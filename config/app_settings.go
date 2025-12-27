@@ -35,6 +35,15 @@ type (
 	Swagger struct {
 		Enabled bool `env:"SWAGGER_ENABLED" envDefault:"false"`
 	}
+
+	// Cookie -.
+	Cookie struct {
+		Domain   string `env:"COOKIE_DOMAIN" envDefault:"localhost"`
+		Path     string `env:"COOKIE_PATH" envDefault:"/"`
+		HttpOnly bool   `env:"COOKIE_HTTP_ONLY" envDefault:"true"`
+		MaxAge   int    `env:"COOKIE_MAX_AGE" envDefault:"3600"`
+		Secure   bool   `env:"COOKIE_SECURE" envDefault:"false"`
+	}
 )
 
 // IsProd returns true if the environment is production.
@@ -79,4 +88,14 @@ func (m *Metrics) IsEnabled() bool {
 // IsEnabled returns true if swagger is enabled.
 func (s *Swagger) IsEnabled() bool {
 	return s.Enabled
+}
+
+// IsHttpOnly returns true if the cookie should be HttpOnly.
+func (c *Cookie) IsHttpOnly() bool {
+	return c.HttpOnly
+}
+
+// IsSecure returns true if the cookie should be Secure.
+func (c *Cookie) IsSecure() bool {
+	return c.Secure
 }

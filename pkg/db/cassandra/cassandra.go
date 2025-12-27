@@ -31,7 +31,7 @@ type Cassandra struct {
 }
 
 // New creates a new Cassandra session with optimized settings.
-func New(ctx context.Context, env string, cfg config.Cassandra, l logger.Interface, opts ...Option) (*Cassandra, error) {
+func New(ctx context.Context, env string, cfg config.Cassandra, l logger.Log, opts ...Option) (*Cassandra, error) {
 	cluster := gocql.NewCluster(cfg.Host)
 	cluster.Keyspace = cfg.Name
 	cluster.Port = cfg.Port

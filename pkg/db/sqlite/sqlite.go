@@ -25,7 +25,7 @@ type SQLite struct {
 }
 
 // New creates a new SQLite connection.
-func New(ctx context.Context, cfg config.SqlLite, l logger.Interface, opts ...Option) (*SQLite, error) {
+func New(ctx context.Context, cfg config.SqlLite, l logger.Log, opts ...Option) (*SQLite, error) {
 	dsn := cfg.DSN()
 
 	db, err := sql.Open("sqlite3", dsn)
@@ -59,7 +59,7 @@ func New(ctx context.Context, cfg config.SqlLite, l logger.Interface, opts ...Op
 }
 
 // verifyConnection pings the database to ensure connectivity.
-func verifyConnection(ctx context.Context, db *sql.DB, l logger.Interface) error {
+func verifyConnection(ctx context.Context, db *sql.DB, l logger.Log) error {
 	pingCtx, cancel := context.WithTimeout(ctx, defaultPingTimeout)
 	defer cancel()
 

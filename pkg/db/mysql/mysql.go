@@ -34,7 +34,7 @@ type MySQL struct {
 }
 
 // New creates a new MySQL connection pool with optimized settings.
-func New(ctx context.Context, env string, cfg config.MySQL, l logger.Interface, opts ...Option) (*MySQL, error) {
+func New(ctx context.Context, env string, cfg config.MySQL, l logger.Log, opts ...Option) (*MySQL, error) {
 	dsn := cfg.URL()
 
 	db, err := sql.Open("mysql", dsn)
@@ -81,7 +81,7 @@ func applyPoolConfig(env string, db *sql.DB) {
 }
 
 // verifyConnection pings the database to ensure connectivity.
-func verifyConnection(ctx context.Context, db *sql.DB, l logger.Interface) error {
+func verifyConnection(ctx context.Context, db *sql.DB, l logger.Log) error {
 	pingCtx, cancel := context.WithTimeout(ctx, defaultPingTimeout)
 	defer cancel()
 

@@ -25,6 +25,7 @@ type Config struct {
 	APIKeys      APIKeys
 	Metrics      Metrics
 	Swagger      Swagger
+	Cookie       Cookie
 }
 
 // NewConfig returns app config (Singleton).

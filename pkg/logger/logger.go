@@ -15,7 +15,7 @@ var (
 )
 
 // Interface -.
-type Interface interface {
+type Log interface {
 	Debug(args ...any)
 	Info(args ...any)
 	Warn(args ...any)
@@ -48,10 +48,8 @@ type Logger struct {
 	Entity *zap.SugaredLogger
 }
 
-var _ Interface = (*Logger)(nil)
-
 // GetLogger returns the singleton logger instance.
-func GetLogger() *Logger {
+func GetLogger() Log {
 	once.Do(func() {
 		instance = New(os.Getenv("LOG_LEVEL"))
 	})

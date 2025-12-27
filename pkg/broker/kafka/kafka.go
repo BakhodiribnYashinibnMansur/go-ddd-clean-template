@@ -22,17 +22,17 @@ const (
 // Producer wraps kafka.Writer for producing messages.
 type Producer struct {
 	Writer *kafka.Writer
-	logger logger.Interface
+	logger logger.Log
 }
 
 // Consumer wraps kafka.Reader for consuming messages.
 type Consumer struct {
 	Reader *kafka.Reader
-	logger logger.Interface
+	logger logger.Log
 }
 
 // NewProducer creates a new Kafka producer.
-func NewProducer(cfg config.Kafka, l logger.Interface, opts ...ProducerOption) (*Producer, error) {
+func NewProducer(cfg config.Kafka, l logger.Log, opts ...ProducerOption) (*Producer, error) {
 	writerConfig := kafka.WriterConfig{
 		Brokers:      cfg.Brokers,
 		Topic:        cfg.Topic,
@@ -58,7 +58,7 @@ func NewProducer(cfg config.Kafka, l logger.Interface, opts ...ProducerOption) (
 }
 
 // NewConsumer creates a new Kafka consumer.
-func NewConsumer(ctx context.Context, cfg config.Kafka, l logger.Interface, opts ...ConsumerOption) (*Consumer, error) {
+func NewConsumer(ctx context.Context, cfg config.Kafka, l logger.Log, opts ...ConsumerOption) (*Consumer, error) {
 	readerConfig := kafka.ReaderConfig{
 		Brokers:        cfg.Brokers,
 		Topic:          cfg.Topic,

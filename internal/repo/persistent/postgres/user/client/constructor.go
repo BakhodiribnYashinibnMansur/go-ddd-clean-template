@@ -1,20 +1,25 @@
 package client
 
 import (
+	"github.com/Masterminds/squirrel"
 	"github.com/evrone/go-clean-template/pkg/db/postgres"
-	"go.uber.org/zap"
+	"github.com/evrone/go-clean-template/pkg/logger"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // UserRepo handles user-related database operations.
-type UserRepo struct {
-	*postgres.Postgres
-	logger *zap.Logger
+// SessionRepo handles session-related database operations.
+type Repo struct {
+	pool    *pgxpool.Pool
+	builder squirrel.StatementBuilderType
+	logger  logger.Log
 }
 
-// NewUserRepo creates a new UserRepo instance.
-func NewUserRepo(pg *postgres.Postgres, logger *zap.Logger) *UserRepo {
-	return &UserRepo{
-		Postgres: pg,
-		logger:   logger,
+// New creates a new client repository instance.
+func New(pg *postgres.Postgres, logger logger.Log) RepoI {
+	return &Repo{
+		pool:    pg.Pool,
+		builder: pg.Builder,
+		logger:  logger,
 	}
 }

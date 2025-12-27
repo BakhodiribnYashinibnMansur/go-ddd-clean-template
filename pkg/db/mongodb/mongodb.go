@@ -35,7 +35,7 @@ type MongoDB struct {
 }
 
 // New creates a new MongoDB client with optimized settings.
-func New(ctx context.Context, env string, cfg config.MongoDB, l logger.Interface, opts ...Option) (*MongoDB, error) {
+func New(ctx context.Context, env string, cfg config.MongoDB, l logger.Log, opts ...Option) (*MongoDB, error) {
 	uri := buildConnectionURI(cfg)
 
 	clientOpts := options.Client().ApplyURI(uri)
@@ -101,7 +101,7 @@ func applyPoolConfig(env string, clientOpts *options.ClientOptions) {
 }
 
 // verifyConnection pings the MongoDB server to ensure connectivity.
-func verifyConnection(ctx context.Context, client *mongo.Client, l logger.Interface) error {
+func verifyConnection(ctx context.Context, client *mongo.Client, l logger.Log) error {
 	pingCtx, cancel := context.WithTimeout(ctx, defaultPingTimeout)
 	defer cancel()
 

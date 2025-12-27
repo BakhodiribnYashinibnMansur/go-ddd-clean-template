@@ -35,7 +35,7 @@ type Redis struct {
 }
 
 // New creates a new Redis client with optimized settings.
-func New(ctx context.Context, env string, cfg config.Redis, l logger.Interface, opts ...Option) (*Redis, error) {
+func New(ctx context.Context, env string, cfg config.Redis, l logger.Log, opts ...Option) (*Redis, error) {
 	addr := fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)
 
 	options := &redis.Options{
@@ -87,7 +87,7 @@ func applyPoolConfig(env string, options *redis.Options) {
 }
 
 // verifyConnection pings the Redis server to ensure connectivity.
-func verifyConnection(ctx context.Context, client *redis.Client, l logger.Interface) error {
+func verifyConnection(ctx context.Context, client *redis.Client, l logger.Log) error {
 	pingCtx, cancel := context.WithTimeout(ctx, defaultPingTimeout)
 	defer cancel()
 

@@ -35,7 +35,7 @@ type ClickHouse struct {
 }
 
 // New creates a new ClickHouse connection with optimized settings.
-func New(ctx context.Context, env string, cfg config.ClickHouse, l logger.Interface, opts ...Option) (*ClickHouse, error) {
+func New(ctx context.Context, env string, cfg config.ClickHouse, l logger.Log, opts ...Option) (*ClickHouse, error) {
 	options := &clickhouse.Options{
 		Addr: []string{fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)},
 		Auth: clickhouse.Auth{
@@ -89,7 +89,7 @@ func applyPoolConfig(env string, db *sql.DB) {
 }
 
 // verifyConnection pings the ClickHouse server to ensure connectivity.
-func verifyConnection(ctx context.Context, conn clickhouse.Conn, l logger.Interface) error {
+func verifyConnection(ctx context.Context, conn clickhouse.Conn, l logger.Log) error {
 	pingCtx, cancel := context.WithTimeout(ctx, defaultPingTimeout)
 	defer cancel()
 

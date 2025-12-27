@@ -7,7 +7,7 @@ import (
 )
 
 // UserRepoI defines the interface for user repository operations.
-type UserRepoI interface {
+type RepoI interface {
 	// Create creates a new user in the database.
 	Create(ctx context.Context, u domain.User) error
 

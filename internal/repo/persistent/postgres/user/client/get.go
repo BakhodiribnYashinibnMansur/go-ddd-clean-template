@@ -9,10 +9,10 @@ import (
 	"go.uber.org/zap"
 )
 
-func (r *UserRepo) Get(ctx context.Context, filter UserFilter) (domain.User, error) {
+func (r *Repo) Get(ctx context.Context, filter UserFilter) (domain.User, error) {
 	r.logger.Info("UserRepo.Get started")
 
-	qb := r.Builder.
+	qb := r.builder.
 		Select("id, username, phone, password_hash, salt, created_at, updated_at, deleted_at, last_seen").
 		From("users").
 		Where("deleted_at = 0")
@@ -27,17 +27,17 @@ func (r *UserRepo) Get(ctx context.Context, filter UserFilter) (domain.User, err
 
 	sql, args, err := qb.ToSql()
 	if err != nil {
-		r.logger.Error("UserRepo.Get - r.Builder", zap.Error(err))
-		return domain.User{}, fmt.Errorf("UserRepo - Get - r.Builder: %w", err)
+		r.logger.Error("UserRepo.Get - r.builder", zap.Error(err))
+		return domain.User{}, fmt.Errorf("UserRepo - Get - r.builder: %w", err)
 	}
 
 	var u domain.User
-	err = r.Pool.QueryRow(ctx, sql, args...).Scan(
+	err = r.pool.QueryRow(ctx, sql, args...).Scan(
 		&u.ID, &u.Username, &u.Phone, &u.PasswordHash, &u.Salt, &u.CreatedAt, &u.UpdatedAt, &u.DeletedAt, &u.LastSeen,
 	)
 	if err != nil {
-		r.logger.Error("UserRepo.Get - r.Pool.QueryRow", zap.Error(err))
-		return domain.User{}, fmt.Errorf("UserRepo - Get - r.Pool.QueryRow: %w", err)
+		r.logger.Error("UserRepo.Get - r.psql.Pool.QueryRow", zap.Error(err))
+		return domain.User{}, fmt.Errorf("UserRepo - Get - r.psql.Pool.QueryRow: %w", err)
 	}
 
 	username := ""

@@ -1,120 +1,102 @@
-// Package http implements HTTP server.
 package http
 
 import (
 	"context"
-	"errors"
+	"fmt"
+	"log"
+	"net"
+	"net/http"
+	"strconv"
 	"time"
 
-	"github.com/evrone/go-clean-template/pkg/logger"
-	"github.com/goccy/go-json"
-	"github.com/gofiber/fiber/v2"
-	"go.uber.org/zap"
-	"golang.org/x/sync/errgroup"
+	"github.com/mbndr/figlet4go"
 )
 
-const (
-	_defaultAddr            = ":80"
-	_defaultReadTimeout     = 5 * time.Second
-	_defaultWriteTimeout    = 5 * time.Second
-	_defaultShutdownTimeout = 3 * time.Second
-)
-
-// Server -.
+// Server is a struct that represents the server
 type Server struct {
-	ctx context.Context
-	eg  *errgroup.Group
-
-	App    *fiber.App
-	notify chan error
-
-	address         string
-	prefork         bool
-	readTimeout     time.Duration
-	writeTimeout    time.Duration
-	shutdownTimeout time.Duration
-
-	logger logger.Interface
+	httpServer *http.Server
 }
 
-// New -.
-func New(l logger.Interface, opts ...Option) *Server {
-	group, ctx := errgroup.WithContext(context.Background())
-	group.SetLimit(1) // Run only one goroutine
-
-	s := &Server{
-		ctx:             ctx,
-		eg:              group,
-		App:             nil,
-		notify:          make(chan error, 1),
-		address:         _defaultAddr,
-		readTimeout:     _defaultReadTimeout,
-		writeTimeout:    _defaultWriteTimeout,
-		shutdownTimeout: _defaultShutdownTimeout,
-		logger:          l,
-	}
-
-	// Custom options
-	for _, opt := range opts {
-		opt(s)
-	}
-
-	app := fiber.New(fiber.Config{
-		Prefork:      s.prefork,
-		ReadTimeout:  s.readTimeout,
-		WriteTimeout: s.writeTimeout,
-		JSONDecoder:  json.Unmarshal,
-		JSONEncoder:  json.Marshal,
-	})
-
-	s.App = app
-
-	return s
+func NewServer() *Server {
+	return &Server{}
 }
 
-// Start -.
-func (s *Server) Start() {
-	s.eg.Go(func() error {
-		err := s.App.Listen(s.address)
+// Run is a function that runs the server
+func (s *Server) Run(port int, handler http.Handler) error {
+	for {
+		status, err := checkPortBind(port)
 		if err != nil {
-			s.notify <- err
-
-			close(s.notify)
-
-			return err
+			port++
 		}
-
-		return nil
-	})
-
-	s.logger.Infow("restapi server - Server - Started")
-}
-
-// Notify -.
-func (s *Server) Notify() <-chan error {
-	return s.notify
-}
-
-// Shutdown -.
-func (s *Server) Shutdown() error {
-	var shutdownErrors []error
-
-	err := s.App.ShutdownWithTimeout(s.shutdownTimeout)
-	if err != nil && !errors.Is(err, context.Canceled) {
-		s.logger.Errorw("restapi server - Server - Shutdown - s.App.ShutdownWithTimeout", zap.Error(err))
-
-		shutdownErrors = append(shutdownErrors, err)
+		if status {
+			break
+		}
+	}
+	figlet(port)
+	s.httpServer = &http.Server{
+		Addr:           ":" + strconv.Itoa(port),
+		Handler:        handler,
+		MaxHeaderBytes: 1 << 20, // 1 MB
+		ReadTimeout:    60 * time.Second,
+		WriteTimeout:   60 * time.Second,
 	}
 
-	// Wait for all goroutines to finish and get any error
-	err = s.eg.Wait()
-	if err != nil && !errors.Is(err, context.Canceled) {
-		s.logger.Errorw("restapi server - Server - Shutdown - s.eg.Wait", zap.Error(err))
-
-		shutdownErrors = append(shutdownErrors, err)
+	err := s.httpServer.ListenAndServe()
+	if err != nil && err != http.ErrServerClosed {
+		return err
 	}
 
-	s.logger.Infow("restapi server - Server - Shutdown")
+	return nil
+}
 
-	return errors.Join(shutdownErrors...)
+// Shutdown is a function that shuts down the server
+func (s *Server) Shutdown(ctx context.Context) error {
+	return s.httpServer.Shutdown(ctx)
+}
+
+// Check if a port is available
+func checkPortBind(port int) (status bool, err error) {
+	// Concatenate a colon and the port
+	host := ":" + strconv.Itoa(port)
+	// Try to create a server with the port
+	server, err := net.Listen("tcp", host)
+	// if it fails then the port is likely taken
+	if err != nil {
+		return false, err
+	}
+	// close the server
+	server.Close()
+	// we successfully used and closed the port
+	// so it's now available to be used again
+	return true, nil
+}
+
+func figlet(port int) {
+	ascii := figlet4go.NewAsciiRender()
+	// Adding the colors to RenderOptions
+	options := figlet4go.NewRenderOptions()
+	options.FontName = "larry3d"
+	options.FontColor = []figlet4go.Color{
+		// Colors can be given by default ansi color codes...
+		figlet4go.ColorGreen,
+		// figlet4go.ColorYellow,
+		figlet4go.ColorCyan,
+		// figlet4go.ColorMagenta,
+		// figlet4go.ColorWhite,
+		figlet4go.ColorRed,
+		figlet4go.ColorBlue,
+		figlet4go.ColorBlack,
+		// ...or by an rgb value
+		// figlet4go.Color{R: 255, G: 0, B: 0},
+		// ...or by an hex string...
+		// figlet4go.NewTrueColorFromHexString("885DBA"),
+		// ...or by an TrueColor object with rgb values
+		// figlet4go.TrueColor{136, 93, 186},
+	}
+	renderStr, err := ascii.RenderOpts(strconv.Itoa(port), options)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Server is running on port :")
+	fmt.Print(renderStr)
 }

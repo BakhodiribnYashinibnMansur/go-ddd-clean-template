@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/evrone/go-clean-template/pkg/logger"
 	natsrpc "github.com/evrone/go-clean-template/pkg/broker/nats/nats_rpc"
+	"github.com/evrone/go-clean-template/pkg/logger"
 	"github.com/goccy/go-json"
 	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
@@ -38,7 +38,7 @@ type Server struct {
 
 	timeout time.Duration
 
-	logger logger.Interface
+	logger logger.Log
 }
 
 // New -.
@@ -46,7 +46,7 @@ func New(
 	url,
 	serverSubject string,
 	router map[string]CallHandler,
-	l logger.Interface,
+	l logger.Log,
 	opts ...Option,
 ) (*Server, error) {
 	group, ctx := errgroup.WithContext(context.Background())

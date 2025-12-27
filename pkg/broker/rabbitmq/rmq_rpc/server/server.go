@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/evrone/go-clean-template/pkg/logger"
 	rmqrpc "github.com/evrone/go-clean-template/pkg/broker/rabbitmq/rmq_rpc"
+	"github.com/evrone/go-clean-template/pkg/logger"
 	"github.com/goccy/go-json"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"go.uber.org/zap"
@@ -36,11 +36,11 @@ type Server struct {
 
 	timeout time.Duration
 
-	logger logger.Interface
+	logger logger.Log
 }
 
 // New -.
-func New(url, serverExchange string, router map[string]CallHandler, l logger.Interface, opts ...Option) (*Server, error) {
+func New(url, serverExchange string, router map[string]CallHandler, l logger.Log, opts ...Option) (*Server, error) {
 	group, ctx := errgroup.WithContext(context.Background())
 	group.SetLimit(1) // Run only one goroutine
 

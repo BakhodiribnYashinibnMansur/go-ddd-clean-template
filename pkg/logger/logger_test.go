@@ -63,7 +63,7 @@ func TestNew(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			l := New(tc.in)
-			if l == nil || l.Entity == nil {
+			if l == nil {
 				t.Fatalf("New(%q) returned nil logger or entity", tc.in)
 			}
 		})

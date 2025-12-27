@@ -3,15 +3,14 @@
 package app
 
 import (
-	"errors"
-	"log"
-	"os"
+	"database/sql"
 	"time"
 
-	"github.com/golang-migrate/migrate/v4"
-	// migrate tools
-	_ "github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/evrone/go-clean-template/config"
+	"github.com/evrone/go-clean-template/pkg/logger"
+	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/pressly/goose/v3"
+	"go.uber.org/zap"
 )
 
 const (
@@ -20,44 +19,55 @@ const (
 )
 
 func init() {
-	databaseURL, ok := os.LookupEnv("PG_URL")
-	if !ok || len(databaseURL) == 0 {
-		log.Fatalf("migrate: environment variable not declared: PG_URL")
+	l := logger.GetLogger()
+
+	cfg, err := config.NewConfig()
+	if err != nil {
+		l.Fatalw("migrate: config error", zap.Error(err))
 	}
 
-	databaseURL += "?sslmode=disable"
+	if cfg.IsProd() {
+		l.Infow("Production environment detected. Waiting 1 minute before starting migrations...")
+		for i := 60; i > 0; i-- {
+			l.Infow("Migration countdown", zap.Int("seconds_left", i))
+			time.Sleep(time.Second)
+		}
+	}
+
+	databaseURL := cfg.Database.Postgres.URL()
 
 	var (
 		attempts = _defaultAttempts
-		err      error
-		m        *migrate.Migrate
+		db       *sql.DB
 	)
 
 	for attempts > 0 {
-		m, err = migrate.New("file://migrations", databaseURL)
+		db, err = sql.Open("pgx", databaseURL)
 		if err == nil {
-			break
+			err = db.Ping()
+			if err == nil {
+				break
+			}
 		}
 
-		log.Printf("Migrate: postgres is trying to connect, attempts left: %d", attempts)
+		l.Infow("Migrate: postgres is trying to connect", zap.Int("attempts_left", attempts))
 		time.Sleep(_defaultTimeout)
 		attempts--
 	}
 
 	if err != nil {
-		log.Fatalf("Migrate: postgres connect error: %s", err)
+		l.Fatalw("Migrate: postgres connect error", zap.Error(err))
+	}
+	defer db.Close()
+
+	if err := goose.SetDialect("postgres"); err != nil {
+		l.Fatalw("Migrate: goose set dialect error", zap.Error(err))
 	}
 
-	err = m.Up()
-	defer m.Close()
-	if err != nil && !errors.Is(err, migrate.ErrNoChange) {
-		log.Fatalf("Migrate: up error: %s", err)
+	l.Infow("Migrate: running up migrations")
+	if err := goose.Up(db, "migrations"); err != nil {
+		l.Fatalw("Migrate: up error", zap.Error(err))
 	}
 
-	if errors.Is(err, migrate.ErrNoChange) {
-		log.Printf("Migrate: no change")
-		return
-	}
-
-	log.Printf("Migrate: up success")
+	l.Infow("Migrate: up success")
 }

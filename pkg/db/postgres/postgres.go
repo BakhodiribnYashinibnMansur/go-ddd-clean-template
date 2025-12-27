@@ -38,7 +38,7 @@ type Postgres struct {
 
 // New creates a new PostgreSQL connection pool with optimized settings.
 // Additional options can be provided to customize the pool configuration.
-func New(ctx context.Context, env string, cfg config.Postgres, l logger.Interface, opts ...Option) (*Postgres, error) {
+func New(ctx context.Context, env string, cfg config.Postgres, l logger.Log, opts ...Option) (*Postgres, error) {
 	connString := buildConnectionString(cfg)
 
 	poolConfig, err := pgxpool.ParseConfig(connString)
@@ -120,7 +120,7 @@ func applyPoolConfig(env string, poolConfig *pgxpool.Config) {
 }
 
 // verifyConnection pings the database to ensure connectivity.
-func verifyConnection(ctx context.Context, pool *pgxpool.Pool, l logger.Interface) error {
+func verifyConnection(ctx context.Context, pool *pgxpool.Pool, l logger.Log) error {
 	pingCtx, cancel := context.WithTimeout(ctx, defaultPingTimeout)
 	defer cancel()
 
@@ -147,7 +147,7 @@ func (p *Postgres) Stats() *pgxpool.Stat {
 	return p.Pool.Stat()
 }
 
-func setTracer(poolConfig *pgxpool.Config, l logger.Interface) {
+func setTracer(poolConfig *pgxpool.Config, l logger.Log) {
 	zapTracer := NewZapTracer(l.GetZap())
 	tracer := &tracelog.TraceLog{
 		Logger:   zapTracer,

@@ -21,7 +21,7 @@ type Elasticsearch struct {
 }
 
 // New creates a new Elasticsearch client with optimized settings.
-func New(ctx context.Context, env string, cfg config.Elasticsearch, l logger.Interface, opts ...Option) (*Elasticsearch, error) {
+func New(ctx context.Context, env string, cfg config.Elasticsearch, l logger.Log, opts ...Option) (*Elasticsearch, error) {
 	esConfig := elasticsearch.Config{
 		Addresses: []string{
 			fmt.Sprintf("http://%s:%d", cfg.Host, cfg.Port),

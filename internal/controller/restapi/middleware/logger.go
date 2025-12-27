@@ -1,35 +1,32 @@
 package middleware
 
 import (
-	"strconv"
-	"strings"
+	"time"
 
 	"github.com/evrone/go-clean-template/pkg/logger"
-	"github.com/gofiber/fiber/v2"
+	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
-func buildRequestMessage(ctx *fiber.Ctx) string {
-	var result strings.Builder
+// Logger -.
+func Logger(l logger.Log) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		start := time.Now()
+		path := c.Request.URL.Path
+		raw := c.Request.URL.RawQuery
 
-	result.WriteString(ctx.IP())
-	result.WriteString(" - ")
-	result.WriteString(ctx.Method())
-	result.WriteString(" ")
-	result.WriteString(ctx.OriginalURL())
-	result.WriteString(" - ")
-	result.WriteString(strconv.Itoa(ctx.Response().StatusCode()))
-	result.WriteString(" ")
-	result.WriteString(strconv.Itoa(len(ctx.Response().Body())))
+		c.Next()
 
-	return result.String()
-}
+		if raw != "" {
+			path = path + "?" + raw
+		}
 
-func Logger(l logger.Interface) func(c *fiber.Ctx) error {
-	return func(ctx *fiber.Ctx) error {
-		err := ctx.Next()
-
-		l.Info(buildRequestMessage(ctx))
-
-		return err
+		l.Infow("HTTP request", zap.String("method", c.Request.Method),
+			zap.String("path", path),
+			zap.Int("status", c.Writer.Status()),
+			zap.String("latency", time.Since(start).String()),
+			zap.String("client_ip", c.ClientIP()),
+			zap.String("error", c.Errors.String()),
+		)
 	}
 }

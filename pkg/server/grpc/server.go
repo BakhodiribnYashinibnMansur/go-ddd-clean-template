@@ -25,11 +25,11 @@ type Server struct {
 	notify  chan error
 	address string
 
-	logger logger.Interface
+	logger logger.Log
 }
 
 // New -.
-func New(l logger.Interface, opts ...Option) *Server {
+func New(l logger.Log, opts ...Option) *Server {
 	group, ctx := errgroup.WithContext(context.Background())
 	group.SetLimit(1) // Run only one goroutine
 

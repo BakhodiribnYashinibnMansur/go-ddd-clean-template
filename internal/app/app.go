@@ -5,24 +5,15 @@ import (
 	"context"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 
 	"github.com/evrone/go-clean-template/config"
-	amqprpc "github.com/evrone/go-clean-template/internal/controller/amqp_rpc"
-
-	// "github.com/evrone/go-clean-template/internal/controller/grpc"
-	natsrpc "github.com/evrone/go-clean-template/internal/controller/nats_rpc"
 	"github.com/evrone/go-clean-template/internal/controller/restapi"
-	persistent_translation "github.com/evrone/go-clean-template/internal/repo/persistent/postgres/translation"
-	persistent_user "github.com/evrone/go-clean-template/internal/repo/persistent/postgres/user"
-	"github.com/evrone/go-clean-template/internal/repo/webapi"
-	"github.com/evrone/go-clean-template/internal/usecase/translation"
-	"github.com/evrone/go-clean-template/internal/usecase/user"
+	"github.com/evrone/go-clean-template/internal/repo"
+	"github.com/evrone/go-clean-template/internal/usecase"
+	"github.com/gin-gonic/gin"
 
-	// "github.com/evrone/go-clean-template/pkg/server/grpc"
-
-	natsRPCServer "github.com/evrone/go-clean-template/pkg/broker/nats/nats_rpc/server"
-	rmqRPCServer "github.com/evrone/go-clean-template/pkg/broker/rabbitmq/rmq_rpc/server"
 	"github.com/evrone/go-clean-template/pkg/db/postgres"
 	"github.com/evrone/go-clean-template/pkg/logger"
 	httpserver "github.com/evrone/go-clean-template/pkg/server/http"
@@ -40,43 +31,37 @@ func Run(cfg *config.Config) {
 	}
 	defer pg.Close()
 
-	// Use-Case
-	translationUseCase := translation.New(
-		persistent_translation.NewTranslationRepo(pg, l.GetZap()),
-		webapi.New(),
-	)
+	repositories := repo.New(pg, l)
 
-	userUseCase := user.New(
-		persistent_user.NewUserRepo(pg, l.GetZap()),
-	)
+	// Use Case
+	useCases := usecase.NewUseCase(repositories, l)
 
-	// RabbitMQ RPC Server
-	rmqRouter := amqprpc.NewRouter(translationUseCase, l)
-	rmqServer, err := rmqRPCServer.New(cfg.Connectivity.RMQ.URL, cfg.Connectivity.RMQ.ServerExchange, rmqRouter, l)
-	if err != nil {
-		l.Fatalw("app - Run - rmqServer - rmqRPCServer.New", zap.Error(err))
+	// HTTP Server logic
+	gin.ForceConsoleColor()
+
+	if cfg.App.IsProd() {
+		gin.SetMode(gin.ReleaseMode)
+	} else {
+		gin.SetMode(gin.DebugMode)
 	}
 
-	// NATS RPC Server
-	natsRouter := natsrpc.NewRouter(translationUseCase, l)
-	natsServer, err := natsRPCServer.New(cfg.Connectivity.NATS.URL, cfg.Connectivity.NATS.ServerExchange, natsRouter, l)
+	handler := gin.New()
+	restapi.NewRouter(handler, cfg, useCases, l)
+
+	httpServer := httpserver.NewServer()
+
+	// Parse port
+	port, err := strconv.Atoi(cfg.HTTP.Port)
 	if err != nil {
-		l.Fatalw("app - Run - natsServer - natsRPCServer.New", zap.Error(err))
+		l.Fatalw("app - Run - strconv.Atoi", zap.Error(err))
 	}
 
-	// gRPC Server
-	// grpcServer := grpcserver.New(l, grpcserver.Port(cfg.Connectivity.GRPC.Port))
-	// grpc.NewRouter(grpcServer.App, translationUseCase, l)
-
-	// HTTP Server
-	httpServer := httpserver.New(l, httpserver.Port(cfg.HTTP.Port), httpserver.Prefork(cfg.HTTP.UsePreforkMode))
-	restapi.NewRouter(httpServer.App, cfg, translationUseCase, userUseCase, l)
-
-	// Start servers
-	rmqServer.Start()
-	natsServer.Start()
-	// grpcServer.Start()
-	httpServer.Start()
+	// Start server
+	go func() {
+		if err := httpServer.Run(port, handler); err != nil {
+			l.Errorw("app - Run - httpServer.Run", zap.Error(err))
+		}
+	}()
 
 	// Waiting signal
 	interrupt := make(chan os.Signal, 1)
@@ -85,34 +70,13 @@ func Run(cfg *config.Config) {
 	select {
 	case s := <-interrupt:
 		l.Infow("app - Run - signal", zap.String("signal", s.String()))
-	case err = <-httpServer.Notify():
-		l.Errorw("app - Run - httpServer.Notify", zap.Error(err))
-	// case err = <-grpcServer.Notify():
-	// 	l.Errorw("app - Run - grpcServer.Notify", zap.Error(err))
-	case err = <-rmqServer.Notify():
-		l.Errorw("app - Run - rmqServer.Notify", zap.Error(err))
-	case err = <-natsServer.Notify():
-		l.Errorw("app - Run - natsServer.Notify", zap.Error(err))
+		// case err = <-httpServer.Notify():
+		// 	l.Errorw("app - Run - httpServer.Notify", zap.Error(err))
 	}
 
 	// Shutdown
-	err = httpServer.Shutdown()
+	err = httpServer.Shutdown(context.Background())
 	if err != nil {
 		l.Errorw("app - Run - httpServer.Shutdown", zap.Error(err))
-	}
-
-	// err = grpcServer.Shutdown()
-	// if err != nil {
-	// 	l.Errorw("app - Run - grpcServer.Shutdown", zap.Error(err))
-	// }
-
-	err = rmqServer.Shutdown()
-	if err != nil {
-		l.Errorw("app - Run - rmqServer.Shutdown", zap.Error(err))
-	}
-
-	err = natsServer.Shutdown()
-	if err != nil {
-		l.Errorw("app - Run - natsServer.Shutdown", zap.Error(err))
 	}
 }

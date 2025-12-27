@@ -6,9 +6,8 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-// V1 -.
 type V1 struct {
-	t usecase.Translation
-	l logger.Interface
+	u *usecase.UseCase
+	l logger.Log
 	v *validator.Validate
 }

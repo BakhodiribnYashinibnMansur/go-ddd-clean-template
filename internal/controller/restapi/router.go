@@ -1,18 +1,19 @@
-// Package v1 implements routing paths. Each services in own file.
+// Package restapi implements routing paths. Each services in own file.
 package restapi
 
 import (
 	"net/http"
 
-	"github.com/ansrivas/fiberprometheus/v2"
 	"github.com/evrone/go-clean-template/config"
-	_ "github.com/evrone/go-clean-template/docs" // Swagger docs.
+	"github.com/evrone/go-clean-template/docs" // Swagger docs.
 	"github.com/evrone/go-clean-template/internal/controller/restapi/middleware"
-	v1 "github.com/evrone/go-clean-template/internal/controller/restapi/v1"
+	"github.com/evrone/go-clean-template/internal/controller/restapi/v1/user"
 	"github.com/evrone/go-clean-template/internal/usecase"
 	"github.com/evrone/go-clean-template/pkg/logger"
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/swagger"
+	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+	ginprometheus "github.com/zsais/go-gin-prometheus"
 )
 
 // NewRouter -.
@@ -22,30 +23,66 @@ import (
 // @version     1.0
 // @host        localhost:8080
 // @BasePath    /v1
-func NewRouter(app *fiber.App, cfg *config.Config, t usecase.Translation, u usecase.User, l logger.Interface) {
+func NewRouter(handler *gin.Engine, cfg *config.Config, uc *usecase.UseCase, l logger.Log) {
 	// Options
-	app.Use(middleware.Logger(l))
-	app.Use(middleware.Recovery(l))
+	handler.HandleMethodNotAllowed = true
+
+	middleware.GinMiddleware(handler)
 
 	// Prometheus metrics
-	if cfg.Metrics.Enabled {
-		prometheus := fiberprometheus.New("my-service-name")
-		prometheus.RegisterAt(app, "/metrics")
-		app.Use(prometheus.Middleware)
-	}
+	setupMetrics(handler, cfg)
 
-	// Swagger
-	if cfg.Swagger.Enabled {
-		app.Get("/swagger/*", swagger.HandlerDefault)
-	}
+	// Swagger settings
+	setupSwagger(handler, cfg)
 
 	// K8s probe
-	app.Get("/healthz", func(ctx *fiber.Ctx) error { return ctx.SendStatus(http.StatusOK) })
+	setupHealthCheck(handler)
+
+	// Controller
+	c := NewController(uc, l)
+
+	// Middleware
+	am := middleware.NewAuthMiddleware(uc, cfg, l)
 
 	// Routers
-	apiV1Group := app.Group("/v1")
+	h := handler.Group("/v1")
 	{
-		v1.NewTranslationRoutes(apiV1Group, t, l)
-		v1.NewUserRoutes(apiV1Group, u, l)
+		user.UserRoute(h, c.User, am.AuthClientAccess)
 	}
+}
+
+func setupMetrics(handler *gin.Engine, cfg *config.Config) {
+	if cfg.Metrics.Enabled {
+		prometheus := ginprometheus.NewPrometheus("my_service_name")
+		prometheus.Use(handler)
+	}
+}
+
+func setupSwagger(handler *gin.Engine, cfg *config.Config) {
+	docs.SwaggerInfo.Version = cfg.App.Version
+
+	if cfg.Swagger.Enabled {
+		handler.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler,
+			func() func(*ginSwagger.Config) {
+				return func(c *ginSwagger.Config) {
+					c.Title = "Golang Clean Architecture Swagger Docs"
+					c.DocExpansion = "none"
+					c.DeepLinking = true
+					c.PersistAuthorization = true
+					c.DefaultModelsExpandDepth = -1
+				}
+			}(),
+		), func(ctx *gin.Context) {
+			docs.SwaggerInfo.Host = ctx.Request.Host
+			if ctx.Request.TLS != nil {
+				docs.SwaggerInfo.Schemes = []string{"https"}
+			}
+		})
+	}
+}
+
+func setupHealthCheck(handler *gin.Engine) {
+	handler.GET("/healthz", func(c *gin.Context) { c.Status(http.StatusOK) })
+	handler.GET("/ping", func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{"message": "pong"}) })
+
 }

@@ -20,15 +20,17 @@ const (
 // Session represents a user session.
 type Session struct {
 	ID           uuid.UUID          `json:"id" db:"id"`
-	TuronID      int64              `json:"turon_id" db:"turon_id"`
 	DeviceID     uuid.UUID          `json:"device_id" db:"device_id"`
 	DeviceName   *string            `json:"device_name,omitempty" db:"device_name"`
 	DeviceType   *SessionDeviceType `json:"device_type,omitempty" db:"device_type"`
 	IPAddress    *string            `json:"ip_address,omitempty" db:"ip_address"`
 	UserAgent    *string            `json:"user_agent,omitempty" db:"user_agent"`
 	FCMToken     *string            `json:"fcm_token,omitempty" db:"fcm_token"`
+	UserID       int64              `json:"user_id" db:"user_id"`
+	CompanyID    int64              `json:"company_id" db:"company_id"`
 	ExpiresAt    time.Time          `json:"expires_at" db:"expires_at"`
 	LastActivity time.Time          `json:"last_activity" db:"last_activity"`
+	Revoked      bool               `json:"revoked" db:"revoked"`
 	CreatedAt    time.Time          `json:"created_at" db:"created_at"`
 	UpdatedAt    time.Time          `json:"updated_at" db:"updated_at"`
 }
