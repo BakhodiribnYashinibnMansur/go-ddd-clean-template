@@ -22,4 +22,10 @@ type UserRepoI interface {
 
 	// Delete soft deletes a user by their ID.
 	Delete(ctx context.Context, id int64) error
+
+	// Get retrieves a single user based on the provided filter.
+	Get(ctx context.Context, filter UserFilter) (domain.User, error)
+
+	// Gets retrieves a list of users based on the provided filter and pagination.
+	Gets(ctx context.Context, filter UserListFilter) ([]domain.User, int, error)
 }
