@@ -1,6 +1,6 @@
 basePath: /v1
 definitions:
-  domain.Translation:
+  entity.Translation:
     properties:
       destination:
         example: en
@@ -15,11 +15,11 @@ definitions:
         example: text for translation
         type: string
     type: object
-  domain.TranslationHistory:
+  entity.TranslationHistory:
     properties:
       history:
         items:
-          $ref: '#/definitions/domain.Translation'
+          $ref: '#/definitions/entity.Translation'
         type: array
     type: object
   request.Translate:
@@ -70,7 +70,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/domain.Translation'
+            $ref: '#/definitions/entity.Translation'
         "400":
           description: Bad Request
           schema:
@@ -94,7 +94,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/domain.TranslationHistory'
+            $ref: '#/definitions/entity.TranslationHistory'
         "500":
           description: Internal Server Error
           schema:

@@ -37,7 +37,8 @@ type Postgres struct {
 }
 
 // New creates a new PostgreSQL connection pool with optimized settings.
-func New(ctx context.Context, env string, cfg config.Postgres, l logger.Interface) (*Postgres, error) {
+// Additional options can be provided to customize the pool configuration.
+func New(ctx context.Context, env string, cfg config.Postgres, l logger.Interface, opts ...Option) (*Postgres, error) {
 	connString := buildConnectionString(cfg)
 
 	poolConfig, err := pgxpool.ParseConfig(connString)
@@ -51,6 +52,11 @@ func New(ctx context.Context, env string, cfg config.Postgres, l logger.Interfac
 
 	// Set tracer
 	setTracer(poolConfig, l)
+
+	// Apply custom options (these override defaults)
+	for _, opt := range opts {
+		opt(poolConfig)
+	}
 
 	// Create connection pool with timeout context
 	poolCtx, cancel := context.WithTimeout(ctx, defaultConnectTimeout)

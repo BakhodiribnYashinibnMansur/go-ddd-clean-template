@@ -38,7 +38,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/domain.Translation"
+                            "$ref": "#/definitions/entity.Translation"
                         }
                     },
                     "400": {
@@ -74,7 +74,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/domain.TranslationHistory"
+                            "$ref": "#/definitions/entity.TranslationHistory"
                         }
                     },
                     "500": {
@@ -88,7 +88,7 @@
         }
     },
     "definitions": {
-        "domain.Translation": {
+        "entity.Translation": {
             "type": "object",
             "properties": {
                 "destination": {
@@ -109,13 +109,13 @@
                 }
             }
         },
-        "domain.TranslationHistory": {
+        "entity.TranslationHistory": {
             "type": "object",
             "properties": {
                 "history": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/domain.Translation"
+                        "$ref": "#/definitions/entity.Translation"
                     }
                 }
             }
