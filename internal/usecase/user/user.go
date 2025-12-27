@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/evrone/go-clean-template/internal/entity"
+	"github.com/evrone/go-clean-template/internal/domain"
 	"github.com/evrone/go-clean-template/internal/repo"
 )
 
@@ -20,19 +20,19 @@ func New(r repo.UserRepo) *UseCase {
 	}
 }
 
-func (uc *UseCase) Create(ctx context.Context, u entity.User) error {
+func (uc *UseCase) Create(ctx context.Context, u domain.User) error {
 	return uc.repo.Create(ctx, u)
 }
 
-func (uc *UseCase) GetByID(ctx context.Context, id int64) (entity.User, error) {
+func (uc *UseCase) GetByID(ctx context.Context, id int64) (domain.User, error) {
 	return uc.repo.GetByID(ctx, id)
 }
 
-func (uc *UseCase) GetByPhone(ctx context.Context, phone string) (entity.User, error) {
+func (uc *UseCase) GetByPhone(ctx context.Context, phone string) (domain.User, error) {
 	return uc.repo.GetByPhone(ctx, phone)
 }
 
-func (uc *UseCase) Update(ctx context.Context, u entity.User) error {
+func (uc *UseCase) Update(ctx context.Context, u domain.User) error {
 	userData, err := uc.repo.GetByID(ctx, u.ID)
 	if err != nil {
 		return fmt.Errorf("UserUseCase - Update - uc.repo.GetByID: %w", err)

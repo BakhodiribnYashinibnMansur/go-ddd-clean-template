@@ -2,11 +2,11 @@ package response
 
 import (
 	v1 "github.com/evrone/go-clean-template/docs/proto/v1"
-	"github.com/evrone/go-clean-template/internal/entity"
+	"github.com/evrone/go-clean-template/internal/domain"
 )
 
 // NewTranslationHistory -.
-func NewTranslationHistory(translationHistory entity.TranslationHistory) *v1.GetHistoryResponse {
+func NewTranslationHistory(translationHistory domain.TranslationHistory) *v1.GetHistoryResponse {
 	history := make([]*v1.TranslationHistory, len(translationHistory.History))
 
 	for i, h := range translationHistory.History {

@@ -44,7 +44,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/entity.Translation"
+                            "$ref": "#/definitions/domain.Translation"
                         }
                     },
                     "400": {
@@ -80,7 +80,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/entity.TranslationHistory"
+                            "$ref": "#/definitions/domain.TranslationHistory"
                         }
                     },
                     "500": {
@@ -94,7 +94,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "entity.Translation": {
+        "domain.Translation": {
             "type": "object",
             "properties": {
                 "destination": {
@@ -115,13 +115,13 @@ const docTemplate = `{
                 }
             }
         },
-        "entity.TranslationHistory": {
+        "domain.TranslationHistory": {
             "type": "object",
             "properties": {
                 "history": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/entity.Translation"
+                        "$ref": "#/definitions/domain.Translation"
                     }
                 }
             }

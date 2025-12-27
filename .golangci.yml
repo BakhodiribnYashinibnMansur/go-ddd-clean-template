@@ -50,6 +50,16 @@ linters:
     - unparam
     - unused
     - whitespace
+    - prealloc
+    - nilnil
+    - errname
+    - contextcheck
+    - depguard
+    - testpackage
+    - tenv
+    - stylecheck
+    - doccheck
+    
   settings:
     wsl_v5:
       allow-first-in-block: true
@@ -91,6 +101,30 @@ linters:
     nolintlint:
       require-explanation: true
       require-specific: true
+    depguard:
+      rules:
+        domain:
+          files:
+            - "internal/domain/**"
+          deny:
+            - pkg: "database/sql"
+              desc: "domain must not depend on sql"
+            - pkg: "github.com/redis"
+              desc: "domain must not depend on redis"
+            - pkg: "gorm.io"
+              desc: "domain must not depend on ORM"
+        service:
+          files:
+            - "internal/service/**"
+          deny:
+            - pkg: "internal/infrastructure"
+              desc: "service must not depend on infrastructure directly"
+    forbidigo:
+      forbid:
+        - p: "^fmt\\.Print"
+          msg: "use structured logger instead of fmt"
+        - p: "^log\\.Print"
+          msg: "use structured logger instead of log"
   exclusions:
     generated: lax
     presets:

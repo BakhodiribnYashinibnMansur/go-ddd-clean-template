@@ -13,7 +13,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	entity "github.com/evrone/go-clean-template/internal/entity"
+	entity "github.com/evrone/go-clean-template/internal/domain"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -42,10 +42,10 @@ func (m *MockTranslationRepo) EXPECT() *MockTranslationRepoMockRecorder {
 }
 
 // GetHistory mocks base method.
-func (m *MockTranslationRepo) GetHistory(arg0 context.Context) ([]entity.Translation, error) {
+func (m *MockTranslationRepo) GetHistory(arg0 context.Context) ([]domain.Translation, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetHistory", arg0)
-	ret0, _ := ret[0].([]entity.Translation)
+	ret0, _ := ret[0].([]domain.Translation)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -57,7 +57,7 @@ func (mr *MockTranslationRepoMockRecorder) GetHistory(arg0 any) *gomock.Call {
 }
 
 // Store mocks base method.
-func (m *MockTranslationRepo) Store(arg0 context.Context, arg1 entity.Translation) error {
+func (m *MockTranslationRepo) Store(arg0 context.Context, arg1 domain.Translation) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Store", arg0, arg1)
 	ret0, _ := ret[0].(error)
@@ -95,10 +95,10 @@ func (m *MockTranslationWebAPI) EXPECT() *MockTranslationWebAPIMockRecorder {
 }
 
 // Translate mocks base method.
-func (m *MockTranslationWebAPI) Translate(arg0 entity.Translation) (entity.Translation, error) {
+func (m *MockTranslationWebAPI) Translate(arg0 domain.Translation) (domain.Translation, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Translate", arg0)
-	ret0, _ := ret[0].(entity.Translation)
+	ret0, _ := ret[0].(domain.Translation)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

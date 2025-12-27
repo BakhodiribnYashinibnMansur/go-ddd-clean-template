@@ -13,7 +13,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	entity "github.com/evrone/go-clean-template/internal/entity"
+	entity "github.com/evrone/go-clean-template/internal/domain"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -42,10 +42,10 @@ func (m *MockTranslation) EXPECT() *MockTranslationMockRecorder {
 }
 
 // History mocks base method.
-func (m *MockTranslation) History(arg0 context.Context) (entity.TranslationHistory, error) {
+func (m *MockTranslation) History(arg0 context.Context) (domain.TranslationHistory, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "History", arg0)
-	ret0, _ := ret[0].(entity.TranslationHistory)
+	ret0, _ := ret[0].(domain.TranslationHistory)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -57,10 +57,10 @@ func (mr *MockTranslationMockRecorder) History(arg0 any) *gomock.Call {
 }
 
 // Translate mocks base method.
-func (m *MockTranslation) Translate(arg0 context.Context, arg1 entity.Translation) (entity.Translation, error) {
+func (m *MockTranslation) Translate(arg0 context.Context, arg1 domain.Translation) (domain.Translation, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Translate", arg0, arg1)
-	ret0, _ := ret[0].(entity.Translation)
+	ret0, _ := ret[0].(domain.Translation)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

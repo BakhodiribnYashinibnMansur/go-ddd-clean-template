@@ -13,7 +13,8 @@ import (
 	// "github.com/evrone/go-clean-template/internal/controller/grpc"
 	natsrpc "github.com/evrone/go-clean-template/internal/controller/nats_rpc"
 	"github.com/evrone/go-clean-template/internal/controller/restapi"
-	"github.com/evrone/go-clean-template/internal/repo/persistent"
+	persistent_translation "github.com/evrone/go-clean-template/internal/repo/persistent/postgres/translation"
+	persistent_user "github.com/evrone/go-clean-template/internal/repo/persistent/postgres/user"
 	"github.com/evrone/go-clean-template/internal/repo/webapi"
 	"github.com/evrone/go-clean-template/internal/usecase/translation"
 	"github.com/evrone/go-clean-template/internal/usecase/user"
@@ -41,12 +42,12 @@ func Run(cfg *config.Config) {
 
 	// Use-Case
 	translationUseCase := translation.New(
-		persistent.NewTranslationRepo(pg),
+		persistent_translation.NewTranslationRepo(pg, l.GetZap()),
 		webapi.New(),
 	)
 
 	userUseCase := user.New(
-		persistent.NewUserRepo(pg),
+		persistent_user.NewUserRepo(pg, l.GetZap()),
 	)
 
 	// RabbitMQ RPC Server

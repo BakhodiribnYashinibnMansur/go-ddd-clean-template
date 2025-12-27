@@ -5,7 +5,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/evrone/go-clean-template/internal/entity"
+	"github.com/evrone/go-clean-template/internal/domain"
 	"github.com/google/uuid"
 )
 
@@ -14,25 +14,25 @@ import (
 type (
 	// Translation -.
 	Translation interface {
-		Translate(context.Context, entity.Translation) (entity.Translation, error)
-		History(context.Context) (entity.TranslationHistory, error)
+		Translate(context.Context, domain.Translation) (domain.Translation, error)
+		History(context.Context) (domain.TranslationHistory, error)
 	}
 
 	// User -.
 	User interface {
-		Create(context.Context, entity.User) error
-		GetByID(context.Context, int64) (entity.User, error)
-		GetByPhone(context.Context, string) (entity.User, error)
-		Update(context.Context, entity.User) error
+		Create(context.Context, domain.User) error
+		GetByID(context.Context, int64) (domain.User, error)
+		GetByPhone(context.Context, string) (domain.User, error)
+		Update(context.Context, domain.User) error
 		Delete(context.Context, int64) error
 	}
 
 	// Session -.
 	Session interface {
-		Create(ctx context.Context, s entity.Session, duration time.Duration) (entity.Session, error)
-		GetByID(ctx context.Context, id uuid.UUID) (entity.Session, error)
-		GetByUserID(ctx context.Context, turonID int64) ([]entity.Session, error)
-		GetOrCreateByDevice(ctx context.Context, turonID int64, deviceID uuid.UUID, s entity.Session, duration time.Duration) (entity.Session, error)
+		Create(ctx context.Context, s domain.Session, duration time.Duration) (domain.Session, error)
+		GetByID(ctx context.Context, id uuid.UUID) (domain.Session, error)
+		GetByUserID(ctx context.Context, turonID int64) ([]domain.Session, error)
+		GetOrCreateByDevice(ctx context.Context, turonID int64, deviceID uuid.UUID, s domain.Session, duration time.Duration) (domain.Session, error)
 		UpdateActivity(ctx context.Context, id uuid.UUID, fcmToken *string) error
 		Delete(ctx context.Context, id uuid.UUID) error
 		DeleteByUserID(ctx context.Context, turonID int64) error

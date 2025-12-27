@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/evrone/go-clean-template/internal/controller/restapi/v1/request"
-	"github.com/evrone/go-clean-template/internal/entity"
+	"github.com/evrone/go-clean-template/internal/domain"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
 )
@@ -15,7 +15,7 @@ import (
 // @Tags  	    translation
 // @Accept      json
 // @Produce     json
-// @Success     200 {object} entity.TranslationHistory
+// @Success     200 {object} domain.TranslationHistory
 // @Failure     500 {object} response.Error
 // @Router      /translation/history [get]
 func (r *V1) history(ctx *fiber.Ctx) error {
@@ -36,7 +36,7 @@ func (r *V1) history(ctx *fiber.Ctx) error {
 // @Accept      json
 // @Produce     json
 // @Param       request body request.Translate true "Set up translation"
-// @Success     200 {object} entity.Translation
+// @Success     200 {object} domain.Translation
 // @Failure     400 {object} response.Error
 // @Failure     500 {object} response.Error
 // @Router      /translation/do-translate [post]
@@ -57,7 +57,7 @@ func (r *V1) doTranslate(ctx *fiber.Ctx) error {
 
 	translation, err := r.t.Translate(
 		ctx.UserContext(),
-		entity.Translation{
+		domain.Translation{
 			Source:      body.Source,
 			Destination: body.Destination,
 			Original:    body.Original,

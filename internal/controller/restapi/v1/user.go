@@ -4,13 +4,13 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/evrone/go-clean-template/internal/entity"
+	"github.com/evrone/go-clean-template/internal/domain"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
 )
 
 func (r *V1) createUser(ctx *fiber.Ctx) error {
-	var body entity.User
+	var body domain.User
 
 	if err := ctx.BodyParser(&body); err != nil {
 		r.l.Errorw("restapi - v1 - createUser", zap.Error(err))
@@ -47,7 +47,7 @@ func (r *V1) updateUser(ctx *fiber.Ctx) error {
 		return errorResponse(ctx, http.StatusBadRequest, "invalid user id")
 	}
 
-	var body entity.User
+	var body domain.User
 	if err := ctx.BodyParser(&body); err != nil {
 		r.l.Errorw("restapi - v1 - updateUser", zap.Error(err))
 		return errorResponse(ctx, http.StatusBadRequest, "invalid request body")

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/evrone/go-clean-template/internal/entity"
+	"github.com/evrone/go-clean-template/internal/domain"
 	"github.com/evrone/go-clean-template/internal/repo"
 )
 
@@ -23,25 +23,25 @@ func New(r repo.TranslationRepo, w repo.TranslationWebAPI) *UseCase {
 }
 
 // History - getting translate history from store.
-func (uc *UseCase) History(ctx context.Context) (entity.TranslationHistory, error) {
+func (uc *UseCase) History(ctx context.Context) (domain.TranslationHistory, error) {
 	translations, err := uc.repo.GetHistory(ctx)
 	if err != nil {
-		return entity.TranslationHistory{}, fmt.Errorf("TranslationUseCase - History - s.repo.GetHistory: %w", err)
+		return domain.TranslationHistory{}, fmt.Errorf("TranslationUseCase - History - s.repo.GetHistory: %w", err)
 	}
 
-	return entity.TranslationHistory{History: translations}, nil
+	return domain.TranslationHistory{History: translations}, nil
 }
 
 // Translate -.
-func (uc *UseCase) Translate(ctx context.Context, t entity.Translation) (entity.Translation, error) {
+func (uc *UseCase) Translate(ctx context.Context, t domain.Translation) (domain.Translation, error) {
 	translation, err := uc.webAPI.Translate(t)
 	if err != nil {
-		return entity.Translation{}, fmt.Errorf("TranslationUseCase - Translate - s.webAPI.Translate: %w", err)
+		return domain.Translation{}, fmt.Errorf("TranslationUseCase - Translate - s.webAPI.Translate: %w", err)
 	}
 
 	err = uc.repo.Store(ctx, translation)
 	if err != nil {
-		return entity.Translation{}, fmt.Errorf("TranslationUseCase - Translate - s.repo.Store: %w", err)
+		return domain.Translation{}, fmt.Errorf("TranslationUseCase - Translate - s.repo.Store: %w", err)
 	}
 
 	return translation, nil

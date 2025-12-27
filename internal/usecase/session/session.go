@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/evrone/go-clean-template/internal/entity"
+	"github.com/evrone/go-clean-template/internal/domain"
 	"github.com/evrone/go-clean-template/internal/repo"
 	"github.com/google/uuid"
 )
@@ -23,36 +23,36 @@ func New(r repo.SessionRepo) *UseCase {
 }
 
 // Create creates a new session with the given duration.
-func (uc *UseCase) Create(ctx context.Context, s entity.Session, duration time.Duration) (entity.Session, error) {
+func (uc *UseCase) Create(ctx context.Context, s domain.Session, duration time.Duration) (domain.Session, error) {
 	s.ExpiresAt = time.Now().Add(duration)
 	return uc.repo.Create(ctx, s)
 }
 
 // GetByID gets a session by ID and validates it's not expired.
-func (uc *UseCase) GetByID(ctx context.Context, id uuid.UUID) (entity.Session, error) {
+func (uc *UseCase) GetByID(ctx context.Context, id uuid.UUID) (domain.Session, error) {
 	s, err := uc.repo.GetByID(ctx, id)
 	if err != nil {
-		return entity.Session{}, fmt.Errorf("SessionUseCase - GetByID - uc.repo.GetByID: %w", err)
+		return domain.Session{}, fmt.Errorf("SessionUseCase - GetByID - uc.repo.GetByID: %w", err)
 	}
 
 	if s.IsExpired() {
 		// Delete expired session
 		_ = uc.repo.Delete(ctx, id)
-		return entity.Session{}, fmt.Errorf("session expired")
+		return domain.Session{}, fmt.Errorf("session expired")
 	}
 
 	return s, nil
 }
 
 // GetByUserID gets all active sessions for a user.
-func (uc *UseCase) GetByUserID(ctx context.Context, turonID int64) ([]entity.Session, error) {
+func (uc *UseCase) GetByUserID(ctx context.Context, turonID int64) ([]domain.Session, error) {
 	sessions, err := uc.repo.GetByUserID(ctx, turonID)
 	if err != nil {
 		return nil, fmt.Errorf("SessionUseCase - GetByUserID - uc.repo.GetByUserID: %w", err)
 	}
 
 	// Filter out expired sessions
-	var activeSessions []entity.Session
+	var activeSessions []domain.Session
 	for _, s := range sessions {
 		if !s.IsExpired() {
 			activeSessions = append(activeSessions, s)
@@ -66,7 +66,7 @@ func (uc *UseCase) GetByUserID(ctx context.Context, turonID int64) ([]entity.Ses
 }
 
 // GetOrCreateByDevice gets existing session by device ID or creates a new one.
-func (uc *UseCase) GetOrCreateByDevice(ctx context.Context, turonID int64, deviceID uuid.UUID, s entity.Session, duration time.Duration) (entity.Session, error) {
+func (uc *UseCase) GetOrCreateByDevice(ctx context.Context, turonID int64, deviceID uuid.UUID, s domain.Session, duration time.Duration) (domain.Session, error) {
 	// Try to get existing session
 	existingSession, err := uc.repo.GetByDeviceID(ctx, turonID, deviceID)
 	if err == nil {

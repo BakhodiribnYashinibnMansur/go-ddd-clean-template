@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/evrone/go-clean-template/internal/entity"
+	"github.com/evrone/go-clean-template/internal/domain"
 	"github.com/evrone/go-clean-template/internal/usecase/translation"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -45,7 +45,7 @@ func TestHistory(t *testing.T) { //nolint:tparallel // data races here
 			mock: func() {
 				repo.EXPECT().GetHistory(context.Background()).Return(nil, nil)
 			},
-			res: entity.TranslationHistory{},
+			res: domain.TranslationHistory{},
 			err: nil,
 		},
 		{
@@ -53,7 +53,7 @@ func TestHistory(t *testing.T) { //nolint:tparallel // data races here
 			mock: func() {
 				repo.EXPECT().GetHistory(context.Background()).Return(nil, errInternalServErr)
 			},
-			res: entity.TranslationHistory{},
+			res: domain.TranslationHistory{},
 			err: errInternalServErr,
 		},
 	}
@@ -81,27 +81,27 @@ func TestTranslate(t *testing.T) { //nolint:tparallel // data races here
 		{
 			name: "empty result",
 			mock: func() {
-				webAPI.EXPECT().Translate(entity.Translation{}).Return(entity.Translation{}, nil)
-				repo.EXPECT().Store(context.Background(), entity.Translation{}).Return(nil)
+				webAPI.EXPECT().Translate(domain.Translation{}).Return(domain.Translation{}, nil)
+				repo.EXPECT().Store(context.Background(), domain.Translation{}).Return(nil)
 			},
-			res: entity.Translation{},
+			res: domain.Translation{},
 			err: nil,
 		},
 		{
 			name: "web API error",
 			mock: func() {
-				webAPI.EXPECT().Translate(entity.Translation{}).Return(entity.Translation{}, errInternalServErr)
+				webAPI.EXPECT().Translate(domain.Translation{}).Return(domain.Translation{}, errInternalServErr)
 			},
-			res: entity.Translation{},
+			res: domain.Translation{},
 			err: errInternalServErr,
 		},
 		{
 			name: "repo error",
 			mock: func() {
-				webAPI.EXPECT().Translate(entity.Translation{}).Return(entity.Translation{}, nil)
-				repo.EXPECT().Store(context.Background(), entity.Translation{}).Return(errInternalServErr)
+				webAPI.EXPECT().Translate(domain.Translation{}).Return(domain.Translation{}, nil)
+				repo.EXPECT().Store(context.Background(), domain.Translation{}).Return(errInternalServErr)
 			},
-			res: entity.Translation{},
+			res: domain.Translation{},
 			err: errInternalServErr,
 		},
 	}
@@ -112,7 +112,7 @@ func TestTranslate(t *testing.T) { //nolint:tparallel // data races here
 		t.Run(localTc.name, func(t *testing.T) {
 			localTc.mock()
 
-			res, err := translationUseCase.Translate(context.Background(), entity.Translation{})
+			res, err := translationUseCase.Translate(context.Background(), domain.Translation{})
 
 			require.EqualValues(t, res, localTc.res)
 			require.ErrorIs(t, err, localTc.err)
