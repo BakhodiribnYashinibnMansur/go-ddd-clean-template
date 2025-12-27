@@ -4,7 +4,7 @@ import (
 	v1 "github.com/evrone/go-clean-template/internal/controller/amqp_rpc/v1"
 	"github.com/evrone/go-clean-template/internal/usecase"
 	"github.com/evrone/go-clean-template/pkg/logger"
-	"github.com/evrone/go-clean-template/pkg/rabbitmq/rmq_rpc/server"
+	"github.com/evrone/go-clean-template/pkg/broker/rabbitmq/rmq_rpc/server"
 )
 
 // NewRouter -.

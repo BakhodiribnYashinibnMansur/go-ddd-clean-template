@@ -49,3 +49,18 @@ func NewConfig() (*Config, error) {
 
 	return instance, nil
 }
+
+// IsProd delegates to App.IsProd
+func (c *Config) IsProd() bool {
+	return c.App.IsProd()
+}
+
+// IsDev delegates to App.IsDev
+func (c *Config) IsDev() bool {
+	return c.App.IsDev()
+}
+
+// IsTest delegates to App.IsTest
+func (c *Config) IsTest() bool {
+	return c.App.IsTest()
+}

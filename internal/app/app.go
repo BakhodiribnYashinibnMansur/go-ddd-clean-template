@@ -18,12 +18,13 @@ import (
 	"github.com/evrone/go-clean-template/internal/usecase/translation"
 	"github.com/evrone/go-clean-template/internal/usecase/user"
 
-	// "github.com/evrone/go-clean-template/pkg/grpcserver"
-	"github.com/evrone/go-clean-template/pkg/httpserver"
+	// "github.com/evrone/go-clean-template/pkg/server/grpc"
+
+	natsRPCServer "github.com/evrone/go-clean-template/pkg/broker/nats/nats_rpc/server"
+	rmqRPCServer "github.com/evrone/go-clean-template/pkg/broker/rabbitmq/rmq_rpc/server"
+	"github.com/evrone/go-clean-template/pkg/db/postgres"
 	"github.com/evrone/go-clean-template/pkg/logger"
-	natsRPCServer "github.com/evrone/go-clean-template/pkg/nats/nats_rpc/server"
-	"github.com/evrone/go-clean-template/pkg/postgres"
-	rmqRPCServer "github.com/evrone/go-clean-template/pkg/rabbitmq/rmq_rpc/server"
+	httpserver "github.com/evrone/go-clean-template/pkg/server/http"
 	"go.uber.org/zap"
 )
 

@@ -1,5 +1,7 @@
 package config
 
+import "strings"
+
 // Connectivity groups communication protocols and brokers -.
 type Connectivity struct {
 	GRPC  GRPC  `envPrefix:"GRPC_"`
@@ -34,3 +36,14 @@ type (
 		GroupId string   `env:"GROUP_ID,required"`
 	}
 )
+
+// Addr returns the gRPC server address.
+func (g *GRPC) Addr() string {
+	if g.Port == "" {
+		return ":50051"
+	}
+	if strings.HasPrefix(g.Port, ":") {
+		return g.Port
+	}
+	return ":" + g.Port
+}
