@@ -3,34 +3,36 @@ package session
 import (
 	"net/http"
 
+	"github.com/evrone/go-clean-template/internal/controller/restapi/response"
+	"github.com/evrone/go-clean-template/internal/controller/restapi/util"
+	"github.com/evrone/go-clean-template/internal/domain"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
-	"go.uber.org/zap"
 )
 
+// UpdateActivity godoc
+// @Summary     Update session activity
+// @Description Update last activity timestamp
+// @Tags        sessions
+// @Accept      json
+// @Produce     json
+// @Param       id      path string true "Session UUID"
+// @Success     200 {object} response.SuccessResponse
+// @Failure     400 {object} response.ErrorResponse
+// @Failure     500 {object} response.ErrorResponse
+// @Router      /sessions/{id}/activity [put]
 func (c *Controller) UpdateActivity(ctx *gin.Context) {
-	idStr := ctx.Param("id")
-	id, err := uuid.Parse(idStr)
+	id, err := util.GetUUIDParam(ctx, "id")
 	if err != nil {
-		errorResponse(ctx, http.StatusBadRequest, "invalid session id")
+		util.LogError(c.l, err, "http - v1 - session - updateActivity - id")
+		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid session id", nil, false)
 		return
 	}
 
-	type updateRequest struct {
-		FCMToken *string `json:"fcm_token"`
-	}
-	var body updateRequest
-	if err := ctx.ShouldBindJSON(&body); err != nil {
-		c.l.Errorw("restapi - v1 - session - updateActivity", zap.Error(err))
-		errorResponse(ctx, http.StatusBadRequest, "invalid request body")
-		return
-	}
-
-	err = c.s.User.Session.UpdateActivity(ctx.Request.Context(), id)
+	filter := &domain.SessionFilter{ID: id}
+	err = c.s.User.Session.UpdateActivity(ctx.Request.Context(), filter)
 	if err != nil {
-		c.l.Errorw("restapi - v1 - session - updateActivity", zap.Error(err))
-		errorResponse(ctx, http.StatusInternalServerError, "service problems")
+		response.ControllerResponse(ctx, http.StatusInternalServerError, err, nil, false)
 		return
 	}
-	ctx.Status(http.StatusOK)
+	response.ControllerResponse(ctx, http.StatusOK, nil, nil, true)
 }

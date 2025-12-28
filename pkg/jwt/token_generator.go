@@ -6,7 +6,6 @@ import (
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/evrone/go-clean-template/consts"
-	"github.com/google/uuid"
 )
 
 // Tokens represents a pair of access and refresh tokens.
@@ -41,7 +40,6 @@ func GenerateToken(p TokenParams) (string, error) {
 		consts.ClaimType:      p.Type,
 		consts.ClaimExpiresAt: now.Add(p.TTL).Unix(),
 		consts.ClaimIssuedAt:  now.Unix(),
-		consts.ClaimJWTID:     uuid.New().String(),
 	}
 
 	if p.CompanyID != "" {

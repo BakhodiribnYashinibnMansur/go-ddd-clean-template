@@ -34,7 +34,7 @@ func Run(cfg *config.Config) {
 	repositories := repo.New(pg, l)
 
 	// Use Case
-	useCases := usecase.NewUseCase(repositories, l)
+	useCases := usecase.NewUseCase(repositories, l, cfg)
 
 	// HTTP Server logic
 	gin.ForceConsoleColor()

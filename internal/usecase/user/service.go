@@ -1,6 +1,7 @@
 package user
 
 import (
+	"github.com/evrone/go-clean-template/config"
 	"github.com/evrone/go-clean-template/internal/repo"
 	"github.com/evrone/go-clean-template/internal/usecase/user/client"
 	"github.com/evrone/go-clean-template/internal/usecase/user/session"
@@ -12,9 +13,9 @@ type User struct {
 	Session session.UseCaseI
 }
 
-func New(r *repo.Repo, logger logger.Log) *User {
+func New(r *repo.Repo, logger logger.Log, cfg *config.Config) *User {
 	return &User{
-		Client:  client.New(r.Persistent, logger),
+		Client:  client.New(r.Persistent, logger, cfg),
 		Session: session.New(r.Persistent, logger),
 	}
 }

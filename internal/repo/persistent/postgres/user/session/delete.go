@@ -2,31 +2,31 @@ package session
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/Masterminds/squirrel"
-	"github.com/google/uuid"
-	"go.uber.org/zap"
+	"github.com/evrone/go-clean-template/internal/domain"
+	apperrors "github.com/evrone/go-clean-template/pkg/errors"
 )
 
-func (r *Repo) Delete(ctx context.Context, id uuid.UUID) error {
-	r.logger.Info("SessionRepo.Delete started", zap.String("id", id.String()))
-
+func (r *Repo) Delete(ctx context.Context, filter *domain.SessionFilter) error {
 	sql, args, err := r.builder.
 		Delete("session").
-		Where(squirrel.Eq{"id": id}).
+		Where(squirrel.Eq{"id": filter.ID}).
 		ToSql()
 	if err != nil {
-		r.logger.Error("SessionRepo.Delete - r.builder", zap.Error(err))
-		return fmt.Errorf("SessionRepo - Delete - r.builder: %w", err)
+		return apperrors.AutoSource(
+			apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase,
+				"failed to build delete SQL query")).
+			WithField("id", filter.ID.String()).
+			WithDetails("Error occurred while building DELETE query for session")
 	}
 
 	_, err = r.pool.Exec(ctx, sql, args...)
 	if err != nil {
-		r.logger.Error("SessionRepo.Delete - r.pool.Exec", zap.Error(err))
-		return fmt.Errorf("SessionRepo - Delete - r.pool.Exec: %w", err)
+		return apperrors.HandlePgError(ctx, err, "session", map[string]any{
+			"id": filter.ID.String(),
+		})
 	}
 
-	r.logger.Info("SessionRepo.Delete finished")
 	return nil
 }

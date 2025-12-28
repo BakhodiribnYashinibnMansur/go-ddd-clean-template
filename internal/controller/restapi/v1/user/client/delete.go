@@ -2,24 +2,36 @@ package client
 
 import (
 	"net/http"
-	"strconv"
 
-	"github.com/evrone/go-clean-template/internal/controller/restapi/v1/response"
+	"github.com/evrone/go-clean-template/internal/controller/restapi/response"
+	"github.com/evrone/go-clean-template/internal/controller/restapi/util"
+	uc_client "github.com/evrone/go-clean-template/internal/usecase/user/client"
 	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
 )
 
+// Delete godoc
+// @Summary     Delete user
+// @Description Delete user by ID (soft delete)
+// @Tags        users
+// @Accept      json
+// @Produce     json
+// @Param       id  path int true "User ID"
+// @Success     200 {object} response.SuccessResponse
+// @Failure     400 {object} response.ErrorResponse
+// @Failure     404 {object} response.ErrorResponse
+// @Failure     500 {object} response.ErrorResponse
+// @Router      /users/{user_id} [delete]
 func (c *Controller) Delete(ctx *gin.Context) {
-	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	id, err := util.GetInt64Param(ctx, userID)
 	if err != nil {
+		util.LogError(c.l, err, "http - v1 - client - delete - id")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid user id", nil, false)
 		return
 	}
 
-	err = c.u.User.Client.Delete(ctx.Request.Context(), id)
+	err = c.u.User.Client.Delete(ctx.Request.Context(), uc_client.DeleteInput{ID: id})
 	if err != nil {
-		c.l.Errorw("restapi - v1 - user - delete", zap.Error(err))
-		response.ControllerResponse(ctx, http.StatusInternalServerError, "service problems", nil, false)
+		response.ControllerResponse(ctx, http.StatusInternalServerError, err, nil, false)
 		return
 	}
 

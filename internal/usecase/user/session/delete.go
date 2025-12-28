@@ -3,10 +3,10 @@ package session
 import (
 	"context"
 
-	"github.com/google/uuid"
+	"github.com/evrone/go-clean-template/internal/domain"
 )
 
 // Delete terminates a session.
-func (uc *UseCase) Delete(ctx context.Context, id uuid.UUID) error {
-	return uc.repo.User.SessionRepo.Delete(ctx, id)
+func (uc *UseCase) Delete(ctx context.Context, filter *domain.SessionFilter) error {
+	return uc.repo.User.SessionRepo.Delete(ctx, filter)
 }

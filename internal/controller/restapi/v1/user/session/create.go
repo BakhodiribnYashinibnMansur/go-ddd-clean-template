@@ -2,36 +2,38 @@ package session
 
 import (
 	"net/http"
-	"time"
 
-	"github.com/evrone/go-clean-template/internal/controller/restapi/v1/response"
+	"github.com/evrone/go-clean-template/internal/controller/restapi/response"
+	"github.com/evrone/go-clean-template/internal/controller/restapi/util"
 	"github.com/evrone/go-clean-template/internal/domain"
 	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
 )
 
+// Create godoc
+// @Summary     Create a new session
+// @Description Create a session for user
+// @Tags        sessions
+// @Accept      json
+// @Produce     json
+// @Param       request body domain.Session true "Session creation query"
+// @Success     201 {object} response.SuccessResponse{data=domain.Session}
+// @Failure     400 {object} response.ErrorResponse
+// @Failure     500 {object} response.ErrorResponse
+// @Router      /sessions [post]
 func (c *Controller) Create(ctx *gin.Context) {
-	var body domain.Session
-
-	if err := ctx.ShouldBindJSON(&body); err != nil {
-		c.l.Errorw("restapi - v1 - session - create", zap.Error(err))
-		errorResponse(ctx, http.StatusBadRequest, "invalid request body")
+	var req domain.Session
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		util.LogError(c.l, err, "http - v1 - session - create - bind")
+		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid request body", nil, false)
 		return
 	}
 
-	// Default duration could also be part of config or request
-	duration := 24 * time.Hour
-
-	createdSession, err := c.s.User.Session.Create(ctx.Request.Context(), body, duration)
+	// Using pointer for session as requested
+	createSession, err := c.s.User.Session.Create(ctx.Request.Context(), &req)
 	if err != nil {
-		c.l.Errorw("restapi - v1 - session - create", zap.Error(err))
-		errorResponse(ctx, http.StatusInternalServerError, "service problems")
+		response.ControllerResponse(ctx, http.StatusInternalServerError, err, nil, false)
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, createdSession)
-}
-
-func errorResponse(c *gin.Context, code int, msg string) {
-	c.AbortWithStatusJSON(code, response.Error{Error: msg})
+	response.ControllerResponse(ctx, http.StatusCreated, createSession, nil, true)
 }

@@ -1,33 +1,33 @@
 package consts
 
 const (
-	CtxUserId                  = "user_id"
-	CtxUserID                  = "id"
-	CtxAbonentId               = "abonent_id"
-	CtxCompanyID               = "company_id"
-	CtxRoleID                  = "role_id"
-	CtxStaffID                 = "staff_id"
-	CtxSessionID               = "session_id"
-	CtxRoleTitle               = "role_title"
-	CtxExpiredDate             = "expired_date"
-	CtxIsAbonent               = "is_abonent"
-	CtxIsCorp                  = "is_corp"
-	AuthorizationHeader        = "Authorization"
-	BasicToken                 = "Basic"
-	BearerToken                = "Bearer"
+	CtxUserID           string = "user_id"
+	CtxCompanyID        string = "company_id"
+	CtxRoleID           string = "role_id"
+	CtxRoleTitle        string = "role_title"
+	CtxDeviceID         string = "device_id"
+	CtxSessionID        string = "session_id"
+	CtxExpiredDate      string = "expired_date"
+	CtxIsAbonent        string = "is_abonent"
+	CtxIsCorp           string = "is_corp"
+	CtxStaffID          string = "staff_id"
+	CtxTuronId          string = "turon_id"
+	AuthorizationHeader string = "Authorization"
+	BasicToken          string = "Basic"
+	BearerToken         string = "Bearer"
 	TokenAccessType     string = "access"
 	TokenRefreshType    string = "refresh"
 
 	// Claims
-	ClaimIssuer          = "iss" // Issuer
-	ClaimSubject         = "sub" // Subject
-	ClaimSessionID       = "sid" // Session ID
-	ClaimCompanyID       = "cid" // Company ID
-	ClaimAudience        = "aud" // Audience
-	ClaimScope           = "scp" // Scope
-	ClaimAuthorizedParty = "azp" // Authorized Party
-	ClaimType            = "typ" // Type
-	ClaimExpiresAt       = "exp" // Expires At
-	ClaimIssuedAt        = "iat" // Issued At
-	ClaimJWTID           = "jti" // JWT ID
+	ClaimIssuer          string = "iss" // Issuer
+	ClaimSubject         string = "sub" // Subject
+	ClaimSessionID       string = "sid" // Session ID
+	ClaimCompanyID       string = "cid" // Company ID
+	ClaimAudience        string = "aud" // Audience
+	ClaimScope           string = "scp" // Scope
+	ClaimAuthorizedParty string = "azp" // Authorized Party
+	ClaimType            string = "typ" // Type
+	ClaimExpiresAt       string = "exp" // Expires At
+	ClaimIssuedAt        string = "iat" // Issued At
+	ClaimJWTID           string = "jti" // JWT ID
 )

@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/google/uuid"
+	"github.com/evrone/go-clean-template/internal/domain"
 )
 
 // UpdateActivity updates session activity using standard Update repo method.
-func (uc *UseCase) UpdateActivity(ctx context.Context, id uuid.UUID) error {
-	s, err := uc.repo.User.SessionRepo.GetByID(ctx, id)
+func (uc *UseCase) UpdateActivity(ctx context.Context, filter *domain.SessionFilter) error {
+	s, err := uc.repo.User.SessionRepo.GetByID(ctx, filter)
 	if err != nil {
 		return fmt.Errorf("SessionUseCase - UpdateActivity - uc.repo.User.SessionRepo.GetByID: %w", err)
 	}

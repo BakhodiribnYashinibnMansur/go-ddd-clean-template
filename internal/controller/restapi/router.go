@@ -39,7 +39,7 @@ func NewRouter(handler *gin.Engine, cfg *config.Config, uc *usecase.UseCase, l l
 	setupHealthCheck(handler)
 
 	// Controller
-	c := NewController(uc, l)
+	c := NewController(uc, cfg, l)
 
 	// Middleware
 	am := middleware.NewAuthMiddleware(uc, cfg, l)
@@ -48,6 +48,7 @@ func NewRouter(handler *gin.Engine, cfg *config.Config, uc *usecase.UseCase, l l
 	h := handler.Group("/v1")
 	{
 		user.UserRoute(h, c.User, am.AuthClientAccess)
+		h.GET("/system/errors", c.System.GetErrors)
 	}
 }
 

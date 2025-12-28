@@ -3,25 +3,37 @@ package session
 import (
 	"net/http"
 
+	"github.com/evrone/go-clean-template/internal/controller/restapi/response"
+	"github.com/evrone/go-clean-template/internal/controller/restapi/util"
+	"github.com/evrone/go-clean-template/internal/domain"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
-	"go.uber.org/zap"
 )
 
-func (c *Controller) Get(ctx *gin.Context) {
-	idStr := ctx.Param("id")
-	id, err := uuid.Parse(idStr)
+// Get godoc
+// @Summary     Get session by ID
+// @Description Retrieve a session details
+// @Tags        sessions
+// @Accept      json
+// @Produce     json
+// @Param       id  path string true "Session UUID"
+// @Success     200 {object} response.SuccessResponse{data=domain.Session}
+// @Failure     400 {object} response.ErrorResponse
+// @Failure     500 {object} response.ErrorResponse
+// @Router      /sessions/{id} [get]
+func (c *Controller) Session(ctx *gin.Context) {
+	id, err := util.GetUUIDParam(ctx, "id")
 	if err != nil {
-		errorResponse(ctx, http.StatusBadRequest, "invalid session id")
+		util.LogError(c.l, err, "http - v1 - session - get - id")
+		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid session id", nil, false)
 		return
 	}
 
-	session, err := c.s.User.Session.GetByID(ctx.Request.Context(), id)
+	filter := &domain.SessionFilter{ID: id}
+	session, err := c.s.User.Session.GetByID(ctx.Request.Context(), filter)
 	if err != nil {
-		c.l.Errorw("restapi - v1 - session - get", zap.Error(err))
-		errorResponse(ctx, http.StatusInternalServerError, "service problems")
+		response.ControllerResponse(ctx, http.StatusInternalServerError, err, nil, false)
 		return
 	}
 
-	ctx.JSON(http.StatusOK, session)
+	response.ControllerResponse(ctx, http.StatusOK, session, nil, true)
 }

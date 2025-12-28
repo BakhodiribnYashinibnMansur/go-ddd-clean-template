@@ -2,16 +2,14 @@ package session
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/evrone/go-clean-template/internal/domain"
-	"go.uber.org/zap"
+	apperrors "github.com/evrone/go-clean-template/pkg/errors"
+	"github.com/google/uuid"
 )
 
-func (r *Repo) Create(ctx context.Context, s domain.Session) error {
-	r.logger.Info("SessionRepo.Create started", zap.String("device_id", s.DeviceID.String()))
-
+func (r *Repo) Create(ctx context.Context, s *domain.Session) error {
 	query := r.builder.Insert("session").
 		Columns(
 			"device_id",
@@ -44,7 +42,7 @@ func (r *Repo) Create(ctx context.Context, s domain.Session) error {
 			time.Now(),
 		)
 
-	if s.ID.String() != "00000000-0000-0000-0000-000000000000" {
+	if s.ID != uuid.Nil {
 		query = r.builder.Insert("session").
 			Columns(
 				"id",
@@ -82,16 +80,20 @@ func (r *Repo) Create(ctx context.Context, s domain.Session) error {
 
 	sql, args, err := query.ToSql()
 	if err != nil {
-		r.logger.Error("SessionRepo.Create - r.builder", zap.Error(err))
-		return fmt.Errorf("SessionRepo - Create - r.builder: %w", err)
+		return apperrors.AutoSource(
+			apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase,
+				"failed to build insert SQL query")).
+			WithField("device_id", s.DeviceID.String()).
+			WithDetails("Error occurred while building INSERT query for session")
 	}
 
 	_, err = r.pool.Exec(ctx, sql, args...)
 	if err != nil {
-		r.logger.Error("SessionRepo.Create - r.pool.Exec", zap.Error(err))
-		return fmt.Errorf("SessionRepo - Create - r.pool.Exec: %w", err)
+		return apperrors.HandlePgError(ctx, err, "session", map[string]any{
+			"device_id": s.DeviceID.String(),
+			"user_id":   s.UserID,
+		})
 	}
 
-	r.logger.Info("SessionRepo.Create finished")
 	return nil
 }

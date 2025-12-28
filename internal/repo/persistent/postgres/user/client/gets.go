@@ -2,16 +2,13 @@ package client
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/evrone/go-clean-template/internal/domain"
-	"go.uber.org/zap"
+	apperrors "github.com/evrone/go-clean-template/pkg/errors"
 )
 
-func (r *Repo) Gets(ctx context.Context, filter UserListFilter) ([]domain.User, int, error) {
-	r.logger.Info("UserRepo.Gets started")
-
+func (r *Repo) Users(ctx context.Context, filter *domain.UsersFilter) ([]*domain.User, int, error) {
 	// Base query
 	qb := r.builder.
 		Select("id, username, phone, password_hash, salt, created_at, updated_at, deleted_at, last_seen").
@@ -38,15 +35,18 @@ func (r *Repo) Gets(ctx context.Context, filter UserListFilter) ([]domain.User, 
 
 	countSql, countArgs, err := countQb.ToSql()
 	if err != nil {
-		r.logger.Error("UserRepo.Gets - count r.builder", zap.Error(err))
-		return nil, 0, fmt.Errorf("UserRepo - Gets - count r.builder: %w", err)
+		return nil, 0, apperrors.AutoSource(
+			apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase,
+				"failed to build count SQL query")).
+			WithDetails("Error occurred while building COUNT query for users")
 	}
 
 	var count int
 	err = r.pool.QueryRow(ctx, countSql, countArgs...).Scan(&count)
 	if err != nil {
-		r.logger.Error("UserRepo.Gets - r.pool.QueryRow count", zap.Error(err))
-		return nil, 0, fmt.Errorf("UserRepo - Gets - r.pool.QueryRow count: %w", err)
+		return nil, 0, apperrors.HandlePgError(ctx, err, "users", map[string]any{
+			"operation": "count",
+		})
 	}
 
 	// Apply pagination
@@ -59,30 +59,35 @@ func (r *Repo) Gets(ctx context.Context, filter UserListFilter) ([]domain.User, 
 
 	sql, args, err := qb.ToSql()
 	if err != nil {
-		r.logger.Error("UserRepo.Gets - r.builder", zap.Error(err))
-		return nil, 0, fmt.Errorf("UserRepo - Gets - r.builder: %w", err)
+		return nil, 0, apperrors.AutoSource(
+			apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase,
+				"failed to build select SQL query")).
+			WithDetails("Error occurred while building SELECT query for users")
 	}
 
 	rows, err := r.pool.Query(ctx, sql, args...)
 	if err != nil {
-		r.logger.Error("UserRepo.Gets - r.pool.Query", zap.Error(err))
-		return nil, 0, fmt.Errorf("UserRepo - Gets - r.pool.Query: %w", err)
+		return nil, 0, apperrors.HandlePgError(ctx, err, "users", map[string]any{
+			"operation": "get_users",
+			"limit":     filter.Limit,
+			"offset":    filter.Offset,
+		})
 	}
 	defer rows.Close()
 
-	var users []domain.User
+	var users []*domain.User
 	for rows.Next() {
 		var u domain.User
 		err = rows.Scan(
 			&u.ID, &u.Username, &u.Phone, &u.PasswordHash, &u.Salt, &u.CreatedAt, &u.UpdatedAt, &u.DeletedAt, &u.LastSeen,
 		)
 		if err != nil {
-			r.logger.Error("UserRepo.Gets - rows.Scan", zap.Error(err))
-			return nil, 0, fmt.Errorf("UserRepo - Gets - rows.Scan: %w", err)
+			return nil, 0, apperrors.HandlePgError(ctx, err, "users", map[string]any{
+				"operation": "scan_row",
+			})
 		}
-		users = append(users, u)
+		users = append(users, &u)
 	}
 
-	r.logger.Info("UserRepo.Gets finished", zap.Int("count", count), zap.Int("returned", len(users)))
 	return users, count, nil
 }

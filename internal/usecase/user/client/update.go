@@ -2,15 +2,18 @@ package client
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/evrone/go-clean-template/internal/domain"
+	apperrors "github.com/evrone/go-clean-template/pkg/errors"
 )
 
-func (uc *UseCase) Update(ctx context.Context, u domain.User) error {
-	userData, err := uc.repo.User.Client.GetByID(ctx, u.ID)
+func (uc *UseCase) Update(ctx context.Context, in UpdateInput) error {
+	u := in.User
+	userData, err := uc.repo.User.Client.User(ctx, u.ID)
 	if err != nil {
-		return fmt.Errorf("UserUseCase - Update - uc.repo.User.Client.GetByID: %w", err)
+		return apperrors.AutoSource(
+			apperrors.MapRepoToServiceError(ctx, err)).
+			WithField("operation", "get_user_for_update").
+			WithField("user_id", u.ID)
 	}
 
 	// Update fields if provided
@@ -30,5 +33,13 @@ func (uc *UseCase) Update(ctx context.Context, u domain.User) error {
 		userData.LastSeen = u.LastSeen
 	}
 
-	return uc.repo.User.Client.Update(ctx, userData)
+	err = uc.repo.User.Client.Update(ctx, userData)
+	if err != nil {
+		return apperrors.AutoSource(
+			apperrors.MapRepoToServiceError(ctx, err)).
+			WithField("operation", "update_user").
+			WithField("user_id", u.ID)
+	}
+
+	return nil
 }

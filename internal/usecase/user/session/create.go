@@ -10,10 +10,10 @@ import (
 )
 
 // Create creates a new session.
-func (uc *UseCase) Create(ctx context.Context, s domain.Session, duration time.Duration) (domain.Session, error) {
-	if s.ID == uuid.Nil {
-		s.ID = uuid.New()
-	}
+func (uc *UseCase) Create(ctx context.Context, s *domain.Session) (*domain.Session, error) {
+	s.ID = uuid.New()
+
+	duration := 24 * time.Hour
 	s.ExpiresAt = time.Now().Add(duration)
 	s.CreatedAt = time.Now()
 	s.UpdatedAt = time.Now()
@@ -22,7 +22,7 @@ func (uc *UseCase) Create(ctx context.Context, s domain.Session, duration time.D
 
 	err := uc.repo.User.SessionRepo.Create(ctx, s)
 	if err != nil {
-		return domain.Session{}, fmt.Errorf("SessionUseCase - Create - uc.repo.User.SessionRepo.Create: %w", err)
+		return nil, fmt.Errorf("SessionUseCase - Create - uc.repo.User.SessionRepo.Create: %w", err)
 	}
 	return s, nil
 }

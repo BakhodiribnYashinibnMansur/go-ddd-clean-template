@@ -19,7 +19,7 @@ const (
 )
 
 // CallHandler -.
-type CallHandler func(kafka.Message) (interface{}, error)
+type CallHandler func(kafka.Message) (any, error)
 
 // Server -.
 type Server struct {

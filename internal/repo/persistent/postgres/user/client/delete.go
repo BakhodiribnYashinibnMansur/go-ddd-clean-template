@@ -2,15 +2,12 @@ package client
 
 import (
 	"context"
-	"fmt"
 	"time"
 
-	"go.uber.org/zap"
+	apperrors "github.com/evrone/go-clean-template/pkg/errors"
 )
 
 func (r *Repo) Delete(ctx context.Context, id int64) error {
-	r.logger.Info("UserRepo.Delete started", zap.Int64("id", id))
-
 	sql, args, err := r.builder.
 		Update("users").
 		Set("deleted_at", time.Now().Unix()).
@@ -18,16 +15,20 @@ func (r *Repo) Delete(ctx context.Context, id int64) error {
 		Where("id = ? AND deleted_at = 0", id).
 		ToSql()
 	if err != nil {
-		r.logger.Error("UserRepo.Delete - r.builder", zap.Error(err))
-		return fmt.Errorf("UserRepo - Delete - r.builder: %w", err)
+		return apperrors.AutoSource(
+			apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase,
+				"failed to build delete SQL query")).
+			WithField("user_id", id).
+			WithDetails("Error occurred while building soft DELETE query")
 	}
 
 	_, err = r.pool.Exec(ctx, sql, args...)
 	if err != nil {
-		r.logger.Error("UserRepo.Delete - r.pool.Exec", zap.Error(err))
-		return fmt.Errorf("UserRepo - Delete - r.pool.Exec: %w", err)
+		// Use centralized PostgreSQL error handler!
+		return apperrors.HandlePgError(ctx, err, "users", map[string]any{
+			"user_id": id,
+		})
 	}
 
-	r.logger.Info("UserRepo.Delete finished")
 	return nil
 }

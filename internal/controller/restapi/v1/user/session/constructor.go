@@ -8,9 +8,12 @@ import (
 
 type ControllerI interface {
 	Create(ctx *gin.Context)
-	Get(ctx *gin.Context)
+	Session(ctx *gin.Context)
+	Sessions(ctx *gin.Context)
 	UpdateActivity(ctx *gin.Context)
 	Delete(ctx *gin.Context)
+	RevokeAll(ctx *gin.Context)
+	RevokeByDevice(ctx *gin.Context)
 }
 
 type Controller struct {

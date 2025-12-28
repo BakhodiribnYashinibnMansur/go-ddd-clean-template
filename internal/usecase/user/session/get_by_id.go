@@ -5,19 +5,18 @@ import (
 	"fmt"
 
 	"github.com/evrone/go-clean-template/internal/domain"
-	"github.com/google/uuid"
 )
 
 // GetByID gets a session by ID.
-func (uc *UseCase) GetByID(ctx context.Context, id uuid.UUID) (domain.Session, error) {
-	s, err := uc.repo.User.SessionRepo.GetByID(ctx, id)
+func (uc *UseCase) GetByID(ctx context.Context, filter *domain.SessionFilter) (*domain.Session, error) {
+	s, err := uc.repo.User.SessionRepo.GetByID(ctx, filter)
 	if err != nil {
-		return domain.Session{}, fmt.Errorf("SessionUseCase - GetByID - uc.repo.User.SessionRepo.GetByID: %w", err)
+		return nil, fmt.Errorf("SessionUseCase - GetByID - uc.repo.User.SessionRepo.GetByID: %w", err)
 	}
 
 	if s.IsExpired() {
-		_ = uc.repo.User.SessionRepo.Delete(ctx, id)
-		return domain.Session{}, fmt.Errorf("session expired")
+		_ = uc.repo.User.SessionRepo.Delete(ctx, filter)
+		return nil, fmt.Errorf("session expired")
 	}
 
 	return s, nil

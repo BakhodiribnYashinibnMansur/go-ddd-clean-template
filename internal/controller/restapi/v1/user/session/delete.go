@@ -3,25 +3,37 @@ package session
 import (
 	"net/http"
 
+	"github.com/evrone/go-clean-template/internal/controller/restapi/response"
+	"github.com/evrone/go-clean-template/internal/controller/restapi/util"
+	"github.com/evrone/go-clean-template/internal/domain"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
-	"go.uber.org/zap"
 )
 
+// Delete godoc
+// @Summary     Delete/Revoke session
+// @Description Revoke a session by ID
+// @Tags        sessions
+// @Accept      json
+// @Produce     json
+// @Param       id  path string true "Session UUID"
+// @Success     200 {object} response.SuccessResponse
+// @Failure     400 {object} response.ErrorResponse
+// @Failure     500 {object} response.ErrorResponse
+// @Router      /sessions/{id} [delete]
 func (c *Controller) Delete(ctx *gin.Context) {
-	idStr := ctx.Param("id")
-	id, err := uuid.Parse(idStr)
+	id, err := util.GetUUIDParam(ctx, "id")
 	if err != nil {
-		errorResponse(ctx, http.StatusBadRequest, "invalid session id")
+		util.LogError(c.l, err, "http - v1 - session - delete - id")
+		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid session id", nil, false)
 		return
 	}
 
-	err = c.s.User.Session.Delete(ctx.Request.Context(), id)
+	filter := &domain.SessionFilter{ID: id}
+	err = c.s.User.Session.Delete(ctx.Request.Context(), filter)
 	if err != nil {
-		c.l.Errorw("restapi - v1 - session - delete", zap.Error(err))
-		errorResponse(ctx, http.StatusInternalServerError, "service problems")
+		response.ControllerResponse(ctx, http.StatusInternalServerError, err, nil, false)
 		return
 	}
 
-	ctx.Status(http.StatusNoContent)
+	response.ControllerResponse(ctx, http.StatusOK, nil, nil, true)
 }

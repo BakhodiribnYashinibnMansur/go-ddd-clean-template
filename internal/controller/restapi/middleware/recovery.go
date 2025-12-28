@@ -10,7 +10,7 @@ import (
 
 // Recovery -.
 func Recovery(l logger.Log) gin.HandlerFunc {
-	return gin.CustomRecovery(func(c *gin.Context, recovered interface{}) {
+	return gin.CustomRecovery(func(c *gin.Context, recovered any) {
 		l.Errorw("panic recovered",
 			"error", recovered,
 			"stack", string(debug.Stack()),

@@ -4,6 +4,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const (
+	userID = "user_id"
+)
+
 func Route(api *gin.RouterGroup, c ControllerI) {
 	user := api.Group("/users")
 	{
@@ -11,8 +15,9 @@ func Route(api *gin.RouterGroup, c ControllerI) {
 		user.POST("/sign-up", c.SignUp)
 		user.POST("/sign-out", c.SignOut)
 		user.POST("/", c.Create)
-		user.GET("/:id", c.Get)
-		user.PATCH("/:id", c.Update)
-		user.DELETE("/:id", c.Delete)
+		user.GET("/", c.Users)
+		user.GET("/:"+userID, c.User)
+		user.PATCH("/:"+userID, c.Update)
+		user.DELETE("/:"+userID, c.Delete)
 	}
 }

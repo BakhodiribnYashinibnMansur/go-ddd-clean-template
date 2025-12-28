@@ -2,16 +2,14 @@ package client
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/evrone/go-clean-template/internal/domain"
-	"go.uber.org/zap"
+	apperrors "github.com/evrone/go-clean-template/pkg/errors"
+	"github.com/jackc/pgx/v5"
 )
 
-func (r *Repo) Get(ctx context.Context, filter UserFilter) (domain.User, error) {
-	r.logger.Info("UserRepo.Get started")
-
+func (r *Repo) Get(ctx context.Context, filter *domain.UserFilter) (*domain.User, error) {
 	qb := r.builder.
 		Select("id, username, phone, password_hash, salt, created_at, updated_at, deleted_at, last_seen").
 		From("users").
@@ -27,8 +25,11 @@ func (r *Repo) Get(ctx context.Context, filter UserFilter) (domain.User, error) 
 
 	sql, args, err := qb.ToSql()
 	if err != nil {
-		r.logger.Error("UserRepo.Get - r.builder", zap.Error(err))
-		return domain.User{}, fmt.Errorf("UserRepo - Get - r.builder: %w", err)
+		return nil, apperrors.AutoSource(
+			apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase,
+				"failed to build SQL query")).
+			WithField("operation", "build_query").
+			WithDetails("Error occurred while building SQL query with squirrel")
 	}
 
 	var u domain.User
@@ -36,14 +37,27 @@ func (r *Repo) Get(ctx context.Context, filter UserFilter) (domain.User, error) 
 		&u.ID, &u.Username, &u.Phone, &u.PasswordHash, &u.Salt, &u.CreatedAt, &u.UpdatedAt, &u.DeletedAt, &u.LastSeen,
 	)
 	if err != nil {
-		r.logger.Error("UserRepo.Get - r.psql.Pool.QueryRow", zap.Error(err))
-		return domain.User{}, fmt.Errorf("UserRepo - Get - r.psql.Pool.QueryRow: %w", err)
+		if err == pgx.ErrNoRows {
+			return nil, apperrors.AutoSource(
+				apperrors.NewRepoError(ctx, apperrors.ErrRepoNotFound,
+					"user not found in database")).
+				WithField("table", "users").
+				WithField("filter_id", filter.ID).
+				WithField("filter_phone", filter.Phone).
+				WithDetails("No user record exists with the given filter criteria")
+		}
+
+		return nil, apperrors.AutoSource(
+			apperrors.WrapRepoError(ctx, err, apperrors.ErrRepoDatabase,
+				"failed to query user from database")).
+			WithField("table", "users").
+			WithField("filter_id", filter.ID).
+			WithField("filter_phone", filter.Phone)
 	}
 
-	username := ""
-	if u.Username != nil {
-		username = *u.Username
-	}
-	r.logger.Info("UserRepo.Get finished", zap.String("username", username))
-	return u, nil
+	return &u, nil
+}
+
+func (r *Repo) User(ctx context.Context, id int64) (*domain.User, error) {
+	return r.Get(ctx, &domain.UserFilter{ID: &id})
 }

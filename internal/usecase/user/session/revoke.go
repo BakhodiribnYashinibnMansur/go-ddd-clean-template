@@ -2,17 +2,11 @@ package session
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/google/uuid"
+	"github.com/evrone/go-clean-template/internal/domain"
 )
 
-// Revoke revokes a session by its ID.
-func (uc *UseCase) Revoke(ctx context.Context, id uuid.UUID) error {
-	err := uc.repo.User.SessionRepo.Revoke(ctx, id)
-	if err != nil {
-		return fmt.Errorf("SessionUseCase - Revoke - uc.repo.User.SessionRepo.Revoke: %w", err)
-	}
-
-	return nil
+// Revoke revokes a session.
+func (uc *UseCase) Revoke(ctx context.Context, filter *domain.SessionFilter) error {
+	return uc.repo.User.SessionRepo.Revoke(ctx, filter)
 }

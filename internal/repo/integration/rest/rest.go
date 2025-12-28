@@ -24,7 +24,7 @@ func New(timeout time.Duration) *Client {
 }
 
 // SendPostBasicRequest sends a POST request with Basic Auth
-func (c *Client) SendPostBasicRequest(ctx context.Context, endpoint string, body interface{}, login, password string) (*resty.Response, error) {
+func (c *Client) SendPostBasicRequest(ctx context.Context, endpoint string, body any, login, password string) (*resty.Response, error) {
 	return c.resty.R().
 		SetContext(ctx).
 		SetBody(body).
@@ -33,7 +33,7 @@ func (c *Client) SendPostBasicRequest(ctx context.Context, endpoint string, body
 }
 
 // SendPostBearerRequest sends a POST request with Bearer Auth
-func (c *Client) SendPostBearerRequest(ctx context.Context, endpoint string, body interface{}, token string, query map[string]string) (*resty.Response, error) {
+func (c *Client) SendPostBearerRequest(ctx context.Context, endpoint string, body any, token string, query map[string]string) (*resty.Response, error) {
 	return c.resty.R().
 		SetContext(ctx).
 		SetBody(body).
