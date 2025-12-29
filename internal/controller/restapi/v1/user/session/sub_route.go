@@ -2,6 +2,8 @@ package session
 
 import (
 	"github.com/gin-gonic/gin"
+
+	"gct/consts"
 )
 
 func Route(api *gin.RouterGroup, c ControllerI) {
@@ -9,8 +11,8 @@ func Route(api *gin.RouterGroup, c ControllerI) {
 	{
 		session.POST("/", c.Create)
 		session.GET("/", c.Sessions)
-		session.GET("/:id", c.Session)
-		session.PATCH("/:id/activity", c.UpdateActivity)
-		session.DELETE("/:id", c.Delete)
+		session.GET("/:"+consts.ParamID, c.Session)
+		session.PATCH("/:"+consts.ParamID+"/activity", c.UpdateActivity)
+		session.DELETE("/:"+consts.ParamID, c.Delete)
 	}
 }

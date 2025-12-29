@@ -52,14 +52,13 @@ func ParseAccessToken(tokenString string, publicKey *rsa.PublicKey, issuer, audi
 		}
 		return publicKey, nil
 	})
-
 	if err != nil {
 		if ve, ok := err.(*jwt.ValidationError); ok {
 			if ve.Errors&jwt.ValidationErrorExpired != 0 {
 				return nil, ErrAccessTokenExpired
 			}
 		}
-		return nil, fmt.Errorf("%w: %v", ErrAccessTokenInvalid, err)
+		return nil, fmt.Errorf("%w: %w", ErrAccessTokenInvalid, err)
 	}
 
 	if claims, ok := token.Claims.(*AccessTokenClaims); ok && token.Valid {

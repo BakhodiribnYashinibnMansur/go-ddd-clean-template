@@ -6,12 +6,13 @@ import (
 	"errors"
 	"time"
 
-	kafkarpc "github.com/evrone/go-clean-template/pkg/broker/kafka/kafka_rpc"
-	"github.com/evrone/go-clean-template/pkg/logger"
 	"github.com/goccy/go-json"
 	"github.com/segmentio/kafka-go"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
+
+	kafkarpc "gct/pkg/broker/kafka/kafka_rpc"
+	"gct/pkg/logger"
 )
 
 const (

@@ -25,7 +25,9 @@ type Config struct {
 	APIKeys      APIKeys
 	Metrics      Metrics
 	Swagger      Swagger
+	Proto        Proto
 	Cookie       Cookie
+	Minio        MinioStore `envPrefix:"MINIO_"`
 }
 
 // NewConfig returns app config (Singleton).

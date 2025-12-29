@@ -3,13 +3,13 @@ package client
 import (
 	"net/http"
 
-	"github.com/evrone/go-clean-template/consts"
-	"github.com/evrone/go-clean-template/internal/controller/restapi/cookie"
-	"github.com/evrone/go-clean-template/internal/controller/restapi/response"
-	"github.com/evrone/go-clean-template/internal/controller/restapi/util"
-	"github.com/evrone/go-clean-template/internal/domain"
-	uc_client "github.com/evrone/go-clean-template/internal/usecase/user/client"
 	"github.com/gin-gonic/gin"
+
+	"gct/consts"
+	"gct/internal/controller/restapi/cookie"
+	"gct/internal/controller/restapi/response"
+	"gct/internal/controller/restapi/util"
+	"gct/internal/domain"
 )
 
 // SignIn godoc
@@ -32,7 +32,7 @@ func (c *Controller) SignIn(ctx *gin.Context) {
 		return
 	}
 
-	out, err := c.u.User.Client.SignIn(ctx.Request.Context(), uc_client.SignInInput{
+	out, err := c.u.User.Client.SignIn(ctx.Request.Context(), &domain.SignInIn{
 		Phone:     user.Phone,
 		Password:  user.Password,
 		DeviceID:  ctx.GetHeader("X-Device-ID"),

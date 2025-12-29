@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/evrone/go-clean-template/config"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
+
+	"gct/config"
 )
 
 // Migration - goose migration manager.

@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -11,7 +13,6 @@ import (
 
 func CORSMiddleware() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-
 		// accessURL := "*"
 		// clientHost := ctx.Request.Header.Get("Origin")
 		// if clientHost != "" {
@@ -25,7 +26,7 @@ func CORSMiddleware() gin.HandlerFunc {
 
 		ctx.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT , DELETE ,PATCH, HEAD")
 		ctx.Header("Access-Control-Max-Age", "3600")
-		if ctx.Request.Method == "OPTIONS" {
+		if ctx.Request.Method == http.MethodOptions {
 			ctx.AbortWithStatus(204)
 			return
 		}

@@ -2,11 +2,12 @@ package session
 
 import (
 	"net/http"
-	"strconv"
 
-	"github.com/evrone/go-clean-template/consts"
-	"github.com/evrone/go-clean-template/internal/controller/restapi/response"
 	"github.com/gin-gonic/gin"
+
+	"gct/internal/controller/restapi/response"
+	"gct/internal/controller/restapi/util"
+	"gct/internal/domain"
 )
 
 // GetActiveSessions godoc
@@ -15,41 +16,44 @@ import (
 // @Tags        sessions
 // @Accept      json
 // @Produce     json
-// @Param       page  query int false "Page number"
-// @Param       limit query int false "Page size"
+// @Param       offset  query int false "Offset"
+// @Param       limit   query int false "Limit"
 // @Success     200 {object} response.SuccessResponse
 // @Failure     401 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
 // @Router      /sessions [get]
 func (c *Controller) Sessions(ctx *gin.Context) {
-	_, exists := ctx.Get(consts.CtxUserID)
-	if !exists {
+	userIDInt, err := util.GetUserIDInt64(ctx)
+	if err != nil {
 		response.ControllerResponse(ctx, http.StatusUnauthorized, "unauthorized", nil, false)
 		return
 	}
 
-	page := 1
-	limit := 10
-
-	if p := ctx.Query("page"); p != "" {
-		if parsed, err := strconv.Atoi(p); err == nil && parsed > 0 {
-			page = parsed
-		}
+	pagination, err := util.GetPagination(ctx)
+	if err != nil {
+		response.ControllerResponse(ctx, http.StatusBadRequest, err, nil, false)
+		return
 	}
 
-	if l := ctx.Query("limit"); l != "" {
-		if parsed, err := strconv.Atoi(l); err == nil && parsed > 0 && parsed <= 100 {
-			limit = parsed
-		}
+	filter := &domain.SessionsFilter{
+		SessionFilter: domain.SessionFilter{
+			UserID: &userIDInt,
+		},
+		Pagination: &pagination,
 	}
 
-	// Placeholder
-	responseData := map[string]any{
-		"sessions": []any{},
-		"total":    0,
-		"page":     page,
-		"limit":    limit,
+	sessions, total, err := c.s.User.Session.Gets(ctx.Request.Context(), filter)
+	if err != nil {
+		response.ControllerResponse(ctx, http.StatusInternalServerError, err, nil, false)
+		return
 	}
 
-	response.ControllerResponse(ctx, http.StatusOK, responseData, nil, true)
+	meta := &response.Meta{
+		Total:  int64(total),
+		Limit:  pagination.Limit,
+		Offset: pagination.Offset,
+		Page:   pagination.Offset/pagination.Limit + 1,
+	}
+
+	response.ControllerResponse(ctx, http.StatusOK, sessions, meta, true)
 }

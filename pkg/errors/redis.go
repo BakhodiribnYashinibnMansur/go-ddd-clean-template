@@ -15,107 +15,70 @@ func HandleRedisError(ctx context.Context, err error, key string, extraFields ma
 		return nil
 	}
 
-	// ============================================================================
-	// Special Case: redis.Nil (Key not found)
-	// ============================================================================
 	if errors.Is(err, redis.Nil) {
-		appErr := AutoSource(
-			NewRepoError(ctx, ErrRepoNotFound,
-				"key not found in cache"))
+		return handleRedisNil(ctx, key, extraFields)
+	}
 
-		if key != "" {
-			appErr.WithField("key", key)
-		}
-		appErr.WithDetails("The requested key does not exist in Redis")
+	errMsg := err.Error()
 
-		for k, value := range extraFields {
-			appErr.WithField(k, value)
-		}
+	// Try specific error types
+	if appErr := tryHandleSpecificRedisErrors(ctx, errMsg, key, extraFields); appErr != nil {
 		return appErr
 	}
 
-	// Get error message for pattern matching
-	errMsg := err.Error()
-
-	// ============================================================================
-	// Connection Errors
-	// ============================================================================
-	if isRedisConnectionError(errMsg) {
-		return handleRedisConnectionError(ctx, err, key, extraFields)
-	}
-
-	// ============================================================================
-	// Timeout Errors
-	// ============================================================================
-	if isRedisTimeoutError(errMsg) {
-		return handleRedisTimeoutError(ctx, err, key, extraFields)
-	}
-
-	// ============================================================================
-	// Authentication Errors
-	// ============================================================================
-	if isRedisAuthError(errMsg) {
-		return handleRedisAuthError(ctx, err, key, extraFields)
-	}
-
-	// ============================================================================
-	// Type Errors (WRONGTYPE)
-	// ============================================================================
-	if isRedisTypeError(errMsg) {
-		return handleRedisTypeError(ctx, err, key, extraFields)
-	}
-
-	// ============================================================================
-	// Memory Errors (OOM)
-	// ============================================================================
-	if isRedisMemoryError(errMsg) {
-		return handleRedisMemoryError(ctx, err, key, extraFields)
-	}
-
-	// ============================================================================
-	// Read-Only Errors (READONLY)
-	// ============================================================================
-	if isRedisReadOnlyError(errMsg) {
-		return handleRedisReadOnlyError(ctx, err, key, extraFields)
-	}
-
-	// ============================================================================
-	// Cluster Errors (CLUSTERDOWN, MOVED, ASK)
-	// ============================================================================
-	if isRedisClusterError(errMsg) {
-		return handleRedisClusterError(ctx, err, key, extraFields)
-	}
-
-	// ============================================================================
-	// NOSCRIPT Error (Lua script not found)
-	// ============================================================================
-	if isRedisNoScriptError(errMsg) {
-		return handleRedisNoScriptError(ctx, err, key, extraFields)
-	}
-
-	// ============================================================================
-	// NOAUTH Error (Authentication required)
-	// ============================================================================
-	if isRedisNoAuthError(errMsg) {
-		return handleRedisNoAuthError(ctx, err, key, extraFields)
-	}
-
-	// ============================================================================
 	// Default: Generic Redis error
-	// ============================================================================
-	appErr := AutoSource(
-		WrapRepoError(ctx, err, ErrRepoDatabase,
-			"redis operation failed"))
-
-	if key != "" {
-		appErr.WithField("key", key)
-	}
-	appErr.WithDetails(errMsg)
+	appErr := AutoSource(WrapRepoError(ctx, err, ErrRepoDatabase, "redis operation failed"))
+	_ = appErr.WithField("key", key)
+	_ = appErr.WithDetails(errMsg)
 
 	for k, value := range extraFields {
-		appErr.WithField(k, value)
+		_ = appErr.WithField(k, value)
 	}
 	return appErr
+}
+
+func handleRedisNil(ctx context.Context, key string, extraFields map[string]any) *AppError {
+	appErr := AutoSource(NewRepoError(ctx, ErrRepoNotFound, "key not found in cache"))
+	if key != "" {
+		_ = appErr.WithField("key", key)
+	}
+	_ = appErr.WithDetails("The requested key does not exist in Redis")
+
+	for k, value := range extraFields {
+		_ = appErr.WithField(k, value)
+	}
+	return appErr
+}
+
+func tryHandleSpecificRedisErrors(ctx context.Context, errMsg, key string, extraFields map[string]any) *AppError {
+	if isRedisConnectionError(errMsg) {
+		return handleRedisConnectionError(ctx, key, extraFields)
+	}
+	if isRedisTimeoutError(errMsg) {
+		return handleRedisTimeoutError(ctx, key, extraFields)
+	}
+	if isRedisAuthError(errMsg) {
+		return handleRedisAuthError(ctx, key, extraFields)
+	}
+	if isRedisTypeError(errMsg) {
+		return handleRedisTypeError(ctx, key, extraFields)
+	}
+	if isRedisMemoryError(errMsg) {
+		return handleRedisMemoryError(ctx, key, extraFields)
+	}
+	if isRedisReadOnlyError(errMsg) {
+		return handleRedisReadOnlyError(ctx, key, extraFields)
+	}
+	if isRedisClusterError(errMsg) {
+		return handleRedisClusterError(ctx, key, extraFields)
+	}
+	if isRedisNoScriptError(errMsg) {
+		return handleRedisNoScriptError(ctx, key, extraFields)
+	}
+	if isRedisNoAuthError(errMsg) {
+		return handleRedisNoAuthError(ctx, key, extraFields)
+	}
+	return nil
 }
 
 // ============================================================================
@@ -177,155 +140,155 @@ func isRedisNoAuthError(msg string) bool {
 // Error Handler Functions
 // ============================================================================
 
-func handleRedisConnectionError(ctx context.Context, err error, key string, extraFields map[string]any) *AppError {
+func handleRedisConnectionError(ctx context.Context, key string, extraFields map[string]any) *AppError {
 	appErr := AutoSource(
 		NewRepoError(ctx, ErrRepoConnection,
 			"redis connection error"))
 
 	if key != "" {
-		appErr.WithField("key", key)
+		_ = appErr.WithField("key", key)
 	}
-	appErr.WithField("error_type", "connection").
-		WithDetails("Failed to connect to Redis server")
+	_ = appErr.WithField("error_type", "connection")
+	_ = appErr.WithDetails("Failed to connect to Redis server")
 
 	for k, value := range extraFields {
-		appErr.WithField(k, value)
+		_ = appErr.WithField(k, value)
 	}
 	return appErr
 }
 
-func handleRedisTimeoutError(ctx context.Context, err error, key string, extraFields map[string]any) *AppError {
+func handleRedisTimeoutError(ctx context.Context, key string, extraFields map[string]any) *AppError {
 	appErr := AutoSource(
 		NewRepoError(ctx, ErrRepoTimeout,
 			"redis operation timeout"))
 
 	if key != "" {
-		appErr.WithField("key", key)
+		_ = appErr.WithField("key", key)
 	}
-	appErr.WithField("error_type", "timeout").
-		WithDetails("Redis operation exceeded timeout limit")
+	_ = appErr.WithField("error_type", "timeout")
+	_ = appErr.WithDetails("Redis operation exceeded timeout limit")
 
 	for k, value := range extraFields {
-		appErr.WithField(k, value)
+		_ = appErr.WithField(k, value)
 	}
 	return appErr
 }
 
-func handleRedisAuthError(ctx context.Context, err error, key string, extraFields map[string]any) *AppError {
+func handleRedisAuthError(ctx context.Context, key string, extraFields map[string]any) *AppError {
 	appErr := AutoSource(
 		NewRepoError(ctx, ErrRepoDatabase,
 			"redis authentication failed"))
 
 	if key != "" {
-		appErr.WithField("key", key)
+		_ = appErr.WithField("key", key)
 	}
-	appErr.WithField("error_type", "auth").
-		WithDetails("Invalid Redis password or authentication failed")
+	_ = appErr.WithField("error_type", "auth")
+	_ = appErr.WithDetails("Invalid Redis password or authentication failed")
 
 	for k, value := range extraFields {
-		appErr.WithField(k, value)
+		_ = appErr.WithField(k, value)
 	}
 	return appErr
 }
 
-func handleRedisTypeError(ctx context.Context, err error, key string, extraFields map[string]any) *AppError {
+func handleRedisTypeError(ctx context.Context, key string, extraFields map[string]any) *AppError {
 	appErr := AutoSource(
 		NewRepoError(ctx, ErrRepoDatabase,
 			"redis wrong type error"))
 
 	if key != "" {
-		appErr.WithField("key", key)
+		_ = appErr.WithField("key", key)
 	}
-	appErr.WithField("error_type", "wrongtype").
-		WithDetails("Operation against a key holding the wrong kind of value")
+	_ = appErr.WithField("error_type", "wrongtype")
+	_ = appErr.WithDetails("Operation against a key holding the wrong kind of value")
 
 	for k, value := range extraFields {
-		appErr.WithField(k, value)
+		_ = appErr.WithField(k, value)
 	}
 	return appErr
 }
 
-func handleRedisMemoryError(ctx context.Context, err error, key string, extraFields map[string]any) *AppError {
+func handleRedisMemoryError(ctx context.Context, key string, extraFields map[string]any) *AppError {
 	appErr := AutoSource(
 		NewRepoError(ctx, ErrRepoDatabase,
 			"redis out of memory"))
 
 	if key != "" {
-		appErr.WithField("key", key)
+		_ = appErr.WithField("key", key)
 	}
-	appErr.WithField("error_type", "oom").
-		WithDetails("Redis server is out of memory")
+	_ = appErr.WithField("error_type", "oom")
+	_ = appErr.WithDetails("Redis server is out of memory")
 
 	for k, value := range extraFields {
-		appErr.WithField(k, value)
+		_ = appErr.WithField(k, value)
 	}
 	return appErr
 }
 
-func handleRedisReadOnlyError(ctx context.Context, err error, key string, extraFields map[string]any) *AppError {
+func handleRedisReadOnlyError(ctx context.Context, key string, extraFields map[string]any) *AppError {
 	appErr := AutoSource(
 		NewRepoError(ctx, ErrRepoDatabase,
 			"redis is read-only"))
 
 	if key != "" {
-		appErr.WithField("key", key)
+		_ = appErr.WithField("key", key)
 	}
-	appErr.WithField("error_type", "readonly").
-		WithDetails("Redis server is in read-only mode (replica)")
+	_ = appErr.WithField("error_type", "readonly")
+	_ = appErr.WithDetails("Redis server is in read-only mode (replica)")
 
 	for k, value := range extraFields {
-		appErr.WithField(k, value)
+		_ = appErr.WithField(k, value)
 	}
 	return appErr
 }
 
-func handleRedisClusterError(ctx context.Context, err error, key string, extraFields map[string]any) *AppError {
+func handleRedisClusterError(ctx context.Context, key string, extraFields map[string]any) *AppError {
 	appErr := AutoSource(
 		NewRepoError(ctx, ErrRepoDatabase,
 			"redis cluster error"))
 
 	if key != "" {
-		appErr.WithField("key", key)
+		_ = appErr.WithField("key", key)
 	}
-	appErr.WithField("error_type", "cluster").
-		WithDetails("Redis cluster is down or key moved to another node")
+	_ = appErr.WithField("error_type", "cluster")
+	_ = appErr.WithDetails("Redis cluster is down or key moved to another node")
 
 	for k, value := range extraFields {
-		appErr.WithField(k, value)
+		_ = appErr.WithField(k, value)
 	}
 	return appErr
 }
 
-func handleRedisNoScriptError(ctx context.Context, err error, key string, extraFields map[string]any) *AppError {
+func handleRedisNoScriptError(ctx context.Context, key string, extraFields map[string]any) *AppError {
 	appErr := AutoSource(
 		NewRepoError(ctx, ErrRepoDatabase,
 			"redis script not found"))
 
 	if key != "" {
-		appErr.WithField("key", key)
+		_ = appErr.WithField("key", key)
 	}
-	appErr.WithField("error_type", "noscript").
-		WithDetails("Lua script not found in Redis cache")
+	_ = appErr.WithField("error_type", "noscript")
+	_ = appErr.WithDetails("Lua script not found in Redis cache")
 
 	for k, value := range extraFields {
-		appErr.WithField(k, value)
+		_ = appErr.WithField(k, value)
 	}
 	return appErr
 }
 
-func handleRedisNoAuthError(ctx context.Context, err error, key string, extraFields map[string]any) *AppError {
+func handleRedisNoAuthError(ctx context.Context, key string, extraFields map[string]any) *AppError {
 	appErr := AutoSource(
 		NewRepoError(ctx, ErrRepoDatabase,
 			"redis authentication required"))
 
 	if key != "" {
-		appErr.WithField("key", key)
+		_ = appErr.WithField("key", key)
 	}
-	appErr.WithField("error_type", "noauth").
-		WithDetails("Redis server requires authentication")
+	_ = appErr.WithField("error_type", "noauth")
+	_ = appErr.WithDetails("Redis server requires authentication")
 
 	for k, value := range extraFields {
-		appErr.WithField(k, value)
+		_ = appErr.WithField(k, value)
 	}
 	return appErr
 }

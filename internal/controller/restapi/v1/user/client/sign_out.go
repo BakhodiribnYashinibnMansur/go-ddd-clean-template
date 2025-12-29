@@ -3,13 +3,14 @@ package client
 import (
 	"net/http"
 
-	"github.com/evrone/go-clean-template/consts"
-	"github.com/evrone/go-clean-template/internal/controller/restapi/cookie"
-	"github.com/evrone/go-clean-template/internal/controller/restapi/response"
-	"github.com/evrone/go-clean-template/internal/controller/restapi/util"
-	uc_client "github.com/evrone/go-clean-template/internal/usecase/user/client"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+
+	"gct/consts"
+	"gct/internal/controller/restapi/cookie"
+	"gct/internal/controller/restapi/response"
+	"gct/internal/controller/restapi/util"
+	"gct/internal/domain"
 )
 
 // SignOut godoc
@@ -42,7 +43,7 @@ func (c *Controller) SignOut(ctx *gin.Context) {
 		}
 	}
 
-	err := c.u.User.Client.SignOut(ctx.Request.Context(), uc_client.SignOutInput{
+	err := c.u.User.Client.SignOut(ctx.Request.Context(), &domain.SignOutIn{
 		SessionID: sessionID,
 	})
 	if err != nil {

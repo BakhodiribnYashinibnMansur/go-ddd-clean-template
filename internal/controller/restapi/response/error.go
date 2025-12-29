@@ -1,12 +1,15 @@
 package response
 
 import (
+	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
-	apperrors "github.com/evrone/go-clean-template/pkg/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+
+	apperrors "gct/pkg/errors"
 )
 
 // ============================================================================
@@ -14,26 +17,26 @@ import (
 // ============================================================================
 
 type ErrorDetail struct {
-	Code       string `json:"code" example:"RESOURCE_NOT_FOUND"`
-	Message    string `json:"message" example:"The requested resource was not found."`
-	Details    string `json:"details,omitempty" example:"The user with the ID '12345' does not exist in our records."`
-	Timestamp  string `json:"timestamp" example:"2023-12-08T12:30:45Z"`
-	Path       string `json:"path" example:"/api/v1/users/12345"`
-	Method     string `json:"method" example:"GET"`
-	Suggestion string `json:"suggestion,omitempty" example:"Please check our documentation."`
+	Code       string `example:"RESOURCE_NOT_FOUND"                                          json:"code"`
+	Message    string `example:"The requested resource was not found."                       json:"message"`
+	Details    string `example:"The user with the ID '12345' does not exist in our records." json:"details,omitempty"`
+	Timestamp  string `example:"2023-12-08T12:30:45Z"                                        json:"timestamp"`
+	Path       string `example:"/api/v1/users/12345"                                         json:"path"`
+	Method     string `example:"GET"                                                         json:"method"`
+	Suggestion string `example:"Please check our documentation."                             json:"suggestion,omitempty"`
 }
 
 // Error for backward compatibility
 type Error struct {
-	Error string `json:"error" example:"message"`
+	Error string `example:"message" json:"error"`
 }
 
 type ErrorResponse struct {
-	Status           string      `json:"status" example:"error"`
-	StatusCode       int         `json:"statusCode" example:"404"`
+	Status           string      `example:"error"                                                    json:"status"`
+	StatusCode       int         `example:"404"                                                      json:"statusCode"`
 	Error            ErrorDetail `json:"error"`
-	RequestId        string      `json:"requestId" example:"a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8"`
-	DocumentationUrl string      `json:"documentation_url" example:"https://developer.mozilla.org/en-US/docs/Web/HTTP/Status"`
+	RequestId        string      `example:"a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8"                     json:"requestId"`
+	DocumentationUrl string      `example:"https://developer.mozilla.org/en-US/docs/Web/HTTP/Status" json:"documentation_url"`
 }
 
 // ============================================================================
@@ -117,7 +120,8 @@ func parseErrorToResponse(c *gin.Context, err error) (int, ErrorResponse) {
 	)
 
 	// Check if it's our AppError
-	if appErr, ok := err.(*apperrors.AppError); ok {
+	var appErr *apperrors.AppError
+	if errors.As(err, &appErr) {
 		statusCode = MapToHTTPStatus(appErr.Code)
 
 		errorCode = appErr.Type
@@ -146,7 +150,7 @@ func parseErrorToResponse(c *gin.Context, err error) (int, ErrorResponse) {
 		} else if statusCode >= 400 {
 			suggestion = "Please check your request and try again."
 		} else {
-			suggestion = "Operation completed with status: " + fmt.Sprint(statusCode)
+			suggestion = "Operation completed with status: " + strconv.Itoa(statusCode)
 		}
 	}
 
@@ -174,16 +178,33 @@ func parseErrorToResponse(c *gin.Context, err error) (int, ErrorResponse) {
 
 // MapToHTTPStatus maps error code to HTTP status code
 func MapToHTTPStatus(code string) int {
+	if status := mapRepoStatus(code); status != 0 {
+		return status
+	}
+	if status := mapServiceStatus(code); status != 0 {
+		return status
+	}
+	if status := mapHandlerStatus(code); status != 0 {
+		return status
+	}
+	return 500
+}
+
+func mapRepoStatus(code string) int {
 	switch code {
-	// Repository Errors
 	case apperrors.CodeRepoNotFound, apperrors.ErrRepoNotFound:
 		return 404
 	case apperrors.CodeRepoAlreadyExists, apperrors.ErrRepoAlreadyExists:
 		return 409
 	case apperrors.CodeRepoTimeout, apperrors.ErrRepoTimeout:
 		return 504
+	default:
+		return 0
+	}
+}
 
-	// Service Errors
+func mapServiceStatus(code string) int {
+	switch code {
 	case apperrors.CodeServiceInvalidInput, apperrors.ErrServiceInvalidInput,
 		apperrors.CodeServiceValidation, apperrors.ErrServiceValidation:
 		return 400
@@ -200,8 +221,13 @@ func MapToHTTPStatus(code string) int {
 		return 422
 	case apperrors.CodeServiceDependency, apperrors.ErrServiceDependency:
 		return 502
+	default:
+		return 0
+	}
+}
 
-	// Handler Errors
+func mapHandlerStatus(code string) int {
+	switch code {
 	case "HANDLER_BAD_REQUEST", "4000":
 		return 400
 	case "HANDLER_UNAUTHORIZED", "4001":
@@ -212,8 +238,7 @@ func MapToHTTPStatus(code string) int {
 		return 404
 	case "HANDLER_CONFLICT", "4009":
 		return 409
-
 	default:
-		return 500
+		return 0
 	}
 }

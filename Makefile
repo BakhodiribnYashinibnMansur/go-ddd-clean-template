@@ -35,17 +35,30 @@ compose-down: ### Down docker compose
 	$(ALL_STACK) down --remove-orphans
 .PHONY: compose-down
 
-swag-v1: ### swag init
-	swag init -g internal/controller/restapi/router.go
-.PHONY: swag-v1
+swag: ### generate swagger documentation
+	cd cmd/app && $(shell go env GOPATH)/bin/swag init -g main.go -o ../../docs/swagger --parseDependency --parseInternal --parseDepth 5
+.PHONY: swag
 
-proto-v1: ### generate source files from proto
-	protoc --go_out=. \
-		--go_opt=paths=source_relative \
-		--go-grpc_out=. \
-		--go-grpc_opt=paths=source_relative \
-		docs/proto/v1/*.proto
-.PHONY: proto-v1
+protogen: ### generate all proto files
+	@bash script/protogen.sh
+.PHONY: protogen
+
+lint-proto: ### lint proto files using buf
+	cd docs/protobuf/proto && buf lint
+.PHONY: lint-proto
+
+check-breaking: ### check breaking changes
+	cd docs/protobuf/proto && buf breaking --against "../../.git#branch=master,subdir=docs/protobuf/proto"
+.PHONY: check-breaking
+
+doc-proto: ### generate proto documentation (all proto files in single HTML)
+	mkdir -p docs/protobuf/doc
+	protoc --doc_out=docs/protobuf/doc --doc_opt=html,index.html \
+		--proto_path=docs/protobuf/proto \
+		docs/protobuf/proto/v1/common/pagination.proto \
+		docs/protobuf/proto/v1/user/user.proto \
+		docs/protobuf/proto/v1/user/session.proto
+.PHONY: doc-proto
 
 deps: ### deps tidy + verify
 	go mod tidy && go mod verify
@@ -60,7 +73,7 @@ format: ### Run code formatter
 	gci write . --skip-generated -s standard -s default
 .PHONY: format
 
-run: deps swag-v1 proto-v1 ### swag run for API v1
+run: deps swag protogen ### run application with all code generation
 	go mod download && \
 	CGO_ENABLED=0 go run -tags migrate ./cmd/app
 .PHONY: run
@@ -94,18 +107,118 @@ mock: ### run mockgen
 	mockgen -source ./internal/usecase/contracts.go -package usecase_test > ./internal/usecase/mocks_usecase_test.go
 .PHONY: mock
 
-migrate-create:  ### create new migration
-	migrate create -ext sql -dir migrations '$(word 2,$(MAKECMDGOALS))'
-.PHONY: migrate-create
+# ==============================================================================
+# Goose Migration Targets
+# ==============================================================================
 
-migrate-up: ### migration up
-	migrate -path migrations -database '$(PG_URL)?sslmode=disable' up
-.PHONY: migrate-up
+CURRENT_DIR = $(shell pwd)
+export GOOSE_MIGRATION_DIR = $(CURRENT_DIR)/migrations/postgres
+export GOOSE_DRIVER = postgres
+export GOOSE_DBSTRING = "host=$(POSTGRES_HOST) port=$(POSTGRES_PORT) dbname=$(POSTGRES_DB) user=$(POSTGRES_USER) password=$(POSTGRES_PASSWORD) sslmode=$(POSTGRES_SSLMODE)"
+GOOSE_ENV = GOOSE_MIGRATION_DIR=$(GOOSE_MIGRATION_DIR) GOOSE_DRIVER=$(GOOSE_DRIVER) GOOSE_DBSTRING=$(GOOSE_DBSTRING)
 
-bin-deps: ### install tools
-	go install tool
-	go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate
+migration-create: ### create new migration (interactive)
+	@read -p "Enter migration name: " MIGRATION_NAME; \
+	echo $$MIGRATION_NAME; \
+	goose -s create $$MIGRATION_NAME sql
+.PHONY: migration-create
+
+migration-up: ### run all available migrations
+	$(GOOSE_ENV) goose up -v
+.PHONY: migration-up
+
+migration-down: ### roll back the version by 1
+	$(GOOSE_ENV) goose down -v
+.PHONY: migration-down
+
+migration-status: ### dump the migration status for the current DB
+	$(GOOSE_ENV) goose status
+.PHONY: migration-status
+
+migration-redo: ### re-run the latest migration
+	$(GOOSE_ENV) goose redo -v
+.PHONY: migration-redo
+
+migration-reset: ### roll back all migrations
+	$(GOOSE_ENV) goose reset -v
+.PHONY: migration-reset
+
+migration-validate: ### check migration files without running them
+	$(GOOSE_ENV) goose validate
+.PHONY: migration-validate
+
+migration-fix: ### apply sequential ordering to migrations
+	$(GOOSE_ENV) goose fix
+.PHONY: migration-fix
+
+# ==============================================================================
+# Mongo Migration Targets
+# ==============================================================================
+
+export MIGRATE_MONGO_DIR = $(CURRENT_DIR)/migrations/mongo
+export MONGO_DSN ?= "mongodb://localhost:27017/test"
+
+mongo-migration-create: ### create new mongo migration
+	@read -p "Enter migration name: " MIGRATION_NAME; \
+	migrate create -ext json -dir $(MIGRATE_MONGO_DIR) -seq $$MIGRATION_NAME
+.PHONY: mongo-migration-create
+
+mongo-migration-up: ### run mongo migrations
+	migrate -path $(MIGRATE_MONGO_DIR) -database "$(MONGO_DSN)" up
+.PHONY: mongo-migration-up
+
+mongo-migration-down: ### roll back mongo migration
+	migrate -path $(MIGRATE_MONGO_DIR) -database "$(MONGO_DSN)" down 1
+.PHONY: mongo-migration-down
+
+# ==============================================================================
+# Air Hot-Reload Targets
+# ==============================================================================
+
+air-init: ### initialize air configuration
+	air init
+.PHONY: air-init
+
+air: ### run application with hot-reload
+	air -c ./.air.toml
+.PHONY: air
+
+# ==============================================================================
+# Tool Installation
+# ==============================================================================
+
+bin-deps: ### install development tools
+	go install github.com/swaggo/swag/cmd/swag@latest
+	go install github.com/pressly/goose/v3/cmd/goose@latest
+	go install -tags 'mongodb' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+	go install github.com/pseudomuto/protoc-gen-doc/cmd/protoc-gen-doc@latest
+	go install github.com/bufbuild/buf/cmd/buf@latest
+	go install github.com/air-verse/air@latest
+	go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+	go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
 .PHONY: bin-deps
 
-pre-commit: swag-v1 proto-v1 mock format linter-golangci test ### run pre-commit
+# ==============================================================================
+# SQLC Code Generation
+# ==============================================================================
+
+sqlc-postgres: ### generate type-safe Go code from PostgreSQL queries
+	cd internal/repo/persistent/postgres/sqlc && sqlc generate
+.PHONY: sqlc-postgres
+
+sqlc-mysql: ### generate type-safe Go code from MySQL queries
+	cd internal/repo/persistent/mysql/sqlc && sqlc generate
+.PHONY: sqlc-mysql
+
+sqlc-sqlite: ### generate type-safe Go code from SQLite queries
+	cd internal/repo/persistent/sqlite/sqlc && sqlc generate
+.PHONY: sqlc-sqlite
+
+sqlc: sqlc-postgres sqlc-mysql sqlc-sqlite ### generate all SQLC code
+.PHONY: sqlc
+
+pre-commit: swag protogen mock format linter-golangci test ### run pre-commit checks
 .PHONY: pre-commit
+

@@ -31,7 +31,7 @@ type (
 
 	// Kafka -.
 	Kafka struct {
-		Brokers []string `env:"BROKERS,required" envSeparator:","`
+		Brokers []string `env:"BROKERS,required"  envSeparator:""`
 		Topic   string   `env:"TOPIC,required"`
 		GroupId string   `env:"GROUP_ID,required"`
 	}

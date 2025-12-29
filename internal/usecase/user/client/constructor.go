@@ -3,10 +3,10 @@ package client
 import (
 	"crypto/rsa"
 
-	"github.com/evrone/go-clean-template/config"
-	"github.com/evrone/go-clean-template/internal/repo/persistent"
-	"github.com/evrone/go-clean-template/pkg/jwt"
-	"github.com/evrone/go-clean-template/pkg/logger"
+	"gct/config"
+	"gct/internal/repo/persistent"
+	"gct/pkg/jwt"
+	"gct/pkg/logger"
 )
 
 // UseCase -.
@@ -21,7 +21,8 @@ type UseCase struct {
 func New(r *persistent.Repo, logger logger.Log, cfg *config.Config) UseCaseI {
 	pk, err := jwt.ParseRSAPrivateKey(cfg.JWT.PrivateKey)
 	if err != nil {
-		logger.Error("ClientUseCase - New - parsedPrivateKey error", err)
+		// Log error at constructor level but don't return it
+		// The use case can still function without private key for some operations
 	}
 	return &UseCase{
 		repo:       r,

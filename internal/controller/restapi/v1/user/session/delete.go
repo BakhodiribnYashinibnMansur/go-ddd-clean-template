@@ -3,10 +3,12 @@ package session
 import (
 	"net/http"
 
-	"github.com/evrone/go-clean-template/internal/controller/restapi/response"
-	"github.com/evrone/go-clean-template/internal/controller/restapi/util"
-	"github.com/evrone/go-clean-template/internal/domain"
 	"github.com/gin-gonic/gin"
+
+	"gct/consts"
+	"gct/internal/controller/restapi/response"
+	"gct/internal/controller/restapi/util"
+	"gct/internal/domain"
 )
 
 // Delete godoc
@@ -21,14 +23,14 @@ import (
 // @Failure     500 {object} response.ErrorResponse
 // @Router      /sessions/{id} [delete]
 func (c *Controller) Delete(ctx *gin.Context) {
-	id, err := util.GetUUIDParam(ctx, "id")
+	id, err := util.GetUUIDParam(ctx, consts.ParamID)
 	if err != nil {
 		util.LogError(c.l, err, "http - v1 - session - delete - id")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid session id", nil, false)
 		return
 	}
 
-	filter := &domain.SessionFilter{ID: id}
+	filter := &domain.SessionFilter{ID: &id}
 	err = c.s.User.Session.Delete(ctx.Request.Context(), filter)
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusInternalServerError, err, nil, false)

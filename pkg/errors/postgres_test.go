@@ -1,7 +1,6 @@
 package errors
 
 import (
-	"context"
 	"errors"
 	"testing"
 
@@ -10,7 +9,7 @@ import (
 )
 
 func TestHandlePgError_NoError(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	result := HandlePgError(ctx, nil, "users", nil)
 
 	if result != nil {
@@ -19,7 +18,7 @@ func TestHandlePgError_NoError(t *testing.T) {
 }
 
 func TestHandlePgError_NoRows(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	result := HandlePgError(ctx, pgx.ErrNoRows, "users", map[string]any{
 		"user_id": 123,
 	})
@@ -42,7 +41,7 @@ func TestHandlePgError_NoRows(t *testing.T) {
 }
 
 func TestHandlePgError_UniqueViolation(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	pgErr := &pgconn.PgError{
 		Code:           "23505",
 		Message:        "duplicate key value violates unique constraint",
@@ -72,7 +71,7 @@ func TestHandlePgError_UniqueViolation(t *testing.T) {
 }
 
 func TestHandlePgError_ForeignKeyViolation(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	pgErr := &pgconn.PgError{
 		Code:           "23503",
 		Message:        "insert or update violates foreign key constraint",
@@ -92,7 +91,7 @@ func TestHandlePgError_ForeignKeyViolation(t *testing.T) {
 }
 
 func TestHandlePgError_NotNullViolation(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	pgErr := &pgconn.PgError{
 		Code:           "23502",
 		Message:        "null value in column violates not-null constraint",
@@ -117,7 +116,7 @@ func TestHandlePgError_NotNullViolation(t *testing.T) {
 }
 
 func TestHandlePgError_CheckViolation(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	pgErr := &pgconn.PgError{
 		Code:           "23514",
 		Message:        "new row violates check constraint",
@@ -137,7 +136,7 @@ func TestHandlePgError_CheckViolation(t *testing.T) {
 }
 
 func TestHandlePgError_ConnectionError(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	pgErr := &pgconn.PgError{
 		Code:     "08006",
 		Message:  "connection failure",
@@ -156,7 +155,7 @@ func TestHandlePgError_ConnectionError(t *testing.T) {
 }
 
 func TestHandlePgError_Deadlock(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	pgErr := &pgconn.PgError{
 		Code:     "40P01",
 		Message:  "deadlock detected",
@@ -175,7 +174,7 @@ func TestHandlePgError_Deadlock(t *testing.T) {
 }
 
 func TestHandlePgError_LockTimeout(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	pgErr := &pgconn.PgError{
 		Code:     "55P03",
 		Message:  "lock not available",
@@ -194,7 +193,7 @@ func TestHandlePgError_LockTimeout(t *testing.T) {
 }
 
 func TestHandlePgError_QueryCanceled(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	pgErr := &pgconn.PgError{
 		Code:     "57014",
 		Message:  "query canceled",
@@ -213,7 +212,7 @@ func TestHandlePgError_QueryCanceled(t *testing.T) {
 }
 
 func TestHandlePgError_GenericError(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	genericErr := errors.New("some database error")
 
 	result := HandlePgError(ctx, genericErr, "users", map[string]any{
@@ -234,7 +233,7 @@ func TestHandlePgError_GenericError(t *testing.T) {
 }
 
 func TestHandlePgError_ExtraFields(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	pgErr := &pgconn.PgError{
 		Code:           "23505",
 		Message:        "duplicate key",
@@ -263,7 +262,7 @@ func TestHandlePgError_ExtraFields(t *testing.T) {
 }
 
 func TestHandlePgError_DataException(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	pgErr := &pgconn.PgError{
 		Code:     "22003",
 		Message:  "numeric value out of range",
@@ -282,7 +281,7 @@ func TestHandlePgError_DataException(t *testing.T) {
 }
 
 func TestHandlePgError_TransactionError(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	pgErr := &pgconn.PgError{
 		Code:     "25P02",
 		Message:  "in failed sql transaction",
@@ -301,7 +300,7 @@ func TestHandlePgError_TransactionError(t *testing.T) {
 }
 
 func TestHandlePgError_AuthError(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	pgErr := &pgconn.PgError{
 		Code:     "28P01",
 		Message:  "invalid password",
@@ -320,7 +319,7 @@ func TestHandlePgError_AuthError(t *testing.T) {
 }
 
 func TestHandlePgError_SyntaxError(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	pgErr := &pgconn.PgError{
 		Code:     "42601",
 		Message:  "syntax error at or near",
@@ -339,7 +338,7 @@ func TestHandlePgError_SyntaxError(t *testing.T) {
 }
 
 func TestHandlePgError_InsufficientPrivilege(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	pgErr := &pgconn.PgError{
 		Code:     "42501",
 		Message:  "permission denied",
@@ -358,7 +357,7 @@ func TestHandlePgError_InsufficientPrivilege(t *testing.T) {
 }
 
 func TestHandlePgError_TableNotFound(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	pgErr := &pgconn.PgError{
 		Code:     "42P01",
 		Message:  "relation does not exist",
@@ -377,7 +376,7 @@ func TestHandlePgError_TableNotFound(t *testing.T) {
 }
 
 func TestHandlePgError_EmptyTable(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	pgErr := &pgconn.PgError{
 		Code:           "23505",
 		Message:        "duplicate key",
@@ -398,7 +397,7 @@ func TestHandlePgError_EmptyTable(t *testing.T) {
 }
 
 func TestHandlePgError_NilExtraFields(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	pgErr := &pgconn.PgError{
 		Code:     "23505",
 		Message:  "duplicate",
@@ -419,14 +418,14 @@ func TestHandlePgError_NilExtraFields(t *testing.T) {
 
 // Benchmark tests
 func BenchmarkHandlePgError_NoRows(b *testing.B) {
-	ctx := context.Background()
-	for i := 0; i < b.N; i++ {
+	ctx := b.Context()
+	for range b.N {
 		HandlePgError(ctx, pgx.ErrNoRows, "users", nil)
 	}
 }
 
 func BenchmarkHandlePgError_UniqueViolation(b *testing.B) {
-	ctx := context.Background()
+	ctx := b.Context()
 	pgErr := &pgconn.PgError{
 		Code:           "23505",
 		Message:        "duplicate key",
@@ -435,17 +434,17 @@ func BenchmarkHandlePgError_UniqueViolation(b *testing.B) {
 	}
 
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		HandlePgError(ctx, pgErr, "users", nil)
 	}
 }
 
 func BenchmarkHandlePgError_GenericError(b *testing.B) {
-	ctx := context.Background()
+	ctx := b.Context()
 	err := errors.New("database error")
 
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		HandlePgError(ctx, err, "users", nil)
 	}
 }

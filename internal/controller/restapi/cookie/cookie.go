@@ -3,9 +3,10 @@ package cookie
 import (
 	"net/http"
 
-	"github.com/evrone/go-clean-template/config"
-	"github.com/evrone/go-clean-template/consts"
 	"github.com/gin-gonic/gin"
+
+	"gct/config"
+	"gct/consts"
 )
 
 // SaveCookies saves multiple cookies using settings from config.
@@ -22,7 +23,6 @@ func SaveCookies(ctx *gin.Context, data map[string]string, cfg config.Cookie) {
 			SameSite: http.SameSiteLaxMode,
 		})
 	}
-
 }
 
 // GetCookie retrieves a cookie value from the request.

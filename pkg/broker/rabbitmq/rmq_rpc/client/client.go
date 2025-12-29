@@ -7,11 +7,12 @@ import (
 	"sync"
 	"time"
 
-	rmqrpc "github.com/evrone/go-clean-template/pkg/broker/rabbitmq/rmq_rpc"
 	"github.com/goccy/go-json"
 	"github.com/google/uuid"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"golang.org/x/sync/errgroup"
+
+	rmqrpc "gct/pkg/broker/rabbitmq/rmq_rpc"
 )
 
 // ErrConnectionClosed -.

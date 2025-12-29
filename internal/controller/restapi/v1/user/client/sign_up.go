@@ -3,11 +3,11 @@ package client
 import (
 	"net/http"
 
-	"github.com/evrone/go-clean-template/internal/controller/restapi/response"
-	"github.com/evrone/go-clean-template/internal/controller/restapi/util"
-	"github.com/evrone/go-clean-template/internal/domain"
-	uc_client "github.com/evrone/go-clean-template/internal/usecase/user/client"
 	"github.com/gin-gonic/gin"
+
+	"gct/internal/controller/restapi/response"
+	"gct/internal/controller/restapi/util"
+	"gct/internal/domain"
 )
 
 // SignUp godoc
@@ -34,7 +34,7 @@ func (c *Controller) SignUp(ctx *gin.Context) {
 		username = *user.Username
 	}
 
-	err := c.u.User.Client.SignUp(ctx.Request.Context(), uc_client.SignUpInput{
+	err := c.u.User.Client.SignUp(ctx.Request.Context(), &domain.SignUpIn{
 		Username: username,
 		Phone:    user.Phone,
 		Password: user.Password,

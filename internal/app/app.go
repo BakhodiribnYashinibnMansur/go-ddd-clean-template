@@ -3,40 +3,86 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"strconv"
 	"syscall"
 
-	"github.com/evrone/go-clean-template/config"
-	"github.com/evrone/go-clean-template/internal/controller/restapi"
-	"github.com/evrone/go-clean-template/internal/repo"
-	"github.com/evrone/go-clean-template/internal/usecase"
 	"github.com/gin-gonic/gin"
-
-	"github.com/evrone/go-clean-template/pkg/db/postgres"
-	"github.com/evrone/go-clean-template/pkg/logger"
-	httpserver "github.com/evrone/go-clean-template/pkg/server/http"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
+
+	"gct/config"
+	"gct/internal/controller/restapi"
+	"gct/internal/repo"
+	"gct/internal/usecase"
+	"gct/pkg/db/minio"
+	"gct/pkg/db/postgres"
+	"gct/pkg/logger"
+	httpserver "gct/pkg/server/http"
 )
 
 // Run creates objects via constructors.
 func Run(cfg *config.Config) {
 	l := logger.New(cfg.Log.Level)
 
-	// Repository
-	pg, err := postgres.New(context.Background(), cfg.App.Environment, cfg.Database.Postgres, l)
+	// Context for initialization
+	ctx := context.Background()
+
+	// 1. Initialize Postgres
+	pg, err := postgres.New(ctx, cfg.App.Environment, cfg.Database.Postgres, l)
 	if err != nil {
 		l.Fatalw("app - Run - postgres.New", zap.Error(err))
 	}
 	defer pg.Close()
 
-	repositories := repo.New(pg, l)
+	// 2. Initialize MinIO
+	minioClient, err := minio.New(cfg.Minio.Endpoint,
+		minio.WithCredentials(cfg.Minio.AccessKey, cfg.Minio.SecretKey),
+		minio.WithSecure(cfg.Minio.UseSSL),
+		minio.WithBucket(cfg.Minio.Bucket, cfg.Minio.Region),
+	)
+	if err != nil {
+		l.Fatalw("app - Run - minio.New", zap.Error(err))
+	}
 
-	// Use Case
+	// 3. Initialize Redis
+	redisClient := initRedis(ctx, cfg, l)
+	defer redisClient.Close()
+
+	// 4. Initialize Layers
+	repositories := repo.New(pg, minioClient, redisClient, &cfg.Minio, l)
 	useCases := usecase.NewUseCase(repositories, l, cfg)
 
-	// HTTP Server logic
+	// 5. Initialize Router and Server
+	handler := initRouter(cfg, useCases, l)
+	httpServer := httpserver.NewServer()
+
+	// Start server
+	startServer(cfg.HTTP.Port, handler, httpServer, l)
+
+	// 6. Wait for Termination Signal
+	waitForSignal(l)
+
+	// 7. Graceful Shutdown
+	shutdownServer(httpServer, l)
+}
+
+func initRedis(ctx context.Context, cfg *config.Config, l logger.Log) *redis.Client {
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:     fmt.Sprintf("%s:%d", cfg.Database.Redis.Host, cfg.Database.Redis.Port),
+		Password: cfg.Database.Redis.Password,
+		DB:       0,
+	})
+
+	if status := redisClient.Ping(ctx); status.Err() != nil {
+		l.Fatalw("app - Run - redis.Ping", zap.Error(status.Err()))
+	}
+	return redisClient
+}
+
+func initRouter(cfg *config.Config, useCases *usecase.UseCase, l logger.Log) *gin.Engine {
 	gin.ForceConsoleColor()
 
 	if cfg.App.IsProd() {
@@ -47,35 +93,32 @@ func Run(cfg *config.Config) {
 
 	handler := gin.New()
 	restapi.NewRouter(handler, cfg, useCases, l)
+	return handler
+}
 
-	httpServer := httpserver.NewServer()
-
-	// Parse port
-	port, err := strconv.Atoi(cfg.HTTP.Port)
+func startServer(portStr string, handler *gin.Engine, server *httpserver.Server, l logger.Log) {
+	port, err := strconv.Atoi(portStr)
 	if err != nil {
 		l.Fatalw("app - Run - strconv.Atoi", zap.Error(err))
 	}
 
-	// Start server
 	go func() {
-		if err := httpServer.Run(port, handler); err != nil {
+		if err := server.Run(port, handler); err != nil {
 			l.Errorw("app - Run - httpServer.Run", zap.Error(err))
 		}
 	}()
+}
 
-	// Waiting signal
+func waitForSignal(l logger.Log) {
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
 
-	select {
-	case s := <-interrupt:
-		l.Infow("app - Run - signal", zap.String("signal", s.String()))
-		// case err = <-httpServer.Notify():
-		// 	l.Errorw("app - Run - httpServer.Notify", zap.Error(err))
-	}
+	s := <-interrupt
+	l.Infow("app - Run - signal received", zap.String("signal", s.String()))
+}
 
-	// Shutdown
-	err = httpServer.Shutdown(context.Background())
+func shutdownServer(server *httpserver.Server, l logger.Log) {
+	err := server.Shutdown(context.Background())
 	if err != nil {
 		l.Errorw("app - Run - httpServer.Shutdown", zap.Error(err))
 	}

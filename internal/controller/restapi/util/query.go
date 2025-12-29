@@ -1,16 +1,16 @@
 package util
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/evrone/go-clean-template/internal/domain"
-	"github.com/evrone/go-clean-template/pkg/logger"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+
+	"gct/internal/domain"
+	"gct/pkg/logger"
 )
 
 // URL Query Argument Helpers
@@ -18,7 +18,7 @@ import (
 func GetStringQuery(ctx *gin.Context, queryName string) (string, error) {
 	param := ctx.Query(queryName)
 	if param == "" {
-		return "", fmt.Errorf(ErrParamIsEmpty, queryName)
+		return "", fmt.Errorf("%w: %s", ErrParamIsEmpty, queryName)
 	}
 	return param, nil
 }
@@ -39,7 +39,7 @@ func GetStringArrayQuery(ctx *gin.Context, queryName string) []string {
 func GetArrayStringQuery(ctx *gin.Context, queryName string) ([]string, error) {
 	param := ctx.Query(queryName)
 	if param == "" {
-		return []string{}, fmt.Errorf(ErrParamIsEmpty, queryName)
+		return []string{}, fmt.Errorf("%w: %s", ErrParamIsEmpty, queryName)
 	}
 	return strings.Split(param, ","), nil
 }
@@ -59,7 +59,7 @@ func GetInt64Query(ctx *gin.Context, queryName string) (int64, error) {
 	}
 	paramInt, err := strconv.ParseInt(param, 10, 64)
 	if err != nil {
-		return 0, fmt.Errorf(ErrParsingQuery, err.Error())
+		return 0, fmt.Errorf("%w: %s", ErrParsingQuery, err.Error())
 	}
 	return paramInt, nil
 }
@@ -71,7 +71,7 @@ func GetNullInt64Query(ctx *gin.Context, queryName string) (int64, error) {
 	}
 	queryInt, err := strconv.ParseInt(queryData, 10, 64)
 	if err != nil {
-		return 0, fmt.Errorf(ErrParsingQuery, err.Error())
+		return 0, fmt.Errorf("%w: %s", ErrParsingQuery, err.Error())
 	}
 	return queryInt, nil
 }
@@ -83,7 +83,7 @@ func GetNullIntQuery(ctx *gin.Context, queryName string) (int, error) {
 	}
 	queryInt, err := strconv.Atoi(queryData)
 	if err != nil {
-		return 0, fmt.Errorf(ErrParamIsInvalid, queryData)
+		return 0, fmt.Errorf("%w: %s", ErrParamIsInvalid, queryData)
 	}
 	return queryInt, nil
 }
@@ -95,7 +95,7 @@ func GetFloat64Query(ctx *gin.Context, queryName string) (float64, error) {
 	}
 	paramNum, err := strconv.ParseFloat(param, 64)
 	if err != nil {
-		return 0, fmt.Errorf(ErrParsingQuery, err.Error())
+		return 0, fmt.Errorf("%w: %s", ErrParsingQuery, err.Error())
 	}
 	return paramNum, nil
 }
@@ -103,7 +103,7 @@ func GetFloat64Query(ctx *gin.Context, queryName string) (float64, error) {
 func GetBooleanQuery(ctx *gin.Context, queryName string) (bool, error) {
 	param := ctx.Query(queryName)
 	if param == "" {
-		return false, fmt.Errorf(ErrParamIsInvalid, queryName)
+		return false, fmt.Errorf("%w: %s", ErrParamIsInvalid, queryName)
 	}
 	return strconv.ParseBool(param)
 }
@@ -121,7 +121,7 @@ func GetNullBooleanStringQuery(ctx *gin.Context, queryName string) (string, erro
 	if param != "" {
 		_, err := strconv.ParseBool(param)
 		if err != nil {
-			return "", fmt.Errorf(ErrParamIsInvalid, param)
+			return "", fmt.Errorf("%w: %s", ErrParamIsInvalid, param)
 		}
 		return param, nil
 	}
@@ -131,12 +131,12 @@ func GetNullBooleanStringQuery(ctx *gin.Context, queryName string) (string, erro
 func GetUUIDQuery(ctx *gin.Context, queryName string) (uuid.UUID, error) {
 	param := ctx.Query(queryName)
 	if param == "" {
-		return uuid.Nil, fmt.Errorf(ErrParamIsInvalid, queryName)
+		return uuid.Nil, fmt.Errorf("%w: %s", ErrParamIsInvalid, queryName)
 	}
 	paramUUID, err := uuid.Parse(param)
 	if err != nil {
 		logger.GetLogger().Error(err)
-		return uuid.Nil, fmt.Errorf(ErrParamIsInvalid, param)
+		return uuid.Nil, fmt.Errorf("%w: %s", ErrParamIsInvalid, param)
 	}
 	return paramUUID, nil
 }
@@ -146,7 +146,7 @@ func GetNullUUIDQuery(ctx *gin.Context, queryName string) (uuid.UUID, error) {
 	if queryData != "" {
 		queryUUID, err := uuid.Parse(queryData)
 		if err != nil {
-			return uuid.Nil, fmt.Errorf(QueryInvalid, queryData)
+			return uuid.Nil, fmt.Errorf("%w: %s", ErrParamIsInvalid, queryData)
 		}
 		return queryUUID, nil
 	}
@@ -188,7 +188,7 @@ func GetSearchParamsQuery(ctx *gin.Context, queryName string, extraFields map[st
 	for _, field := range searchFields {
 		parts := strings.Split(field, ":")
 		if len(parts) != 2 || parts[0] == "" {
-			return nil, fmt.Errorf(ErrParamIsInvalid, searchQuery)
+			return nil, fmt.Errorf("%w: %s", ErrParamIsInvalid, searchQuery)
 		}
 		searchParams[parts[0]] = parts[1]
 	}
@@ -205,7 +205,7 @@ func GetSortParamsQuery(ctx *gin.Context, queryName string) (map[string]string, 
 	for _, field := range sortFields {
 		parts := strings.Split(field, ":")
 		if len(parts) != 2 || (strings.ToLower(parts[1]) != OrderAsc && strings.ToLower(parts[1]) != OrderDesc) || parts[0] == "" {
-			return nil, fmt.Errorf(ErrParamIsInvalid, sortQuery)
+			return nil, fmt.Errorf("%w: %s", ErrParamIsInvalid, sortQuery)
 		}
 		sortParams[parts[0]] = parts[1]
 	}
@@ -234,10 +234,10 @@ func GetFieldsParamsQuery(ctx *gin.Context, queryName string, extraParams map[st
 func GetDateOrderQuery(ctx *gin.Context, queryName string) (string, error) {
 	dateOrder := strings.ToLower(ctx.Query(queryName))
 	if dateOrder == "" {
-		return "", errors.New("date-order query is empty")
+		return "", ErrDateOrderEmpty
 	}
 	if dateOrder != OrderAsc && dateOrder != OrderDesc {
-		return "", errors.New("invalid date-order value. it is not same with asc or desc")
+		return "", ErrDateOrderInvalid
 	}
 	return dateOrder, nil
 }
@@ -248,10 +248,10 @@ func GetPageQuery(ctx *gin.Context) (int64, error) {
 	offsetStr := ctx.DefaultQuery("page", "1")
 	offset, err := strconv.ParseInt(offsetStr, 10, 64)
 	if err != nil {
-		return 0, fmt.Errorf(ErrParsingQuery, err.Error())
+		return 0, fmt.Errorf("%w: %s", ErrParsingQuery, err.Error())
 	}
 	if offset < 0 {
-		return 0, fmt.Errorf(ErrDataUnsignedInt, offset)
+		return 0, fmt.Errorf("%w: %d", ErrDataUnsignedInt, offset)
 	}
 	return offset, nil
 }
@@ -260,10 +260,10 @@ func GetPageSizeQuery(ctx *gin.Context) (int64, error) {
 	limitStr := ctx.DefaultQuery("pageSize", "10")
 	limit, err := strconv.ParseInt(limitStr, 10, 64)
 	if err != nil {
-		return 0, fmt.Errorf(ErrParsingQuery, err.Error())
+		return 0, fmt.Errorf("%w: %s", ErrParsingQuery, err.Error())
 	}
 	if limit < 0 {
-		return 0, fmt.Errorf(ErrDataUnsignedInt, limit)
+		return 0, fmt.Errorf("%w: %d", ErrDataUnsignedInt, limit)
 	}
 	return limit, nil
 }

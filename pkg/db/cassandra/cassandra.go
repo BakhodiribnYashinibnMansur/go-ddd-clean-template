@@ -6,10 +6,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/evrone/go-clean-template/config"
-	"github.com/evrone/go-clean-template/pkg/logger"
 	"github.com/gocql/gocql"
 	"go.uber.org/zap"
+
+	"gct/config"
+	"gct/pkg/logger"
 )
 
 const (

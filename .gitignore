@@ -24,6 +24,24 @@ vendor/
 
 coverage.txt
 
-
 # macos
 .DS_Store
+
+# Generated protobuf files
+v1/genproto/
+
+# SQLC generated files
+internal/repo/persistent/postgres/sqlc/db.go
+internal/repo/persistent/postgres/sqlc/models.go
+internal/repo/persistent/postgres/sqlc/querier.go
+internal/repo/persistent/postgres/sqlc/query.sql.go
+
+internal/repo/persistent/mysql/sqlc/db.go
+internal/repo/persistent/mysql/sqlc/models.go
+internal/repo/persistent/mysql/sqlc/querier.go
+internal/repo/persistent/mysql/sqlc/query.sql.go
+
+internal/repo/persistent/sqlite/sqlc/db.go
+internal/repo/persistent/sqlite/sqlc/models.go
+internal/repo/persistent/sqlite/sqlc/querier.go
+internal/repo/persistent/sqlite/sqlc/query.sql.go

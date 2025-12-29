@@ -5,12 +5,13 @@ import (
 	"database/sql"
 	"log"
 
-	"github.com/evrone/go-clean-template/config"
 	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib" // pgx stdlib driver
 	"github.com/pressly/goose"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
+
+	"gct/config"
 )
 
 // RunPostgresTestContainer is a function that runs a postgres test container

@@ -2,22 +2,23 @@ package client
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 
-	"github.com/evrone/go-clean-template/internal/domain"
-	"github.com/evrone/go-clean-template/pkg/jwt"
 	"github.com/google/uuid"
+
+	"gct/internal/domain"
+	apperrors "gct/pkg/errors"
+	"gct/pkg/jwt"
 )
 
-func (uc *UseCase) SignIn(ctx context.Context, in SignInInput) (SignInOutput, error) {
-	user, err := uc.repo.User.Client.GetByPhone(ctx, in.Phone)
+func (uc *UseCase) SignIn(ctx context.Context, in *domain.SignInIn) (*domain.SignInOut, error) {
+	user, err := uc.repo.Postgres.Client.GetByPhone(ctx, in.Phone)
 	if err != nil {
-		return SignInOutput{}, fmt.Errorf("user not found: %w", err)
+		return nil, apperrors.MapRepoToServiceError(ctx, err).WithInput(in)
 	}
 
 	if !user.ComparePassword(in.Password) {
-		return SignInOutput{}, fmt.Errorf("invalid password")
+		return nil, apperrors.MapRepoToServiceError(ctx, domain.ErrInvalidPassword).WithInput(in)
 	}
 
 	// Device Info
@@ -36,7 +37,7 @@ func (uc *UseCase) SignIn(ctx context.Context, in SignInInput) (SignInOutput, er
 		uc.cfg.JWT.RefreshTTL,
 	)
 	if err != nil {
-		return SignInOutput{}, fmt.Errorf("failed to generate refresh token: %w", err)
+		return nil, apperrors.MapRepoToServiceError(ctx, err).WithInput(in)
 	}
 
 	// Create Session
@@ -49,9 +50,9 @@ func (uc *UseCase) SignIn(ctx context.Context, in SignInInput) (SignInOutput, er
 		RefreshTokenHash: refToken.Hashed,
 	}
 
-	err = uc.repo.User.SessionRepo.Create(ctx, session)
+	err = uc.repo.Postgres.SessionRepo.Create(ctx, session)
 	if err != nil {
-		return SignInOutput{}, fmt.Errorf("failed to create session: %w", err)
+		return nil, apperrors.MapRepoToServiceError(ctx, err).WithInput(in)
 	}
 
 	// Generate Access Token
@@ -64,10 +65,10 @@ func (uc *UseCase) SignIn(ctx context.Context, in SignInInput) (SignInOutput, er
 		PrivateKey: uc.privateKey,
 	})
 	if err != nil {
-		return SignInOutput{}, fmt.Errorf("failed to generate access token: %w", err)
+		return nil, apperrors.MapRepoToServiceError(ctx, err).WithInput(in)
 	}
 
-	return SignInOutput{
+	return &domain.SignInOut{
 		AccessToken:  accessToken,
 		RefreshToken: refToken.String(),
 	}, nil

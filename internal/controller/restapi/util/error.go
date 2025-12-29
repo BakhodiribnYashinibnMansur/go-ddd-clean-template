@@ -3,7 +3,7 @@ package util
 import (
 	"errors"
 
-	"github.com/evrone/go-clean-template/pkg/logger"
+	"gct/pkg/logger"
 )
 
 func LogError(l logger.Log, err error, msg string) {
@@ -14,14 +14,19 @@ func LogError(l logger.Log, err error, msg string) {
 }
 
 var (
-	ErrParamIsEmpty    = "parameter %s is empty"
-	ErrParsingQuery    = "error while parsing query parameter: %s"
-	ErrUnmarshalData   = "error while unmarshalling data: %s"
-	ErrParamIsInvalid  = "parameter %s is invalid"
-	ErrUserIdNotFound  = errors.New("user id not found in context")
-	ErrParsingUUID     = "error while parsing UUID: %s"
-	ErrRoleNotFound    = errors.New("user role not found in context")
-	ErrDataUnsignedInt = "value %d is not a positive integer"
+	ErrParamIsEmpty       = errors.New("parameter is empty")
+	ErrParsingQuery       = errors.New("error while parsing query parameter")
+	ErrUnmarshalData      = errors.New("error while unmarshalling data")
+	ErrParamIsInvalid     = errors.New("parameter is invalid")
+	ErrUserIdNotFound     = errors.New("user id not found in context")
+	ErrParsingUUID        = errors.New("error while parsing UUID")
+	ErrRoleNotFound       = errors.New("user role not found in context")
+	ErrDataUnsignedInt    = errors.New("value is not a positive integer")
+	ErrSessionIDNotFound  = errors.New("sessionID not found")
+	ErrInvalidSessionID   = errors.New("sessionID is not a string or UUID")
+	ErrDateOrderEmpty     = errors.New("date-order query is empty")
+	ErrDateOrderInvalid   = errors.New("invalid date-order value. it is not same with asc or desc")
+	ErrApiKeyTypeNotFound = errors.New("API key type not found")
 )
 
 const (

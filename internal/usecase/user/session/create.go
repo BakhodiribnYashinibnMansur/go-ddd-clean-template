@@ -2,27 +2,28 @@ package session
 
 import (
 	"context"
-	"fmt"
 	"time"
 
-	"github.com/evrone/go-clean-template/internal/domain"
 	"github.com/google/uuid"
+
+	"gct/internal/domain"
+	apperrors "gct/pkg/errors"
 )
 
 // Create creates a new session.
-func (uc *UseCase) Create(ctx context.Context, s *domain.Session) (*domain.Session, error) {
-	s.ID = uuid.New()
+func (uc *UseCase) Create(ctx context.Context, in *domain.Session) (*domain.Session, error) {
+	in.ID = uuid.New()
 
 	duration := 24 * time.Hour
-	s.ExpiresAt = time.Now().Add(duration)
-	s.CreatedAt = time.Now()
-	s.UpdatedAt = time.Now()
-	s.LastActivity = time.Now()
-	s.Revoked = false
+	in.ExpiresAt = time.Now().Add(duration)
+	in.CreatedAt = time.Now()
+	in.UpdatedAt = time.Now()
+	in.LastActivity = time.Now()
+	in.Revoked = false
 
-	err := uc.repo.User.SessionRepo.Create(ctx, s)
+	err := uc.repo.Postgres.SessionRepo.Create(ctx, in)
 	if err != nil {
-		return nil, fmt.Errorf("SessionUseCase - Create - uc.repo.User.SessionRepo.Create: %w", err)
+		return nil, apperrors.MapRepoToServiceError(ctx, err).WithInput(in)
 	}
-	return s, nil
+	return in, nil
 }

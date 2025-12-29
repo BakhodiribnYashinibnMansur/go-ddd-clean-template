@@ -3,10 +3,11 @@ package session
 import (
 	"net/http"
 
-	"github.com/evrone/go-clean-template/internal/controller/restapi/response"
-	"github.com/evrone/go-clean-template/internal/controller/restapi/util"
-	"github.com/evrone/go-clean-template/internal/domain"
 	"github.com/gin-gonic/gin"
+
+	"gct/internal/controller/restapi/response"
+	"gct/internal/controller/restapi/util"
+	"gct/internal/domain"
 )
 
 // Create godoc

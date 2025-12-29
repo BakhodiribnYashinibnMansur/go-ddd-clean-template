@@ -1,9 +1,10 @@
 package session
 
 import (
-	"github.com/evrone/go-clean-template/internal/usecase"
-	"github.com/evrone/go-clean-template/pkg/logger"
 	"github.com/gin-gonic/gin"
+
+	"gct/internal/usecase"
+	"gct/pkg/logger"
 )
 
 type ControllerI interface {

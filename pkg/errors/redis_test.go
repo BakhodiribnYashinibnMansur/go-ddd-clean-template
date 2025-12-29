@@ -1,7 +1,6 @@
 package errors
 
 import (
-	"context"
 	"errors"
 	"testing"
 
@@ -9,7 +8,7 @@ import (
 )
 
 func TestHandleRedisError_NoError(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	result := HandleRedisError(ctx, nil, "user:123", nil)
 
 	if result != nil {
@@ -18,7 +17,7 @@ func TestHandleRedisError_NoError(t *testing.T) {
 }
 
 func TestHandleRedisError_Nil(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	result := HandleRedisError(ctx, redis.Nil, "user:123", map[string]any{
 		"operation": "get",
 	})
@@ -41,7 +40,7 @@ func TestHandleRedisError_Nil(t *testing.T) {
 }
 
 func TestHandleRedisError_ConnectionRefused(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	err := errors.New("dial tcp 127.0.0.1:6379: connection refused")
 
 	result := HandleRedisError(ctx, err, "user:123", nil)
@@ -60,7 +59,7 @@ func TestHandleRedisError_ConnectionRefused(t *testing.T) {
 }
 
 func TestHandleRedisError_Timeout(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	err := errors.New("i/o timeout")
 
 	result := HandleRedisError(ctx, err, "session:456", nil)
@@ -79,7 +78,7 @@ func TestHandleRedisError_Timeout(t *testing.T) {
 }
 
 func TestHandleRedisError_DeadlineExceeded(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	err := errors.New("context deadline exceeded")
 
 	result := HandleRedisError(ctx, err, "cache:data", nil)
@@ -94,7 +93,7 @@ func TestHandleRedisError_DeadlineExceeded(t *testing.T) {
 }
 
 func TestHandleRedisError_WrongPassword(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	err := errors.New("WRONGPASS invalid username-password pair")
 
 	result := HandleRedisError(ctx, err, "", nil)
@@ -113,7 +112,7 @@ func TestHandleRedisError_WrongPassword(t *testing.T) {
 }
 
 func TestHandleRedisError_WrongType(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	err := errors.New("WRONGTYPE Operation against a key holding the wrong kind of value")
 
 	result := HandleRedisError(ctx, err, "mykey", nil)
@@ -132,7 +131,7 @@ func TestHandleRedisError_WrongType(t *testing.T) {
 }
 
 func TestHandleRedisError_OutOfMemory(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	err := errors.New("OOM command not allowed when used memory > 'maxmemory'")
 
 	result := HandleRedisError(ctx, err, "data", nil)
@@ -151,7 +150,7 @@ func TestHandleRedisError_OutOfMemory(t *testing.T) {
 }
 
 func TestHandleRedisError_ReadOnly(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	err := errors.New("READONLY You can't write against a read only replica")
 
 	result := HandleRedisError(ctx, err, "key", nil)
@@ -170,7 +169,7 @@ func TestHandleRedisError_ReadOnly(t *testing.T) {
 }
 
 func TestHandleRedisError_ClusterDown(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	err := errors.New("CLUSTERDOWN The cluster is down")
 
 	result := HandleRedisError(ctx, err, "key", nil)
@@ -189,7 +188,7 @@ func TestHandleRedisError_ClusterDown(t *testing.T) {
 }
 
 func TestHandleRedisError_NoScript(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	err := errors.New("NOSCRIPT No matching script. Please use EVAL")
 
 	result := HandleRedisError(ctx, err, "", nil)
@@ -208,7 +207,7 @@ func TestHandleRedisError_NoScript(t *testing.T) {
 }
 
 func TestHandleRedisError_NoAuth(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	err := errors.New("NOAUTH Authentication required")
 
 	result := HandleRedisError(ctx, err, "", nil)
@@ -227,7 +226,7 @@ func TestHandleRedisError_NoAuth(t *testing.T) {
 }
 
 func TestHandleRedisError_EOF(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	err := errors.New("EOF")
 
 	result := HandleRedisError(ctx, err, "key", nil)
@@ -242,7 +241,7 @@ func TestHandleRedisError_EOF(t *testing.T) {
 }
 
 func TestHandleRedisError_BrokenPipe(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	err := errors.New("write: broken pipe")
 
 	result := HandleRedisError(ctx, err, "key", nil)
@@ -257,7 +256,7 @@ func TestHandleRedisError_BrokenPipe(t *testing.T) {
 }
 
 func TestHandleRedisError_GenericError(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	err := errors.New("some random redis error")
 
 	result := HandleRedisError(ctx, err, "mykey", map[string]any{
@@ -283,7 +282,7 @@ func TestHandleRedisError_GenericError(t *testing.T) {
 }
 
 func TestHandleRedisError_EmptyKey(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	result := HandleRedisError(ctx, redis.Nil, "", nil)
 
@@ -298,7 +297,7 @@ func TestHandleRedisError_EmptyKey(t *testing.T) {
 }
 
 func TestHandleRedisError_ExtraFields(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	extraFields := map[string]any{
 		"user_id":   123,
@@ -347,7 +346,7 @@ func TestHandleRedisError_MultiplePatterns(t *testing.T) {
 		},
 	}
 
-	ctx := context.Background()
+	ctx := t.Context()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := HandleRedisError(ctx, tt.err, "key", nil)
@@ -371,38 +370,38 @@ func TestHandleRedisError_MultiplePatterns(t *testing.T) {
 
 // Benchmark tests
 func BenchmarkHandleRedisError_Nil(b *testing.B) {
-	ctx := context.Background()
-	for i := 0; i < b.N; i++ {
+	ctx := b.Context()
+	for range b.N {
 		HandleRedisError(ctx, redis.Nil, "key", nil)
 	}
 }
 
 func BenchmarkHandleRedisError_ConnectionError(b *testing.B) {
-	ctx := context.Background()
+	ctx := b.Context()
 	err := errors.New("connection refused")
 
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		HandleRedisError(ctx, err, "key", nil)
 	}
 }
 
 func BenchmarkHandleRedisError_Timeout(b *testing.B) {
-	ctx := context.Background()
+	ctx := b.Context()
 	err := errors.New("i/o timeout")
 
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		HandleRedisError(ctx, err, "key", nil)
 	}
 }
 
 func BenchmarkHandleRedisError_GenericError(b *testing.B) {
-	ctx := context.Background()
+	ctx := b.Context()
 	err := errors.New("some redis error")
 
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		HandleRedisError(ctx, err, "key", nil)
 	}
 }

@@ -1,0 +1,131 @@
+syntax = "proto3";
+
+package grpc.v1;
+
+option go_package = "gct/docs/protobuf/genproto/v1/user";
+
+import "v1/common/pagination.proto";
+
+// ============================================================================
+// MESSAGE DEFINITIONS
+// ============================================================================
+
+// SessionDeviceType represents the type of device
+enum SessionDeviceType {
+  DEVICE_TYPE_UNSPECIFIED = 0;
+  DEVICE_TYPE_DESKTOP = 1;
+  DEVICE_TYPE_MOBILE = 2;
+  DEVICE_TYPE_TABLET = 3;
+  DEVICE_TYPE_BOT = 4;
+  DEVICE_TYPE_TV = 5;
+}
+
+// Session represents a user session
+message Session {
+  string id = 1;
+  string deviceId = 2;
+  optional string deviceName = 3;
+  SessionDeviceType deviceType = 4;
+  optional string ipAddress = 5;
+  optional string userAgent = 6;
+  optional string fcmToken = 7;
+  int64 userId = 8;
+  int64 companyId = 9;
+  string refreshTokenHash = 10; // Only used in internal communication
+  int64 expiresAt = 11;
+  int64 lastActivity = 12;
+  bool revoked = 13;
+  int64 createdAt = 14;
+  int64 updatedAt = 15;
+}
+
+// SessionFilter represents a filter for session queries
+message SessionFilter {
+  optional string id = 1;
+  optional int64 userId = 2;
+  optional bool revoked = 3;
+}
+
+// SessionsFilter represents a filter for multiple sessions with pagination
+message SessionsFilter {
+  SessionFilter sessionFilter = 1;
+  Pagination pagination = 2;
+}
+
+// SessionCreateRequest represents a request to create a session
+message SessionCreateRequest {
+  string deviceId = 1;
+  optional string deviceName = 2;
+  SessionDeviceType deviceType = 3;
+  optional string ipAddress = 4;
+  optional string userAgent = 5;
+  optional string fcmToken = 6;
+  int64 userId = 7;
+  int64 companyId = 8;
+  int64 expiresAt = 9;
+}
+
+// SessionUpdateRequest represents a request to update a session
+message SessionUpdateRequest {
+  string id = 1;
+  optional string deviceName = 2;
+  optional SessionDeviceType deviceType = 3;
+  optional string ipAddress = 4;
+  optional string userAgent = 5;
+  optional string fcmToken = 6;
+  optional int64 expiresAt = 7;
+  optional int64 lastActivity = 8;
+}
+
+// SessionResponse represents a session response
+message SessionResponse {
+  Session session = 1;
+}
+
+// SessionsResponse represents multiple sessions response
+message SessionsResponse {
+  repeated Session sessions = 1;
+  Pagination pagination = 2;
+}
+
+// SessionRevokeRequest represents a request to revoke sessions
+message SessionRevokeRequest {
+  optional string sessionId = 1;
+  optional int64 userId = 2;
+  bool revokeAll = 3;
+}
+
+// SessionRevokeResponse represents revoke session response
+message SessionRevokeResponse {
+  bool success = 1;
+  string message = 2;
+  int64 revokedCount = 3;
+}
+
+// ============================================================================
+// SERVICE DEFINITIONS
+// ============================================================================
+
+// The Session service definition.
+service SessionService {
+  // RPC method to create a new session.
+  rpc CreateSession (SessionCreateRequest) returns (SessionResponse);
+  
+  // RPC method to get session by ID.
+  rpc GetSession (SessionFilter) returns (SessionResponse);
+  
+  // RPC method to get sessions with pagination and filtering.
+  rpc GetSessions (SessionsFilter) returns (SessionsResponse);
+  
+  // RPC method to update session information.
+  rpc UpdateSession (SessionUpdateRequest) returns (SessionResponse);
+  
+  // RPC method to delete session.
+  rpc DeleteSession (SessionFilter) returns (SessionResponse);
+  
+  // RPC method to revoke session(s).
+  rpc RevokeSession (SessionRevokeRequest) returns (SessionRevokeResponse);
+  
+  // RPC method to update session activity.
+  rpc UpdateActivity (SessionFilter) returns (SessionResponse);
+}

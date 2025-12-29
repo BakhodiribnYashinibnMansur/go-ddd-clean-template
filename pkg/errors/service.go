@@ -54,12 +54,12 @@ var serviceMessages = map[string]string{
 }
 
 // NewServiceError creates a new service error
-func NewServiceError(ctx context.Context, code string, message string) *AppError {
+func NewServiceError(ctx context.Context, code, message string) *AppError {
 	return New(ctx, code, message)
 }
 
 // WrapServiceError wraps an error as service error
-func WrapServiceError(ctx context.Context, err error, code string, message string) *AppError {
+func WrapServiceError(ctx context.Context, err error, code, message string) *AppError {
 	return Wrap(ctx, err, code, message)
 }
 

@@ -1,10 +1,10 @@
 package user
 
 import (
-	"github.com/evrone/go-clean-template/internal/repo/persistent/postgres/user/client"
-	"github.com/evrone/go-clean-template/internal/repo/persistent/postgres/user/session"
-	"github.com/evrone/go-clean-template/pkg/db/postgres"
-	"github.com/evrone/go-clean-template/pkg/logger"
+	"gct/internal/repo/persistent/postgres/user/client"
+	"gct/internal/repo/persistent/postgres/user/session"
+	"gct/pkg/db/postgres"
+	"gct/pkg/logger"
 )
 
 // User aggregates user-related repositories.

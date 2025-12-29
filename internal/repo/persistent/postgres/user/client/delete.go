@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	apperrors "github.com/evrone/go-clean-template/pkg/errors"
+	apperrors "gct/pkg/errors"
 )
 
 func (r *Repo) Delete(ctx context.Context, id int64) error {
@@ -15,19 +15,13 @@ func (r *Repo) Delete(ctx context.Context, id int64) error {
 		Where("id = ? AND deleted_at = 0", id).
 		ToSql()
 	if err != nil {
-		return apperrors.AutoSource(
-			apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase,
-				"failed to build delete SQL query")).
-			WithField("user_id", id).
-			WithDetails("Error occurred while building soft DELETE query")
+		return apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase,
+			"failed to build delete SQL query")
 	}
 
 	_, err = r.pool.Exec(ctx, sql, args...)
 	if err != nil {
-		// Use centralized PostgreSQL error handler!
-		return apperrors.HandlePgError(ctx, err, "users", map[string]any{
-			"user_id": id,
-		})
+		return apperrors.HandlePgError(ctx, err, "users", nil)
 	}
 
 	return nil

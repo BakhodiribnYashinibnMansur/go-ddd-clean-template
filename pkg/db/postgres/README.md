@@ -19,9 +19,9 @@ PostgreSQL connection pool with functional options pattern.
 import (
     "context"
     
-    "github.com/evrone/go-clean-template/config"
-    "github.com/evrone/go-clean-template/pkg/logger"
-    "github.com/evrone/go-clean-template/pkg/postgres"
+    "gct/config"
+    "gct/pkg/logger"
+    "gct/pkg/postgres"
 )
 
 ctx := context.Background()

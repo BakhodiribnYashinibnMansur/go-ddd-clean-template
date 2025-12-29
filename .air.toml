@@ -1,0 +1,53 @@
+root = "./"
+testdata_dir = "testdata"
+tmp_dir = "bin"
+
+[build]
+args_bin = []
+bin = "./bin/main"
+#build golang app. you set up your directory which is located main.go
+cmd = "go build  -a -installsuffix cgo -o ./bin ./command/main.go"
+delay = 0
+exclude_dir = ["assets", "tmp", "vendor", "testdata", "docs", "public"]
+exclude_file = []
+exclude_regex = ["_test.go"]
+exclude_unchanged = false
+follow_symlink = false
+full_bin = ""
+include_dir = []
+include_ext = ["go", "tpl", "tmpl", "html"]
+include_file = [".env"]
+kill_delay = "10s"
+log = "build-errors.log"
+poll = false
+poll_interval = 0
+post_cmd = []
+#command before build. you set up swaggo command
+pre_cmd = ["swag init -g command/main.go  -o docs > /dev/null"]
+rerun = false
+rerun_delay = 5000
+send_interrupt = false
+stop_on_error = false
+
+[color]
+app = ""
+build = "yellow"
+main = "magenta"
+runner = "green"
+watcher = "cyan"
+
+[log]
+main_only = false
+time = false
+
+[misc]
+clean_on_exit = true
+
+[proxy]
+app_port = 0
+enabled = false
+proxy_port = 0
+
+[screen]
+clear_on_rebuild = false
+keep_scroll = true

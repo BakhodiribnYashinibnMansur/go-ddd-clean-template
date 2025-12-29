@@ -13,7 +13,7 @@ import (
 func GetStringParam(ctx *gin.Context, paramName string) (string, error) {
 	param := ctx.Param(paramName)
 	if param == "" {
-		return "", fmt.Errorf(ErrParamIsEmpty, paramName)
+		return "", fmt.Errorf("%w: %s", ErrParamIsEmpty, paramName)
 	}
 	return param, nil
 }
@@ -25,11 +25,11 @@ func GetNullStringParam(ctx *gin.Context, paramName string) (string, error) {
 func GetUUIDParam(ctx *gin.Context, paramName string) (uuid.UUID, error) {
 	queryData := ctx.Param(paramName)
 	if queryData == "" {
-		return uuid.Nil, fmt.Errorf(ErrParamIsEmpty, paramName)
+		return uuid.Nil, fmt.Errorf("%w: %s", ErrParamIsEmpty, paramName)
 	}
 	queryUUID, err := uuid.Parse(queryData)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf(ErrParamIsInvalid, queryData)
+		return uuid.Nil, fmt.Errorf("%w: %s", ErrParamIsInvalid, queryData)
 	}
 	return queryUUID, nil
 }
@@ -39,7 +39,7 @@ func GetNullUUIDParam(ctx *gin.Context, paramName string) (uuid.UUID, error) {
 	if queryData != "" {
 		queryUUID, err := uuid.Parse(queryData)
 		if err != nil {
-			return uuid.Nil, fmt.Errorf(ErrParsingUUID, err.Error())
+			return uuid.Nil, fmt.Errorf("%w: %s", ErrParsingUUID, err.Error())
 		}
 		return queryUUID, nil
 	}
@@ -49,11 +49,11 @@ func GetNullUUIDParam(ctx *gin.Context, paramName string) (uuid.UUID, error) {
 func GetInt64Param(ctx *gin.Context, paramName string) (int64, error) {
 	queryData := ctx.Param(paramName)
 	if queryData == "" {
-		return 0, fmt.Errorf(ErrParamIsEmpty, paramName)
+		return 0, fmt.Errorf("%w: %s", ErrParamIsEmpty, paramName)
 	}
 	queryInt, err := strconv.ParseInt(queryData, 10, 64)
 	if err != nil {
-		return 0, fmt.Errorf(ErrParsingQuery, err.Error())
+		return 0, fmt.Errorf("%w: %s", ErrParsingQuery, err.Error())
 	}
 	return queryInt, nil
 }
@@ -63,7 +63,7 @@ func GetNullInt64Param(ctx *gin.Context, paramName string) (int64, error) {
 	if queryData != "" {
 		queryInt, err := strconv.ParseInt(queryData, 10, 64)
 		if err != nil {
-			return 0, fmt.Errorf(ErrParsingQuery, err.Error())
+			return 0, fmt.Errorf("%w: %s", ErrParsingQuery, err.Error())
 		}
 		return queryInt, nil
 	}
@@ -75,7 +75,7 @@ func GetNullIntParam(ctx *gin.Context, paramName string) (int, error) {
 	if queryData != "" {
 		queryInt, err := strconv.Atoi(queryData)
 		if err != nil {
-			return 0, fmt.Errorf(ErrParamIsInvalid, queryData)
+			return 0, fmt.Errorf("%w: %s", ErrParamIsInvalid, queryData)
 		}
 		return queryInt, nil
 	}
@@ -87,7 +87,7 @@ func GetNullFloat64Param(ctx *gin.Context, paramName string) (float64, error) {
 	if queryData != "" {
 		queryFloat, err := strconv.ParseFloat(queryData, 64)
 		if err != nil {
-			return 0, fmt.Errorf(ErrParsingQuery, err.Error())
+			return 0, fmt.Errorf("%w: %s", ErrParsingQuery, err.Error())
 		}
 		return queryFloat, nil
 	}

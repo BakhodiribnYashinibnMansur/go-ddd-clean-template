@@ -7,11 +7,12 @@ import (
 	"time"
 
 	"github.com/Masterminds/squirrel"
-	"github.com/evrone/go-clean-template/config"
-	"github.com/evrone/go-clean-template/pkg/logger"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/tracelog"
 	"go.uber.org/zap"
+
+	"gct/config"
+	"gct/pkg/logger"
 )
 
 const (

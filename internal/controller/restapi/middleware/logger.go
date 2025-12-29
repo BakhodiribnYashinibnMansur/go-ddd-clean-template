@@ -3,9 +3,10 @@ package middleware
 import (
 	"time"
 
-	"github.com/evrone/go-clean-template/pkg/logger"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
+
+	"gct/pkg/logger"
 )
 
 // Logger -.

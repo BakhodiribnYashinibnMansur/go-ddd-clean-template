@@ -13,7 +13,7 @@ const (
 	FCM_TYPE_CRAFTSMAN = "CRAFTSMAN"
 )
 
-func (f *Firebase) SendNotification(ctx context.Context, token string, fcmType string, content Content, data map[string]string) error {
+func (f *Firebase) SendNotification(ctx context.Context, token, fcmType string, content Content, data map[string]string) error {
 	notification := &messaging.Message{
 		Token: token,
 		Data:  data,

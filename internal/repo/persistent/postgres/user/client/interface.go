@@ -3,16 +3,13 @@ package client
 import (
 	"context"
 
-	"github.com/evrone/go-clean-template/internal/domain"
+	"gct/internal/domain"
 )
 
 // UserRepoI defines the interface for user repository operations.
 type RepoI interface {
 	// Create creates a new user in the database.
 	Create(ctx context.Context, u *domain.User) error
-
-	// User retrieves a user by their ID.
-	User(ctx context.Context, id int64) (*domain.User, error)
 
 	// GetByPhone retrieves a user by their phone number.
 	GetByPhone(ctx context.Context, phone string) (*domain.User, error)
@@ -27,5 +24,5 @@ type RepoI interface {
 	Get(ctx context.Context, filter *domain.UserFilter) (*domain.User, error)
 
 	// Users retrieves users based on the provided filter and pagination.
-	Users(ctx context.Context, filter *domain.UsersFilter) ([]*domain.User, int, error)
+	Gets(ctx context.Context, filter *domain.UsersFilter) ([]*domain.User, int, error)
 }

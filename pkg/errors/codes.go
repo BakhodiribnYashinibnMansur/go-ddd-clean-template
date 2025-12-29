@@ -66,4 +66,20 @@ const (
 	// 504 - Timeout
 	ErrTimeout  = "TIMEOUT"
 	CodeTimeout = "1020"
+
+	// Storage errors (MinIO/File Upload)
+	ErrBucketNotFound  = "BUCKET_NOT_FOUND"
+	CodeBucketNotFound = "1021"
+
+	ErrFileNotFound  = "FILE_NOT_FOUND"
+	CodeFileNotFound = "1022"
+
+	ErrInvalidFileFormat  = "INVALID_FILE_FORMAT"
+	CodeInvalidFileFormat = "1023"
+
+	ErrUploadFailed  = "UPLOAD_FAILED"
+	CodeUploadFailed = "1024"
+
+	ErrDeleteFailed  = "DELETE_FAILED"
+	CodeDeleteFailed = "1025"
 )

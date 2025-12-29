@@ -3,11 +3,11 @@ package client
 import (
 	"net/http"
 
-	"github.com/evrone/go-clean-template/internal/controller/restapi/response"
-	"github.com/evrone/go-clean-template/internal/controller/restapi/util"
-	"github.com/evrone/go-clean-template/internal/domain"
-	uc_client "github.com/evrone/go-clean-template/internal/usecase/user/client"
 	"github.com/gin-gonic/gin"
+
+	"gct/internal/controller/restapi/response"
+	"gct/internal/controller/restapi/util"
+	"gct/internal/domain"
 )
 
 // Users godoc
@@ -43,11 +43,11 @@ func (c *Controller) Users(ctx *gin.Context) {
 		Pagination: &pagination,
 	}
 
-	out, err := c.u.User.Client.Users(ctx.Request.Context(), uc_client.UsersInput{Filter: filter})
+	users, total, err := c.u.User.Client.Gets(ctx.Request.Context(), &filter)
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusInternalServerError, err, nil, false)
 		return
 	}
 
-	response.ControllerResponse(ctx, http.StatusOK, out.Users, pagination, true)
+	response.ControllerResponse(ctx, http.StatusOK, users, total, true)
 }

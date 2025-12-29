@@ -6,10 +6,11 @@ import (
 	"errors"
 	"net"
 
-	"github.com/evrone/go-clean-template/pkg/logger"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 	pbgrpc "google.golang.org/grpc"
+
+	"gct/pkg/logger"
 )
 
 const (

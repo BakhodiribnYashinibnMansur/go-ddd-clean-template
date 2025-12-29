@@ -2,6 +2,7 @@ package http
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -42,7 +43,7 @@ func (s *Server) Run(port int, handler http.Handler) error {
 	}
 
 	err := s.httpServer.ListenAndServe()
-	if err != nil && err != http.ErrServerClosed {
+	if err != nil && !errors.Is(err, http.ErrServerClosed) {
 		return err
 	}
 

@@ -1,0 +1,70 @@
+[
+    {
+        "create": "users"
+    },
+    {
+        "createIndexes": "users",
+        "indexes": [
+            {
+                "key": {
+                    "phone": 1
+                },
+                "name": "phone_unique",
+                "unique": true
+            },
+            {
+                "key": {
+                    "username": 1
+                },
+                "name": "username_unique",
+                "unique": true,
+                "partialFilterExpression": {
+                    "username": {
+                        "$exists": true
+                    }
+                }
+            },
+            {
+                "key": {
+                    "deleted_at": 1
+                },
+                "name": "deleted_at_idx"
+            }
+        ]
+    },
+    {
+        "create": "sessions"
+    },
+    {
+        "createIndexes": "sessions",
+        "indexes": [
+            {
+                "key": {
+                    "user_id": 1
+                },
+                "name": "user_id_idx"
+            },
+            {
+                "key": {
+                    "device_id": 1
+                },
+                "name": "device_id_idx"
+            },
+            {
+                "key": {
+                    "expires_at": 1
+                },
+                "name": "expires_at_idx"
+            },
+            {
+                "key": {
+                    "revoked": 1
+                },
+                "name": "revoked_active_idx",
+                "partialFilterExpression": {
+                    "revoked": false
+                }
+            }
+        ]
+    }
+]

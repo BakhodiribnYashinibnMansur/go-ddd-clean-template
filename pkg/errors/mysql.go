@@ -25,12 +25,12 @@ func HandleMySQLError(ctx context.Context, err error, table string, extraFields 
 				"record not found"))
 
 		if table != "" {
-			appErr.WithField("table", table)
+			_ = appErr.WithField("table", table)
 		}
-		appErr.WithDetails("No matching record found in database")
+		_ = appErr.WithDetails("No matching record found in database")
 
 		for key, value := range extraFields {
-			appErr.WithField(key, value)
+			_ = appErr.WithField(key, value)
 		}
 		return appErr
 	}
@@ -44,7 +44,7 @@ func HandleMySQLError(ctx context.Context, err error, table string, extraFields 
 	// Check for connection errors in error message
 	errMsg := err.Error()
 	if isMySQLConnectionError(errMsg) {
-		return handleMySQLConnectionError(ctx, err, table, extraFields)
+		return handleMySQLConnectionError(ctx, table, extraFields)
 	}
 
 	// ============================================================================
@@ -55,12 +55,12 @@ func HandleMySQLError(ctx context.Context, err error, table string, extraFields 
 			"mysql operation failed"))
 
 	if table != "" {
-		appErr.WithField("table", table)
+		_ = appErr.WithField("table", table)
 	}
-	appErr.WithDetails(errMsg)
+	_ = appErr.WithDetails(errMsg)
 
 	for key, value := range extraFields {
-		appErr.WithField(key, value)
+		_ = appErr.WithField(key, value)
 	}
 	return appErr
 }
@@ -77,14 +77,14 @@ func handleMySQLSpecificError(ctx context.Context, mysqlErr *mysql.MySQLError, t
 				"duplicate entry"))
 
 		if table != "" {
-			appErr.WithField("table", table)
+			_ = appErr.WithField("table", table)
 		}
-		appErr.WithField("mysql_code", mysqlErr.Number).
+		_ = appErr.WithField("mysql_code", mysqlErr.Number).
 			WithField("sql_state", mysqlErr.SQLState[0]).
 			WithDetails("A record with this unique constraint already exists")
 
 		for key, value := range extraFields {
-			appErr.WithField(key, value)
+			_ = appErr.WithField(key, value)
 		}
 		return appErr
 
@@ -97,14 +97,14 @@ func handleMySQLSpecificError(ctx context.Context, mysqlErr *mysql.MySQLError, t
 				"foreign key constraint violation"))
 
 		if table != "" {
-			appErr.WithField("table", table)
+			_ = appErr.WithField("table", table)
 		}
-		appErr.WithField("mysql_code", mysqlErr.Number).
+		_ = appErr.WithField("mysql_code", mysqlErr.Number).
 			WithField("sql_state", mysqlErr.SQLState[0]).
 			WithDetails(mysqlErr.Message)
 
 		for key, value := range extraFields {
-			appErr.WithField(key, value)
+			_ = appErr.WithField(key, value)
 		}
 		return appErr
 
@@ -117,14 +117,14 @@ func handleMySQLSpecificError(ctx context.Context, mysqlErr *mysql.MySQLError, t
 				"cannot delete or update parent row"))
 
 		if table != "" {
-			appErr.WithField("table", table)
+			_ = appErr.WithField("table", table)
 		}
-		appErr.WithField("mysql_code", mysqlErr.Number).
+		_ = appErr.WithField("mysql_code", mysqlErr.Number).
 			WithField("sql_state", mysqlErr.SQLState[0]).
 			WithDetails("Foreign key constraint prevents this operation")
 
 		for key, value := range extraFields {
-			appErr.WithField(key, value)
+			_ = appErr.WithField(key, value)
 		}
 		return appErr
 
@@ -137,14 +137,14 @@ func handleMySQLSpecificError(ctx context.Context, mysqlErr *mysql.MySQLError, t
 				"null value constraint violation"))
 
 		if table != "" {
-			appErr.WithField("table", table)
+			_ = appErr.WithField("table", table)
 		}
-		appErr.WithField("mysql_code", mysqlErr.Number).
+		_ = appErr.WithField("mysql_code", mysqlErr.Number).
 			WithField("sql_state", mysqlErr.SQLState[0]).
 			WithDetails("Required field cannot be null")
 
 		for key, value := range extraFields {
-			appErr.WithField(key, value)
+			_ = appErr.WithField(key, value)
 		}
 		return appErr
 
@@ -157,14 +157,14 @@ func handleMySQLSpecificError(ctx context.Context, mysqlErr *mysql.MySQLError, t
 				"table does not exist"))
 
 		if table != "" {
-			appErr.WithField("table", table)
+			_ = appErr.WithField("table", table)
 		}
-		appErr.WithField("mysql_code", mysqlErr.Number).
+		_ = appErr.WithField("mysql_code", mysqlErr.Number).
 			WithField("sql_state", mysqlErr.SQLState[0]).
 			WithDetails(mysqlErr.Message)
 
 		for key, value := range extraFields {
-			appErr.WithField(key, value)
+			_ = appErr.WithField(key, value)
 		}
 		return appErr
 
@@ -177,14 +177,14 @@ func handleMySQLSpecificError(ctx context.Context, mysqlErr *mysql.MySQLError, t
 				"unknown column"))
 
 		if table != "" {
-			appErr.WithField("table", table)
+			_ = appErr.WithField("table", table)
 		}
-		appErr.WithField("mysql_code", mysqlErr.Number).
+		_ = appErr.WithField("mysql_code", mysqlErr.Number).
 			WithField("sql_state", mysqlErr.SQLState[0]).
 			WithDetails(mysqlErr.Message)
 
 		for key, value := range extraFields {
-			appErr.WithField(key, value)
+			_ = appErr.WithField(key, value)
 		}
 		return appErr
 
@@ -197,14 +197,14 @@ func handleMySQLSpecificError(ctx context.Context, mysqlErr *mysql.MySQLError, t
 				"lock wait timeout"))
 
 		if table != "" {
-			appErr.WithField("table", table)
+			_ = appErr.WithField("table", table)
 		}
-		appErr.WithField("mysql_code", mysqlErr.Number).
+		_ = appErr.WithField("mysql_code", mysqlErr.Number).
 			WithField("sql_state", mysqlErr.SQLState[0]).
 			WithDetails("Lock wait timeout exceeded, transaction rolled back")
 
 		for key, value := range extraFields {
-			appErr.WithField(key, value)
+			_ = appErr.WithField(key, value)
 		}
 		return appErr
 
@@ -217,14 +217,14 @@ func handleMySQLSpecificError(ctx context.Context, mysqlErr *mysql.MySQLError, t
 				"deadlock detected"))
 
 		if table != "" {
-			appErr.WithField("table", table)
+			_ = appErr.WithField("table", table)
 		}
-		appErr.WithField("mysql_code", mysqlErr.Number).
+		_ = appErr.WithField("mysql_code", mysqlErr.Number).
 			WithField("sql_state", mysqlErr.SQLState[0]).
 			WithDetails("Deadlock found when trying to get lock, please retry transaction")
 
 		for key, value := range extraFields {
-			appErr.WithField(key, value)
+			_ = appErr.WithField(key, value)
 		}
 		return appErr
 
@@ -237,14 +237,14 @@ func handleMySQLSpecificError(ctx context.Context, mysqlErr *mysql.MySQLError, t
 				"too many connections"))
 
 		if table != "" {
-			appErr.WithField("table", table)
+			_ = appErr.WithField("table", table)
 		}
-		appErr.WithField("mysql_code", mysqlErr.Number).
+		_ = appErr.WithField("mysql_code", mysqlErr.Number).
 			WithField("sql_state", mysqlErr.SQLState[0]).
 			WithDetails("Too many connections to MySQL server")
 
 		for key, value := range extraFields {
-			appErr.WithField(key, value)
+			_ = appErr.WithField(key, value)
 		}
 		return appErr
 
@@ -257,14 +257,14 @@ func handleMySQLSpecificError(ctx context.Context, mysqlErr *mysql.MySQLError, t
 				"access denied"))
 
 		if table != "" {
-			appErr.WithField("table", table)
+			_ = appErr.WithField("table", table)
 		}
-		appErr.WithField("mysql_code", mysqlErr.Number).
+		_ = appErr.WithField("mysql_code", mysqlErr.Number).
 			WithField("sql_state", mysqlErr.SQLState[0]).
 			WithDetails("Access denied for user")
 
 		for key, value := range extraFields {
-			appErr.WithField(key, value)
+			_ = appErr.WithField(key, value)
 		}
 		return appErr
 
@@ -277,14 +277,14 @@ func handleMySQLSpecificError(ctx context.Context, mysqlErr *mysql.MySQLError, t
 				"access denied for database"))
 
 		if table != "" {
-			appErr.WithField("table", table)
+			_ = appErr.WithField("table", table)
 		}
-		appErr.WithField("mysql_code", mysqlErr.Number).
+		_ = appErr.WithField("mysql_code", mysqlErr.Number).
 			WithField("sql_state", mysqlErr.SQLState[0]).
 			WithDetails(mysqlErr.Message)
 
 		for key, value := range extraFields {
-			appErr.WithField(key, value)
+			_ = appErr.WithField(key, value)
 		}
 		return appErr
 
@@ -297,14 +297,14 @@ func handleMySQLSpecificError(ctx context.Context, mysqlErr *mysql.MySQLError, t
 				"field has no default value"))
 
 		if table != "" {
-			appErr.WithField("table", table)
+			_ = appErr.WithField("table", table)
 		}
-		appErr.WithField("mysql_code", mysqlErr.Number).
+		_ = appErr.WithField("mysql_code", mysqlErr.Number).
 			WithField("sql_state", mysqlErr.SQLState[0]).
 			WithDetails(mysqlErr.Message)
 
 		for key, value := range extraFields {
-			appErr.WithField(key, value)
+			_ = appErr.WithField(key, value)
 		}
 		return appErr
 
@@ -317,14 +317,14 @@ func handleMySQLSpecificError(ctx context.Context, mysqlErr *mysql.MySQLError, t
 				"data too long"))
 
 		if table != "" {
-			appErr.WithField("table", table)
+			_ = appErr.WithField("table", table)
 		}
-		appErr.WithField("mysql_code", mysqlErr.Number).
+		_ = appErr.WithField("mysql_code", mysqlErr.Number).
 			WithField("sql_state", mysqlErr.SQLState[0]).
 			WithDetails("Data too long for column")
 
 		for key, value := range extraFields {
-			appErr.WithField(key, value)
+			_ = appErr.WithField(key, value)
 		}
 		return appErr
 
@@ -337,14 +337,14 @@ func handleMySQLSpecificError(ctx context.Context, mysqlErr *mysql.MySQLError, t
 				"mysql error"))
 
 		if table != "" {
-			appErr.WithField("table", table)
+			_ = appErr.WithField("table", table)
 		}
-		appErr.WithField("mysql_code", mysqlErr.Number).
+		_ = appErr.WithField("mysql_code", mysqlErr.Number).
 			WithField("sql_state", mysqlErr.SQLState[0]).
 			WithDetails(mysqlErr.Message)
 
 		for key, value := range extraFields {
-			appErr.WithField(key, value)
+			_ = appErr.WithField(key, value)
 		}
 		return appErr
 	}
@@ -365,18 +365,18 @@ func isMySQLConnectionError(msg string) bool {
 		strings.Contains(msg, "can't connect to MySQL server")
 }
 
-func handleMySQLConnectionError(ctx context.Context, err error, table string, extraFields map[string]any) *AppError {
+func handleMySQLConnectionError(ctx context.Context, table string, extraFields map[string]any) *AppError {
 	appErr := AutoSource(
 		NewRepoError(ctx, ErrRepoConnection,
 			"mysql connection error"))
 
 	if table != "" {
-		appErr.WithField("table", table)
+		_ = appErr.WithField("table", table)
 	}
-	appErr.WithDetails("Failed to connect to MySQL server")
+	_ = appErr.WithDetails("Failed to connect to MySQL server")
 
 	for key, value := range extraFields {
-		appErr.WithField(key, value)
+		_ = appErr.WithField(key, value)
 	}
 	return appErr
 }

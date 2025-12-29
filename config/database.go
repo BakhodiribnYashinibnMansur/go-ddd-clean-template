@@ -33,8 +33,8 @@ type BaseDB struct {
 	Name     string `env:"NAME,required"`
 	User     string `env:"USER,required"`
 	Password string `env:"PASSWORD,required"`
-	SSLMode  string `env:"SSL_MODE" envDefault:"disable"`
-	PoolMax  int    `env:"POOL_MAX" envDefault:"10"`
+	SSLMode  string `env:"SSL_MODE"          envDefault:"disable"`
+	PoolMax  int    `env:"POOL_MAX"          envDefault:"10"`
 }
 
 // Database specific configs -.

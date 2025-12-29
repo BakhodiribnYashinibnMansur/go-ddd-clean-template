@@ -3,10 +3,16 @@ package session
 import (
 	"context"
 
-	"github.com/evrone/go-clean-template/internal/domain"
+	"gct/internal/domain"
+	apperrors "gct/pkg/errors"
 )
 
 // Revoke revokes a session.
-func (uc *UseCase) Revoke(ctx context.Context, filter *domain.SessionFilter) error {
-	return uc.repo.User.SessionRepo.Revoke(ctx, filter)
+func (uc *UseCase) Revoke(ctx context.Context, in *domain.SessionFilter) error {
+	repo := uc.repo.Postgres.SessionRepo
+	err := repo.Revoke(ctx, in)
+	if err != nil {
+		return apperrors.MapRepoToServiceError(ctx, err).WithInput(in)
+	}
+	return nil
 }

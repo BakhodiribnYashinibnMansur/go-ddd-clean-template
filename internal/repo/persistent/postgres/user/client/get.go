@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/Masterminds/squirrel"
-	"github.com/evrone/go-clean-template/internal/domain"
-	apperrors "github.com/evrone/go-clean-template/pkg/errors"
-	"github.com/jackc/pgx/v5"
+
+	"gct/internal/domain"
+	apperrors "gct/pkg/errors"
 )
 
 func (r *Repo) Get(ctx context.Context, filter *domain.UserFilter) (*domain.User, error) {
@@ -15,21 +15,18 @@ func (r *Repo) Get(ctx context.Context, filter *domain.UserFilter) (*domain.User
 		From("users").
 		Where("deleted_at = 0")
 
-	if filter.ID != nil {
+	if !filter.IsIDNull() {
 		qb = qb.Where(squirrel.Eq{"id": *filter.ID})
 	}
 
-	if filter.Phone != nil {
+	if !filter.IsPhoneNull() {
 		qb = qb.Where(squirrel.Eq{"phone": *filter.Phone})
 	}
 
 	sql, args, err := qb.ToSql()
 	if err != nil {
-		return nil, apperrors.AutoSource(
-			apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase,
-				"failed to build SQL query")).
-			WithField("operation", "build_query").
-			WithDetails("Error occurred while building SQL query with squirrel")
+		return nil, apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase,
+			"failed to build SQL query")
 	}
 
 	var u domain.User
@@ -37,27 +34,11 @@ func (r *Repo) Get(ctx context.Context, filter *domain.UserFilter) (*domain.User
 		&u.ID, &u.Username, &u.Phone, &u.PasswordHash, &u.Salt, &u.CreatedAt, &u.UpdatedAt, &u.DeletedAt, &u.LastSeen,
 	)
 	if err != nil {
-		if err == pgx.ErrNoRows {
-			return nil, apperrors.AutoSource(
-				apperrors.NewRepoError(ctx, apperrors.ErrRepoNotFound,
-					"user not found in database")).
-				WithField("table", "users").
-				WithField("filter_id", filter.ID).
-				WithField("filter_phone", filter.Phone).
-				WithDetails("No user record exists with the given filter criteria")
-		}
-
-		return nil, apperrors.AutoSource(
-			apperrors.WrapRepoError(ctx, err, apperrors.ErrRepoDatabase,
-				"failed to query user from database")).
-			WithField("table", "users").
-			WithField("filter_id", filter.ID).
-			WithField("filter_phone", filter.Phone)
+		return nil, apperrors.HandlePgError(ctx, err, "users", map[string]any{
+			"filter_id":    filter.ID,
+			"filter_phone": filter.Phone,
+		})
 	}
 
 	return &u, nil
-}
-
-func (r *Repo) User(ctx context.Context, id int64) (*domain.User, error) {
-	return r.Get(ctx, &domain.UserFilter{ID: &id})
 }

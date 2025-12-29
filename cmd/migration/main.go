@@ -4,10 +4,11 @@ import (
 	"log"
 	"os"
 
-	"github.com/evrone/go-clean-template/config"
-	"github.com/evrone/go-clean-template/pkg/logger"
-	"github.com/evrone/go-clean-template/pkg/db/postgres"
 	"go.uber.org/zap"
+
+	"gct/config"
+	"gct/pkg/db/postgres"
+	"gct/pkg/logger"
 )
 
 func main() {

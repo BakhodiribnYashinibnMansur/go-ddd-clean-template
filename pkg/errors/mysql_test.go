@@ -1,7 +1,6 @@
 package errors
 
 import (
-	"context"
 	"database/sql"
 	"errors"
 	"testing"
@@ -10,7 +9,7 @@ import (
 )
 
 func TestHandleMySQLError_NoError(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	result := HandleMySQLError(ctx, nil, "users", nil)
 
 	if result != nil {
@@ -19,7 +18,7 @@ func TestHandleMySQLError_NoError(t *testing.T) {
 }
 
 func TestHandleMySQLError_NoRows(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	result := HandleMySQLError(ctx, sql.ErrNoRows, "users", map[string]any{
 		"user_id": 123,
 	})
@@ -38,7 +37,7 @@ func TestHandleMySQLError_NoRows(t *testing.T) {
 }
 
 func TestHandleMySQLError_DuplicateEntry(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	mysqlErr := &mysql.MySQLError{
 		Number:   1062,
 		SQLState: [5]byte{'2', '3', '0', '0', '0'},
@@ -63,7 +62,7 @@ func TestHandleMySQLError_DuplicateEntry(t *testing.T) {
 }
 
 func TestHandleMySQLError_ForeignKeyConstraint(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	mysqlErr := &mysql.MySQLError{
 		Number:   1452,
 		SQLState: [5]byte{'2', '3', '0', '0', '0'},
@@ -82,7 +81,7 @@ func TestHandleMySQLError_ForeignKeyConstraint(t *testing.T) {
 }
 
 func TestHandleMySQLError_CannotDeleteParentRow(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	mysqlErr := &mysql.MySQLError{
 		Number:   1451,
 		SQLState: [5]byte{'2', '3', '0', '0', '0'},
@@ -101,7 +100,7 @@ func TestHandleMySQLError_CannotDeleteParentRow(t *testing.T) {
 }
 
 func TestHandleMySQLError_ColumnCannotBeNull(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	mysqlErr := &mysql.MySQLError{
 		Number:   1048,
 		SQLState: [5]byte{'2', '3', '0', '0', '0'},
@@ -120,7 +119,7 @@ func TestHandleMySQLError_ColumnCannotBeNull(t *testing.T) {
 }
 
 func TestHandleMySQLError_TableDoesntExist(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	mysqlErr := &mysql.MySQLError{
 		Number:   1146,
 		SQLState: [5]byte{'4', '2', 'S', '0', '2'},
@@ -139,7 +138,7 @@ func TestHandleMySQLError_TableDoesntExist(t *testing.T) {
 }
 
 func TestHandleMySQLError_UnknownColumn(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	mysqlErr := &mysql.MySQLError{
 		Number:   1054,
 		SQLState: [5]byte{'4', '2', 'S', '2', '2'},
@@ -158,7 +157,7 @@ func TestHandleMySQLError_UnknownColumn(t *testing.T) {
 }
 
 func TestHandleMySQLError_LockWaitTimeout(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	mysqlErr := &mysql.MySQLError{
 		Number:   1205,
 		SQLState: [5]byte{'H', 'Y', '0', '0', '0'},
@@ -177,7 +176,7 @@ func TestHandleMySQLError_LockWaitTimeout(t *testing.T) {
 }
 
 func TestHandleMySQLError_Deadlock(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	mysqlErr := &mysql.MySQLError{
 		Number:   1213,
 		SQLState: [5]byte{'4', '0', '0', '0', '1'},
@@ -196,7 +195,7 @@ func TestHandleMySQLError_Deadlock(t *testing.T) {
 }
 
 func TestHandleMySQLError_TooManyConnections(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	mysqlErr := &mysql.MySQLError{
 		Number:   1040,
 		SQLState: [5]byte{'0', '8', '0', '0', '4'},
@@ -215,7 +214,7 @@ func TestHandleMySQLError_TooManyConnections(t *testing.T) {
 }
 
 func TestHandleMySQLError_AccessDenied(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	mysqlErr := &mysql.MySQLError{
 		Number:   1045,
 		SQLState: [5]byte{'2', '8', '0', '0', '0'},
@@ -234,7 +233,7 @@ func TestHandleMySQLError_AccessDenied(t *testing.T) {
 }
 
 func TestHandleMySQLError_AccessDeniedForDatabase(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	mysqlErr := &mysql.MySQLError{
 		Number:   1044,
 		SQLState: [5]byte{'4', '2', '0', '0', '0'},
@@ -253,7 +252,7 @@ func TestHandleMySQLError_AccessDeniedForDatabase(t *testing.T) {
 }
 
 func TestHandleMySQLError_NoDefaultValue(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	mysqlErr := &mysql.MySQLError{
 		Number:   1364,
 		SQLState: [5]byte{'H', 'Y', '0', '0', '0'},
@@ -272,7 +271,7 @@ func TestHandleMySQLError_NoDefaultValue(t *testing.T) {
 }
 
 func TestHandleMySQLError_DataTooLong(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	mysqlErr := &mysql.MySQLError{
 		Number:   1406,
 		SQLState: [5]byte{'2', '2', '0', '0', '1'},
@@ -291,7 +290,7 @@ func TestHandleMySQLError_DataTooLong(t *testing.T) {
 }
 
 func TestHandleMySQLError_ConnectionError(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	err := errors.New("dial tcp: connection refused")
 
 	result := HandleMySQLError(ctx, err, "users", nil)
@@ -306,7 +305,7 @@ func TestHandleMySQLError_ConnectionError(t *testing.T) {
 }
 
 func TestHandleMySQLError_GenericError(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	err := errors.New("some database error")
 
 	result := HandleMySQLError(ctx, err, "users", map[string]any{
@@ -327,7 +326,7 @@ func TestHandleMySQLError_GenericError(t *testing.T) {
 }
 
 func TestHandleMySQLError_ExtraFields(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	mysqlErr := &mysql.MySQLError{
 		Number:   1062,
 		SQLState: [5]byte{'2', '3', '0', '0', '0'},
@@ -355,7 +354,7 @@ func TestHandleMySQLError_ExtraFields(t *testing.T) {
 }
 
 func TestHandleMySQLError_UnknownMySQLError(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	mysqlErr := &mysql.MySQLError{
 		Number:   9999,
 		SQLState: [5]byte{'H', 'Y', '0', '0', '0'},
@@ -375,14 +374,14 @@ func TestHandleMySQLError_UnknownMySQLError(t *testing.T) {
 
 // Benchmark tests
 func BenchmarkHandleMySQLError_NoRows(b *testing.B) {
-	ctx := context.Background()
-	for i := 0; i < b.N; i++ {
+	ctx := b.Context()
+	for range b.N {
 		HandleMySQLError(ctx, sql.ErrNoRows, "users", nil)
 	}
 }
 
 func BenchmarkHandleMySQLError_DuplicateEntry(b *testing.B) {
-	ctx := context.Background()
+	ctx := b.Context()
 	mysqlErr := &mysql.MySQLError{
 		Number:   1062,
 		SQLState: [5]byte{'2', '3', '0', '0', '0'},
@@ -390,17 +389,17 @@ func BenchmarkHandleMySQLError_DuplicateEntry(b *testing.B) {
 	}
 
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		HandleMySQLError(ctx, mysqlErr, "users", nil)
 	}
 }
 
 func BenchmarkHandleMySQLError_GenericError(b *testing.B) {
-	ctx := context.Background()
+	ctx := b.Context()
 	err := errors.New("database error")
 
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		HandleMySQLError(ctx, err, "users", nil)
 	}
 }

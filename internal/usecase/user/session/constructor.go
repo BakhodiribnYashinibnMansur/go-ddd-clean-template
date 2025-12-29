@@ -1,8 +1,8 @@
 package session
 
 import (
-	"github.com/evrone/go-clean-template/internal/repo/persistent"
-	"github.com/evrone/go-clean-template/pkg/logger"
+	"gct/internal/repo/persistent"
+	"gct/pkg/logger"
 )
 
 // UseCase -.

@@ -118,7 +118,7 @@ func VerifyRefreshToken(tokenString, hashedSecret string) (*RefreshToken, error)
 	}
 
 	if !token.Verify(hashedSecret) {
-		return nil, fmt.Errorf("invalid refresh token: hash mismatch")
+		return nil, errors.New("invalid refresh token: hash mismatch")
 	}
 
 	// Add the hash to the token for consistency

@@ -5,7 +5,8 @@ import (
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
-	"github.com/evrone/go-clean-template/consts"
+
+	"gct/consts"
 )
 
 // Tokens represents a pair of access and refresh tokens.

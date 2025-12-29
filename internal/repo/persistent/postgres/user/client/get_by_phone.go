@@ -3,7 +3,7 @@ package client
 import (
 	"context"
 
-	"github.com/evrone/go-clean-template/internal/domain"
+	"gct/internal/domain"
 )
 
 func (r *Repo) GetByPhone(ctx context.Context, phone string) (*domain.User, error) {

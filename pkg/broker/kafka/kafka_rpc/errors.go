@@ -8,6 +8,4 @@ const (
 	ErrBadHandler     = "bad_handler"
 )
 
-var (
-	ErrTimeout = errors.New("timeout")
-)
+var ErrTimeout = errors.New("timeout")

@@ -7,7 +7,7 @@ type (
 	App struct {
 		Name        string `env:"APP_NAME,required"`
 		Version     string `env:"APP_VERSION,required"`
-		Environment string `env:"APP_ENV" envDefault:"development"`
+		Environment string `env:"APP_ENV"              envDefault:"development"`
 	}
 
 	// HTTP -.
@@ -36,13 +36,18 @@ type (
 		Enabled bool `env:"SWAGGER_ENABLED" envDefault:"false"`
 	}
 
+	// Proto -.
+	Proto struct {
+		Enabled bool `env:"PROTO_DOCS_ENABLED" envDefault:"false"`
+	}
+
 	// Cookie -.
 	Cookie struct {
-		Domain   string `env:"COOKIE_DOMAIN" envDefault:"localhost"`
-		Path     string `env:"COOKIE_PATH" envDefault:"/"`
+		Domain   string `env:"COOKIE_DOMAIN"    envDefault:"localhost"`
+		Path     string `env:"COOKIE_PATH"      envDefault:"/"`
 		HttpOnly bool   `env:"COOKIE_HTTP_ONLY" envDefault:"true"`
-		MaxAge   int    `env:"COOKIE_MAX_AGE" envDefault:"3600"`
-		Secure   bool   `env:"COOKIE_SECURE" envDefault:"false"`
+		MaxAge   int    `env:"COOKIE_MAX_AGE"   envDefault:"3600"`
+		Secure   bool   `env:"COOKIE_SECURE"    envDefault:"false"`
 	}
 )
 

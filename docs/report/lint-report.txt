@@ -1,0 +1,827 @@
+pkg/broker/kafka/kafka_rpc/server/server.go:27:2                     containedctx       found a struct that contains a context.Context field
+pkg/broker/nats/nats_rpc/server/server.go:30:2                       containedctx       found a struct that contains a context.Context field
+pkg/broker/rabbitmq/rmq_rpc/client/client.go:45:2                    containedctx       found a struct that contains a context.Context field
+pkg/broker/rabbitmq/rmq_rpc/server/server.go:30:2                    containedctx       found a struct that contains a context.Context field
+pkg/server/grpc/server.go:22:2                                       containedctx       found a struct that contains a context.Context field
+pkg/db/clickhouse/clickhouse.go:123:10                               err113             do not define dynamic errors, use wrapped static errors instead: "fmt.Errorf(\"close clickhouse: %v\", errs)"
+pkg/db/elasticsearch/elasticsearch.go:59:15                          err113             do not define dynamic errors, use wrapped static errors instead: "fmt.Errorf(\"elasticsearch error: %s\", res.Status())"
+pkg/db/postgres/migration.go:35:15                                   err113             do not define dynamic errors, use wrapped static errors instead: "fmt.Errorf(\"postgres - NewMigration - migrations directory not found: %s\", dir)"
+pkg/errors/mysql.go:336:23                                           err113             do not define dynamic errors, use wrapped static errors instead: "errors.New(mysqlErr.Message)"
+pkg/errors/mysql_test.go:294:9                                       err113             do not define dynamic errors, use wrapped static errors instead: "errors.New(\"dial tcp: connection refused\")"
+pkg/errors/mysql_test.go:309:9                                       err113             do not define dynamic errors, use wrapped static errors instead: "errors.New(\"some database error\")"
+pkg/errors/mysql_test.go:399:9                                       err113             do not define dynamic errors, use wrapped static errors instead: "errors.New(\"database error\")"
+pkg/errors/postgres_test.go:216:16                                   err113             do not define dynamic errors, use wrapped static errors instead: "errors.New(\"some database error\")"
+pkg/errors/postgres_test.go:444:9                                    err113             do not define dynamic errors, use wrapped static errors instead: "errors.New(\"database error\")"
+pkg/errors/redis_test.go:44:9                                        err113             do not define dynamic errors, use wrapped static errors instead: "errors.New(\"dial tcp 127.0.0.1:6379: connection refused\")"
+pkg/errors/redis_test.go:63:9                                        err113             do not define dynamic errors, use wrapped static errors instead: "errors.New(\"i/o timeout\")"
+pkg/errors/redis_test.go:82:9                                        err113             do not define dynamic errors, use wrapped static errors instead: "errors.New(\"context deadline exceeded\")"
+pkg/errors/redis_test.go:97:9                                        err113             do not define dynamic errors, use wrapped static errors instead: "errors.New(\"WRONGPASS invalid username-password pair\")"
+pkg/errors/redis_test.go:116:9                                       err113             do not define dynamic errors, use wrapped static errors instead: "errors.New(\"WRONGTYPE Operation against a key holding the wrong kind of value\")"
+pkg/errors/redis_test.go:135:9                                       err113             do not define dynamic errors, use wrapped static errors instead: "errors.New(\"OOM command not allowed when used memory > 'maxmemory'\")"
+pkg/errors/redis_test.go:154:9                                       err113             do not define dynamic errors, use wrapped static errors instead: "errors.New(\"READONLY You can't write against a read only replica\")"
+pkg/errors/redis_test.go:173:9                                       err113             do not define dynamic errors, use wrapped static errors instead: "errors.New(\"CLUSTERDOWN The cluster is down\")"
+pkg/errors/redis_test.go:192:9                                       err113             do not define dynamic errors, use wrapped static errors instead: "errors.New(\"NOSCRIPT No matching script. Please use EVAL\")"
+pkg/errors/redis_test.go:211:9                                       err113             do not define dynamic errors, use wrapped static errors instead: "errors.New(\"NOAUTH Authentication required\")"
+pkg/errors/redis_test.go:230:9                                       err113             do not define dynamic errors, use wrapped static errors instead: "errors.New(\"EOF\")"
+pkg/errors/redis_test.go:245:9                                       err113             do not define dynamic errors, use wrapped static errors instead: "errors.New(\"write: broken pipe\")"
+pkg/errors/redis_test.go:260:9                                       err113             do not define dynamic errors, use wrapped static errors instead: "errors.New(\"some random redis error\")"
+pkg/errors/redis_test.go:331:18                                      err113             do not define dynamic errors, use wrapped static errors instead: "errors.New(\"dial tcp: i/o timeout\")"
+pkg/errors/redis_test.go:337:18                                      err113             do not define dynamic errors, use wrapped static errors instead: "errors.New(\"connection refused\")"
+pkg/errors/redis_test.go:381:9                                       err113             do not define dynamic errors, use wrapped static errors instead: "errors.New(\"connection refused\")"
+pkg/errors/redis_test.go:391:9                                       err113             do not define dynamic errors, use wrapped static errors instead: "errors.New(\"i/o timeout\")"
+pkg/errors/redis_test.go:401:9                                       err113             do not define dynamic errors, use wrapped static errors instead: "errors.New(\"some redis error\")"
+pkg/jwt/refresh_token.go:121:15                                      err113             do not define dynamic errors, use wrapped static errors instead: "errors.New(\"invalid refresh token: hash mismatch\")"
+pkg/errors/postgres.go:51:20                                         errcheck           Error return value of `appErr.WithField` is not checked
+pkg/errors/postgres.go:87:20                                         errcheck           Error return value of `appErr.WithField` is not checked
+pkg/errors/postgres.go:104:20                                        errcheck           Error return value of `appErr.WithField` is not checked
+pkg/errors/postgres.go:119:15                                        errcheck           Error return value of `(*gct/pkg/errors.AppError).WithDetails` is not checked
+pkg/errors/postgres.go:122:20                                        errcheck           Error return value of `appErr.WithField` is not checked
+pkg/errors/postgres.go:139:20                                        errcheck           Error return value of `appErr.WithField` is not checked
+pkg/errors/postgres.go:156:20                                        errcheck           Error return value of `appErr.WithField` is not checked
+pkg/errors/postgres.go:254:20                                        errcheck           Error return value of `appErr.WithField` is not checked
+pkg/errors/postgres.go:271:14                                        errcheck           Error return value of `(*gct/pkg/errors.AppError).WithDetails` is not checked
+pkg/errors/postgres.go:274:19                                        errcheck           Error return value of `appErr.WithField` is not checked
+pkg/errors/postgres.go:291:14                                        errcheck           Error return value of `(*gct/pkg/errors.AppError).WithDetails` is not checked
+pkg/errors/postgres.go:294:19                                        errcheck           Error return value of `appErr.WithField` is not checked
+pkg/errors/postgres.go:310:14                                        errcheck           Error return value of `(*gct/pkg/errors.AppError).WithDetails` is not checked
+pkg/errors/postgres.go:313:19                                        errcheck           Error return value of `appErr.WithField` is not checked
+pkg/errors/postgres.go:330:15                                        errcheck           Error return value of `(*gct/pkg/errors.AppError).WithDetails` is not checked
+pkg/errors/postgres.go:333:20                                        errcheck           Error return value of `appErr.WithField` is not checked
+pkg/errors/postgres.go:347:14                                        errcheck           Error return value of `(*gct/pkg/errors.AppError).WithDetails` is not checked
+pkg/errors/postgres.go:350:19                                        errcheck           Error return value of `appErr.WithField` is not checked
+pkg/errors/postgres.go:366:14                                        errcheck           Error return value of `(*gct/pkg/errors.AppError).WithDetails` is not checked
+pkg/errors/postgres.go:369:19                                        errcheck           Error return value of `appErr.WithField` is not checked
+pkg/errors/postgres.go:385:14                                        errcheck           Error return value of `(*gct/pkg/errors.AppError).WithDetails` is not checked
+pkg/errors/postgres.go:388:19                                        errcheck           Error return value of `appErr.WithField` is not checked
+pkg/errors/postgres.go:405:15                                        errcheck           Error return value of `(*gct/pkg/errors.AppError).WithDetails` is not checked
+pkg/errors/postgres.go:408:20                                        errcheck           Error return value of `appErr.WithField` is not checked
+pkg/errors/postgres.go:422:14                                        errcheck           Error return value of `(*gct/pkg/errors.AppError).WithDetails` is not checked
+pkg/errors/postgres.go:425:19                                        errcheck           Error return value of `appErr.WithField` is not checked
+pkg/errors/postgres.go:442:15                                        errcheck           Error return value of `(*gct/pkg/errors.AppError).WithDetails` is not checked
+pkg/errors/postgres.go:445:20                                        errcheck           Error return value of `appErr.WithField` is not checked
+pkg/errors/postgres.go:459:14                                        errcheck           Error return value of `(*gct/pkg/errors.AppError).WithDetails` is not checked
+pkg/errors/postgres.go:462:19                                        errcheck           Error return value of `appErr.WithField` is not checked
+pkg/errors/postgres.go:478:14                                        errcheck           Error return value of `(*gct/pkg/errors.AppError).WithDetails` is not checked
+pkg/errors/postgres.go:481:19                                        errcheck           Error return value of `appErr.WithField` is not checked
+pkg/errors/logging.go:10:16                                          errorlint          type assertion on error will fail on wrapped errors. Use errors.As to check for specific errors
+pkg/errors/logging.go:44:16                                          errorlint          type assertion on error will fail on wrapped errors. Use errors.As to check for specific errors
+pkg/errors/logging.go:65:16                                          errorlint          type assertion on error will fail on wrapped errors. Use errors.As to check for specific errors
+pkg/errors/postgres.go:38:15                                         errorlint          type assertion on error will fail on wrapped errors. Use errors.As to check for specific errors
+pkg/errors/service.go:73:19                                          errorlint          type assertion on error will fail on wrapped errors. Use errors.As to check for specific errors
+pkg/jwt/access_token.go:56:16                                        errorlint          type assertion on error will fail on wrapped errors. Use errors.As to check for specific errors
+config/utils.go:10:3                                                 exhaustive         missing cases in switch of type reflect.Kind: reflect.Invalid, reflect.Bool, reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr, reflect.Float32, reflect.Float64, reflect.Complex64, reflect.Complex128, reflect.Array, reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Slice, reflect.UnsafePointer
+pkg/db/postgres/tracer.go:31:2                                       exhaustive         missing cases in switch of type tracelog.LogLevel: tracelog.LogLevelNone
+internal/usecase/cache/lfu.go:90:2                                   forcetypeassert    type assertion must be checked
+internal/usecase/cache/lfu.go:130:2                                  forcetypeassert    type assertion must be checked
+pkg/broker/rabbitmq/rmq_rpc/connection.go:56:22                      funlen             Function 'connect' is too long (62 > 60)
+cmd/migration/main.go:7:1                                            gci                File is not properly formatted
+internal/app/app.go:12:1                                             gci                File is not properly formatted
+internal/controller/amqp_rpc/v1/controller.go:4:1                    gci                File is not properly formatted
+internal/controller/amqp_rpc/v1/router.go:4:1                        gci                File is not properly formatted
+internal/controller/grpc/router.go:4:1                               gci                File is not properly formatted
+internal/controller/grpc/v1/controller.go:4:1                        gci                File is not properly formatted
+internal/controller/grpc/v1/router.go:4:1                            gci                File is not properly formatted
+internal/controller/kafka_rpc/v1/controller.go:4:1                   gci                File is not properly formatted
+internal/controller/kafka_rpc/v1/router.go:4:1                       gci                File is not properly formatted
+internal/controller/nats_rpc/v1/controller.go:4:1                    gci                File is not properly formatted
+internal/controller/nats_rpc/v1/router.go:4:1                        gci                File is not properly formatted
+internal/controller/restapi/cookie/cookie.go:6:1                     gci                File is not properly formatted
+internal/controller/restapi/middleware/auth.go:9:1                   gci                File is not properly formatted
+internal/controller/restapi/middleware/logger.go:5:1                 gci                File is not properly formatted
+internal/controller/restapi/middleware/recovery.go:7:1               gci                File is not properly formatted
+internal/controller/restapi/response/error.go:8:1                    gci                File is not properly formatted
+internal/controller/restapi/router.go:9:1                            gci                File is not properly formatted
+internal/controller/restapi/util/context.go:5:1                      gci                File is not properly formatted
+internal/controller/restapi/util/query.go:9:1                        gci                File is not properly formatted
+internal/controller/restapi/v1/minio/download_file.go:7:1            gci                File is not properly formatted
+internal/controller/restapi/v1/minio/transfer_file.go:6:1            gci                File is not properly formatted
+internal/controller/restapi/v1/minio/upload_document.go:6:1          gci                File is not properly formatted
+internal/controller/restapi/v1/minio/upload_image.go:6:1             gci                File is not properly formatted
+internal/controller/restapi/v1/minio/upload_video.go:6:1             gci                File is not properly formatted
+internal/controller/restapi/v1/system/error_controller.go:6:1        gci                File is not properly formatted
+internal/controller/restapi/v1/user/client/constructor.go:6:1        gci                File is not properly formatted
+internal/controller/restapi/v1/user/client/create.go:6:1             gci                File is not properly formatted
+internal/controller/restapi/v1/user/client/delete.go:6:1             gci                File is not properly formatted
+internal/controller/restapi/v1/user/client/get.go:6:1                gci                File is not properly formatted
+internal/controller/restapi/v1/user/client/gets.go:6:1               gci                File is not properly formatted
+internal/controller/restapi/v1/user/client/route.go:4:1              gci                File is not properly formatted
+internal/controller/restapi/v1/user/client/sign_in.go:6:1            gci                File is not properly formatted
+internal/controller/restapi/v1/user/client/sign_out.go:6:1           gci                File is not properly formatted
+internal/controller/restapi/v1/user/client/sign_up.go:6:1            gci                File is not properly formatted
+internal/controller/restapi/v1/user/client/update.go:6:1             gci                File is not properly formatted
+internal/controller/restapi/v1/user/endpoint.go:4:1                  gci                File is not properly formatted
+internal/controller/restapi/v1/user/session/constructor.go:4:1       gci                File is not properly formatted
+internal/controller/restapi/v1/user/session/create.go:6:1            gci                File is not properly formatted
+internal/controller/restapi/v1/user/session/delete.go:6:1            gci                File is not properly formatted
+internal/controller/restapi/v1/user/session/get.go:6:1               gci                File is not properly formatted
+internal/controller/restapi/v1/user/session/gets.go:6:1              gci                File is not properly formatted
+internal/controller/restapi/v1/user/session/revoke_all.go:6:1        gci                File is not properly formatted
+internal/controller/restapi/v1/user/session/revoke_by_device.go:6:1  gci                File is not properly formatted
+internal/controller/restapi/v1/user/session/sub_route.go:4:1         gci                File is not properly formatted
+internal/controller/restapi/v1/user/session/update_activity.go:6:1   gci                File is not properly formatted
+internal/cron/cron.go:7:1                                            gci                File is not properly formatted
+internal/cron/session/constructor.go:3:1                             gci                File is not properly formatted
+internal/domain/mock/common.go:5:1                                   gci                File is not properly formatted
+internal/domain/mock/session.go:5:1                                  gci                File is not properly formatted
+internal/domain/mock/user.go:5:1                                     gci                File is not properly formatted
+internal/repo/persistent/minio/delete.go:6:1                         gci                File is not properly formatted
+internal/repo/persistent/minio/minio.go:7:1                          gci                File is not properly formatted
+internal/repo/persistent/minio/object.go:6:1                         gci                File is not properly formatted
+internal/repo/persistent/minio/upload_document.go:7:1                gci                File is not properly formatted
+internal/repo/persistent/minio/upload_file.go:6:1                    gci                File is not properly formatted
+internal/repo/persistent/minio/upload_image.go:7:1                   gci                File is not properly formatted
+internal/repo/persistent/minio/upload_video.go:7:1                   gci                File is not properly formatted
+internal/repo/persistent/persistent.go:4:1                           gci                File is not properly formatted
+internal/repo/persistent/postgres/repo.go:4:1                        gci                File is not properly formatted
+internal/repo/persistent/postgres/user/client/constructor.go:4:1     gci                File is not properly formatted
+internal/repo/persistent/postgres/user/client/get.go:6:1             gci                File is not properly formatted
+internal/repo/persistent/postgres/user/client/gets.go:6:1            gci                File is not properly formatted
+internal/repo/persistent/postgres/user/session/constructor.go:4:1    gci                File is not properly formatted
+internal/repo/persistent/postgres/user/session/create.go:7:1         gci                File is not properly formatted
+internal/repo/persistent/postgres/user/session/delete.go:6:1         gci                File is not properly formatted
+internal/repo/persistent/postgres/user/session/get.go:6:1            gci                File is not properly formatted
+internal/repo/persistent/postgres/user/session/gets.go:6:1           gci                File is not properly formatted
+internal/repo/persistent/postgres/user/session/update.go:7:1         gci                File is not properly formatted
+internal/repo/persistent/redis/repo.go:4:1                           gci                File is not properly formatted
+internal/repo/repository.go:4:1                                      gci                File is not properly formatted
+internal/usecase/cache/cache.go:4:1                                  gci                File is not properly formatted
+internal/usecase/minio/upload_image.go:7:1                           gci                File is not properly formatted
+internal/usecase/user/client/sign_in.go:7:1                          gci                File is not properly formatted
+internal/usecase/user/client/sign_out.go:6:1                         gci                File is not properly formatted
+internal/usecase/user/session/create.go:7:1                          gci                File is not properly formatted
+pkg/broker/kafka/kafka.go:9:1                                        gci                File is not properly formatted
+pkg/broker/kafka/kafka_rpc/server/server.go:8:1                      gci                File is not properly formatted
+pkg/broker/nats/nats_rpc/client/client.go:8:1                        gci                File is not properly formatted
+pkg/broker/nats/nats_rpc/server/server.go:9:1                        gci                File is not properly formatted
+pkg/broker/rabbitmq/rmq_rpc/client/client.go:9:1                     gci                File is not properly formatted
+pkg/broker/rabbitmq/rmq_rpc/server/server.go:9:1                     gci                File is not properly formatted
+pkg/container/minio.go:6:1                                           gci                File is not properly formatted
+pkg/container/psql.go:7:1                                            gci                File is not properly formatted
+pkg/db/cassandra/cassandra.go:9:1                                    gci                File is not properly formatted
+pkg/db/clickhouse/clickhouse.go:10:1                                 gci                File is not properly formatted
+pkg/db/elasticsearch/elasticsearch.go:8:1                            gci                File is not properly formatted
+pkg/db/mongodb/mongodb.go:8:1                                        gci                File is not properly formatted
+pkg/db/mysql/mysql.go:14:1                                           gci                File is not properly formatted
+pkg/db/postgres/migration.go:7:1                                     gci                File is not properly formatted
+pkg/db/postgres/postgres.go:8:1                                      gci                File is not properly formatted
+pkg/db/redis/redis.go:9:1                                            gci                File is not properly formatted
+pkg/db/sqlite/sqlite.go:14:1                                         gci                File is not properly formatted
+pkg/firebase/firebase.go:9:1                                         gci                File is not properly formatted
+pkg/jwt/token_generator.go:7:1                                       gci                File is not properly formatted
+pkg/server/grpc/server.go:8:1                                        gci                File is not properly formatted
+pkg/errors/mysql.go:69:1                                             gocognit           cognitive complexity 57 of func `handleMySQLSpecificError` is high (> 30)
+pkg/errors/postgres.go:14:1                                          gocognit           cognitive complexity 36 of func `HandlePgError` is high (> 30)
+pkg/errors/context.go:26:10                                          goconst            string `unknown` has 3 occurrences, make it a constant
+cmd/migration/main.go:36:2                                           gocritic           exitAfterDefer: os.Exit will exit, and `defer migrator.Close()` will not run
+internal/controller/restapi/response/error.go:148:3                  gocritic           ifElseChain: rewrite if-else to switch statement
+internal/repo/persistent/minio/upload_document.go:20:2               gocritic           ifElseChain: rewrite if-else to switch statement
+pkg/container/psql.go:59:4                                           gocritic           exitAfterDefer: log.Fatalf will exit, and `defer db.Close()` will not run
+pkg/db/postgres/query_helper.go:19:13                                gocritic           wrapperFunc: use strings.ReplaceAll method in `strings.Replace(*query, key, " $"+strconv.Itoa(count)+" ", -1)`
+pkg/errors/minio.go:56:2                                             gocritic           ifElseChain: rewrite if-else to switch statement
+cmd/app/main.go:10:1                                                 gofumpt            File is not properly formatted
+cmd/app/main.go:13:1                                                 gofumpt            File is not properly formatted
+cmd/migration/main.go:4:1                                            gofumpt            File is not properly formatted
+internal/app/app.go:7:1                                              gofumpt            File is not properly formatted
+internal/app/app.go:22:1                                             gofumpt            File is not properly formatted
+internal/controller/grpc/router.go:3:1                               gofumpt            File is not properly formatted
+internal/controller/grpc/router.go:8:1                               gofumpt            File is not properly formatted
+internal/controller/restapi/cookie/cookie.go:4:1                     gofumpt            File is not properly formatted
+internal/controller/restapi/middleware/auth.go:6:1                   gofumpt            File is not properly formatted
+internal/controller/restapi/middleware/logger.go:3:1                 gofumpt            File is not properly formatted
+internal/controller/restapi/middleware/recovery.go:3:1               gofumpt            File is not properly formatted
+internal/controller/restapi/middleware/recovery.go:8:1               gofumpt            File is not properly formatted
+internal/controller/restapi/router.go:5:1                            gofumpt            File is not properly formatted
+internal/controller/restapi/router.go:14:1                           gofumpt            File is not properly formatted
+internal/controller/restapi/router.go:16:1                           gofumpt            File is not properly formatted
+internal/controller/restapi/util/context.go:3:1                      gofumpt            File is not properly formatted
+internal/controller/restapi/util/error.go:5:1                        gofumpt            File is not properly formatted
+internal/controller/restapi/util/query.go:4:1                        gofumpt            File is not properly formatted
+internal/controller/restapi/util/query.go:11:1                       gofumpt            File is not properly formatted
+internal/controller/restapi/v1/minio/download_file.go:3:1            gofumpt            File is not properly formatted
+internal/controller/restapi/v1/minio/download_file.go:8:1            gofumpt            File is not properly formatted
+internal/controller/restapi/v1/minio/transfer_file.go:3:1            gofumpt            File is not properly formatted
+internal/controller/restapi/v1/minio/transfer_file.go:7:1            gofumpt            File is not properly formatted
+internal/controller/restapi/v1/minio/upload_document.go:3:1          gofumpt            File is not properly formatted
+internal/controller/restapi/v1/minio/upload_document.go:7:1          gofumpt            File is not properly formatted
+internal/controller/restapi/v1/minio/upload_image.go:3:1             gofumpt            File is not properly formatted
+internal/controller/restapi/v1/minio/upload_image.go:7:1             gofumpt            File is not properly formatted
+internal/controller/restapi/v1/minio/upload_video.go:3:1             gofumpt            File is not properly formatted
+internal/controller/restapi/v1/minio/upload_video.go:7:1             gofumpt            File is not properly formatted
+internal/controller/restapi/v1/system/error_controller.go:3:1        gofumpt            File is not properly formatted
+internal/controller/restapi/v1/system/error_controller.go:8:1        gofumpt            File is not properly formatted
+internal/controller/restapi/v1/user/client/constructor.go:5:1        gofumpt            File is not properly formatted
+internal/controller/restapi/v1/user/client/create.go:4:1             gofumpt            File is not properly formatted
+internal/controller/restapi/v1/user/client/delete.go:4:1             gofumpt            File is not properly formatted
+internal/controller/restapi/v1/user/client/get.go:4:1                gofumpt            File is not properly formatted
+internal/controller/restapi/v1/user/client/gets.go:4:1               gofumpt            File is not properly formatted
+internal/controller/restapi/v1/user/client/sign_in.go:4:1            gofumpt            File is not properly formatted
+internal/controller/restapi/v1/user/client/sign_out.go:4:1           gofumpt            File is not properly formatted
+internal/controller/restapi/v1/user/client/sign_up.go:4:1            gofumpt            File is not properly formatted
+internal/controller/restapi/v1/user/client/update.go:4:1             gofumpt            File is not properly formatted
+internal/controller/restapi/v1/user/session/create.go:4:1            gofumpt            File is not properly formatted
+internal/controller/restapi/v1/user/session/delete.go:4:1            gofumpt            File is not properly formatted
+internal/controller/restapi/v1/user/session/get.go:4:1               gofumpt            File is not properly formatted
+internal/controller/restapi/v1/user/session/gets.go:4:1              gofumpt            File is not properly formatted
+internal/controller/restapi/v1/user/session/revoke_all.go:4:1        gofumpt            File is not properly formatted
+internal/controller/restapi/v1/user/session/revoke_by_device.go:4:1  gofumpt            File is not properly formatted
+internal/controller/restapi/v1/user/session/update_activity.go:4:1   gofumpt            File is not properly formatted
+internal/cron/cron.go:3:1                                            gofumpt            File is not properly formatted
+internal/cron/cron.go:10:1                                           gofumpt            File is not properly formatted
+internal/domain/mock/common.go:3:1                                   gofumpt            File is not properly formatted
+internal/domain/mock/session.go:3:1                                  gofumpt            File is not properly formatted
+internal/domain/mock/user.go:3:1                                     gofumpt            File is not properly formatted
+internal/repo/persistent/minio/get_file_urls.go:4:1                  gofumpt            File is not properly formatted
+internal/repo/persistent/minio/get_file_urls.go:8:1                  gofumpt            File is not properly formatted
+internal/repo/persistent/minio/minio.go:5:1                          gofumpt            File is not properly formatted
+internal/repo/persistent/mysql/user/client/interface.go:5:1          gofumpt            File is not properly formatted
+internal/repo/persistent/persistent.go:11:1                          gofumpt            File is not properly formatted
+internal/repo/persistent/postgres/user/client/create.go:5:1          gofumpt            File is not properly formatted
+internal/repo/persistent/postgres/user/client/create.go:7:1          gofumpt            File is not properly formatted
+internal/repo/persistent/postgres/user/client/get.go:5:1             gofumpt            File is not properly formatted
+internal/repo/persistent/postgres/user/client/get.go:8:1             gofumpt            File is not properly formatted
+internal/repo/persistent/postgres/user/client/get_by_phone.go:5:1    gofumpt            File is not properly formatted
+internal/repo/persistent/postgres/user/client/gets.go:4:1            gofumpt            File is not properly formatted
+internal/repo/persistent/postgres/user/client/gets.go:9:1            gofumpt            File is not properly formatted
+internal/repo/persistent/postgres/user/client/interface.go:5:1       gofumpt            File is not properly formatted
+internal/repo/persistent/postgres/user/client/update.go:5:1          gofumpt            File is not properly formatted
+internal/repo/persistent/postgres/user/client/update.go:7:1          gofumpt            File is not properly formatted
+internal/repo/persistent/postgres/user/session/create.go:4:1         gofumpt            File is not properly formatted
+internal/repo/persistent/postgres/user/session/create.go:9:1         gofumpt            File is not properly formatted
+internal/repo/persistent/postgres/user/session/delete.go:5:1         gofumpt            File is not properly formatted
+internal/repo/persistent/postgres/user/session/delete.go:8:1         gofumpt            File is not properly formatted
+internal/repo/persistent/postgres/user/session/get.go:5:1            gofumpt            File is not properly formatted
+internal/repo/persistent/postgres/user/session/get.go:8:1            gofumpt            File is not properly formatted
+internal/repo/persistent/postgres/user/session/gets.go:4:1           gofumpt            File is not properly formatted
+internal/repo/persistent/postgres/user/session/gets.go:9:1           gofumpt            File is not properly formatted
+internal/repo/persistent/postgres/user/session/interface.go:5:1      gofumpt            File is not properly formatted
+internal/repo/persistent/postgres/user/session/update.go:4:1         gofumpt            File is not properly formatted
+internal/repo/persistent/postgres/user/session/update.go:9:1         gofumpt            File is not properly formatted
+internal/repo/persistent/sqlite/user/client/interface.go:5:1         gofumpt            File is not properly formatted
+internal/usecase/user/client/constructor.go:5:1                      gofumpt            File is not properly formatted
+internal/usecase/user/client/create.go:5:1                           gofumpt            File is not properly formatted
+internal/usecase/user/client/create.go:6:1                           gofumpt            File is not properly formatted
+internal/usecase/user/client/delete.go:5:1                           gofumpt            File is not properly formatted
+internal/usecase/user/client/delete.go:6:1                           gofumpt            File is not properly formatted
+internal/usecase/user/client/get.go:5:1                              gofumpt            File is not properly formatted
+internal/usecase/user/client/get.go:6:1                              gofumpt            File is not properly formatted
+internal/usecase/user/client/get_by_phone.go:5:1                     gofumpt            File is not properly formatted
+internal/usecase/user/client/get_by_phone.go:6:1                     gofumpt            File is not properly formatted
+internal/usecase/user/client/gets.go:5:1                             gofumpt            File is not properly formatted
+internal/usecase/user/client/gets.go:6:1                             gofumpt            File is not properly formatted
+internal/usecase/user/client/interface.go:5:1                        gofumpt            File is not properly formatted
+internal/usecase/user/client/sign_in.go:4:1                          gofumpt            File is not properly formatted
+internal/usecase/user/client/sign_in.go:9:1                          gofumpt            File is not properly formatted
+internal/usecase/user/client/sign_out.go:5:1                         gofumpt            File is not properly formatted
+internal/usecase/user/client/sign_up.go:5:1                          gofumpt            File is not properly formatted
+internal/usecase/user/client/sign_up.go:6:1                          gofumpt            File is not properly formatted
+internal/usecase/user/client/update.go:5:1                           gofumpt            File is not properly formatted
+internal/usecase/user/client/update.go:6:1                           gofumpt            File is not properly formatted
+internal/usecase/user/session/create.go:4:1                          gofumpt            File is not properly formatted
+internal/usecase/user/session/create.go:9:1                          gofumpt            File is not properly formatted
+internal/usecase/user/session/delete.go:5:1                          gofumpt            File is not properly formatted
+internal/usecase/user/session/delete.go:6:1                          gofumpt            File is not properly formatted
+internal/usecase/user/session/get.go:5:1                             gofumpt            File is not properly formatted
+internal/usecase/user/session/get.go:6:1                             gofumpt            File is not properly formatted
+internal/usecase/user/session/gets.go:5:1                            gofumpt            File is not properly formatted
+internal/usecase/user/session/gets.go:6:1                            gofumpt            File is not properly formatted
+internal/usecase/user/session/interface.go:5:1                       gofumpt            File is not properly formatted
+internal/usecase/user/session/revoke.go:5:1                          gofumpt            File is not properly formatted
+internal/usecase/user/session/revoke.go:6:1                          gofumpt            File is not properly formatted
+internal/usecase/user/session/update.go:5:1                          gofumpt            File is not properly formatted
+internal/usecase/user/session/update.go:6:1                          gofumpt            File is not properly formatted
+internal/usecase/user/session/update_activity.go:5:1                 gofumpt            File is not properly formatted
+internal/usecase/user/session/update_activity.go:6:1                 gofumpt            File is not properly formatted
+pkg/broker/kafka/kafka.go:6:1                                        gofumpt            File is not properly formatted
+pkg/broker/kafka/kafka.go:11:1                                       gofumpt            File is not properly formatted
+pkg/broker/kafka/kafka_rpc/server/server.go:6:1                      gofumpt            File is not properly formatted
+pkg/broker/kafka/kafka_rpc/server/server.go:15:1                     gofumpt            File is not properly formatted
+pkg/broker/nats/nats_rpc/server/server.go:7:1                        gofumpt            File is not properly formatted
+pkg/broker/nats/nats_rpc/server/server.go:16:1                       gofumpt            File is not properly formatted
+pkg/broker/rabbitmq/rmq_rpc/server/server.go:7:1                     gofumpt            File is not properly formatted
+pkg/broker/rabbitmq/rmq_rpc/server/server.go:16:1                    gofumpt            File is not properly formatted
+pkg/container/minio.go:4:1                                           gofumpt            File is not properly formatted
+pkg/container/psql.go:5:1                                            gofumpt            File is not properly formatted
+pkg/db/cassandra/cassandra.go:6:1                                    gofumpt            File is not properly formatted
+pkg/db/cassandra/cassandra.go:11:1                                   gofumpt            File is not properly formatted
+pkg/db/clickhouse/clickhouse.go:7:1                                  gofumpt            File is not properly formatted
+pkg/db/clickhouse/clickhouse.go:12:1                                 gofumpt            File is not properly formatted
+pkg/db/elasticsearch/elasticsearch.go:7:1                            gofumpt            File is not properly formatted
+pkg/db/mongodb/mongodb.go:6:1                                        gofumpt            File is not properly formatted
+pkg/db/mysql/mysql.go:7:1                                            gofumpt            File is not properly formatted
+pkg/db/mysql/mysql.go:12:1                                           gofumpt            File is not properly formatted
+pkg/db/postgres/migration.go:5:1                                     gofumpt            File is not properly formatted
+pkg/db/postgres/postgres.go:6:1                                      gofumpt            File is not properly formatted
+pkg/db/redis/redis.go:6:1                                            gofumpt            File is not properly formatted
+pkg/db/redis/redis.go:11:1                                           gofumpt            File is not properly formatted
+pkg/db/sqlite/sqlite.go:7:1                                          gofumpt            File is not properly formatted
+pkg/db/sqlite/sqlite.go:12:1                                         gofumpt            File is not properly formatted
+pkg/firebase/firebase.go:5:1                                         gofumpt            File is not properly formatted
+pkg/firebase/firebase.go:10:1                                        gofumpt            File is not properly formatted
+pkg/jwt/device/fingerprint.go:6:1                                    gofumpt            File is not properly formatted
+pkg/jwt/device/fingerprint.go:9:1                                    gofumpt            File is not properly formatted
+pkg/jwt/token_generator.go:4:1                                       gofumpt            File is not properly formatted
+pkg/jwt/token_generator.go:8:1                                       gofumpt            File is not properly formatted
+pkg/server/grpc/server.go:6:1                                        gofumpt            File is not properly formatted
+internal/controller/restapi/middleware/auth.go:38:2                  gosec              G101: Potential hardcoded credentials
+internal/controller/restapi/util/error.go:41:2                       gosec              G101: Potential hardcoded credentials
+internal/domain/mock/common.go:80:30                                 gosec              G115: integer overflow conversion int -> uint
+internal/repo/persistent/postgres/user/client/gets.go:55:23          gosec              G115: integer overflow conversion int64 -> uint64
+internal/repo/persistent/postgres/user/client/gets.go:58:24          gosec              G115: integer overflow conversion int64 -> uint64
+internal/repo/persistent/postgres/user/session/gets.go:61:23         gosec              G115: integer overflow conversion int64 -> uint64
+internal/repo/persistent/postgres/user/session/gets.go:64:24         gosec              G115: integer overflow conversion int64 -> uint64
+pkg/errors/context.go:31:2                                           ineffassign        ineffectual assignment to file
+pkg/useragent/main.go:27:2                                           ineffassign        ineffectual assignment to deviceType
+internal/repo/persistent/redis/store/priority_queue.go:14:28         interfacebloat     the interface has more than 10 methods: 13
+internal/repo/persistent/redis/store/queue.go:10:20                  interfacebloat     the interface has more than 10 methods: 14
+pkg/logger/logger.go:18:10                                           interfacebloat     the interface has more than 10 methods: 22
+internal/controller/restapi/v1/user/client/constructor.go:32:1       ireturn            New returns interface (gct/internal/controller/restapi/v1/user/client.ControllerI)
+internal/controller/restapi/v1/user/session/constructor.go:25:1      ireturn            New returns interface (gct/internal/controller/restapi/v1/user/session.ControllerI)
+internal/repo/persistent/postgres/user/client/constructor.go:20:1    ireturn            New returns interface (gct/internal/repo/persistent/postgres/user/client.RepoI)
+internal/repo/persistent/postgres/user/session/constructor.go:19:1   ireturn            New returns interface (gct/internal/repo/persistent/postgres/user/session.RepoI)
+internal/repo/persistent/redis/store/array.go:75:1                   ireturn            unmarshalOne returns generic interface (T) of type param any
+internal/repo/persistent/redis/store/list.go:84:1                    ireturn            unmarshalOne returns generic interface (T) of type param any
+internal/repo/persistent/redis/store/primitive.go:44:1               ireturn            Get returns generic interface (T) of type param any
+internal/repo/persistent/redis/store/primitive.go:61:1               ireturn            Pop returns generic interface (T) of type param any
+internal/repo/persistent/redis/store/priority_queue.go:79:1          ireturn            Peek returns generic interface (T) of type param any
+internal/repo/persistent/redis/store/priority_queue.go:116:1         ireturn            unmarshalOne returns generic interface (T) of type param any
+internal/repo/persistent/redis/store/queue.go:83:1                   ireturn            PopFront returns generic interface (T) of type param any
+internal/repo/persistent/redis/store/queue.go:92:1                   ireturn            PopBack returns generic interface (T) of type param any
+internal/repo/persistent/redis/store/queue.go:105:1                  ireturn            Peek returns generic interface (T) of type param any
+internal/repo/persistent/redis/store/queue.go:139:1                  ireturn            unmarshalOne returns generic interface (T) of type param any
+internal/repo/persistent/redis/store/set.go:72:1                     ireturn            unmarshalOne returns generic interface (T) of type param any
+internal/usecase/user/client/constructor.go:21:1                     ireturn            New returns interface (gct/internal/usecase/user/client.UseCaseI)
+internal/usecase/user/session/constructor.go:15:1                    ireturn            New returns interface (gct/internal/usecase/user/session.UseCaseI)
+pkg/logger/logger.go:52:1                                            ireturn            GetLogger returns interface (gct/pkg/logger.Log)
+internal/controller/restapi/middleware/cors.go:25:1                  lll                The line is 281 characters long, which exceeds the maximum of 120 characters.
+internal/controller/restapi/response/error.go:54:1                   lll                The line is 122 characters long, which exceeds the maximum of 120 characters.
+internal/controller/restapi/router.go:102:1                          lll                The line is 145 characters long, which exceeds the maximum of 120 characters.
+internal/controller/restapi/router.go:103:1                          lll                The line is 144 characters long, which exceeds the maximum of 120 characters.
+internal/controller/restapi/router.go:107:1                          lll                The line is 176 characters long, which exceeds the maximum of 120 characters.
+internal/controller/restapi/util/query.go:178:1                      lll                The line is 121 characters long, which exceeds the maximum of 120 characters.
+internal/controller/restapi/util/query.go:207:1                      lll                The line is 125 characters long, which exceeds the maximum of 120 characters.
+internal/repo/integration/rest/rest.go:27:1                          lll                The line is 136 characters long, which exceeds the maximum of 120 characters.
+internal/repo/integration/rest/rest.go:36:1                          lll                The line is 152 characters long, which exceeds the maximum of 120 characters.
+internal/repo/integration/rest/rest.go:46:1                          lll                The line is 134 characters long, which exceeds the maximum of 120 characters.
+internal/repo/persistent/minio/upload_document.go:31:1               lll                The line is 130 characters long, which exceeds the maximum of 120 characters.
+internal/repo/persistent/minio/upload_file.go:16:1                   lll                The line is 122 characters long, which exceeds the maximum of 120 characters.
+internal/repo/persistent/minio/upload_image.go:23:1                  lll                The line is 128 characters long, which exceeds the maximum of 120 characters.
+internal/repo/persistent/minio/upload_video.go:23:1                  lll                The line is 132 characters long, which exceeds the maximum of 120 characters.
+internal/repo/persistent/persistent.go:21:1                          lll                The line is 146 characters long, which exceeds the maximum of 120 characters.
+internal/repo/persistent/postgres/user/session/get.go:14:1           lll                The line is 138 characters long, which exceeds the maximum of 120 characters.
+internal/repo/persistent/postgres/user/session/get.go:25:1           lll                The line is 151 characters long, which exceeds the maximum of 120 characters.
+internal/repo/persistent/redis/geospatial/contract.go:14:1           lll                The line is 130 characters long, which exceeds the maximum of 120 characters.
+internal/repo/persistent/redis/geospatial/geospatial.go:37:1         lll                The line is 152 characters long, which exceeds the maximum of 120 characters.
+internal/repo/persistent/redis/geospatial/geospatial.go:42:1         lll                The line is 139 characters long, which exceeds the maximum of 120 characters.
+internal/repo/persistent/redis/geospatial/geospatial.go:52:1         lll                The line is 135 characters long, which exceeds the maximum of 120 characters.
+internal/repo/persistent/redis/geospatial/geospatial.go:57:1         lll                The line is 122 characters long, which exceeds the maximum of 120 characters.
+internal/repo/persistent/redis/stream/contract.go:18:1               lll                The line is 138 characters long, which exceeds the maximum of 120 characters.
+internal/repo/persistent/redis/stream/contract.go:25:1               lll                The line is 128 characters long, which exceeds the maximum of 120 characters.
+internal/repo/persistent/redis/stream/stream.go:42:1                 lll                The line is 122 characters long, which exceeds the maximum of 120 characters.
+internal/repo/persistent/redis/stream/stream.go:62:1                 lll                The line is 127 characters long, which exceeds the maximum of 120 characters.
+internal/repo/persistent/redis/stream/stream.go:71:1                 lll                The line is 126 characters long, which exceeds the maximum of 120 characters.
+internal/repo/persistent/redis/stream/stream.go:82:1                 lll                The line is 156 characters long, which exceeds the maximum of 120 characters.
+internal/repo/persistent/redis/stream/stream.go:118:1                lll                The line is 127 characters long, which exceeds the maximum of 120 characters.
+internal/repo/persistent/redis/stream/stream.go:130:1                lll                The line is 146 characters long, which exceeds the maximum of 120 characters.
+internal/repo/repository.go:21:1                                     lll                The line is 144 characters long, which exceeds the maximum of 120 characters.
+internal/usecase/cache/public.go:4:1                                 lll                The line is 134 characters long, which exceeds the maximum of 120 characters.
+internal/usecase/minio/upload_image.go:18:1                          lll                The line is 127 characters long, which exceeds the maximum of 120 characters.
+internal/usecase/minio/upload_image.go:30:1                          lll                The line is 121 characters long, which exceeds the maximum of 120 characters.
+pkg/errors/postgres.go:261:1                                         lll                The line is 124 characters long, which exceeds the maximum of 120 characters.
+pkg/errors/postgres.go:280:1                                         lll                The line is 122 characters long, which exceeds the maximum of 120 characters.
+pkg/errors/postgres.go:300:1                                         lll                The line is 125 characters long, which exceeds the maximum of 120 characters.
+pkg/errors/postgres.go:319:1                                         lll                The line is 128 characters long, which exceeds the maximum of 120 characters.
+pkg/errors/postgres.go:356:1                                         lll                The line is 122 characters long, which exceeds the maximum of 120 characters.
+pkg/errors/postgres.go:375:1                                         lll                The line is 126 characters long, which exceeds the maximum of 120 characters.
+pkg/errors/postgres.go:394:1                                         lll                The line is 126 characters long, which exceeds the maximum of 120 characters.
+pkg/errors/postgres.go:431:1                                         lll                The line is 129 characters long, which exceeds the maximum of 120 characters.
+pkg/errors/postgres_handlers.go:29:1                                 lll                The line is 128 characters long, which exceeds the maximum of 120 characters.
+pkg/errors/postgres_handlers.go:122:1                                lll                The line is 121 characters long, which exceeds the maximum of 120 characters.
+pkg/errors/postgres_handlers.go:141:1                                lll                The line is 122 characters long, which exceeds the maximum of 120 characters.
+pkg/errors/registry.go:24:1                                          lll                The line is 168 characters long, which exceeds the maximum of 120 characters.
+pkg/errors/registry.go:25:1                                          lll                The line is 183 characters long, which exceeds the maximum of 120 characters.
+pkg/errors/registry.go:26:1                                          lll                The line is 170 characters long, which exceeds the maximum of 120 characters.
+pkg/errors/registry.go:27:1                                          lll                The line is 167 characters long, which exceeds the maximum of 120 characters.
+pkg/errors/registry.go:28:1                                          lll                The line is 176 characters long, which exceeds the maximum of 120 characters.
+pkg/errors/registry.go:29:1                                          lll                The line is 179 characters long, which exceeds the maximum of 120 characters.
+pkg/errors/registry.go:30:1                                          lll                The line is 174 characters long, which exceeds the maximum of 120 characters.
+pkg/errors/registry.go:31:1                                          lll                The line is 167 characters long, which exceeds the maximum of 120 characters.
+pkg/errors/registry.go:38:1                                          lll                The line is 195 characters long, which exceeds the maximum of 120 characters.
+pkg/errors/registry.go:39:1                                          lll                The line is 189 characters long, which exceeds the maximum of 120 characters.
+pkg/errors/registry.go:40:1                                          lll                The line is 177 characters long, which exceeds the maximum of 120 characters.
+pkg/errors/registry.go:41:1                                          lll                The line is 192 characters long, which exceeds the maximum of 120 characters.
+pkg/errors/registry.go:42:1                                          lll                The line is 193 characters long, which exceeds the maximum of 120 characters.
+pkg/errors/registry.go:43:1                                          lll                The line is 184 characters long, which exceeds the maximum of 120 characters.
+pkg/errors/registry.go:44:1                                          lll                The line is 181 characters long, which exceeds the maximum of 120 characters.
+pkg/errors/registry.go:45:1                                          lll                The line is 193 characters long, which exceeds the maximum of 120 characters.
+pkg/errors/registry.go:46:1                                          lll                The line is 185 characters long, which exceeds the maximum of 120 characters.
+pkg/errors/registry.go:47:1                                          lll                The line is 176 characters long, which exceeds the maximum of 120 characters.
+pkg/errors/registry.go:54:1                                          lll                The line is 189 characters long, which exceeds the maximum of 120 characters.
+pkg/errors/registry.go:55:1                                          lll                The line is 193 characters long, which exceeds the maximum of 120 characters.
+pkg/errors/registry.go:56:1                                          lll                The line is 184 characters long, which exceeds the maximum of 120 characters.
+pkg/errors/registry.go:57:1                                          lll                The line is 177 characters long, which exceeds the maximum of 120 characters.
+pkg/errors/registry.go:58:1                                          lll                The line is 181 characters long, which exceeds the maximum of 120 characters.
+pkg/errors/registry.go:59:1                                          lll                The line is 179 characters long, which exceeds the maximum of 120 characters.
+pkg/errors/registry.go:60:1                                          lll                The line is 176 characters long, which exceeds the maximum of 120 characters.
+pkg/firebase/fcm.go:16:1                                             lll                The line is 128 characters long, which exceeds the maximum of 120 characters.
+pkg/firebase/fcm.go:45:1                                             lll                The line is 143 characters long, which exceeds the maximum of 120 characters.
+pkg/jwt/access_token.go:27:1                                         lll                The line is 139 characters long, which exceeds the maximum of 120 characters.
+pkg/jwt/access_token.go:48:1                                         lll                The line is 122 characters long, which exceeds the maximum of 120 characters.
+pkg/db/clickhouse/clickhouse.go:109:1                                nestif             `if ch != nil` has complex nested blocks (complexity: 6)
+pkg/db/minio/minio.go:78:1                                           nestif             `if options.makeBucket && options.bucket != ""` has complex nested blocks (complexity: 6)
+internal/usecase/cache/lru.go:24:3                                   nilnil             return both a `nil` error and an invalid value: use a sentinel error instead
+internal/controller/restapi/util/file.go:12:1                        nonamedreturns     named return "err" with type "error" found
+internal/usecase/cache/two_queue.go:242:1                            nonamedreturns     named return "hits" with type "int" found
+pkg/db/postgres/query_helper.go:12:1                                 nonamedreturns     named return "params" with type "[]any" found
+pkg/errors/context.go:23:1                                           nonamedreturns     named return "file" with type "string" found
+pkg/server/http/server.go:59:1                                       nonamedreturns     named return "status" with type "bool" found
+config/database.go:57:9                                              nosprintfhostport  host:port in url should be constructed with net.JoinHostPort and not directly with fmt.Sprintf
+pkg/db/elasticsearch/elasticsearch.go:28:4                           nosprintfhostport  host:port in url should be constructed with net.JoinHostPort and not directly with fmt.Sprintf
+pkg/db/mongodb/mongodb.go:83:10                                      nosprintfhostport  host:port in url should be constructed with net.JoinHostPort and not directly with fmt.Sprintf
+pkg/db/mongodb/mongodb.go:86:9                                       nosprintfhostport  host:port in url should be constructed with net.JoinHostPort and not directly with fmt.Sprintf
+pkg/db/postgres/postgres.go:90:16                                    nosprintfhostport  host:port in url should be constructed with net.JoinHostPort and not directly with fmt.Sprintf
+pkg/db/postgres/query_helper_test.go:7:1                             paralleltest       Function TestParseNamedQuery missing the call to method parallel
+
+pkg/db/postgres/query_helper_test.go:45:2  paralleltest  Range statement for test TestParseNamedQuery missing the call to method parallel in test Run
+
+pkg/errors/mysql_test.go:11:1  paralleltest  Function TestHandleMySQLError_NoError missing the call to method parallel
+
+pkg/errors/mysql_test.go:20:1  paralleltest  Function TestHandleMySQLError_NoRows missing the call to method parallel
+
+pkg/errors/mysql_test.go:39:1  paralleltest  Function TestHandleMySQLError_DuplicateEntry missing the call to method parallel
+
+pkg/errors/mysql_test.go:64:1  paralleltest  Function TestHandleMySQLError_ForeignKeyConstraint missing the call to method parallel
+
+pkg/errors/mysql_test.go:83:1  paralleltest  Function TestHandleMySQLError_CannotDeleteParentRow missing the call to method parallel
+
+pkg/errors/mysql_test.go:102:1  paralleltest  Function TestHandleMySQLError_ColumnCannotBeNull missing the call to method parallel
+
+pkg/errors/mysql_test.go:121:1  paralleltest  Function TestHandleMySQLError_TableDoesntExist missing the call to method parallel
+
+pkg/errors/mysql_test.go:140:1  paralleltest  Function TestHandleMySQLError_UnknownColumn missing the call to method parallel
+
+pkg/errors/mysql_test.go:159:1  paralleltest  Function TestHandleMySQLError_LockWaitTimeout missing the call to method parallel
+
+pkg/errors/mysql_test.go:178:1  paralleltest  Function TestHandleMySQLError_Deadlock missing the call to method parallel
+
+pkg/errors/mysql_test.go:197:1  paralleltest  Function TestHandleMySQLError_TooManyConnections missing the call to method parallel
+
+pkg/errors/mysql_test.go:216:1  paralleltest  Function TestHandleMySQLError_AccessDenied missing the call to method parallel
+
+pkg/errors/mysql_test.go:235:1  paralleltest  Function TestHandleMySQLError_AccessDeniedForDatabase missing the call to method parallel
+
+pkg/errors/mysql_test.go:254:1  paralleltest  Function TestHandleMySQLError_NoDefaultValue missing the call to method parallel
+
+pkg/errors/mysql_test.go:273:1  paralleltest  Function TestHandleMySQLError_DataTooLong missing the call to method parallel
+
+pkg/errors/mysql_test.go:292:1  paralleltest  Function TestHandleMySQLError_ConnectionError missing the call to method parallel
+
+pkg/errors/mysql_test.go:307:1  paralleltest  Function TestHandleMySQLError_GenericError missing the call to method parallel
+
+pkg/errors/mysql_test.go:328:1  paralleltest  Function TestHandleMySQLError_ExtraFields missing the call to method parallel
+
+pkg/errors/mysql_test.go:356:1  paralleltest  Function TestHandleMySQLError_UnknownMySQLError missing the call to method parallel
+
+pkg/errors/postgres_test.go:11:1  paralleltest  Function TestHandlePgError_NoError missing the call to method parallel
+
+pkg/errors/postgres_test.go:20:1  paralleltest  Function TestHandlePgError_NoRows missing the call to method parallel
+
+pkg/errors/postgres_test.go:43:1  paralleltest  Function TestHandlePgError_UniqueViolation missing the call to method parallel
+
+pkg/errors/postgres_test.go:73:1  paralleltest  Function TestHandlePgError_ForeignKeyViolation missing the call to method parallel
+
+pkg/errors/postgres_test.go:93:1  paralleltest  Function TestHandlePgError_NotNullViolation missing the call to method parallel
+
+pkg/errors/postgres_test.go:118:1  paralleltest  Function TestHandlePgError_CheckViolation missing the call to method parallel
+
+pkg/errors/postgres_test.go:138:1  paralleltest  Function TestHandlePgError_ConnectionError missing the call to method parallel
+
+pkg/errors/postgres_test.go:157:1  paralleltest  Function TestHandlePgError_Deadlock missing the call to method parallel
+
+pkg/errors/postgres_test.go:176:1  paralleltest  Function TestHandlePgError_LockTimeout missing the call to method parallel
+
+pkg/errors/postgres_test.go:195:1  paralleltest  Function TestHandlePgError_QueryCanceled missing the call to method parallel
+
+pkg/errors/postgres_test.go:214:1  paralleltest  Function TestHandlePgError_GenericError missing the call to method parallel
+
+pkg/errors/postgres_test.go:235:1  paralleltest  Function TestHandlePgError_ExtraFields missing the call to method parallel
+
+pkg/errors/postgres_test.go:264:1  paralleltest  Function TestHandlePgError_DataException missing the call to method parallel
+
+pkg/errors/postgres_test.go:283:1  paralleltest  Function TestHandlePgError_TransactionError missing the call to method parallel
+
+pkg/errors/postgres_test.go:302:1  paralleltest  Function TestHandlePgError_AuthError missing the call to method parallel
+
+pkg/errors/postgres_test.go:321:1  paralleltest  Function TestHandlePgError_SyntaxError missing the call to method parallel
+
+pkg/errors/postgres_test.go:340:1  paralleltest  Function TestHandlePgError_InsufficientPrivilege missing the call to method parallel
+
+pkg/errors/postgres_test.go:359:1  paralleltest  Function TestHandlePgError_TableNotFound missing the call to method parallel
+
+pkg/errors/postgres_test.go:378:1  paralleltest  Function TestHandlePgError_EmptyTable missing the call to method parallel
+
+pkg/errors/postgres_test.go:399:1  paralleltest  Function TestHandlePgError_NilExtraFields missing the call to method parallel
+
+pkg/errors/redis_test.go:10:1  paralleltest  Function TestHandleRedisError_NoError missing the call to method parallel
+
+pkg/errors/redis_test.go:19:1  paralleltest  Function TestHandleRedisError_Nil missing the call to method parallel
+
+pkg/errors/redis_test.go:42:1  paralleltest  Function TestHandleRedisError_ConnectionRefused missing the call to method parallel
+
+pkg/errors/redis_test.go:61:1  paralleltest  Function TestHandleRedisError_Timeout missing the call to method parallel
+
+pkg/errors/redis_test.go:80:1  paralleltest  Function TestHandleRedisError_DeadlineExceeded missing the call to method parallel
+
+pkg/errors/redis_test.go:95:1  paralleltest  Function TestHandleRedisError_WrongPassword missing the call to method parallel
+
+pkg/errors/redis_test.go:114:1  paralleltest  Function TestHandleRedisError_WrongType missing the call to method parallel
+
+pkg/errors/redis_test.go:133:1  paralleltest  Function TestHandleRedisError_OutOfMemory missing the call to method parallel
+
+pkg/errors/redis_test.go:152:1  paralleltest  Function TestHandleRedisError_ReadOnly missing the call to method parallel
+
+pkg/errors/redis_test.go:171:1  paralleltest  Function TestHandleRedisError_ClusterDown missing the call to method parallel
+
+pkg/errors/redis_test.go:190:1  paralleltest  Function TestHandleRedisError_NoScript missing the call to method parallel
+
+pkg/errors/redis_test.go:209:1  paralleltest  Function TestHandleRedisError_NoAuth missing the call to method parallel
+
+pkg/errors/redis_test.go:228:1  paralleltest  Function TestHandleRedisError_EOF missing the call to method parallel
+
+pkg/errors/redis_test.go:243:1  paralleltest  Function TestHandleRedisError_BrokenPipe missing the call to method parallel
+
+pkg/errors/redis_test.go:258:1  paralleltest  Function TestHandleRedisError_GenericError missing the call to method parallel
+
+pkg/errors/redis_test.go:284:1  paralleltest  Function TestHandleRedisError_EmptyKey missing the call to method parallel
+
+pkg/errors/redis_test.go:299:1  paralleltest  Function TestHandleRedisError_ExtraFields missing the call to method parallel
+
+pkg/errors/redis_test.go:322:1  paralleltest  Function TestHandleRedisError_MultiplePatterns missing the call to method parallel
+
+pkg/errors/redis_test.go:350:2  paralleltest  Range statement for test TestHandleRedisError_MultiplePatterns missing the call to method parallel in test Run
+
+pkg/logger/logger_test.go:63:2  paralleltest  Range statement for test TestNew missing the call to method parallel in test Run
+
+pkg/logger/logger_test.go:174:1  paralleltest  Function TestFatal_ExitsAndLogs missing the call to method parallel
+
+internal/controller/restapi/v1/minio/upload_image.go:45:2        prealloc     Consider pre-allocating `uploadedFiles`
+internal/domain/session.go:40:6                                  recvcheck    the methods of "SessionFilter" use pointer receiver and non-pointer receiver.
+internal/domain/user.go:32:6                                     recvcheck    the methods of "UserFilter" use pointer receiver and non-pointer receiver.
+internal/domain/user.go:45:6                                     recvcheck    the methods of "UsersFilter" use pointer receiver and non-pointer receiver.
+internal/usecase/cache/lfu.go:110:6                              recvcheck    the methods of "priorityQueue" use pointer receiver and non-pointer receiver.
+config/app_settings.go:48:3                                      revive       var-naming: struct field HttpOnly should be HTTPOnly
+config/app_settings.go:99:18                                     revive       var-naming: method IsHttpOnly should be IsHTTPOnly
+config/connectivity.go:36:3                                      revive       var-naming: struct field GroupId should be GroupID
+config/database.go:26:2                                          revive       var-naming: struct field SqlLite should be SQLLite
+config/database.go:50:2                                          revive       var-naming: type SqlLite should be SQLLite
+consts/const.go:5:2                                              revive       var-naming: don't use ALL_CAPS in Go names; use CamelCase
+consts/const.go:8:2                                              revive       var-naming: don't use ALL_CAPS in Go names; use CamelCase
+consts/const.go:9:2                                              revive       var-naming: don't use ALL_CAPS in Go names; use CamelCase
+consts/const.go:10:2                                             revive       var-naming: don't use ALL_CAPS in Go names; use CamelCase
+consts/const.go:11:2                                             revive       var-naming: don't use ALL_CAPS in Go names; use CamelCase
+consts/const.go:12:2                                             revive       var-naming: don't use ALL_CAPS in Go names; use CamelCase
+consts/const.go:13:2                                             revive       var-naming: don't use ALL_CAPS in Go names; use CamelCase
+consts/const.go:14:2                                             revive       var-naming: don't use ALL_CAPS in Go names; use CamelCase
+consts/const.go:18:2                                             revive       var-naming: const CookieHttpOnly should be CookieHTTPOnly
+consts/ctx.go:14:2                                               revive       var-naming: const CtxTuronId should be CtxTuronID
+internal/controller/amqp_rpc/v1/router.go:12:20                  revive       unused-parameter: parameter 'routes' seems to be unused, consider removing or renaming it as _
+internal/controller/amqp_rpc/v1/router.go:15:2                   revive       empty-block: this block is empty, you can remove it
+internal/controller/grpc/v1/router.go:12:20                      revive       unused-parameter: parameter 'app' seems to be unused, consider removing or renaming it as _
+internal/controller/grpc/v1/router.go:15:2                       revive       empty-block: this block is empty, you can remove it
+internal/controller/kafka_rpc/router.go:1:9                      revive       var-naming: don't use an underscore in package name
+internal/controller/kafka_rpc/v1/router.go:12:20                 revive       unused-parameter: parameter 'routes' seems to be unused, consider removing or renaming it as _
+internal/controller/kafka_rpc/v1/router.go:15:2                  revive       empty-block: this block is empty, you can remove it
+internal/controller/nats_rpc/v1/router.go:12:20                  revive       unused-parameter: parameter 'routes' seems to be unused, consider removing or renaming it as _
+internal/controller/nats_rpc/v1/router.go:15:2                   revive       empty-block: this block is empty, you can remove it
+internal/controller/restapi/middleware/auth.go:36:2              revive       var-naming: var errApiKeyMissing should be errAPIKeyMissing
+internal/controller/restapi/middleware/auth.go:37:2              revive       var-naming: var errInvalidApiKey should be errInvalidAPIKey
+internal/controller/restapi/middleware/auth.go:212:26            revive       var-naming: method AuthApiKey should be AuthAPIKey
+internal/controller/restapi/response/error.go:38:2               revive       var-naming: struct field RequestId should be RequestID
+internal/controller/restapi/response/error.go:39:2               revive       var-naming: struct field DocumentationUrl should be DocumentationURL
+internal/controller/restapi/util/error.go:21:2                   revive       var-naming: var ErrUserIdNotFound should be ErrUserIDNotFound
+internal/controller/restapi/util/error.go:29:2                   revive       var-naming: var ErrApiKeyTypeNotFound should be ErrAPIKeyTypeNotFound
+internal/controller/restapi/util/request.go:48:6                 revive       var-naming: func GetApiKeyType should be GetAPIKeyType
+internal/controller/restapi/v1/minio/route.go:7:6                revive       exported: func name will be used as minio.MinioRoute by other packages, and that stutters; consider calling this Route
+internal/controller/restapi/v1/system/error_controller.go:39:53  revive       empty-block: this block is empty, you can remove it
+internal/controller/restapi/v1/user/endpoint.go:10:6             revive       exported: func name will be used as user.UserRoute by other packages, and that stutters; consider calling this Route
+internal/cron/cron.go:16:6                                       revive       exported: type name will be used as cron.CronJobs by other packages, and that stutters; consider calling this Jobs
+internal/cron/session/constructor.go:10:6                        revive       exported: type name will be used as session.SessionCronJobs by other packages, and that stutters; consider calling this CronJobs
+internal/cron/session/model.go:6:6                               revive       exported: type name will be used as session.SessionActivity by other packages, and that stutters; consider calling this Activity
+internal/repo/persistent/redis/bitmap/contract.go:8:6            revive       exported: type name will be used as bitmap.BitmapBasicI by other packages, and that stutters; consider calling this BasicI
+internal/repo/persistent/redis/bitmap/contract.go:20:6           revive       exported: type name will be used as bitmap.BitmapAdvancedI by other packages, and that stutters; consider calling this AdvancedI
+internal/repo/persistent/redis/bitmap/contract.go:29:6           revive       exported: type name will be used as bitmap.BitmapI by other packages, and that stutters; consider calling this I
+internal/repo/persistent/redis/geospatial/contract.go:10:6       revive       exported: type name will be used as geospatial.GeospatialI by other packages, and that stutters; consider calling this I
+internal/repo/persistent/redis/hyperloglog/contract.go:8:6       revive       exported: type name will be used as hyperloglog.HyperLogLogI by other packages, and that stutters; consider calling this I
+internal/repo/persistent/redis/pubsub/contract.go:10:6           revive       exported: type name will be used as pubsub.PubSubI by other packages, and that stutters; consider calling this I
+internal/repo/persistent/redis/repo.go:30:35                     revive       unused-parameter: parameter 'logger' seems to be unused, consider removing or renaming it as _
+internal/repo/persistent/redis/store/hash_table.go:11:18         revive       redefines-builtin-id: redefinition of the built-in function delete
+internal/repo/persistent/redis/store/hash_table.go:27:40         revive       redefines-builtin-id: redefinition of the built-in function delete
+internal/repo/persistent/redis/stream/contract.go:11:6           revive       exported: type name will be used as stream.StreamI by other packages, and that stutters; consider calling this I
+internal/usecase/user/client/constructor.go:23:16                revive       empty-block: this block is empty, you can remove it
+pkg/broker/kafka/kafka.go:62:18                                  revive       unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _
+pkg/broker/kafka/kafka_rpc/errors.go:1:9                         revive       var-naming: don't use an underscore in package name
+pkg/broker/kafka/kafka_rpc/server/server.go:45:2                 revive       var-naming: func parameter groupId should be groupID
+pkg/container/psql.go:18:31                                      revive       unused-parameter: parameter 'cfg' seems to be unused, consider removing or renaming it as _
+pkg/db/cassandra/cassandra.go:35:10                              revive       unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _
+pkg/db/elasticsearch/elasticsearch.go:25:10                      revive       unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _
+pkg/db/mysql/mysql.go:10:2                                       revive       blank-imports: a blank import should be only in a main or test package, or have a comment justifying it
+pkg/db/postgres/migration.go:8:2                                 revive       blank-imports: a blank import should be only in a main or test package, or have a comment justifying it
+pkg/db/postgres/tracer.go:23:25                                  revive       unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _
+pkg/db/sqlite/sqlite.go:10:2                                     revive       blank-imports: a blank import should be only in a main or test package, or have a comment justifying it
+pkg/errors/errors.go:66:10                                       revive       unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _
+pkg/errors/errors.go:78:11                                       revive       unused-parameter: parameter 'ctx' seems to be unused, consider removing or renaming it as _
+pkg/firebase/fcm.go:11:2                                         revive       var-naming: don't use ALL_CAPS in Go names; use CamelCase
+pkg/firebase/fcm.go:12:2                                         revive       var-naming: don't use ALL_CAPS in Go names; use CamelCase
+pkg/firebase/fcm.go:13:2                                         revive       var-naming: don't use ALL_CAPS in Go names; use CamelCase
+pkg/container/minio.go:19:25                                     staticcheck  SA1019: minio.RunContainer is deprecated: use Run instead RunContainer creates an instance of the Minio container type 
+pkg/container/psql.go:21:28                                      staticcheck  SA1019: postgres.RunContainer is deprecated: use Run instead RunContainer creates an instance of the Postgres container type 
+internal/usecase/minio/delete_file.go:9:20                       stylecheck   ST1016: methods on the same type should have the same receiver name (seen 2x "uc", 4x "m")
+pkg/db/postgres/query_helper_test.go:1:9                         testpackage  package should be `postgres_test` instead of `postgres`
+pkg/errors/mysql_test.go:1:9                                     testpackage  package should be `errors_test` instead of `errors`
+pkg/errors/postgres_test.go:1:9                                  testpackage  package should be `errors_test` instead of `errors`
+pkg/errors/redis_test.go:1:9                                     testpackage  package should be `errors_test` instead of `errors`
+pkg/logger/logger_test.go:1:9                                    testpackage  package should be `logger_test` instead of `logger`
+pkg/logger/logger_test.go:49:6                                   tparallel    TestNew's subtests should call t.Parallel
+internal/cron/cron.go:20:2                                       unused       field `mu` is unused
+internal/usecase/cache/consts.go:11:2                            unused       const `publicCacheTime` is unused
+pkg/jwt/device/fingerprint.go:90:6                               unused       func `extractPlatform` is unused
+pkg/jwt/device/fingerprint.go:110:6                              unused       func `normalizeUserAgent` is unused
+pkg/logger/logger_test.go:15:5                                   unused       var `errTest` is unused
+internal/controller/restapi/util/context.go:27:10                wrapcheck    error returned from external package is unwrapped: sig: func github.com/google/uuid.Parse(s string) (github.com/google/uuid.UUID, error)
+internal/controller/restapi/util/context.go:44:10                wrapcheck    error returned from external package is unwrapped: sig: func strconv.ParseInt(s string, base int, bitSize int) (i int64, err error)
+internal/controller/restapi/util/context.go:73:10                wrapcheck    error returned from external package is unwrapped: sig: func github.com/google/uuid.Parse(s string) (github.com/google/uuid.UUID, error)
+internal/controller/restapi/util/file.go:15:10                   wrapcheck    error returned from external package is unwrapped: sig: func os.ReadFile(name string) ([]byte, error)
+internal/controller/restapi/util/file.go:28:10                   wrapcheck    error returned from external package is unwrapped: sig: func os.ReadFile(name string) ([]byte, error)
+internal/controller/restapi/util/file.go:33:10                   wrapcheck    error returned from interface method should be wrapped: sig: func (net/http.ResponseWriter).Write([]byte) (int, error)
+internal/controller/restapi/util/query.go:108:9                  wrapcheck    error returned from external package is unwrapped: sig: func strconv.ParseBool(str string) (bool, error)
+internal/controller/restapi/util/query.go:114:10                 wrapcheck    error returned from external package is unwrapped: sig: func strconv.ParseBool(str string) (bool, error)
+internal/controller/restapi/util/query.go:161:15                 wrapcheck    error returned from external package is unwrapped: sig: func time.Parse(layout string, value string) (time.Time, error)
+internal/controller/restapi/util/query.go:171:10                 wrapcheck    error returned from external package is unwrapped: sig: func time.Parse(layout string, value string) (time.Time, error)
+internal/cron/session/sync_session_activity.go:40:15             wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.ScanIterator).Err() error
+internal/cron/session/sync_session_activity.go:65:15             wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.StringCmd).Result() (string, error)
+internal/cron/session/sync_session_activity.go:70:15             wrapcheck    error returned from external package is unwrapped: sig: func time.Parse(layout string, value string) (time.Time, error)
+internal/cron/session/sync_session_activity.go:82:10             wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/jackc/pgx/v5/pgxpool.Pool).Begin(ctx context.Context) (github.com/jackc/pgx/v5.Tx, error)
+internal/cron/session/sync_session_activity.go:93:10             wrapcheck    error returned from interface method should be wrapped: sig: func (github.com/jackc/pgx/v5.Tx).Commit(ctx context.Context) error
+internal/cron/session/sync_session_activity.go:115:10            wrapcheck    error returned from interface method should be wrapped: sig: func (github.com/jackc/pgx/v5.Tx).Exec(ctx context.Context, sql string, arguments ...any) (commandTag github.com/jackc/pgx/v5/pgconn.CommandTag, err error)
+internal/cron/session/sync_session_activity.go:133:10            wrapcheck    error returned from interface method should be wrapped: sig: func (github.com/jackc/pgx/v5.Tx).CopyFrom(ctx context.Context, tableName github.com/jackc/pgx/v5.Identifier, columnNames []string, rowSrc github.com/jackc/pgx/v5.CopyFromSource) (int64, error)
+internal/cron/session/sync_session_activity.go:147:10            wrapcheck    error returned from interface method should be wrapped: sig: func (github.com/jackc/pgx/v5.Tx).Exec(ctx context.Context, sql string, arguments ...any) (commandTag github.com/jackc/pgx/v5/pgconn.CommandTag, err error)
+internal/domain/user.go:94:10                                    wrapcheck    error returned from external package is unwrapped: sig: func golang.org/x/crypto/bcrypt.GenerateFromPassword(password []byte, cost int) ([]byte, error)
+internal/repo/integration/rest/rest.go:28:9                      wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/go-resty/resty/v2.Request).Post(url string) (*github.com/go-resty/resty/v2.Response, error)
+internal/repo/integration/rest/rest.go:37:9                      wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/go-resty/resty/v2.Request).Post(url string) (*github.com/go-resty/resty/v2.Response, error)
+internal/repo/integration/rest/rest.go:47:9                      wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/go-resty/resty/v2.Request).Get(url string) (*github.com/go-resty/resty/v2.Response, error)
+internal/repo/persistent/minio/minio.go:51:10                    wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/minio/minio-go/v7.Client).BucketExists(ctx context.Context, bucketName string) (bool, error)
+internal/repo/persistent/redis/bitmap/bitmap.go:23:9             wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.IntCmd).Result() (int64, error)
+internal/repo/persistent/redis/bitmap/bitmap.go:28:9             wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.IntCmd).Result() (int64, error)
+internal/repo/persistent/redis/bitmap/bitmap.go:37:9             wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.IntCmd).Result() (int64, error)
+internal/repo/persistent/redis/bitmap/bitmap.go:42:9             wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.IntCmd).Result() (int64, error)
+internal/repo/persistent/redis/bitmap/bitmap.go:47:9             wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.IntCmd).Result() (int64, error)
+internal/repo/persistent/redis/bitmap/bitmap.go:52:9             wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.IntCmd).Result() (int64, error)
+internal/repo/persistent/redis/bitmap/bitmap.go:57:9             wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.IntCmd).Result() (int64, error)
+internal/repo/persistent/redis/bitmap/bitmap.go:62:9             wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.IntCmd).Result() (int64, error)
+internal/repo/persistent/redis/bitmap/bitmap.go:67:9             wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.IntCmd).Result() (int64, error)
+internal/repo/persistent/redis/bitmap/bitmap.go:72:9             wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.IntCmd).Result() (int64, error)
+internal/repo/persistent/redis/bitmap/bitmap.go:77:9             wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.IntSliceCmd).Result() ([]int64, error)
+internal/repo/persistent/redis/bitmap/bitmap.go:82:9             wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.baseCmd).Err() error
+internal/repo/persistent/redis/bitmap/bitmap.go:89:17            wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.IntCmd).Result() (int64, error)
+internal/repo/persistent/redis/geospatial/geospatial.go:23:9     wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.IntCmd).Result() (int64, error)
+internal/repo/persistent/redis/geospatial/geospatial.go:28:9     wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.GeoPosCmd).Result() ([]*github.com/redis/go-redis/v9.GeoPos, error)
+internal/repo/persistent/redis/geospatial/geospatial.go:33:9     wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.FloatCmd).Result() (float64, error)
+internal/repo/persistent/redis/geospatial/geospatial.go:38:9     wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.GeoLocationCmd).Result() ([]github.com/redis/go-redis/v9.GeoLocation, error)
+internal/repo/persistent/redis/geospatial/geospatial.go:43:9     wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.GeoLocationCmd).Result() ([]github.com/redis/go-redis/v9.GeoLocation, error)
+internal/repo/persistent/redis/geospatial/geospatial.go:48:9     wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.StringSliceCmd).Result() ([]string, error)
+internal/repo/persistent/redis/geospatial/geospatial.go:53:9     wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.GeoSearchLocationCmd).Result() ([]github.com/redis/go-redis/v9.GeoLocation, error)
+internal/repo/persistent/redis/geospatial/geospatial.go:58:9     wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.IntCmd).Result() (int64, error)
+internal/repo/persistent/redis/geospatial/geospatial.go:63:9     wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.StringSliceCmd).Result() ([]string, error)
+internal/repo/persistent/redis/geospatial/geospatial.go:68:9     wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.IntCmd).Result() (int64, error)
+internal/repo/persistent/redis/hyperloglog/hyperloglog.go:23:9   wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.IntCmd).Result() (int64, error)
+internal/repo/persistent/redis/hyperloglog/hyperloglog.go:28:9   wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.IntCmd).Result() (int64, error)
+internal/repo/persistent/redis/hyperloglog/hyperloglog.go:33:9   wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.baseCmd).Err() error
+internal/repo/persistent/redis/hyperloglog/hyperloglog.go:38:9   wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.baseCmd).Err() error
+internal/repo/persistent/redis/hyperloglog/hyperloglog.go:45:17  wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.IntCmd).Result() (int64, error)
+internal/repo/persistent/redis/pubsub/pubsub.go:23:9             wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.baseCmd).Err() error
+internal/repo/persistent/redis/pubsub/pubsub.go:38:9             wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.PubSub).ReceiveMessage(ctx context.Context) (*github.com/redis/go-redis/v9.Message, error)
+internal/repo/persistent/redis/pubsub/pubsub.go:43:9             wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.PubSub).Unsubscribe(ctx context.Context, channels ...string) error
+internal/repo/persistent/redis/pubsub/pubsub.go:48:9             wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.PubSub).Close() error
+internal/repo/persistent/redis/store/array.go:30:15              wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.StringSliceCmd).Result() ([]string, error)
+internal/repo/persistent/redis/store/array.go:38:10              wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.baseCmd).Err() error
+internal/repo/persistent/redis/store/array.go:51:9               wrapcheck    error returned from interface method should be wrapped: sig: func (github.com/redis/go-redis/v9.Pipeliner).Exec(ctx context.Context) ([]github.com/redis/go-redis/v9.Cmder, error)
+internal/repo/persistent/redis/store/array.go:55:9               wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.baseCmd).Err() error
+internal/repo/persistent/redis/store/array.go:65:15              wrapcheck    error returned from interface method should be wrapped: sig: func (github.com/redis/go-redis/v9.Pipeliner).Exec(ctx context.Context) ([]github.com/redis/go-redis/v9.Cmder, error)
+internal/repo/persistent/redis/store/array.go:70:15              wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.StringSliceCmd).Result() ([]string, error)
+internal/repo/persistent/redis/store/array.go:78:14              wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.StringCmd).Scan(val interface{}) error
+internal/repo/persistent/redis/store/hash_table.go:31:15         wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.MapStringStringCmd).Result() (map[string]string, error)
+internal/repo/persistent/redis/store/hash_table.go:39:16         wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.StringCmd).Scan(val interface{}) error
+internal/repo/persistent/redis/store/hash_table.go:47:16         wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.baseCmd).Err() error
+internal/repo/persistent/redis/store/hash_table.go:67:10         wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.baseCmd).Err() error
+internal/repo/persistent/redis/store/hash_table.go:71:10         wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.baseCmd).Err() error
+internal/repo/persistent/redis/store/hash_table.go:77:9          wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.baseCmd).Err() error
+internal/repo/persistent/redis/store/list.go:32:15               wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.StringSliceCmd).Result() ([]string, error)
+internal/repo/persistent/redis/store/list.go:38:9                wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.IntCmd).Result() (int64, error)
+internal/repo/persistent/redis/store/list.go:48:15               wrapcheck    error returned from interface method should be wrapped: sig: func (github.com/redis/go-redis/v9.Pipeliner).Exec(ctx context.Context) ([]github.com/redis/go-redis/v9.Cmder, error)
+internal/repo/persistent/redis/store/list.go:52:15               wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.StringSliceCmd).Result() ([]string, error)
+internal/repo/persistent/redis/store/list.go:60:10               wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.baseCmd).Err() error
+internal/repo/persistent/redis/store/list.go:73:9                wrapcheck    error returned from interface method should be wrapped: sig: func (github.com/redis/go-redis/v9.Pipeliner).Exec(ctx context.Context) ([]github.com/redis/go-redis/v9.Cmder, error)
+internal/repo/persistent/redis/store/list.go:77:9                wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.baseCmd).Err() error
+internal/repo/persistent/redis/store/list.go:81:9                wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.IntCmd).Result() (int64, error)
+internal/repo/persistent/redis/store/list.go:88:14               wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.StringCmd).Scan(val interface{}) error
+internal/repo/persistent/redis/store/primitive.go:48:15          wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.StringCmd).Scan(val interface{}) error
+internal/repo/persistent/redis/store/primitive.go:54:9           wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.baseCmd).Err() error
+internal/repo/persistent/redis/store/primitive.go:58:9           wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.baseCmd).Err() error
+internal/repo/persistent/redis/store/primitive.go:69:15          wrapcheck    error returned from interface method should be wrapped: sig: func (github.com/redis/go-redis/v9.Pipeliner).Exec(ctx context.Context) ([]github.com/redis/go-redis/v9.Cmder, error)
+internal/repo/persistent/redis/store/primitive.go:73:14          wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.StringCmd).Scan(val interface{}) error
+internal/repo/persistent/redis/store/primitive.go:79:17          wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.IntCmd).Result() (int64, error)
+internal/repo/persistent/redis/store/primitive.go:94:16          wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.ScanCmd).Result() (keys []string, cursor uint64, err error)
+internal/repo/persistent/redis/store/priority_queue.go:43:15     wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.StringSliceCmd).Result() ([]string, error)
+internal/repo/persistent/redis/store/priority_queue.go:49:9      wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.IntCmd).Result() (int64, error)
+internal/repo/persistent/redis/store/priority_queue.go:53:9      wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.baseCmd).Err() error
+internal/repo/persistent/redis/store/priority_queue.go:64:9      wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.baseCmd).Err() error
+internal/repo/persistent/redis/store/priority_queue.go:68:9      wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.baseCmd).Err() error
+internal/repo/persistent/redis/store/priority_queue.go:72:9      wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.baseCmd).Err() error
+internal/repo/persistent/redis/store/priority_queue.go:76:9      wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.baseCmd).Err() error
+internal/repo/persistent/redis/store/priority_queue.go:83:15     wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.StringSliceCmd).Result() ([]string, error)
+internal/repo/persistent/redis/store/priority_queue.go:97:9      wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.IntCmd).Result() (int64, error)
+internal/repo/persistent/redis/store/priority_queue.go:101:9     wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.baseCmd).Err() error
+internal/repo/persistent/redis/store/priority_queue.go:105:9     wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.baseCmd).Err() error
+internal/repo/persistent/redis/store/priority_queue.go:111:15    wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.StringSliceCmd).Result() ([]string, error)
+internal/repo/persistent/redis/store/priority_queue.go:119:14    wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.StringCmd).Scan(val interface{}) error
+internal/repo/persistent/redis/store/queue.go:38:9               wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.IntCmd).Result() (int64, error)
+internal/repo/persistent/redis/store/queue.go:44:15              wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.StringSliceCmd).Result() ([]string, error)
+internal/repo/persistent/redis/store/queue.go:50:9               wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.IntCmd).Result() (int64, error)
+internal/repo/persistent/redis/store/queue.go:54:9               wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.baseCmd).Err() error
+internal/repo/persistent/redis/store/queue.go:58:9               wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.baseCmd).Err() error
+internal/repo/persistent/redis/store/queue.go:69:9               wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.baseCmd).Err() error
+internal/repo/persistent/redis/store/queue.go:80:9               wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.baseCmd).Err() error
+internal/repo/persistent/redis/store/queue.go:87:15              wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.StringCmd).Result() (string, error)
+internal/repo/persistent/redis/store/queue.go:96:15              wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.StringCmd).Result() (string, error)
+internal/repo/persistent/redis/store/queue.go:102:9              wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.baseCmd).Err() error
+internal/repo/persistent/redis/store/queue.go:109:15             wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.StringCmd).Result() (string, error)
+internal/repo/persistent/redis/store/queue.go:116:17             wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.IntCmd).Result() (int64, error)
+internal/repo/persistent/redis/store/queue.go:124:17             wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.StringCmd).Result() (string, error)
+internal/repo/persistent/redis/store/queue.go:134:15             wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.StringSliceCmd).Result() ([]string, error)
+internal/repo/persistent/redis/store/queue.go:142:14             wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.StringCmd).Scan(val interface{}) error
+internal/repo/persistent/redis/store/set.go:30:15                wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.StringSliceCmd).Result() ([]string, error)
+internal/repo/persistent/redis/store/set.go:42:15                wrapcheck    error returned from interface method should be wrapped: sig: func (github.com/redis/go-redis/v9.Pipeliner).Exec(ctx context.Context) ([]github.com/redis/go-redis/v9.Cmder, error)
+internal/repo/persistent/redis/store/set.go:46:15                wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.StringSliceCmd).Result() ([]string, error)
+internal/repo/persistent/redis/store/set.go:53:10                wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.baseCmd).Err() error
+internal/repo/persistent/redis/store/set.go:63:10                wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.baseCmd).Err() error
+internal/repo/persistent/redis/store/set.go:65:9                 wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.baseCmd).Err() error
+internal/repo/persistent/redis/store/set.go:69:9                 wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.baseCmd).Err() error
+internal/repo/persistent/redis/store/set.go:75:14                wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.StringCmd).Scan(val interface{}) error
+internal/repo/persistent/redis/stream/stream.go:28:9             wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.StringCmd).Result() (string, error)
+internal/repo/persistent/redis/stream/stream.go:38:9             wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.StringCmd).Result() (string, error)
+internal/repo/persistent/redis/stream/stream.go:49:9             wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.StringCmd).Result() (string, error)
+internal/repo/persistent/redis/stream/stream.go:58:9             wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.XStreamSliceCmd).Result() ([]github.com/redis/go-redis/v9.XStream, error)
+internal/repo/persistent/redis/stream/stream.go:67:9             wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.XStreamSliceCmd).Result() ([]github.com/redis/go-redis/v9.XStream, error)
+internal/repo/persistent/redis/stream/stream.go:78:9             wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.XStreamSliceCmd).Result() ([]github.com/redis/go-redis/v9.XStream, error)
+internal/repo/persistent/redis/stream/stream.go:89:9             wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.XStreamSliceCmd).Result() ([]github.com/redis/go-redis/v9.XStream, error)
+internal/repo/persistent/redis/stream/stream.go:94:9             wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.baseCmd).Err() error
+internal/repo/persistent/redis/stream/stream.go:99:9             wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.baseCmd).Err() error
+internal/repo/persistent/redis/stream/stream.go:104:9            wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.baseCmd).Err() error
+internal/repo/persistent/redis/stream/stream.go:109:9            wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.IntCmd).Result() (int64, error)
+internal/repo/persistent/redis/stream/stream.go:114:9            wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.XPendingCmd).Result() (*github.com/redis/go-redis/v9.XPending, error)
+internal/repo/persistent/redis/stream/stream.go:126:9            wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.XPendingExtCmd).Result() ([]github.com/redis/go-redis/v9.XPendingExt, error)
+internal/repo/persistent/redis/stream/stream.go:138:9            wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.XMessageSliceCmd).Result() ([]github.com/redis/go-redis/v9.XMessage, error)
+internal/repo/persistent/redis/stream/stream.go:143:9            wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.IntCmd).Result() (int64, error)
+internal/repo/persistent/redis/stream/stream.go:148:9            wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.IntCmd).Result() (int64, error)
+internal/repo/persistent/redis/stream/stream.go:153:9            wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.XMessageSliceCmd).Result() ([]github.com/redis/go-redis/v9.XMessage, error)
+internal/repo/persistent/redis/stream/stream.go:158:9            wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.XMessageSliceCmd).Result() ([]github.com/redis/go-redis/v9.XMessage, error)
+internal/repo/persistent/redis/stream/stream.go:163:9            wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.XMessageSliceCmd).Result() ([]github.com/redis/go-redis/v9.XMessage, error)
+internal/repo/persistent/redis/stream/stream.go:168:9            wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.XMessageSliceCmd).Result() ([]github.com/redis/go-redis/v9.XMessage, error)
+internal/repo/persistent/redis/stream/stream.go:173:9            wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.IntCmd).Result() (int64, error)
+internal/repo/persistent/redis/stream/stream.go:178:9            wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.IntCmd).Result() (int64, error)
+internal/usecase/user/client/sign_out.go:14:10                   wrapcheck    error returned from external package is unwrapped: sig: func github.com/google/uuid.Parse(s string) (github.com/google/uuid.UUID, error)
+internal/usecase/user/client/sign_out.go:17:9                    wrapcheck    error returned from interface method should be wrapped: sig: func (gct/internal/repo/persistent/postgres/user/session.RepoI).Revoke(ctx context.Context, filter *gct/internal/domain.SessionFilter) error
+pkg/broker/kafka/kafka.go:111:10                                 wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/segmentio/kafka-go.Writer).Close() error
+pkg/broker/kafka/kafka.go:130:10                                 wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/segmentio/kafka-go.Reader).Close() error
+pkg/broker/nats/nats_rpc/client/client.go:78:11                  wrapcheck    error returned from external package is unwrapped: sig: func github.com/goccy/go-json.Marshal(v interface{}) ([]byte, error)
+pkg/broker/rabbitmq/rmq_rpc/client/client.go:162:10              wrapcheck    error returned from interface method should be wrapped: sig: func (context.Context).Err() error
+pkg/broker/rabbitmq/rmq_rpc/client/client.go:179:10              wrapcheck    error returned from interface method should be wrapped: sig: func (context.Context).Err() error
+pkg/broker/rabbitmq/rmq_rpc/client/client.go:211:11              wrapcheck    error returned from interface method should be wrapped: sig: func (context.Context).Err() error
+pkg/broker/rabbitmq/rmq_rpc/client/client.go:230:9               wrapcheck    error returned from external package is unwrapped: sig: func (*gct/pkg/broker/rabbitmq/rmq_rpc.Connection).AttemptConnect() error
+pkg/broker/rabbitmq/rmq_rpc/client/client.go:282:11              wrapcheck    error returned from external package is unwrapped: sig: func github.com/goccy/go-json.Marshal(v interface{}) ([]byte, error)
+pkg/broker/rabbitmq/rmq_rpc/server/server.go:133:11              wrapcheck    error returned from interface method should be wrapped: sig: func (context.Context).Err() error
+pkg/broker/rabbitmq/rmq_rpc/server/server.go:152:9               wrapcheck    error returned from external package is unwrapped: sig: func (*gct/pkg/broker/rabbitmq/rmq_rpc.Connection).AttemptConnect() error
+pkg/db/mongodb/mongodb.go:122:10                                 wrapcheck    error returned from external package is unwrapped: sig: func (*go.mongodb.org/mongo-driver/mongo.Client).Disconnect(ctx context.Context) error
+pkg/db/mysql/mysql.go:100:10                                     wrapcheck    error returned from external package is unwrapped: sig: func (*database/sql.DB).Close() error
+pkg/db/postgres/migration.go:46:9                                wrapcheck    error returned from external package is unwrapped: sig: func (*database/sql.DB).Close() error
+pkg/db/redis/redis.go:106:10                                     wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/redis/go-redis/v9.baseClient).Close() error
+pkg/db/sqlite/sqlite.go:78:10                                    wrapcheck    error returned from external package is unwrapped: sig: func (*database/sql.DB).Close() error
+pkg/firebase/fcm.go:30:11                                        wrapcheck    error returned from external package is unwrapped: sig: func (*firebase.google.com/go/v4/messaging.fcmClient).Send(ctx context.Context, message *firebase.google.com/go/v4/messaging.Message) (string, error)
+pkg/firebase/fcm.go:36:11                                        wrapcheck    error returned from external package is unwrapped: sig: func (*firebase.google.com/go/v4/messaging.fcmClient).Send(ctx context.Context, message *firebase.google.com/go/v4/messaging.Message) (string, error)
+pkg/firebase/fcm.go:72:11                                        wrapcheck    error returned from external package is unwrapped: sig: func (*firebase.google.com/go/v4/messaging.fcmClient).SendEachForMulticast(ctx context.Context, message *firebase.google.com/go/v4/messaging.MulticastMessage) (*firebase.google.com/go/v4/messaging.BatchResponse, error)
+pkg/firebase/fcm.go:78:11                                        wrapcheck    error returned from external package is unwrapped: sig: func (*firebase.google.com/go/v4/messaging.fcmClient).SendEachForMulticast(ctx context.Context, message *firebase.google.com/go/v4/messaging.MulticastMessage) (*firebase.google.com/go/v4/messaging.BatchResponse, error)
+pkg/firebase/fcm.go:104:12                                       wrapcheck    error returned from external package is unwrapped: sig: func (*firebase.google.com/go/v4/messaging.fcmClient).Send(ctx context.Context, message *firebase.google.com/go/v4/messaging.Message) (string, error)
+pkg/firebase/fcm.go:110:12                                       wrapcheck    error returned from external package is unwrapped: sig: func (*firebase.google.com/go/v4/messaging.fcmClient).Send(ctx context.Context, message *firebase.google.com/go/v4/messaging.Message) (string, error)
+pkg/firebase/firebase.go:27:15                                   wrapcheck    error returned from external package is unwrapped: sig: func encoding/json.Marshal(v any) ([]byte, error)
+pkg/firebase/firebase.go:32:15                                   wrapcheck    error returned from external package is unwrapped: sig: func firebase.google.com/go/v4.NewApp(ctx context.Context, config *firebase.google.com/go/v4.Config, opts ...google.golang.org/api/option.ClientOption) (*firebase.google.com/go/v4.App, error)
+pkg/firebase/firebase.go:38:15                                   wrapcheck    error returned from external package is unwrapped: sig: func encoding/json.Marshal(v any) ([]byte, error)
+pkg/firebase/firebase.go:43:15                                   wrapcheck    error returned from external package is unwrapped: sig: func firebase.google.com/go/v4.NewApp(ctx context.Context, config *firebase.google.com/go/v4.Config, opts ...google.golang.org/api/option.ClientOption) (*firebase.google.com/go/v4.App, error)
+pkg/firebase/firebase.go:49:15                                   wrapcheck    error returned from external package is unwrapped: sig: func (*firebase.google.com/go/v4.App).Messaging(ctx context.Context) (*firebase.google.com/go/v4/messaging.Client, error)
+pkg/firebase/firebase.go:54:15                                   wrapcheck    error returned from external package is unwrapped: sig: func (*firebase.google.com/go/v4.App).Messaging(ctx context.Context) (*firebase.google.com/go/v4/messaging.Client, error)
+pkg/jwt/access_token.go:44:9                                     wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/golang-jwt/jwt/v4.Token).SignedString(key interface{}) (string, error)
+pkg/jwt/refresh_token.go:150:14                                  wrapcheck    error returned from external package is unwrapped: sig: func crypto/rand.Read(b []byte) (n int, err error)
+pkg/jwt/token_generator.go:57:9                                  wrapcheck    error returned from external package is unwrapped: sig: func (*github.com/dgrijalva/jwt-go.Token).SignedString(key interface{}) (string, error)
+pkg/server/grpc/server.go:65:11                                  wrapcheck    error returned from external package is unwrapped: sig: func (*net.ListenConfig).Listen(ctx context.Context, network string, address string) (net.Listener, error)
+pkg/server/grpc/server.go:74:11                                  wrapcheck    error returned from external package is unwrapped: sig: func (*google.golang.org/grpc.Server).Serve(lis net.Listener) error
+pkg/server/http/server.go:47:10                                  wrapcheck    error returned from external package is unwrapped: sig: func (*net/http.Server).ListenAndServe() error
+pkg/server/http/server.go:55:9                                   wrapcheck    error returned from external package is unwrapped: sig: func (*net/http.Server).Shutdown(ctx context.Context) error
+pkg/server/http/server.go:66:17                                  wrapcheck    error returned from external package is unwrapped: sig: func net.Listen(network string, address string) (net.Listener, error)

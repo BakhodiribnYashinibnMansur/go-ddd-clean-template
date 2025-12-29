@@ -3,17 +3,15 @@ package client
 import (
 	"context"
 
-	apperrors "github.com/evrone/go-clean-template/pkg/errors"
+	"gct/internal/domain"
+	apperrors "gct/pkg/errors"
 )
 
-// User gets a user by ID.
-func (uc *UseCase) User(ctx context.Context, in UserInput) (UserOutput, error) {
-	user, err := uc.repo.User.Client.User(ctx, in.ID)
+// Get gets a user.
+func (uc *UseCase) Get(ctx context.Context, in *domain.UserFilter) (*domain.User, error) {
+	user, err := uc.repo.Postgres.Client.Get(ctx, in)
 	if err != nil {
-		return UserOutput{}, apperrors.AutoSource(
-			apperrors.MapRepoToServiceError(ctx, err)).
-			WithField("operation", "get_user_by_id").
-			WithField("user_id", in.ID)
+		return nil, apperrors.MapRepoToServiceError(ctx, err).WithInput(in)
 	}
-	return UserOutput{User: user}, nil
+	return user, nil
 }

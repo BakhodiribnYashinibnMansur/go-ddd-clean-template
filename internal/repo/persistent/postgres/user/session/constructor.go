@@ -2,9 +2,10 @@ package session
 
 import (
 	"github.com/Masterminds/squirrel"
-	"github.com/evrone/go-clean-template/pkg/db/postgres"
-	"github.com/evrone/go-clean-template/pkg/logger"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"gct/pkg/db/postgres"
+	"gct/pkg/logger"
 )
 
 // SessionRepo handles session-related database operations.

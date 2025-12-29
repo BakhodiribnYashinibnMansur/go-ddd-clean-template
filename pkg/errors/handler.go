@@ -1,6 +1,9 @@
 package errors
 
-import "context"
+import (
+	"context"
+	"errors"
+)
 
 // ============================================================================
 // Handler Layer Error Codes
@@ -42,12 +45,12 @@ var handlerMessages = map[string]string{
 }
 
 // NewHandlerError creates a new handler error
-func NewHandlerError(ctx context.Context, code string, message string) *AppError {
+func NewHandlerError(ctx context.Context, code, message string) *AppError {
 	return New(ctx, code, message)
 }
 
 // WrapHandlerError wraps an error as handler error
-func WrapHandlerError(ctx context.Context, err error, code string, message string) *AppError {
+func WrapHandlerError(ctx context.Context, err error, code, message string) *AppError {
 	return Wrap(ctx, err, code, message)
 }
 
@@ -58,7 +61,8 @@ func MapServiceToHandlerError(ctx context.Context, err error) *AppError {
 	}
 
 	// If it's already our AppError, check the code
-	if appErr, ok := err.(*AppError); ok {
+	var appErr *AppError
+	if errors.As(err, &appErr) {
 		switch appErr.Type {
 		case ErrServiceNotFound:
 			return NewHandlerError(ctx, ErrHandlerNotFound, "Resource not found").

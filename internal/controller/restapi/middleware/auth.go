@@ -3,30 +3,39 @@ package middleware
 import (
 	"crypto/rsa"
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 
-	"github.com/evrone/go-clean-template/config"
-	"github.com/evrone/go-clean-template/consts"
-	"github.com/evrone/go-clean-template/internal/controller/restapi/cookie"
-	"github.com/evrone/go-clean-template/internal/controller/restapi/response"
-	"github.com/evrone/go-clean-template/internal/domain"
-	"github.com/evrone/go-clean-template/internal/usecase"
-	"github.com/evrone/go-clean-template/internal/usecase/user/client"
-	"github.com/evrone/go-clean-template/internal/usecase/user/session"
-	"github.com/evrone/go-clean-template/pkg/jwt"
-	"github.com/evrone/go-clean-template/pkg/logger"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+
+	"gct/config"
+	"gct/consts"
+	"gct/internal/controller/restapi/cookie"
+	"gct/internal/controller/restapi/response"
+	"gct/internal/domain"
+	"gct/internal/usecase"
+	"gct/internal/usecase/user/client"
+	"gct/internal/usecase/user/session"
+	"gct/pkg/jwt"
+	"gct/pkg/logger"
 )
 
 var (
-	errUnAuth        = errors.New("unauthorized. token is missing")
-	errInvalidToken  = errors.New("unauthorized. token is invalid")
-	errExpiredToken  = errors.New("unauthorized. token is expired")
-	errRevokedToken  = errors.New("unauthorized. token is revoked")
-	ApiKeyTypeHeader = "X-Api-Key-Type"
+	errUnAuth                = errors.New("unauthorized. token is missing")
+	errInvalidToken          = errors.New("unauthorized. token is invalid")
+	errExpiredToken          = errors.New("unauthorized. token is expired")
+	errRevokedToken          = errors.New("unauthorized. token is revoked")
+	errInvalidIssuer         = errors.New("invalid issuer")
+	errInvalidType           = errors.New("invalid token type")
+	errInvalidSession        = errors.New("invalid session id in token")
+	errInvalidRefreshFormat  = errors.New("invalid refresh token format")
+	errInvalidRefreshToken   = errors.New("invalid refresh token")
+	errInvalidRefreshSession = errors.New("invalid refresh session")
+	errUserNotFound          = errors.New("user not found")
+	errApiKeyMissing         = errors.New("API key missing")
+	errInvalidApiKey         = errors.New("invalid API key")
+	ApiKeyTypeHeader         = "X-Api-Key-Type"
 )
 
 type AuthMiddleware struct {
@@ -52,60 +61,62 @@ func NewAuthMiddleware(u *usecase.UseCase, cfg *config.Config, l logger.Log) *Au
 	}
 }
 
-func (m *AuthMiddleware) AuthClientAccess(ctx *gin.Context) {
+func (m *AuthMiddleware) validateAccessToken(ctx *gin.Context) (*domain.Session, error) {
 	tokenStr := cookie.GetCookie(ctx, consts.COOKIE_ACCESS_TOKEN)
 	if tokenStr == "" {
 		tokenStr = ExtractBearerToken(ctx)
 	}
 
 	if tokenStr == "" {
-		response.ControllerResponse(ctx, http.StatusUnauthorized, errUnAuth.Error(), nil, false)
-		ctx.Abort()
-		return
+		return nil, errUnAuth
 	}
 
-	// 1. Signature & Basic Validation (RS256)
-	// Use empty audience since it's not configured
+	metadata, err := m.parseAndValidateMetadata(tokenStr)
+	if err != nil {
+		return nil, err
+	}
+
+	sessionID, err := uuid.Parse(metadata.SessionID)
+	if err != nil {
+		m.l.Warn("AuthMiddleware - validateAccessToken - Invalid session ID", "session_id", metadata.SessionID)
+		return nil, errInvalidSession
+	}
+
+	session, err := (*m.sessionUC).Get(ctx, &domain.SessionFilter{ID: &sessionID})
+	if err != nil || session.Revoked || session.IsExpired() {
+		m.l.Error("AuthMiddleware - validateAccessToken - Get", err)
+		return nil, errRevokedToken
+	}
+
+	return session, nil
+}
+
+func (m *AuthMiddleware) parseAndValidateMetadata(tokenStr string) (*jwt.AccessTokenClaims, error) {
 	metadata, err := jwt.ParseAccessToken(tokenStr, m.pubKey, m.cfg.JWT.Issuer, "")
 	if err != nil {
 		if errors.Is(err, jwt.ErrAccessTokenExpired) {
-			response.ControllerResponse(ctx, http.StatusUnauthorized, errExpiredToken.Error(), nil, false)
-		} else {
-			response.ControllerResponse(ctx, http.StatusUnauthorized, errInvalidToken.Error(), nil, false)
+			return nil, errExpiredToken
 		}
-		ctx.Abort()
-		return
+		return nil, errInvalidToken
 	}
 
-	// 2. Issuer check
 	if metadata.Issuer != m.cfg.JWT.Issuer {
-		m.l.Warn("AuthMiddleware - AuthClientAccess - Invalid issuer", "issuer", metadata.Issuer)
-		response.ControllerResponse(ctx, http.StatusUnauthorized, "invalid issuer", nil, false)
-		ctx.Abort()
-		return
+		m.l.Warn("AuthMiddleware - parseAndValidateMetadata - Invalid issuer", "issuer", metadata.Issuer)
+		return nil, errInvalidIssuer
 	}
 
-	// 3. Type check (must be access)
 	if metadata.Type != "access" {
-		m.l.Warn("AuthMiddleware - AuthClientAccess - Invalid token type", "type", metadata.Type)
-		response.ControllerResponse(ctx, http.StatusUnauthorized, "invalid token type", nil, false)
-		ctx.Abort()
-		return
+		m.l.Warn("AuthMiddleware - parseAndValidateMetadata - Invalid token type", "type", metadata.Type)
+		return nil, errInvalidType
 	}
 
-	// 4. Session & Revocation check (Stateful)
-	sessionID, err := uuid.Parse(metadata.SessionID)
+	return metadata, nil
+}
+
+func (m *AuthMiddleware) AuthClientAccess(ctx *gin.Context) {
+	session, err := m.validateAccessToken(ctx)
 	if err != nil {
-		m.l.Warn("AuthMiddleware - AuthClientAccess - Invalid session ID", "session_id", metadata.SessionID)
-		response.ControllerResponse(ctx, http.StatusUnauthorized, "invalid session id in token", nil, false)
-		ctx.Abort()
-		return
-	}
-
-	session, err := (*m.sessionUC).GetByID(ctx, &domain.SessionFilter{ID: sessionID})
-	if err != nil || session.Revoked || session.IsExpired() {
-		m.l.Error("AuthMiddleware - AuthClientAccess - GetByID", err)
-		response.ControllerResponse(ctx, http.StatusUnauthorized, errRevokedToken.Error(), nil, false)
+		response.ControllerResponse(ctx, http.StatusUnauthorized, err.Error(), nil, false)
 		ctx.Abort()
 		return
 	}
@@ -134,16 +145,17 @@ func (m *AuthMiddleware) AuthClientRefresh(ctx *gin.Context) {
 	rt, err := jwt.ParseRefreshToken(token)
 	if err != nil {
 		m.l.Error("AuthMiddleware - AuthClientRefresh - invalid refresh token format", err)
-		response.ControllerResponse(ctx, http.StatusUnauthorized, "invalid refresh token", nil, false)
+		response.ControllerResponse(ctx, http.StatusUnauthorized, errInvalidRefreshFormat.Error(), nil, false)
 		ctx.Abort()
 		return
 	}
 
 	// Get session from database
-	session, err := (*m.sessionUC).GetByID(ctx, &domain.SessionFilter{ID: uuid.MustParse(rt.ID)})
+	sessionID := uuid.MustParse(rt.ID)
+	session, err := (*m.sessionUC).Get(ctx, &domain.SessionFilter{ID: &sessionID})
 	if err != nil {
 		m.l.Error("AuthMiddleware - AuthClientRefresh - session not found", err)
-		response.ControllerResponse(ctx, http.StatusUnauthorized, "invalid refresh session", nil, false)
+		response.ControllerResponse(ctx, http.StatusUnauthorized, errInvalidRefreshSession.Error(), nil, false)
 		ctx.Abort()
 		return
 	}
@@ -151,7 +163,7 @@ func (m *AuthMiddleware) AuthClientRefresh(ctx *gin.Context) {
 	// Verify the refresh token
 	if !rt.Verify(session.RefreshTokenHash) {
 		m.l.Error("AuthMiddleware - AuthClientRefresh - invalid refresh token hash")
-		response.ControllerResponse(ctx, http.StatusUnauthorized, "invalid refresh token", nil, false)
+		response.ControllerResponse(ctx, http.StatusUnauthorized, errInvalidRefreshToken.Error(), nil, false)
 		ctx.Abort()
 		return
 	}
@@ -159,7 +171,7 @@ func (m *AuthMiddleware) AuthClientRefresh(ctx *gin.Context) {
 	// Check if session is still valid
 	if session.Revoked || session.IsExpired() {
 		m.l.Error("AuthMiddleware - AuthClientRefresh - session revoked or expired")
-		response.ControllerResponse(ctx, http.StatusUnauthorized, "session expired or revoked", nil, false)
+		response.ControllerResponse(ctx, http.StatusUnauthorized, errRevokedToken.Error(), nil, false)
 		ctx.Abort()
 		return
 	}
@@ -172,67 +184,19 @@ func (m *AuthMiddleware) AuthClientRefresh(ctx *gin.Context) {
 }
 
 func (m *AuthMiddleware) AuthAdmin(ctx *gin.Context) {
-	tokenStr := cookie.GetCookie(ctx, consts.COOKIE_ACCESS_TOKEN)
-	if tokenStr == "" {
-		tokenStr = ExtractBearerToken(ctx)
-	}
-
-	if tokenStr == "" {
-		response.ControllerResponse(ctx, http.StatusUnauthorized, errUnAuth.Error(), nil, false)
-		ctx.Abort()
-		return
-	}
-
-	// 1. Signature & Basic Validation (RS256)
-	// Use empty audience since it's not configured
-	metadata, err := jwt.ParseAccessToken(tokenStr, m.pubKey, m.cfg.JWT.Issuer, "")
+	session, err := m.validateAccessToken(ctx)
 	if err != nil {
-		m.l.Error("AuthMiddleware - AuthAdmin - ParseAccessToken", err)
-		if errors.Is(err, jwt.ErrAccessTokenExpired) {
-			response.ControllerResponse(ctx, http.StatusUnauthorized, errExpiredToken.Error(), nil, false)
-		} else {
-			response.ControllerResponse(ctx, http.StatusUnauthorized, errInvalidToken.Error(), nil, false)
-		}
-		ctx.Abort()
-		return
-	}
-
-	// 2. Issuer check
-	if metadata.Issuer != m.cfg.JWT.Issuer {
-		response.ControllerResponse(ctx, http.StatusUnauthorized, "invalid issuer", nil, false)
-		ctx.Abort()
-		return
-	}
-
-	// 3. Type check (must be access)
-	if metadata.Type != "access" {
-		response.ControllerResponse(ctx, http.StatusUnauthorized, "invalid token type", nil, false)
-		ctx.Abort()
-		return
-	}
-
-	// 4. Session & Revocation check (Stateful)
-	sessionID, err := uuid.Parse(metadata.SessionID)
-	if err != nil {
-		response.ControllerResponse(ctx, http.StatusUnauthorized, "invalid session id in token", nil, false)
-		ctx.Abort()
-		return
-	}
-
-	session, err := (*m.sessionUC).GetByID(ctx, &domain.SessionFilter{ID: sessionID})
-	if err != nil || session.Revoked || session.IsExpired() {
-		m.l.Error("AuthMiddleware - AuthAdmin - GetByID", err)
-		response.ControllerResponse(ctx, http.StatusUnauthorized, errRevokedToken.Error(), nil, false)
+		response.ControllerResponse(ctx, http.StatusUnauthorized, err.Error(), nil, false)
 		ctx.Abort()
 		return
 	}
 
 	// 5. Admin check - for now, just ensure user exists
 	// TODO: Implement proper role-based access control
-	_, err = (*m.userUC).User(ctx, client.UserInput{ID: session.UserID})
+	_, err = (*m.userUC).Get(ctx, &domain.UserFilter{ID: &session.UserID})
 	if err != nil {
 		m.l.Error("AuthMiddleware - AuthAdmin - User", err)
-		response.ControllerResponse(ctx, http.StatusUnauthorized, "user not found", nil, false)
+		response.ControllerResponse(ctx, http.StatusUnauthorized, errUserNotFound.Error(), nil, false)
 		ctx.Abort()
 		return
 	}
@@ -249,7 +213,7 @@ func (m *AuthMiddleware) AuthApiKey(ctx *gin.Context) {
 	apiKey := ctx.GetHeader("X-API-KEY")
 	if apiKey == "" {
 		m.l.Warn("AuthMiddleware - AuthApiKey - API key missing", "ip", ctx.ClientIP())
-		response.ControllerResponse(ctx, http.StatusUnauthorized, "API key missing", nil, false)
+		response.ControllerResponse(ctx, http.StatusUnauthorized, errApiKeyMissing.Error(), nil, false)
 		ctx.Abort()
 		return
 	}
@@ -257,7 +221,7 @@ func (m *AuthMiddleware) AuthApiKey(ctx *gin.Context) {
 	// Simple check against config - in real app, check DB or external service
 	if apiKey != m.cfg.APIKeys.XApiKey {
 		m.l.Warn("AuthMiddleware - AuthApiKey - Invalid API key", "ip", ctx.ClientIP())
-		response.ControllerResponse(ctx, http.StatusUnauthorized, "invalid API key", nil, false)
+		response.ControllerResponse(ctx, http.StatusUnauthorized, errInvalidApiKey.Error(), nil, false)
 		ctx.Abort()
 		return
 	}
@@ -268,7 +232,7 @@ func (m *AuthMiddleware) AuthApiKey(ctx *gin.Context) {
 
 func ExtractBearerToken(ctx *gin.Context) string {
 	bearToken := ctx.GetHeader(consts.AuthorizationHeader)
-	token := fmt.Sprintf("%v", bearToken)
+	token := bearToken
 	onlyToken := strings.Split(token, " ")
 
 	if len(onlyToken) != 2 || onlyToken[0] != consts.BearerToken {
@@ -280,7 +244,7 @@ func ExtractBearerToken(ctx *gin.Context) string {
 
 func ExtractBasicToken(ctx *gin.Context) string {
 	basicToken := ctx.GetHeader(consts.AuthorizationHeader)
-	token := fmt.Sprintf("%v", basicToken)
+	token := basicToken
 	onlyToken := strings.Split(token, " ")
 
 	if len(onlyToken) != 2 || onlyToken[0] != "Basic" {

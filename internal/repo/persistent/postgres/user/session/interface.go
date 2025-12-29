@@ -3,7 +3,7 @@ package session
 import (
 	"context"
 
-	"github.com/evrone/go-clean-template/internal/domain"
+	"gct/internal/domain"
 )
 
 // SessionRepoI defines the interface for session repository operations.
@@ -22,4 +22,7 @@ type RepoI interface {
 
 	// Delete terminates (deletes) a session.
 	Delete(ctx context.Context, filter *domain.SessionFilter) error
+
+	// Gets retrieves sessions based on the provided filter and pagination.
+	Gets(ctx context.Context, filter *domain.SessionsFilter) ([]*domain.Session, int, error)
 }

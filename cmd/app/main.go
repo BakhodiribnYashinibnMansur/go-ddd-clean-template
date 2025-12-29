@@ -1,10 +1,16 @@
+// Package main implements the main application entry point.
+// @title       Go Clean Template API
+// @description Using a user management service as an example
+// @version     1.0
+// @host        localhost:8080
+// @BasePath    /api
 package main
 
 import (
 	"log"
 
-	"github.com/evrone/go-clean-template/config"
-	"github.com/evrone/go-clean-template/internal/app"
+	"gct/config"
+	"gct/internal/app"
 )
 
 func main() {

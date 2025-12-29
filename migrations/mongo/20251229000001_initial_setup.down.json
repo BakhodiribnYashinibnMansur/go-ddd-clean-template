@@ -1,0 +1,8 @@
+[
+    {
+        "drop": "sessions"
+    },
+    {
+        "drop": "users"
+    }
+]

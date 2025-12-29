@@ -3,9 +3,10 @@ package session
 import (
 	"net/http"
 
-	"github.com/evrone/go-clean-template/consts"
-	"github.com/evrone/go-clean-template/internal/controller/restapi/response"
 	"github.com/gin-gonic/gin"
+
+	"gct/consts"
+	"gct/internal/controller/restapi/response"
 )
 
 // RevokeByDevice godoc

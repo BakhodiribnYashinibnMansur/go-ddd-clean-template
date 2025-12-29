@@ -3,24 +3,25 @@ package system
 import (
 	"net/http"
 
-	"github.com/evrone/go-clean-template/internal/controller/restapi/response"
-	apperrors "github.com/evrone/go-clean-template/pkg/errors"
-	"github.com/evrone/go-clean-template/pkg/logger"
 	"github.com/gin-gonic/gin"
+
+	"gct/internal/controller/restapi/response"
+	apperrors "gct/pkg/errors"
+	"gct/pkg/logger"
 )
 
 type Controller struct {
 	l logger.Log
 }
 
-func NewController(l logger.Log) *Controller {
+func New(l logger.Log) *Controller {
 	return &Controller{l: l}
 }
 
 type ErrorFilter struct {
-	Layer    string `form:"type" example:"Repository"`     // Maps to 'layer'
-	Category string `form:"category" example:"Validation"` // Maps to 'category'
-	Code     string `form:"code" example:"NOT_FOUND"`      // Maps to 'code'
+	Layer    string `example:"Repository" form:"type"`     // Maps to 'layer'
+	Category string `example:"Validation" form:"category"` // Maps to 'category'
+	Code     string `example:"NOT_FOUND"  form:"code"`     // Maps to 'code'
 }
 
 // GetErrors godoc

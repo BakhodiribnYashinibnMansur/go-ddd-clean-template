@@ -3,10 +3,12 @@ package client
 import (
 	"net/http"
 
-	"github.com/evrone/go-clean-template/internal/controller/restapi/response"
-	"github.com/evrone/go-clean-template/internal/controller/restapi/util"
-	uc_client "github.com/evrone/go-clean-template/internal/usecase/user/client"
 	"github.com/gin-gonic/gin"
+
+	"gct/consts"
+	"gct/internal/controller/restapi/response"
+	"gct/internal/controller/restapi/util"
+	"gct/internal/domain"
 )
 
 // Get godoc
@@ -22,17 +24,17 @@ import (
 // @Failure     500 {object} response.ErrorResponse
 // @Router      /users/{user_id} [get]
 func (c *Controller) User(ctx *gin.Context) {
-	id, err := util.GetInt64Param(ctx, "user_id")
+	id, err := util.GetInt64Param(ctx, consts.ParamUserID)
 	if err != nil {
 		util.LogError(c.l, err, "http - v1 - client - get - id")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid user id", nil, false)
 		return
 	}
-	out, err := c.u.User.Client.User(ctx.Request.Context(), uc_client.UserInput{ID: id})
+	out, err := c.u.User.Client.Get(ctx.Request.Context(), &domain.UserFilter{ID: &id})
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusInternalServerError, err, nil, false)
 		return
 	}
 
-	response.ControllerResponse(ctx, http.StatusOK, out.User, nil, true)
+	response.ControllerResponse(ctx, http.StatusOK, out, nil, true)
 }

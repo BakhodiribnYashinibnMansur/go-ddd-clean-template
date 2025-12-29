@@ -7,12 +7,13 @@ import (
 	"fmt"
 	"time"
 
-	rmqrpc "github.com/evrone/go-clean-template/pkg/broker/rabbitmq/rmq_rpc"
-	"github.com/evrone/go-clean-template/pkg/logger"
 	"github.com/goccy/go-json"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
+
+	rmqrpc "gct/pkg/broker/rabbitmq/rmq_rpc"
+	"gct/pkg/logger"
 )
 
 const (

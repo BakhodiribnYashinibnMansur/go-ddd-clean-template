@@ -20,7 +20,7 @@ func WithSource(err *AppError, file, function string) *AppError {
 // GetCaller returns the file and function name of the caller
 // Skip levels: 0 = GetCaller itself, 1 = caller of GetCaller, etc.
 // Returns relative path from project root (internal/repo/...) and short function name
-func GetCaller(skip int) (file string, function string) {
+func GetCaller(skip int) (file, function string) {
 	pc, fullPath, _, ok := runtime.Caller(skip + 1)
 	if !ok {
 		return "unknown", "unknown"

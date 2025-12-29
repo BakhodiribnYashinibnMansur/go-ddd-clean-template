@@ -46,11 +46,11 @@ var repoMessages = map[string]string{
 }
 
 // NewRepoError creates a new repository error
-func NewRepoError(ctx context.Context, code string, message string) *AppError {
+func NewRepoError(ctx context.Context, code, message string) *AppError {
 	return New(ctx, code, message)
 }
 
 // WrapRepoError wraps an error as repository error
-func WrapRepoError(ctx context.Context, err error, code string, message string) *AppError {
+func WrapRepoError(ctx context.Context, err error, code, message string) *AppError {
 	return Wrap(ctx, err, code, message)
 }

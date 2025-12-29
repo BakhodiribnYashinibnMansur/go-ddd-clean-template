@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func FileTransfer(ctx *gin.Context, filePath string, contentType string) (err error) {
+func FileTransfer(ctx *gin.Context, filePath, contentType string) (err error) {
 	bytes, err := os.ReadFile(filePath)
 	if err != nil {
 		return err
@@ -29,6 +29,8 @@ func DownloadFile(ctx *gin.Context, filePath string) error {
 	}
 	ctx.Header("Content-Type", "application/octet-stream")
 	ctx.Header("Content-Disposition", "attachment; filename="+fileName)
-	ctx.Writer.Write(bytes)
+	if _, err := ctx.Writer.Write(bytes); err != nil {
+		return err
+	}
 	return nil
 }

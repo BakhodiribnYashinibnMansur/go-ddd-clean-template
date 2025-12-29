@@ -43,7 +43,7 @@ func (c *Client) SendPostBearerRequest(ctx context.Context, endpoint string, bod
 }
 
 // SendGetBearerRequest sends a GET request with Bearer Auth
-func (c *Client) SendGetBearerRequest(ctx context.Context, endpoint string, token string, query map[string]string) (*resty.Response, error) {
+func (c *Client) SendGetBearerRequest(ctx context.Context, endpoint, token string, query map[string]string) (*resty.Response, error) {
 	return c.resty.R().
 		SetContext(ctx).
 		SetAuthToken(token).

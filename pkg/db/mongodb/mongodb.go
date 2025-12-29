@@ -6,12 +6,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/evrone/go-clean-template/config"
-	"github.com/evrone/go-clean-template/pkg/logger"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"go.uber.org/zap"
+
+	"gct/config"
+	"gct/pkg/logger"
 )
 
 const (
@@ -60,7 +61,9 @@ func New(ctx context.Context, env string, cfg config.MongoDB, l logger.Log, opts
 
 	// Verify connection with ping
 	if err := verifyConnection(ctx, client, l); err != nil {
-		client.Disconnect(ctx)
+		if disconnectErr := client.Disconnect(ctx); disconnectErr != nil {
+			l.Warnw("failed to disconnect MongoDB client during cleanup", zap.Error(disconnectErr))
+		}
 		return nil, err
 	}
 

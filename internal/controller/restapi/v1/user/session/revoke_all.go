@@ -3,12 +3,12 @@ package session
 import (
 	"net/http"
 
-	"github.com/evrone/go-clean-template/consts"
-	"github.com/evrone/go-clean-template/internal/controller/restapi/response"
-	"github.com/evrone/go-clean-template/internal/controller/restapi/util"
-	"github.com/evrone/go-clean-template/internal/domain"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+
+	"gct/internal/controller/restapi/response"
+	"gct/internal/controller/restapi/util"
+	"gct/internal/domain"
 )
 
 // RevokeAll godoc
@@ -22,25 +22,15 @@ import (
 // @Failure     500 {object} response.ErrorResponse
 // @Router      /sessions/revoke-all [post]
 func (c *Controller) RevokeAll(ctx *gin.Context) {
-	userID, exists := ctx.Get(consts.CtxUserID)
-	if !exists {
+	userID, err := util.GetUserIDInt64(ctx)
+	if err != nil {
 		response.ControllerResponse(ctx, http.StatusUnauthorized, "unauthorized", nil, false)
 		return
 	}
 
-	currentSessionID, exists := ctx.Get(consts.CtxSessionID)
-	if !exists {
+	sid, err := util.GetCtxSessionID(ctx)
+	if err != nil {
 		response.ControllerResponse(ctx, http.StatusUnauthorized, "session not found", nil, false)
-		return
-	}
-
-	// Logging purpose only
-	uid, _ := userID.(string)
-
-	sid, ok := currentSessionID.(string)
-	if !ok {
-		util.LogError(c.l, nil, "http - v1 - session - revoke_all - context_sid: invalid type")
-		response.ControllerResponse(ctx, http.StatusInternalServerError, "invalid session ID", nil, false)
 		return
 	}
 
@@ -52,13 +42,13 @@ func (c *Controller) RevokeAll(ctx *gin.Context) {
 	}
 
 	// Just revoke current session for now
-	filter := &domain.SessionFilter{ID: sessionUUID}
+	filter := &domain.SessionFilter{ID: &sessionUUID}
 	err = c.s.User.Session.Revoke(ctx.Request.Context(), filter)
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusInternalServerError, err, nil, false)
 		return
 	}
 
-	c.l.Infow("Session revoked for user", "user_id", uid)
+	c.l.Infow("Session revoked for user", "user_id", userID)
 	response.ControllerResponse(ctx, http.StatusOK, "Session revoked successfully", nil, true)
 }

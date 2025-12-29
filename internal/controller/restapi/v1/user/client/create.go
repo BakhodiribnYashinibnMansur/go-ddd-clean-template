@@ -3,11 +3,11 @@ package client
 import (
 	"net/http"
 
-	"github.com/evrone/go-clean-template/internal/controller/restapi/response"
-	"github.com/evrone/go-clean-template/internal/controller/restapi/util"
-	"github.com/evrone/go-clean-template/internal/domain"
-	uc_client "github.com/evrone/go-clean-template/internal/usecase/user/client"
 	"github.com/gin-gonic/gin"
+
+	"gct/internal/controller/restapi/response"
+	"gct/internal/controller/restapi/util"
+	"gct/internal/domain"
 )
 
 // Create godoc
@@ -29,7 +29,7 @@ func (c *Controller) Create(ctx *gin.Context) {
 		return
 	}
 
-	err := c.u.User.Client.Create(ctx.Request.Context(), uc_client.CreateInput{User: &user})
+	err := c.u.User.Client.Create(ctx.Request.Context(), &user)
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusInternalServerError, err, nil, false)
 		return

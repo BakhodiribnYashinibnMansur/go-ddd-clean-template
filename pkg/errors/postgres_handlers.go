@@ -13,14 +13,14 @@ func handleAuthError(ctx context.Context, pgErr *pgconn.PgError, table string, e
 			"authentication failed"))
 
 	if table != "" {
-		appErr.WithField("table", table)
+		_ = appErr.WithField("table", table)
 	}
-	appErr.WithField("pg_code", pgErr.Code).
+	_ = appErr.WithField("pg_code", pgErr.Code).
 		WithField("pg_severity", pgErr.Severity).
 		WithDetails(pgErr.Message)
 
 	for key, value := range extraFields {
-		appErr.WithField(key, value)
+		_ = appErr.WithField(key, value)
 	}
 	return appErr
 }
@@ -34,13 +34,13 @@ func handleSyntaxOrAccessError(ctx context.Context, pgErr *pgconn.PgError, table
 				"insufficient privilege"))
 
 		if table != "" {
-			appErr.WithField("table", table)
+			_ = appErr.WithField("table", table)
 		}
-		appErr.WithField("pg_code", pgErr.Code).
+		_ = appErr.WithField("pg_code", pgErr.Code).
 			WithDetails("User does not have required database privileges")
 
 		for key, value := range extraFields {
-			appErr.WithField(key, value)
+			_ = appErr.WithField(key, value)
 		}
 		return appErr
 	}
@@ -52,13 +52,13 @@ func handleSyntaxOrAccessError(ctx context.Context, pgErr *pgconn.PgError, table
 				"table does not exist"))
 
 		if table != "" {
-			appErr.WithField("table", table)
+			_ = appErr.WithField("table", table)
 		}
-		appErr.WithField("pg_code", pgErr.Code).
+		_ = appErr.WithField("pg_code", pgErr.Code).
 			WithDetails(pgErr.Message)
 
 		for key, value := range extraFields {
-			appErr.WithField(key, value)
+			_ = appErr.WithField(key, value)
 		}
 		return appErr
 	}
@@ -68,14 +68,14 @@ func handleSyntaxOrAccessError(ctx context.Context, pgErr *pgconn.PgError, table
 			"syntax error or access violation"))
 
 	if table != "" {
-		appErr.WithField("table", table)
+		_ = appErr.WithField("table", table)
 	}
-	appErr.WithField("pg_code", pgErr.Code).
+	_ = appErr.WithField("pg_code", pgErr.Code).
 		WithField("pg_severity", pgErr.Severity).
 		WithDetails(pgErr.Message)
 
 	for key, value := range extraFields {
-		appErr.WithField(key, value)
+		_ = appErr.WithField(key, value)
 	}
 	return appErr
 }
@@ -87,14 +87,14 @@ func handleConfigError(ctx context.Context, pgErr *pgconn.PgError, table string,
 			"configuration file error"))
 
 	if table != "" {
-		appErr.WithField("table", table)
+		_ = appErr.WithField("table", table)
 	}
-	appErr.WithField("pg_code", pgErr.Code).
+	_ = appErr.WithField("pg_code", pgErr.Code).
 		WithField("pg_severity", pgErr.Severity).
 		WithDetails(pgErr.Message)
 
 	for key, value := range extraFields {
-		appErr.WithField(key, value)
+		_ = appErr.WithField(key, value)
 	}
 	return appErr
 }
@@ -106,14 +106,14 @@ func handleFDWError(ctx context.Context, pgErr *pgconn.PgError, table string, ex
 			"foreign data wrapper error"))
 
 	if table != "" {
-		appErr.WithField("table", table)
+		_ = appErr.WithField("table", table)
 	}
-	appErr.WithField("pg_code", pgErr.Code).
+	_ = appErr.WithField("pg_code", pgErr.Code).
 		WithField("pg_severity", pgErr.Severity).
 		WithDetails(pgErr.Message)
 
 	for key, value := range extraFields {
-		appErr.WithField(key, value)
+		_ = appErr.WithField(key, value)
 	}
 	return appErr
 }
@@ -125,14 +125,14 @@ func handlePLpgSQLError(ctx context.Context, pgErr *pgconn.PgError, table string
 			"PL/pgSQL error"))
 
 	if table != "" {
-		appErr.WithField("table", table)
+		_ = appErr.WithField("table", table)
 	}
-	appErr.WithField("pg_code", pgErr.Code).
+	_ = appErr.WithField("pg_code", pgErr.Code).
 		WithField("pg_severity", pgErr.Severity).
 		WithDetails(pgErr.Message)
 
 	for key, value := range extraFields {
-		appErr.WithField(key, value)
+		_ = appErr.WithField(key, value)
 	}
 	return appErr
 }
@@ -144,14 +144,14 @@ func handleInternalError(ctx context.Context, pgErr *pgconn.PgError, table strin
 			"internal database error"))
 
 	if table != "" {
-		appErr.WithField("table", table)
+		_ = appErr.WithField("table", table)
 	}
-	appErr.WithField("pg_code", pgErr.Code).
+	_ = appErr.WithField("pg_code", pgErr.Code).
 		WithField("pg_severity", pgErr.Severity).
 		WithDetails(pgErr.Message)
 
 	for key, value := range extraFields {
-		appErr.WithField(key, value)
+		_ = appErr.WithField(key, value)
 	}
 	return appErr
 }

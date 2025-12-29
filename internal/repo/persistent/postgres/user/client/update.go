@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/evrone/go-clean-template/internal/domain"
-	apperrors "github.com/evrone/go-clean-template/pkg/errors"
+	"gct/internal/domain"
+	apperrors "gct/pkg/errors"
 )
 
 func (r *Repo) Update(ctx context.Context, u *domain.User) error {
@@ -20,20 +20,13 @@ func (r *Repo) Update(ctx context.Context, u *domain.User) error {
 		Where("id = ? AND deleted_at = 0", u.ID).
 		ToSql()
 	if err != nil {
-		return apperrors.AutoSource(
-			apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase,
-				"failed to build update SQL query")).
-			WithField("user_id", u.ID).
-			WithDetails("Error occurred while building UPDATE query")
+		return apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase,
+			"failed to build update SQL query")
 	}
 
 	_, err = r.pool.Exec(ctx, sql, args...)
 	if err != nil {
-		// Use centralized PostgreSQL error handler!
-		return apperrors.HandlePgError(ctx, err, "users", map[string]any{
-			"user_id": u.ID,
-			"phone":   u.Phone,
-		})
+		return apperrors.HandlePgError(ctx, err, "users", nil)
 	}
 
 	return nil

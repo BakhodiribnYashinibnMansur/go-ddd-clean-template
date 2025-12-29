@@ -5,8 +5,9 @@ import (
 	"time"
 
 	"github.com/Masterminds/squirrel"
-	"github.com/evrone/go-clean-template/internal/domain"
-	apperrors "github.com/evrone/go-clean-template/pkg/errors"
+
+	"gct/internal/domain"
+	apperrors "gct/pkg/errors"
 )
 
 func (r *Repo) Update(ctx context.Context, s *domain.Session) error {
@@ -19,18 +20,13 @@ func (r *Repo) Update(ctx context.Context, s *domain.Session) error {
 		Where(squirrel.Eq{"id": s.ID}).
 		ToSql()
 	if err != nil {
-		return apperrors.AutoSource(
-			apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase,
-				"failed to build update SQL query")).
-			WithField("id", s.ID.String()).
-			WithDetails("Error occurred while building UPDATE query for session")
+		return apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase,
+			"failed to build update SQL query")
 	}
 
 	_, err = r.pool.Exec(ctx, sql, args...)
 	if err != nil {
-		return apperrors.HandlePgError(ctx, err, "session", map[string]any{
-			"id": s.ID.String(),
-		})
+		return apperrors.HandlePgError(ctx, err, "session", nil)
 	}
 
 	return nil
@@ -41,21 +37,16 @@ func (r *Repo) Revoke(ctx context.Context, filter *domain.SessionFilter) error {
 		Update("session").
 		Set("revoked", true).
 		Set("updated_at", time.Now()).
-		Where(squirrel.Eq{"id": filter.ID}).
+		Where(squirrel.Eq{"id": *filter.ID}).
 		ToSql()
 	if err != nil {
-		return apperrors.AutoSource(
-			apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase,
-				"failed to build update SQL query")).
-			WithField("id", filter.ID.String()).
-			WithDetails("Error occurred while building UPDATE query for revoke session")
+		return apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase,
+			"failed to build update SQL query")
 	}
 
 	_, err = r.pool.Exec(ctx, sql, args...)
 	if err != nil {
-		return apperrors.HandlePgError(ctx, err, "session", map[string]any{
-			"id": filter.ID.String(),
-		})
+		return apperrors.HandlePgError(ctx, err, "session", nil)
 	}
 
 	return nil

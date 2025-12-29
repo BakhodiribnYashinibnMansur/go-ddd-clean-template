@@ -3,11 +3,12 @@ package client
 import (
 	"crypto/rsa"
 
-	"github.com/evrone/go-clean-template/config"
-	"github.com/evrone/go-clean-template/internal/usecase"
-	"github.com/evrone/go-clean-template/pkg/jwt"
-	"github.com/evrone/go-clean-template/pkg/logger"
 	"github.com/gin-gonic/gin"
+
+	"gct/config"
+	"gct/internal/usecase"
+	"gct/pkg/jwt"
+	"gct/pkg/logger"
 )
 
 type Controller struct {

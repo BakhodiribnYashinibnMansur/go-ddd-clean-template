@@ -4,7 +4,7 @@ import "reflect"
 
 // cleanConfigStrings recursively walks through the config and removes quotes from string fields
 func cleanConfigStrings(v reflect.Value) {
-	for i := 0; i < v.NumField(); i++ {
+	for i := range v.NumField() {
 		field := v.Field(i)
 
 		switch field.Kind() {

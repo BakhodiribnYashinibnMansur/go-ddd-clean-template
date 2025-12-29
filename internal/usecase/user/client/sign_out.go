@@ -3,15 +3,16 @@ package client
 import (
 	"context"
 
-	"github.com/evrone/go-clean-template/internal/domain"
 	"github.com/google/uuid"
+
+	"gct/internal/domain"
 )
 
-func (uc *UseCase) SignOut(ctx context.Context, in SignOutInput) error {
+func (uc *UseCase) SignOut(ctx context.Context, in *domain.SignOutIn) error {
 	sessionID, err := uuid.Parse(in.SessionID)
 	if err != nil {
 		return err
 	}
 
-	return uc.repo.User.SessionRepo.Revoke(ctx, &domain.SessionFilter{ID: sessionID})
+	return uc.repo.Postgres.SessionRepo.Revoke(ctx, &domain.SessionFilter{ID: &sessionID})
 }

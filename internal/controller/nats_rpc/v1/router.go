@@ -1,10 +1,11 @@
 package v1
 
 import (
-	"github.com/evrone/go-clean-template/internal/usecase"
-	"github.com/evrone/go-clean-template/pkg/broker/nats/nats_rpc/server"
-	"github.com/evrone/go-clean-template/pkg/logger"
 	"github.com/go-playground/validator/v10"
+
+	"gct/internal/usecase"
+	"gct/pkg/broker/nats/nats_rpc/server"
+	"gct/pkg/logger"
 )
 
 // NewUserRoutes -.

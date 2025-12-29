@@ -3,11 +3,12 @@ package client
 import (
 	"net/http"
 
-	"github.com/evrone/go-clean-template/internal/controller/restapi/response"
-	"github.com/evrone/go-clean-template/internal/controller/restapi/util"
-	"github.com/evrone/go-clean-template/internal/domain"
-	uc_client "github.com/evrone/go-clean-template/internal/usecase/user/client"
 	"github.com/gin-gonic/gin"
+
+	"gct/consts"
+	"gct/internal/controller/restapi/response"
+	"gct/internal/controller/restapi/util"
+	"gct/internal/domain"
 )
 
 // Update godoc
@@ -24,7 +25,7 @@ import (
 // @Failure     500 {object} response.ErrorResponse
 // @Router      /users/{user_id} [patch]
 func (c *Controller) Update(ctx *gin.Context) {
-	id, err := util.GetInt64Param(ctx, "user_id")
+	id, err := util.GetInt64Param(ctx, consts.ParamUserID)
 	if err != nil {
 		util.LogError(c.l, err, "http - v1 - client - update - id")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid user id", nil, false)
@@ -39,7 +40,7 @@ func (c *Controller) Update(ctx *gin.Context) {
 	}
 	user.ID = id
 
-	err = c.u.User.Client.Update(ctx.Request.Context(), uc_client.UpdateInput{User: &user})
+	err = c.u.User.Client.Update(ctx.Request.Context(), &user)
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusInternalServerError, err, nil, false)
 		return

@@ -1,7 +1,6 @@
 package util
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -49,7 +48,7 @@ func GetClientDomain(ctx *gin.Context) string {
 func GetApiKeyType(ctx *gin.Context) (string, error) {
 	apiKeyType := ctx.GetHeader(ApiKeyTypeHeader)
 	if apiKeyType == "" {
-		return "", fmt.Errorf("%s not found", ApiKeyTypeHeader)
+		return "", ErrApiKeyTypeNotFound
 	}
 	return apiKeyType, nil
 }

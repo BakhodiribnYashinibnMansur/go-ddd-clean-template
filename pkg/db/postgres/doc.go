@@ -6,9 +6,9 @@
 //		"context"
 //		"time"
 //
-//		"github.com/evrone/go-clean-template/config"
-//		"github.com/evrone/go-clean-template/pkg/logger"
-//		"github.com/evrone/go-clean-template/pkg/db/postgres"
+//		"gct/config"
+//		"gct/pkg/logger"
+//		"gct/pkg/db/postgres"
 //	)
 //
 //	func main() {

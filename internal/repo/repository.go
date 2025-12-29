@@ -1,32 +1,26 @@
 package repo
 
 import (
-	"github.com/evrone/go-clean-template/internal/repo/integration/rest"
-	"github.com/evrone/go-clean-template/internal/repo/persistent"
-	"github.com/evrone/go-clean-template/pkg/db/postgres"
-	"github.com/evrone/go-clean-template/pkg/logger"
+	minioClient "github.com/minio/minio-go/v7"
+	redisClient "github.com/redis/go-redis/v9"
+
+	"gct/config"
+	"gct/internal/repo/integration/rest"
+	"gct/internal/repo/persistent"
+	"gct/pkg/db/postgres"
+	"gct/pkg/logger"
 )
 
-// Repo represents the main repository structure that aggregates
-// both persistent storage and external integration repositories
+// Repo represents the main repository structure
 type Repo struct {
-	// Persistent layer repositories
 	Persistent *persistent.Repo
-
-	// Integration layer repositories
-	Client *rest.Client
-	// Add other integration repos here (Kafka, Redis, etc.)
+	Client     *rest.Client
 }
 
-// New creates a new repository instance with both persistent and integration layers
-func New(pg *postgres.Postgres, logger logger.Log) *Repo {
+// New creates a new repository instance
+func New(pg *postgres.Postgres, mClient *minioClient.Client, rClient *redisClient.Client, mConfig *config.MinioStore, logger logger.Log) *Repo {
 	return &Repo{
-		Persistent: persistent.New(pg, logger),
-		Client:     rest.New(30), // 30 second timeout for REST client
+		Persistent: persistent.New(pg, mClient, rClient, mConfig, logger),
+		Client:     rest.New(30),
 	}
-}
-
-// Getter methods for backward compatibility and clean access
-func (r *Repo) User() *persistent.Repo {
-	return r.Persistent
 }

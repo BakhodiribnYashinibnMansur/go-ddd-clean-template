@@ -85,6 +85,128 @@ services:
         aliases:
           - nats.lvh.me
 
+  redis:
+    container_name: redis
+    image: redis:7.4-alpine
+    command: redis-server --requirepass redisPassword123
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      app_network:
+        aliases:
+          - redis.lvh.me
+
+  mongodb:
+    container_name: mongodb
+    image: mongo:8.0
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mongoUser
+      MONGO_INITDB_ROOT_PASSWORD: mongoPassword123
+      MONGO_INITDB_DATABASE: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      app_network:
+        aliases:
+          - mongodb.lvh.me
+
+  mysql:
+    container_name: mysql
+    image: mysql:9.1
+    environment:
+      MYSQL_ROOT_PASSWORD: rootPassword123
+      MYSQL_DATABASE: mysqldb
+      MYSQL_USER: mysqlUser
+      MYSQL_PASSWORD: mysqlPassword123
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password
+    networks:
+      app_network:
+        aliases:
+          - mysql.lvh.me
+
+  minio:
+    container_name: minio
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioUser
+      MINIO_ROOT_PASSWORD: minioPassword123
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      app_network:
+        aliases:
+          - minio.lvh.me
+
+  elasticsearch:
+    container_name: elasticsearch
+    image: elasticsearch:8.17.0
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      app_network:
+        aliases:
+          - elasticsearch.lvh.me
+
+  clickhouse:
+    container_name: clickhouse
+    image: clickhouse/clickhouse-server:24.12-alpine
+    environment:
+      CLICKHOUSE_DB: clickhousedb
+      CLICKHOUSE_USER: clickhouseUser
+      CLICKHOUSE_PASSWORD: clickhousePassword123
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    networks:
+      app_network:
+        aliases:
+          - clickhouse.lvh.me
+
+  cassandra:
+    container_name: cassandra
+    image: cassandra:5.0
+    environment:
+      CASSANDRA_CLUSTER_NAME: "CassandraCluster"
+      CASSANDRA_DC: "dc1"
+      CASSANDRA_RACK: "rack1"
+      CASSANDRA_ENDPOINT_SNITCH: "GossipingPropertyFileSnitch"
+      CASSANDRA_NUM_TOKENS: 128
+    ports:
+      - "9042:9042"
+      - "7000:7000"
+    volumes:
+      - cassandra_data:/var/lib/cassandra
+    networks:
+      app_network:
+        aliases:
+          - cassandra.lvh.me
+
   app:
     container_name: app
     platform: linux/amd64
@@ -137,3 +259,10 @@ volumes:
   db_data:
   rabbitmq_data:
   nats_data:
+  redis_data:
+  mongodb_data:
+  mysql_data:
+  minio_data:
+  elasticsearch_data:
+  clickhouse_data:
+  cassandra_data:

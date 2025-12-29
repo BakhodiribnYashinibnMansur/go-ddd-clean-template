@@ -6,9 +6,10 @@ import (
 	"fmt"
 
 	"github.com/elastic/go-elasticsearch/v8"
-	"github.com/evrone/go-clean-template/config"
-	"github.com/evrone/go-clean-template/pkg/logger"
 	"go.uber.org/zap"
+
+	"gct/config"
+	"gct/pkg/logger"
 )
 
 const (

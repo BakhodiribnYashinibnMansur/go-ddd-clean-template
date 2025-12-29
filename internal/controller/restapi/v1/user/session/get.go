@@ -3,10 +3,12 @@ package session
 import (
 	"net/http"
 
-	"github.com/evrone/go-clean-template/internal/controller/restapi/response"
-	"github.com/evrone/go-clean-template/internal/controller/restapi/util"
-	"github.com/evrone/go-clean-template/internal/domain"
 	"github.com/gin-gonic/gin"
+
+	"gct/consts"
+	"gct/internal/controller/restapi/response"
+	"gct/internal/controller/restapi/util"
+	"gct/internal/domain"
 )
 
 // Get godoc
@@ -21,15 +23,15 @@ import (
 // @Failure     500 {object} response.ErrorResponse
 // @Router      /sessions/{id} [get]
 func (c *Controller) Session(ctx *gin.Context) {
-	id, err := util.GetUUIDParam(ctx, "id")
+	id, err := util.GetUUIDParam(ctx, consts.ParamSessionID)
 	if err != nil {
 		util.LogError(c.l, err, "http - v1 - session - get - id")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid session id", nil, false)
 		return
 	}
 
-	filter := &domain.SessionFilter{ID: id}
-	session, err := c.s.User.Session.GetByID(ctx.Request.Context(), filter)
+	filter := &domain.SessionFilter{ID: &id}
+	session, err := c.s.User.Session.Get(ctx.Request.Context(), filter)
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusInternalServerError, err, nil, false)
 		return

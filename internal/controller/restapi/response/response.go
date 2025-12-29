@@ -10,11 +10,19 @@ import (
 
 // SuccessResponse is the standard success response structure
 type SuccessResponse struct {
-	Status     string `json:"status" example:"success"` // "success" or "error"
-	StatusCode int    `json:"statusCode" example:"200"`
-	Message    string `json:"message" example:"Operation completed successfully"`
+	Status     string `example:"success"                          json:"status"` // "success" or "error"
+	StatusCode int    `example:"200"                              json:"statusCode"`
+	Message    string `example:"Operation completed successfully" json:"message"`
 	Data       any    `json:"data,omitempty"`
-	Pagination any    `json:"pagination,omitempty"`
+	Meta       any    `json:"meta,omitempty"`
+}
+
+// Meta holds pagination metadata
+type Meta struct {
+	Total  int64 `json:"total"`
+	Limit  int64 `json:"limit"`
+	Offset int64 `json:"offset"`
+	Page   int64 `json:"page"`
 }
 
 // ============================================================================
@@ -26,11 +34,11 @@ type SuccessResponse struct {
 // 1. Error: (ctx, code, "error msg", nil, false)
 // 2. Success with data: (ctx, code, userStruct, nil, true)
 // 3. Success with message: (ctx, code, "message", nil, true)
-// 4. Success with pagination: (ctx, code, list, pagination, true)
-func ControllerResponse(c *gin.Context, code int, payload any, pagination any, success bool) {
+// 4. Success with meta: (ctx, code, list, meta, true)
+func ControllerResponse(c *gin.Context, code int, payload, meta any, success bool) {
 	if !success {
 		// Error case
-		// payload odatda string (mesaj) yoki error bo'ladi
+		// payload is typically a string (message) or error
 		var err error
 		if e, ok := payload.(error); ok {
 			err = e
@@ -45,20 +53,15 @@ func ControllerResponse(c *gin.Context, code int, payload any, pagination any, s
 	}
 
 	// Success case
-	var message string = "Success"
-	var data any = payload
-
-	// Agar payload string bo'lsa va message bo'sh bo'lsa, uni message deb olamiz?
-	// Lekin hozirgi logic bo'yicha payload har doim data fieldiga tushadi.
-	// Agar payload string bo'lib, data bo'sh bo'lishi kerak bo'lgan holatlar bo'lsa,
-	// uni keyinchalik refinement qilish mumkin.
+	message := "Success"
+	data := payload
 
 	res := SuccessResponse{
-		Status:     "success",
+		Status:     "SUCCESS",
 		StatusCode: code,
 		Message:    message,
 		Data:       data,
-		Pagination: pagination,
+		Meta:       meta,
 	}
 	c.JSON(code, res)
 }

@@ -16,9 +16,9 @@ var (
 type JWT struct {
 	PrivateKey string        `env:"JWT_PRIVATE_KEY"` // RSA Private Key (PEM)
 	PublicKey  string        `env:"JWT_PUBLIC_KEY"`  // RSA Public Key (PEM)
-	AccessTTL  time.Duration `env:"JWT_ACCESS_TTL" envDefault:"15m"`
+	AccessTTL  time.Duration `env:"JWT_ACCESS_TTL"  envDefault:"15m"`
 	RefreshTTL time.Duration `env:"JWT_REFRESH_TTL" envDefault:"720h"` // 30 days
-	Issuer     string        `env:"JWT_ISSUER" envDefault:"auth-service"`
+	Issuer     string        `env:"JWT_ISSUER"      envDefault:"auth-service"`
 }
 
 // Validate validates JWT configuration.

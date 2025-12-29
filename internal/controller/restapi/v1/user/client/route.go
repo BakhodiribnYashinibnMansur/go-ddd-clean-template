@@ -2,10 +2,8 @@ package client
 
 import (
 	"github.com/gin-gonic/gin"
-)
 
-const (
-	userID = "user_id"
+	"gct/consts"
 )
 
 func Route(api *gin.RouterGroup, c ControllerI) {
@@ -16,8 +14,8 @@ func Route(api *gin.RouterGroup, c ControllerI) {
 		user.POST("/sign-out", c.SignOut)
 		user.POST("/", c.Create)
 		user.GET("/", c.Users)
-		user.GET("/:"+userID, c.User)
-		user.PATCH("/:"+userID, c.Update)
-		user.DELETE("/:"+userID, c.Delete)
+		user.GET("/:"+consts.ParamUserID, c.User)
+		user.PATCH("/:"+consts.ParamUserID, c.Update)
+		user.DELETE("/:"+consts.ParamUserID, c.Delete)
 	}
 }

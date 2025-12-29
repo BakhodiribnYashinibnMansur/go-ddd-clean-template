@@ -1,9 +1,9 @@
 package consts
 
 const (
-	//BASE URL
+	// BASE URL
 	BASE_URL_V1 string = "/api/v1"
-	//COOKIE KEY
+	// COOKIE KEY
 	CookiePath           string = "/"
 	COOKIE_ACCESS_TOKEN  string = "c_at"
 	COOKIE_REFRESH_TOKEN string = "c_rt"
