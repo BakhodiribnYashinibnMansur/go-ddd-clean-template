@@ -7,11 +7,9 @@ import (
 	"gct/internal/controller/restapi/v1/user/session"
 )
 
-func UserRoute(api *gin.RouterGroup, controller *Controller, middlewares ...gin.HandlerFunc) {
-	group := api.Group("/user")
-	if len(middlewares) > 0 {
-		group.Use(middlewares...)
-	}
-	client.Route(group, controller.ClientI)
-	session.Route(group, controller.SessionI)
+func UserRoute(api *gin.RouterGroup, controller *Controller, authMiddleware gin.HandlerFunc) {
+	group := api.Group("/")
+
+	client.Route(group, controller.ClientI, authMiddleware)
+	session.Route(group, controller.SessionI, authMiddleware)
 }

@@ -138,7 +138,9 @@ func (q *Queue[T]) ToArray(key string) ([]T, error) {
 
 func (q *Queue[T]) unmarshalOne(s string) (T, error) {
 	var val T
-	err := redis.NewStringCmd(context.Background(), s).Scan(&val)
+	cmd := redis.NewStringCmd(context.Background())
+	cmd.SetVal(s)
+	err := cmd.Scan(&val)
 	return val, err
 }
 

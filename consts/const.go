@@ -16,4 +16,7 @@ const (
 	CookieExpiredTime int    = 3600
 	CookieDomain      string = "localhost"
 	CookieHttpOnly    bool   = true
+
+	// TELEGRAM
+	TelegramErrorTopicID string = "2"
 )

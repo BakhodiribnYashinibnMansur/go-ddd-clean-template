@@ -41,6 +41,7 @@ func New(ctx context.Context, env string, cfg config.Redis, l logger.Log, opts .
 
 	options := &redis.Options{
 		Addr:         addr,
+		Username:     cfg.User,
 		Password:     cfg.Password,
 		DB:           0, // default DB
 		DialTimeout:  defaultDialTimeout,

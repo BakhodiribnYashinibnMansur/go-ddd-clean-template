@@ -22,7 +22,7 @@ import (
 // @Failure     500 {object} response.ErrorResponse
 // @Router      /sessions/revoke-all [post]
 func (c *Controller) RevokeAll(ctx *gin.Context) {
-	userID, err := util.GetUserIDInt64(ctx)
+	userID, err := util.GetUserIDUUID(ctx)
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusUnauthorized, "unauthorized", nil, false)
 		return

@@ -4,99 +4,105 @@ import (
 	"context"
 
 	"github.com/Masterminds/squirrel"
-	"github.com/jackc/pgx/v5"
 
 	"gct/internal/domain"
 	apperrors "gct/pkg/errors"
 )
 
 func (r *Repo) Gets(ctx context.Context, filter *domain.UsersFilter) ([]*domain.User, int, error) {
-	qb := r.buildSelectUsersQuery(filter)
-	countQb := r.buildCountUsersQuery(filter)
-
-	count, err := r.getTotalCount(ctx, countQb)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	sql, args, err := qb.ToSql()
-	if err != nil {
-		return nil, 0, apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase, "failed to build select SQL query")
-	}
-
-	rows, err := r.pool.Query(ctx, sql, args...)
-	if err != nil {
-		return nil, 0, apperrors.HandlePgError(ctx, err, "users", map[string]any{"operation": "get_users"})
-	}
-	defer rows.Close()
-
-	users, err := r.scanUserRows(ctx, rows)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	return users, count, nil
-}
-
-func (r *Repo) buildSelectUsersQuery(filter *domain.UsersFilter) squirrel.SelectBuilder {
 	qb := r.builder.
-		Select("id, username, phone, password_hash, salt, created_at, updated_at, deleted_at, last_seen").
+		Select("id, role_id, username, email, phone, password_hash, salt, attributes, active, created_at, updated_at, deleted_at, last_seen").
 		From("users").
 		Where("deleted_at = 0")
 
-	if !filter.IsIDNull() {
+	// Apply filter from UserFilter
+	if filter.ID != nil {
 		qb = qb.Where(squirrel.Eq{"id": *filter.ID})
 	}
-	if !filter.IsPhoneNull() {
+	if filter.RoleID != nil {
+		qb = qb.Where(squirrel.Eq{"role_id": *filter.RoleID})
+	}
+	if filter.Username != nil {
+		qb = qb.Where(squirrel.Eq{"username": *filter.Username})
+	}
+	if filter.Phone != nil {
 		qb = qb.Where(squirrel.Eq{"phone": *filter.Phone})
 	}
-
-	if filter.IsValidLimit() {
-		qb = qb.Limit(uint64(filter.Pagination.Limit))
+	if filter.Email != nil {
+		qb = qb.Where(squirrel.Eq{"email": *filter.Email})
 	}
-	if filter.IsValidOffset() {
-		qb = qb.Offset(uint64(filter.Pagination.Offset))
+	if filter.Active != nil {
+		qb = qb.Where(squirrel.Eq{"active": *filter.Active})
 	}
 
-	return qb
-}
-
-func (r *Repo) buildCountUsersQuery(filter *domain.UsersFilter) squirrel.SelectBuilder {
+	// Count qb
 	countQb := r.builder.Select("COUNT(*)").From("users").Where("deleted_at = 0")
+	// Re-apply filters for count
 	if filter.ID != nil {
 		countQb = countQb.Where(squirrel.Eq{"id": *filter.ID})
+	}
+	if filter.RoleID != nil {
+		countQb = countQb.Where(squirrel.Eq{"role_id": *filter.RoleID})
+	}
+	if filter.Username != nil {
+		countQb = countQb.Where(squirrel.Eq{"username": *filter.Username})
 	}
 	if filter.Phone != nil {
 		countQb = countQb.Where(squirrel.Eq{"phone": *filter.Phone})
 	}
-	return countQb
-}
+	if filter.Email != nil {
+		countQb = countQb.Where(squirrel.Eq{"email": *filter.Email})
+	}
+	if filter.Active != nil {
+		countQb = countQb.Where(squirrel.Eq{"active": *filter.Active})
+	}
 
-func (r *Repo) getTotalCount(ctx context.Context, qb squirrel.SelectBuilder) (int, error) {
+	if filter.Pagination != nil {
+		if filter.Pagination.SortBy != "" {
+			order := "ASC"
+			if filter.Pagination.SortOrder == "DESC" {
+				order = "DESC"
+			}
+			qb = qb.OrderBy(filter.Pagination.SortBy + " " + order)
+		} else {
+			qb = qb.OrderBy("created_at DESC")
+		}
+		qb = qb.Limit(uint64(filter.Pagination.Limit)).Offset(uint64(filter.Pagination.Offset))
+	}
+
 	sql, args, err := qb.ToSql()
 	if err != nil {
-		return 0, apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase, "failed to build count SQL query")
+		return nil, 0, apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase, "failed to build SQL query")
 	}
 
-	var count int
-	err = r.pool.QueryRow(ctx, sql, args...).Scan(&count)
+	rows, err := r.pool.Query(ctx, sql, args...)
 	if err != nil {
-		return 0, apperrors.HandlePgError(ctx, err, "users", map[string]any{"operation": "count"})
+		return nil, 0, apperrors.HandlePgError(ctx, err, "users", nil)
 	}
-	return count, nil
-}
+	defer rows.Close()
 
-func (r *Repo) scanUserRows(ctx context.Context, rows pgx.Rows) ([]*domain.User, error) {
 	var users []*domain.User
 	for rows.Next() {
 		var u domain.User
-		err := rows.Scan(
-			&u.ID, &u.Username, &u.Phone, &u.PasswordHash, &u.Salt, &u.CreatedAt, &u.UpdatedAt, &u.DeletedAt, &u.LastSeen,
-		)
-		if err != nil {
-			return nil, apperrors.HandlePgError(ctx, err, "users", map[string]any{"operation": "scan_row"})
+		if err := rows.Scan(
+			&u.ID, &u.RoleID, &u.Username, &u.Email, &u.Phone, &u.PasswordHash, &u.Salt,
+			&u.Attributes, &u.Active,
+			&u.CreatedAt, &u.UpdatedAt, &u.DeletedAt, &u.LastSeen,
+		); err != nil {
+			return nil, 0, apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase, "failed to scan row")
 		}
 		users = append(users, &u)
 	}
-	return users, nil
+
+	// Count
+	countSql, countArgs, err := countQb.ToSql()
+	if err != nil {
+		return nil, 0, apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase, "failed to build count query")
+	}
+	var count int
+	if err := r.pool.QueryRow(ctx, countSql, countArgs...).Scan(&count); err != nil {
+		return nil, 0, apperrors.HandlePgError(ctx, err, "users", nil)
+	}
+
+	return users, count, nil
 }

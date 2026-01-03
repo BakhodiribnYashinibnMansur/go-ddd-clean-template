@@ -19,7 +19,6 @@ func CORSMiddleware() gin.HandlerFunc {
 		// 	accessURL = clientHost
 		// }
 		ctx.Header("Access-Control-Allow-Origin", "*")
-		ctx.Writer.Header().Set("Content-Type", "application/json")
 		ctx.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
 
 		ctx.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, Accept, Origin, Cache-Control, X-Requested-With,Access-Control-Request-Method , Access-Control-Request-Headers,Language,language,Accept-Language")

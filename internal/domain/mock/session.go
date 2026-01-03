@@ -20,21 +20,19 @@ func Session() *domain.Session {
 	}[gofakeit.IntRange(0, 4)]
 
 	return &domain.Session{
-		ID:               UUID(),
-		DeviceID:         UUID(),
-		DeviceName:       func() *string { s := gofakeit.Name(); return &s }(),
-		DeviceType:       func() *domain.SessionDeviceType { dt := deviceType; return &dt }(),
-		IPAddress:        func() *string { ip := gofakeit.IPv4Address(); return &ip }(),
-		UserAgent:        func() *string { ua := gofakeit.UserAgent(); return &ua }(),
-		FCMToken:         func() *string { token := gofakeit.LetterN(20); return &token }(),
-		UserID:           int64(gofakeit.IntRange(1, 1000000)),
-		CompanyID:        int64(gofakeit.IntRange(1, 100)),
-		RefreshTokenHash: gofakeit.LetterN(64),
-		ExpiresAt:        FutureTime(),
-		LastActivity:     time.Now(),
-		Revoked:          false,
-		CreatedAt:        time.Now(),
-		UpdatedAt:        time.Now(),
+		ID:           UUID(),
+		UserID:       UUID(),
+		DeviceID:     UUID(),
+		DeviceName:   func() *string { s := gofakeit.Name(); return &s }(),
+		DeviceType:   func() *domain.SessionDeviceType { dt := deviceType; return &dt }(),
+		IPAddress:    func() *string { ip := gofakeit.IPv4Address(); return &ip }(),
+		UserAgent:    func() *string { ua := gofakeit.UserAgent(); return &ua }(),
+		FCMToken:     func() *string { token := gofakeit.LetterN(20); return &token }(),
+		ExpiresAt:    FutureTime(),
+		LastActivity: time.Now(),
+		Revoked:      false,
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
 	}
 }
 
@@ -48,7 +46,7 @@ func Sessions(count int) []*domain.Session {
 }
 
 // SessionWithUserID generates a fake domain.Session with specific UserID
-func SessionWithUserID(userID int64) *domain.Session {
+func SessionWithUserID(userID uuid.UUID) *domain.Session {
 	session := Session()
 	session.UserID = userID
 	return session

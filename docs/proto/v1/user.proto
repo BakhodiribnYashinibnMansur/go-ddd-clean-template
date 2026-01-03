@@ -1,0 +1,108 @@
+syntax = "proto3";
+
+package grpc.v1;
+
+option go_package = "docs/proto/v1";
+
+// ============================================================================
+// MESSAGE DEFINITIONS
+// ============================================================================
+
+// User represents a user entity
+message User {
+  int64 id = 1;
+  optional string username = 2;
+  string phone = 3;
+  string password_hash = 4; // Only used in internal communication
+  optional string salt = 5; // Only used in internal communication
+  int64 created_at = 6;
+  int64 updated_at = 7;
+  int64 deleted_at = 8;
+  optional int64 last_seen = 9;
+  string password = 10; // Only used for create/update operations
+}
+
+// UserFilter represents a filter for user queries
+message UserFilter {
+  optional int64 id = 1;
+  optional string phone = 2;
+}
+
+// UsersFilter represents a filter for multiple users with pagination
+message UsersFilter {
+  UserFilter user_filter = 1;
+  Pagination pagination = 2;
+}
+
+// Pagination represents pagination parameters
+message Pagination {
+  int64 limit = 1;
+  int64 offset = 2;
+}
+
+// UserCreateRequest represents a request to create a user
+message UserCreateRequest {
+  optional string username = 1;
+  string phone = 2;
+  string password = 3;
+}
+
+// UserUpdateRequest represents a request to update a user
+message UserUpdateRequest {
+  int64 id = 1;
+  optional string username = 2;
+  optional string phone = 3;
+  optional string password = 4;
+}
+
+// UserResponse represents a user response
+message UserResponse {
+  User user = 1;
+}
+
+// UsersResponse represents multiple users response
+message UsersResponse {
+  repeated User users = 1;
+  Pagination pagination = 2;
+}
+
+// UserAuthRequest represents authentication request
+message UserAuthRequest {
+  string phone = 1;
+  string password = 2;
+}
+
+// UserAuthResponse represents authentication response
+message UserAuthResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+  User user = 3;
+}
+
+// ============================================================================
+// SERVICE DEFINITIONS
+// ============================================================================
+
+// The User service definition.
+service UserService {
+  // RPC method to create a new user.
+  rpc CreateUser (UserCreateRequest) returns (UserResponse);
+  
+  // RPC method to get user by ID.
+  rpc GetUser (UserFilter) returns (UserResponse);
+  
+  // RPC method to get users with pagination and filtering.
+  rpc GetUsers (UsersFilter) returns (UsersResponse);
+  
+  // RPC method to update user information.
+  rpc UpdateUser (UserUpdateRequest) returns (UserResponse);
+  
+  // RPC method to delete user (soft delete).
+  rpc DeleteUser (UserFilter) returns (UserResponse);
+  
+  // RPC method to authenticate user.
+  rpc Authenticate (UserAuthRequest) returns (UserAuthResponse);
+  
+  // RPC method to sign out user.
+  rpc SignOut (UserFilter) returns (UserResponse);
+}

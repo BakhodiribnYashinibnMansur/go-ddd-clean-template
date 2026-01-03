@@ -2,7 +2,7 @@ package container
 
 import (
 	"context"
-	"log"
+	"fmt"
 
 	minio_client "github.com/minio/minio-go/v7"
 	minio_credentials "github.com/minio/minio-go/v7/pkg/credentials"
@@ -13,19 +13,24 @@ import (
 )
 
 // RunMinioTestContainer is a function that runs a minio test container
-func RunMinioTestContainer(cfg config.MinioStore) *minio_client.Client {
+// RunMinioTestContainer runs a minio test container
+func RunMinioTestContainer(cfg config.MinioStore) (*minio_client.Client, testcontainers.Container, error) {
 	ctx := context.Background()
 
 	minioContainer, err := minio.RunContainer(ctx,
 		testcontainers.WithImage(MinioImage),
+		testcontainers.WithEnv(map[string]string{
+			"MINIO_ROOT_USER":     cfg.AccessKey,
+			"MINIO_ROOT_PASSWORD": cfg.SecretKey,
+		}),
 	)
 	if err != nil {
-		log.Fatalf("failed to start minio container: %v", err)
+		return nil, nil, fmt.Errorf("failed to start minio container: %w", err)
 	}
 
 	endpoint, err := minioContainer.Endpoint(ctx, "")
 	if err != nil {
-		log.Fatalf("failed to get minio endpoint: %v", err)
+		return nil, minioContainer, fmt.Errorf("failed to get minio endpoint: %w", err)
 	}
 
 	// Create a new MinIO client
@@ -34,7 +39,7 @@ func RunMinioTestContainer(cfg config.MinioStore) *minio_client.Client {
 		Secure: cfg.UseSSL,
 	})
 	if err != nil {
-		log.Fatalf("failed to create minio client: %v", err)
+		return nil, minioContainer, fmt.Errorf("failed to create minio client: %w", err)
 	}
 
 	// Create bucket if it doesn't exist
@@ -43,12 +48,12 @@ func RunMinioTestContainer(cfg config.MinioStore) *minio_client.Client {
 		// Check if bucket already exists
 		exists, err := client.BucketExists(ctx, cfg.Bucket)
 		if err != nil {
-			log.Fatalf("failed to check bucket existence: %v", err)
+			return nil, minioContainer, fmt.Errorf("failed to check bucket existence: %w", err)
 		}
 		if !exists {
-			log.Fatalf("failed to create bucket: %v", err)
+			return nil, minioContainer, fmt.Errorf("failed to create bucket: %w", err)
 		}
 	}
 
-	return client
+	return client, minioContainer, nil
 }

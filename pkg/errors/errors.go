@@ -121,205 +121,34 @@ func captureStack() []uintptr {
 func getHTTPStatus(code string) int {
 	switch code {
 	// 400 errors
-	case ErrBadRequest, ErrInvalidInput, ErrValidation:
+	case ErrBadRequest, ErrInvalidInput, ErrValidation, ErrServiceInvalidInput, ErrServiceValidation, ErrHandlerBadRequest:
 		return 400
 
 	// 401 errors
-	case ErrUnauthorized, ErrInvalidToken, ErrExpiredToken, ErrRevokedToken:
+	case ErrUnauthorized, ErrInvalidToken, ErrExpiredToken, ErrRevokedToken, ErrServiceUnauthorized, ErrHandlerUnauthorized:
 		return 401
 
 	// 403 errors
-	case ErrForbidden, ErrPermissionDenied, ErrDisabledAccount:
+	case ErrForbidden, ErrPermissionDenied, ErrDisabledAccount, ErrServiceForbidden, ErrServicePolicyViolation, ErrHandlerForbidden:
 		return 403
 
 	// 404 errors
-	case ErrNotFound, ErrUserNotFound, ErrSessionNotFound:
+	case ErrNotFound, ErrUserNotFound, ErrSessionNotFound, ErrServiceNotFound, ErrServiceRoleNotFound, ErrServicePermissionNotFound, ErrServiceScopeNotFound, ErrBucketNotFound, ErrFileNotFound, ErrRepoNotFound, ErrHandlerNotFound:
 		return 404
 
 	// 409 errors
-	case ErrConflict, ErrAlreadyExists:
+	case ErrConflict, ErrAlreadyExists, ErrServiceAlreadyExists, ErrServiceConflict, ErrRepoAlreadyExists, ErrRepoConstraint, ErrHandlerConflict:
 		return 409
 
 	// 500 errors
-	case ErrInternal, ErrDatabase, ErrUnknown:
+	case ErrInternal, ErrDatabase, ErrUnknown, ErrServiceUnknown, ErrServiceDependency, ErrRepoDatabase, ErrRepoConnection, ErrRepoTransaction, ErrRepoUnknown, ErrHandlerInternal, ErrHandlerUnknown:
 		return 500
 
 	// 504 errors
-	case ErrTimeout:
+	case ErrTimeout, ErrRepoTimeout:
 		return 504
 
 	default:
 		return 500
 	}
 }
-
-// getUserMessage returns user-facing message by error code
-func getUserMessage(code string) string {
-	if msg := getCommonUserMessage(code); msg != "" {
-		return msg
-	}
-	if msg := getAuthUserMessage(code); msg != "" {
-		return msg
-	}
-	if msg := getResourceUserMessage(code); msg != "" {
-		return msg
-	}
-	if msg := getSystemUserMessage(code); msg != "" {
-		return msg
-	}
-	return "An error occurred"
-}
-
-func getCommonUserMessage(code string) string {
-	switch code {
-	case ErrBadRequest:
-		return "Bad request"
-	case ErrInvalidInput:
-		return "Invalid input provided"
-	case ErrValidation:
-		return "Validation failed"
-	default:
-		return ""
-	}
-}
-
-func getAuthUserMessage(code string) string {
-	switch code {
-	case ErrUnauthorized:
-		return "Authentication required"
-	case ErrInvalidToken:
-		return "Invalid token"
-	case ErrExpiredToken:
-		return "Token has expired"
-	case ErrRevokedToken:
-		return "Token has been revoked"
-	case ErrForbidden:
-		return "Access denied"
-	case ErrPermissionDenied:
-		return "You don't have permission to perform this action"
-	case ErrDisabledAccount:
-		return "Account is disabled"
-	default:
-		return ""
-	}
-}
-
-func getResourceUserMessage(code string) string {
-	switch code {
-	case ErrNotFound:
-		return "Not found"
-	case ErrUserNotFound:
-		return "User not found"
-	case ErrSessionNotFound:
-		return "Session not found"
-	case ErrConflict:
-		return "Resource already exists"
-	case ErrAlreadyExists:
-		return "Already exists"
-	default:
-		return ""
-	}
-}
-
-func getSystemUserMessage(code string) string {
-	switch code {
-	case ErrInternal:
-		return "Internal error"
-	case ErrDatabase:
-		return "Database error"
-	case ErrTimeout:
-		return "Request timeout"
-	case ErrUnknown:
-		return "Unknown error"
-	default:
-		return ""
-	}
-}
-
-// getNumericCode returns numeric code by error type
-func getNumericCode(code string) string {
-	if c := getRepoNumericCode(code); c != "" {
-		return c
-	}
-	if c := getServiceNumericCode(code); c != "" {
-		return c
-	}
-	if c := getHandlerNumericCode(code); c != "" {
-		return c
-	}
-	if c := getLegacyNumericCode(code); c != "" {
-		return c
-	}
-	return "9999"
-}
-
-func getRepoNumericCode(code string) string {
-	return repoNumericCodes[code]
-}
-
-func getServiceNumericCode(code string) string {
-	return serviceNumericCodes[code]
-}
-
-func getHandlerNumericCode(code string) string {
-	return handlerNumericCodes[code]
-}
-
-func getLegacyNumericCode(code string) string {
-	return legacyNumericCodes[code]
-}
-
-var (
-	repoNumericCodes = map[string]string{
-		ErrRepoDatabase:      CodeRepoDatabase,
-		ErrRepoNotFound:      CodeRepoNotFound,
-		ErrRepoAlreadyExists: CodeRepoAlreadyExists,
-		ErrRepoConstraint:    CodeRepoConstraint,
-		ErrRepoUnknown:       CodeRepoUnknown,
-	}
-
-	serviceNumericCodes = map[string]string{
-		ErrServiceInvalidInput:  CodeServiceInvalidInput,
-		ErrServiceValidation:    CodeServiceValidation,
-		ErrServiceNotFound:      CodeServiceNotFound,
-		ErrServiceAlreadyExists: CodeServiceAlreadyExists,
-		ErrServiceUnauthorized:  CodeServiceUnauthorized,
-		ErrServiceForbidden:     CodeServiceForbidden,
-		ErrServiceConflict:      CodeServiceConflict,
-		ErrServiceBusinessRule:  CodeServiceBusinessRule,
-		ErrServiceDependency:    CodeServiceDependency,
-		ErrServiceUnknown:       CodeServiceUnknown,
-	}
-
-	handlerNumericCodes = map[string]string{
-		ErrHandlerBadRequest:   CodeHandlerBadRequest,
-		ErrHandlerUnauthorized: CodeHandlerUnauthorized,
-		ErrHandlerForbidden:    CodeHandlerForbidden,
-		ErrHandlerNotFound:     CodeHandlerNotFound,
-		ErrHandlerConflict:     CodeHandlerConflict,
-		ErrHandlerInternal:     CodeHandlerInternal,
-		ErrHandlerUnknown:      CodeHandlerUnknown,
-	}
-
-	legacyNumericCodes = map[string]string{
-		ErrBadRequest:       CodeBadRequest,
-		ErrInvalidInput:     CodeInvalidInput,
-		ErrValidation:       CodeValidation,
-		ErrUnauthorized:     CodeUnauthorized,
-		ErrInvalidToken:     CodeInvalidToken,
-		ErrExpiredToken:     CodeExpiredToken,
-		ErrRevokedToken:     CodeRevokedToken,
-		ErrForbidden:        CodeForbidden,
-		ErrPermissionDenied: CodePermissionDenied,
-		ErrDisabledAccount:  CodeDisabledAccount,
-		ErrNotFound:         CodeNotFound,
-		ErrUserNotFound:     CodeUserNotFound,
-		ErrSessionNotFound:  CodeSessionNotFound,
-		ErrConflict:         CodeConflict,
-		ErrAlreadyExists:    CodeAlreadyExists,
-		ErrInternal:         CodeInternal,
-		ErrDatabase:         CodeDatabase,
-		ErrTimeout:          CodeTimeout,
-		ErrUnknown:          CodeUnknown,
-	}
-)

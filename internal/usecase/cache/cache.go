@@ -1,10 +1,9 @@
 package cache
 
 import (
-	"go.uber.org/zap"
-
 	"gct/internal/repo/persistent/redis"
 	"gct/pkg/logger"
+	"go.uber.org/zap"
 )
 
 type Cache struct {

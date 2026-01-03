@@ -23,7 +23,7 @@ import (
 // @Failure     500 {object} response.ErrorResponse
 // @Router      /sessions [get]
 func (c *Controller) Sessions(ctx *gin.Context) {
-	userIDInt, err := util.GetUserIDInt64(ctx)
+	userID, err := util.GetUserIDUUID(ctx)
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusUnauthorized, "unauthorized", nil, false)
 		return
@@ -37,7 +37,7 @@ func (c *Controller) Sessions(ctx *gin.Context) {
 
 	filter := &domain.SessionsFilter{
 		SessionFilter: domain.SessionFilter{
-			UserID: &userIDInt,
+			UserID: &userID,
 		},
 		Pagination: &pagination,
 	}

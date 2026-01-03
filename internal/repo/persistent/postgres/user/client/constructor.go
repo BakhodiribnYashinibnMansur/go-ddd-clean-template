@@ -1,17 +1,25 @@
 package client
 
 import (
+	"context"
+
 	"github.com/Masterminds/squirrel"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 
 	"gct/pkg/db/postgres"
 	"gct/pkg/logger"
 )
 
+type Pool interface {
+	Exec(ctx context.Context, sql string, arguments ...any) (pgconn.CommandTag, error)
+	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
+	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
+}
+
 // UserRepo handles user-related database operations.
-// SessionRepo handles session-related database operations.
 type Repo struct {
-	pool    *pgxpool.Pool
+	pool    Pool
 	builder squirrel.StatementBuilderType
 	logger  logger.Log
 }

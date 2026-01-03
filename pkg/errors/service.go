@@ -35,22 +35,43 @@ const (
 	ErrServiceDependency  = "SERVICE_DEPENDENCY_ERROR"
 	CodeServiceDependency = "3009"
 
+	// Authz specific errors
+	ErrServiceRoleNotFound  = "SERVICE_ROLE_NOT_FOUND"
+	CodeServiceRoleNotFound = "3010"
+
+	ErrServicePermissionNotFound  = "SERVICE_PERMISSION_NOT_FOUND"
+	CodeServicePermissionNotFound = "3011"
+
+	ErrServicePolicyViolation  = "SERVICE_POLICY_VIOLATION"
+	CodeServicePolicyViolation = "3012"
+
+	ErrServiceScopeNotFound  = "SERVICE_SCOPE_NOT_FOUND"
+	CodeServiceScopeNotFound = "3013"
+
+	ErrServiceRelationNotFound  = "SERVICE_RELATION_NOT_FOUND"
+	CodeServiceRelationNotFound = "3014"
+
 	ErrServiceUnknown  = "SERVICE_UNKNOWN_ERROR"
 	CodeServiceUnknown = "3099"
 )
 
 // Service error messages
 var serviceMessages = map[string]string{
-	ErrServiceInvalidInput:  "Invalid input provided",
-	ErrServiceValidation:    "Validation failed",
-	ErrServiceNotFound:      "Resource not found",
-	ErrServiceAlreadyExists: "Resource already exists",
-	ErrServiceUnauthorized:  "Authentication required",
-	ErrServiceForbidden:     "Permission denied",
-	ErrServiceConflict:      "Resource conflict",
-	ErrServiceBusinessRule:  "Business rule violation",
-	ErrServiceDependency:    "Dependency service error",
-	ErrServiceUnknown:       "Unknown service error",
+	ErrServiceInvalidInput:       "Invalid input provided",
+	ErrServiceValidation:         "Validation failed",
+	ErrServiceNotFound:           "Resource not found",
+	ErrServiceAlreadyExists:      "Resource already exists",
+	ErrServiceUnauthorized:       "Authentication required",
+	ErrServiceForbidden:          "Permission denied",
+	ErrServiceConflict:           "Resource conflict",
+	ErrServiceBusinessRule:       "Business rule violation",
+	ErrServiceDependency:         "Dependency service error",
+	ErrServiceUnknown:            "Unknown service error",
+	ErrServiceRoleNotFound:       "Role not found",
+	ErrServicePermissionNotFound: "Permission not found",
+	ErrServicePolicyViolation:    "Policy violation",
+	ErrServiceScopeNotFound:      "Scope not found",
+	ErrServiceRelationNotFound:   "Relation not found",
 }
 
 // NewServiceError creates a new service error
@@ -64,7 +85,8 @@ func WrapServiceError(ctx context.Context, err error, code, message string) *App
 }
 
 // MapRepoToServiceError maps repository error to service error
-func MapRepoToServiceError(ctx context.Context, err error) *AppError {
+// MapRepoToServiceError maps repository error to service error
+func MapRepoToServiceError(ctx context.Context, err error, notFoundCode ...string) *AppError {
 	if err == nil {
 		return nil
 	}
@@ -73,7 +95,15 @@ func MapRepoToServiceError(ctx context.Context, err error) *AppError {
 	if appErr, ok := err.(*AppError); ok {
 		switch appErr.Type {
 		case ErrRepoNotFound:
-			return NewServiceError(ctx, ErrServiceNotFound, "Resource not found").
+			code := ErrServiceNotFound
+			msg := "Resource not found"
+			if len(notFoundCode) > 0 {
+				code = notFoundCode[0]
+				if m, ok := serviceMessages[code]; ok {
+					msg = m
+				}
+			}
+			return NewServiceError(ctx, code, msg).
 				WithDetails(appErr.Message)
 		case ErrRepoAlreadyExists:
 			return NewServiceError(ctx, ErrServiceAlreadyExists, "Resource already exists").

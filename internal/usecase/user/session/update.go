@@ -8,9 +8,13 @@ import (
 )
 
 func (uc *UseCase) Update(ctx context.Context, in *domain.Session) error {
-	err := uc.repo.Postgres.SessionRepo.Update(ctx, in)
+	uc.logger.Infow("session update started", "input", in)
+
+	err := uc.repo.Postgres.User.SessionRepo.Update(ctx, in)
 	if err != nil {
+		uc.logger.Errorw("session update failed", "error", err)
 		return apperrors.MapRepoToServiceError(ctx, err).WithInput(in)
 	}
+	uc.logger.Infow("session update success")
 	return nil
 }

@@ -34,9 +34,14 @@ func (c *Controller) SignUp(ctx *gin.Context) {
 		username = *user.Username
 	}
 
+	if user.Phone == nil {
+		response.ControllerResponse(ctx, http.StatusBadRequest, "phone is required", nil, false)
+		return
+	}
+
 	err := c.u.User.Client.SignUp(ctx.Request.Context(), &domain.SignUpIn{
 		Username: username,
-		Phone:    user.Phone,
+		Phone:    *user.Phone,
 		Password: user.Password,
 	})
 	if err != nil {

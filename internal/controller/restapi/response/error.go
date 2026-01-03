@@ -101,16 +101,17 @@ var statusSuggestions = map[int]string{
 // ============================================================================
 
 // RespondWithError sends the error response in the defined JSON format
-func RespondWithError(c *gin.Context, err error) {
+func RespondWithError(c *gin.Context, err error, fallbackCode int) {
+	_ = c.Error(err)
 	// 1. Parse error to get status code and details
-	status, errResp := parseErrorToResponse(c, err)
+	status, errResp := parseErrorToResponse(c, err, fallbackCode)
 
 	// 2. Send JSON response
 	c.JSON(status, errResp)
 }
 
 // parseErrorToResponse converts error to ErrorResponse structure
-func parseErrorToResponse(c *gin.Context, err error) (int, ErrorResponse) {
+func parseErrorToResponse(c *gin.Context, err error, fallbackCode int) (int, ErrorResponse) {
 	var (
 		statusCode = 500
 		errorCode  = "INTERNAL_ERROR"
@@ -134,6 +135,9 @@ func parseErrorToResponse(c *gin.Context, err error) (int, ErrorResponse) {
 		// fields = appErr.Fields // unused
 	} else if err != nil {
 		message = err.Error()
+		if fallbackCode != 0 {
+			statusCode = fallbackCode
+		}
 	}
 
 	// Request ID

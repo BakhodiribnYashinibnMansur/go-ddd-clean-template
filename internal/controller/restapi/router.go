@@ -14,9 +14,12 @@ import (
 	"gct/config"
 	docs "gct/docs/swagger" // Swagger docs.
 	"gct/internal/controller/restapi/middleware"
+	"gct/internal/controller/restapi/v1/audit"
+	"gct/internal/controller/restapi/v1/authz"
 	"gct/internal/controller/restapi/v1/minio"
 	"gct/internal/controller/restapi/v1/user"
 	"gct/internal/usecase"
+	webAdmin "gct/internal/web/admin"
 	"gct/pkg/logger"
 )
 
@@ -31,7 +34,13 @@ func NewRouter(handler *gin.Engine, cfg *config.Config, uc *usecase.UseCase, l l
 	// Options
 	handler.HandleMethodNotAllowed = true
 
-	middleware.GinMiddleware(handler)
+	// System Error Middleware
+	sysErrM := middleware.NewSystemErrorMiddleware(uc, l)
+
+	handler.Use(gin.Logger())
+	handler.Use(sysErrM.Recovery())
+	handler.Use(sysErrM.Persist5xx())
+	handler.Use(middleware.CORSMiddleware())
 
 	// Prometheus metrics
 	setupMetrics(handler, cfg)
@@ -54,12 +63,21 @@ func NewRouter(handler *gin.Engine, cfg *config.Config, uc *usecase.UseCase, l l
 	// Middleware
 	am := middleware.NewAuthMiddleware(uc, cfg, l)
 
+	// Audit Middleware
+	auditM := middleware.NewAuditMiddleware(uc, l)
+	handler.Use(auditM.EndpointHistory())
+
 	// Routers
-	h := handler.Group("/api")
+	h := handler.Group("/api/v1")
 	{
 		user.UserRoute(h, c.User, am.AuthClientAccess)
 		minio.MinioRoute(h, c.Minio, am.AuthClientAccess)
-		h.GET("/system/errors", c.System.GetErrors)
+		authz.AuthzRoute(h, c.Authz, am.AuthClientAccess, am.Authz)
+		audit.AuditRoute(h, c.Audit)
+
+		// Web Admin Panel
+		adminHandler := webAdmin.New(uc, cfg, l)
+		adminHandler.Register(handler.Group("/"), am)
 	}
 }
 
@@ -95,52 +113,176 @@ func setupSwagger(handler *gin.Engine, cfg *config.Config) {
 
 const rootHTML = `
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-	<title>Go Clean Template API</title>
-	<style>
-		body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; line-height: 1.6; background-color: #f8f9fa; color: #333; }
-		.container { max-width: 800px; margin: 0 auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-		h1 { color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 20px; font-weight: 300; }
-		p { font-size: 1.1em; color: #666; margin-bottom: 30px; }
-		.link-group { margin-bottom: 30px; }
-		.link-item { display: block; padding: 15px; border: 1px solid #e1e4e8; border-radius: 8px; text-decoration: none; color: #24292e; transition: all 0.2s; margin-bottom: 15px; }
-		.link-item:hover { background-color: #f6f8fa; border-color: #0366d6; transform: translateY(-2px); }
-		.link-title { display: block; font-size: 18px; font-weight: 600; color: #0366d6; margin-bottom: 5px; }
-		.link-url { display: block; font-size: 14px; color: #586069; word-break: break-all; }
-		.emoji { margin-right: 8px; }
-	</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Go Clean Template API</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6200EE;
+            --primary-variant: #3700B3;
+            --secondary: #03DAC6;
+            --background: #F5F5F5;
+            --surface: #FFFFFF;
+            --error: #B00020;
+            --on-primary: #FFFFFF;
+            --on-surface: #000000;
+        }
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--background);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: rgba(0, 0, 0, 0.87);
+        }
+        .container {
+            width: 100%;
+            max-width: 480px;
+            padding: 24px;
+        }
+        .card {
+            background-color: var(--surface);
+            border-radius: 8px;
+            box-shadow: 0 2px 1px -1px rgba(0,0,0,0.2), 0 1px 1px 0 rgba(0,0,0,0.14), 0 1px 3px 0 rgba(0,0,0,0.12);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        h1 {
+            font-weight: 400;
+            font-size: 24px;
+            margin: 0 0 16px 0;
+            color: var(--primary);
+            letter-spacing: 0.18px;
+        }
+        p {
+            font-size: 16px;
+            line-height: 1.5;
+            color: rgba(0, 0, 0, 0.6);
+            margin-bottom: 24px;
+        }
+        h3 {
+            font-weight: 500;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1.25px;
+            color: rgba(0, 0, 0, 0.6);
+            margin: 24px 0 16px 0;
+        }
+        .btn-link {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            border-radius: 4px;
+            text-decoration: none;
+            color: rgba(0, 0, 0, 0.87);
+            background-color: var(--surface);
+            transition: background-color 0.2s, box-shadow 0.2s;
+            border: 1px solid rgba(0, 0, 0, 0.12);
+            margin-bottom: 12px;
+        }
+        .btn-link:hover {
+            background-color: rgba(98, 0, 238, 0.04);
+            border-color: var(--primary);
+        }
+        .btn-link:active {
+            background-color: rgba(98, 0, 238, 0.12);
+        }
+        .icon {
+            font-size: 24px;
+            margin-right: 16px;
+        }
+        .text-content {
+            display: flex;
+            flex-direction: column;
+        }
+        .title {
+            font-weight: 500;
+            font-size: 16px;
+            letter-spacing: 0.15px;
+            color: var(--primary);
+        }
+        .subtitle {
+            font-size: 12px;
+            color: rgba(0, 0, 0, 0.6);
+            margin-top: 4px;
+            word-break: break-all;
+        }
+        .chip-error {
+            background-color: #FDEDED;
+            color: #5F2120;
+            padding: 12px 16px;
+            border-radius: 16px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+    </style>
 </head>
 <body>
-	<div class="container">
-		<h1>Welcome to Go Clean Template API</h1>
-		
-		<div class="link-group">
-			{{if .IsProduction}}
-				<p style="color: #e67e22; font-weight: 600;">⚠️ Production Environment</p>
-				<p>API documentation is not available in the production environment for security reasons.</p>
-			{{else if or .SwaggerEnabled .ProtoEnabled}}
-				<p>The following documentation is available for this API:</p>
-				
-				{{if .SwaggerEnabled}}
-				<a href="{{.SwaggerURL}}" class="link-item">
-					<span class="link-title"><span class="emoji">📄</span>Swagger UI</span>
-					<span class="link-url">{{.SwaggerURL}}</span>
-				</a>
-				{{end}}
-				
-				{{if .ProtoEnabled}}
-				<a href="{{.ProtoURL}}" class="link-item">
-					<span class="link-title"><span class="emoji">🛠️</span>Protobuf Documentation</span>
-					<span class="link-url">{{.ProtoURL}}</span>
-				</a>
-				{{end}}
-			{{else}}
-				<p style="color: #e74c3c; font-weight: 600;">⚠️ Documentation is currently disabled.</p>
-				<p>Please check your configuration settings (SWAGGER_ENABLED/PROTO_DOCS_ENABLED) to enable API documentation.</p>
-			{{end}}
-		</div>
-	</div>
+    <div class="container">
+        <div class="card">
+            <h1>Go Clean Template API</h1>
+            <p>Welcome to the API gateway. Access documentation and administration tools below.</p>
+
+            {{if .IsProduction}}
+                <div class="chip-error">
+                    <span class="icon" style="font-size: 20px; margin-right: 8px;">⚠️</span>
+                    <div>
+                        <strong>Production Environment</strong><br>
+                        Documentation is disabled for security.
+                    </div>
+                </div>
+            {{else if or .SwaggerEnabled .ProtoEnabled}}
+                <h3>Documentation</h3>
+                
+                {{if .SwaggerEnabled}}
+                <a href="{{.SwaggerURL}}" class="btn-link">
+                    <span class="icon">📄</span>
+                    <div class="text-content">
+                        <span class="title">Swagger UI</span>
+                        <span class="subtitle">Interactive REST API Documentation</span>
+                    </div>
+                </a>
+                {{end}}
+                
+                {{if .ProtoEnabled}}
+                <a href="{{.ProtoURL}}" class="btn-link">
+                    <span class="icon">🛠️</span>
+                    <div class="text-content">
+                        <span class="title">Protobuf Docs</span>
+                        <span class="subtitle">gRPC Protocol Buffer Definitions</span>
+                    </div>
+                </a>
+                {{end}}
+            {{end}}
+
+            {{if .AdminEnabled}}
+            <h3>Administration</h3>
+            <a href="{{.AdminURL}}" class="btn-link">
+                <span class="icon">⚙️</span>
+                <div class="text-content">
+                    <span class="title">Web Admin Panel</span>
+                    <span class="subtitle">Manage Users, Policies & System</span>
+                </div>
+            </a>
+            {{end}}
+
+            {{if and (not .SwaggerEnabled) (not .ProtoEnabled) (not .AdminEnabled)}}
+                <div class="chip-error">
+                    <span class="icon" style="font-size: 20px; margin-right: 8px;">❌</span>
+                    No services enabled. Check configuration.
+                </div>
+            {{end}}
+        </div>
+    </div>
 </body>
 </html>
 `
@@ -156,14 +298,18 @@ func setupRoot(handler *gin.Engine, cfg *config.Config) {
 		data := struct {
 			SwaggerURL     string
 			ProtoURL       string
+			AdminURL       string
 			SwaggerEnabled bool
 			ProtoEnabled   bool
+			AdminEnabled   bool
 			IsProduction   bool
 		}{
 			SwaggerURL:     scheme + "://" + host + "/swagger/index.html",
 			ProtoURL:       scheme + "://" + host + "/docs/proto",
+			AdminURL:       scheme + "://" + host + "/admin/dashboard",
 			SwaggerEnabled: cfg.Swagger.Enabled,
 			ProtoEnabled:   cfg.Proto.Enabled,
+			AdminEnabled:   cfg.Admin.Enabled,
 			IsProduction:   cfg.App.IsProd(),
 		}
 

@@ -7,7 +7,7 @@ import (
 )
 
 // AddCronJobWithName adds a cron job with job wrapper for tracking execution
-func (c *CronJobs) AddCronJobWithName(expression, name string, fn func()) {
+func (c *Jobs) AddCronJobWithName(expression, name string, fn func()) {
 	_, err := c.cron.AddFunc(expression, func() {
 		c.runJobWithWrapper(name, fn)
 	})
@@ -27,7 +27,7 @@ func (c *CronJobs) AddCronJobWithName(expression, name string, fn func()) {
 }
 
 // runJobWithWrapper wraps job execution with logging and prevents duplicate runs
-func (c *CronJobs) runJobWithWrapper(name string, fn func()) {
+func (c *Jobs) runJobWithWrapper(name string, fn func()) {
 	// Check if job is already running
 	if _, loaded := c.runningJobs.LoadOrStore(name, true); loaded {
 		c.logger.Warn("Cronjob already running, skipping",

@@ -1,0 +1,190 @@
+package client_test
+
+import (
+	"errors"
+	"testing"
+
+	"gct/internal/domain"
+
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+)
+
+func TestUseCase_SignUp_TableDriven(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name          string
+		input         *domain.SignUpIn
+		repoError     error
+		expectError   bool
+		validateSaved func(t *testing.T, u *domain.User)
+	}{
+		{
+			name: "success_basic_signup",
+			input: &domain.SignUpIn{
+				Username: "testuser",
+				Phone:    "123456789",
+				Password: "password",
+			},
+			repoError:   nil,
+			expectError: false,
+			validateSaved: func(t *testing.T, u *domain.User) {
+				require.NotNil(t, u.Username)
+				require.Equal(t, "testuser", *u.Username)
+				require.Equal(t, "123456789", u.Phone)
+				// Password should be hashed by SignUp method
+				require.NotEmpty(t, u.PasswordHash)
+				require.NotEqual(t, "password", u.PasswordHash)
+			},
+		},
+		{
+			name: "success_empty_username",
+			input: &domain.SignUpIn{
+				Username: "",
+				Phone:    "123456789",
+				Password: "password",
+			},
+			repoError:   nil,
+			expectError: false,
+			validateSaved: func(t *testing.T, u *domain.User) {
+				require.NotNil(t, u.Username)
+				require.Equal(t, "", *u.Username)
+				require.Equal(t, "123456789", u.Phone)
+			},
+		},
+		{
+			name: "success_empty_phone",
+			input: &domain.SignUpIn{
+				Username: "testuser",
+				Phone:    "",
+				Password: "password",
+			},
+			repoError:   nil,
+			expectError: false,
+			validateSaved: func(t *testing.T, u *domain.User) {
+				require.Equal(t, "", u.Phone)
+				require.NotNil(t, u.Username)
+				require.Equal(t, "testuser", *u.Username)
+			},
+		},
+		{
+			name: "error_empty_password",
+			input: &domain.SignUpIn{
+				Username: "testuser",
+				Phone:    "123456789",
+				Password: "",
+			},
+			repoError:   nil,
+			expectError: true,
+		},
+		{
+			name: "success_weak_password",
+			input: &domain.SignUpIn{
+				Username: "testuser",
+				Phone:    "123456789",
+				Password: "123",
+			},
+			repoError:   nil,
+			expectError: false,
+			validateSaved: func(t *testing.T, u *domain.User) {
+				require.Equal(t, "123456789", u.Phone)
+				require.NotNil(t, u.Username)
+				require.Equal(t, "testuser", *u.Username)
+				// Even weak passwords should be hashed
+				require.NotEmpty(t, u.PasswordHash)
+			},
+		},
+		{
+			name: "error_repository_failure",
+			input: &domain.SignUpIn{
+				Username: "testuser",
+				Phone:    "123456789",
+				Password: "password",
+			},
+			repoError:   errors.New("database error"),
+			expectError: true,
+		},
+		{
+			name: "success_long_username",
+			input: &domain.SignUpIn{
+				Username: "verylongusernamethatmightstillwork",
+				Phone:    "123456789",
+				Password: "password",
+			},
+			repoError:   nil,
+			expectError: false,
+			validateSaved: func(t *testing.T, u *domain.User) {
+				require.NotNil(t, u.Username)
+				require.Equal(t, "verylongusernamethatmightstillwork", *u.Username)
+			},
+		},
+		{
+			name: "success_special_chars_password",
+			input: &domain.SignUpIn{
+				Username: "testuser",
+				Phone:    "123456789",
+				Password: "p@ssw0rd!#",
+			},
+			repoError:   nil,
+			expectError: false,
+			validateSaved: func(t *testing.T, u *domain.User) {
+				require.Equal(t, "123456789", u.Phone)
+				require.NotNil(t, u.Username)
+				require.Equal(t, "testuser", *u.Username)
+				// Special characters should be handled and hashed
+				require.NotEmpty(t, u.PasswordHash)
+			},
+		},
+		{
+			name: "success_numeric_phone",
+			input: &domain.SignUpIn{
+				Username: "testuser",
+				Phone:    "9876543210",
+				Password: "password",
+			},
+			repoError:   nil,
+			expectError: false,
+			validateSaved: func(t *testing.T, u *domain.User) {
+				require.Equal(t, "9876543210", u.Phone)
+				require.NotNil(t, u.Username)
+				require.Equal(t, "testuser", *u.Username)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt // parallel safety
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			// arrange
+			uc, clientRepo, _ := setup(t)
+			ctx := t.Context()
+
+			if tt.repoError != nil || tt.validateSaved != nil {
+				clientRepo.
+					On("Create", ctx, mock.MatchedBy(func(u *domain.User) bool {
+						if tt.validateSaved != nil {
+							tt.validateSaved(t, u)
+						}
+						return true
+					})).
+					Return(tt.repoError).
+					Once()
+			}
+
+			// act
+			err := uc.SignUp(ctx, tt.input)
+
+			// assert
+			if tt.expectError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+
+			clientRepo.AssertExpectations(t)
+		})
+	}
+}

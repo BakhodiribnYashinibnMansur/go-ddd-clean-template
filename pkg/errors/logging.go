@@ -2,11 +2,25 @@ package errors
 
 import "go.uber.org/zap"
 
+type Reporter interface {
+	SendError(err error) error
+}
+
+var reporter Reporter
+
+func SetReporter(r Reporter) {
+	reporter = r
+}
+
 // LogError logs error using zap logger with all available fields
 // Usage in Handler layer ONLY:
 //
 //	errors.LogError(logger, err)
 func LogError(logger *zap.Logger, err error) {
+	if reporter != nil {
+		_ = reporter.SendError(err)
+	}
+
 	appErr, ok := err.(*AppError)
 	if !ok {
 		// Not our custom error, log as standard error

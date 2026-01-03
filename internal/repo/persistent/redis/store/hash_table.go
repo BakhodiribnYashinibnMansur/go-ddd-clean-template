@@ -34,7 +34,9 @@ func (h *HashTable[V]) Get(key string, delete bool) (map[string]V, error) {
 	res := make(map[string]V, len(valMap))
 	for k, s := range valMap {
 		var v V
-		err := redis.NewStringCmd(ctx, s).Scan(&v)
+		cmd := redis.NewStringCmd(ctx)
+		cmd.SetVal(s)
+		err := cmd.Scan(&v)
 		if err != nil {
 			return nil, err
 		}
@@ -57,6 +59,11 @@ func (h *HashTable[V]) Pop(key string) (map[string]V, error) {
 func (h *HashTable[V]) Set(key string, hashKey map[string]V, expirationTime time.Duration) error {
 	ctx := context.Background()
 
+	// If empty map, delete the key
+	if len(hashKey) == 0 {
+		return h.db.Del(ctx, key).Err()
+	}
+
 	marshalledMap := make(map[string]any, len(hashKey))
 	for k, v := range hashKey {
 		marshalledMap[k] = v
@@ -66,9 +73,12 @@ func (h *HashTable[V]) Set(key string, hashKey map[string]V, expirationTime time
 	if err != nil {
 		return err
 	}
-	err = h.db.Expire(ctx, key, expirationTime).Err()
-	if err != nil {
-		return err
+	// Only set expiration if it's greater than 0
+	if expirationTime > 0 {
+		err = h.db.Expire(ctx, key, expirationTime).Err()
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

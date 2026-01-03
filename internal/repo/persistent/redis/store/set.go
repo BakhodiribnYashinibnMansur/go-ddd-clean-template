@@ -62,7 +62,11 @@ func (s *Set[T]) Set(key string, value []T, expiration time.Duration) error {
 	if err != nil {
 		return err
 	}
-	return s.db.Expire(ctx, key, expiration).Err()
+	// Only set expiration if it's greater than 0
+	if expiration > 0 {
+		return s.db.Expire(ctx, key, expiration).Err()
+	}
+	return nil
 }
 
 func (s *Set[T]) Delete(key string) error {
@@ -71,7 +75,9 @@ func (s *Set[T]) Delete(key string) error {
 
 func (s *Set[T]) unmarshalOne(vStr string) (T, error) {
 	var val T
-	err := redis.NewStringCmd(context.Background(), vStr).Scan(&val)
+	cmd := redis.NewStringCmd(context.Background())
+	cmd.SetVal(vStr)
+	err := cmd.Scan(&val)
 	return val, err
 }
 

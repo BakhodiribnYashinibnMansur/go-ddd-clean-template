@@ -54,6 +54,9 @@ func (p *PriorityQueue[T]) Delete(key string) error {
 }
 
 func (p *PriorityQueue[T]) Push(key string, value []GenericZ[T]) error {
+	if len(value) == 0 {
+		return nil
+	}
 	zSlice := make([]redis.Z, len(value))
 	for i, v := range value {
 		zSlice[i] = redis.Z{
@@ -115,7 +118,9 @@ func (p *PriorityQueue[T]) ToArray(key string) ([]T, error) {
 
 func (p *PriorityQueue[T]) unmarshalOne(s string) (T, error) {
 	var val T
-	err := redis.NewStringCmd(context.Background(), s).Scan(&val)
+	cmd := redis.NewStringCmd(context.Background())
+	cmd.SetVal(s)
+	err := cmd.Scan(&val)
 	return val, err
 }
 

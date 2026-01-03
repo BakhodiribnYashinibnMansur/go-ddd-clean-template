@@ -41,8 +41,8 @@ func (r *Repo) Gets(ctx context.Context, filter *domain.SessionsFilter) ([]*doma
 func (r *Repo) buildSelectSessionsQuery(filter *domain.SessionsFilter) squirrel.SelectBuilder {
 	qb := r.builder.
 		Select(
-			"id", "device_id", "device_name", "device_type", "ip_address", "user_agent",
-			"fcm_token", "user_id", "company_id", "refresh_token_hash", "expires_at",
+			"id", "device_id", "device_name", "device_type", "ip_address::text", "user_agent",
+			"fcm_token", "refresh_token_hash", "data", "user_id", "expires_at",
 			"last_activity", "revoked", "created_at", "updated_at",
 		).
 		From("session")
@@ -101,7 +101,7 @@ func (r *Repo) scanSessionRows(ctx context.Context, rows pgx.Rows) ([]*domain.Se
 		var s domain.Session
 		err := rows.Scan(
 			&s.ID, &s.DeviceID, &s.DeviceName, &s.DeviceType, &s.IPAddress, &s.UserAgent,
-			&s.FCMToken, &s.UserID, &s.CompanyID, &s.RefreshTokenHash, &s.ExpiresAt,
+			&s.FCMToken, &s.RefreshTokenHash, &s.Data, &s.UserID, &s.ExpiresAt,
 			&s.LastActivity, &s.Revoked, &s.CreatedAt, &s.UpdatedAt,
 		)
 		if err != nil {

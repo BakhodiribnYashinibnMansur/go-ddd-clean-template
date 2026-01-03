@@ -1,83 +1,99 @@
 package cache
 
-// // CreatePublicCache stores data in Redis cache with pagination info
-// func (c *Cache) CreatePublicCache(data any, key string, lang string, pagination *domain.Pagination, duration time.Duration) error {
-// 	bytes, err := json.Marshal(data)
-// 	if err != nil {
-// 		return fmt.Errorf("marshal data: %w", err)
-// 	}
+import (
+	"encoding/json"
+	"fmt"
+	"time"
 
-// 	cacheKey := createCacheKey(key, lang, pagination)
-// 	if err := c.redis.Byte.Set(cacheKey, bytes, duration); err != nil {
-// 		return fmt.Errorf("redis set: %w", err)
-// 	}
-// 	return nil
-// }
+	"gct/internal/domain"
 
-// // GetPublicCache retrieves data from Redis cache using pagination info
-// func (c *Cache) GetPublicCache(
-// 	key string,
-// 	lang string,
-// 	pagination *domain.Pagination,
-// 	out any,
-// ) error {
-// 	if out == nil {
-// 		return ErrNilOutput
-// 	}
+	"go.uber.org/zap"
+)
 
-// 	cacheKey := createCacheKey(key, lang, pagination)
+// CreatePublicCache stores data in Redis cache with pagination info
+func (c *Cache) CreatePublicCache(
+	data any,
+	key string,
+	lang string,
+	pagination *domain.Pagination,
+	duration time.Duration,
+) error {
+	bytes, err := json.Marshal(data)
+	if err != nil {
+		return fmt.Errorf("marshal data: %w", err)
+	}
 
-// 	bytes, err := c.redis.Byte.Get(cacheKey)
-// 	if err != nil {
-// 		return fmt.Errorf("redis get: %w", err)
-// 	}
+	cacheKey := createCacheKey(key, lang, pagination)
+	if err := c.redis.Primitive.Byte.Set(cacheKey, bytes, duration); err != nil {
+		return fmt.Errorf("redis set: %w", err)
+	}
+	return nil
+}
 
-// 	if err := json.Unmarshal(bytes, out); err != nil {
-// 		return fmt.Errorf("unmarshal data: %w", err)
-// 	}
+// GetPublicCache retrieves data from Redis cache using pagination info
+func (c *Cache) GetPublicCache(
+	key string,
+	lang string,
+	pagination *domain.Pagination,
+	out any,
+) error {
+	if out == nil {
+		return ErrNilOutput
+	}
 
-// 	return nil
-// }
+	cacheKey := createCacheKey(key, lang, pagination)
 
-// // DeletePublicCache removes an item from Redis cache
-// func (c *Cache) DeletePublicCache(key string, lang string, pagination *domain.Pagination) error {
-// 	cacheKey := createCacheKey(key, lang, pagination)
-// 	if err := c.redis.Primitive.Delete(cacheKey); err != nil {
-// 		c.logger.Errorw("failed to delete public cache", zap.Error(err))
-// 		return fmt.Errorf("redis delete: %w", err)
-// 	}
-// 	return nil
-// }
+	bytes, err := c.redis.Primitive.Byte.Get(cacheKey)
+	if err != nil {
+		return fmt.Errorf("redis get: %w", err)
+	}
 
-// // DeletePublicCaches removes all items matching the key pattern from Redis cache
-// func (c *Cache) DeletePublicCaches(key string) error {
-// 	keys, err := c.redis.String.Scan(key + "*")
-// 	if err != nil {
-// 		c.logger.Errorw("failed to scan public cache keys", zap.Error(err))
-// 		return fmt.Errorf("redis scan: %w", err)
-// 	}
+	if err := json.Unmarshal(bytes, out); err != nil {
+		return fmt.Errorf("unmarshal data: %w", err)
+	}
 
-// 	var firstErr error
-// 	for _, key := range keys {
-// 		if err := c.redis.Byte.Delete(key); err != nil {
-// 			c.logger.Errorw("failed to delete public cache item", "key", key, zap.Error(err))
-// 			if firstErr == nil {
-// 				firstErr = err
-// 			}
-// 		}
-// 	}
+	return nil
+}
 
-// 	if firstErr != nil {
-// 		return fmt.Errorf("redis delete items: %w", firstErr)
-// 	}
+// DeletePublicCache removes an item from Redis cache
+func (c *Cache) DeletePublicCache(key string, lang string, pagination *domain.Pagination) error {
+	cacheKey := createCacheKey(key, lang, pagination)
+	if err := c.redis.Primitive.Byte.Delete(cacheKey); err != nil {
+		c.logger.Errorw("failed to delete public cache", zap.Error(err))
+		return fmt.Errorf("redis delete: %w", err)
+	}
+	return nil
+}
 
-// 	return nil
-// }
+// DeletePublicCaches removes all items matching the key pattern from Redis cache
+func (c *Cache) DeletePublicCaches(key string) error {
+	keys, err := c.redis.Primitive.String.Scan(key + "*")
+	if err != nil {
+		c.logger.Errorw("failed to scan public cache keys", zap.Error(err))
+		return fmt.Errorf("redis scan: %w", err)
+	}
 
-// // createCacheKey generates a unique cache key combining the base key and pagination info
-// func createCacheKey(key string, lang string, pagination *domain.Pagination) string {
-// 	if pagination != nil {
-// 		return fmt.Sprintf("%s_%s_%d_%d", key, lang, pagination.Offset, pagination.Limit)
-// 	}
-// 	return fmt.Sprintf("%s_%s", key, lang)
-// }
+	var firstErr error
+	for _, key := range keys {
+		if err := c.redis.Primitive.Byte.Delete(key); err != nil {
+			c.logger.Errorw("failed to delete public cache item", "key", key, zap.Error(err))
+			if firstErr == nil {
+				firstErr = err
+			}
+		}
+	}
+
+	if firstErr != nil {
+		return fmt.Errorf("redis delete items: %w", firstErr)
+	}
+
+	return nil
+}
+
+// createCacheKey generates a unique cache key combining the base key and pagination info
+func createCacheKey(key string, lang string, pagination *domain.Pagination) string {
+	if pagination != nil {
+		return fmt.Sprintf("%s_%s_%d_%d", key, lang, pagination.Offset, pagination.Limit)
+	}
+	return fmt.Sprintf("%s_%s", key, lang)
+}

@@ -3,6 +3,7 @@ package session
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -14,7 +15,7 @@ import (
 var errNoSessionsToUpdate = errors.New("no sessions to update")
 
 // SyncSessionActivityToPostgres syncs session last_activity from Redis to PostgreSQL
-func (c *SessionCronJobs) SyncSessionActivityToPostgres() {
+func (c *CronJobs) SyncSessionActivityToPostgres() {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
@@ -28,7 +29,7 @@ func (c *SessionCronJobs) SyncSessionActivityToPostgres() {
 	}
 }
 
-func (c *SessionCronJobs) collectSessionActivities(ctx context.Context) ([]SessionActivity, error) {
+func (c *CronJobs) collectSessionActivities(ctx context.Context) ([]Activity, error) {
 	pattern := "session_last_activity:*"
 	var keys []string
 	iter := c.redis.Scan(ctx, 0, pattern, 0).Iterator()
@@ -37,7 +38,7 @@ func (c *SessionCronJobs) collectSessionActivities(ctx context.Context) ([]Sessi
 	}
 	if err := iter.Err(); err != nil {
 		c.logger.Errorw("Failed to scan Redis keys", "error", err, "pattern", pattern)
-		return nil, err
+		return nil, fmt.Errorf("redis scan error: %w", err)
 	}
 
 	if len(keys) == 0 {
@@ -45,7 +46,7 @@ func (c *SessionCronJobs) collectSessionActivities(ctx context.Context) ([]Sessi
 		return nil, nil
 	}
 
-	sessions := make([]SessionActivity, 0, len(keys))
+	sessions := make([]Activity, 0, len(keys))
 	for _, key := range keys {
 		activity, err := c.getSingleSessionActivity(ctx, key)
 		if err != nil {
@@ -59,27 +60,27 @@ func (c *SessionCronJobs) collectSessionActivities(ctx context.Context) ([]Sessi
 	return sessions, nil
 }
 
-func (c *SessionCronJobs) getSingleSessionActivity(ctx context.Context, key string) (*SessionActivity, error) {
+func (c *CronJobs) getSingleSessionActivity(ctx context.Context, key string) (*Activity, error) {
 	lastActivityStr, err := c.redis.Get(ctx, key).Result()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get from redis: %w", err)
 	}
 
 	lastActivity, err := time.Parse(time.RFC3339, lastActivityStr)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to parse activity time: %w", err)
 	}
 
-	return &SessionActivity{
+	return &Activity{
 		SessionID:    strings.TrimPrefix(key, "session_last_activity:"),
 		LastActivity: lastActivity,
 	}, nil
 }
 
-func (c *SessionCronJobs) syncToPostgres(ctx context.Context, sessions []SessionActivity) error {
+func (c *CronJobs) syncToPostgres(ctx context.Context, sessions []Activity) error {
 	tx, err := c.pool.Begin(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
 	defer func() {
 		_ = tx.Rollback(ctx)
@@ -90,7 +91,7 @@ func (c *SessionCronJobs) syncToPostgres(ctx context.Context, sessions []Session
 	}
 
 	if err := tx.Commit(ctx); err != nil {
-		return err
+		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
 	c.logger.Info("Session activity synced to PostgreSQL", zap.Int("count", len(sessions)))
@@ -98,7 +99,7 @@ func (c *SessionCronJobs) syncToPostgres(ctx context.Context, sessions []Session
 }
 
 // batchUpdateSessionActivity performs batch update using temporary table
-func (c *SessionCronJobs) batchUpdateSessionActivity(ctx context.Context, tx pgx.Tx, sessions []SessionActivity) error {
+func (c *CronJobs) batchUpdateSessionActivity(ctx context.Context, tx pgx.Tx, sessions []Activity) error {
 	if len(sessions) == 0 {
 		return errNoSessionsToUpdate
 	}
@@ -112,7 +113,7 @@ func (c *SessionCronJobs) batchUpdateSessionActivity(ctx context.Context, tx pgx
 	`)
 	if err != nil {
 		c.logger.Error("Failed to create temp table", zap.Error(err))
-		return err
+		return fmt.Errorf("failed to create temp table: %w", err)
 	}
 
 	// Prepare data for CopyFrom
@@ -130,7 +131,7 @@ func (c *SessionCronJobs) batchUpdateSessionActivity(ctx context.Context, tx pgx
 	)
 	if err != nil {
 		c.logger.Error("Failed to copy data to temp table", zap.Error(err))
-		return err
+		return fmt.Errorf("failed to copy data to temp table: %w", err)
 	}
 
 	// Update main table from temp table
@@ -144,7 +145,7 @@ func (c *SessionCronJobs) batchUpdateSessionActivity(ctx context.Context, tx pgx
 	`)
 	if err != nil {
 		c.logger.Error("Failed to update sessions from temp table", zap.Error(err))
-		return err
+		return fmt.Errorf("failed to update sessions from temp table: %w", err)
 	}
 
 	rowsAffected := result.RowsAffected()

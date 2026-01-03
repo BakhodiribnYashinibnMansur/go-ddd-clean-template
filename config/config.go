@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/caarlos0/env/v11"
+	"github.com/subosito/gotenv"
 )
 
 var (
@@ -26,14 +27,25 @@ type Config struct {
 	Metrics      Metrics
 	Swagger      Swagger
 	Proto        Proto
+	Admin        Admin
 	Cookie       Cookie
 	Minio        MinioStore `envPrefix:"MINIO_"`
+	Redis        RedisStore `envPrefix:"REDIS_"`
+	Telegram     Telegram   `envPrefix:"TELEGRAM_"`
+}
+
+type Telegram struct {
+	BotToken string `env:"BOT_TOKEN"`
+	ChatID   string `env:"CHAT_ID"`
 }
 
 // NewConfig returns app config (Singleton).
 func NewConfig() (*Config, error) {
 	var err error
 	once.Do(func() {
+		// Load .env file if it exists
+		_ = gotenv.Load()
+
 		cfg := &Config{}
 		if e := env.Parse(cfg); e != nil {
 			err = fmt.Errorf("config error: %w", e)

@@ -1,9 +1,1572 @@
 basePath: /api
+definitions:
+  domain.AuditActionType:
+    enum:
+    - LOGIN
+    - LOGOUT
+    - SESSION_REVOKE
+    - PASSWORD_CHANGE
+    - MFA_VERIFY_FAIL
+    - ACCESS_GRANTED
+    - ACCESS_DENIED
+    - POLICY_MATCHED
+    - POLICY_DENIED
+    - USER_CREATE
+    - USER_UPDATE
+    - USER_DELETE
+    - ROLE_ASSIGN
+    - ROLE_REMOVE
+    - ORDER_APPROVE
+    - ORDER_CANCEL
+    - PAYMENT_PROCESS
+    - PAYMENT_CANCEL
+    - POLICY_EVALUATED
+    type: string
+    x-enum-varnames:
+    - AuditActionLogin
+    - AuditActionLogout
+    - AuditActionSessionRevoke
+    - AuditActionPasswordChange
+    - AuditActionMfaVerifyFail
+    - AuditActionAccessGranted
+    - AuditActionAccessDenied
+    - AuditActionPolicyMatched
+    - AuditActionPolicyDenied
+    - AuditActionUserCreate
+    - AuditActionUserUpdate
+    - AuditActionUserDelete
+    - AuditActionRoleAssign
+    - AuditActionRoleRemove
+    - AuditActionOrderApprove
+    - AuditActionOrderCancel
+    - AuditActionPaymentProcess
+    - AuditActionPaymentCancel
+    - AuditActionPolicyEvaluated
+  domain.AuditLog:
+    properties:
+      action:
+        $ref: '#/definitions/domain.AuditActionType'
+      created_at:
+        type: string
+      decision:
+        type: string
+      error_message:
+        type: string
+      id:
+        type: string
+      ip_address:
+        type: string
+      metadata:
+        additionalProperties: {}
+        type: object
+      permission:
+        type: string
+      platform:
+        type: string
+      policy_id:
+        type: string
+      resource_id:
+        type: string
+      resource_type:
+        type: string
+      session_id:
+        type: string
+      success:
+        type: boolean
+      user_agent:
+        type: string
+      user_id:
+        type: string
+    type: object
+  domain.EndpointHistory:
+    properties:
+      created_at:
+        type: string
+      decision:
+        type: string
+      duration_ms:
+        type: integer
+      error_message:
+        type: string
+      id:
+        type: string
+      ip_address:
+        type: string
+      method:
+        type: string
+      path:
+        type: string
+      permission:
+        type: string
+      platform:
+        type: string
+      rate_limited:
+        type: boolean
+      request_id:
+        type: string
+      response_size:
+        type: integer
+      session_id:
+        type: string
+      status_code:
+        type: integer
+      user_agent:
+        type: string
+      user_id:
+        type: string
+    type: object
+  domain.FunctionMetric:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      is_panic:
+        type: boolean
+      latency_ms:
+        type: integer
+      name:
+        type: string
+      panic_error:
+        type: string
+    type: object
+  domain.Permission:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      parent_id:
+        type: string
+    type: object
+  domain.Role:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  domain.Scope:
+    properties:
+      created_at:
+        type: string
+      method:
+        type: string
+      path:
+        type: string
+    type: object
+  domain.Session:
+    properties:
+      created_at:
+        type: string
+      device_id:
+        type: string
+      device_name:
+        type: string
+      device_type:
+        $ref: '#/definitions/domain.SessionDeviceType'
+      expires_at:
+        type: string
+      fcm_token:
+        type: string
+      id:
+        type: string
+      ip_address:
+        type: string
+      last_activity:
+        type: string
+      refresh_token_hash:
+        type: string
+      revoked:
+        type: boolean
+      updated_at:
+        type: string
+      user_agent:
+        type: string
+      user_id:
+        type: string
+    type: object
+  domain.SessionDeviceType:
+    enum:
+    - DESKTOP
+    - MOBILE
+    - TABLET
+    - BOT
+    - TV
+    type: string
+    x-enum-varnames:
+    - DeviceTypeDesktop
+    - DeviceTypeMobile
+    - DeviceTypeTablet
+    - DeviceTypeBot
+    - DeviceTypeTV
+  domain.User:
+    properties:
+      active:
+        type: boolean
+      attributes:
+        additionalProperties: {}
+        description: JSONB for ABAC (region, branch, dept)
+        type: object
+      created_at:
+        type: string
+      deleted_at:
+        type: integer
+      email:
+        type: string
+      id:
+        type: string
+      last_seen:
+        type: string
+      password:
+        description: Transient field for input
+        type: string
+      phone:
+        type: string
+      role_id:
+        type: string
+      updated_at:
+        type: string
+      username:
+        type: string
+    type: object
+  errors.ErrorDefinition:
+    properties:
+      category:
+        description: Data, Validation, Security, System, Business
+        type: string
+      code:
+        type: string
+      http_status:
+        type: integer
+      layer:
+        description: Repository, Service, Handler
+        type: string
+      message:
+        type: string
+      numeric_code:
+        type: string
+    type: object
+  permission.ScopeRequest:
+    properties:
+      method:
+        type: string
+      path:
+        type: string
+    required:
+    - method
+    - path
+    type: object
+  response.ErrorDetail:
+    properties:
+      code:
+        example: RESOURCE_NOT_FOUND
+        type: string
+      details:
+        example: The user with the ID '12345' does not exist in our records.
+        type: string
+      message:
+        example: The requested resource was not found.
+        type: string
+      method:
+        example: GET
+        type: string
+      path:
+        example: /api/v1/users/12345
+        type: string
+      suggestion:
+        example: Please check our documentation.
+        type: string
+      timestamp:
+        example: "2023-12-08T12:30:45Z"
+        type: string
+    type: object
+  response.ErrorResponse:
+    properties:
+      documentation_url:
+        example: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
+        type: string
+      error:
+        $ref: '#/definitions/response.ErrorDetail'
+      requestId:
+        example: a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8
+        type: string
+      status:
+        example: error
+        type: string
+      statusCode:
+        example: 404
+        type: integer
+    type: object
+  response.SuccessResponse:
+    properties:
+      data: {}
+      message:
+        example: Operation completed successfully
+        type: string
+      meta: {}
+      status:
+        description: '"success" or "error"'
+        example: success
+        type: string
+      statusCode:
+        example: 200
+        type: integer
+    type: object
 host: localhost:8080
 info:
   contact: {}
   description: Using a user management service as an example
   title: Go Clean Template API
   version: "1.0"
-paths: {}
+paths:
+  /audit/history:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve endpoint histories with filtering and pagination
+      parameters:
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Offset
+        in: query
+        name: offset
+        type: integer
+      - description: User ID
+        in: query
+        name: user_id
+        type: string
+      - description: Method
+        in: query
+        name: method
+        type: string
+      - description: Path
+        in: query
+        name: path
+        type: string
+      - description: Status Code
+        in: query
+        name: status_code
+        type: integer
+      - description: From Date (RFC3339)
+        in: query
+        name: from_date
+        type: string
+      - description: To Date (RFC3339)
+        in: query
+        name: to_date
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.SuccessResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/domain.EndpointHistory'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Get endpoint histories
+      tags:
+      - audit
+  /audit/logs:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve audit logs with filtering and pagination
+      parameters:
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Offset
+        in: query
+        name: offset
+        type: integer
+      - description: User ID
+        in: query
+        name: user_id
+        type: string
+      - description: Action
+        in: query
+        name: action
+        type: string
+      - description: Resource Type
+        in: query
+        name: resource_type
+        type: string
+      - description: Resource ID
+        in: query
+        name: resource_id
+        type: string
+      - description: Success
+        in: query
+        name: success
+        type: boolean
+      - description: From Date (RFC3339)
+        in: query
+        name: from_date
+        type: string
+      - description: To Date (RFC3339)
+        in: query
+        name: to_date
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.SuccessResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/domain.AuditLog'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Get audit logs
+      tags:
+      - audit
+  /auth/sign-in:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user and return tokens
+      parameters:
+      - description: Credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Sign In
+      tags:
+      - auth
+  /auth/sign-out:
+    post:
+      consumes:
+      - application/json
+      description: Revoke current session
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Sign Out
+      tags:
+      - auth
+  /auth/sign-up:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user
+      parameters:
+      - description: User info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Sign Up
+      tags:
+      - auth
+  /authz/permissions:
+    get:
+      consumes:
+      - application/json
+      description: Get list of permissions with pagination and optional filtering
+      parameters:
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Offset
+        in: query
+        name: offset
+        type: integer
+      - description: Filter by name
+        in: query
+        name: name
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.SuccessResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/domain.Permission'
+                  type: array
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: List permissions
+      tags:
+      - authz-permissions
+    post:
+      consumes:
+      - application/json
+      description: Create a new permission
+      parameters:
+      - description: Permission creation body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.Permission'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Create a new permission
+      tags:
+      - authz-permissions
+  /authz/permissions/{perm_id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete permission by ID
+      parameters:
+      - description: Permission ID
+        in: path
+        name: perm_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Delete permission
+      tags:
+      - authz-permissions
+    get:
+      consumes:
+      - application/json
+      description: Get permission details by unique ID
+      parameters:
+      - description: Permission ID
+        in: path
+        name: perm_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Get permission by ID
+      tags:
+      - authz-permissions
+    put:
+      consumes:
+      - application/json
+      description: Update permission details
+      parameters:
+      - description: Permission ID
+        in: path
+        name: perm_id
+        required: true
+        type: string
+      - description: Permission update body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.Permission'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Update permission
+      tags:
+      - authz-permissions
+  /authz/permissions/{perm_id}/scopes:
+    delete:
+      consumes:
+      - application/json
+      description: Remove a scope (path + method) from a permission
+      parameters:
+      - description: Permission ID
+        in: path
+        name: perm_id
+        required: true
+        type: string
+      - description: Scope details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/permission.ScopeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Remove scope from permission
+      tags:
+      - authz-permissions
+    post:
+      consumes:
+      - application/json
+      description: Assign a scope (path + method) to a permission
+      parameters:
+      - description: Permission ID
+        in: path
+        name: perm_id
+        required: true
+        type: string
+      - description: Scope details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/permission.ScopeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Assign scope to permission
+      tags:
+      - authz-permissions
+  /authz/roles:
+    get:
+      consumes:
+      - application/json
+      description: Get list of roles with pagination and optional filtering
+      parameters:
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Offset
+        in: query
+        name: offset
+        type: integer
+      - description: Filter by name
+        in: query
+        name: name
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.SuccessResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/domain.Role'
+                  type: array
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: List roles
+      tags:
+      - authz-roles
+    post:
+      consumes:
+      - application/json
+      description: Create a new role with name
+      parameters:
+      - description: Role creation body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.Role'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Create a new role
+      tags:
+      - authz-roles
+  /authz/roles/{role_id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete role by ID
+      parameters:
+      - description: Role ID
+        in: path
+        name: role_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Delete role
+      tags:
+      - authz-roles
+    get:
+      consumes:
+      - application/json
+      description: Get role details by unique ID
+      parameters:
+      - description: Role ID
+        in: path
+        name: role_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Get role by ID
+      tags:
+      - authz-roles
+    put:
+      consumes:
+      - application/json
+      description: Update role name
+      parameters:
+      - description: Role ID
+        in: path
+        name: role_id
+        required: true
+        type: string
+      - description: Role update body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.Role'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Update role
+      tags:
+      - authz-roles
+  /authz/roles/{role_id}/permissions/{perm_id}:
+    delete:
+      consumes:
+      - application/json
+      description: Remove a permission from a role
+      parameters:
+      - description: Role ID
+        in: path
+        name: role_id
+        required: true
+        type: string
+      - description: Permission ID
+        in: path
+        name: perm_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Remove permission from role
+      tags:
+      - authz-roles
+    post:
+      consumes:
+      - application/json
+      description: Add a permission to a role
+      parameters:
+      - description: Role ID
+        in: path
+        name: role_id
+        required: true
+        type: string
+      - description: Permission ID
+        in: path
+        name: perm_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Add permission to role
+      tags:
+      - authz-roles
+  /authz/scope:
+    get:
+      parameters:
+      - description: Path
+        in: query
+        name: path
+        required: true
+        type: string
+      - description: Method
+        in: query
+        name: method
+        required: true
+        type: string
+      responses: {}
+      summary: Get scope
+      tags:
+      - authz-scopes
+  /authz/scopes:
+    delete:
+      parameters:
+      - description: Path
+        in: query
+        name: path
+        required: true
+        type: string
+      - description: Method
+        in: query
+        name: method
+        required: true
+        type: string
+      responses: {}
+      summary: Delete scope
+      tags:
+      - authz-scopes
+    get:
+      parameters:
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Offset
+        in: query
+        name: offset
+        type: integer
+      - description: Path
+        in: query
+        name: path
+        type: string
+      - description: Method
+        in: query
+        name: method
+        type: string
+      responses: {}
+      summary: List scopes
+      tags:
+      - authz-scopes
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Scope creation body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.Scope'
+      produces:
+      - application/json
+      responses: {}
+      summary: Create a new scope
+      tags:
+      - authz-scopes
+  /authz/users/{user_id}/roles/{role_id}:
+    post:
+      consumes:
+      - application/json
+      description: Assign a role to a user
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: Role ID
+        in: path
+        name: role_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Assign role to user
+      tags:
+      - authz-roles
+  /metrics/functions:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve function execution metrics
+      parameters:
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Offset
+        in: query
+        name: offset
+        type: integer
+      - description: Function Name
+        in: query
+        name: name
+        type: string
+      - description: Is Panic
+        in: query
+        name: is_panic
+        type: boolean
+      - description: From Date (RFC3339)
+        in: query
+        name: from_date
+        type: string
+      - description: To Date (RFC3339)
+        in: query
+        name: to_date
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.SuccessResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/domain.FunctionMetric'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Get function metrics
+      tags:
+      - metrics
+  /sessions:
+    get:
+      consumes:
+      - application/json
+      description: List all active sessions for the current user
+      parameters:
+      - description: Offset
+        in: query
+        name: offset
+        type: integer
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Get active sessions
+      tags:
+      - sessions
+    post:
+      consumes:
+      - application/json
+      description: Create a session for user
+      parameters:
+      - description: Session creation query
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.Session'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/domain.Session'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Create a new session
+      tags:
+      - sessions
+  /sessions/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Revoke a session by ID
+      parameters:
+      - description: Session UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Delete/Revoke session
+      tags:
+      - sessions
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a session details
+      parameters:
+      - description: Session UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/domain.Session'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Get session by ID
+      tags:
+      - sessions
+  /sessions/{id}/activity:
+    put:
+      consumes:
+      - application/json
+      description: Update last activity timestamp
+      parameters:
+      - description: Session UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Update session activity
+      tags:
+      - sessions
+  /sessions/device/{device_id}:
+    delete:
+      consumes:
+      - application/json
+      description: Revoke all sessions for a specific device
+      parameters:
+      - description: Device ID
+        in: path
+        name: device_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Revoke sessions by device
+      tags:
+      - sessions
+  /sessions/revoke-all:
+    post:
+      consumes:
+      - application/json
+      description: Revoke all user sessions except the current one (Currently revokes
+        current one as placeholder)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Revoke all other sessions
+      tags:
+      - sessions
+  /system/errors:
+    get:
+      description: Returns a list of system errors. If Accept header includes text/html,
+        returns a styled HTML page. Otherwise returns JSON.
+      parameters:
+      - description: Error Layer (Repository, Service, Handler)
+        in: query
+        name: type
+        type: string
+      - description: Error Category (Data, Validation, Security, System, Business)
+        in: query
+        name: category
+        type: string
+      - description: Error Code (partial match)
+        in: query
+        name: code
+        type: string
+      produces:
+      - application/json
+      - text/html
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.SuccessResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/errors.ErrorDefinition'
+                  type: array
+              type: object
+      summary: Get system errors
+      tags:
+      - system
+  /users:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve users with pagination
+      parameters:
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Offset
+        in: query
+        name: offset
+        type: integer
+      - description: Phone
+        in: query
+        name: phone
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.SuccessResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/domain.User'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Get users
+      tags:
+      - users
+    post:
+      consumes:
+      - application/json
+      description: Register a new user with username, phone and password
+      parameters:
+      - description: User creation query
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.User'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Create a new user
+      tags:
+      - users
+  /users/{user_id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete user by ID (soft delete)
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Delete user
+      tags:
+      - users
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a user's details by their ID
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/domain.User'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Get user by ID
+      tags:
+      - users
+    patch:
+      consumes:
+      - application/json
+      description: Update user details by ID
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: User update query
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Update user
+      tags:
+      - users
 swagger: "2.0"

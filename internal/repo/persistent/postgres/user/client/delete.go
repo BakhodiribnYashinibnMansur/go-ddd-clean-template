@@ -5,9 +5,11 @@ import (
 	"time"
 
 	apperrors "gct/pkg/errors"
+
+	"github.com/google/uuid"
 )
 
-func (r *Repo) Delete(ctx context.Context, id int64) error {
+func (r *Repo) Delete(ctx context.Context, id uuid.UUID) error {
 	sql, args, err := r.builder.
 		Update("users").
 		Set("deleted_at", time.Now().Unix()).

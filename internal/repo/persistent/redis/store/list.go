@@ -67,8 +67,12 @@ func (l *List[T]) Set(key string, value []T, expiration time.Duration) error {
 
 	pipe := l.db.TxPipeline()
 	pipe.Del(ctx, key)
-	pipe.LPush(ctx, key, vals...)
-	pipe.Expire(ctx, key, expiration)
+	// Use RPush instead of LPush to preserve order
+	pipe.RPush(ctx, key, vals...)
+	// Only set expiration if it's greater than 0
+	if expiration > 0 {
+		pipe.Expire(ctx, key, expiration)
+	}
 	_, err := pipe.Exec(ctx)
 	return err
 }
@@ -84,7 +88,9 @@ func (l *List[T]) Len(key string) (int64, error) {
 func (l *List[T]) unmarshalOne(s string) (T, error) {
 	var val T
 	// Use go-redis Scan logic equivalent for strings
-	err := redis.NewStringCmd(context.Background(), s).Scan(&val)
+	cmd := redis.NewStringCmd(context.Background())
+	cmd.SetVal(s)
+	err := cmd.Scan(&val)
 	return val, err
 }
 

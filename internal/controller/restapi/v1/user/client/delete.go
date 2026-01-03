@@ -17,14 +17,14 @@ import (
 // @Tags        users
 // @Accept      json
 // @Produce     json
-// @Param       user_id path int true "User ID"
+// @Param       user_id path string true "User ID"
 // @Success     200 {object} response.SuccessResponse
 // @Failure     400 {object} response.ErrorResponse
 // @Failure     404 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
 // @Router      /users/{user_id} [delete]
 func (c *Controller) Delete(ctx *gin.Context) {
-	id, err := util.GetInt64Param(ctx, consts.ParamUserID)
+	id, err := util.GetUUIDParam(ctx, consts.ParamUserID)
 	if err != nil {
 		util.LogError(c.l, err, "http - v1 - client - delete - id")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid user id", nil, false)

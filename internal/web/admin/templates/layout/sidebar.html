@@ -1,0 +1,96 @@
+{{ define "sidebar" }}
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+        AdminPanel
+    </div>
+    <nav class="sidebar-nav">
+        <a href="/admin/dashboard" class="nav-item {{ if eq .ActivePage " dashboard" }}active{{ end }}">
+            <i class="material-symbols-outlined">dashboard</i>
+            Dashboard
+        </a>
+
+        {{ if .Can.users_view }}
+        <a href="/admin/users" class="nav-item {{ if eq .ActivePage " users" }}active{{ end }}">
+            <i class="material-symbols-outlined">group</i>
+            Users
+        </a>
+        {{ end }}
+
+        {{ if .Can.sessions_view }}
+        <a href="/admin/sessions" class="nav-item {{ if eq .ActivePage " sessions" }}active{{ end }}">
+            <i class="material-symbols-outlined">devices</i>
+            Sessions
+        </a>
+        {{ end }}
+
+        <div
+            style="margin: 16px 0 8px 16px; font-size: 12px; font-weight: 600; color: var(--md-sys-color-on-surface-variant); text-transform: uppercase; letter-spacing: 0.5px;">
+            Access Control
+        </div>
+
+        {{ if .Can.roles_view }}
+        <a href="/admin/rbac/roles" class="nav-item {{ if eq .ActivePage " roles" }}active{{ end }}">
+            <i class="material-symbols-outlined">badge</i>
+            Roles
+        </a>
+        {{ end }}
+
+        {{ if .Can.permissions_view }}
+        <a href="/admin/rbac/permissions" class="nav-item {{ if eq .ActivePage " permissions" }}active{{ end }}">
+            <i class="material-symbols-outlined">lock_open</i>
+            Permissions
+        </a>
+        {{ end }}
+
+        {{ if .Can.scopes_view }}
+        <a href="/admin/rbac/scopes" class="nav-item {{ if eq .ActivePage " scopes" }}active{{ end }}">
+            <i class="material-symbols-outlined">api</i>
+            Scopes
+        </a>
+        {{ end }}
+
+        {{ if .Can.policies_view }}
+        <a href="/admin/abac/policies" class="nav-item {{ if eq .ActivePage " policies" }}active{{ end }}">
+            <i class="material-symbols-outlined">policy</i>
+            Policies (ABAC)
+        </a>
+        {{ end }}
+
+        {{ if .Can.system_errors_view }}
+        <a href="/admin/system-errors" class="nav-item {{ if eq .ActivePage " system_errors" }}active{{ end }}">
+            <i class="material-symbols-outlined">bug_report</i>
+            System Errors
+        </a>
+        {{ end }}
+
+        {{ if .Can.functions_view }}
+        <a href="/admin/functions" class="nav-item {{ if eq .ActivePage " functions" }}active{{ end }}">
+            <i class="material-symbols-outlined">timer</i>
+            Function Metrics
+        </a>
+        {{ end }}
+
+        {{ if .Can.audit_logs_view }}
+        <a href="/admin/audit/logs" class="nav-item {{ if eq .ActivePage " audit_logs" }}active{{ end }}">
+            <i class="material-symbols-outlined">list_alt</i>
+            Audit Logs
+        </a>
+        {{ end }}
+
+        {{ if .Can.endpoint_history_view }}
+        <a href="/admin/audit/history" class="nav-item {{ if eq .ActivePage " endpoint_history" }}active{{ end }}">
+            <i class="material-symbols-outlined">history</i>
+            Endpoint History
+        </a>
+        {{ end }}
+
+        <div style="margin-top: auto;"></div>
+        {{ if .Can.settings_view }}
+        <a href="/admin/settings" class="nav-item {{ if eq .ActivePage " settings" }}active{{ end }}">
+            <i class="material-symbols-outlined">settings</i>
+            Settings
+        </a>
+        {{ end }}
+    </nav>
+</aside>
+{{ end }}

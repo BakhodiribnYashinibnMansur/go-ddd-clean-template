@@ -1,0 +1,130 @@
+{{ define "content" }}
+<div class="content-header">
+    <div>
+        <h1 class="content-title">Endpoint History</h1>
+        <p class="content-subtitle">Detailed HTTP request/response logs</p>
+    </div>
+    <div class="header-actions">
+        <button class="btn btn-secondary" onclick="window.location.reload()">
+            <i class="material-symbols-outlined">refresh</i>
+            Refresh
+        </button>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">Request Logs</h2>
+        <div class="card-actions">
+            <div class="search-box">
+                <i class="material-symbols-outlined">search</i>
+                <input type="text" placeholder="Filter by path..." onkeyup="applyFilter('path', this.value)">
+            </div>
+            <div class="filter-group">
+                <select class="form-select" onchange="applyFilter('method', this.value)">
+                    <option value="">Method</option>
+                    <option value="GET" {{ if eq .QueryParams.method "GET" }}selected{{ end }}>GET</option>
+                    <option value="POST" {{ if eq .QueryParams.method "POST" }}selected{{ end }}>POST</option>
+                    <option value="PUT" {{ if eq .QueryParams.method "PUT" }}selected{{ end }}>PUT</option>
+                    <option value="DELETE" {{ if eq .QueryParams.method "DELETE" }}selected{{ end }}>DELETE</option>
+                    <option value="PATCH" {{ if eq .QueryParams.method "PATCH" }}selected{{ end }}>PATCH</option>
+                </select>
+                <select class="form-select" onchange="applyFilter('status_code', this.value)">
+                    <option value="">Status</option>
+                    <option value="200" {{ if eq .QueryParams.status_code "200" }}selected{{ end }}>200 OK</option>
+                    <option value="201" {{ if eq .QueryParams.status_code "201" }}selected{{ end }}>201 Created</option>
+                    <option value="400" {{ if eq .QueryParams.status_code "400" }}selected{{ end }}>400 Bad Request
+                    </option>
+                    <option value="401" {{ if eq .QueryParams.status_code "401" }}selected{{ end }}>401 Unauthorized
+                    </option>
+                    <option value="403" {{ if eq .QueryParams.status_code "403" }}selected{{ end }}>403 Forbidden
+                    </option>
+                    <option value="404" {{ if eq .QueryParams.status_code "404" }}selected{{ end }}>404 Not Found
+                    </option>
+                    <option value="500" {{ if eq .QueryParams.status_code "500" }}selected{{ end }}>500 Internal Error
+                    </option>
+                </select>
+            </div>
+        </div>
+    </div>
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Method</th>
+                    <th>Path</th>
+                    <th>Status</th>
+                    <th>Duration</th>
+                    <th>User</th>
+                    <th>IP</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{ range .History }}
+                <tr>
+                    <td class="text-nowrap">{{ .CreatedAt.Format "Jan 02, 15:04:05" }}</td>
+                    <td>
+                        {{ if eq .Method "GET" }}<span class="badge badge-success">GET</span>
+                        {{ else if eq .Method "POST" }}<span class="badge badge-primary">POST</span>
+                        {{ else if eq .Method "DELETE" }}<span class="badge badge-danger">DEL</span>
+                        {{ else if eq .Method "PUT" }}<span class="badge badge-warning">PUT</span>
+                        {{ else }}<span class="badge badge-secondary">{{ .Method }}</span>{{ end }}
+                    </td>
+                    <td><code class="code-pill">{{ .Path }}</code></td>
+                    <td>
+                        {{ if ge .StatusCode 200 }}
+                        {{ if lt .StatusCode 300 }}
+                        <span class="text-success">{{ .StatusCode }}</span>
+                        {{ else if lt .StatusCode 400 }}
+                        <span class="text-info">{{ .StatusCode }}</span>
+                        {{ else if lt .StatusCode 500 }}
+                        <span class="text-warning">{{ .StatusCode }}</span>
+                        {{ else }}
+                        <span class="text-danger">{{ .StatusCode }}</span>
+                        {{ end }}
+                        {{ else }}
+                        <span>{{ .StatusCode }}</span>
+                        {{ end }}
+                    </td>
+                    <td>{{ .DurationMs }}ms</td>
+                    <td>
+                        {{ if .UserID }}
+                        <a href="/admin/users/{{ .UserID }}" class="text-link" title="{{ .UserID }}"><i
+                                class="material-symbols-outlined text-sm">person</i></a>
+                        {{ else }}
+                        <span class="text-muted">-</span>
+                        {{ end }}
+                    </td>
+                    <td class="text-muted text-xs">{{ if .IPAddress }}{{ .IPAddress }}{{ else }}-{{ end }}</td>
+                </tr>
+                {{ else }}
+                <tr>
+                    <td colspan="7" class="text-center py-4 text-muted">No history found</td>
+                </tr>
+                {{ end }}
+            </tbody>
+        </table>
+    </div>
+    <div class="card-footer">
+        {{ template "pagination" .Pagination }}
+    </div>
+</div>
+
+<script>
+    let filterTimeout;
+    function applyFilter(key, value) {
+        clearTimeout(filterTimeout);
+        filterTimeout = setTimeout(() => {
+            const url = new URL(window.location.href);
+            if (value) {
+                url.searchParams.set(key, value);
+            } else {
+                url.searchParams.delete(key);
+            }
+            url.searchParams.set('page', '1');
+            window.location.href = url.toString();
+        }, 500); // Debounce typing
+    }
+</script>
+{{ end }}

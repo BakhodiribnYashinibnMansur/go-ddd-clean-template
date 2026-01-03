@@ -1,0 +1,42 @@
+{{ define "base" }}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ .Title }} - Admin Panel</title>
+    <!-- Google Fonts: Inter & Material Symbols -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Materialize CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <!-- Custom Admin CSS -->
+    <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+
+<body>
+    <div class="admin-layout">
+        {{ template "sidebar" . }}
+
+        <div class="main-content">
+            {{ template "header" . }}
+
+            <main class="page-content">
+                {{ block "content" . }}{{ end }}
+            </main>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <!-- Materialize JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script src="/static/js/admin.js"></script>
+    {{ block "scripts" . }}{{ end }}
+</body>
+
+</html>
+{{ end }}

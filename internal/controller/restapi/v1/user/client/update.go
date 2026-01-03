@@ -17,7 +17,7 @@ import (
 // @Tags        users
 // @Accept      json
 // @Produce     json
-// @Param       user_id path int                       true "User ID"
+// @Param       user_id path string true "User ID"
 // @Param       request body domain.User true "User update query"
 // @Success     200 {object} response.SuccessResponse
 // @Failure     400 {object} response.ErrorResponse
@@ -25,7 +25,7 @@ import (
 // @Failure     500 {object} response.ErrorResponse
 // @Router      /users/{user_id} [patch]
 func (c *Controller) Update(ctx *gin.Context) {
-	id, err := util.GetInt64Param(ctx, consts.ParamUserID)
+	id, err := util.GetUUIDParam(ctx, consts.ParamUserID)
 	if err != nil {
 		util.LogError(c.l, err, "http - v1 - client - update - id")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid user id", nil, false)

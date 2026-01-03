@@ -23,7 +23,7 @@ import (
 // @Failure     500 {object} response.ErrorResponse
 // @Router      /sessions/{id} [get]
 func (c *Controller) Session(ctx *gin.Context) {
-	id, err := util.GetUUIDParam(ctx, consts.ParamSessionID)
+	id, err := util.GetUUIDParam(ctx, consts.ParamID)
 	if err != nil {
 		util.LogError(c.l, err, "http - v1 - session - get - id")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid session id", nil, false)

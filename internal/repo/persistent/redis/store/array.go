@@ -46,7 +46,10 @@ func (a *Array[T]) Set(key string, value []T, expiration time.Duration) error {
 	pipe := a.db.TxPipeline()
 	pipe.Del(ctx, key)
 	pipe.RPush(ctx, key, vals...)
-	pipe.Expire(ctx, key, expiration)
+	// Only set expiration if it's greater than 0
+	if expiration > 0 {
+		pipe.Expire(ctx, key, expiration)
+	}
 	_, err := pipe.Exec(ctx)
 	return err
 }
@@ -74,7 +77,9 @@ func (a *Array[T]) Pop(key string) ([]T, error) {
 
 func (a *Array[T]) unmarshalOne(s string) (T, error) {
 	var val T
-	err := redis.NewStringCmd(context.Background(), s).Scan(&val)
+	cmd := redis.NewStringCmd(context.Background())
+	cmd.SetVal(s)
+	err := cmd.Scan(&val)
 	return val, err
 }
 

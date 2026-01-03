@@ -1,0 +1,21 @@
+{
+  "collections": [
+    "passcode",
+    "user_relation", 
+    "user_info",
+    "session",
+    "user",
+    "role_permission",
+    "permission_scope",
+    "permission",
+    "scope",
+    "role",
+    "client",
+    "user_info_field",
+    "relation",
+    "client_type",
+    "client_platform",
+    "integration",
+    "project"
+  ]
+}

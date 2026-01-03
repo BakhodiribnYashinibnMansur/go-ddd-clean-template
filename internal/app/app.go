@@ -3,22 +3,20 @@ package app
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"os/signal"
 	"strconv"
 	"syscall"
 
 	"github.com/gin-gonic/gin"
-	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 
 	"gct/config"
 	"gct/internal/controller/restapi"
 	"gct/internal/repo"
 	"gct/internal/usecase"
-	"gct/pkg/db/minio"
 	"gct/pkg/db/postgres"
+	redisPkg "gct/pkg/db/redis"
 	"gct/pkg/logger"
 	httpserver "gct/pkg/server/http"
 )
@@ -38,21 +36,25 @@ func Run(cfg *config.Config) {
 	defer pg.Close()
 
 	// 2. Initialize MinIO
-	minioClient, err := minio.New(cfg.Minio.Endpoint,
-		minio.WithCredentials(cfg.Minio.AccessKey, cfg.Minio.SecretKey),
-		minio.WithSecure(cfg.Minio.UseSSL),
-		minio.WithBucket(cfg.Minio.Bucket, cfg.Minio.Region),
-	)
-	if err != nil {
-		l.Fatalw("app - Run - minio.New", zap.Error(err))
-	}
-
+	// minioClient, err := minioPkg.New(cfg.Minio.Endpoint,
+	// 	minioPkg.WithCredentials(cfg.Minio.AccessKey, cfg.Minio.SecretKey),
+	// 	minioPkg.WithSecure(cfg.Minio.UseSSL),
+	// 	minioPkg.WithBucket(cfg.Minio.Bucket, cfg.Minio.Region),
+	// )
+	// if err != nil {
+	// 	l.Fatalw("app - Run - minio.New", zap.Error(err))
+	// }
 	// 3. Initialize Redis
-	redisClient := initRedis(ctx, cfg, l)
-	defer redisClient.Close()
+	redisInstance, err := redisPkg.New(ctx, cfg.App.Environment, cfg.Database.Redis, l)
+	if err != nil {
+		l.Fatalw("app - Run - redis.New", zap.Error(err))
+	}
+	defer redisInstance.Close()
+
+	redisClient := redisInstance.Client
 
 	// 4. Initialize Layers
-	repositories := repo.New(pg, minioClient, redisClient, &cfg.Minio, l)
+	repositories := repo.New(pg, nil, redisClient, &cfg.Minio, l)
 	useCases := usecase.NewUseCase(repositories, l, cfg)
 
 	// 5. Initialize Router and Server
@@ -67,19 +69,6 @@ func Run(cfg *config.Config) {
 
 	// 7. Graceful Shutdown
 	shutdownServer(httpServer, l)
-}
-
-func initRedis(ctx context.Context, cfg *config.Config, l logger.Log) *redis.Client {
-	redisClient := redis.NewClient(&redis.Options{
-		Addr:     fmt.Sprintf("%s:%d", cfg.Database.Redis.Host, cfg.Database.Redis.Port),
-		Password: cfg.Database.Redis.Password,
-		DB:       0,
-	})
-
-	if status := redisClient.Ping(ctx); status.Err() != nil {
-		l.Fatalw("app - Run - redis.Ping", zap.Error(status.Err()))
-	}
-	return redisClient
 }
 
 func initRouter(cfg *config.Config, useCases *usecase.UseCase, l logger.Log) *gin.Engine {

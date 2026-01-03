@@ -1,0 +1,97 @@
+{{ define "content" }}
+<div class="content-header">
+    <div>
+        <h1 class="content-title">Function Metrics</h1>
+        <p class="content-subtitle">Performance tracking and panic monitoring for internal functions</p>
+    </div>
+    <div class="header-actions">
+        <button class="btn btn-secondary" onclick="window.location.reload()">
+            <i class="material-symbols-outlined">refresh</i>
+            Refresh
+        </button>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">Execution Log</h2>
+        <div class="card-actions">
+            <div class="search-box">
+                <i class="material-symbols-outlined">search</i>
+                <input type="text" placeholder="Search function name..." onkeyup="filterTable(this)">
+            </div>
+            <div class="filter-group">
+                <select class="form-select" onchange="applyFilter('is_panic', this.value)">
+                    <option value="">All Status</option>
+                    <option value="true" {{ if eq .QueryParams.is_panic "true" }}selected{{ end }}>Panicked</option>
+                    <option value="false" {{ if eq .QueryParams.is_panic "false" }}selected{{ end }}>Success</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Function Name</th>
+                    <th>Latency</th>
+                    <th>Status</th>
+                    <th>Time</th>
+                    <th>Error Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{ range .Metrics }}
+                <tr>
+                    <td><code class="code-pill">{{ .Name }}</code></td>
+                    <td>
+                        {{ if gt .LatencyMs 1000 }}
+                        <span class="text-danger font-weight-bold">{{ .LatencyMs }}ms</span>
+                        {{ else if gt .LatencyMs 500 }}
+                        <span class="text-warning">{{ .LatencyMs }}ms</span>
+                        {{ else }}
+                        <span class="text-success">{{ .LatencyMs }}ms</span>
+                        {{ end }}
+                    </td>
+                    <td>
+                        {{ if .IsPanic }}
+                        <span class="badge badge-danger">PANIC</span>
+                        {{ else }}
+                        <span class="badge badge-success">OK</span>
+                        {{ end }}
+                    </td>
+                    <td>{{ .CreatedAt.Format "Jan 02, 15:04:05" }}</td>
+                    <td class="text-truncate" style="max-width: 300px;">
+                        {{ if .PanicError }}
+                        <span class="text-danger" title="{{ .PanicError }}">{{ .PanicError }}</span>
+                        {{ else }}
+                        <span class="text-muted">-</span>
+                        {{ end }}
+                    </td>
+                </tr>
+                {{ else }}
+                <tr>
+                    <td colspan="5" class="text-center py-4 text-muted">No metrics found</td>
+                </tr>
+                {{ end }}
+            </tbody>
+        </table>
+    </div>
+    <div class="card-footer">
+        {{ template "pagination" .Pagination }}
+    </div>
+</div>
+
+<script>
+    function applyFilter(key, value) {
+        const url = new URL(window.location.href);
+        if (value) {
+            url.searchParams.set(key, value);
+        } else {
+            url.searchParams.delete(key);
+        }
+        url.searchParams.set('page', '1');
+        window.location.href = url.toString();
+    }
+</script>
+{{ end }}

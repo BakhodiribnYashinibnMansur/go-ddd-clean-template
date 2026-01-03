@@ -1,0 +1,77 @@
+{{ template "base" . }}
+
+{{ define "content" }}
+<div style="margin-bottom: 24px;">
+    <a href="/admin/abac/policies" class="text-body"
+        style="display: inline-flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+        <i class="material-symbols-outlined" style="font-size: 18px;">arrow_back</i> Back to Policies
+    </a>
+    <h2>{{ if .Policy.ID }}Edit Policy{{ else }}Create New Policy{{ end }}</h2>
+</div>
+
+<form id="policyForm" class="card">
+    <input type="hidden" name="id" value="{{ .Policy.ID }}">
+
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+        <!-- Left Column: Details -->
+        <div>
+            <div class="form-group">
+                <label class="form-label">Policy Name</label>
+                <input type="text" name="name" class="form-input" value="{{ .Policy.Name }}" required
+                    placeholder="e.g. Finance Dept Access">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Action / Resource</label>
+                <input type="text" name="action" class="form-input" value="{{ .Policy.Action }}"
+                    placeholder="e.g. document:read">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Conditions (JSON)</label>
+                <div style="font-size: 0.875rem; color: var(--md-sys-color-on-surface-variant); margin-bottom: 8px;">
+                    Define dynamic conditions (e.g., department == 'sales', time_of_day > 900)
+                </div>
+                <textarea name="conditions" id="conditionsJson" class="form-input"
+                    style="height: 200px; font-family: monospace;"
+                    placeholder='{ "department": "sales" }'>{{ .Policy.Conditions }}</textarea>
+            </div>
+        </div>
+
+        <!-- Right Column: Effect & Meta -->
+        <div
+            style="background: var(--md-sys-color-surface-variant); padding: 24px; border-radius: 12px; height: fit-content;">
+            <div class="form-group">
+                <label class="form-label">Effect</label>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="radio" name="effect" value="allow" {{ if eq .Policy.Effect "allow" }}checked{{ end
+                            }} style="width: 20px; height: 20px; accent-color: var(--md-sys-color-tertiary);">
+                        <span>Allow</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="radio" name="effect" value="deny" {{ if eq .Policy.Effect "deny" }}checked{{ end }}
+                            style="width: 20px; height: 20px; accent-color: var(--md-sys-color-error);">
+                        <span>Deny</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Priority</label>
+                <input type="number" name="priority" class="form-input" value="{{ .Policy.Priority }}" placeholder="0">
+                <small>Higher number = Higher priority</small>
+            </div>
+        </div>
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+        <a href="/admin/abac/policies" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary">Save Policy</button>
+    </div>
+</form>
+{{ end }}
+
+{{ define "scripts" }}
+<script src="/static/js/abac.js"></script>
+{{ end }}

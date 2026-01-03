@@ -32,8 +32,13 @@ func (c *Controller) SignIn(ctx *gin.Context) {
 		return
 	}
 
+	phone := ""
+	if user.Phone != nil {
+		phone = *user.Phone
+	}
+
 	out, err := c.u.User.Client.SignIn(ctx.Request.Context(), &domain.SignInIn{
-		Phone:     user.Phone,
+		Phone:     phone,
 		Password:  user.Password,
 		DeviceID:  ctx.GetHeader("X-Device-ID"),
 		UserAgent: ctx.GetHeader("User-Agent"),

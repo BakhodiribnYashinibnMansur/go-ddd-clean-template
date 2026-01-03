@@ -19,7 +19,7 @@ type Migration struct {
 
 // NewMigration creates a new goose migration manager.
 func NewMigration(cfg config.Postgres, dir string) (*Migration, error) {
-	db, err := sql.Open("pgx", buildConnectionString(cfg))
+	db, err := sql.Open("pgx", cfg.URL())
 	if err != nil {
 		return nil, fmt.Errorf("postgres - NewMigration - sql.Open: %w", err)
 	}

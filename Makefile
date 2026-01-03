@@ -73,9 +73,8 @@ format: ### Run code formatter
 	gci write . --skip-generated -s standard -s default
 .PHONY: format
 
-run: deps swag protogen ### run application with all code generation
-	go mod download && \
-	CGO_ENABLED=0 go run -tags migrate ./cmd/app
+run: swag  ### run application with all code generation
+	CGO_ENABLED=0 go run ./cmd/app
 .PHONY: run
 
 docker-rm-volume: ### remove docker volume
@@ -221,4 +220,8 @@ sqlc: sqlc-postgres sqlc-mysql sqlc-sqlite ### generate all SQLC code
 
 pre-commit: swag protogen mock format linter-golangci test ### run pre-commit checks
 .PHONY: pre-commit
+
+test-e2e: ### run e2e-test
+	go clean -testcache && go test -v -count=1 -p 1 ./test/e2e/flows/...
+.PHONY: test-e2e
 

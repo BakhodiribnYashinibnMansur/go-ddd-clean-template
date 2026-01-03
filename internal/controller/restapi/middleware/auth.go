@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -15,6 +16,7 @@ import (
 	"gct/internal/controller/restapi/response"
 	"gct/internal/domain"
 	"gct/internal/usecase"
+	"gct/internal/usecase/authz"
 	"gct/internal/usecase/user/client"
 	"gct/internal/usecase/user/session"
 	"gct/pkg/jwt"
@@ -35,12 +37,14 @@ var (
 	errUserNotFound          = errors.New("user not found")
 	errApiKeyMissing         = errors.New("API key missing")
 	errInvalidApiKey         = errors.New("invalid API key")
+	errAccessDenied          = errors.New("access denied")
 	ApiKeyTypeHeader         = "X-Api-Key-Type"
 )
 
 type AuthMiddleware struct {
 	userUC    *client.UseCaseI
 	sessionUC *session.UseCaseI
+	authzUC   *authz.UseCase
 	cfg       *config.Config
 	l         logger.Log
 	pubKey    *rsa.PublicKey
@@ -49,12 +53,13 @@ type AuthMiddleware struct {
 func NewAuthMiddleware(u *usecase.UseCase, cfg *config.Config, l logger.Log) *AuthMiddleware {
 	pubKey, err := jwt.ParseRSAPublicKey(cfg.JWT.PublicKey)
 	if err != nil {
-		l.Error("AuthMiddleware - NewAuthMiddleware - ParseRSAPublicKey", err)
+		l.Errorw("AuthMiddleware - NewAuthMiddleware - ParseRSAPublicKey", "error", err)
 	}
 
 	return &AuthMiddleware{
 		userUC:    &u.User.Client,
 		sessionUC: &u.User.Session,
+		authzUC:   u.Authz,
 		cfg:       cfg,
 		l:         l,
 		pubKey:    pubKey,
@@ -78,13 +83,13 @@ func (m *AuthMiddleware) validateAccessToken(ctx *gin.Context) (*domain.Session,
 
 	sessionID, err := uuid.Parse(metadata.SessionID)
 	if err != nil {
-		m.l.Warn("AuthMiddleware - validateAccessToken - Invalid session ID", "session_id", metadata.SessionID)
+		m.l.Warnw("AuthMiddleware - validateAccessToken - Invalid session ID", "session_id", metadata.SessionID)
 		return nil, errInvalidSession
 	}
 
 	session, err := (*m.sessionUC).Get(ctx, &domain.SessionFilter{ID: &sessionID})
 	if err != nil || session.Revoked || session.IsExpired() {
-		m.l.Error("AuthMiddleware - validateAccessToken - Get", err)
+		m.l.Errorw("AuthMiddleware - validateAccessToken - Get", "error", err)
 		return nil, errRevokedToken
 	}
 
@@ -101,12 +106,12 @@ func (m *AuthMiddleware) parseAndValidateMetadata(tokenStr string) (*jwt.AccessT
 	}
 
 	if metadata.Issuer != m.cfg.JWT.Issuer {
-		m.l.Warn("AuthMiddleware - parseAndValidateMetadata - Invalid issuer", "issuer", metadata.Issuer)
+		m.l.Warnw("AuthMiddleware - parseAndValidateMetadata - Invalid issuer", "issuer", metadata.Issuer)
 		return nil, errInvalidIssuer
 	}
 
 	if metadata.Type != "access" {
-		m.l.Warn("AuthMiddleware - parseAndValidateMetadata - Invalid token type", "type", metadata.Type)
+		m.l.Warnw("AuthMiddleware - parseAndValidateMetadata - Invalid token type", "type", metadata.Type)
 		return nil, errInvalidType
 	}
 
@@ -123,7 +128,8 @@ func (m *AuthMiddleware) AuthClientAccess(ctx *gin.Context) {
 
 	// 5. Context injection
 	ctx.Set(consts.CtxSessionID, session.ID)
-	ctx.Set(consts.CtxUserID, session.UserID)
+	ctx.Set(consts.CtxSession, session)
+	ctx.Set(consts.CtxUserID, session.UserID.String())
 
 	ctx.Next()
 }
@@ -144,7 +150,7 @@ func (m *AuthMiddleware) AuthClientRefresh(ctx *gin.Context) {
 	// Parse the refresh token
 	rt, err := jwt.ParseRefreshToken(token)
 	if err != nil {
-		m.l.Error("AuthMiddleware - AuthClientRefresh - invalid refresh token format", err)
+		m.l.Errorw("AuthMiddleware - AuthClientRefresh - invalid refresh token format", "error", err)
 		response.ControllerResponse(ctx, http.StatusUnauthorized, errInvalidRefreshFormat.Error(), nil, false)
 		ctx.Abort()
 		return
@@ -154,7 +160,7 @@ func (m *AuthMiddleware) AuthClientRefresh(ctx *gin.Context) {
 	sessionID := uuid.MustParse(rt.ID)
 	session, err := (*m.sessionUC).Get(ctx, &domain.SessionFilter{ID: &sessionID})
 	if err != nil {
-		m.l.Error("AuthMiddleware - AuthClientRefresh - session not found", err)
+		m.l.Errorw("AuthMiddleware - AuthClientRefresh - session not found", "error", err)
 		response.ControllerResponse(ctx, http.StatusUnauthorized, errInvalidRefreshSession.Error(), nil, false)
 		ctx.Abort()
 		return
@@ -162,7 +168,7 @@ func (m *AuthMiddleware) AuthClientRefresh(ctx *gin.Context) {
 
 	// Verify the refresh token
 	if !rt.Verify(session.RefreshTokenHash) {
-		m.l.Error("AuthMiddleware - AuthClientRefresh - invalid refresh token hash")
+		m.l.Errorw("AuthMiddleware - AuthClientRefresh - invalid refresh token hash", "session_id", sessionID)
 		response.ControllerResponse(ctx, http.StatusUnauthorized, errInvalidRefreshToken.Error(), nil, false)
 		ctx.Abort()
 		return
@@ -170,15 +176,16 @@ func (m *AuthMiddleware) AuthClientRefresh(ctx *gin.Context) {
 
 	// Check if session is still valid
 	if session.Revoked || session.IsExpired() {
-		m.l.Error("AuthMiddleware - AuthClientRefresh - session revoked or expired")
+		m.l.Errorw("AuthMiddleware - AuthClientRefresh - session revoked or expired", "session_id", sessionID)
 		response.ControllerResponse(ctx, http.StatusUnauthorized, errRevokedToken.Error(), nil, false)
 		ctx.Abort()
 		return
 	}
 
-	// Set the session ID in context for the next handler
+	// Set session ID in context for next handler
 	ctx.Set(consts.CtxSessionID, rt.ID)
-	ctx.Set(consts.CtxUserID, session.UserID)
+	ctx.Set(consts.CtxSession, session)
+	ctx.Set(consts.CtxUserID, session.UserID.String())
 
 	ctx.Next()
 }
@@ -191,19 +198,42 @@ func (m *AuthMiddleware) AuthAdmin(ctx *gin.Context) {
 		return
 	}
 
-	// 5. Admin check - for now, just ensure user exists
-	// TODO: Implement proper role-based access control
-	_, err = (*m.userUC).Get(ctx, &domain.UserFilter{ID: &session.UserID})
+	// 5. Admin check - ensure user exists and has admin role
+	user, err := (*m.userUC).Get(ctx, &domain.UserFilter{ID: &session.UserID})
 	if err != nil {
-		m.l.Error("AuthMiddleware - AuthAdmin - User", err)
+		m.l.Errorw("AuthMiddleware - AuthAdmin - User Get", "error", err)
 		response.ControllerResponse(ctx, http.StatusUnauthorized, errUserNotFound.Error(), nil, false)
+		ctx.Abort()
+		return
+	}
+
+	if user.RoleID == nil {
+		m.l.Warnw("AuthMiddleware - AuthAdmin - User has no role", "user_id", user.ID)
+		response.ControllerResponse(ctx, http.StatusForbidden, errAccessDenied.Error(), nil, false)
+		ctx.Abort()
+		return
+	}
+
+	role, err := m.authzUC.Role.Get(ctx, &domain.RoleFilter{ID: user.RoleID})
+	if err != nil {
+		m.l.Errorw("AuthMiddleware - AuthAdmin - Role Get", "error", err)
+		response.ControllerResponse(ctx, http.StatusForbidden, errAccessDenied.Error(), nil, false)
+		ctx.Abort()
+		return
+	}
+
+	// Check if role name contains "admin" (case-insensitive)
+	if !strings.Contains(strings.ToLower(role.Name), "admin") {
+		m.l.Warnw("AuthMiddleware - AuthAdmin - User is not admin", "user_id", user.ID, "role", role.Name)
+		response.ControllerResponse(ctx, http.StatusForbidden, errAccessDenied.Error(), nil, false)
 		ctx.Abort()
 		return
 	}
 
 	// 6. Context injection
 	ctx.Set(consts.CtxSessionID, session.ID)
-	ctx.Set(consts.CtxUserID, session.UserID)
+	ctx.Set(consts.CtxSession, session)
+	ctx.Set(consts.CtxUserID, session.UserID.String())
 	ctx.Set("is_admin", true)
 
 	ctx.Next()
@@ -212,7 +242,7 @@ func (m *AuthMiddleware) AuthAdmin(ctx *gin.Context) {
 func (m *AuthMiddleware) AuthApiKey(ctx *gin.Context) {
 	apiKey := ctx.GetHeader("X-API-KEY")
 	if apiKey == "" {
-		m.l.Warn("AuthMiddleware - AuthApiKey - API key missing", "ip", ctx.ClientIP())
+		m.l.Warnw("AuthMiddleware - AuthApiKey - API key missing", "ip", ctx.ClientIP())
 		response.ControllerResponse(ctx, http.StatusUnauthorized, errApiKeyMissing.Error(), nil, false)
 		ctx.Abort()
 		return
@@ -220,13 +250,81 @@ func (m *AuthMiddleware) AuthApiKey(ctx *gin.Context) {
 
 	// Simple check against config - in real app, check DB or external service
 	if apiKey != m.cfg.APIKeys.XApiKey {
-		m.l.Warn("AuthMiddleware - AuthApiKey - Invalid API key", "ip", ctx.ClientIP())
+		m.l.Warnw("AuthMiddleware - AuthApiKey - Invalid API key", "ip", ctx.ClientIP())
 		response.ControllerResponse(ctx, http.StatusUnauthorized, errInvalidApiKey.Error(), nil, false)
 		ctx.Abort()
 		return
 	}
 
 	ctx.Set("api_key_authenticated", true)
+	ctx.Next()
+}
+
+func (m *AuthMiddleware) Authz(ctx *gin.Context) {
+	sessionVal, exists := ctx.Get(consts.CtxSession)
+	if !exists {
+		// Should have been set by AuthClientAccess
+		response.ControllerResponse(ctx, http.StatusUnauthorized, errUnAuth.Error(), nil, false)
+		ctx.Abort()
+		return
+	}
+
+	session, ok := sessionVal.(*domain.Session)
+	if !ok {
+		m.l.Errorw("AuthMiddleware - Authz - session type cast error")
+		response.ControllerResponse(ctx, http.StatusInternalServerError, "internal server error", nil, false)
+		ctx.Abort()
+		return
+	}
+
+	// 1. Get User to check RBAC role existence
+	user, err := (*m.userUC).Get(ctx, &domain.UserFilter{ID: &session.UserID})
+	if err != nil {
+		m.l.Errorw("AuthMiddleware - Authz - Get User", "error", err)
+		response.ControllerResponse(ctx, http.StatusUnauthorized, errUserNotFound.Error(), nil, false)
+		ctx.Abort()
+		return
+	}
+
+	if user.RoleID == nil {
+		m.l.Warnw("AuthMiddleware - Authz - User has no role", "user_id", user.ID)
+		response.ControllerResponse(ctx, http.StatusForbidden, errAccessDenied.Error(), nil, false)
+		ctx.Abort()
+		return
+	}
+
+	path := ctx.FullPath()
+	if path == "" {
+		path = ctx.Request.URL.Path
+	}
+	method := ctx.Request.Method
+
+	env := map[string]any{
+		consts.PolicyKeyIP:        ctx.ClientIP(),
+		consts.PolicyKeyUserAgent: ctx.GetHeader("User-Agent"),
+		consts.PolicyKeyTime:      time.Now(),
+		consts.PolicyKeyUserID:    user.ID,
+		consts.PolicyKeyRoleID:    *user.RoleID,
+	}
+
+	for _, p := range ctx.Params {
+		env[p.Key] = p.Value
+	}
+
+	allowed, err := m.authzUC.Access.Check(ctx.Request.Context(), session.UserID, session, path, method, env)
+	if err != nil {
+		m.l.Errorw("AuthMiddleware - Authz - Check", "error", err)
+		response.ControllerResponse(ctx, http.StatusInternalServerError, "internal server error", nil, false)
+		ctx.Abort()
+		return
+	}
+
+	if !allowed {
+		response.ControllerResponse(ctx, http.StatusForbidden, errAccessDenied.Error(), nil, false)
+		ctx.Abort()
+		return
+	}
+
 	ctx.Next()
 }
 

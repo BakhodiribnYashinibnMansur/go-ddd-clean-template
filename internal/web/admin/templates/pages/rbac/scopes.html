@@ -1,0 +1,67 @@
+{{ define "content" }}
+<div style="margin-bottom: var(--spacing-lg);">
+    <div class="flex-between" style="margin-bottom: var(--spacing-md);">
+        <div>
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                <a href="/admin/dashboard" class="btn btn-text btn-icon" style="padding: 0; width: 24px; height: 24px;">
+                    <i class="material-symbols-outlined" style="font-size: 20px;">arrow_back</i>
+                </a>
+                <h2 class="text-h2">Scopes</h2>
+            </div>
+            <p class="text-body">Defined API Scopes and Resources.</p>
+        </div>
+        <!-- Scopes creation might be automatic or manual. -->
+    </div>
+
+    <!-- Stats -->
+    <div class="dashboard-grid"
+        style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: var(--spacing-lg); margin-top: 0;">
+        <div class="card stat-card" style="padding: 16px;">
+            <div class="flex-between">
+                <span class="stat-label">Total Scopes</span>
+                <i class="material-symbols-outlined" style="color: var(--primary-color);">api</i>
+            </div>
+            <div class="stat-value">{{ .Pagination.Total }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="card" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>
+                        <a href="?sort_by=resource&sort_order={{ if eq .Pagination.SortOrder " ASC" }}DESC{{ else
+                            }}ASC{{ end }}" style="color: inherit; display: flex; align-items: center; gap: 4px;">
+                            Resource {{ if eq .Pagination.SortBy "resource" }}<i class="material-symbols-outlined"
+                                style="font-size: 16px;">{{ if eq .Pagination.SortOrder "ASC" }}arrow_upward{{ else
+                                }}arrow_downward{{ end }}</i>{{ end }}
+                        </a>
+                    </th>
+                    <th>Kind</th>
+                    <th>Action</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{ range .Scopes }}
+                <tr>
+                    <td style="font-weight: 500;">{{ .Resource }}</td>
+                    <td>
+                        <span class="badge badge-neutral">{{ .Kind }}</span>
+                    </td>
+                    <td>
+                        <span class="badge badge-neutral" style="text-transform: uppercase;">{{ .Action }}</span>
+                    </td>
+                    <td>{{ .Description }}</td>
+                </tr>
+                {{ end }}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination Partial -->
+    {{ template "pagination" .Pagination }}
+</div>
+{{ end }}

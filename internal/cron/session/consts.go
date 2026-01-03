@@ -1,6 +1,10 @@
 package session
 
-import "gct/internal/cron/model"
+// CronConfig matches gct/internal/cron.CronConfig but defined here to avoid import cycles.
+type CronConfig struct {
+	Expression string
+	Name       string
+}
 
 const (
 	// Cron expressions
@@ -16,16 +20,16 @@ const (
 )
 
 // GetSyncSessionActivityConfig returns cron config for syncing session activity
-func GetSyncSessionActivityConfig() model.CronConfig {
-	return model.CronConfig{
+func GetSyncSessionActivityConfig() CronConfig {
+	return CronConfig{
 		Expression: SyncSessionActivityCronExpression,
 		Name:       SyncSessionActivityCronName,
 	}
 }
 
 // GetExpireOldSessionsConfig returns cron config for expiring old sessions
-func GetExpireOldSessionsConfig() model.CronConfig {
-	return model.CronConfig{
+func GetExpireOldSessionsConfig() CronConfig {
+	return CronConfig{
 		Expression: ExpireOldSessionsCronExpression,
 		Name:       ExpireOldSessionsCronName,
 	}

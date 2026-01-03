@@ -1,0 +1,78 @@
+{{ define "content" }}
+<div style="margin-bottom: var(--spacing-lg);">
+    <div class="flex-between" style="margin-bottom: var(--spacing-md);">
+        <div>
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                <a href="/admin/dashboard" class="btn btn-text btn-icon" style="padding: 0; width: 24px; height: 24px;">
+                    <i class="material-symbols-outlined" style="font-size: 20px;">arrow_back</i>
+                </a>
+                <h2 class="text-h2">Permissions</h2>
+            </div>
+            <p class="text-body">System granular permissions registry.</p>
+        </div>
+        <button class="btn btn-primary" onclick="location.href='/admin/rbac/permissions/new'">
+            <i class="material-symbols-outlined">add</i> Create Permission
+        </button>
+    </div>
+
+    <!-- Stats -->
+    <div class="dashboard-grid"
+        style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: var(--spacing-lg); margin-top: 0;">
+        <div class="card stat-card" style="padding: 16px;">
+            <div class="flex-between">
+                <span class="stat-label">Total Permissions</span>
+                <i class="material-symbols-outlined" style="color: var(--primary-color);">lock_open</i>
+            </div>
+            <div class="stat-value">{{ .Pagination.Total }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="card" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>
+                        <a href="?sort_by=name&sort_order={{ if eq .Pagination.SortOrder " ASC" }}DESC{{ else }}ASC{{
+                            end }}" style="color: inherit; display: flex; align-items: center; gap: 4px;">
+                            Name {{ if eq .Pagination.SortBy "name" }}<i class="material-symbols-outlined"
+                                style="font-size: 16px;">{{ if eq .Pagination.SortOrder "ASC" }}arrow_upward{{ else
+                                }}arrow_downward{{ end }}</i>{{ end }}
+                        </a>
+                    </th>
+                    <th>Description</th>
+                    <th>
+                        <a href="?sort_by=created_at&sort_order={{ if eq .Pagination.SortOrder " ASC" }}DESC{{ else
+                            }}ASC{{ end }}" style="color: inherit; display: flex; align-items: center; gap: 4px;">
+                            Created At {{ if eq .Pagination.SortBy "created_at" }}<i class="material-symbols-outlined"
+                                style="font-size: 16px;">{{ if eq .Pagination.SortOrder "ASC" }}arrow_upward{{ else
+                                }}arrow_downward{{ end }}</i>{{ end }}
+                        </a>
+                    </th>
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{ range .Permissions }}
+                <tr>
+                    <td>
+                        <div style="font-weight: 600; color: var(--primary-color);">{{ .Name }}</div>
+                    </td>
+                    <td>{{ .Description }}</td>
+                    <td>{{ .CreatedAt.Format "Jan 02, 2006" }}</td>
+                    <td style="text-align: right;">
+                        <button class="btn btn-text btn-icon" title="Edit">
+                            <i class="material-symbols-outlined">edit</i>
+                        </button>
+                    </td>
+                </tr>
+                {{ end }}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination Partial -->
+    {{ template "pagination" .Pagination }}
+</div>
+{{ end }}

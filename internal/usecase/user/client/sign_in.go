@@ -2,23 +2,28 @@ package client
 
 import (
 	"context"
-	"strconv"
-
-	"github.com/google/uuid"
+	"time"
 
 	"gct/internal/domain"
 	apperrors "gct/pkg/errors"
 	"gct/pkg/jwt"
+
+	"github.com/google/uuid"
 )
 
 func (uc *UseCase) SignIn(ctx context.Context, in *domain.SignInIn) (*domain.SignInOut, error) {
-	user, err := uc.repo.Postgres.Client.GetByPhone(ctx, in.Phone)
+	uc.logger.Infow("user sign in started", "phone", in.Phone)
+
+	user, err := uc.repo.Postgres.User.Client.GetByPhone(ctx, in.Phone)
 	if err != nil {
+		uc.logger.Errorw("user sign in failed: get by phone", "error", err)
 		return nil, apperrors.MapRepoToServiceError(ctx, err).WithInput(in)
 	}
 
 	if !user.ComparePassword(in.Password) {
-		return nil, apperrors.MapRepoToServiceError(ctx, domain.ErrInvalidPassword).WithInput(in)
+		err := domain.ErrInvalidPassword
+		uc.logger.Errorw("user sign in failed: invalid password", "error", err)
+		return nil, apperrors.MapRepoToServiceError(ctx, err).WithInput(in)
 	}
 
 	// Device Info
@@ -31,12 +36,13 @@ func (uc *UseCase) SignIn(ctx context.Context, in *domain.SignInIn) (*domain.Sig
 
 	// Generate Refresh Token
 	refToken, err := jwt.GenerateRefreshToken(
-		strconv.FormatInt(user.ID, 10),
+		user.ID.String(),
 		sessionID.String(),
 		deviceID.String(),
 		uc.cfg.JWT.RefreshTTL,
 	)
 	if err != nil {
+		uc.logger.Errorw("user sign in failed: generate refresh token", "error", err)
 		return nil, apperrors.MapRepoToServiceError(ctx, err).WithInput(in)
 	}
 
@@ -48,27 +54,33 @@ func (uc *UseCase) SignIn(ctx context.Context, in *domain.SignInIn) (*domain.Sig
 		DeviceName:       &in.UserAgent,
 		IPAddress:        &in.IP,
 		RefreshTokenHash: refToken.Hashed,
+		ExpiresAt:        time.Now().Add(uc.cfg.JWT.RefreshTTL),
 	}
 
-	err = uc.repo.Postgres.SessionRepo.Create(ctx, session)
+	err = uc.repo.Postgres.User.SessionRepo.Create(ctx, session)
 	if err != nil {
+		uc.logger.Errorw("user sign in failed: create session", "error", err)
 		return nil, apperrors.MapRepoToServiceError(ctx, err).WithInput(in)
 	}
 
 	// Generate Access Token
 	accessToken, err := jwt.GenerateToken(jwt.TokenParams{
 		Issuer:     uc.cfg.JWT.Issuer,
-		Subject:    strconv.FormatInt(user.ID, 10),
+		Subject:    user.ID.String(),
 		SessionID:  sessionID.String(),
 		Type:       "access",
 		TTL:        uc.cfg.JWT.AccessTTL,
 		PrivateKey: uc.privateKey,
 	})
 	if err != nil {
+		uc.logger.Errorw("user sign in failed: generate access token", "error", err)
 		return nil, apperrors.MapRepoToServiceError(ctx, err).WithInput(in)
 	}
 
+	uc.logger.Infow("user sign in success", "user_id", user.ID, "session_id", sessionID)
 	return &domain.SignInOut{
+		UserID:       user.ID,
+		SessionID:    sessionID,
 		AccessToken:  accessToken,
 		RefreshToken: refToken.String(),
 	}, nil

@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/brianvoe/gofakeit/v7"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 
 	"gct/internal/domain"
@@ -12,9 +13,9 @@ import (
 // User generates a fake domain.User
 func User() *domain.User {
 	user := &domain.User{
-		ID:        int64(gofakeit.IntRange(1, 1000000)),
+		ID:        uuid.New(),
 		Username:  func() *string { s := gofakeit.Name(); return &s }(),
-		Phone:     gofakeit.Phone(),
+		Phone:     func() *string { phone := gofakeit.Phone(); return &phone }(),
 		Salt:      func() *string { s := gofakeit.LetterN(10); return &s }(),
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
@@ -50,13 +51,13 @@ func UserWithPassword() *domain.User {
 // UserFilter generates a fake domain.UserFilter
 func UserFilter() *domain.UserFilter {
 	return &domain.UserFilter{
-		ID:    func() *int64 { id := int64(gofakeit.IntRange(1, 1000000)); return &id }(),
+		ID:    func() *uuid.UUID { id := uuid.New(); return &id }(),
 		Phone: func() *string { phone := gofakeit.Phone(); return &phone }(),
 	}
 }
 
 // UserFilterWithID generates a fake domain.UserFilter with ID
-func UserFilterWithID(id int64) *domain.UserFilter {
+func UserFilterWithID(id uuid.UUID) *domain.UserFilter {
 	return &domain.UserFilter{
 		ID:    &id,
 		Phone: func() *string { phone := gofakeit.Phone(); return &phone }(),
@@ -66,7 +67,7 @@ func UserFilterWithID(id int64) *domain.UserFilter {
 // UserFilterWithPhone generates a fake domain.UserFilter with Phone
 func UserFilterWithPhone(phone string) *domain.UserFilter {
 	return &domain.UserFilter{
-		ID:    func() *int64 { id := int64(gofakeit.IntRange(1, 1000000)); return &id }(),
+		ID:    func() *uuid.UUID { id := uuid.New(); return &id }(),
 		Phone: &phone,
 	}
 }

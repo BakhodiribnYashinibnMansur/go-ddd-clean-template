@@ -41,6 +41,11 @@ type (
 		Enabled bool `env:"PROTO_DOCS_ENABLED" envDefault:"false"`
 	}
 
+	// Admin -.
+	Admin struct {
+		Enabled bool `env:"ADMIN_ENABLED" envDefault:"true"`
+	}
+
 	// Cookie -.
 	Cookie struct {
 		Domain   string `env:"COOKIE_DOMAIN"    envDefault:"localhost"`

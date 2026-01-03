@@ -66,7 +66,7 @@ func init() {
 	}
 
 	l.Infow("Migrate: running up migrations")
-	if err := goose.Up(db, "migrations"); err != nil {
+	if err := goose.Up(db, "migrations/postgres"); err != nil {
 		l.Fatalw("Migrate: up error", zap.Error(err))
 	}
 

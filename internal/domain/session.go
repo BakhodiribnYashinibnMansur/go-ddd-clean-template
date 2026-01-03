@@ -1,10 +1,16 @@
 package domain
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
 )
+
+// RawMessage represents a raw JSON message for Swagger documentation
+// swagger:type object
+// swagger:model RawMessage
+type RawMessage = json.RawMessage
 
 // SessionDeviceType represents the type of device.
 type SessionDeviceType string
@@ -20,15 +26,15 @@ const (
 // Session represents a user session.
 type Session struct {
 	ID               uuid.UUID          `db:"id"                 json:"id"`
+	UserID           uuid.UUID          `db:"user_id"            json:"user_id"`
 	DeviceID         uuid.UUID          `db:"device_id"          json:"device_id"`
 	DeviceName       *string            `db:"device_name"        json:"device_name,omitempty"`
 	DeviceType       *SessionDeviceType `db:"device_type"        json:"device_type,omitempty"`
 	IPAddress        *string            `db:"ip_address"         json:"ip_address,omitempty"`
 	UserAgent        *string            `db:"user_agent"         json:"user_agent,omitempty"`
 	FCMToken         *string            `db:"fcm_token"          json:"fcm_token,omitempty"`
-	UserID           int64              `db:"user_id"            json:"user_id"`
-	CompanyID        int64              `db:"company_id"         json:"company_id"`
-	RefreshTokenHash string             `db:"refresh_token_hash" json:"-"` // Hashed refresh token
+	Data             RawMessage         `db:"data"               json:"data,omitempty"`
+	RefreshTokenHash string             `db:"refresh_token_hash" json:"refresh_token_hash"`
 	ExpiresAt        time.Time          `db:"expires_at"         json:"expires_at"`
 	LastActivity     time.Time          `db:"last_activity"      json:"last_activity"`
 	Revoked          bool               `db:"revoked"            json:"revoked"`
@@ -39,7 +45,7 @@ type Session struct {
 // SessionFilter represents a filter for session queries. for get and gets endpoints
 type SessionFilter struct {
 	ID      *uuid.UUID `json:"id,omitempty"`
-	UserID  *int64     `json:"user_id,omitempty"`
+	UserID  *uuid.UUID `json:"user_id,omitempty"`
 	Revoked *bool      `json:"revoked,omitempty"`
 }
 
@@ -69,15 +75,15 @@ func (f SessionsFilter) IsValidOffset() bool {
 
 // Getters for Session
 func (s *Session) GetID() uuid.UUID                  { return s.ID }
+func (s *Session) GetUserID() uuid.UUID              { return s.UserID }
 func (s *Session) GetDeviceID() uuid.UUID            { return s.DeviceID }
 func (s *Session) GetDeviceName() *string            { return s.DeviceName }
 func (s *Session) GetDeviceType() *SessionDeviceType { return s.DeviceType }
 func (s *Session) GetIPAddress() *string             { return s.IPAddress }
 func (s *Session) GetUserAgent() *string             { return s.UserAgent }
 func (s *Session) GetFCMToken() *string              { return s.FCMToken }
-func (s *Session) GetUserID() int64                  { return s.UserID }
-func (s *Session) GetCompanyID() int64               { return s.CompanyID }
 func (s *Session) GetRefreshTokenHash() string       { return s.RefreshTokenHash }
+func (s *Session) GetData() RawMessage               { return s.Data }
 func (s *Session) GetExpiresAt() time.Time           { return s.ExpiresAt }
 func (s *Session) GetLastActivity() time.Time        { return s.LastActivity }
 func (s *Session) GetRevoked() bool                  { return s.Revoked }
@@ -99,6 +105,10 @@ func (s *Session) SetUserAgent(userAgent *string) { s.UserAgent = userAgent; s.U
 func (s *Session) SetFCMToken(fcmToken *string)   { s.FCMToken = fcmToken; s.UpdatedAt = time.Now() }
 func (s *Session) SetRefreshTokenHash(refreshTokenHash string) {
 	s.RefreshTokenHash = refreshTokenHash
+	s.UpdatedAt = time.Now()
+}
+func (s *Session) SetData(data RawMessage) {
+	s.Data = data
 	s.UpdatedAt = time.Now()
 }
 

@@ -29,6 +29,11 @@ func (c *Controller) Create(ctx *gin.Context) {
 		return
 	}
 
+	// Initialize attributes if nil
+	if user.Attributes == nil {
+		user.Attributes = make(map[string]any)
+	}
+
 	err := c.u.User.Client.Create(ctx.Request.Context(), &user)
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusInternalServerError, err, nil, false)

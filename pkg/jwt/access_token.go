@@ -66,7 +66,7 @@ func ParseAccessToken(tokenString string, publicKey *rsa.PublicKey, issuer, audi
 		if !claims.VerifyIssuer(issuer, true) {
 			return nil, fmt.Errorf("%w: invalid issuer", ErrAccessTokenInvalid)
 		}
-		if !claims.VerifyAudience(audience, true) {
+		if !claims.VerifyAudience(audience, audience != "") {
 			return nil, fmt.Errorf("%w: invalid audience", ErrAccessTokenInvalid)
 		}
 		return claims, nil

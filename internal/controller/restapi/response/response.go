@@ -48,7 +48,7 @@ func ControllerResponse(c *gin.Context, code int, payload, meta any, success boo
 			err = &simpleError{msg: "Unknown error occurred"}
 		}
 
-		RespondWithError(c, err)
+		RespondWithError(c, err, code)
 		return
 	}
 

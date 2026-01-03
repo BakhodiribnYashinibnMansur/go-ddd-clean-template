@@ -1,0 +1,31 @@
+{{ define "content" }}
+<div class="flex-between" style="margin-bottom: var(--spacing-lg);">
+    <h2>Dashboard</h2>
+    <span class="text-body">{{ .CurrentDate }}</span>
+</div>
+
+<!-- Stats Cards -->
+<div class="dashboard-grid">
+    <div class="card stat-card">
+        <span class="stat-label">Total Users</span>
+        <span class="stat-value">1,234</span>
+        <span class="badge badge-success">+12% this month</span>
+    </div>
+    <div class="card stat-card">
+        <span class="stat-label">Active Sessions</span>
+        <span class="stat-value">56</span>
+        <span class="badge badge-neutral">Live</span>
+    </div>
+    <div class="card stat-card">
+        <span class="stat-label">System Load</span>
+        <span class="stat-value">0.8%</span>
+        <span class="badge badge-success">Healthy</span>
+    </div>
+</div>
+
+<!-- Recent Activity Placeholder -->
+<div class="card">
+    <h3>Recent Activity</h3>
+    <p class="text-body">System logs and recent user actions will appear here.</p>
+</div>
+{{ end }}

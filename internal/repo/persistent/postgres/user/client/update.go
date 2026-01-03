@@ -11,10 +11,14 @@ import (
 func (r *Repo) Update(ctx context.Context, u *domain.User) error {
 	sql, args, err := r.builder.
 		Update("users").
+		Set("role_id", u.RoleID).
 		Set("username", u.Username).
+		Set("email", u.Email).
 		Set("phone", u.Phone).
 		Set("password_hash", u.PasswordHash).
 		Set("salt", u.Salt).
+		Set("attributes", u.Attributes).
+		Set("active", u.Active).
 		Set("updated_at", time.Now()).
 		Set("last_seen", u.LastSeen).
 		Where("id = ? AND deleted_at = 0", u.ID).

@@ -45,3 +45,8 @@ internal/repo/persistent/sqlite/sqlc/db.go
 internal/repo/persistent/sqlite/sqlc/models.go
 internal/repo/persistent/sqlite/sqlc/querier.go
 internal/repo/persistent/sqlite/sqlc/query.sql.go
+# Test output files
+test_*.log
+test_*.txt
+test/report/*.log
+test/report/*.txt

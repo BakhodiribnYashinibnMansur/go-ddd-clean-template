@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"gct/internal/domain"
+
+	"github.com/google/uuid"
 )
 
 // UserRepoI defines the interface for user repository operations.
@@ -18,7 +20,7 @@ type RepoI interface {
 	Update(ctx context.Context, u *domain.User) error
 
 	// Delete soft deletes a user by their ID.
-	Delete(ctx context.Context, id int64) error
+	Delete(ctx context.Context, id uuid.UUID) error
 
 	// Get retrieves a single user based on the provided filter.
 	Get(ctx context.Context, filter *domain.UserFilter) (*domain.User, error)

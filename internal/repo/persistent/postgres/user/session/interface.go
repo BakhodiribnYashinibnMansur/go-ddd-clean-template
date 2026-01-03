@@ -11,8 +11,8 @@ type RepoI interface {
 	// Create creates a new session.
 	Create(ctx context.Context, s *domain.Session) error
 
-	// GetByID retrieves a session by its ID.
-	GetByID(ctx context.Context, filter *domain.SessionFilter) (*domain.Session, error)
+	// Get retrieves a session by its ID.
+	Get(ctx context.Context, filter *domain.SessionFilter) (*domain.Session, error)
 
 	// Update updates the session details.
 	Update(ctx context.Context, s *domain.Session) error

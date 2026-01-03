@@ -2,6 +2,7 @@ package cache
 
 import (
 	"container/list"
+	"errors"
 	"sync"
 )
 
@@ -21,7 +22,7 @@ type lruEntry struct {
 // NewLRUCache creates a new LRU cache with the given capacity
 func NewLRUCache(capacity int) (*LRUCache, error) {
 	if capacity <= 0 {
-		return nil, nil // or return error if preferred
+		return nil, errors.New("capacity must be greater than 0")
 	}
 	return &LRUCache{
 		capacity: capacity,
