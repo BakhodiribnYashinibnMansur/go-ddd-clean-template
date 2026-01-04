@@ -3,9 +3,9 @@ package cache_test
 import (
 	"testing"
 
-	"gct/internal/usecase/cache"
+	"gct/pkg/cache"
+
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestTwoQueueCache(t *testing.T) {
@@ -17,8 +17,7 @@ func TestTwoQueueCache(t *testing.T) {
 	t.Run("Basic Operations", func(t *testing.T) {
 		t.Parallel()
 		// Capacity 2: Q1 (In) cap = 1, Q2 (Am) cap = 1
-		c, err := cache.NewTwoQueueCache(2)
-		require.NoError(t, err)
+		c := cache.NewTwoQueueCache(2)
 
 		c.Set("1", "one") // "1" -> Q1
 
@@ -51,7 +50,7 @@ func TestTwoQueueCache(t *testing.T) {
 
 	t.Run("Remove", func(t *testing.T) {
 		t.Parallel()
-		c, _ := cache.NewTwoQueueCache(10)
+		c := cache.NewTwoQueueCache(10)
 		c.Set("1", "one")
 		c.Delete("1")
 		val, ok := c.Get("1")
@@ -61,7 +60,7 @@ func TestTwoQueueCache(t *testing.T) {
 
 	t.Run("Purge", func(t *testing.T) {
 		t.Parallel()
-		c, _ := cache.NewTwoQueueCache(10)
+		c := cache.NewTwoQueueCache(10)
 		c.Set("1", "one")
 		c.Purge()
 		assert.Equal(t, 0, c.Len())

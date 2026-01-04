@@ -3,9 +3,12 @@ package cache
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 
 	"gct/internal/domain"
+	pkgCache "gct/pkg/cache"
+
 	"go.uber.org/zap"
 )
 
@@ -37,7 +40,7 @@ func (c *Cache) GetPublicCache(
 	out any,
 ) error {
 	if out == nil {
-		return ErrNilOutput
+		return pkgCache.ErrNilOutput
 	}
 
 	cacheKey := createCacheKey(key, lang, pagination)
@@ -64,7 +67,9 @@ func (c *Cache) DeletePublicCache(key string, lang string, pagination *domain.Pa
 	return nil
 }
 
-// DeletePublicCaches removes all items matching the key pattern from Redis cache
+// DeletePublicCaches removes all items matching the key pattern from Redis cache.
+// When triggered by Postgres notification, 'key' corresponds to the table name.
+// It can also be used manually with any specific key prefix.
 func (c *Cache) DeletePublicCaches(key string) error {
 	keys, err := c.redis.Primitive.String.Scan(key + "*")
 	if err != nil {
@@ -91,8 +96,11 @@ func (c *Cache) DeletePublicCaches(key string) error {
 
 // createCacheKey generates a unique cache key combining the base key and pagination info
 func createCacheKey(key string, lang string, pagination *domain.Pagination) string {
-	if pagination != nil {
-		return fmt.Sprintf("%s_%s_%d_%d", key, lang, pagination.Offset, pagination.Limit)
+	if lang != "" {
+		key = key + "_" + lang
 	}
-	return fmt.Sprintf("%s_%s", key, lang)
+	if pagination != nil {
+		key = key + "_" + strconv.FormatInt(pagination.Offset, 10) + "_" + strconv.FormatInt(pagination.Limit, 10)
+	}
+	return key
 }

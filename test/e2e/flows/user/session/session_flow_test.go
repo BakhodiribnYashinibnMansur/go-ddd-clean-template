@@ -46,6 +46,7 @@ func TestSession_ComprehensiveFlow(t *testing.T) {
 		{
 			name: "Step 1: SignUp",
 			run: func(t *testing.T, ctx *TestContext) {
+				t.Helper()
 				resp := uClient.SignUp(t, ctx.Username, ctx.Phone, ctx.Password)
 				defer resp.Body.Close()
 				require.Equal(t, http.StatusCreated, resp.StatusCode)
@@ -54,6 +55,7 @@ func TestSession_ComprehensiveFlow(t *testing.T) {
 		{
 			name: "Step 2: Login Device 1",
 			run: func(t *testing.T, ctx *TestContext) {
+				t.Helper()
 				resp := uClient.SignIn(t, ctx.Phone, ctx.Password)
 				defer resp.Body.Close()
 				require.Equal(t, http.StatusOK, resp.StatusCode)
@@ -69,6 +71,7 @@ func TestSession_ComprehensiveFlow(t *testing.T) {
 		{
 			name: "Step 3: Login Device 2",
 			run: func(t *testing.T, ctx *TestContext) {
+				t.Helper()
 				resp := uClient.SignIn(t, ctx.Phone, ctx.Password)
 				defer resp.Body.Close()
 				require.Equal(t, http.StatusOK, resp.StatusCode)
@@ -88,6 +91,7 @@ func TestSession_ComprehensiveFlow(t *testing.T) {
 		{
 			name: "Step 4: List Sessions",
 			run: func(t *testing.T, ctx *TestContext) {
+				t.Helper()
 				resp := sClient.List(t, ctx.Token1)
 				defer resp.Body.Close()
 				require.Equal(t, http.StatusOK, resp.StatusCode)
@@ -103,6 +107,7 @@ func TestSession_ComprehensiveFlow(t *testing.T) {
 		{
 			name: "Step 5: Revoke Session 2",
 			run: func(t *testing.T, ctx *TestContext) {
+				t.Helper()
 				if ctx.SessionID2 != "" {
 					resp := sClient.Delete(t, ctx.Token1, ctx.SessionID2)
 					defer resp.Body.Close()
@@ -115,6 +120,7 @@ func TestSession_ComprehensiveFlow(t *testing.T) {
 		{
 			name: "Step 6: Revoke All",
 			run: func(t *testing.T, ctx *TestContext) {
+				t.Helper()
 				resp := sClient.RevokeAll(t, ctx.Token1)
 				defer resp.Body.Close()
 				assert.Equal(t, http.StatusOK, resp.StatusCode)
@@ -123,6 +129,7 @@ func TestSession_ComprehensiveFlow(t *testing.T) {
 		{
 			name: "Step 7: Verify Token1 Invalid",
 			run: func(t *testing.T, ctx *TestContext) {
+				t.Helper()
 				time.Sleep(10 * time.Millisecond)
 				resp := sClient.List(t, ctx.Token1)
 				defer resp.Body.Close()

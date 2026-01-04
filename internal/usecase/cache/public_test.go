@@ -6,10 +6,12 @@ import (
 	"testing"
 	"time"
 
+	"gct/consts"
 	"gct/internal/domain"
 	"gct/internal/repo/persistent/redis"
 	"gct/internal/usecase/cache"
 	"gct/pkg/logger"
+
 	"github.com/go-redis/redismock/v9"
 	redisClient "github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
@@ -33,19 +35,19 @@ func TestCache_CreatePublicCache(t *testing.T) {
 	t.Parallel()
 	c, mock := setupPublicCache(t)
 
-	key := "test_key"
+	tableName := consts.TableUsers
 	lang := "en"
 	pagination := &domain.Pagination{Limit: 10, Offset: 0}
 	duration := time.Minute
 	data := TestData{Name: "John", Age: 30}
 	dataBytes, _ := json.Marshal(data)
 
-	// Expected cache key: "test_key_en_0_10"
-	cacheKey := "test_key_en_0_10"
+	// Expected cache key: "users_en_0_10"
+	cacheKey := "users_en_0_10"
 
 	mock.ExpectSet(cacheKey, dataBytes, duration).SetVal("OK")
 
-	err := c.CreatePublicCache(data, key, lang, pagination, duration)
+	err := c.CreatePublicCache(data, tableName, lang, pagination, duration)
 	require.NoError(t, err)
 
 	require.NoError(t, mock.ExpectationsWereMet())
@@ -55,18 +57,18 @@ func TestCache_GetPublicCache(t *testing.T) {
 	t.Parallel()
 	c, mock := setupPublicCache(t)
 
-	key := "test_key"
+	tableName := consts.TableUsers
 	lang := "en"
 	pagination := &domain.Pagination{Limit: 10, Offset: 0}
 	data := TestData{Name: "John", Age: 30}
 	dataBytes, _ := json.Marshal(data)
 
-	cacheKey := "test_key_en_0_10"
+	cacheKey := "users_en_0_10"
 
 	mock.ExpectGet(cacheKey).SetVal(string(dataBytes))
 
 	var out TestData
-	err := c.GetPublicCache(key, lang, pagination, &out)
+	err := c.GetPublicCache(tableName, lang, pagination, &out)
 	require.NoError(t, err)
 	assert.Equal(t, data, out)
 
@@ -77,15 +79,15 @@ func TestCache_GetPublicCache_Miss(t *testing.T) {
 	t.Parallel()
 	c, mock := setupPublicCache(t)
 
-	key := "test_key"
+	tableName := consts.TableUsers
 	lang := "en"
 	pagination := &domain.Pagination{Limit: 10, Offset: 0}
-	cacheKey := "test_key_en_0_10"
+	cacheKey := "users_en_0_10"
 
 	mock.ExpectGet(cacheKey).SetErr(redisClient.Nil)
 
 	var out TestData
-	err := c.GetPublicCache(key, lang, pagination, &out)
+	err := c.GetPublicCache(tableName, lang, pagination, &out)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "redis get")
 
@@ -96,14 +98,14 @@ func TestCache_DeletePublicCache(t *testing.T) {
 	t.Parallel()
 	c, mock := setupPublicCache(t)
 
-	key := "test_key"
+	tableName := consts.TableUsers
 	lang := "en"
 	pagination := &domain.Pagination{Limit: 10, Offset: 0}
-	cacheKey := "test_key_en_0_10"
+	cacheKey := "users_en_0_10"
 
 	mock.ExpectDel(cacheKey).SetVal(1)
 
-	err := c.DeletePublicCache(key, lang, pagination)
+	err := c.DeletePublicCache(tableName, lang, pagination)
 	require.NoError(t, err)
 
 	require.NoError(t, mock.ExpectationsWereMet())
@@ -113,16 +115,16 @@ func TestCache_DeletePublicCaches(t *testing.T) {
 	t.Parallel()
 	c, mock := setupPublicCache(t)
 
-	key := "test_key"
-	keys := []string{"test_key_en_0_10", "test_key_ru_0_10"}
+	tableName := consts.TableUsers
+	keys := []string{"users_en_0_10", "users_ru_0_10"}
 
 	// Expect Scan
-	mock.ExpectScan(0, key+"*", 100).SetVal(keys, 0)
+	mock.ExpectScan(0, tableName+"*", 100).SetVal(keys, 0)
 	// Expect Del for each key
 	mock.ExpectDel(keys[0]).SetVal(1)
 	mock.ExpectDel(keys[1]).SetVal(1)
 
-	err := c.DeletePublicCaches(key)
+	err := c.DeletePublicCaches(tableName)
 	require.NoError(t, err)
 
 	require.NoError(t, mock.ExpectationsWereMet())
@@ -132,13 +134,44 @@ func TestCache_DeletePublicCaches_ScanError(t *testing.T) {
 	t.Parallel()
 	c, mock := setupPublicCache(t)
 
-	key := "test_key"
+	tableName := consts.TableUsers
 
-	mock.ExpectScan(0, key+"*", 100).SetErr(errors.New("scan error"))
+	mock.ExpectScan(0, tableName+"*", 100).SetErr(errors.New("scan error"))
 
-	err := c.DeletePublicCaches(key)
+	err := c.DeletePublicCaches(tableName)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "redis scan")
+
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestCache_CreatePublicCache_NoLangOrPagination(t *testing.T) {
+	t.Parallel()
+	c, mock := setupPublicCache(t)
+
+	tableName := consts.TableUsers
+	duration := time.Minute
+	data := TestData{Name: "John", Age: 30}
+	dataBytes, _ := json.Marshal(data)
+
+	// Case 1: No Lang, No Pagination
+	// Expected key: "users"
+	mock.ExpectSet("users", dataBytes, duration).SetVal("OK")
+	err := c.CreatePublicCache(data, tableName, "", nil, duration)
+	require.NoError(t, err)
+
+	// Case 2: No Lang, With Pagination
+	// Expected key: "users_0_10"
+	pagination := &domain.Pagination{Limit: 10, Offset: 0}
+	mock.ExpectSet("users_0_10", dataBytes, duration).SetVal("OK")
+	err = c.CreatePublicCache(data, tableName, "", pagination, duration)
+	require.NoError(t, err)
+
+	// Case 3: With Lang, No Pagination
+	// Expected key: "users_en"
+	mock.ExpectSet("users_en", dataBytes, duration).SetVal("OK")
+	err = c.CreatePublicCache(data, tableName, "en", nil, duration)
+	require.NoError(t, err)
 
 	require.NoError(t, mock.ExpectationsWereMet())
 }

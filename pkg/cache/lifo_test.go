@@ -3,18 +3,18 @@ package cache_test
 import (
 	"testing"
 
-	"gct/internal/usecase/cache"
+	"gct/pkg/cache"
 	"github.com/stretchr/testify/assert"
 )
 
-type MRUTestCase struct {
+type LIFOTestCase struct {
 	Name        string
 	Capacity    int
-	Operations  []MRUOperation
+	Operations  []LIFOOperation
 	ExpectedLen int
 }
 
-type MRUOperation struct {
+type LIFOOperation struct {
 	Type       string // "set", "get", "remove", "purge"
 	Key        string
 	Value      any
@@ -22,18 +22,18 @@ type MRUOperation struct {
 	ExpectedOK bool
 }
 
-func TestMRUCache_TableDriven(t *testing.T) {
-	testCases := []MRUTestCase{
+func TestLIFOCache_TableDriven(t *testing.T) {
+	testCases := []LIFOTestCase{
 		{
 			Name:     "Basic Operations",
 			Capacity: 2,
-			Operations: []MRUOperation{
+			Operations: []LIFOOperation{
 				{"set", "1", "one", nil, false},
 				{"set", "2", "two", nil, false},
 				{"get", "1", nil, "one", true},
-				{"set", "3", "three", nil, false}, // Should evict 1 (MRU)
-				{"get", "1", nil, nil, false},     // 1 should be evicted
-				{"get", "2", nil, "two", true},
+				{"set", "3", "three", nil, false}, // Should evict "2" (most recently added)
+				{"get", "2", nil, nil, false},     // "2" should be evicted
+				{"get", "1", nil, "one", true},
 				{"get", "3", nil, "three", true},
 			},
 			ExpectedLen: 2,
@@ -41,17 +41,17 @@ func TestMRUCache_TableDriven(t *testing.T) {
 		{
 			Name:     "Remove operation",
 			Capacity: 2,
-			Operations: []MRUOperation{
+			Operations: []LIFOOperation{
 				{"set", "1", "one", nil, false},
 				{"remove", "1", nil, nil, false},
-				{"get", "1", nil, nil, false}, // 1 should be gone
+				{"get", "1", nil, nil, false}, // "1" should be gone
 			},
 			ExpectedLen: 0,
 		},
 		{
 			Name:     "Purge operation",
 			Capacity: 2,
-			Operations: []MRUOperation{
+			Operations: []LIFOOperation{
 				{"set", "1", "one", nil, false},
 				{"set", "2", "two", nil, false},
 				{"purge", "", nil, nil, false},
@@ -61,29 +61,15 @@ func TestMRUCache_TableDriven(t *testing.T) {
 			ExpectedLen: 0,
 		},
 		{
-			Name:     "Update accesses",
-			Capacity: 2,
-			Operations: []MRUOperation{
-				{"set", "1", "one", nil, false},
-				{"set", "2", "two", nil, false},
-				{"get", "1", nil, "one", true},    // Access 1 (makes it MRU)
-				{"set", "3", "three", nil, false}, // Should evict 1 (MRU)
-				{"get", "1", nil, nil, false},     // 1 should be evicted
-				{"get", "2", nil, "two", true},
-				{"get", "3", nil, "three", true},
-			},
-			ExpectedLen: 2,
-		},
-		{
 			Name:     "Update existing key",
 			Capacity: 2,
-			Operations: []MRUOperation{
+			Operations: []LIFOOperation{
 				{"set", "1", "one", nil, false},
 				{"set", "2", "two", nil, false},
-				{"set", "1", "one_updated", nil, false}, // Update 1 (makes it MRU)
-				{"set", "3", "three", nil, false},       // Should evict 1 (MRU)
-				{"get", "1", nil, nil, false},           // 1 should be evicted
-				{"get", "2", nil, "two", true},
+				{"set", "1", "one_updated", nil, false}, // Update existing key
+				{"set", "3", "three", nil, false},       // Should still evict "2" (most recently added)
+				{"get", "2", nil, nil, false},           // "2" should be evicted
+				{"get", "1", nil, "one_updated", true},
 				{"get", "3", nil, "three", true},
 			},
 			ExpectedLen: 2,
@@ -91,47 +77,43 @@ func TestMRUCache_TableDriven(t *testing.T) {
 		{
 			Name:     "Zero capacity",
 			Capacity: 0,
-			Operations: []MRUOperation{
+			Operations: []LIFOOperation{
 				{"set", "1", "one", nil, false},
-				{"get", "1", nil, "one", true}, // Some implementations still store items even with zero capacity
+				{"get", "1", nil, nil, false}, // Should not be stored
 			},
-			ExpectedLen: 1, // Adjust based on actual behavior
+			ExpectedLen: 0,
 		},
 		{
 			Name:     "Single item capacity",
 			Capacity: 1,
-			Operations: []MRUOperation{
+			Operations: []LIFOOperation{
 				{"set", "1", "one", nil, false},
-				{"set", "2", "two", nil, false}, // Should evict 1
-				{"get", "1", nil, nil, false},   // 1 should be evicted
+				{"set", "2", "two", nil, false}, // Should evict "1"
+				{"get", "1", nil, nil, false},   // "1" should be evicted
 				{"get", "2", nil, "two", true},
 			},
 			ExpectedLen: 1,
 		},
 		{
-			Name:     "Access pattern",
+			Name:     "Multiple removes",
 			Capacity: 3,
-			Operations: []MRUOperation{
+			Operations: []LIFOOperation{
 				{"set", "1", "one", nil, false},
 				{"set", "2", "two", nil, false},
 				{"set", "3", "three", nil, false},
-				{"get", "1", nil, "one", true},   // Access 1
-				{"get", "2", nil, "two", true},   // Access 2
-				{"get", "3", nil, "three", true}, // Access 3 (now MRU)
-				{"set", "4", "four", nil, false}, // Should evict 3 (MRU)
-				{"get", "3", nil, nil, false},    // 3 should be evicted
+				{"remove", "2", nil, nil, false}, // Remove middle item
 				{"get", "1", nil, "one", true},
-				{"get", "2", nil, "two", true},
-				{"get", "4", nil, "four", true},
+				{"get", "2", nil, nil, false}, // "2" should be gone
+				{"get", "3", nil, "three", true},
 			},
-			ExpectedLen: 3,
+			ExpectedLen: 2,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
-			c := cache.NewMRUCache(tc.Capacity)
+			c := cache.NewLIFOCache(tc.Capacity)
 
 			for _, op := range tc.Operations {
 				switch op.Type {

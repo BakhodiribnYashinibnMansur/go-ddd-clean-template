@@ -11,5 +11,6 @@ func TestMain(m *testing.M) {
 }
 
 func cleanDB(t *testing.T) {
+	t.Helper()
 	setup.CleanDB(t)
 }

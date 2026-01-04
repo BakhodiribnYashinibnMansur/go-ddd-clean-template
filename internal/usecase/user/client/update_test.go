@@ -30,6 +30,7 @@ func TestUseCase_Update_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateSaved: func(t *testing.T, u *domain.User) {
+				t.Helper()
 				require.Equal(t, uuid.MustParse("00000000-0000-0000-0000-000000000001"), u.ID)
 				require.Equal(t, "111222333", *u.Phone)
 			},
@@ -44,6 +45,7 @@ func TestUseCase_Update_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateSaved: func(t *testing.T, u *domain.User) {
+				t.Helper()
 				require.Equal(t, uuid.MustParse("00000000-0000-0000-0000-000000000001"), u.ID)
 				require.NotNil(t, u.Username)
 				require.Equal(t, "updateduser", *u.Username)
@@ -59,6 +61,7 @@ func TestUseCase_Update_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateSaved: func(t *testing.T, u *domain.User) {
+				t.Helper()
 				require.Equal(t, uuid.MustParse("00000000-0000-0000-0000-000000000001"), u.ID)
 				require.Equal(t, "newpassword", u.Password)
 			},
@@ -75,6 +78,7 @@ func TestUseCase_Update_TableDriven(t *testing.T) {
 				u.Phone = stringPtr("111222333")
 			},
 			validateSaved: func(t *testing.T, u *domain.User) {
+				t.Helper()
 				require.Equal(t, uuid.MustParse("00000000-0000-0000-0000-000000000001"), u.ID)
 				require.Equal(t, "111222333", *u.Phone)
 			},
@@ -92,6 +96,7 @@ func TestUseCase_Update_TableDriven(t *testing.T) {
 				u.Username = nil
 			},
 			validateSaved: func(t *testing.T, u *domain.User) {
+				t.Helper()
 				require.Equal(t, uuid.MustParse("00000000-0000-0000-0000-000000000001"), u.ID)
 				require.Nil(t, u.Username)
 			},
@@ -105,6 +110,7 @@ func TestUseCase_Update_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateSaved: func(t *testing.T, u *domain.User) {
+				t.Helper()
 				require.Equal(t, uuid.UUID{}, u.ID)
 			},
 		},
@@ -117,6 +123,7 @@ func TestUseCase_Update_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateSaved: func(t *testing.T, u *domain.User) {
+				t.Helper()
 				require.Equal(t, uuid.MustParse("ffffffff-ffff-ffff-ffff-ffffffffffff"), u.ID)
 			},
 		},
@@ -145,6 +152,7 @@ func TestUseCase_Update_TableDriven(t *testing.T) {
 				u.Password = "oldpass"
 			},
 			validateSaved: func(t *testing.T, u *domain.User) {
+				t.Helper()
 				require.Equal(t, uuid.MustParse("00000000-0000-0000-0000-000000000001"), u.ID)
 				require.NotNil(t, u.Username)
 				require.Equal(t, "fulluser", *u.Username)

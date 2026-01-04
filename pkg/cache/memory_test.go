@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/usecase/cache"
+	"gct/pkg/cache"
 	"github.com/stretchr/testify/assert"
 )
 

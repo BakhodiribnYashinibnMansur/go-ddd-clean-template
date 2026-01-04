@@ -9,13 +9,16 @@ import (
 	"syscall"
 
 	"gct/config"
+	"gct/consts"
 	"gct/internal/controller/restapi"
 	"gct/internal/repo"
 	"gct/internal/usecase"
+	"gct/internal/usecase/cache"
 	"gct/pkg/db/postgres"
 	redisPkg "gct/pkg/db/redis"
 	"gct/pkg/logger"
 	httpserver "gct/pkg/server/http"
+
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
@@ -55,6 +58,12 @@ func Run(cfg *config.Config) {
 	// 4. Initialize Layers
 	repositories := repo.New(pg, nil, redisClient, &cfg.Minio, l)
 	useCases := usecase.NewUseCase(repositories, l, cfg)
+
+	// Initialize Cache service
+	cacheService := cache.NewCache(repositories.Persistent.Redis, l)
+
+	// Start listener for postgres notifications
+	go pg.Listen(ctx, consts.CacheInvalidationChannel, cacheService.DeletePublicCaches, l)
 
 	// 5. Initialize Router and Server
 	handler := initRouter(cfg, useCases, l)

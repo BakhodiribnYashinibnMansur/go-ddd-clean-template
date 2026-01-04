@@ -28,6 +28,7 @@ func TestUseCase_Revoke_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateCall: func(t *testing.T, f *domain.SessionFilter) {
+				t.Helper()
 				require.NotNil(t, f.ID)
 			},
 		},
@@ -39,6 +40,7 @@ func TestUseCase_Revoke_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateCall: func(t *testing.T, f *domain.SessionFilter) {
+				t.Helper()
 				require.NotNil(t, f.UserID)
 			},
 		},
@@ -48,6 +50,7 @@ func TestUseCase_Revoke_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateCall: func(t *testing.T, f *domain.SessionFilter) {
+				t.Helper()
 				require.Nil(t, f.ID)
 				require.Nil(t, f.UserID)
 				require.Nil(t, f.Revoked)
@@ -61,6 +64,7 @@ func TestUseCase_Revoke_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateCall: func(t *testing.T, f *domain.SessionFilter) {
+				t.Helper()
 				require.NotNil(t, f.Revoked)
 				require.False(t, *f.Revoked)
 			},
@@ -73,6 +77,7 @@ func TestUseCase_Revoke_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateCall: func(t *testing.T, f *domain.SessionFilter) {
+				t.Helper()
 				require.NotNil(t, f.Revoked)
 				require.True(t, *f.Revoked)
 			},
@@ -86,6 +91,7 @@ func TestUseCase_Revoke_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateCall: func(t *testing.T, f *domain.SessionFilter) {
+				t.Helper()
 				require.NotNil(t, f.ID)
 				require.NotNil(t, f.UserID)
 			},

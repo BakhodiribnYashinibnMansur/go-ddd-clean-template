@@ -45,7 +45,7 @@ type twoQueueEntry struct {
 
 // NewTwoQueueCache creates a new 2Q cache based on the provided technical specification.
 // maxSize: Total number of items allowed in memory (A1in + Am).
-func NewTwoQueueCache(maxSize int) (*TwoQueueCache, error) {
+func NewTwoQueueCache(maxSize int) *TwoQueueCache {
 	if maxSize <= 0 {
 		maxSize = 100 // Default or handle error
 	}
@@ -70,7 +70,7 @@ func NewTwoQueueCache(maxSize int) (*TwoQueueCache, error) {
 
 		items:    make(map[string]*list.Element),
 		outItems: make(map[string]*list.Element),
-	}, nil
+	}
 }
 
 // Get retrieves an item from the cache.

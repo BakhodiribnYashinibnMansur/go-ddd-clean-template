@@ -32,7 +32,7 @@ func (c *Client) UploadImage(t *testing.T, token string, filename string, conten
 	if err != nil {
 		t.Fatal(err)
 	}
-	part.Write(content)
+	_, _ = part.Write(content)
 	writer.Close()
 
 	req, err := http.NewRequest(http.MethodPost, c.endpoint+"/api/v1/files/upload/image", body)
@@ -63,7 +63,7 @@ func (c *Client) UploadImages(t *testing.T, token string, files map[string][]byt
 		if err != nil {
 			t.Fatal(err)
 		}
-		part.Write(content)
+		_, _ = part.Write(content)
 	}
 	writer.Close()
 
@@ -94,7 +94,7 @@ func (c *Client) UploadDoc(t *testing.T, token string, filename string, content 
 	if err != nil {
 		t.Fatal(err)
 	}
-	part.Write(content)
+	_, _ = part.Write(content)
 	writer.Close()
 
 	req, err := http.NewRequest(http.MethodPost, c.endpoint+"/api/v1/files/upload/doc", body)

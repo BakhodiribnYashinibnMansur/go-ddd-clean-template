@@ -38,6 +38,11 @@ func (c *LIFOCache) Set(key string, value any) {
 		c.evict()
 	}
 
+	// Double check if we still are over capacity (e.g. capacity is 0)
+	if len(c.stack) >= c.capacity {
+		return
+	}
+
 	c.items[key] = value
 	c.stack = append(c.stack, key)
 }

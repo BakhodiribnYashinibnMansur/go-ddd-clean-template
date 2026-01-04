@@ -15,6 +15,7 @@ import (
 
 	"gct/internal/controller/restapi/response"
 	"gct/pkg/logger"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -115,7 +116,7 @@ func parseReport(report string) *LinterResponse {
 	// Example: "2616 issues:"
 	issuesPattern := regexp.MustCompile(`(\d+) issues?:`)
 	if matches := issuesPattern.FindStringSubmatch(report); len(matches) > 1 {
-		fmt.Sscanf(matches[1], "%d", &result.TotalIssues)
+		_, _ = fmt.Sscanf(matches[1], "%d", &result.TotalIssues)
 	}
 
 	// Parse linter counts from summary
@@ -140,7 +141,7 @@ func parseReport(report string) *LinterResponse {
 			if matches := linterPattern.FindStringSubmatch(line); len(matches) > 2 {
 				linterName := matches[1]
 				count := 0
-				fmt.Sscanf(matches[2], "%d", &count)
+				_, _ = fmt.Sscanf(matches[2], "%d", &count)
 				result.IssuesByLinter[linterName] = count
 			}
 		} else {

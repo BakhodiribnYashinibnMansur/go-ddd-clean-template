@@ -31,6 +31,7 @@ func TestUseCase_GetByPhone_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateOut: func(t *testing.T, u *domain.User) {
+				t.Helper()
 				require.Equal(t, uuid.MustParse("00000000-0000-0000-0000-000000000001"), u.ID)
 				require.Equal(t, "123456789", *u.Phone)
 			},
@@ -46,6 +47,7 @@ func TestUseCase_GetByPhone_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateOut: func(t *testing.T, u *domain.User) {
+				t.Helper()
 				require.Equal(t, uuid.MustParse("00000000-0000-0000-0000-000000000001"), u.ID)
 				require.Equal(t, "123456789", *u.Phone)
 				require.NotNil(t, u.Username)
@@ -76,6 +78,7 @@ func TestUseCase_GetByPhone_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateOut: func(t *testing.T, u *domain.User) {
+				t.Helper()
 				require.Equal(t, uuid.MustParse("00000000-0000-0000-0000-000000000002"), u.ID)
 				require.Equal(t, "98765432109876543210", *u.Phone)
 			},
@@ -91,6 +94,7 @@ func TestUseCase_GetByPhone_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateOut: func(t *testing.T, u *domain.User) {
+				t.Helper()
 				require.Equal(t, uuid.MustParse("00000000-0000-0000-0000-000000000001"), u.ID)
 				require.Equal(t, "123456789", *u.Phone)
 				require.NotEmpty(t, u.PasswordHash)
@@ -113,6 +117,7 @@ func TestUseCase_GetByPhone_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateOut: func(t *testing.T, u *domain.User) {
+				t.Helper()
 				require.Equal(t, uuid.MustParse("00000000-0000-0000-0000-000000000003"), u.ID)
 				require.Equal(t, "9876543210", *u.Phone)
 			},
@@ -130,6 +135,7 @@ func TestUseCase_GetByPhone_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateOut: func(t *testing.T, u *domain.User) {
+				t.Helper()
 				require.Equal(t, uuid.MustParse("00000000-0000-0000-0000-000000000001"), u.ID)
 				require.NotNil(t, u.Username)
 				require.Equal(t, "fulluser", *u.Username)

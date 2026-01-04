@@ -50,6 +50,7 @@ func TestSessionAPI_Integration(t *testing.T) {
 			useToken:     true,
 			expectedCode: http.StatusOK,
 			checkResponse: func(t *testing.T, body []byte) {
+				t.Helper()
 				var resp map[string]any
 				json.Unmarshal(body, &resp)
 				assert.NotNil(t, resp["data"])
@@ -66,6 +67,7 @@ func TestSessionAPI_Integration(t *testing.T) {
 			expectedCode: http.StatusOK,
 
 			checkResponse: func(t *testing.T, body []byte) {
+				t.Helper()
 				var resp map[string]any
 				json.Unmarshal(body, &resp)
 				assert.Equal(t, sessionID, resp["data"].(map[string]any)["id"])
@@ -80,6 +82,7 @@ func TestSessionAPI_Integration(t *testing.T) {
 			expectedCode: http.StatusOK,
 
 			checkResponse: func(t *testing.T, body []byte) {
+				t.Helper()
 				var resp map[string]any
 				json.Unmarshal(body, &resp)
 				assert.Equal(t, "SUCCESS", resp["status"])
@@ -100,6 +103,7 @@ func TestSessionAPI_Integration(t *testing.T) {
 			expectedCode: http.StatusOK,
 
 			checkResponse: func(t *testing.T, body []byte) {
+				t.Helper()
 				var resp map[string]any
 				json.Unmarshal(body, &resp)
 				assert.Equal(t, "SUCCESS", resp["status"])

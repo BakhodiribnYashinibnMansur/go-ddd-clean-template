@@ -44,7 +44,6 @@ func newBufferedLogger(level string) (*Logger, *bytes.Buffer) {
 }
 
 func TestNew(t *testing.T) {
-	t.Parallel()
 
 	cases := []struct {
 		in   string
@@ -59,6 +58,7 @@ func TestNew(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			l := New(tc.in)
 			if l == nil {
 				t.Fatalf("New(%q) returned nil logger or entity", tc.in)

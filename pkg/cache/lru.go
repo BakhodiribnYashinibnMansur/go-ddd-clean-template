@@ -23,15 +23,15 @@ type lruEntry struct {
 }
 
 // NewLRUCache creates a new LRU cache with the given capacity
-func NewLRUCache(capacity int) (*LRUCache, error) {
+func NewLRUCache(capacity int) *LRUCache {
 	if capacity <= 0 {
-		return nil, ErrInvalidCapacity
+		capacity = 100
 	}
 	return &LRUCache{
 		capacity: capacity,
 		items:    make(map[string]*list.Element),
 		list:     list.New(),
-	}, nil
+	}
 }
 
 // Set adds or updates a value in the cache

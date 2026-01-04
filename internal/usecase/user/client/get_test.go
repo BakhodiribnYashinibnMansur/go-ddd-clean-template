@@ -30,6 +30,7 @@ func TestUseCase_Get_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateUser: func(t *testing.T, got *domain.User) {
+				t.Helper()
 				require.Equal(t, uuid.MustParse("00000000-0000-0000-0000-000000000001"), got.ID)
 				require.Equal(t, "123456789", *got.Phone)
 			},
@@ -43,6 +44,7 @@ func TestUseCase_Get_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateUser: func(t *testing.T, got *domain.User) {
+				t.Helper()
 				require.Equal(t, uuid.UUID{}, got.ID)
 				require.Equal(t, "987654321", *got.Phone)
 			},
@@ -56,6 +58,7 @@ func TestUseCase_Get_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateUser: func(t *testing.T, got *domain.User) {
+				t.Helper()
 				require.Equal(t, uuid.MustParse("ffffffff-ffff-ffff-ffff-ffffffffffff"), got.ID)
 				require.Equal(t, "555555555", *got.Phone)
 			},
@@ -69,6 +72,7 @@ func TestUseCase_Get_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateUser: func(t *testing.T, got *domain.User) {
+				t.Helper()
 				require.Equal(t, uuid.MustParse("00000000-0000-0000-0000-000000000001"), got.ID)
 				require.Equal(t, "111111111", *got.Phone)
 			},
@@ -82,6 +86,7 @@ func TestUseCase_Get_TableDriven(t *testing.T) {
 			repoError:   errors.New("user not found"),
 			expectError: true,
 			validateUser: func(t *testing.T, got *domain.User) {
+				t.Helper()
 				// No validation expected on error
 			},
 		},
@@ -94,6 +99,7 @@ func TestUseCase_Get_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: true, // Get now returns error for nil user
 			validateUser: func(t *testing.T, got *domain.User) {
+				t.Helper()
 				// No validation on error
 			},
 		},
@@ -110,6 +116,7 @@ func TestUseCase_Get_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateUser: func(t *testing.T, got *domain.User) {
+				t.Helper()
 				require.Equal(t, uuid.MustParse("00000000-0000-0000-0000-000000000002"), got.ID)
 				require.Equal(t, "222222222", *got.Phone)
 				require.NotNil(t, got.Username)
@@ -129,6 +136,7 @@ func TestUseCase_Get_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateUser: func(t *testing.T, got *domain.User) {
+				t.Helper()
 				require.Equal(t, uuid.MustParse("00000000-0000-0000-0000-000000000003"), got.ID)
 				require.Equal(t, "333333333", *got.Phone)
 				require.Nil(t, got.Username)

@@ -87,6 +87,7 @@ func TestUserAPI_Integration_Exhaustive(t *testing.T) {
 			},
 			expectedCode: http.StatusCreated,
 			checkResponse: func(t *testing.T, body []byte) {
+				t.Helper()
 				var resp map[string]any
 				json.Unmarshal(body, &resp)
 				data, _ := resp["data"].(map[string]any)
@@ -133,6 +134,7 @@ func TestUserAPI_Integration_Exhaustive(t *testing.T) {
 			expectedCode: http.StatusCreated,
 
 			checkResponse: func(t *testing.T, body []byte) {
+				t.Helper()
 				var resp map[string]any
 				json.Unmarshal(body, &resp)
 				data, _ := resp["data"].(map[string]any)
@@ -158,6 +160,7 @@ func TestUserAPI_Integration_Exhaustive(t *testing.T) {
 			expectedCode: http.StatusCreated,
 
 			checkResponse: func(t *testing.T, body []byte) {
+				t.Helper()
 				var resp map[string]any
 				json.Unmarshal(body, &resp)
 				data, _ := resp["data"].(map[string]any)
@@ -191,6 +194,7 @@ func TestUserAPI_Integration_Exhaustive(t *testing.T) {
 			expectedCode: http.StatusOK,
 
 			checkResponse: func(t *testing.T, body []byte) {
+				t.Helper()
 				var resp map[string]any
 				json.Unmarshal(body, &resp)
 				assert.NotEmpty(t, resp["data"].(map[string]any)["access_token"])
@@ -252,6 +256,7 @@ func TestUserAPI_Integration_Exhaustive(t *testing.T) {
 			expectedCode: http.StatusOK,
 
 			checkResponse: func(t *testing.T, body []byte) {
+				t.Helper()
 				var resp map[string]any
 				json.Unmarshal(body, &resp)
 				assert.NotNil(t, resp["data"], "Response data should not be nil")
@@ -276,6 +281,7 @@ func TestUserAPI_Integration_Exhaustive(t *testing.T) {
 			expectedCode: http.StatusOK,
 
 			checkResponse: func(t *testing.T, body []byte) {
+				t.Helper()
 				var resp map[string]any
 				json.Unmarshal(body, &resp)
 				assert.Equal(t, "SUCCESS", resp["status"])
@@ -304,6 +310,7 @@ func TestUserAPI_Integration_Exhaustive(t *testing.T) {
 			expectedCode: http.StatusOK,
 
 			checkResponse: func(t *testing.T, body []byte) {
+				t.Helper()
 				var resp map[string]any
 				json.Unmarshal(body, &resp)
 				assert.NotNil(t, resp["data"], "Response data should not be nil")
@@ -320,6 +327,7 @@ func TestUserAPI_Integration_Exhaustive(t *testing.T) {
 			expectedCode: http.StatusOK,
 
 			checkResponse: func(t *testing.T, body []byte) {
+				t.Helper()
 				var resp map[string]any
 				json.Unmarshal(body, &resp)
 				assert.Equal(t, "SUCCESS", resp["status"])
@@ -338,6 +346,7 @@ func TestUserAPI_Integration_Exhaustive(t *testing.T) {
 			expectedCode: http.StatusNotFound, // Correctly returns 404 for missing record
 
 			checkResponse: func(t *testing.T, body []byte) {
+				t.Helper()
 				var resp map[string]any
 				json.Unmarshal(body, &resp)
 				assert.NotNil(t, resp["error"])
@@ -351,6 +360,7 @@ func TestUserAPI_Integration_Exhaustive(t *testing.T) {
 			expectedCode: http.StatusOK,
 
 			checkResponse: func(t *testing.T, body []byte) {
+				t.Helper()
 				var resp map[string]any
 				json.Unmarshal(body, &resp)
 				assert.Equal(t, "SUCCESS", resp["status"])

@@ -29,6 +29,7 @@ func TestUseCase_Create_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateSaved: func(t *testing.T, u *domain.User) {
+				t.Helper()
 				// Create method doesn't hash passwords, so password remains unchanged
 				require.Equal(t, "password", u.Password)
 			},
@@ -43,6 +44,7 @@ func TestUseCase_Create_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateSaved: func(t *testing.T, u *domain.User) {
+				t.Helper()
 				require.NotNil(t, u.Username)
 				require.Equal(t, "testuser", *u.Username)
 			},
@@ -55,6 +57,7 @@ func TestUseCase_Create_TableDriven(t *testing.T) {
 			},
 			expectError: false, // Create method doesn't validate
 			validateSaved: func(t *testing.T, u *domain.User) {
+				t.Helper()
 				require.Equal(t, "", u.Password)
 			},
 		},
@@ -66,6 +69,7 @@ func TestUseCase_Create_TableDriven(t *testing.T) {
 			},
 			expectError: false, // Create method doesn't validate
 			validateSaved: func(t *testing.T, u *domain.User) {
+				t.Helper()
 				require.NotNil(t, u.Phone)
 				require.Equal(t, "", *u.Phone)
 			},
@@ -78,6 +82,7 @@ func TestUseCase_Create_TableDriven(t *testing.T) {
 			},
 			expectError: false, // Create method doesn't validate
 			validateSaved: func(t *testing.T, u *domain.User) {
+				t.Helper()
 				require.Equal(t, "123", u.Password)
 			},
 		},
@@ -100,6 +105,7 @@ func TestUseCase_Create_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateSaved: func(t *testing.T, u *domain.User) {
+				t.Helper()
 				// Create replaces zero UUID with a new one
 				require.NotEqual(t, uuid.UUID{}, u.ID)
 			},
@@ -114,6 +120,7 @@ func TestUseCase_Create_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateSaved: func(t *testing.T, u *domain.User) {
+				t.Helper()
 				require.Equal(t, uuid.MustParse("00000000-0000-0000-0000-000000000001"), u.ID)
 			},
 		},
@@ -127,6 +134,7 @@ func TestUseCase_Create_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateSaved: func(t *testing.T, u *domain.User) {
+				t.Helper()
 				require.Nil(t, u.Username)
 			},
 		},

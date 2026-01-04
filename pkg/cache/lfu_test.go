@@ -3,7 +3,7 @@ package cache_test
 import (
 	"testing"
 
-	"gct/internal/usecase/cache"
+	"gct/pkg/cache"
 	"github.com/stretchr/testify/assert"
 )
 

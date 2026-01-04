@@ -21,6 +21,7 @@ import (
 	tc "gct/pkg/container"
 	dbPostgres "gct/pkg/db/postgres"
 	"gct/pkg/logger"
+
 	"github.com/minio/minio-go/v7"
 	"github.com/redis/go-redis/v9"
 )
@@ -81,7 +82,7 @@ func SetupTestEnvironment(m *testing.M) {
 	rOpt := rClient.Options()
 	host, port, _ := net.SplitHostPort(rOpt.Addr)
 	cfg.Database.Redis.Host = host
-	fmt.Sscanf(port, "%d", &cfg.Database.Redis.Port)
+	_, _ = fmt.Sscanf(port, "%d", &cfg.Database.Redis.Port)
 
 	TestRedis = rClient
 

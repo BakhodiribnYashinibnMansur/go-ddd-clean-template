@@ -8,6 +8,7 @@ import (
 	"time"
 
 	rmqrpc "gct/pkg/broker/rabbitmq/rmq_rpc"
+
 	"github.com/goccy/go-json"
 	"github.com/google/uuid"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -264,7 +265,7 @@ func (c *Client) deleteCall(corrID string) {
 }
 
 func (c *Client) ack(d *amqp.Delivery, multiple bool) {
-	d.Ack(multiple)
+	_ = d.Ack(multiple)
 }
 
 func (c *Client) publish(corrID, handler string, request any) error {

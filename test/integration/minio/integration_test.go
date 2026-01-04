@@ -69,6 +69,7 @@ func TestMinioAPI_Integration_TableDriven(t *testing.T) {
 			useToken:     true,
 			expectedCode: http.StatusOK,
 			checkResponse: func(t *testing.T, w *httptest.ResponseRecorder) {
+				t.Helper()
 				var resp map[string]any
 				json.Unmarshal(w.Body.Bytes(), &resp)
 				assert.NotEmpty(t, resp["data"])
@@ -180,6 +181,7 @@ func TestMinioAPI_Integration_TableDriven(t *testing.T) {
 			},
 			expectedCode: http.StatusOK,
 			checkResponse: func(t *testing.T, w *httptest.ResponseRecorder) {
+				t.Helper()
 				assert.Equal(t, "download-me", w.Body.String())
 			},
 			definition: "Integration test: verifies file download endpoint works correctly",

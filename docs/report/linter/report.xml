@@ -183,11 +183,9 @@
     <error column="6" line="82" message="var-naming: func GetApiKeyType should be GetAPIKeyType" severity="warning" source="revive"></error>
   </file>
   <file name="internal/controller/restapi/v1/admin/controller.go">
-    <error column="13" line="118" message="Error return value of `fmt.Sscanf` is not checked" severity="error" source="errcheck"></error>
-    <error column="15" line="143" message="Error return value of `fmt.Sscanf` is not checked" severity="error" source="errcheck"></error>
+    <error column="1" line="18" message="File is not properly formatted" severity="error" source="gci"></error>
     <error column="1" line="7" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="1" line="16" message="File is not properly formatted" severity="error" source="gofumpt"></error>
-    <error column="1" line="17" message="File is not properly formatted" severity="error" source="goimports"></error>
   </file>
   <file name="internal/controller/restapi/v1/audit/endpoint.go">
     <error column="1" line="5" message="File is not properly formatted" severity="error" source="gofumpt"></error>
@@ -1421,6 +1419,9 @@
     <error column="1" line="10" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="35" line="29" message="unused-parameter: parameter &#39;logger&#39; seems to be unused, consider removing or renaming it as _" severity="warning" source="revive"></error>
   </file>
+  <file name="internal/repo/persistent/redis/store/array.go">
+    <error column="1" line="88" message="unmarshalOne returns generic interface (T) of type param any" severity="error" source="ireturn"></error>
+  </file>
   <file name="internal/repo/persistent/redis/store/array_test.go">
     <error column="6" line="14" message="Function &#39;TestArray_SetGet&#39; is too long (102 &gt; 60)" severity="error" source="funlen"></error>
     <error column="2" line="96" message="Range statement for test TestArray_SetGet missing the call to method parallel in test Run&#xA;" severity="error" source="paralleltest"></error>
@@ -1454,6 +1455,9 @@
     <error column="20" line="86" message="unused-parameter: parameter &#39;client&#39; seems to be unused, consider removing or renaming it as _" severity="warning" source="revive"></error>
     <error column="9" line="1" message="package should be `store_test` instead of `store`" severity="error" source="testpackage"></error>
   </file>
+  <file name="internal/repo/persistent/redis/store/list.go">
+    <error column="1" line="106" message="unmarshalOne returns generic interface (T) of type param any" severity="error" source="ireturn"></error>
+  </file>
   <file name="internal/repo/persistent/redis/store/list_test.go">
     <error column="6" line="14" message="Function &#39;TestList_SetGet&#39; is too long (102 &gt; 60)" severity="error" source="funlen"></error>
     <error column="2" line="96" message="Range statement for test TestList_SetGet missing the call to method parallel in test Run&#xA;" severity="error" source="paralleltest"></error>
@@ -1469,6 +1473,10 @@
     <error column="20" line="86" message="unused-parameter: parameter &#39;client&#39; seems to be unused, consider removing or renaming it as _" severity="warning" source="revive"></error>
     <error column="2" line="134" message="redefines-builtin-id: redefinition of the built-in function len" severity="warning" source="revive"></error>
     <error column="9" line="1" message="package should be `store_test` instead of `store`" severity="error" source="testpackage"></error>
+  </file>
+  <file name="internal/repo/persistent/redis/store/primitive.go">
+    <error column="1" line="45" message="Get returns generic interface (T) of type param any" severity="error" source="ireturn"></error>
+    <error column="1" line="68" message="Pop returns generic interface (T) of type param any" severity="error" source="ireturn"></error>
   </file>
   <file name="internal/repo/persistent/redis/store/primitive_test.go">
     <error column="6" line="23" message="Function &#39;TestPrimitive_SetGet&#39; is too long (92 &gt; 60)" severity="error" source="funlen"></error>
@@ -1490,6 +1498,8 @@
   </file>
   <file name="internal/repo/persistent/redis/store/priority_queue.go">
     <error column="28" line="15" message="the interface has more than 10 methods: 13" severity="error" source="interfacebloat"></error>
+    <error column="1" line="102" message="Peek returns generic interface (T) of type param any" severity="error" source="ireturn"></error>
+    <error column="1" line="149" message="unmarshalOne returns generic interface (T) of type param any" severity="error" source="ireturn"></error>
   </file>
   <file name="internal/repo/persistent/redis/store/priority_queue_test.go">
     <error column="6" line="14" message="Function &#39;TestPriorityQueue_PushPop&#39; is too long (109 &gt; 60)" severity="error" source="funlen"></error>
@@ -1509,6 +1519,10 @@
   </file>
   <file name="internal/repo/persistent/redis/store/queue.go">
     <error column="20" line="10" message="the interface has more than 10 methods: 14" severity="error" source="interfacebloat"></error>
+    <error column="1" line="103" message="PopFront returns generic interface (T) of type param any" severity="error" source="ireturn"></error>
+    <error column="1" line="112" message="PopBack returns generic interface (T) of type param any" severity="error" source="ireturn"></error>
+    <error column="1" line="128" message="Peek returns generic interface (T) of type param any" severity="error" source="ireturn"></error>
+    <error column="1" line="165" message="unmarshalOne returns generic interface (T) of type param any" severity="error" source="ireturn"></error>
   </file>
   <file name="internal/repo/persistent/redis/store/queue_test.go">
     <error column="6" line="13" message="Function &#39;TestQueue_PushPop&#39; is too long (93 &gt; 60)" severity="error" source="funlen"></error>
@@ -1526,6 +1540,9 @@
     <error column="20" line="65" message="unused-parameter: parameter &#39;client&#39; seems to be unused, consider removing or renaming it as _" severity="warning" source="revive"></error>
     <error column="20" line="75" message="unused-parameter: parameter &#39;client&#39; seems to be unused, consider removing or renaming it as _" severity="warning" source="revive"></error>
     <error column="9" line="1" message="package should be `store_test` instead of `store`" severity="error" source="testpackage"></error>
+  </file>
+  <file name="internal/repo/persistent/redis/store/set.go">
+    <error column="1" line="85" message="unmarshalOne returns generic interface (T) of type param any" severity="error" source="ireturn"></error>
   </file>
   <file name="internal/repo/persistent/redis/store/set_test.go">
     <error column="6" line="14" message="Function &#39;TestSet_SetGet&#39; is too long (102 &gt; 60)" severity="error" source="funlen"></error>
@@ -1593,6 +1610,7 @@
     <error column="9" line="1" message="var-naming: don&#39;t use MixedCaps in package name; auditLog should be auditlog" severity="warning" source="revive"></error>
   </file>
   <file name="internal/usecase/audit/auditLog/service.go">
+    <error column="1" line="13" message="New returns interface (gct/internal/usecase/audit/auditLog.UseCaseI)" severity="error" source="ireturn"></error>
     <error column="9" line="1" message="var-naming: don&#39;t use MixedCaps in package name; auditLog should be auditlog" severity="warning" source="revive"></error>
   </file>
   <file name="internal/usecase/audit/endpointHistory/create.go">
@@ -1613,6 +1631,7 @@
     <error column="9" line="1" message="var-naming: don&#39;t use MixedCaps in package name; endpointHistory should be endpointhistory" severity="warning" source="revive"></error>
   </file>
   <file name="internal/usecase/audit/endpointHistory/service.go">
+    <error column="1" line="13" message="New returns interface (gct/internal/usecase/audit/endpointHistory.UseCaseI)" severity="error" source="ireturn"></error>
     <error column="9" line="1" message="var-naming: don&#39;t use MixedCaps in package name; endpointHistory should be endpointhistory" severity="warning" source="revive"></error>
   </file>
   <file name="internal/usecase/audit/log/interface.go">
@@ -1635,6 +1654,9 @@
     <error column="1" line="6" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="1" line="8" message="File is not properly formatted" severity="error" source="gofumpt"></error>
   </file>
+  <file name="internal/usecase/audit/metric/service.go">
+    <error column="1" line="13" message="New returns interface (gct/internal/usecase/audit/metric.UseCaseI)" severity="error" source="ireturn"></error>
+  </file>
   <file name="internal/usecase/audit/systemError/create.go">
     <error column="1" line="5" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="1" line="6" message="File is not properly formatted" severity="error" source="gofumpt"></error>
@@ -1652,6 +1674,7 @@
     <error column="9" line="1" message="var-naming: don&#39;t use MixedCaps in package name; systemError should be systemerror" severity="warning" source="revive"></error>
   </file>
   <file name="internal/usecase/audit/systemError/service.go">
+    <error column="1" line="13" message="New returns interface (gct/internal/usecase/audit/systemError.UseCaseI)" severity="error" source="ireturn"></error>
     <error column="9" line="1" message="var-naming: don&#39;t use MixedCaps in package name; systemError should be systemerror" severity="warning" source="revive"></error>
   </file>
   <file name="internal/usecase/authz/access/check.go">
@@ -1667,6 +1690,9 @@
     <error column="1" line="5" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="1" line="6" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="1" line="11" message="The line is 125 characters long, which exceeds the maximum of 120 characters." severity="error" source="lll"></error>
+  </file>
+  <file name="internal/usecase/authz/access/service.go">
+    <error column="1" line="13" message="New returns interface (gct/internal/usecase/authz/access.UseCaseI)" severity="error" source="ireturn"></error>
   </file>
   <file name="internal/usecase/authz/permission/assign_scope.go">
     <error column="1" line="6" message="File is not properly formatted" severity="error" source="goimports"></error>
@@ -1697,6 +1723,9 @@
   <file name="internal/usecase/authz/permission/remove_scope.go">
     <error column="1" line="6" message="File is not properly formatted" severity="error" source="goimports"></error>
     <error column="1" line="16" message="The line is 126 characters long, which exceeds the maximum of 120 characters." severity="error" source="lll"></error>
+  </file>
+  <file name="internal/usecase/authz/permission/service.go">
+    <error column="1" line="13" message="New returns interface (gct/internal/usecase/authz/permission.UseCaseI)" severity="error" source="ireturn"></error>
   </file>
   <file name="internal/usecase/authz/permission/update.go">
     <error column="1" line="5" message="File is not properly formatted" severity="error" source="gofumpt"></error>
@@ -1755,6 +1784,9 @@
   <file name="internal/usecase/authz/relation/remove_user.go">
     <error column="1" line="6" message="File is not properly formatted" severity="error" source="goimports"></error>
   </file>
+  <file name="internal/usecase/authz/relation/service.go">
+    <error column="1" line="13" message="New returns interface (gct/internal/usecase/authz/relation.UseCaseI)" severity="error" source="ireturn"></error>
+  </file>
   <file name="internal/usecase/authz/relation/update.go">
     <error column="1" line="5" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="1" line="6" message="File is not properly formatted" severity="error" source="gofumpt"></error>
@@ -1786,6 +1818,9 @@
   <file name="internal/usecase/authz/role/permissions.go">
     <error column="1" line="6" message="File is not properly formatted" severity="error" source="goimports"></error>
   </file>
+  <file name="internal/usecase/authz/role/service.go">
+    <error column="1" line="13" message="New returns interface (gct/internal/usecase/authz/role.UseCaseI)" severity="error" source="ireturn"></error>
+  </file>
   <file name="internal/usecase/authz/role/update.go">
     <error column="1" line="5" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="1" line="6" message="File is not properly formatted" severity="error" source="gofumpt"></error>
@@ -1804,6 +1839,9 @@
   </file>
   <file name="internal/usecase/authz/scope/interface.go">
     <error column="1" line="5" message="File is not properly formatted" severity="error" source="gofumpt"></error>
+  </file>
+  <file name="internal/usecase/authz/scope/service.go">
+    <error column="1" line="13" message="New returns interface (gct/internal/usecase/authz/scope.UseCaseI)" severity="error" source="ireturn"></error>
   </file>
   <file name="internal/usecase/authz/service.go">
     <error column="43" line="24" message="unused-parameter: parameter &#39;cfg&#39; seems to be unused, consider removing or renaming it as _" severity="warning" source="revive"></error>
@@ -1937,71 +1975,27 @@
     <error column="6" line="19" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
   </file>
   <file name="internal/usecase/minio/upload_document_test.go">
-    <error column="6" line="10" message="Function &#39;TestUseCase_UploadDoc_TableDriven&#39; is too long (149 &gt; 60)" severity="error" source="funlen"></error>
-    <error column="20" line="27" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="40" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="51" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="62" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="73" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="84" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="94" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="104" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="115" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="126" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="137" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
+    <error column="6" line="10" message="Function &#39;TestUseCase_UploadDoc_TableDriven&#39; is too long (160 &gt; 60)" severity="error" source="funlen"></error>
   </file>
   <file name="internal/usecase/minio/upload_image.go">
     <error column="1" line="8" message="File is not properly formatted" severity="error" source="goimports"></error>
   </file>
   <file name="internal/usecase/minio/upload_image_test.go">
-    <error column="6" line="39" message="Function &#39;TestUseCase_UploadImage_TableDriven&#39; is too long (138 &gt; 60)" severity="error" source="funlen"></error>
-    <error column="20" line="56" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="69" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="80" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="91" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="101" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="111" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="122" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="133" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="144" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="155" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
+    <error column="6" line="39" message="Function &#39;TestUseCase_UploadImage_TableDriven&#39; is too long (148 &gt; 60)" severity="error" source="funlen"></error>
   </file>
   <file name="internal/usecase/minio/upload_pdf_test.go">
-    <error column="6" line="10" message="Function &#39;TestUseCase_UploadPDF_TableDriven&#39; is too long (139 &gt; 60)" severity="error" source="funlen"></error>
+    <error column="6" line="10" message="Function &#39;TestUseCase_UploadPDF_TableDriven&#39; is too long (150 &gt; 60)" severity="error" source="funlen"></error>
     <error column="1" line="23" message="The line is 385 characters long, which exceeds the maximum of 120 characters." severity="error" source="lll"></error>
     <error column="1" line="24" message="The line is 389 characters long, which exceeds the maximum of 120 characters." severity="error" source="lll"></error>
-    <error column="1" line="120" message="The line is 165 characters long, which exceeds the maximum of 120 characters." severity="error" source="lll"></error>
-    <error column="1" line="121" message="The line is 169 characters long, which exceeds the maximum of 120 characters." severity="error" source="lll"></error>
-    <error column="20" line="27" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="38" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="49" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="60" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="70" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="80" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="91" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="102" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="113" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="124" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="135" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
+    <error column="1" line="129" message="The line is 165 characters long, which exceeds the maximum of 120 characters." severity="error" source="lll"></error>
+    <error column="1" line="130" message="The line is 169 characters long, which exceeds the maximum of 120 characters." severity="error" source="lll"></error>
   </file>
   <file name="internal/usecase/minio/upload_video_test.go">
-    <error column="6" line="10" message="Function &#39;TestUseCase_UploadVideo_TableDriven&#39; is too long (161 &gt; 60)" severity="error" source="funlen"></error>
-    <error column="20" line="27" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="38" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="49" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="60" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="71" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="82" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="92" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="102" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="113" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="124" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="135" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="146" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="157" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
+    <error column="6" line="10" message="Function &#39;TestUseCase_UploadVideo_TableDriven&#39; is too long (174 &gt; 60)" severity="error" source="funlen"></error>
   </file>
   <file name="internal/usecase/user/client/constructor.go">
     <error column="1" line="5" message="File is not properly formatted" severity="error" source="gofumpt"></error>
+    <error column="1" line="21" message="New returns interface (gct/internal/usecase/user/client.UseCaseI)" severity="error" source="ireturn"></error>
     <error column="16" line="23" message="empty-block: this block is empty, you can remove it" severity="warning" source="revive"></error>
   </file>
   <file name="internal/usecase/user/client/create.go">
@@ -2010,18 +2004,10 @@
     <error column="1" line="7" message="File is not properly formatted" severity="error" source="goimports"></error>
   </file>
   <file name="internal/usecase/user/client/create_test.go">
-    <error column="17" line="90" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;db error\&#34;)&#34;" severity="error" source="err113"></error>
-    <error column="6" line="13" message="Function &#39;TestUseCase_Create_TableDriven&#39; is too long (144 &gt; 60)" severity="error" source="funlen"></error>
+    <error column="17" line="95" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;db error\&#34;)&#34;" severity="error" source="err113"></error>
+    <error column="6" line="13" message="Function &#39;TestUseCase_Create_TableDriven&#39; is too long (152 &gt; 60)" severity="error" source="funlen"></error>
     <error column="1" line="5" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="1" line="7" message="File is not properly formatted" severity="error" source="gofumpt"></error>
-    <error column="19" line="31" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="19" line="45" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="19" line="57" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="19" line="68" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="19" line="80" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="19" line="102" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="19" line="116" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="19" line="129" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
   </file>
   <file name="internal/usecase/user/client/delete.go">
     <error column="1" line="5" message="File is not properly formatted" severity="error" source="gofumpt"></error>
@@ -2049,53 +2035,34 @@
     <error column="1" line="6" message="File is not properly formatted" severity="error" source="gofumpt"></error>
   </file>
   <file name="internal/usecase/user/client/get_by_phone_test.go">
-    <error column="17" line="59" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;user not found\&#34;)&#34;" severity="error" source="err113"></error>
-    <error column="17" line="103" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;database connection failed\&#34;)&#34;" severity="error" source="err113"></error>
-    <error column="6" line="13" message="Function &#39;TestUseCase_GetByPhone_TableDriven&#39; is too long (158 &gt; 60)" severity="error" source="funlen"></error>
+    <error column="17" line="61" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;user not found\&#34;)&#34;" severity="error" source="err113"></error>
+    <error column="17" line="107" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;database connection failed\&#34;)&#34;" severity="error" source="err113"></error>
+    <error column="6" line="13" message="Function &#39;TestUseCase_GetByPhone_TableDriven&#39; is too long (164 &gt; 60)" severity="error" source="funlen"></error>
     <error column="1" line="5" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="1" line="7" message="File is not properly formatted" severity="error" source="gofumpt"></error>
-    <error column="17" line="33" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="17" line="48" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="17" line="78" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="17" line="93" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="17" line="115" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="17" line="132" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
   </file>
   <file name="internal/usecase/user/client/get_test.go">
-    <error column="17" line="82" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;user not found\&#34;)&#34;" severity="error" source="err113"></error>
-    <error column="6" line="13" message="Function &#39;TestUseCase_Get_TableDriven&#39; is too long (142 &gt; 60)" severity="error" source="funlen"></error>
+    <error column="17" line="86" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;user not found\&#34;)&#34;" severity="error" source="err113"></error>
+    <error column="6" line="13" message="Function &#39;TestUseCase_Get_TableDriven&#39; is too long (150 &gt; 60)" severity="error" source="funlen"></error>
     <error column="1" line="5" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="1" line="7" message="File is not properly formatted" severity="error" source="gofumpt"></error>
-    <error column="23" line="84" message="unused-parameter: parameter &#39;t&#39; seems to be unused, consider removing or renaming it as _" severity="warning" source="revive"></error>
-    <error column="23" line="96" message="unused-parameter: parameter &#39;t&#39; seems to be unused, consider removing or renaming it as _" severity="warning" source="revive"></error>
-    <error column="5" line="155" message="require-error: for error assertions use require" severity="error" source="testifylint"></error>
-    <error column="18" line="32" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="18" line="45" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="18" line="58" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="18" line="71" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="18" line="112" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="18" line="131" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
+    <error column="37" line="88" message="unused-parameter: parameter &#39;got&#39; seems to be unused, consider removing or renaming it as _" severity="warning" source="revive"></error>
+    <error column="37" line="101" message="unused-parameter: parameter &#39;got&#39; seems to be unused, consider removing or renaming it as _" severity="warning" source="revive"></error>
+    <error column="5" line="163" message="require-error: for error assertions use require" severity="error" source="testifylint"></error>
   </file>
   <file name="internal/usecase/user/client/gets.go">
     <error column="1" line="5" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="1" line="6" message="File is not properly formatted" severity="error" source="gofumpt"></error>
   </file>
   <file name="internal/usecase/user/client/gets_test.go">
-    <error column="17" line="112" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;database error\&#34;)&#34;" severity="error" source="err113"></error>
-    <error column="6" line="13" message="Function &#39;TestUseCase_Gets_TableDriven&#39; is too long (186 &gt; 60)" severity="error" source="funlen"></error>
+    <error column="17" line="116" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;database error\&#34;)&#34;" severity="error" source="err113"></error>
+    <error column="6" line="13" message="Function &#39;TestUseCase_Gets_TableDriven&#39; is too long (194 &gt; 60)" severity="error" source="funlen"></error>
     <error column="1" line="5" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="1" line="7" message="File is not properly formatted" severity="error" source="gofumpt"></error>
-    <error column="1" line="161" message="The line is 126 characters long, which exceeds the maximum of 120 characters." severity="error" source="lll"></error>
-    <error column="1" line="162" message="The line is 126 characters long, which exceeds the maximum of 120 characters." severity="error" source="lll"></error>
-    <error column="25" line="114" message="unused-parameter: parameter &#39;t&#39; seems to be unused, consider removing or renaming it as _" severity="warning" source="revive"></error>
-    <error column="5" line="194" message="require-error: for error assertions use require" severity="error" source="testifylint"></error>
-    <error column="20" line="40" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="59" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="80" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="97" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="130" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="147" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="168" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
+    <error column="1" line="168" message="The line is 126 characters long, which exceeds the maximum of 120 characters." severity="error" source="lll"></error>
+    <error column="1" line="169" message="The line is 126 characters long, which exceeds the maximum of 120 characters." severity="error" source="lll"></error>
+    <error column="39" line="118" message="unused-parameter: parameter &#39;users&#39; seems to be unused, consider removing or renaming it as _" severity="warning" source="revive"></error>
+    <error column="5" line="202" message="require-error: for error assertions use require" severity="error" source="testifylint"></error>
   </file>
   <file name="internal/usecase/user/client/interface.go">
     <error column="1" line="5" message="File is not properly formatted" severity="error" source="gofumpt"></error>
@@ -2133,17 +2100,12 @@
     <error column="1" line="9" message="File is not properly formatted" severity="error" source="gofumpt"></error>
   </file>
   <file name="internal/usecase/user/client/sign_in_test.go">
-    <error column="17" line="116" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;user not found\&#34;)&#34;" severity="error" source="err113"></error>
-    <error column="17" line="142" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;user not found\&#34;)&#34;" severity="error" source="err113"></error>
-    <error column="18" line="175" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;session creation failed\&#34;)&#34;" severity="error" source="err113"></error>
-    <error column="6" line="14" message="Function &#39;TestUseCase_SignIn_TableDriven&#39; is too long (222 &gt; 60)" severity="error" source="funlen"></error>
+    <error column="17" line="120" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;user not found\&#34;)&#34;" severity="error" source="err113"></error>
+    <error column="17" line="146" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;user not found\&#34;)&#34;" severity="error" source="err113"></error>
+    <error column="18" line="179" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;session creation failed\&#34;)&#34;" severity="error" source="err113"></error>
+    <error column="6" line="14" message="Function &#39;TestUseCase_SignIn_TableDriven&#39; is too long (227 &gt; 60)" severity="error" source="funlen"></error>
     <error column="1" line="5" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="1" line="7" message="File is not properly formatted" severity="error" source="gofumpt"></error>
-    <error column="19" line="41" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="19" line="62" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="19" line="83" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="19" line="104" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="19" line="196" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
   </file>
   <file name="internal/usecase/user/client/sign_out.go">
     <error column="1" line="5" message="File is not properly formatted" severity="error" source="gofumpt"></error>
@@ -2163,17 +2125,10 @@
     <error column="1" line="6" message="File is not properly formatted" severity="error" source="gofumpt"></error>
   </file>
   <file name="internal/usecase/user/client/sign_up_test.go">
-    <error column="17" line="106" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;database error\&#34;)&#34;" severity="error" source="err113"></error>
-    <error column="6" line="14" message="Function &#39;TestUseCase_SignUp_TableDriven&#39; is too long (185 &gt; 60)" severity="error" source="funlen"></error>
+    <error column="17" line="110" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;database error\&#34;)&#34;" severity="error" source="err113"></error>
+    <error column="6" line="14" message="Function &#39;TestUseCase_SignUp_TableDriven&#39; is too long (192 &gt; 60)" severity="error" source="funlen"></error>
     <error column="1" line="5" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="1" line="7" message="File is not properly formatted" severity="error" source="gofumpt"></error>
-    <error column="19" line="33" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="19" line="51" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="19" line="66" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="19" line="91" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="19" line="118" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="19" line="132" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="19" line="149" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
   </file>
   <file name="internal/usecase/user/client/update.go">
     <error column="1" line="10" message="calculated cyclomatic complexity for function Update is 11, max is 10" severity="error" source="cyclop"></error>
@@ -2181,18 +2136,13 @@
     <error column="1" line="6" message="File is not properly formatted" severity="error" source="gofumpt"></error>
   </file>
   <file name="internal/usecase/user/client/update_test.go">
-    <error column="17" line="129" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;database error\&#34;)&#34;" severity="error" source="err113"></error>
-    <error column="6" line="13" message="Function &#39;TestUseCase_Update_TableDriven&#39; is too long (183 &gt; 60)" severity="error" source="funlen"></error>
+    <error column="17" line="136" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;database error\&#34;)&#34;" severity="error" source="err113"></error>
+    <error column="6" line="13" message="Function &#39;TestUseCase_Update_TableDriven&#39; is too long (191 &gt; 60)" severity="error" source="funlen"></error>
     <error column="1" line="5" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="1" line="7" message="File is not properly formatted" severity="error" source="gofumpt"></error>
-    <error column="19" line="32" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="19" line="46" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="19" line="61" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="19" line="77" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="19" line="94" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="19" line="107" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="19" line="119" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="19" line="147" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
+  </file>
+  <file name="internal/usecase/user/session/constructor.go">
+    <error column="1" line="15" message="New returns interface (gct/internal/usecase/user/session.UseCaseI)" severity="error" source="ireturn"></error>
   </file>
   <file name="internal/usecase/user/session/create.go">
     <error column="1" line="5" message="File is not properly formatted" severity="error" source="gofumpt"></error>
@@ -2202,73 +2152,51 @@
   </file>
   <file name="internal/usecase/user/session/create_test.go">
     <error column="1" line="15" message="calculated cyclomatic complexity for function TestUseCase_Create_TableDriven is 12, max is 10" severity="error" source="cyclop"></error>
-    <error column="89" line="120" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;database error\&#34;)&#34;" severity="error" source="err113"></error>
-    <error column="17" line="122" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;database error\&#34;)&#34;" severity="error" source="err113"></error>
-    <error column="39" line="65" message="string `Mozilla/5.0` has 3 occurrences, make it a constant" severity="error" source="goconst"></error>
-    <error column="39" line="83" message="string `192.168.1.1` has 4 occurrences, make it a constant" severity="error" source="goconst"></error>
+    <error column="89" line="125" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;database error\&#34;)&#34;" severity="error" source="err113"></error>
+    <error column="17" line="127" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;database error\&#34;)&#34;" severity="error" source="err113"></error>
+    <error column="39" line="67" message="string `Mozilla/5.0` has 3 occurrences, make it a constant" severity="error" source="goconst"></error>
+    <error column="39" line="86" message="string `192.168.1.1` has 4 occurrences, make it a constant" severity="error" source="goconst"></error>
     <error column="1" line="4" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="1" line="8" message="File is not properly formatted" severity="error" source="gofumpt"></error>
-    <error column="20" line="38" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="56" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="74" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="92" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="109" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="137" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="153" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="169" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="185" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
   </file>
   <file name="internal/usecase/user/session/delete.go">
     <error column="1" line="5" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="1" line="6" message="File is not properly formatted" severity="error" source="gofumpt"></error>
   </file>
   <file name="internal/usecase/user/session/delete_test.go">
-    <error column="17" line="84" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;database error\&#34;)&#34;" severity="error" source="err113"></error>
-    <error column="17" line="90" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;invalid filter\&#34;)&#34;" severity="error" source="err113"></error>
-    <error column="6" line="13" message="Function &#39;TestUseCase_Delete_TableDriven&#39; is too long (117 &gt; 60)" severity="error" source="funlen"></error>
+    <error column="17" line="88" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;database error\&#34;)&#34;" severity="error" source="err113"></error>
+    <error column="17" line="94" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;invalid filter\&#34;)&#34;" severity="error" source="err113"></error>
+    <error column="6" line="13" message="Function &#39;TestUseCase_Delete_TableDriven&#39; is too long (122 &gt; 60)" severity="error" source="funlen"></error>
     <error column="1" line="5" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="1" line="7" message="File is not properly formatted" severity="error" source="gofumpt"></error>
-    <error column="18" line="30" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="18" line="49" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="18" line="61" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="18" line="74" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="18" line="98" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
   </file>
   <file name="internal/usecase/user/session/get.go">
     <error column="1" line="5" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="1" line="6" message="File is not properly formatted" severity="error" source="gofumpt"></error>
   </file>
   <file name="internal/usecase/user/session/get_test.go">
-    <error column="18" line="112" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;session not found\&#34;)&#34;" severity="error" source="err113"></error>
-    <error column="18" line="122" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;database error\&#34;)&#34;" severity="error" source="err113"></error>
-    <error column="6" line="14" message="Function &#39;TestUseCase_Get_TableDriven&#39; is too long (180 &gt; 60)" severity="error" source="funlen"></error>
+    <error column="18" line="115" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;session not found\&#34;)&#34;" severity="error" source="err113"></error>
+    <error column="18" line="125" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;database error\&#34;)&#34;" severity="error" source="err113"></error>
+    <error column="6" line="14" message="Function &#39;TestUseCase_Get_TableDriven&#39; is too long (185 &gt; 60)" severity="error" source="funlen"></error>
     <error column="1" line="4" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="1" line="8" message="File is not properly formatted" severity="error" source="gofumpt"></error>
-    <error column="20" line="39" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="72" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="89" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="139" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="157" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
   </file>
   <file name="internal/usecase/user/session/gets.go">
     <error column="1" line="5" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="1" line="6" message="File is not properly formatted" severity="error" source="gofumpt"></error>
   </file>
   <file name="internal/usecase/user/session/gets_test.go">
-    <error column="18" line="151" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;database error\&#34;)&#34;" severity="error" source="err113"></error>
-    <error column="6" line="13" message="Function &#39;TestUseCase_Gets_TableDriven&#39; is too long (208 &gt; 60)" severity="error" source="funlen"></error>
+    <error column="18" line="157" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;database error\&#34;)&#34;" severity="error" source="err113"></error>
+    <error column="6" line="13" message="Function &#39;TestUseCase_Gets_TableDriven&#39; is too long (216 &gt; 60)" severity="error" source="funlen"></error>
     <error column="1" line="5" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="1" line="7" message="File is not properly formatted" severity="error" source="gofumpt"></error>
-    <error column="1" line="160" message="The line is 146 characters long, which exceeds the maximum of 120 characters." severity="error" source="lll"></error>
-    <error column="1" line="161" message="The line is 146 characters long, which exceeds the maximum of 120 characters." severity="error" source="lll"></error>
-    <error column="67" line="79" message="unused-parameter: parameter &#39;total&#39; seems to be unused, consider removing or renaming it as _" severity="warning" source="revive"></error>
-    <error column="67" line="101" message="unused-parameter: parameter &#39;total&#39; seems to be unused, consider removing or renaming it as _" severity="warning" source="revive"></error>
-    <error column="67" line="123" message="unused-parameter: parameter &#39;total&#39; seems to be unused, consider removing or renaming it as _" severity="warning" source="revive"></error>
-    <error column="67" line="166" message="unused-parameter: parameter &#39;total&#39; seems to be unused, consider removing or renaming it as _" severity="warning" source="revive"></error>
-    <error column="67" line="188" message="unused-parameter: parameter &#39;total&#39; seems to be unused, consider removing or renaming it as _" severity="warning" source="revive"></error>
-    <error column="20" line="37" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="59" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="20" line="139" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
+    <error column="1" line="166" message="The line is 146 characters long, which exceeds the maximum of 120 characters." severity="error" source="lll"></error>
+    <error column="1" line="167" message="The line is 146 characters long, which exceeds the maximum of 120 characters." severity="error" source="lll"></error>
+    <error column="67" line="81" message="unused-parameter: parameter &#39;total&#39; seems to be unused, consider removing or renaming it as _" severity="warning" source="revive"></error>
+    <error column="67" line="104" message="unused-parameter: parameter &#39;total&#39; seems to be unused, consider removing or renaming it as _" severity="warning" source="revive"></error>
+    <error column="67" line="127" message="unused-parameter: parameter &#39;total&#39; seems to be unused, consider removing or renaming it as _" severity="warning" source="revive"></error>
+    <error column="67" line="172" message="unused-parameter: parameter &#39;total&#39; seems to be unused, consider removing or renaming it as _" severity="warning" source="revive"></error>
+    <error column="67" line="195" message="unused-parameter: parameter &#39;total&#39; seems to be unused, consider removing or renaming it as _" severity="warning" source="revive"></error>
   </file>
   <file name="internal/usecase/user/session/interface.go">
     <error column="1" line="5" message="File is not properly formatted" severity="error" source="gofumpt"></error>
@@ -2278,17 +2206,11 @@
     <error column="1" line="6" message="File is not properly formatted" severity="error" source="gofumpt"></error>
   </file>
   <file name="internal/usecase/user/session/revoke_test.go">
-    <error column="17" line="98" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;database error\&#34;)&#34;" severity="error" source="err113"></error>
-    <error column="17" line="104" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;invalid filter\&#34;)&#34;" severity="error" source="err113"></error>
-    <error column="6" line="13" message="Function &#39;TestUseCase_Revoke_TableDriven&#39; is too long (119 &gt; 60)" severity="error" source="funlen"></error>
+    <error column="17" line="104" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;database error\&#34;)&#34;" severity="error" source="err113"></error>
+    <error column="17" line="110" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;invalid filter\&#34;)&#34;" severity="error" source="err113"></error>
+    <error column="6" line="13" message="Function &#39;TestUseCase_Revoke_TableDriven&#39; is too long (125 &gt; 60)" severity="error" source="funlen"></error>
     <error column="1" line="5" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="1" line="7" message="File is not properly formatted" severity="error" source="gofumpt"></error>
-    <error column="18" line="30" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="18" line="41" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="18" line="50" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="18" line="63" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="18" line="75" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="18" line="88" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
   </file>
   <file name="internal/usecase/user/session/setup_test.go">
     <error column="9" line="46" message="type assertion must be checked" severity="error" source="forcetypeassert"></error>
@@ -2314,30 +2236,20 @@
     <error column="1" line="6" message="File is not properly formatted" severity="error" source="gofumpt"></error>
   </file>
   <file name="internal/usecase/user/session/update_activity_test.go">
-    <error column="21" line="79" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;session not found\&#34;)&#34;" severity="error" source="err113"></error>
-    <error column="21" line="89" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;database error\&#34;)&#34;" severity="error" source="err113"></error>
-    <error column="21" line="104" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;update failed\&#34;)&#34;" severity="error" source="err113"></error>
-    <error column="6" line="15" message="Function &#39;TestUseCase_UpdateActivity_TableDriven&#39; is too long (124 &gt; 60)" severity="error" source="funlen"></error>
+    <error column="21" line="80" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;session not found\&#34;)&#34;" severity="error" source="err113"></error>
+    <error column="21" line="90" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;database error\&#34;)&#34;" severity="error" source="err113"></error>
+    <error column="21" line="105" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;update failed\&#34;)&#34;" severity="error" source="err113"></error>
+    <error column="6" line="15" message="Function &#39;TestUseCase_UpdateActivity_TableDriven&#39; is too long (125 &gt; 60)" severity="error" source="funlen"></error>
     <error column="1" line="4" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="1" line="8" message="File is not properly formatted" severity="error" source="gofumpt"></error>
-    <error column="1" line="120" message="The line is 130 characters long, which exceeds the maximum of 120 characters." severity="error" source="lll"></error>
-    <error column="20" line="40" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
+    <error column="1" line="121" message="The line is 130 characters long, which exceeds the maximum of 120 characters." severity="error" source="lll"></error>
   </file>
   <file name="internal/usecase/user/session/update_test.go">
-    <error column="17" line="169" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;database error\&#34;)&#34;" severity="error" source="err113"></error>
-    <error column="17" line="175" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;invalid session\&#34;)&#34;" severity="error" source="err113"></error>
-    <error column="6" line="14" message="Function &#39;TestUseCase_Update_TableDriven&#39; is too long (195 &gt; 60)" severity="error" source="funlen"></error>
+    <error column="17" line="178" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;database error\&#34;)&#34;" severity="error" source="err113"></error>
+    <error column="17" line="184" message="do not define dynamic errors, use wrapped static errors instead: &#34;errors.New(\&#34;invalid session\&#34;)&#34;" severity="error" source="err113"></error>
+    <error column="6" line="14" message="Function &#39;TestUseCase_Update_TableDriven&#39; is too long (204 &gt; 60)" severity="error" source="funlen"></error>
     <error column="1" line="4" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="1" line="8" message="File is not properly formatted" severity="error" source="gofumpt"></error>
-    <error column="19" line="32" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="19" line="46" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="19" line="60" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="19" line="74" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="19" line="88" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="19" line="102" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="19" line="116" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="19" line="129" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="19" line="150" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
   </file>
   <file name="internal/web/admin/audit_logs.go">
     <error column="22" line="29" message="string `true` has 4 occurrences, make it a constant" severity="error" source="goconst"></error>
@@ -2380,10 +2292,11 @@
     <error column="9" line="1" message="var-naming: don&#39;t use an underscore in package name" severity="warning" source="revive"></error>
   </file>
   <file name="pkg/broker/kafka/kafka_rpc/server/server.go">
-    <error column="5" line="104" message="Function `handleMessage-&gt;publishResponse` should pass the context parameter" severity="error" source="contextcheck"></error>
+    <error column="5" line="105" message="Function `handleMessage` should pass the context parameter" severity="error" source="contextcheck"></error>
+    <error column="1" line="11" message="File is not properly formatted" severity="error" source="gci"></error>
     <error column="1" line="6" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="1" line="10" message="File is not properly formatted" severity="error" source="gofumpt"></error>
-    <error column="2" line="43" message="var-naming: func parameter groupId should be groupID" severity="warning" source="revive"></error>
+    <error column="2" line="44" message="var-naming: func parameter groupId should be groupID" severity="warning" source="revive"></error>
   </file>
   <file name="pkg/broker/nats/nats_rpc/client/client.go">
     <error column="1" line="9" message="File is not properly formatted" severity="error" source="goimports"></error>
@@ -2394,12 +2307,11 @@
     <error column="1" line="11" message="File is not properly formatted" severity="error" source="gofumpt"></error>
   </file>
   <file name="pkg/broker/rabbitmq/rmq_rpc/client/client.go">
-    <error column="7" line="267" message="Error return value of `d.Ack` is not checked" severity="error" source="errcheck"></error>
-    <error column="1" line="10" message="File is not properly formatted" severity="error" source="goimports"></error>
-    <error column="10" line="175" message="error returned from interface method should be wrapped: sig: func (context.Context).Err() error" severity="error" source="wrapcheck"></error>
-    <error column="11" line="208" message="error returned from interface method should be wrapped: sig: func (context.Context).Err() error" severity="error" source="wrapcheck"></error>
-    <error column="9" line="227" message="error returned from external package is unwrapped: sig: func (*gct/pkg/broker/rabbitmq/rmq_rpc.Connection).AttemptConnect() error" severity="error" source="wrapcheck"></error>
-    <error column="11" line="279" message="error returned from external package is unwrapped: sig: func github.com/goccy/go-json.Marshal(v interface{}) ([]byte, error)" severity="error" source="wrapcheck"></error>
+    <error column="1" line="11" message="File is not properly formatted" severity="error" source="gci"></error>
+    <error column="10" line="176" message="error returned from interface method should be wrapped: sig: func (context.Context).Err() error" severity="error" source="wrapcheck"></error>
+    <error column="11" line="209" message="error returned from interface method should be wrapped: sig: func (context.Context).Err() error" severity="error" source="wrapcheck"></error>
+    <error column="9" line="228" message="error returned from external package is unwrapped: sig: func (*gct/pkg/broker/rabbitmq/rmq_rpc.Connection).AttemptConnect() error" severity="error" source="wrapcheck"></error>
+    <error column="11" line="280" message="error returned from external package is unwrapped: sig: func github.com/goccy/go-json.Marshal(v interface{}) ([]byte, error)" severity="error" source="wrapcheck"></error>
   </file>
   <file name="pkg/broker/rabbitmq/rmq_rpc/server/server.go">
     <error column="1" line="7" message="File is not properly formatted" severity="error" source="gofumpt"></error>
@@ -2435,6 +2347,7 @@
   <file name="pkg/container/minio.go">
     <error column="1" line="6" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="1" line="7" message="File is not properly formatted" severity="error" source="gofumpt"></error>
+    <error column="1" line="16" message="RunMinioTestContainer returns interface (github.com/testcontainers/testcontainers-go.Container)" severity="error" source="ireturn"></error>
     <error column="25" line="19" message="SA1019: minio.RunContainer is deprecated: use Run instead RunContainer creates an instance of the Minio container type " severity="error" source="staticcheck"></error>
   </file>
   <file name="pkg/container/minio_test.go">
@@ -2453,7 +2366,7 @@
   <file name="pkg/container/psql.go">
     <error column="1" line="6" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="1" line="10" message="File is not properly formatted" severity="error" source="gofumpt"></error>
-    <error column="31" line="20" message="unused-parameter: parameter &#39;cfg&#39; seems to be unused, consider removing or renaming it as _" severity="warning" source="revive"></error>
+    <error column="1" line="20" message="RunPostgresTestContainer returns interface (github.com/testcontainers/testcontainers-go.Container)" severity="error" source="ireturn"></error>
     <error column="28" line="23" message="SA1019: postgres.RunContainer is deprecated: use Run instead RunContainer creates an instance of the Postgres container type " severity="error" source="staticcheck"></error>
   </file>
   <file name="pkg/container/psql_test.go">
@@ -2472,6 +2385,7 @@
   <file name="pkg/container/redis.go">
     <error column="1" line="6" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="1" line="8" message="File is not properly formatted" severity="error" source="gofumpt"></error>
+    <error column="1" line="16" message="RunRedisTestContainer returns interface (github.com/testcontainers/testcontainers-go.Container)" severity="error" source="ireturn"></error>
   </file>
   <file name="pkg/container/redis_test.go">
     <error column="6" line="15" message="Function &#39;TestRedisConfig_TableDriven&#39; is too long (76 &gt; 60)" severity="error" source="funlen"></error>
@@ -2719,38 +2633,6 @@
     <error column="9" line="1" message="package should be `errors_test` instead of `errors`" severity="error" source="testpackage"></error>
   </file>
   <file name="pkg/errors/postgres.go">
-    <error column="20" line="51" message="Error return value of `appErr.WithField` is not checked" severity="error" source="errcheck"></error>
-    <error column="20" line="87" message="Error return value of `appErr.WithField` is not checked" severity="error" source="errcheck"></error>
-    <error column="20" line="104" message="Error return value of `appErr.WithField` is not checked" severity="error" source="errcheck"></error>
-    <error column="15" line="119" message="Error return value of `(*gct/pkg/errors.AppError).WithDetails` is not checked" severity="error" source="errcheck"></error>
-    <error column="20" line="122" message="Error return value of `appErr.WithField` is not checked" severity="error" source="errcheck"></error>
-    <error column="20" line="139" message="Error return value of `appErr.WithField` is not checked" severity="error" source="errcheck"></error>
-    <error column="20" line="156" message="Error return value of `appErr.WithField` is not checked" severity="error" source="errcheck"></error>
-    <error column="20" line="254" message="Error return value of `appErr.WithField` is not checked" severity="error" source="errcheck"></error>
-    <error column="14" line="271" message="Error return value of `(*gct/pkg/errors.AppError).WithDetails` is not checked" severity="error" source="errcheck"></error>
-    <error column="19" line="274" message="Error return value of `appErr.WithField` is not checked" severity="error" source="errcheck"></error>
-    <error column="14" line="291" message="Error return value of `(*gct/pkg/errors.AppError).WithDetails` is not checked" severity="error" source="errcheck"></error>
-    <error column="19" line="294" message="Error return value of `appErr.WithField` is not checked" severity="error" source="errcheck"></error>
-    <error column="14" line="310" message="Error return value of `(*gct/pkg/errors.AppError).WithDetails` is not checked" severity="error" source="errcheck"></error>
-    <error column="19" line="313" message="Error return value of `appErr.WithField` is not checked" severity="error" source="errcheck"></error>
-    <error column="15" line="330" message="Error return value of `(*gct/pkg/errors.AppError).WithDetails` is not checked" severity="error" source="errcheck"></error>
-    <error column="20" line="333" message="Error return value of `appErr.WithField` is not checked" severity="error" source="errcheck"></error>
-    <error column="14" line="347" message="Error return value of `(*gct/pkg/errors.AppError).WithDetails` is not checked" severity="error" source="errcheck"></error>
-    <error column="19" line="350" message="Error return value of `appErr.WithField` is not checked" severity="error" source="errcheck"></error>
-    <error column="14" line="366" message="Error return value of `(*gct/pkg/errors.AppError).WithDetails` is not checked" severity="error" source="errcheck"></error>
-    <error column="19" line="369" message="Error return value of `appErr.WithField` is not checked" severity="error" source="errcheck"></error>
-    <error column="14" line="385" message="Error return value of `(*gct/pkg/errors.AppError).WithDetails` is not checked" severity="error" source="errcheck"></error>
-    <error column="19" line="388" message="Error return value of `appErr.WithField` is not checked" severity="error" source="errcheck"></error>
-    <error column="15" line="405" message="Error return value of `(*gct/pkg/errors.AppError).WithDetails` is not checked" severity="error" source="errcheck"></error>
-    <error column="20" line="408" message="Error return value of `appErr.WithField` is not checked" severity="error" source="errcheck"></error>
-    <error column="14" line="422" message="Error return value of `(*gct/pkg/errors.AppError).WithDetails` is not checked" severity="error" source="errcheck"></error>
-    <error column="19" line="425" message="Error return value of `appErr.WithField` is not checked" severity="error" source="errcheck"></error>
-    <error column="15" line="442" message="Error return value of `(*gct/pkg/errors.AppError).WithDetails` is not checked" severity="error" source="errcheck"></error>
-    <error column="20" line="445" message="Error return value of `appErr.WithField` is not checked" severity="error" source="errcheck"></error>
-    <error column="14" line="459" message="Error return value of `(*gct/pkg/errors.AppError).WithDetails` is not checked" severity="error" source="errcheck"></error>
-    <error column="19" line="462" message="Error return value of `appErr.WithField` is not checked" severity="error" source="errcheck"></error>
-    <error column="14" line="478" message="Error return value of `(*gct/pkg/errors.AppError).WithDetails` is not checked" severity="error" source="errcheck"></error>
-    <error column="19" line="481" message="Error return value of `appErr.WithField` is not checked" severity="error" source="errcheck"></error>
     <error column="1" line="14" message="cognitive complexity 36 of func `HandlePgError` is high (&gt; 30)" severity="error" source="gocognit"></error>
     <error column="1" line="261" message="The line is 124 characters long, which exceeds the maximum of 120 characters." severity="error" source="lll"></error>
     <error column="1" line="280" message="The line is 122 characters long, which exceeds the maximum of 120 characters." severity="error" source="lll"></error>
@@ -2958,12 +2840,13 @@
   </file>
   <file name="pkg/logger/logger.go">
     <error column="10" line="18" message="the interface has more than 10 methods: 22" severity="error" source="interfacebloat"></error>
+    <error column="1" line="52" message="GetLogger returns interface (gct/pkg/logger.Log)" severity="error" source="ireturn"></error>
   </file>
   <file name="pkg/logger/logger_test.go">
-    <error column="2" line="60" message="Range statement for test TestNew missing the call to method parallel in test Run&#xA;" severity="error" source="paralleltest"></error>
+    <error column="1" line="47" message="File is not properly formatted" severity="error" source="gofumpt"></error>
+    <error column="1" line="46" message="Function TestNew missing the call to method parallel&#xA;" severity="error" source="paralleltest"></error>
     <error column="1" line="171" message="Function TestFatal_ExitsAndLogs missing the call to method parallel&#xA;" severity="error" source="paralleltest"></error>
     <error column="9" line="1" message="package should be `logger_test` instead of `logger`" severity="error" source="testpackage"></error>
-    <error column="6" line="46" message="TestNew&#39;s subtests should call t.Parallel" severity="error" source="tparallel"></error>
   </file>
   <file name="pkg/server/grpc/server.go">
     <error column="1" line="7" message="File is not properly formatted" severity="error" source="gofumpt"></error>
@@ -2986,13 +2869,13 @@
     <error column="2" line="27" message="ineffectual assignment to deviceType" severity="error" source="ineffassign"></error>
   </file>
   <file name="test/e2e/common/setup/setup.go">
-    <error column="2" line="38" message="declaration has 3 blank identifiers" severity="error" source="dogsled"></error>
-    <error column="12" line="84" message="Error return value of `fmt.Sscanf` is not checked" severity="error" source="errcheck"></error>
-    <error column="1" line="37" message="don&#39;t use `init` function" severity="error" source="gochecknoinits"></error>
+    <error column="2" line="39" message="declaration has 3 blank identifiers" severity="error" source="dogsled"></error>
+    <error column="1" line="24" message="File is not properly formatted" severity="error" source="gci"></error>
+    <error column="1" line="38" message="don&#39;t use `init` function" severity="error" source="gochecknoinits"></error>
     <error column="1" line="9" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="1" line="19" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="1" line="23" message="File is not properly formatted" severity="error" source="gofumpt"></error>
-    <error column="6" line="44" message="exported: func name will be used as setup.SetupTestEnvironment by other packages, and that stutters; consider calling this TestEnvironment" severity="warning" source="revive"></error>
+    <error column="6" line="45" message="exported: func name will be used as setup.SetupTestEnvironment by other packages, and that stutters; consider calling this TestEnvironment" severity="warning" source="revive"></error>
   </file>
   <file name="test/e2e/config_test.go">
     <error column="1" line="3" message="File is not properly formatted" severity="error" source="gofumpt"></error>
@@ -3006,9 +2889,6 @@
   <file name="test/e2e/flows/minio/client.go">
     <error column="0" line="24" message="24-52 lines are duplicate of `test/e2e/flows/minio/client.go:86-114`" severity="error" source="dupl"></error>
     <error column="0" line="86" message="86-114 lines are duplicate of `test/e2e/flows/minio/client.go:24-52`" severity="error" source="dupl"></error>
-    <error column="12" line="35" message="Error return value of `part.Write` is not checked" severity="error" source="errcheck"></error>
-    <error column="13" line="66" message="Error return value of `part.Write` is not checked" severity="error" source="errcheck"></error>
-    <error column="12" line="97" message="Error return value of `part.Write` is not checked" severity="error" source="errcheck"></error>
     <error column="29" line="70" message="should rewrite http.NewRequestWithContext or add (*Request).WithContext" severity="error" source="noctx"></error>
     <error column="29" line="100" message="should rewrite http.NewRequestWithContext or add (*Request).WithContext" severity="error" source="noctx"></error>
     <error column="29" line="118" message="should rewrite http.NewRequestWithContext or add (*Request).WithContext" severity="error" source="noctx"></error>
@@ -3029,7 +2909,6 @@
     <error column="1" line="4" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="1" line="11" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="9" line="1" message="package should be `minio_test` instead of `minio`" severity="error" source="testpackage"></error>
-    <error column="6" line="19" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
   </file>
   <file name="test/e2e/flows/user/client/client.go">
     <error column="13" line="25" message="Error return value of `encoding/json.Marshal` is not checked" severity="error" source="errchkjson"></error>
@@ -3067,23 +2946,16 @@
     <error column="1" line="4" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="1" line="6" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="9" line="1" message="package should be `client_test` instead of `client`" severity="error" source="testpackage"></error>
-    <error column="6" line="17" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
   </file>
   <file name="test/e2e/flows/user/client/user_flow_test.go">
-    <error column="5" line="62" message="type assertion must be checked" severity="error" source="forcetypeassert"></error>
-    <error column="5" line="63" message="type assertion must be checked" severity="error" source="forcetypeassert"></error>
     <error column="5" line="64" message="type assertion must be checked" severity="error" source="forcetypeassert"></error>
-    <error column="5" line="81" message="type assertion must be checked" severity="error" source="forcetypeassert"></error>
-    <error column="5" line="100" message="type assertion must be checked" severity="error" source="forcetypeassert"></error>
-    <error column="6" line="13" message="Function &#39;TestUser_ComprehensiveFlow&#39; is too long (110 &gt; 60)" severity="error" source="funlen"></error>
-    <error column="2" line="125" message="Range statement for test TestUser_ComprehensiveFlow missing the call to method parallel in test Run&#xA;" severity="error" source="paralleltest"></error>
+    <error column="5" line="65" message="type assertion must be checked" severity="error" source="forcetypeassert"></error>
+    <error column="5" line="66" message="type assertion must be checked" severity="error" source="forcetypeassert"></error>
+    <error column="5" line="84" message="type assertion must be checked" severity="error" source="forcetypeassert"></error>
+    <error column="5" line="104" message="type assertion must be checked" severity="error" source="forcetypeassert"></error>
+    <error column="6" line="13" message="Function &#39;TestUser_ComprehensiveFlow&#39; is too long (116 &gt; 60)" severity="error" source="funlen"></error>
+    <error column="2" line="131" message="Range statement for test TestUser_ComprehensiveFlow missing the call to method parallel in test Run&#xA;" severity="error" source="paralleltest"></error>
     <error column="9" line="1" message="package should be `client_test` instead of `client`" severity="error" source="testpackage"></error>
-    <error column="9" line="45" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="9" line="53" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="9" line="72" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="9" line="88" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="9" line="106" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="9" line="114" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
   </file>
   <file name="test/e2e/flows/user/session/client.go">
     <error column="29" line="39" message="should rewrite http.NewRequestWithContext or add (*Request).WithContext" severity="error" source="noctx"></error>
@@ -3108,37 +2980,29 @@
     <error column="1" line="10" message="File is not properly formatted" severity="error" source="gofumpt"></error>
   </file>
   <file name="test/e2e/flows/user/session/session_flow_test.go">
-    <error column="5" line="64" message="type assertion must be checked" severity="error" source="forcetypeassert"></error>
-    <error column="5" line="65" message="type assertion must be checked" severity="error" source="forcetypeassert"></error>
-    <error column="5" line="79" message="type assertion must be checked" severity="error" source="forcetypeassert"></error>
-    <error column="5" line="80" message="type assertion must be checked" severity="error" source="forcetypeassert"></error>
-    <error column="5" line="99" message="type assertion must be checked" severity="error" source="forcetypeassert"></error>
-    <error column="6" line="14" message="Function &#39;TestSession_ComprehensiveFlow&#39; is too long (121 &gt; 60)" severity="error" source="funlen"></error>
+    <error column="5" line="66" message="type assertion must be checked" severity="error" source="forcetypeassert"></error>
+    <error column="5" line="67" message="type assertion must be checked" severity="error" source="forcetypeassert"></error>
+    <error column="5" line="82" message="type assertion must be checked" severity="error" source="forcetypeassert"></error>
+    <error column="5" line="83" message="type assertion must be checked" severity="error" source="forcetypeassert"></error>
+    <error column="5" line="103" message="type assertion must be checked" severity="error" source="forcetypeassert"></error>
+    <error column="6" line="14" message="Function &#39;TestSession_ComprehensiveFlow&#39; is too long (128 &gt; 60)" severity="error" source="funlen"></error>
     <error column="1" line="9" message="File is not properly formatted" severity="error" source="goimports"></error>
-    <error column="2" line="135" message="Range statement for test TestSession_ComprehensiveFlow missing the call to method parallel in test Run&#xA;" severity="error" source="paralleltest"></error>
+    <error column="2" line="142" message="Range statement for test TestSession_ComprehensiveFlow missing the call to method parallel in test Run&#xA;" severity="error" source="paralleltest"></error>
     <error column="9" line="1" message="package should be `session_test` instead of `session`" severity="error" source="testpackage"></error>
-    <error column="9" line="48" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="9" line="56" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="9" line="71" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="9" line="90" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="9" line="105" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="9" line="117" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="9" line="125" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
   </file>
   <file name="test/e2e/flows/user/session/setup_test.go">
     <error column="1" line="4" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="1" line="6" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="9" line="1" message="package should be `session_test` instead of `session`" severity="error" source="testpackage"></error>
-    <error column="6" line="17" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
   </file>
   <file name="test/integration/common/setup/setup.go">
-    <error column="2" line="38" message="declaration has 3 blank identifiers" severity="error" source="dogsled"></error>
-    <error column="12" line="84" message="Error return value of `fmt.Sscanf` is not checked" severity="error" source="errcheck"></error>
-    <error column="1" line="37" message="don&#39;t use `init` function" severity="error" source="gochecknoinits"></error>
+    <error column="2" line="39" message="declaration has 3 blank identifiers" severity="error" source="dogsled"></error>
+    <error column="1" line="24" message="File is not properly formatted" severity="error" source="gci"></error>
+    <error column="1" line="38" message="don&#39;t use `init` function" severity="error" source="gochecknoinits"></error>
     <error column="1" line="9" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="1" line="19" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="1" line="23" message="File is not properly formatted" severity="error" source="gofumpt"></error>
-    <error column="6" line="44" message="exported: func name will be used as setup.SetupTestEnvironment by other packages, and that stutters; consider calling this TestEnvironment" severity="warning" source="revive"></error>
+    <error column="6" line="45" message="exported: func name will be used as setup.SetupTestEnvironment by other packages, and that stutters; consider calling this TestEnvironment" severity="warning" source="revive"></error>
   </file>
   <file name="test/integration/minio/integration_test.go">
     <error column="1" line="21" message="calculated cyclomatic complexity for function TestMinioAPI_Integration_TableDriven is 11, max is 10" severity="error" source="cyclop"></error>
@@ -3148,73 +3012,54 @@
     <error column="1" line="6" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="1" line="16" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="1" line="36" message="The line is 136 characters long, which exceeds the maximum of 120 characters." severity="error" source="lll"></error>
-    <error column="2" line="211" message="Range statement for test TestMinioAPI_Integration_TableDriven missing the call to method parallel in test Run&#xA;" severity="error" source="paralleltest"></error>
+    <error column="2" line="213" message="Range statement for test TestMinioAPI_Integration_TableDriven missing the call to method parallel in test Run&#xA;" severity="error" source="paralleltest"></error>
     <error column="9" line="1" message="package should be `minio_test` instead of `minio`" severity="error" source="testpackage"></error>
-    <error column="19" line="71" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="19" line="182" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
   </file>
   <file name="test/integration/minio/setup_test.go">
     <error column="1" line="4" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="1" line="6" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="9" line="1" message="package should be `minio_test` instead of `minio`" severity="error" source="testpackage"></error>
-    <error column="6" line="13" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
   </file>
   <file name="test/integration/user/client/integration_test.go">
     <error column="19" line="45" message="Error return value of `encoding/json.Marshal` is not checked" severity="error" source="errchkjson"></error>
     <error column="2" line="60" message="type assertion must be checked" severity="error" source="forcetypeassert"></error>
-    <error column="24" line="196" message="type assertion must be checked" severity="error" source="forcetypeassert"></error>
+    <error column="24" line="200" message="type assertion must be checked" severity="error" source="forcetypeassert"></error>
     <error column="1" line="21" message="cognitive complexity 31 of func `TestUserAPI_Integration_Exhaustive` is high (&gt; 30)" severity="error" source="gocognit"></error>
     <error column="1" line="6" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="1" line="15" message="File is not properly formatted" severity="error" source="gofumpt"></error>
-    <error column="2" line="361" message="Range statement for test TestUserAPI_Integration_Exhaustive missing the call to method parallel in test Run&#xA;" severity="error" source="paralleltest"></error>
-    <error column="5" line="97" message="require-error: for error assertions use require" severity="error" source="testifylint"></error>
-    <error column="5" line="143" message="require-error: for error assertions use require" severity="error" source="testifylint"></error>
-    <error column="5" line="168" message="require-error: for error assertions use require" severity="error" source="testifylint"></error>
-    <error column="5" line="285" message="require-error: for error assertions use require" severity="error" source="testifylint"></error>
-    <error column="5" line="329" message="require-error: for error assertions use require" severity="error" source="testifylint"></error>
+    <error column="2" line="371" message="Range statement for test TestUserAPI_Integration_Exhaustive missing the call to method parallel in test Run&#xA;" severity="error" source="paralleltest"></error>
+    <error column="5" line="98" message="require-error: for error assertions use require" severity="error" source="testifylint"></error>
+    <error column="5" line="145" message="require-error: for error assertions use require" severity="error" source="testifylint"></error>
+    <error column="5" line="171" message="require-error: for error assertions use require" severity="error" source="testifylint"></error>
+    <error column="5" line="291" message="require-error: for error assertions use require" severity="error" source="testifylint"></error>
+    <error column="5" line="337" message="require-error: for error assertions use require" severity="error" source="testifylint"></error>
     <error column="9" line="1" message="package should be `client_test` instead of `client`" severity="error" source="testpackage"></error>
-    <error column="19" line="89" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="19" line="135" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="19" line="160" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="19" line="193" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="19" line="254" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="19" line="278" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="19" line="306" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="19" line="322" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="19" line="340" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="19" line="353" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
   </file>
   <file name="test/integration/user/client/setup_test.go">
     <error column="1" line="4" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="1" line="6" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="9" line="1" message="package should be `client_test` instead of `client`" severity="error" source="testpackage"></error>
-    <error column="6" line="13" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
   </file>
   <file name="test/integration/user/session/integration_test.go">
-    <error column="19" line="162" message="Error return value of `encoding/json.Marshal` is not checked" severity="error" source="errchkjson"></error>
-    <error column="19" line="175" message="Error return value of `encoding/json.Marshal` is not checked" severity="error" source="errchkjson"></error>
-    <error column="20" line="202" message="Error return value of `encoding/json.Marshal` is not checked: unsafe type `any` found" severity="error" source="errchkjson"></error>
-    <error column="5" line="56" message="type assertion must be checked" severity="error" source="forcetypeassert"></error>
-    <error column="32" line="71" message="type assertion must be checked" severity="error" source="forcetypeassert"></error>
-    <error column="2" line="193" message="type assertion must be checked" severity="error" source="forcetypeassert"></error>
-    <error column="2" line="216" message="type assertion must be checked" severity="error" source="forcetypeassert"></error>
-    <error column="6" line="21" message="Function &#39;TestSessionAPI_Integration&#39; is too long (133 &gt; 60)" severity="error" source="funlen"></error>
+    <error column="19" line="166" message="Error return value of `encoding/json.Marshal` is not checked" severity="error" source="errchkjson"></error>
+    <error column="19" line="179" message="Error return value of `encoding/json.Marshal` is not checked" severity="error" source="errchkjson"></error>
+    <error column="20" line="206" message="Error return value of `encoding/json.Marshal` is not checked: unsafe type `any` found" severity="error" source="errchkjson"></error>
+    <error column="5" line="57" message="type assertion must be checked" severity="error" source="forcetypeassert"></error>
+    <error column="32" line="73" message="type assertion must be checked" severity="error" source="forcetypeassert"></error>
+    <error column="2" line="197" message="type assertion must be checked" severity="error" source="forcetypeassert"></error>
+    <error column="2" line="220" message="type assertion must be checked" severity="error" source="forcetypeassert"></error>
+    <error column="6" line="21" message="Function &#39;TestSessionAPI_Integration&#39; is too long (137 &gt; 60)" severity="error" source="funlen"></error>
     <error column="1" line="6" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="1" line="15" message="File is not properly formatted" severity="error" source="gofumpt"></error>
-    <error column="2" line="133" message="Range statement for test TestSessionAPI_Integration missing the call to method parallel in test Run&#xA;" severity="error" source="paralleltest"></error>
-    <error column="5" line="90" message="require-error: for error assertions use require" severity="error" source="testifylint"></error>
-    <error column="5" line="110" message="require-error: for error assertions use require" severity="error" source="testifylint"></error>
+    <error column="2" line="137" message="Range statement for test TestSessionAPI_Integration missing the call to method parallel in test Run&#xA;" severity="error" source="paralleltest"></error>
+    <error column="5" line="93" message="require-error: for error assertions use require" severity="error" source="testifylint"></error>
+    <error column="5" line="114" message="require-error: for error assertions use require" severity="error" source="testifylint"></error>
     <error column="9" line="1" message="package should be `session_test` instead of `session`" severity="error" source="testpackage"></error>
-    <error column="19" line="52" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="19" line="68" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="19" line="82" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="19" line="102" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
-    <error column="6" line="160" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
+    <error column="6" line="164" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
   </file>
   <file name="test/integration/user/session/setup_test.go">
     <error column="1" line="4" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="1" line="6" message="File is not properly formatted" severity="error" source="gofumpt"></error>
     <error column="9" line="1" message="package should be `session_test` instead of `session`" severity="error" source="testpackage"></error>
-    <error column="6" line="13" message="test helper function should start from t.Helper()" severity="error" source="thelper"></error>
   </file>
 </checkstyle>

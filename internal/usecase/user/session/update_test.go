@@ -30,6 +30,7 @@ func TestUseCase_Update_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateSaved: func(t *testing.T, s *domain.Session) {
+				t.Helper()
 				require.NotEqual(t, uuid.Nil, s.ID)
 				require.NotEqual(t, uuid.Nil, s.UserID)
 			},
@@ -44,6 +45,7 @@ func TestUseCase_Update_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateSaved: func(t *testing.T, s *domain.Session) {
+				t.Helper()
 				require.NotNil(t, s.DeviceName)
 				require.Equal(t, "iPhone 13", *s.DeviceName)
 			},
@@ -58,6 +60,7 @@ func TestUseCase_Update_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateSaved: func(t *testing.T, s *domain.Session) {
+				t.Helper()
 				require.NotNil(t, s.DeviceType)
 				require.Equal(t, domain.DeviceTypeMobile, *s.DeviceType)
 			},
@@ -72,6 +75,7 @@ func TestUseCase_Update_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateSaved: func(t *testing.T, s *domain.Session) {
+				t.Helper()
 				require.NotNil(t, s.IPAddress)
 				require.Equal(t, "192.168.1.100", *s.IPAddress)
 			},
@@ -86,6 +90,7 @@ func TestUseCase_Update_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateSaved: func(t *testing.T, s *domain.Session) {
+				t.Helper()
 				require.NotNil(t, s.UserAgent)
 				require.Equal(t, "Mozilla/5.0 (iPhone)", *s.UserAgent)
 			},
@@ -100,6 +105,7 @@ func TestUseCase_Update_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateSaved: func(t *testing.T, s *domain.Session) {
+				t.Helper()
 				require.NotNil(t, s.FCMToken)
 				require.Equal(t, "fcm_token_123", *s.FCMToken)
 			},
@@ -114,6 +120,7 @@ func TestUseCase_Update_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateSaved: func(t *testing.T, s *domain.Session) {
+				t.Helper()
 				require.True(t, s.ExpiresAt.After(time.Now()))
 			},
 		},
@@ -127,6 +134,7 @@ func TestUseCase_Update_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateSaved: func(t *testing.T, s *domain.Session) {
+				t.Helper()
 				require.True(t, s.Revoked)
 			},
 		},
@@ -148,6 +156,7 @@ func TestUseCase_Update_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateSaved: func(t *testing.T, s *domain.Session) {
+				t.Helper()
 				require.NotEqual(t, uuid.Nil, s.ID)
 				require.NotEqual(t, uuid.Nil, s.DeviceID)
 				require.NotNil(t, s.DeviceName)

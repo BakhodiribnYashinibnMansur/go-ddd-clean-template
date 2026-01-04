@@ -3,9 +3,9 @@ package cache_test
 import (
 	"testing"
 
-	"gct/internal/usecase/cache"
+	"gct/pkg/cache"
+
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 type LRUTestCase struct {
@@ -100,17 +100,7 @@ func TestLRUCache_TableDriven(t *testing.T) {
 		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 
-			var c *cache.LRUCache
-			var err error
-
-			c, err = cache.NewLRUCache(tc.Capacity)
-
-			if tc.ExpectError {
-				require.Error(t, err)
-				return
-			}
-
-			require.NoError(t, err)
+			c := cache.NewLRUCache(tc.Capacity)
 
 			for _, op := range tc.Operations {
 				switch op.Type {

@@ -43,6 +43,7 @@ func TestUser_ComprehensiveFlow(t *testing.T) {
 		{
 			name: "Step 1: SignUp",
 			run: func(t *testing.T, ctx *TestContext) {
+				t.Helper()
 				resp := client.SignUp(t, ctx.Username, ctx.Phone, ctx.Password)
 				defer resp.Body.Close()
 				require.Equal(t, http.StatusCreated, resp.StatusCode)
@@ -51,6 +52,7 @@ func TestUser_ComprehensiveFlow(t *testing.T) {
 		{
 			name: "Step 2: SignIn",
 			run: func(t *testing.T, ctx *TestContext) {
+				t.Helper()
 				resp := client.SignIn(t, ctx.Phone, ctx.Password)
 				defer resp.Body.Close()
 				require.Equal(t, http.StatusOK, resp.StatusCode)
@@ -70,6 +72,7 @@ func TestUser_ComprehensiveFlow(t *testing.T) {
 		{
 			name: "Step 3: Get Profile",
 			run: func(t *testing.T, ctx *TestContext) {
+				t.Helper()
 				resp := client.Get(t, ctx.Token, ctx.UserID)
 				defer resp.Body.Close()
 				require.Equal(t, http.StatusOK, resp.StatusCode)
@@ -86,6 +89,7 @@ func TestUser_ComprehensiveFlow(t *testing.T) {
 		{
 			name: "Step 4: Update Profile",
 			run: func(t *testing.T, ctx *TestContext) {
+				t.Helper()
 				newName := "updated_name"
 				resp := client.Update(t, ctx.Token, ctx.UserID, newName)
 				defer resp.Body.Close()
@@ -104,6 +108,7 @@ func TestUser_ComprehensiveFlow(t *testing.T) {
 		{
 			name: "Step 5: Sign Out",
 			run: func(t *testing.T, ctx *TestContext) {
+				t.Helper()
 				resp := client.SignOut(t, ctx.Token)
 				defer resp.Body.Close()
 				require.Equal(t, http.StatusOK, resp.StatusCode)
@@ -112,6 +117,7 @@ func TestUser_ComprehensiveFlow(t *testing.T) {
 		{
 			name: "Step 6: Verify Unauthorized",
 			run: func(t *testing.T, ctx *TestContext) {
+				t.Helper()
 				// Allow some time for async token revocation if applicable
 				time.Sleep(10 * time.Millisecond)
 				resp := client.Get(t, ctx.Token, ctx.UserID)

@@ -48,7 +48,7 @@ func HandlePgError(ctx context.Context, err error, table string, extraFields map
 
 		// Add extra fields
 		for key, value := range extraFields {
-			appErr.WithField(key, value)
+			_ = appErr.WithField(key, value)
 		}
 
 		return appErr
@@ -84,7 +84,7 @@ func HandlePgError(ctx context.Context, err error, table string, extraFields map
 			WithDetails("A record with this unique constraint already exists")
 
 		for key, value := range extraFields {
-			appErr.WithField(key, value)
+			_ = appErr.WithField(key, value)
 		}
 		return appErr
 
@@ -101,7 +101,7 @@ func HandlePgError(ctx context.Context, err error, table string, extraFields map
 			WithDetails(pgErr.Message)
 
 		for key, value := range extraFields {
-			appErr.WithField(key, value)
+			_ = appErr.WithField(key, value)
 		}
 		return appErr
 
@@ -113,13 +113,13 @@ func HandlePgError(ctx context.Context, err error, table string, extraFields map
 		if table != "" {
 			_ = appErr.WithField("table", table)
 		}
-		appErr.WithField("constraint", pgErr.ConstraintName).
+		_ = appErr.WithField("constraint", pgErr.ConstraintName).
 			WithField("column", pgErr.ColumnName).
 			WithField("pg_code", pgErr.Code).
 			WithDetails("Required field cannot be null")
 
 		for key, value := range extraFields {
-			appErr.WithField(key, value)
+			_ = appErr.WithField(key, value)
 		}
 		return appErr
 
@@ -136,7 +136,7 @@ func HandlePgError(ctx context.Context, err error, table string, extraFields map
 			WithDetails(pgErr.Message)
 
 		for key, value := range extraFields {
-			appErr.WithField(key, value)
+			_ = appErr.WithField(key, value)
 		}
 		return appErr
 
@@ -153,7 +153,7 @@ func HandlePgError(ctx context.Context, err error, table string, extraFields map
 			WithDetails(pgErr.Message)
 
 		for key, value := range extraFields {
-			appErr.WithField(key, value)
+			_ = appErr.WithField(key, value)
 		}
 		return appErr
 
@@ -251,7 +251,7 @@ func HandlePgError(ctx context.Context, err error, table string, extraFields map
 			WithDetails(pgErr.Message)
 
 		for key, value := range extraFields {
-			appErr.WithField(key, value)
+			_ = appErr.WithField(key, value)
 		}
 		return appErr
 	}
@@ -266,12 +266,12 @@ func handleConnectionError(ctx context.Context, pgErr *pgconn.PgError, table str
 	if table != "" {
 		_ = appErr.WithField("table", table)
 	}
-	appErr.WithField("pg_code", pgErr.Code).
+	_ = appErr.WithField("pg_code", pgErr.Code).
 		WithField("pg_severity", pgErr.Severity).
 		WithDetails(pgErr.Message)
 
 	for key, value := range extraFields {
-		appErr.WithField(key, value)
+		_ = appErr.WithField(key, value)
 	}
 	return appErr
 }
@@ -285,13 +285,13 @@ func handleDataException(ctx context.Context, pgErr *pgconn.PgError, table strin
 	if table != "" {
 		_ = appErr.WithField("table", table)
 	}
-	appErr.WithField("pg_code", pgErr.Code).
+	_ = appErr.WithField("pg_code", pgErr.Code).
 		WithField("pg_severity", pgErr.Severity).
 		WithField("column", pgErr.ColumnName).
 		WithDetails(pgErr.Message)
 
 	for key, value := range extraFields {
-		appErr.WithField(key, value)
+		_ = appErr.WithField(key, value)
 	}
 	return appErr
 }
@@ -305,12 +305,12 @@ func handleTransactionError(ctx context.Context, pgErr *pgconn.PgError, table st
 	if table != "" {
 		_ = appErr.WithField("table", table)
 	}
-	appErr.WithField("pg_code", pgErr.Code).
+	_ = appErr.WithField("pg_code", pgErr.Code).
 		WithField("pg_severity", pgErr.Severity).
 		WithDetails(pgErr.Message)
 
 	for key, value := range extraFields {
-		appErr.WithField(key, value)
+		_ = appErr.WithField(key, value)
 	}
 	return appErr
 }
@@ -326,11 +326,11 @@ func handleTransactionRollback(ctx context.Context, pgErr *pgconn.PgError, table
 		if table != "" {
 			_ = appErr.WithField("table", table)
 		}
-		appErr.WithField("pg_code", pgErr.Code).
+		_ = appErr.WithField("pg_code", pgErr.Code).
 			WithDetails("Transaction deadlock detected, please retry")
 
 		for key, value := range extraFields {
-			appErr.WithField(key, value)
+			_ = appErr.WithField(key, value)
 		}
 		return appErr
 	}
@@ -342,12 +342,12 @@ func handleTransactionRollback(ctx context.Context, pgErr *pgconn.PgError, table
 	if table != "" {
 		_ = appErr.WithField("table", table)
 	}
-	appErr.WithField("pg_code", pgErr.Code).
+	_ = appErr.WithField("pg_code", pgErr.Code).
 		WithField("pg_severity", pgErr.Severity).
 		WithDetails(pgErr.Message)
 
 	for key, value := range extraFields {
-		appErr.WithField(key, value)
+		_ = appErr.WithField(key, value)
 	}
 	return appErr
 }
@@ -361,12 +361,12 @@ func handleResourceError(ctx context.Context, pgErr *pgconn.PgError, table strin
 	if table != "" {
 		_ = appErr.WithField("table", table)
 	}
-	appErr.WithField("pg_code", pgErr.Code).
+	_ = appErr.WithField("pg_code", pgErr.Code).
 		WithField("pg_severity", pgErr.Severity).
 		WithDetails(pgErr.Message)
 
 	for key, value := range extraFields {
-		appErr.WithField(key, value)
+		_ = appErr.WithField(key, value)
 	}
 	return appErr
 }
@@ -380,12 +380,12 @@ func handleProgramLimitError(ctx context.Context, pgErr *pgconn.PgError, table s
 	if table != "" {
 		_ = appErr.WithField("table", table)
 	}
-	appErr.WithField("pg_code", pgErr.Code).
+	_ = appErr.WithField("pg_code", pgErr.Code).
 		WithField("pg_severity", pgErr.Severity).
 		WithDetails(pgErr.Message)
 
 	for key, value := range extraFields {
-		appErr.WithField(key, value)
+		_ = appErr.WithField(key, value)
 	}
 	return appErr
 }
@@ -401,11 +401,11 @@ func handlePrerequisiteError(ctx context.Context, pgErr *pgconn.PgError, table s
 		if table != "" {
 			_ = appErr.WithField("table", table)
 		}
-		appErr.WithField("pg_code", pgErr.Code).
+		_ = appErr.WithField("pg_code", pgErr.Code).
 			WithDetails("Could not acquire lock on requested resource")
 
 		for key, value := range extraFields {
-			appErr.WithField(key, value)
+			_ = appErr.WithField(key, value)
 		}
 		return appErr
 	}
@@ -417,12 +417,12 @@ func handlePrerequisiteError(ctx context.Context, pgErr *pgconn.PgError, table s
 	if table != "" {
 		_ = appErr.WithField("table", table)
 	}
-	appErr.WithField("pg_code", pgErr.Code).
+	_ = appErr.WithField("pg_code", pgErr.Code).
 		WithField("pg_severity", pgErr.Severity).
 		WithDetails(pgErr.Message)
 
 	for key, value := range extraFields {
-		appErr.WithField(key, value)
+		_ = appErr.WithField(key, value)
 	}
 	return appErr
 }
@@ -438,11 +438,11 @@ func handleOperatorIntervention(ctx context.Context, pgErr *pgconn.PgError, tabl
 		if table != "" {
 			_ = appErr.WithField("table", table)
 		}
-		appErr.WithField("pg_code", pgErr.Code).
+		_ = appErr.WithField("pg_code", pgErr.Code).
 			WithDetails("Query was canceled by user or timeout")
 
 		for key, value := range extraFields {
-			appErr.WithField(key, value)
+			_ = appErr.WithField(key, value)
 		}
 		return appErr
 	}
@@ -454,12 +454,12 @@ func handleOperatorIntervention(ctx context.Context, pgErr *pgconn.PgError, tabl
 	if table != "" {
 		_ = appErr.WithField("table", table)
 	}
-	appErr.WithField("pg_code", pgErr.Code).
+	_ = appErr.WithField("pg_code", pgErr.Code).
 		WithField("pg_severity", pgErr.Severity).
 		WithDetails(pgErr.Message)
 
 	for key, value := range extraFields {
-		appErr.WithField(key, value)
+		_ = appErr.WithField(key, value)
 	}
 	return appErr
 }
@@ -473,12 +473,12 @@ func handleSystemError(ctx context.Context, pgErr *pgconn.PgError, table string,
 	if table != "" {
 		_ = appErr.WithField("table", table)
 	}
-	appErr.WithField("pg_code", pgErr.Code).
+	_ = appErr.WithField("pg_code", pgErr.Code).
 		WithField("pg_severity", pgErr.Severity).
 		WithDetails(pgErr.Message)
 
 	for key, value := range extraFields {
-		appErr.WithField(key, value)
+		_ = appErr.WithField(key, value)
 	}
 	return appErr
 }

@@ -39,6 +39,7 @@ func TestUseCase_SignIn_TableDriven(t *testing.T) {
 			}(),
 			expectError: false,
 			validateToken: func(t *testing.T, out *domain.SignInOut) {
+				t.Helper()
 				require.NotEmpty(t, out.AccessToken)
 				require.NotEmpty(t, out.RefreshToken)
 			},
@@ -60,6 +61,7 @@ func TestUseCase_SignIn_TableDriven(t *testing.T) {
 			}(),
 			expectError: false,
 			validateToken: func(t *testing.T, out *domain.SignInOut) {
+				t.Helper()
 				require.NotEmpty(t, out.AccessToken)
 				require.NotEmpty(t, out.RefreshToken)
 			},
@@ -81,6 +83,7 @@ func TestUseCase_SignIn_TableDriven(t *testing.T) {
 			}(),
 			expectError: false,
 			validateToken: func(t *testing.T, out *domain.SignInOut) {
+				t.Helper()
 				require.NotEmpty(t, out.AccessToken)
 				require.NotEmpty(t, out.RefreshToken)
 			},
@@ -102,6 +105,7 @@ func TestUseCase_SignIn_TableDriven(t *testing.T) {
 			}(),
 			expectError: false,
 			validateToken: func(t *testing.T, out *domain.SignInOut) {
+				t.Helper()
 				require.NotEmpty(t, out.AccessToken)
 				require.NotEmpty(t, out.RefreshToken)
 			},
@@ -194,6 +198,7 @@ func TestUseCase_SignIn_TableDriven(t *testing.T) {
 			}(),
 			expectError: false,
 			validateToken: func(t *testing.T, out *domain.SignInOut) {
+				t.Helper()
 				require.NotEmpty(t, out.AccessToken)
 				require.NotEmpty(t, out.RefreshToken)
 			},

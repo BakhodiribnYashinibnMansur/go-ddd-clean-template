@@ -31,6 +31,7 @@ func TestUseCase_SignUp_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateSaved: func(t *testing.T, u *domain.User) {
+				t.Helper()
 				require.NotNil(t, u.Username)
 				require.Equal(t, "testuser", *u.Username)
 				require.Equal(t, "123456789", *u.Phone)
@@ -49,6 +50,7 @@ func TestUseCase_SignUp_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateSaved: func(t *testing.T, u *domain.User) {
+				t.Helper()
 				require.NotNil(t, u.Username)
 				require.Equal(t, "", *u.Username)
 				require.Equal(t, "123456789", *u.Phone)
@@ -64,6 +66,7 @@ func TestUseCase_SignUp_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateSaved: func(t *testing.T, u *domain.User) {
+				t.Helper()
 				require.Equal(t, "", *u.Phone)
 				require.NotNil(t, u.Username)
 				require.Equal(t, "testuser", *u.Username)
@@ -89,6 +92,7 @@ func TestUseCase_SignUp_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateSaved: func(t *testing.T, u *domain.User) {
+				t.Helper()
 				require.Equal(t, "123456789", *u.Phone)
 				require.NotNil(t, u.Username)
 				require.Equal(t, "testuser", *u.Username)
@@ -116,6 +120,7 @@ func TestUseCase_SignUp_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateSaved: func(t *testing.T, u *domain.User) {
+				t.Helper()
 				require.NotNil(t, u.Username)
 				require.Equal(t, "verylongusernamethatmightstillwork", *u.Username)
 			},
@@ -130,6 +135,7 @@ func TestUseCase_SignUp_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateSaved: func(t *testing.T, u *domain.User) {
+				t.Helper()
 				require.Equal(t, "123456789", *u.Phone)
 				require.NotNil(t, u.Username)
 				require.Equal(t, "testuser", *u.Username)
@@ -147,6 +153,7 @@ func TestUseCase_SignUp_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateSaved: func(t *testing.T, u *domain.User) {
+				t.Helper()
 				require.Equal(t, "9876543210", *u.Phone)
 				require.NotNil(t, u.Username)
 				require.Equal(t, "testuser", *u.Username)
