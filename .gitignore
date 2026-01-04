@@ -53,3 +53,9 @@ test/report/*.txt
 
 *.pem
 *.txt
+
+# Logs and Reports
+logs/
+log/
+docs/report/
+tmp/
