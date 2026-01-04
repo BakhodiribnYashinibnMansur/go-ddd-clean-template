@@ -21,6 +21,7 @@ func New(endpoint string) *Client {
 
 // SignUp creates a new user account
 func (c *Client) SignUp(t *testing.T, username, phone, password string) *http.Response {
+	t.Helper()
 	body, _ := json.Marshal(map[string]string{
 		"username": username,
 		"phone":    phone,
@@ -41,6 +42,7 @@ func (c *Client) SignUp(t *testing.T, username, phone, password string) *http.Re
 
 // SignIn authenticates a user and returns tokens
 func (c *Client) SignIn(t *testing.T, phone, password string) *http.Response {
+	t.Helper()
 	body, _ := json.Marshal(map[string]string{
 		"phone":    phone,
 		"password": password,
@@ -60,6 +62,7 @@ func (c *Client) SignIn(t *testing.T, phone, password string) *http.Response {
 
 // SignOut revokes the current session
 func (c *Client) SignOut(t *testing.T, token string) *http.Response {
+	t.Helper()
 	req, err := http.NewRequest(http.MethodPost, c.endpoint+"/api/v1/users/sign-out", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -75,6 +78,7 @@ func (c *Client) SignOut(t *testing.T, token string) *http.Response {
 
 // Get retrieves user details by ID
 func (c *Client) Get(t *testing.T, token, userID string) *http.Response {
+	t.Helper()
 	req, err := http.NewRequest(http.MethodGet, c.endpoint+"/api/v1/users/"+userID, nil)
 	if err != nil {
 		t.Fatal(err)
@@ -90,6 +94,7 @@ func (c *Client) Get(t *testing.T, token, userID string) *http.Response {
 
 // Update modifies user information
 func (c *Client) Update(t *testing.T, token, userID, username string) *http.Response {
+	t.Helper()
 	body, _ := json.Marshal(map[string]string{
 		"username": username,
 	})
@@ -109,6 +114,7 @@ func (c *Client) Update(t *testing.T, token, userID, username string) *http.Resp
 
 // Delete removes a user account
 func (c *Client) Delete(t *testing.T, token, userID string) *http.Response {
+	t.Helper()
 	req, err := http.NewRequest(http.MethodDelete, c.endpoint+"/api/v1/users/"+userID, nil)
 	if err != nil {
 		t.Fatal(err)

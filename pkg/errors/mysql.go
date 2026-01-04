@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/go-sql-driver/mysql"
@@ -333,7 +334,7 @@ func handleMySQLSpecificError(ctx context.Context, mysqlErr *mysql.MySQLError, t
 	// ============================================================================
 	default:
 		appErr := AutoSource(
-			WrapRepoError(ctx, errors.New(mysqlErr.Message), ErrRepoDatabase,
+			WrapRepoError(ctx, fmt.Errorf("mysql error: %s", mysqlErr.Message), ErrRepoDatabase,
 				"mysql error"))
 
 		if table != "" {

@@ -1,12 +1,11 @@
 package container
 
 import (
-	"fmt"
+	"strconv"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"gct/config"
+	"github.com/stretchr/testify/assert"
 )
 
 // TestPostgresConfig_TableDriven tests PostgreSQL configuration scenarios
@@ -314,7 +313,7 @@ func TestPostgresConnectionStrings_TableDriven(t *testing.T) {
 func generateConnectionString(cfg config.Database) string {
 	pg := cfg.Postgres
 	connStr := "host=" + pg.Host
-	connStr += " port=" + fmt.Sprintf("%d", pg.Port)
+	connStr += " port=" + strconv.Itoa(pg.Port)
 	connStr += " user=" + pg.User
 	connStr += " password=" + pg.Password
 	connStr += " dbname=" + pg.Name

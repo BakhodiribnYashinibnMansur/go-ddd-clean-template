@@ -3,10 +3,9 @@ package role
 import (
 	"context"
 
-	"github.com/google/uuid"
-
 	"gct/internal/domain"
 	apperrors "gct/pkg/errors"
+	"github.com/google/uuid"
 )
 
 func (u *UseCase) Assign(ctx context.Context, userID, roleID uuid.UUID) error {

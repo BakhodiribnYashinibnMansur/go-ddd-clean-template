@@ -1,23 +1,21 @@
 package session
 
 import (
-	"context"
 	"errors"
 	"testing"
 	"time"
 
+	"gct/internal/domain"
+	"gct/pkg/logger"
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
 	"github.com/pashagolub/pgxmock/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"gct/internal/domain"
-	"gct/pkg/logger"
 )
 
 func TestRepo_Gets(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	now := time.Now()
 
 	sID1 := uuid.New()
@@ -313,7 +311,7 @@ func TestRepo_Gets(t *testing.T) {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
-				assert.Equal(t, tt.expectedSessions, len(sessions))
+				assert.Len(t, sessions, tt.expectedSessions)
 				assert.Equal(t, tt.expectedCount, count)
 			}
 			assert.NoError(t, mockPool.ExpectationsWereMet())

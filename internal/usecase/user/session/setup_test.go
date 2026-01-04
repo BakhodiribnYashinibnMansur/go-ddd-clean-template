@@ -10,7 +10,6 @@ import (
 	"gct/internal/repo/persistent/postgres/user"
 	sessionUC "gct/internal/usecase/user/session"
 	"gct/pkg/logger"
-
 	"github.com/stretchr/testify/mock"
 )
 

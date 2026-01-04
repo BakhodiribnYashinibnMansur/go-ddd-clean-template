@@ -1,6 +1,9 @@
 package errors
 
-import "context"
+import (
+	"context"
+	"errors"
+)
 
 // ============================================================================
 // Service Layer Error Codes
@@ -92,7 +95,8 @@ func MapRepoToServiceError(ctx context.Context, err error, notFoundCode ...strin
 	}
 
 	// If it's already our AppError, check the code
-	if appErr, ok := err.(*AppError); ok {
+	var appErr *AppError
+	if errors.As(err, &appErr) {
 		switch appErr.Type {
 		case ErrRepoNotFound:
 			code := ErrServiceNotFound

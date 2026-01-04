@@ -3,11 +3,10 @@ package permission
 import (
 	"context"
 
-	"github.com/Masterminds/squirrel"
-	"github.com/google/uuid"
-
 	"gct/internal/domain"
 	apperrors "gct/pkg/errors"
+	"github.com/Masterminds/squirrel"
+	"github.com/google/uuid"
 )
 
 func (r *Repo) GetScopes(ctx context.Context, permID uuid.UUID) ([]*domain.Scope, error) {

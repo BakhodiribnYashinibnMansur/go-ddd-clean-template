@@ -2,7 +2,6 @@ package logger
 
 import (
 	"bytes"
-	"errors"
 	"os"
 	"os/exec"
 	"strings"
@@ -11,8 +10,6 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
-
-var errTest = errors.New("test error")
 
 // newBufferedLogger. Helper to replace underlying zap writer with a buffer and capture logs.
 func newBufferedLogger(level string) (*Logger, *bytes.Buffer) {

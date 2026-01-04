@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"gct/pkg/logger"
-
 	"github.com/go-redis/redismock/v9"
 	"github.com/jackc/pgx/v5"
 	"github.com/pashagolub/pgxmock/v4"

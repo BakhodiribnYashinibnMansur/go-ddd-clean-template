@@ -102,7 +102,7 @@ func TestUseCase_DeleteFile_TableDriven(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // parallel safety
+		// parallel safety
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 

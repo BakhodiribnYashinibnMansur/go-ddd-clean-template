@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -28,7 +29,7 @@ func (h *HashTable[V]) Get(key string, delete bool) (map[string]V, error) {
 	ctx := context.Background()
 	valMap, err := h.db.HGetAll(ctx, key).Result()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get hash table from key %s: %w", key, err)
 	}
 
 	res := make(map[string]V, len(valMap))
@@ -38,7 +39,7 @@ func (h *HashTable[V]) Get(key string, delete bool) (map[string]V, error) {
 		cmd.SetVal(s)
 		err := cmd.Scan(&v)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to scan hash value for key %s: %w", k, err)
 		}
 		res[k] = v
 	}
@@ -46,7 +47,7 @@ func (h *HashTable[V]) Get(key string, delete bool) (map[string]V, error) {
 	if delete {
 		err = h.db.Del(ctx, key).Err()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to delete hash table key %s: %w", key, err)
 		}
 	}
 	return res, nil
@@ -61,7 +62,10 @@ func (h *HashTable[V]) Set(key string, hashKey map[string]V, expirationTime time
 
 	// If empty map, delete the key
 	if len(hashKey) == 0 {
-		return h.db.Del(ctx, key).Err()
+		if err := h.db.Del(ctx, key).Err(); err != nil {
+			return fmt.Errorf("failed to delete empty hash table key %s: %w", key, err)
+		}
+		return nil
 	}
 
 	marshalledMap := make(map[string]any, len(hashKey))
@@ -71,18 +75,21 @@ func (h *HashTable[V]) Set(key string, hashKey map[string]V, expirationTime time
 
 	err := h.db.HMSet(ctx, key, marshalledMap).Err()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to set hash table key %s: %w", key, err)
 	}
 	// Only set expiration if it's greater than 0
 	if expirationTime > 0 {
 		err = h.db.Expire(ctx, key, expirationTime).Err()
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to set expiration for hash table key %s: %w", key, err)
 		}
 	}
 	return nil
 }
 
 func (h *HashTable[V]) Delete(key string) error {
-	return h.db.Del(context.Background(), key).Err()
+	if err := h.db.Del(context.Background(), key).Err(); err != nil {
+		return fmt.Errorf("failed to delete hash table key %s: %w", key, err)
+	}
+	return nil
 }

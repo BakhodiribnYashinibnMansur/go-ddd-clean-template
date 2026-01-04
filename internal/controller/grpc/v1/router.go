@@ -1,11 +1,10 @@
 package v1
 
 import (
-	"github.com/go-playground/validator/v10"
-	pbgrpc "google.golang.org/grpc"
-
 	"gct/internal/usecase"
 	"gct/pkg/logger"
+	"github.com/go-playground/validator/v10"
+	pbgrpc "google.golang.org/grpc"
 )
 
 // NewUserRoutes -.

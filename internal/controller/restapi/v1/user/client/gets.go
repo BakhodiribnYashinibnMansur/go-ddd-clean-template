@@ -3,11 +3,12 @@ package client
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
-
+	"gct/consts"
 	"gct/internal/controller/restapi/response"
 	"gct/internal/controller/restapi/util"
 	"gct/internal/domain"
+	"gct/internal/domain/mock"
+	"github.com/gin-gonic/gin"
 )
 
 // Users godoc
@@ -33,7 +34,7 @@ func (c *Controller) Users(ctx *gin.Context) {
 	filter := domain.UsersFilter{
 		UserFilter: domain.UserFilter{
 			Phone: func() *string {
-				p := util.GetNullStringQuery(ctx, "phone")
+				p := util.GetNullStringQuery(ctx, consts.QueryPhone)
 				if p == "" {
 					return nil
 				}
@@ -41,6 +42,11 @@ func (c *Controller) Users(ctx *gin.Context) {
 			}(),
 		},
 		Pagination: &pagination,
+	}
+
+	// Handle mock mode
+	if util.Mock(ctx, util.MockTypeGets, func(count int) any { return mock.Users(count) }) {
+		return
 	}
 
 	users, total, err := c.u.User.Client.Gets(ctx.Request.Context(), &filter)

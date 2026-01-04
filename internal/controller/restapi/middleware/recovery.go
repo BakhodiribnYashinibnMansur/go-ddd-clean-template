@@ -4,9 +4,8 @@ import (
 	"net/http"
 	"runtime/debug"
 
-	"github.com/gin-gonic/gin"
-
 	"gct/pkg/logger"
+	"github.com/gin-gonic/gin"
 )
 
 // Recovery -.

@@ -2,6 +2,7 @@ package pubsub
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -20,7 +21,10 @@ func New(client *redis.Client) *PubSub {
 
 // Publish publishes a message to a channel
 func (p *PubSub) Publish(ctx context.Context, channel string, message any) error {
-	return p.client.Publish(ctx, channel, message).Err()
+	if err := p.client.Publish(ctx, channel, message).Err(); err != nil {
+		return fmt.Errorf("failed to publish message to channel %s: %w", channel, err)
+	}
+	return nil
 }
 
 // Subscribe subscribes to channels and returns a PubSub instance
@@ -35,15 +39,25 @@ func (p *PubSub) PSubscribe(ctx context.Context, patterns ...string) *redis.PubS
 
 // ReceiveMessage receives a message from subscribed channels
 func (p *PubSub) ReceiveMessage(ctx context.Context, pubsub *redis.PubSub) (*redis.Message, error) {
-	return pubsub.ReceiveMessage(ctx)
+	msg, err := pubsub.ReceiveMessage(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to receive message from pubsub: %w", err)
+	}
+	return msg, nil
 }
 
 // Unsubscribe unsubscribes from channels
 func (p *PubSub) Unsubscribe(ctx context.Context, pubsub *redis.PubSub, channels ...string) error {
-	return pubsub.Unsubscribe(ctx, channels...)
+	if err := pubsub.Unsubscribe(ctx, channels...); err != nil {
+		return fmt.Errorf("failed to unsubscribe from channels %v: %w", channels, err)
+	}
+	return nil
 }
 
 // Close closes the PubSub connection
 func (p *PubSub) Close(pubsub *redis.PubSub) error {
-	return pubsub.Close()
+	if err := pubsub.Close(); err != nil {
+		return fmt.Errorf("failed to close pubsub connection: %w", err)
+	}
+	return nil
 }

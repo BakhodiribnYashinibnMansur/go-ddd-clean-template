@@ -3,11 +3,10 @@ package permission
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
-
 	"gct/consts"
 	"gct/internal/controller/restapi/response"
 	"gct/internal/controller/restapi/util"
+	"github.com/gin-gonic/gin"
 )
 
 // Delete godoc
@@ -26,6 +25,11 @@ func (c *Controller) Delete(ctx *gin.Context) {
 	if err != nil {
 		util.LogError(c.l, err, "http - v1 - authz - permission - delete - uuid")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid permission id", nil, false)
+		return
+	}
+
+	// Handle mock mode
+	if util.Mock(ctx, util.MockTypeDelete, "Permission deleted successfully") {
 		return
 	}
 

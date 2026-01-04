@@ -1,7 +1,6 @@
 package store
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -95,7 +94,6 @@ func TestHashTable_SetGet(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // parallel safety
 		t.Run(tt.name, func(t *testing.T) {
 			// arrange
 			client, _ := newTestRedis(t)
@@ -138,7 +136,7 @@ func TestHashTable_Pop(t *testing.T) {
 	assert.Equal(t, val, got)
 
 	// Should be deleted
-	exists, err := client.Exists(context.Background(), key).Result()
+	exists, err := client.Exists(t.Context(), key).Result()
 	require.NoError(t, err)
 	assert.Equal(t, int64(0), exists)
 }
@@ -157,7 +155,7 @@ func TestHashTable_Delete(t *testing.T) {
 	err = h.Delete(key)
 	require.NoError(t, err)
 
-	exists, err := client.Exists(context.Background(), key).Result()
+	exists, err := client.Exists(t.Context(), key).Result()
 	require.NoError(t, err)
 	assert.Equal(t, int64(0), exists)
 }

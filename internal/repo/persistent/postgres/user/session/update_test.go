@@ -1,23 +1,21 @@
 package session
 
 import (
-	"context"
 	"errors"
 	"testing"
 	"time"
 
+	"gct/internal/domain"
+	"gct/pkg/logger"
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
 	"github.com/pashagolub/pgxmock/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"gct/internal/domain"
-	"gct/pkg/logger"
 )
 
 func TestRepo_Update(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	sID := uuid.New()
 	fcm := "new_fcm"
 
@@ -228,7 +226,7 @@ func TestRepo_Update(t *testing.T) {
 }
 
 func TestRepo_Revoke(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	sID := uuid.New()
 	filter := &domain.SessionFilter{ID: &sID}
 

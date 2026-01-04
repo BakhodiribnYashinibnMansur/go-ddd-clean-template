@@ -3,16 +3,15 @@ package permission
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
-
 	"gct/consts"
 	"gct/internal/controller/restapi/response"
 	"gct/internal/controller/restapi/util"
+	"github.com/gin-gonic/gin"
 )
 
 type ScopeRequest struct {
-	Path   string `json:"path" binding:"required"`
-	Method string `json:"method" binding:"required"`
+	Path   string `binding:"required" json:"path"`
+	Method string `binding:"required" json:"method"`
 }
 
 // AssignScope godoc
@@ -39,6 +38,11 @@ func (c *Controller) AssignScope(ctx *gin.Context) {
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		util.LogError(c.l, err, "http - v1 - authz - permission - assign_scope - bind")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid request body", nil, false)
+		return
+	}
+
+	// Handle mock mode
+	if util.Mock(ctx, util.MockTypeUpdate, "Scope assigned successfully") {
 		return
 	}
 
@@ -75,6 +79,11 @@ func (c *Controller) RemoveScope(ctx *gin.Context) {
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		util.LogError(c.l, err, "http - v1 - authz - permission - remove_scope - bind")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid request body", nil, false)
+		return
+	}
+
+	// Handle mock mode
+	if util.Mock(ctx, util.MockTypeDelete, "Scope removed successfully") {
 		return
 	}
 

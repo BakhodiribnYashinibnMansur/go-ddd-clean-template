@@ -4,12 +4,13 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
-
+	"gct/consts"
 	"gct/internal/controller/restapi/response"
 	"gct/internal/controller/restapi/util"
 	"gct/internal/domain"
+	"gct/internal/domain/mock"
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 // Gets godoc
@@ -42,7 +43,7 @@ func (c *Controller) Gets(ctx *gin.Context) {
 		Pagination: &pagination,
 		AuditLogFilter: domain.AuditLogFilter{
 			ResourceType: func() *string {
-				s := util.GetNullStringQuery(ctx, "resource_type")
+				s := util.GetNullStringQuery(ctx, consts.QueryResourceType)
 				if s == "" {
 					return nil
 				}
@@ -51,7 +52,7 @@ func (c *Controller) Gets(ctx *gin.Context) {
 		},
 	}
 
-	userIDStr := util.GetNullStringQuery(ctx, "user_id")
+	userIDStr := util.GetNullStringQuery(ctx, consts.QueryUserID)
 	if userIDStr != "" {
 		uid, err := uuid.Parse(userIDStr)
 		if err == nil {
@@ -59,13 +60,13 @@ func (c *Controller) Gets(ctx *gin.Context) {
 		}
 	}
 
-	actionStr := util.GetNullStringQuery(ctx, "action")
+	actionStr := util.GetNullStringQuery(ctx, consts.QueryAction)
 	if actionStr != "" {
 		act := domain.AuditActionType(actionStr)
 		filter.Action = &act
 	}
 
-	reqIDStr := util.GetNullStringQuery(ctx, "resource_id")
+	reqIDStr := util.GetNullStringQuery(ctx, consts.QueryResourceID)
 	if reqIDStr != "" {
 		rid, err := uuid.Parse(reqIDStr)
 		if err == nil {
@@ -73,7 +74,7 @@ func (c *Controller) Gets(ctx *gin.Context) {
 		}
 	}
 
-	successStr := util.GetNullStringQuery(ctx, "success")
+	successStr := util.GetNullStringQuery(ctx, consts.QuerySuccess)
 	if successStr == "true" {
 		t := true
 		filter.Success = &t
@@ -82,7 +83,7 @@ func (c *Controller) Gets(ctx *gin.Context) {
 		filter.Success = &f
 	}
 
-	fromDateStr := util.GetNullStringQuery(ctx, "from_date")
+	fromDateStr := util.GetNullStringQuery(ctx, consts.QueryFromDate)
 	if fromDateStr != "" {
 		t, err := time.Parse(time.RFC3339, fromDateStr)
 		if err == nil {
@@ -90,12 +91,17 @@ func (c *Controller) Gets(ctx *gin.Context) {
 		}
 	}
 
-	toDateStr := util.GetNullStringQuery(ctx, "to_date")
+	toDateStr := util.GetNullStringQuery(ctx, consts.QueryToDate)
 	if toDateStr != "" {
 		t, err := time.Parse(time.RFC3339, toDateStr)
 		if err == nil {
 			filter.ToDate = &t
 		}
+	}
+
+	// Handle mock mode
+	if util.Mock(ctx, util.MockTypeGets, func(count int) any { return mock.AuditLogs(count) }) {
+		return
 	}
 
 	logs, total, err := c.u.Audit.Log.Gets(ctx.Request.Context(), &filter)

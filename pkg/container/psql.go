@@ -7,13 +7,12 @@ import (
 	"log"
 	"time"
 
+	"gct/config"
 	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib" // pgx stdlib driver
 	"github.com/pressly/goose"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
-
-	"gct/config"
 )
 
 // RunPostgresTestContainer is a function that runs a postgres test container
@@ -43,7 +42,7 @@ func RunPostgresTestContainer(cfg config.Database, schemaPath string) (*pgxpool.
 
 	// Test connection with retry
 	var pingErr error
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		pingErr = pool.Ping(ctx)
 		if pingErr == nil {
 			break

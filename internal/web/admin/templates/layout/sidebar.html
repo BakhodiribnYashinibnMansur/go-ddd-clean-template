@@ -84,6 +84,13 @@
         </a>
         {{ end }}
 
+        {{ if .Can.linter_view }}
+        <a href="/admin/linter" class="nav-item {{ if eq .ActivePage " linter" }}active{{ end }}">
+            <i class="material-symbols-outlined">code</i>
+            Code Linter
+        </a>
+        {{ end }}
+
         <div style="margin-top: auto;"></div>
         {{ if .Can.settings_view }}
         <a href="/admin/settings" class="nav-item {{ if eq .ActivePage " settings" }}active{{ end }}">

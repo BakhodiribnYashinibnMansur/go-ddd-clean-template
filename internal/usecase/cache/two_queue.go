@@ -84,7 +84,7 @@ func (c *TwoQueueCache) Get(key string) (any, bool) {
 
 	// Check Am (Q2) or A1in (Q1)
 	if elem, ok := c.items[key]; ok {
-		entry := elem.Value.(*twoQueueEntry) //nolint:forcetypeassert // safe: we control the type
+		entry := elem.Value.(*twoQueueEntry) // safe: we control the type
 
 		// If it's already in Q2, move to MRU (front) of Q2
 		if entry.q == inQ2 {
@@ -129,7 +129,7 @@ func (c *TwoQueueCache) Set(key string, value any) {
 
 	// 1. If key exists in memory (Q1 or Q2)
 	if elem, ok := c.items[key]; ok {
-		entry := elem.Value.(*twoQueueEntry) //nolint:forcetypeassert // safe: we control the type
+		entry := elem.Value.(*twoQueueEntry) // safe: we control the type
 		entry.value = value
 
 		// Move to MRU of its respective list
@@ -171,7 +171,7 @@ func (c *TwoQueueCache) ensureA1InCapacity() {
 		elem := c.q1.Back()
 		if elem != nil {
 			c.q1.Remove(elem)
-			entry := elem.Value.(*twoQueueEntry) //nolint:forcetypeassert // safe: we control the type
+			entry := elem.Value.(*twoQueueEntry) // safe: we control the type
 			delete(c.items, entry.key)
 
 			// Transfer key to A1out history
@@ -191,7 +191,7 @@ func (c *TwoQueueCache) ensureAmCapacity() {
 		elem := c.q2.Back()
 		if elem != nil {
 			c.q2.Remove(elem)
-			entry := elem.Value.(*twoQueueEntry) //nolint:forcetypeassert // safe: we control the type
+			entry := elem.Value.(*twoQueueEntry) // safe: we control the type
 			delete(c.items, entry.key)
 		}
 	}
@@ -204,7 +204,7 @@ func (c *TwoQueueCache) ensureA1OutCapacity() {
 		elem := c.qout.Back()
 		if elem != nil {
 			c.qout.Remove(elem)
-			key := elem.Value.(string) //nolint:forcetypeassert // safe: we control the type
+			key := elem.Value.(string) // safe: we control the type
 			delete(c.outItems, key)
 		}
 	}
@@ -216,7 +216,7 @@ func (c *TwoQueueCache) Delete(key string) {
 	defer c.mu.Unlock()
 
 	if elem, ok := c.items[key]; ok {
-		entry := elem.Value.(*twoQueueEntry) //nolint:forcetypeassert // safe: we control the type
+		entry := elem.Value.(*twoQueueEntry) // safe: we control the type
 		if entry.q == inQ1 {
 			c.q1.Remove(elem)
 		} else {

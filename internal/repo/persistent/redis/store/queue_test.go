@@ -83,7 +83,6 @@ func TestQueue_PushPop(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // parallel safety
 		t.Run(tt.name, func(t *testing.T) {
 			// arrange
 			client, _ := newTestRedis(t)
@@ -145,7 +144,7 @@ func TestQueue_Contains(t *testing.T) {
 
 	// Note: Contains implementation only checks index 0
 	// func (q *Queue[T]) Contains(key string, value T) (bool, error) {
-	// 	valStr, err := q.db.LIndex(context.Background(), key, 0).Result()
+	// 	valStr, err := q.db.LIndex(t.Context(), key, 0).Result()
 	//     ...
 	// }
 

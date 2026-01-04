@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"gct/internal/usecase/cache"
-
 	"github.com/stretchr/testify/assert"
 )
 
@@ -120,7 +119,7 @@ func TestLFUCache_TableDriven(t *testing.T) {
 				case "set":
 					c.Set(op.Key, op.Value)
 				case "get":
-					for i := 0; i < op.AccessCount; i++ {
+					for i := range op.AccessCount {
 						val, ok := c.Get(op.Key)
 						if i == op.AccessCount-1 { // Only check on last access
 							assert.Equal(t, op.ExpectedOK, ok)

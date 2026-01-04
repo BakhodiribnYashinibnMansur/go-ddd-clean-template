@@ -3,13 +3,13 @@ package client
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
-
 	"gct/consts"
 	"gct/internal/controller/restapi/cookie"
 	"gct/internal/controller/restapi/response"
 	"gct/internal/controller/restapi/util"
 	"gct/internal/domain"
+	"gct/internal/domain/mock"
+	"github.com/gin-gonic/gin"
 )
 
 // SignIn godoc
@@ -37,12 +37,17 @@ func (c *Controller) SignIn(ctx *gin.Context) {
 		phone = *user.Phone
 	}
 
+	// Handle mock mode
+	if util.Mock(ctx, util.MockTypeGet, func() any { return mock.SignInOut() }) {
+		return
+	}
+
 	out, err := c.u.User.Client.SignIn(ctx.Request.Context(), &domain.SignInIn{
 		Phone:     phone,
 		Password:  user.Password,
-		DeviceID:  ctx.GetHeader("X-Device-ID"),
-		UserAgent: ctx.GetHeader("User-Agent"),
-		IP:        ctx.ClientIP(),
+		DeviceID:  util.GetDeviceIDUUID(ctx),
+		UserAgent: util.GetUserAgent(ctx),
+		IP:        util.GetIPAddress(ctx),
 	})
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusUnauthorized, "invalid credentials", nil, false)

@@ -1,7 +1,6 @@
 package store
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -101,7 +100,6 @@ func TestPriorityQueue_PushPop(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // parallel safety
 		t.Run(tt.name, func(t *testing.T) {
 			// arrange
 			client, _ := newTestRedis(t)
@@ -173,7 +171,7 @@ func TestPriorityQueue_ChangePriority(t *testing.T) {
 	// Check if score updated (by checking order if we had multiple, or just by popping)
 	// We can check Score using direct redis client commands or infer from behavior
 
-	score, err := client.ZScore(context.Background(), key, "item").Result()
+	score, err := client.ZScore(t.Context(), key, "item").Result()
 	require.NoError(t, err)
 	assert.Equal(t, float64(100), score)
 }

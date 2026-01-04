@@ -12,17 +12,17 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"testing"
 	"time"
-
-	"github.com/minio/minio-go/v7"
-	"github.com/redis/go-redis/v9"
 
 	"gct/config"
 	"gct/internal/repo"
 	tc "gct/pkg/container"
 	dbPostgres "gct/pkg/db/postgres"
 	"gct/pkg/logger"
+	"github.com/minio/minio-go/v7"
+	"github.com/redis/go-redis/v9"
 )
 
 var (
@@ -68,7 +68,7 @@ func SetupTestEnvironment(m *testing.M) {
 	// 2. Start Redis Container
 	rStoreCfg := config.RedisStore{
 		Host:     cfg.Database.Redis.Host,
-		Port:     fmt.Sprintf("%d", cfg.Database.Redis.Port),
+		Port:     strconv.Itoa(cfg.Database.Redis.Port),
 		Password: cfg.Database.Redis.Password,
 		DB:       0,
 	}
@@ -130,10 +130,10 @@ func SetupTestEnvironment(m *testing.M) {
 
 func CleanDB(t *testing.T) {
 	t.Helper()
-	ctx := context.Background()
+	ctx := t.Context()
 
 	var err error
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		_, err = TestPG.Pool.Exec(ctx, `
 			DELETE FROM endpoint_history;
 			DELETE FROM audit_log;

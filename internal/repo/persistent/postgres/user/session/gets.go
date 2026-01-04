@@ -3,11 +3,10 @@ package session
 import (
 	"context"
 
-	"github.com/Masterminds/squirrel"
-	"github.com/jackc/pgx/v5"
-
 	"gct/internal/domain"
 	apperrors "gct/pkg/errors"
+	"github.com/Masterminds/squirrel"
+	"github.com/jackc/pgx/v5"
 )
 
 func (r *Repo) Gets(ctx context.Context, filter *domain.SessionsFilter) ([]*domain.Session, int, error) {

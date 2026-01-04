@@ -4,13 +4,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gin-gonic/gin"
-
 	"gct/internal/controller/restapi"
 	"gct/internal/repo"
 	"gct/internal/usecase"
 	"gct/pkg/logger"
 	"gct/test/e2e/common/setup"
+	"github.com/gin-gonic/gin"
 )
 
 func TestMain(m *testing.M) {
@@ -18,7 +17,6 @@ func TestMain(m *testing.M) {
 }
 
 func cleanDB(t *testing.T) {
-	t.Helper()
 	setup.CleanDB(t)
 }
 

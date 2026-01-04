@@ -3,12 +3,11 @@ package permission
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
-
 	"gct/consts"
 	"gct/internal/controller/restapi/response"
 	"gct/internal/controller/restapi/util"
 	"gct/internal/domain"
+	"github.com/gin-gonic/gin"
 )
 
 // Update godoc
@@ -38,6 +37,10 @@ func (c *Controller) Update(ctx *gin.Context) {
 		return
 	}
 	perm.ID = id
+	// Handle mock mode
+	if util.Mock(ctx, util.MockTypeUpdate, "Permission updated successfully") {
+		return
+	}
 
 	err = c.u.Authz.Permission.Update(ctx.Request.Context(), &perm)
 	if err != nil {

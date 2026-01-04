@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"gct/internal/domain"
-
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -93,9 +92,9 @@ func TestUseCase_Get_TableDriven(t *testing.T) {
 			},
 			mockUser:    nil,
 			repoError:   nil,
-			expectError: false,
+			expectError: true, // Get now returns error for nil user
 			validateUser: func(t *testing.T, got *domain.User) {
-				require.Nil(t, got)
+				// No validation on error
 			},
 		},
 		{
@@ -138,7 +137,7 @@ func TestUseCase_Get_TableDriven(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // parallel safety
+		// parallel safety
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 

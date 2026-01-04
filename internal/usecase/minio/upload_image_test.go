@@ -54,10 +54,11 @@ func TestUseCase_UploadImage_TableDriven(t *testing.T) {
 			contentType: "image/png",
 			expectError: false,
 			validateResult: func(t *testing.T, filename string) {
+				t.Helper()
 				require.NotEmpty(t, filename)
 				require.Contains(t, filename, ".webp")
 				// Should be a UUID filename
-				require.True(t, len(filename) > 40) // UUID + .webp
+				require.Greater(t, len(filename), 40) // UUID + .webp
 			},
 		},
 		{
@@ -67,6 +68,7 @@ func TestUseCase_UploadImage_TableDriven(t *testing.T) {
 			contentType: "image/jpeg",
 			expectError: false,
 			validateResult: func(t *testing.T, filename string) {
+				t.Helper()
 				require.NotEmpty(t, filename)
 				require.Contains(t, filename, ".webp")
 			},
@@ -78,6 +80,7 @@ func TestUseCase_UploadImage_TableDriven(t *testing.T) {
 			contentType: "image/webp",
 			expectError: false,
 			validateResult: func(t *testing.T, filename string) {
+				t.Helper()
 				require.NotEmpty(t, filename)
 				require.Contains(t, filename, ".webp")
 			},
@@ -89,6 +92,7 @@ func TestUseCase_UploadImage_TableDriven(t *testing.T) {
 			contentType: "image/png",
 			expectError: true,
 			validateResult: func(t *testing.T, filename string) {
+				t.Helper()
 				require.Empty(t, filename)
 			},
 		},
@@ -99,6 +103,7 @@ func TestUseCase_UploadImage_TableDriven(t *testing.T) {
 			contentType: "image/png",
 			expectError: true,
 			validateResult: func(t *testing.T, filename string) {
+				t.Helper()
 				require.Empty(t, filename)
 			},
 		},
@@ -109,6 +114,7 @@ func TestUseCase_UploadImage_TableDriven(t *testing.T) {
 			contentType: "image/png",
 			expectError: false, // Size validation is not performed
 			validateResult: func(t *testing.T, filename string) {
+				t.Helper()
 				require.NotEmpty(t, filename)
 				require.Contains(t, filename, ".webp")
 			},
@@ -120,6 +126,7 @@ func TestUseCase_UploadImage_TableDriven(t *testing.T) {
 			contentType: "image/png",
 			expectError: false, // Size validation is not performed
 			validateResult: func(t *testing.T, filename string) {
+				t.Helper()
 				require.NotEmpty(t, filename)
 				require.Contains(t, filename, ".webp")
 			},
@@ -131,6 +138,7 @@ func TestUseCase_UploadImage_TableDriven(t *testing.T) {
 			contentType: "text/plain",
 			expectError: false, // Content type validation is not performed
 			validateResult: func(t *testing.T, filename string) {
+				t.Helper()
 				require.NotEmpty(t, filename)
 				require.Contains(t, filename, ".webp")
 			},
@@ -142,6 +150,7 @@ func TestUseCase_UploadImage_TableDriven(t *testing.T) {
 			contentType: "image/png",
 			expectError: false,
 			validateResult: func(t *testing.T, filename string) {
+				t.Helper()
 				require.NotEmpty(t, filename)
 				require.Contains(t, filename, ".webp")
 			},
@@ -153,13 +162,14 @@ func TestUseCase_UploadImage_TableDriven(t *testing.T) {
 			contentType: "image/png",
 			expectError: true,
 			validateResult: func(t *testing.T, filename string) {
+				t.Helper()
 				require.Empty(t, filename)
 			},
 		},
 	}
 
 	for _, tt := range tests {
-		tt := tt // parallel safety
+		// parallel safety
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 

@@ -1,13 +1,12 @@
 package errors
 
 import (
-	"context"
 	"errors"
 	"testing"
 )
 
 func TestNewHandlerError(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	tests := []struct {
 		name    string
@@ -65,7 +64,7 @@ func TestNewHandlerError(t *testing.T) {
 }
 
 func TestWrapHandlerError(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	baseErr := errors.New("handler error")
 
 	tests := []struct {
@@ -126,7 +125,7 @@ func TestWrapHandlerError(t *testing.T) {
 			if got.UserMsg != tt.want.UserMsg {
 				t.Errorf("WrapHandlerError().UserMsg = %v, want %v", got.UserMsg, tt.want.UserMsg)
 			}
-			if got.Err != tt.want.Err {
+			if !errors.Is(got.Err, tt.want.Err) {
 				t.Errorf("WrapHandlerError().Err = %v, want %v", got.Err, tt.want.Err)
 			}
 		})
@@ -134,7 +133,7 @@ func TestWrapHandlerError(t *testing.T) {
 }
 
 func TestMapServiceToHandlerError(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	tests := []struct {
 		name     string

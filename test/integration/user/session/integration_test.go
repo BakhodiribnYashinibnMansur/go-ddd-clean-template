@@ -2,15 +2,10 @@ package session
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
 
 	"gct/internal/controller/restapi"
 	"gct/internal/domain"
@@ -18,6 +13,9 @@ import (
 	"gct/internal/usecase"
 	"gct/pkg/logger"
 	"gct/test/integration/common/setup"
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSessionAPI_Integration(t *testing.T) {
@@ -25,7 +23,7 @@ func TestSessionAPI_Integration(t *testing.T) {
 	l := logger.New("debug")
 	repositories := repo.New(setup.TestPG, setup.TestMinio, setup.TestRedis, &setup.TestCfg.Minio, l)
 	useCases := usecase.NewUseCase(repositories, l, setup.TestCfg)
-	ctx := context.Background()
+	ctx := t.Context()
 
 	handler := gin.New()
 	restapi.NewRouter(handler, setup.TestCfg, useCases, l)
@@ -66,6 +64,7 @@ func TestSessionAPI_Integration(t *testing.T) {
 			url:          "/api/v1/sessions/" + sessionID,
 			useToken:     true,
 			expectedCode: http.StatusOK,
+
 			checkResponse: func(t *testing.T, body []byte) {
 				var resp map[string]any
 				json.Unmarshal(body, &resp)
@@ -79,6 +78,7 @@ func TestSessionAPI_Integration(t *testing.T) {
 			url:          "/api/v1/sessions/" + sessionID + "/activity",
 			useToken:     true,
 			expectedCode: http.StatusOK,
+
 			checkResponse: func(t *testing.T, body []byte) {
 				var resp map[string]any
 				json.Unmarshal(body, &resp)
@@ -98,6 +98,7 @@ func TestSessionAPI_Integration(t *testing.T) {
 			url:          "/api/v1/sessions/" + sessionID,
 			useToken:     true,
 			expectedCode: http.StatusOK,
+
 			checkResponse: func(t *testing.T, body []byte) {
 				var resp map[string]any
 				json.Unmarshal(body, &resp)
@@ -157,8 +158,6 @@ func TestSessionAPI_Integration(t *testing.T) {
 }
 
 func createUserAndSession(t *testing.T, handler *gin.Engine, phone, password string) (string, string) {
-	t.Helper()
-
 	// 1. Sign up
 	signupBody, _ := json.Marshal(map[string]string{
 		"username": "user_" + phone,
@@ -196,7 +195,7 @@ func createUserAndSession(t *testing.T, handler *gin.Engine, phone, password str
 	// 3. Get user
 	l := logger.New("debug")
 	repositories := repo.New(setup.TestPG, setup.TestMinio, setup.TestRedis, &setup.TestCfg.Minio, l)
-	ctx := context.Background()
+	ctx := t.Context()
 	user, _ := repositories.Persistent.Postgres.User.Client.GetByPhone(ctx, phone)
 
 	// 4. Create session

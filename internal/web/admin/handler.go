@@ -9,15 +9,14 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
-
 	"gct/config"
 	"gct/consts"
 	"gct/internal/controller/restapi/middleware"
 	"gct/internal/domain"
 	"gct/internal/usecase"
 	"gct/pkg/logger"
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type Handler struct {
@@ -49,6 +48,7 @@ func (h *Handler) Register(r *gin.RouterGroup, authmw *middleware.AuthMiddleware
 	g.GET("/functions", h.FunctionMetrics)
 	g.GET("/audit/logs", h.AuditLogs)
 	g.GET("/audit/history", h.EndpointHistory)
+	g.GET("/linter", h.Linter)
 	g.GET("/settings", h.Settings)
 }
 
@@ -104,7 +104,6 @@ func (h *Handler) render(ctx *gin.Context, tmplName string, data PageData) {
 			return "?" + currURL.Encode()
 		},
 	}).ParseFiles(files...)
-
 	if err != nil {
 		h.l.Errorw("failed to parse templates", "error", err)
 		ctx.String(http.StatusInternalServerError, "Internal Server Error")
@@ -266,13 +265,22 @@ func (h *Handler) Policies(ctx *gin.Context) {
 	})
 }
 
+func (h *Handler) Linter(ctx *gin.Context) {
+	h.servePage(ctx, "linter.html", "Code Linter", "linter", nil)
+}
+
 func (h *Handler) Settings(ctx *gin.Context) {
 	h.servePage(ctx, "settings.html", "Settings", "settings", nil)
 }
 
 func (h *Handler) servePage(ctx *gin.Context, tmplFile, title, activePage string, pageContent any) {
 	sessionVal, _ := ctx.Get(consts.CtxSession)
-	sessObj := sessionVal.(*domain.Session)
+	sessObj, ok := sessionVal.(*domain.Session)
+	if !ok {
+		h.l.Warnw("invalid session object in context")
+		ctx.String(http.StatusUnauthorized, "Unauthorized")
+		return
+	}
 
 	user, err := h.uc.User.Client.Get(ctx, &domain.UserFilter{ID: &sessObj.UserID})
 	if err != nil {
@@ -316,6 +324,7 @@ func (h *Handler) servePage(ctx *gin.Context, tmplFile, title, activePage string
 		"functions_view":        "/admin/functions",
 		"audit_logs_view":       "/admin/audit/logs",
 		"endpoint_history_view": "/admin/audit/history",
+		"linter_view":           "/admin/linter",
 		"settings_view":         "/admin/settings",
 	}
 

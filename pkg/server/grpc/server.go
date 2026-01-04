@@ -6,11 +6,10 @@ import (
 	"errors"
 	"net"
 
+	"gct/pkg/logger"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 	pbgrpc "google.golang.org/grpc"
-
-	"gct/pkg/logger"
 )
 
 const (
@@ -19,8 +18,7 @@ const (
 
 // Server -.
 type Server struct {
-	ctx context.Context
-	eg  *errgroup.Group
+	eg *errgroup.Group
 
 	App     *pbgrpc.Server
 	notify  chan error
@@ -31,11 +29,10 @@ type Server struct {
 
 // New -.
 func New(l logger.Log, opts ...Option) *Server {
-	group, ctx := errgroup.WithContext(context.Background())
+	group, _ := errgroup.WithContext(context.Background())
 	group.SetLimit(1) // Run only one goroutine
 
 	s := &Server{
-		ctx:     ctx,
 		eg:      group,
 		App:     pbgrpc.NewServer(),
 		notify:  make(chan error, 1),
@@ -53,10 +50,11 @@ func New(l logger.Log, opts ...Option) *Server {
 
 // Start -.
 func (s *Server) Start() {
+	ctx := context.Background()
 	s.eg.Go(func() error {
 		var lc net.ListenConfig
 
-		ln, err := lc.Listen(s.ctx, "tcp", s.address)
+		ln, err := lc.Listen(ctx, "tcp", s.address)
 		if err != nil {
 			s.notify <- err
 

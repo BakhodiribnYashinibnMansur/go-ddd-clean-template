@@ -53,7 +53,8 @@ func ParseAccessToken(tokenString string, publicKey *rsa.PublicKey, issuer, audi
 		return publicKey, nil
 	})
 	if err != nil {
-		if ve, ok := err.(*jwt.ValidationError); ok {
+		var ve *jwt.ValidationError
+		if errors.As(err, &ve) {
 			if ve.Errors&jwt.ValidationErrorExpired != 0 {
 				return nil, ErrAccessTokenExpired
 			}

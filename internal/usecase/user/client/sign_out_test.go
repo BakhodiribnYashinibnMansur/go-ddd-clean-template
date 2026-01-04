@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"gct/internal/domain"
-
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -16,32 +15,14 @@ func TestUseCase_SignOut_TableDriven(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		sessionID      string
+		sessionID      uuid.UUID
 		repoError      error
 		expectError    bool
 		validateFilter func(t *testing.T, filter *domain.SessionFilter)
 	}{
 		{
 			name:        "success_valid_session_id",
-			sessionID:   uuid.New().String(),
-			repoError:   nil,
-			expectError: false,
-			validateFilter: func(t *testing.T, filter *domain.SessionFilter) {
-				// Validated in test setup
-			},
-		},
-		{
-			name:        "success_empty_session_id",
-			sessionID:   "",
-			repoError:   nil,
-			expectError: false,
-			validateFilter: func(t *testing.T, filter *domain.SessionFilter) {
-				// Validated in test setup
-			},
-		},
-		{
-			name:        "success_invalid_uuid_format",
-			sessionID:   "invalid-uuid-format",
+			sessionID:   uuid.New(),
 			repoError:   nil,
 			expectError: false,
 			validateFilter: func(t *testing.T, filter *domain.SessionFilter) {
@@ -50,7 +31,7 @@ func TestUseCase_SignOut_TableDriven(t *testing.T) {
 		},
 		{
 			name:        "error_repo_returns_error",
-			sessionID:   uuid.New().String(),
+			sessionID:   uuid.New(),
 			repoError:   errors.New("session revoke failed"),
 			expectError: true,
 			validateFilter: func(t *testing.T, filter *domain.SessionFilter) {
@@ -59,16 +40,7 @@ func TestUseCase_SignOut_TableDriven(t *testing.T) {
 		},
 		{
 			name:        "success_nil_session_id",
-			sessionID:   "00000000-0000-0000-0000-000000000000",
-			repoError:   nil,
-			expectError: false,
-			validateFilter: func(t *testing.T, filter *domain.SessionFilter) {
-				// Validated in test setup
-			},
-		},
-		{
-			name:        "success_long_session_id",
-			sessionID:   "12345678-1234-5678-9abc-123456789012-extra",
+			sessionID:   uuid.Nil,
 			repoError:   nil,
 			expectError: false,
 			validateFilter: func(t *testing.T, filter *domain.SessionFilter) {
@@ -78,7 +50,7 @@ func TestUseCase_SignOut_TableDriven(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // parallel safety
+		// parallel safety
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 

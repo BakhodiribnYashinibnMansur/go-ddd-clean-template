@@ -19,7 +19,7 @@ func (uc *UseCase) Update(ctx context.Context, u *domain.User) error {
 	if u.Username != nil {
 		existing.Username = u.Username
 	}
-	if u.Phone != nil {
+	if u.Phone != nil && *u.Phone != "" {
 		existing.Phone = u.Phone
 	}
 	if u.Email != nil {
@@ -30,6 +30,12 @@ func (uc *UseCase) Update(ctx context.Context, u *domain.User) error {
 	}
 	if u.Attributes != nil {
 		existing.Attributes = u.Attributes
+	}
+	if u.Password != "" {
+		if err := existing.SetPassword(u.Password); err != nil {
+			uc.logger.Errorw("user update failed: set password", "error", err)
+			return apperrors.MapRepoToServiceError(ctx, err).WithInput(u)
+		}
 	}
 
 	err = uc.repo.Postgres.User.Client.Update(ctx, existing)

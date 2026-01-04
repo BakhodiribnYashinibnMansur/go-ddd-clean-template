@@ -4,11 +4,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gin-gonic/gin"
-
 	"gct/internal/controller/restapi/response"
 	"gct/internal/controller/restapi/util"
 	"gct/internal/domain"
+	"gct/internal/domain/mock"
+	"github.com/gin-gonic/gin"
 )
 
 // Gets godoc
@@ -68,6 +68,11 @@ func (c *Controller) Gets(ctx *gin.Context) {
 		if err == nil {
 			filter.ToDate = &t
 		}
+	}
+
+	// Handle mock mode
+	if util.Mock(ctx, util.MockTypeGets, func(count int) any { return mock.FunctionMetrics(count) }) {
+		return
 	}
 
 	metrics, total, err := c.u.Audit.Metric.Gets(ctx.Request.Context(), &filter)

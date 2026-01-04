@@ -5,9 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"go.uber.org/zap"
-
 	"gct/internal/domain"
+	"go.uber.org/zap"
 )
 
 // MeasureSafe is a helper to measure function execution time and catch panics, saving results to DB.

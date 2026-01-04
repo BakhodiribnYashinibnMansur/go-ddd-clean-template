@@ -2,14 +2,17 @@ package postgres
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"os"
 
+	"gct/config"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
-
-	"gct/config"
 )
+
+// ErrMigrationDirNotFound is returned when migrations directory doesn't exist.
+var ErrMigrationDirNotFound = errors.New("migrations directory not found")
 
 // Migration - goose migration manager.
 type Migration struct {
@@ -32,7 +35,7 @@ func NewMigration(cfg config.Postgres, dir string) (*Migration, error) {
 	// Check if directory exists
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		db.Close()
-		return nil, fmt.Errorf("postgres - NewMigration - migrations directory not found: %s", dir)
+		return nil, fmt.Errorf("%w: %s", ErrMigrationDirNotFound, dir)
 	}
 
 	return &Migration{

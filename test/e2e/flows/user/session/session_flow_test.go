@@ -6,10 +6,9 @@ import (
 	"testing"
 	"time"
 
+	userClient "gct/test/e2e/flows/user/client"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	userClient "gct/test/e2e/flows/user/client"
 )
 
 func TestSession_ComprehensiveFlow(t *testing.T) {

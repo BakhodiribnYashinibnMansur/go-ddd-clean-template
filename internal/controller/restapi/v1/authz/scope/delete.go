@@ -3,11 +3,10 @@ package scope
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
-
 	"gct/consts"
 	"gct/internal/controller/restapi/response"
 	"gct/internal/controller/restapi/util"
+	"github.com/gin-gonic/gin"
 )
 
 // Delete godoc
@@ -27,6 +26,11 @@ func (c *Controller) Delete(ctx *gin.Context) {
 	if err != nil {
 		util.LogError(c.l, err, "http - v1 - authz - scope - delete - method")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "method required", nil, false)
+		return
+	}
+
+	// Handle mock mode
+	if util.Mock(ctx, util.MockTypeDelete, "Scope deleted successfully") {
 		return
 	}
 

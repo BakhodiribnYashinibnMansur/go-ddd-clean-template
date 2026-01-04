@@ -3,12 +3,11 @@ package client
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
-
 	"gct/consts"
 	"gct/internal/controller/restapi/response"
 	"gct/internal/controller/restapi/util"
 	"gct/internal/domain"
+	"github.com/gin-gonic/gin"
 )
 
 // Update godoc
@@ -39,6 +38,11 @@ func (c *Controller) Update(ctx *gin.Context) {
 		return
 	}
 	user.ID = id
+
+	// Handle mock mode
+	if util.Mock(ctx, util.MockTypeUpdate, "User updated successfully") {
+		return
+	}
 
 	err = c.u.User.Client.Update(ctx.Request.Context(), &user)
 	if err != nil {

@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"gct/internal/domain"
-
 	"go.uber.org/zap"
 )
 

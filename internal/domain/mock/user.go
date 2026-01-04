@@ -3,11 +3,10 @@ package mock
 import (
 	"time"
 
+	"gct/internal/domain"
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
-
-	"gct/internal/domain"
 )
 
 // User generates a fake domain.User

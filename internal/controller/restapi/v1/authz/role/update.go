@@ -3,12 +3,11 @@ package role
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
-
 	"gct/consts"
 	"gct/internal/controller/restapi/response"
 	"gct/internal/controller/restapi/util"
 	"gct/internal/domain"
+	"github.com/gin-gonic/gin"
 )
 
 // Update godoc
@@ -38,6 +37,10 @@ func (c *Controller) Update(ctx *gin.Context) {
 		return
 	}
 	role.ID = id
+	// Handle mock mode
+	if util.Mock(ctx, util.MockTypeUpdate, "Role updated successfully") {
+		return
+	}
 
 	err = c.u.Authz.Role.Update(ctx.Request.Context(), &role)
 	if err != nil {

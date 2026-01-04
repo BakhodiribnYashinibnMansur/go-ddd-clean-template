@@ -2,6 +2,7 @@ package domain
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -40,7 +41,7 @@ type User struct {
 	CreatedAt    time.Time      `db:"created_at"    json:"created_at"`
 	UpdatedAt    time.Time      `db:"updated_at"    json:"updated_at"`
 
-	Password string `db:"-"             json:"password,omitempty"` // Transient field for input
+	Password string `db:"-" json:"password,omitempty"` // Transient field for input
 }
 
 // UserFilter represents a filter for user queries.
@@ -107,7 +108,7 @@ func (u *User) SetPassword(password string) error {
 	}
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to generate password hash: %w", err)
 	}
 	u.PasswordHash = string(hash)
 	u.Password = password

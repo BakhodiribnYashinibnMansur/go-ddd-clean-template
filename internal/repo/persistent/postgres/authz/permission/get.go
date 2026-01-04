@@ -5,7 +5,6 @@ import (
 
 	"gct/internal/domain"
 	apperrors "gct/pkg/errors"
-
 	"github.com/Masterminds/squirrel"
 )
 

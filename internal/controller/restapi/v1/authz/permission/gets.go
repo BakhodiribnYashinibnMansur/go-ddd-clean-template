@@ -3,12 +3,12 @@ package permission
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
-
 	"gct/consts"
 	"gct/internal/controller/restapi/response"
 	"gct/internal/controller/restapi/util"
 	"gct/internal/domain"
+	"gct/internal/domain/mock"
+	"github.com/gin-gonic/gin"
 )
 
 // Gets godoc
@@ -37,6 +37,11 @@ func (c *Controller) Gets(ctx *gin.Context) {
 	}
 	if permName != "" {
 		filter.Name = &permName
+	}
+
+	// Handle mock mode
+	if util.Mock(ctx, util.MockTypeGets, func(count int) any { return mock.Permissions(count) }) {
+		return
 	}
 
 	perms, count, err := c.u.Authz.Permission.Gets(ctx.Request.Context(), &filter)

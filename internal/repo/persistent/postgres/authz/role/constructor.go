@@ -3,12 +3,11 @@ package role
 import (
 	"context"
 
+	"gct/pkg/db/postgres"
+	"gct/pkg/logger"
 	"github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
-
-	"gct/pkg/db/postgres"
-	"gct/pkg/logger"
 )
 
 type Pool interface {

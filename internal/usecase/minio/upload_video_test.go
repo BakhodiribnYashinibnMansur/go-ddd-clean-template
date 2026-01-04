@@ -25,6 +25,7 @@ func TestUseCase_UploadVideo_TableDriven(t *testing.T) {
 			contentType: "video/mp4",
 			expectError: false,
 			validateResult: func(t *testing.T, filename string) {
+				t.Helper()
 				require.NotEmpty(t, filename)
 				require.Contains(t, filename, ".mp4") // MP4 videos keep .mp4 extension
 			},
@@ -36,6 +37,7 @@ func TestUseCase_UploadVideo_TableDriven(t *testing.T) {
 			contentType: "video/webm",
 			expectError: false,
 			validateResult: func(t *testing.T, filename string) {
+				t.Helper()
 				require.NotEmpty(t, filename)
 				require.Contains(t, filename, ".webm") // WebM videos keep .webm extension
 			},
@@ -47,6 +49,7 @@ func TestUseCase_UploadVideo_TableDriven(t *testing.T) {
 			contentType: "video/quicktime",
 			expectError: false,
 			validateResult: func(t *testing.T, filename string) {
+				t.Helper()
 				require.NotEmpty(t, filename)
 				require.Contains(t, filename, ".mp4") // MOV videos are converted to .mp4
 			},
@@ -58,6 +61,7 @@ func TestUseCase_UploadVideo_TableDriven(t *testing.T) {
 			contentType: "video/x-msvideo",
 			expectError: false,
 			validateResult: func(t *testing.T, filename string) {
+				t.Helper()
 				require.NotEmpty(t, filename)
 				require.Contains(t, filename, ".mp4") // AVI videos are converted to .mp4
 			},
@@ -69,6 +73,7 @@ func TestUseCase_UploadVideo_TableDriven(t *testing.T) {
 			contentType: "video/mp4",
 			expectError: false,
 			validateResult: func(t *testing.T, filename string) {
+				t.Helper()
 				require.NotEmpty(t, filename)
 				require.Contains(t, filename, ".mp4") // MP4 videos keep .mp4 extension
 			},
@@ -80,6 +85,7 @@ func TestUseCase_UploadVideo_TableDriven(t *testing.T) {
 			contentType: "video/mp4",
 			expectError: true,
 			validateResult: func(t *testing.T, filename string) {
+				t.Helper()
 				require.Empty(t, filename)
 			},
 		},
@@ -90,6 +96,7 @@ func TestUseCase_UploadVideo_TableDriven(t *testing.T) {
 			contentType: "video/mp4",
 			expectError: true, // Zero size causes repository error
 			validateResult: func(t *testing.T, filename string) {
+				t.Helper()
 				require.Empty(t, filename)
 			},
 		},
@@ -100,6 +107,7 @@ func TestUseCase_UploadVideo_TableDriven(t *testing.T) {
 			contentType: "video/mp4",
 			expectError: false, // Size validation is not performed
 			validateResult: func(t *testing.T, filename string) {
+				t.Helper()
 				require.NotEmpty(t, filename)
 				require.Contains(t, filename, ".mp4") // MP4 videos keep .mp4 extension
 			},
@@ -111,6 +119,7 @@ func TestUseCase_UploadVideo_TableDriven(t *testing.T) {
 			contentType: "text/plain",
 			expectError: false, // Content type validation is not performed
 			validateResult: func(t *testing.T, filename string) {
+				t.Helper()
 				require.NotEmpty(t, filename)
 				require.Contains(t, filename, ".mp4") // Default to .mp4 for unknown types
 			},
@@ -122,6 +131,7 @@ func TestUseCase_UploadVideo_TableDriven(t *testing.T) {
 			contentType: "video/mp4",
 			expectError: false,
 			validateResult: func(t *testing.T, filename string) {
+				t.Helper()
 				require.NotEmpty(t, filename)
 				require.Contains(t, filename, ".mp4") // MP4 videos keep .mp4 extension
 			},
@@ -133,6 +143,7 @@ func TestUseCase_UploadVideo_TableDriven(t *testing.T) {
 			contentType: "video/mp4",
 			expectError: false,
 			validateResult: func(t *testing.T, filename string) {
+				t.Helper()
 				require.NotEmpty(t, filename)
 				require.Contains(t, filename, ".mp4") // MP4 videos keep .mp4 extension
 			},
@@ -144,6 +155,7 @@ func TestUseCase_UploadVideo_TableDriven(t *testing.T) {
 			contentType: "video/x-matroska",
 			expectError: false,
 			validateResult: func(t *testing.T, filename string) {
+				t.Helper()
 				require.NotEmpty(t, filename)
 				require.Contains(t, filename, ".mp4") // MKV videos are converted to .mp4
 			},
@@ -155,6 +167,7 @@ func TestUseCase_UploadVideo_TableDriven(t *testing.T) {
 			contentType: "video/x-flv",
 			expectError: false,
 			validateResult: func(t *testing.T, filename string) {
+				t.Helper()
 				require.NotEmpty(t, filename)
 				require.Contains(t, filename, ".mp4") // FLV videos are converted to .mp4
 			},
@@ -162,7 +175,7 @@ func TestUseCase_UploadVideo_TableDriven(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // parallel safety
+		// parallel safety
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 

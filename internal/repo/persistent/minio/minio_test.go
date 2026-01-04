@@ -1,7 +1,6 @@
 package minio
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -23,6 +22,6 @@ func TestRepo_HealthCheck(t *testing.T) {
 
 	badRepo := New(testRepo.client, &newCfg)
 
-	err = badRepo.HealthCheck(context.Background())
+	err = badRepo.HealthCheck(t.Context())
 	assert.Error(t, err)
 }

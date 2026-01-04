@@ -4,12 +4,12 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
-
 	"gct/internal/controller/restapi/response"
 	"gct/internal/controller/restapi/util"
 	"gct/internal/domain"
+	"gct/internal/domain/mock"
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 // Gets godoc
@@ -84,6 +84,11 @@ func (c *Controller) Gets(ctx *gin.Context) {
 		if err == nil {
 			filter.ToDate = &t
 		}
+	}
+
+	// Handle mock mode
+	if util.Mock(ctx, util.MockTypeGets, func(count int) any { return mock.EndpointHistories(count) }) {
+		return
 	}
 
 	histories, total, err := c.u.Audit.History.Gets(ctx.Request.Context(), &filter)

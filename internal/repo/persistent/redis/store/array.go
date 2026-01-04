@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -27,7 +28,7 @@ func NewArray[T any](db *redis.Client) *Array[T] {
 func (a *Array[T]) Get(key string) ([]T, error) {
 	valStrs, err := a.db.LRange(context.Background(), key, 0, -1).Result()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get array from key %s: %w", key, err)
 	}
 	return a.unmarshalSlice(valStrs)
 }
@@ -35,7 +36,10 @@ func (a *Array[T]) Get(key string) ([]T, error) {
 func (a *Array[T]) Set(key string, value []T, expiration time.Duration) error {
 	ctx := context.Background()
 	if len(value) == 0 {
-		return a.db.Del(ctx, key).Err()
+		if err := a.db.Del(ctx, key).Err(); err != nil {
+			return fmt.Errorf("failed to delete empty array key %s: %w", key, err)
+		}
+		return nil
 	}
 
 	vals := make([]any, len(value))
@@ -51,11 +55,17 @@ func (a *Array[T]) Set(key string, value []T, expiration time.Duration) error {
 		pipe.Expire(ctx, key, expiration)
 	}
 	_, err := pipe.Exec(ctx)
-	return err
+	if err != nil {
+		return fmt.Errorf("failed to execute pipeline for array key %s: %w", key, err)
+	}
+	return nil
 }
 
 func (a *Array[T]) Delete(key string) error {
-	return a.db.Del(context.Background(), key).Err()
+	if err := a.db.Del(context.Background(), key).Err(); err != nil {
+		return fmt.Errorf("failed to delete array key %s: %w", key, err)
+	}
+	return nil
 }
 
 func (a *Array[T]) Pop(key string) ([]T, error) {
@@ -65,12 +75,12 @@ func (a *Array[T]) Pop(key string) ([]T, error) {
 	pipe.Del(ctx, key)
 	_, err := pipe.Exec(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to execute pipeline for popping array key %s: %w", key, err)
 	}
 
 	valStrs, err := get.Result()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get array result for key %s: %w", key, err)
 	}
 	return a.unmarshalSlice(valStrs)
 }
@@ -80,7 +90,10 @@ func (a *Array[T]) unmarshalOne(s string) (T, error) {
 	cmd := redis.NewStringCmd(context.Background())
 	cmd.SetVal(s)
 	err := cmd.Scan(&val)
-	return val, err
+	if err != nil {
+		return val, fmt.Errorf("failed to scan array value: %w", err)
+	}
+	return val, nil
 }
 
 func (a *Array[T]) unmarshalSlice(valStrs []string) ([]T, error) {

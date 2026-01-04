@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -27,7 +28,7 @@ func NewSet[T any](db *redis.Client) *Set[T] {
 func (s *Set[T]) Get(key string) ([]T, error) {
 	valStrs, err := s.db.SMembers(context.Background(), key).Result()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get set from key %s: %w", key, err)
 	}
 	return s.unmarshalSlice(valStrs)
 }
@@ -39,18 +40,21 @@ func (s *Set[T]) Pop(key string) ([]T, error) {
 	pipe.Del(ctx, key)
 	_, err := pipe.Exec(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to execute pipeline for popping set key %s: %w", key, err)
 	}
 	valStrs, err := get.Result()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get set result for key %s: %w", key, err)
 	}
 	return s.unmarshalSlice(valStrs)
 }
 
 func (s *Set[T]) Set(key string, value []T, expiration time.Duration) error {
 	if len(value) == 0 {
-		return s.db.Del(context.Background(), key).Err()
+		if err := s.db.Del(context.Background(), key).Err(); err != nil {
+			return fmt.Errorf("failed to delete empty set key %s: %w", key, err)
+		}
+		return nil
 	}
 	marshalled, err := s.marshalSlice(value)
 	if err != nil {
@@ -60,17 +64,22 @@ func (s *Set[T]) Set(key string, value []T, expiration time.Duration) error {
 	ctx := context.Background()
 	err = s.db.SAdd(ctx, key, marshalled...).Err()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to add elements to set key %s: %w", key, err)
 	}
 	// Only set expiration if it's greater than 0
 	if expiration > 0 {
-		return s.db.Expire(ctx, key, expiration).Err()
+		if err := s.db.Expire(ctx, key, expiration).Err(); err != nil {
+			return fmt.Errorf("failed to set expiration for set key %s: %w", key, err)
+		}
 	}
 	return nil
 }
 
 func (s *Set[T]) Delete(key string) error {
-	return s.db.Del(context.Background(), key).Err()
+	if err := s.db.Del(context.Background(), key).Err(); err != nil {
+		return fmt.Errorf("failed to delete set key %s: %w", key, err)
+	}
+	return nil
 }
 
 func (s *Set[T]) unmarshalOne(vStr string) (T, error) {
@@ -78,7 +87,10 @@ func (s *Set[T]) unmarshalOne(vStr string) (T, error) {
 	cmd := redis.NewStringCmd(context.Background())
 	cmd.SetVal(vStr)
 	err := cmd.Scan(&val)
-	return val, err
+	if err != nil {
+		return val, fmt.Errorf("failed to scan set value: %w", err)
+	}
+	return val, nil
 }
 
 func (s *Set[T]) unmarshalSlice(valStrs []string) ([]T, error) {

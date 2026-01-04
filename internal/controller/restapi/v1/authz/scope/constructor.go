@@ -4,7 +4,6 @@ import (
 	"gct/config"
 	"gct/internal/usecase"
 	"gct/pkg/logger"
-
 	"github.com/gin-gonic/gin"
 )
 

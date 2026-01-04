@@ -6,11 +6,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
-
+	"gct/consts"
 	"gct/internal/domain"
 	"gct/pkg/logger"
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"go.uber.org/zap"
 )
 
 // URL Query Argument Helpers
@@ -105,13 +106,21 @@ func GetBooleanQuery(ctx *gin.Context, queryName string) (bool, error) {
 	if param == "" {
 		return false, fmt.Errorf("%w: %s", ErrParamIsInvalid, queryName)
 	}
-	return strconv.ParseBool(param)
+	result, err := strconv.ParseBool(param)
+	if err != nil {
+		return false, fmt.Errorf("failed to parse boolean parameter %s: %w", queryName, err)
+	}
+	return result, nil
 }
 
 func GetNullBooleanQuery(ctx *gin.Context, queryName string) (bool, error) {
 	param := ctx.Query(queryName)
 	if param != "" {
-		return strconv.ParseBool(param)
+		result, err := strconv.ParseBool(param)
+		if err != nil {
+			return false, fmt.Errorf("failed to parse boolean parameter %s: %w", queryName, err)
+		}
+		return result, nil
 	}
 	return true, nil
 }
@@ -135,7 +144,7 @@ func GetUUIDQuery(ctx *gin.Context, queryName string) (uuid.UUID, error) {
 	}
 	paramUUID, err := uuid.Parse(param)
 	if err != nil {
-		logger.GetLogger().Error(err)
+		logger.GetLogger().Errorw("GetUUIDQuery - Parse", zap.Error(err))
 		return uuid.Nil, fmt.Errorf("%w: %s", ErrParamIsInvalid, param)
 	}
 	return paramUUID, nil
@@ -156,11 +165,11 @@ func GetNullUUIDQuery(ctx *gin.Context, queryName string) (uuid.UUID, error) {
 func GetDateQuery(ctx *gin.Context, queryName string) (string, error) {
 	queryDate := GetNullStringQuery(ctx, queryName)
 	if queryDate != "" {
-		parseDate, err := time.Parse(ParseDate, queryDate)
+		parseDate, err := time.Parse(consts.FormatDate, queryDate)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("failed to parse date parameter %s: %w", queryName, err)
 		}
-		return parseDate.Format(FormatDate), nil
+		return parseDate.Format(consts.FormatDate), nil
 	}
 	return "", nil
 }
@@ -168,7 +177,11 @@ func GetDateQuery(ctx *gin.Context, queryName string) (string, error) {
 func GetNullDateQuery(ctx *gin.Context, queryName string) (time.Time, error) {
 	queryData := ctx.Query(queryName)
 	if queryData != "" {
-		return time.Parse(ParseDate, queryData)
+		result, err := time.Parse(consts.FormatDate, queryData)
+		if err != nil {
+			return time.Time{}, fmt.Errorf("failed to parse date parameter %s: %w", queryName, err)
+		}
+		return result, nil
 	}
 	return time.Time{}, nil
 }
@@ -204,7 +217,7 @@ func GetSortParamsQuery(ctx *gin.Context, queryName string) (map[string]string, 
 	sortFields := strings.Split(sortQuery, ",")
 	for _, field := range sortFields {
 		parts := strings.Split(field, ":")
-		if len(parts) != 2 || (strings.ToLower(parts[1]) != OrderAsc && strings.ToLower(parts[1]) != OrderDesc) || parts[0] == "" {
+		if len(parts) != 2 || (strings.ToLower(parts[1]) != consts.OrderAsc && strings.ToLower(parts[1]) != consts.OrderDesc) || parts[0] == "" {
 			return nil, fmt.Errorf("%w: %s", ErrParamIsInvalid, sortQuery)
 		}
 		sortParams[parts[0]] = parts[1]
@@ -236,7 +249,7 @@ func GetDateOrderQuery(ctx *gin.Context, queryName string) (string, error) {
 	if dateOrder == "" {
 		return "", ErrDateOrderEmpty
 	}
-	if dateOrder != OrderAsc && dateOrder != OrderDesc {
+	if dateOrder != consts.OrderAsc && dateOrder != consts.OrderDesc {
 		return "", ErrDateOrderInvalid
 	}
 	return dateOrder, nil
@@ -245,7 +258,7 @@ func GetDateOrderQuery(ctx *gin.Context, queryName string) (string, error) {
 // Pagination Helpers
 
 func GetPageQuery(ctx *gin.Context) (int64, error) {
-	offsetStr := ctx.DefaultQuery("page", "1")
+	offsetStr := ctx.DefaultQuery(consts.QueryPage, "1")
 	offset, err := strconv.ParseInt(offsetStr, 10, 64)
 	if err != nil {
 		return 0, fmt.Errorf("%w: %s", ErrParsingQuery, err.Error())
@@ -257,7 +270,7 @@ func GetPageQuery(ctx *gin.Context) (int64, error) {
 }
 
 func GetPageSizeQuery(ctx *gin.Context) (int64, error) {
-	limitStr := ctx.DefaultQuery("pageSize", "10")
+	limitStr := ctx.DefaultQuery(consts.QueryPageSize, "10")
 	limit, err := strconv.ParseInt(limitStr, 10, 64)
 	if err != nil {
 		return 0, fmt.Errorf("%w: %s", ErrParsingQuery, err.Error())
@@ -269,11 +282,11 @@ func GetPageSizeQuery(ctx *gin.Context) (int64, error) {
 }
 
 func GetPagination(ctx *gin.Context) (domain.Pagination, error) {
-	limit, err := GetInt64Query(ctx, "limit")
+	limit, err := GetInt64Query(ctx, consts.QueryLimit)
 	if err != nil {
 		return domain.Pagination{}, err
 	}
-	offset, err := GetInt64Query(ctx, "offset")
+	offset, err := GetInt64Query(ctx, consts.QueryOffset)
 	if err != nil {
 		return domain.Pagination{}, err
 	}

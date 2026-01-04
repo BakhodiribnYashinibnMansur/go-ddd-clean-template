@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"gct/internal/domain"
-
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -49,7 +48,7 @@ func TestUseCase_SignIn_TableDriven(t *testing.T) {
 			input: &domain.SignInIn{
 				Phone:    "123456789",
 				Password: "password",
-				DeviceID: "device-123",
+				DeviceID: uuid.MustParse("00000000-0000-0000-0000-000000000123"),
 			},
 			mockUser: func() *domain.User {
 				hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("password"), bcrypt.DefaultCost)
@@ -181,7 +180,7 @@ func TestUseCase_SignIn_TableDriven(t *testing.T) {
 			input: &domain.SignInIn{
 				Phone:     "123456789",
 				Password:  "password",
-				DeviceID:  "device-123",
+				DeviceID:  uuid.MustParse("00000000-0000-0000-0000-000000000123"),
 				UserAgent: "Mozilla/5.0",
 				IP:        "192.168.1.1",
 			},
@@ -202,7 +201,7 @@ func TestUseCase_SignIn_TableDriven(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // parallel safety
+		// parallel safety
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 

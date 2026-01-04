@@ -4,10 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/Masterminds/squirrel"
-
 	"gct/internal/domain"
 	apperrors "gct/pkg/errors"
+	"github.com/Masterminds/squirrel"
 )
 
 func (r *Repo) Update(ctx context.Context, s *domain.Session) error {
@@ -29,7 +28,6 @@ func (r *Repo) Update(ctx context.Context, s *domain.Session) error {
 		Set("updated_at", time.Now()).
 		Where(squirrel.Eq{"id": s.ID}).
 		ToSql()
-
 	if err != nil {
 		return apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase,
 			"failed to build update SQL query")

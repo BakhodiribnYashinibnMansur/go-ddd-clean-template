@@ -7,13 +7,12 @@ import (
 	"fmt"
 	"time"
 
+	natsrpc "gct/pkg/broker/nats/nats_rpc"
+	"gct/pkg/logger"
 	"github.com/goccy/go-json"
 	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
-
-	natsrpc "gct/pkg/broker/nats/nats_rpc"
-	"gct/pkg/logger"
 )
 
 const (
@@ -27,8 +26,7 @@ type CallHandler func(*nats.Msg) (any, error)
 
 // Server -.
 type Server struct {
-	ctx context.Context
-	eg  *errgroup.Group
+	eg *errgroup.Group
 
 	subject      string
 	connection   *nats.Conn
@@ -50,7 +48,7 @@ func New(
 	l logger.Log,
 	opts ...Option,
 ) (*Server, error) {
-	group, ctx := errgroup.WithContext(context.Background())
+	group, _ := errgroup.WithContext(context.Background())
 	group.SetLimit(1) // Run only one goroutine
 
 	connection, err := nats.Connect(
@@ -64,7 +62,6 @@ func New(
 	}
 
 	s := &Server{
-		ctx:        ctx,
 		eg:         group,
 		subject:    serverSubject,
 		connection: connection,

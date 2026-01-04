@@ -3,10 +3,10 @@ package session
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
-
 	"gct/consts"
 	"gct/internal/controller/restapi/response"
+	"gct/internal/controller/restapi/util"
+	"github.com/gin-gonic/gin"
 )
 
 // RevokeByDevice godoc
@@ -22,6 +22,10 @@ import (
 // @Failure     500 {object} response.ErrorResponse
 // @Router      /sessions/device/{device_id} [delete]
 func (c *Controller) RevokeByDevice(ctx *gin.Context) {
+	// Handle mock mode
+	if util.Mock(ctx, util.MockTypeDelete, "Device sessions revoked successfully") {
+		return
+	}
 	_, exists := ctx.Get(consts.CtxUserID)
 	if !exists {
 		response.ControllerResponse(ctx, http.StatusUnauthorized, "unauthorized", nil, false)

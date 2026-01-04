@@ -7,13 +7,13 @@ import (
 	"runtime/debug"
 	"time"
 
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
-	"go.uber.org/zap"
-
+	"gct/internal/controller/restapi/util"
 	"gct/internal/domain"
 	"gct/internal/usecase"
 	"gct/pkg/logger"
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"go.uber.org/zap"
 )
 
 type SystemErrorMiddleware struct {
@@ -71,7 +71,7 @@ func (m *SystemErrorMiddleware) saveError(c *gin.Context, errVal any, stack *str
 	// Extract context info
 	path := c.Request.URL.Path
 	method := c.Request.Method
-	ip := c.ClientIP()
+	ip := util.GetIPAddress(c)
 
 	// Create struct
 	sysErr := &domain.SystemError{
@@ -86,12 +86,12 @@ func (m *SystemErrorMiddleware) saveError(c *gin.Context, errVal any, stack *str
 		CreatedAt:   time.Now(),
 		Metadata: map[string]any{
 			"duration_ms": time.Since(start).Milliseconds(),
-			"user_agent":  c.Request.UserAgent(),
+			"user_agent":  util.GetUserAgent(c),
 		},
 	}
 
 	// Extract Request ID
-	reqIDStr := c.GetHeader("X-Request-ID")
+	reqIDStr := util.GetRequestID(c)
 	if reqIDStr != "" {
 		if uid, err := uuid.Parse(reqIDStr); err == nil {
 			sysErr.RequestID = &uid

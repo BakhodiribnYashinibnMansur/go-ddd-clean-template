@@ -3,9 +3,8 @@ package permission
 import (
 	"context"
 
-	"github.com/google/uuid"
-
 	apperrors "gct/pkg/errors"
+	"github.com/google/uuid"
 )
 
 func (u *UseCase) RemoveScope(ctx context.Context, permID uuid.UUID, path, method string) error {

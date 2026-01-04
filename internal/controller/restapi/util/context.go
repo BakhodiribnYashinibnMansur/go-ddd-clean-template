@@ -1,17 +1,16 @@
 package util
 
 import (
-	"strconv"
-
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
+	"fmt"
 
 	"gct/consts"
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 // Gin Context Helpers (Keys set by Middleware)
 
-func GetUserIDUUID(ctx *gin.Context) (uuid.UUID, error) {
+func GetUserID(ctx *gin.Context) (uuid.UUID, error) {
 	id, ok := ctx.Get(consts.CtxUserID)
 	if !ok {
 		return uuid.Nil, ErrUserIdNotFound
@@ -24,41 +23,32 @@ func GetUserIDUUID(ctx *gin.Context) (uuid.UUID, error) {
 
 	// If string, parse it
 	if userID, ok := id.(string); ok {
-		return uuid.Parse(userID)
+		parsed, err := uuid.Parse(userID)
+		if err != nil {
+			return uuid.Nil, fmt.Errorf("failed to parse user ID: %w", err)
+		}
+		return parsed, nil
 	}
 
 	return uuid.Nil, ErrUserIdNotFound
 }
 
-func GetUserIDInt64(ctx *gin.Context) (int64, error) {
-	id, ok := ctx.Get(consts.CtxUserID)
-	if !ok {
-		return 0, ErrUserIdNotFound
-	}
-
-	if i, ok := id.(int64); ok {
-		return i, nil
-	}
-
-	if s, ok := id.(string); ok {
-		return strconv.ParseInt(s, 10, 64)
-	}
-
-	return 0, ErrUserIdNotFound
-}
-
-func GetCtxSessionID(ctx *gin.Context) (string, error) {
+func GetCtxSessionID(ctx *gin.Context) (uuid.UUID, error) {
 	sessionID, ok := ctx.Get(consts.CtxSessionID)
 	if !ok {
-		return "", ErrSessionIDNotFound
+		return uuid.Nil, ErrSessionIDNotFound
 	}
 	if s, ok := sessionID.(string); ok {
-		return s, nil
+		parsed, err := uuid.Parse(s)
+		if err != nil {
+			return uuid.Nil, fmt.Errorf("failed to parse session ID: %w", err)
+		}
+		return parsed, nil
 	}
 	if u, ok := sessionID.(uuid.UUID); ok {
-		return u.String(), nil
+		return u, nil
 	}
-	return "", ErrInvalidSessionID
+	return uuid.Nil, ErrInvalidSessionID
 }
 
 func GetUserRole(ctx *gin.Context) (uuid.UUID, error) {
@@ -70,7 +60,11 @@ func GetUserRole(ctx *gin.Context) (uuid.UUID, error) {
 		return roleID, nil
 	}
 	if roleIDStr, ok := role.(string); ok {
-		return uuid.Parse(roleIDStr)
+		parsed, err := uuid.Parse(roleIDStr)
+		if err != nil {
+			return uuid.Nil, fmt.Errorf("failed to parse role ID: %w", err)
+		}
+		return parsed, nil
 	}
 	return uuid.Nil, ErrRoleNotFound
 }

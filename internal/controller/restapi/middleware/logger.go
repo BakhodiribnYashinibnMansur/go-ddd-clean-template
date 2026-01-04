@@ -3,10 +3,10 @@ package middleware
 import (
 	"time"
 
+	"gct/internal/controller/restapi/util"
+	"gct/pkg/logger"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
-
-	"gct/pkg/logger"
 )
 
 // Logger -.
@@ -26,7 +26,7 @@ func Logger(l logger.Log) gin.HandlerFunc {
 			zap.String("path", path),
 			zap.Int("status", c.Writer.Status()),
 			zap.String("latency", time.Since(start).String()),
-			zap.String("client_ip", c.ClientIP()),
+			zap.String("client_ip", util.GetIPAddress(c)),
 			zap.String("error", c.Errors.String()),
 		)
 	}

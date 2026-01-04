@@ -17,7 +17,6 @@ import (
 )
 
 func setup(t *testing.T) *minio.UseCase {
-	t.Helper()
 	// Setup fake S3
 	backend := s3mem.New()
 	faker := gofakes3.New(backend)

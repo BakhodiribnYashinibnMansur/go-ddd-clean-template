@@ -6,7 +6,6 @@ import (
 	"gct/internal/repo/persistent"
 	"gct/pkg/db/postgres"
 	"gct/pkg/logger"
-
 	"github.com/minio/minio-go/v7"
 	"github.com/redis/go-redis/v9"
 )

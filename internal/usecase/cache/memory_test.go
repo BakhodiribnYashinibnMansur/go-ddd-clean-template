@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"gct/internal/usecase/cache"
-
 	"github.com/stretchr/testify/assert"
 )
 

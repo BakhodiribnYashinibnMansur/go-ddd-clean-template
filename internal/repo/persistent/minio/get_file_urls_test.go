@@ -4,10 +4,9 @@ import (
 	"strings"
 	"testing"
 
+	"gct/internal/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"gct/internal/domain"
 )
 
 func TestRepo_GetFileURLs(t *testing.T) {
@@ -164,7 +163,7 @@ func TestRepo_GetFileURLs(t *testing.T) {
 			expectError: false,
 			validateResult: func(t *testing.T, files []domain.File, err error) {
 				require.NoError(t, err)
-				assert.Len(t, files, 0)
+				assert.Empty(t, files)
 			},
 		},
 		{
@@ -173,7 +172,7 @@ func TestRepo_GetFileURLs(t *testing.T) {
 				var files []domain.File
 				content := "content for large list test"
 
-				for i := 0; i < 10; i++ {
+				for range 10 {
 					reader := strings.NewReader(content)
 					f, err := testRepo.UploadImage(testCtx, reader, int64(len(content)), "image/png")
 					require.NoError(t, err)
@@ -227,7 +226,6 @@ func TestRepo_GetFileURLs(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // parallel safety
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 

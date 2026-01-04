@@ -3,11 +3,10 @@ package scope
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
-
 	"gct/internal/controller/restapi/response"
 	"gct/internal/controller/restapi/util"
 	"gct/internal/domain"
+	"github.com/gin-gonic/gin"
 )
 
 // Create godoc
@@ -22,6 +21,11 @@ func (c *Controller) Create(ctx *gin.Context) {
 	if err := ctx.ShouldBindJSON(&scope); err != nil {
 		util.LogError(c.l, err, "http - v1 - authz - scope - create - bind")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid request body", nil, false)
+		return
+	}
+
+	// Handle mock mode
+	if util.Mock(ctx, util.MockTypeCreate, "Scope created successfully") {
 		return
 	}
 

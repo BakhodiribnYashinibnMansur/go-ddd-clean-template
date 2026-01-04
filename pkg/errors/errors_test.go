@@ -1,7 +1,6 @@
 package errors
 
 import (
-	"context"
 	"errors"
 	"testing"
 )
@@ -67,7 +66,7 @@ func TestAppError_Unwrap(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.appError.Unwrap(); got != tt.want && (got == nil || tt.want == nil || got.Error() != tt.want.Error()) {
+			if got := tt.appError.Unwrap(); !errors.Is(got, tt.want) && (got == nil || tt.want == nil || got.Error() != tt.want.Error()) {
 				t.Errorf("AppError.Unwrap() = %v, want %v", got, tt.want)
 			}
 		})
@@ -210,7 +209,7 @@ func TestAppError_WithDetails(t *testing.T) {
 }
 
 func TestNew(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	tests := []struct {
 		name    string
@@ -271,7 +270,7 @@ func TestNew(t *testing.T) {
 }
 
 func TestWrap(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	baseErr := errors.New("base error")
 
 	tests := []struct {
@@ -332,7 +331,7 @@ func TestWrap(t *testing.T) {
 			if got.UserMsg != tt.want.UserMsg {
 				t.Errorf("Wrap().UserMsg = %v, want %v", got.UserMsg, tt.want.UserMsg)
 			}
-			if got.Err != tt.want.Err {
+			if !errors.Is(got.Err, tt.want.Err) {
 				t.Errorf("Wrap().Err = %v, want %v", got.Err, tt.want.Err)
 			}
 			if len(got.Stack) == 0 {
@@ -343,7 +342,7 @@ func TestWrap(t *testing.T) {
 }
 
 func TestIs(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	tests := []struct {
 		name string
@@ -387,7 +386,7 @@ func TestIs(t *testing.T) {
 }
 
 func TestGetCode(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	tests := []struct {
 		name string

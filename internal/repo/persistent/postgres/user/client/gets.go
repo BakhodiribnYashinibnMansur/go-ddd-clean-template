@@ -3,10 +3,9 @@ package client
 import (
 	"context"
 
-	"github.com/Masterminds/squirrel"
-
 	"gct/internal/domain"
 	apperrors "gct/pkg/errors"
+	"github.com/Masterminds/squirrel"
 )
 
 func (r *Repo) Gets(ctx context.Context, filter *domain.UsersFilter) ([]*domain.User, int, error) {

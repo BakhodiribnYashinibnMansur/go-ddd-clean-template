@@ -8,9 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
-
 	userClient "gct/test/e2e/flows/user/client"
+	"github.com/stretchr/testify/require"
 )
 
 // TestListSessions tests listing sessions with table-driven tests
@@ -63,7 +62,7 @@ func TestListSessions(t *testing.T) {
 
 			var token string
 			// Create sessions
-			for i := 0; i < tt.numSessions; i++ {
+			for i := range tt.numSessions {
 				resp := uClient.SignIn(t, phone, "password123")
 				require.Equal(t, http.StatusOK, resp.StatusCode, "SignIn failed")
 

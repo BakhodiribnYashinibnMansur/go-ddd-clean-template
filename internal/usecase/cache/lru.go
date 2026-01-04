@@ -6,6 +6,9 @@ import (
 	"sync"
 )
 
+// ErrInvalidCapacity is returned when cache capacity is invalid.
+var ErrInvalidCapacity = errors.New("capacity must be greater than 0")
+
 // LRUCache implements a Least Recently Used cache
 type LRUCache struct {
 	capacity int
@@ -22,7 +25,7 @@ type lruEntry struct {
 // NewLRUCache creates a new LRU cache with the given capacity
 func NewLRUCache(capacity int) (*LRUCache, error) {
 	if capacity <= 0 {
-		return nil, errors.New("capacity must be greater than 0")
+		return nil, ErrInvalidCapacity
 	}
 	return &LRUCache{
 		capacity: capacity,
@@ -38,7 +41,9 @@ func (c *LRUCache) Set(key string, value any) {
 
 	if elem, ok := c.items[key]; ok {
 		c.list.MoveToFront(elem)
-		elem.Value.(*lruEntry).value = value
+		if entry, ok := elem.Value.(*lruEntry); ok {
+			entry.value = value
+		}
 		return
 	}
 
@@ -58,7 +63,9 @@ func (c *LRUCache) Get(key string) (any, bool) {
 
 	if elem, ok := c.items[key]; ok {
 		c.list.MoveToFront(elem)
-		return elem.Value.(*lruEntry).value, true
+		if entry, ok := elem.Value.(*lruEntry); ok {
+			return entry.value, true
+		}
 	}
 	return nil, false
 }
@@ -82,8 +89,9 @@ func (c *LRUCache) evict() {
 
 func (c *LRUCache) removeElement(elem *list.Element) {
 	c.list.Remove(elem)
-	entry := elem.Value.(*lruEntry)
-	delete(c.items, entry.key)
+	if entry, ok := elem.Value.(*lruEntry); ok {
+		delete(c.items, entry.key)
+	}
 }
 
 // Len returns the number of items in the cache

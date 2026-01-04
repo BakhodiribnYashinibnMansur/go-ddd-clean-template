@@ -4,12 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"gct/config"
 	minio_client "github.com/minio/minio-go/v7"
 	minio_credentials "github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/minio"
-
-	"gct/config"
 )
 
 // RunMinioTestContainer is a function that runs a minio test container

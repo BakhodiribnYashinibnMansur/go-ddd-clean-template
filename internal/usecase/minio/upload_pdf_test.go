@@ -25,6 +25,7 @@ func TestUseCase_UploadPDF_TableDriven(t *testing.T) {
 			contentType: "application/pdf",
 			expectError: false,
 			validateResult: func(t *testing.T, filename string) {
+				t.Helper()
 				require.NotEmpty(t, filename)
 				require.Contains(t, filename, ".pdf") // PDFs keep .pdf extension
 			},
@@ -36,6 +37,7 @@ func TestUseCase_UploadPDF_TableDriven(t *testing.T) {
 			contentType: "application/pdf",
 			expectError: false,
 			validateResult: func(t *testing.T, filename string) {
+				t.Helper()
 				require.NotEmpty(t, filename)
 				require.Contains(t, filename, ".pdf") // PDFs keep .pdf extension
 			},
@@ -47,6 +49,7 @@ func TestUseCase_UploadPDF_TableDriven(t *testing.T) {
 			contentType: "application/pdf",
 			expectError: false,
 			validateResult: func(t *testing.T, filename string) {
+				t.Helper()
 				require.NotEmpty(t, filename)
 				require.Contains(t, filename, ".pdf") // PDFs keep .pdf extension
 			},
@@ -58,6 +61,7 @@ func TestUseCase_UploadPDF_TableDriven(t *testing.T) {
 			contentType: "application/pdf",
 			expectError: true,
 			validateResult: func(t *testing.T, filename string) {
+				t.Helper()
 				require.Empty(t, filename)
 			},
 		},
@@ -68,6 +72,7 @@ func TestUseCase_UploadPDF_TableDriven(t *testing.T) {
 			contentType: "application/pdf",
 			expectError: true, // Zero size causes repository error
 			validateResult: func(t *testing.T, filename string) {
+				t.Helper()
 				require.Empty(t, filename)
 			},
 		},
@@ -78,6 +83,7 @@ func TestUseCase_UploadPDF_TableDriven(t *testing.T) {
 			contentType: "application/pdf",
 			expectError: false, // Size validation is not performed
 			validateResult: func(t *testing.T, filename string) {
+				t.Helper()
 				require.NotEmpty(t, filename)
 				require.Contains(t, filename, ".pdf") // PDFs keep .pdf extension
 			},
@@ -89,6 +95,7 @@ func TestUseCase_UploadPDF_TableDriven(t *testing.T) {
 			contentType: "text/plain",
 			expectError: false, // Content type validation is not performed
 			validateResult: func(t *testing.T, filename string) {
+				t.Helper()
 				require.NotEmpty(t, filename)
 				require.Contains(t, filename, ".dat") // Non-PDF content types are saved as .dat
 			},
@@ -100,6 +107,7 @@ func TestUseCase_UploadPDF_TableDriven(t *testing.T) {
 			contentType: "application/pdf",
 			expectError: false, // PDF format validation is not performed
 			validateResult: func(t *testing.T, filename string) {
+				t.Helper()
 				require.NotEmpty(t, filename)
 				require.Contains(t, filename, ".pdf") // PDFs keep .pdf extension
 			},
@@ -111,6 +119,7 @@ func TestUseCase_UploadPDF_TableDriven(t *testing.T) {
 			contentType: "application/pdf",
 			expectError: false, // PDF header validation is not performed
 			validateResult: func(t *testing.T, filename string) {
+				t.Helper()
 				require.NotEmpty(t, filename)
 				require.Contains(t, filename, ".pdf") // PDFs keep .pdf extension
 			},
@@ -122,6 +131,7 @@ func TestUseCase_UploadPDF_TableDriven(t *testing.T) {
 			contentType: "application/pdf",
 			expectError: false,
 			validateResult: func(t *testing.T, filename string) {
+				t.Helper()
 				require.NotEmpty(t, filename)
 				require.Contains(t, filename, ".pdf") // PDFs keep .pdf extension
 			},
@@ -133,6 +143,7 @@ func TestUseCase_UploadPDF_TableDriven(t *testing.T) {
 			contentType: "application/pdf",
 			expectError: false,
 			validateResult: func(t *testing.T, filename string) {
+				t.Helper()
 				require.NotEmpty(t, filename)
 				require.Contains(t, filename, ".pdf") // PDFs keep .pdf extension
 			},
@@ -140,7 +151,7 @@ func TestUseCase_UploadPDF_TableDriven(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // parallel safety
+		// parallel safety
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 

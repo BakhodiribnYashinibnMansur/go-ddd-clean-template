@@ -4,10 +4,9 @@ import (
 	"context"
 	"time"
 
+	apperrors "gct/pkg/errors"
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
-
-	apperrors "gct/pkg/errors"
 )
 
 func (r *Repo) AddScope(ctx context.Context, permID uuid.UUID, path, method string) error {

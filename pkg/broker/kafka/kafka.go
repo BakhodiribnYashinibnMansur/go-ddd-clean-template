@@ -6,11 +6,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/segmentio/kafka-go"
-	"go.uber.org/zap"
-
 	"gct/config"
 	"gct/pkg/logger"
+	"github.com/segmentio/kafka-go"
+	"go.uber.org/zap"
 )
 
 const (

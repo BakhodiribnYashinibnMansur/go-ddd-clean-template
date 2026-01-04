@@ -6,10 +6,9 @@ import (
 	"fmt"
 	"time"
 
+	natsrpc "gct/pkg/broker/nats/nats_rpc"
 	"github.com/goccy/go-json"
 	"github.com/nats-io/nats.go"
-
-	natsrpc "gct/pkg/broker/nats/nats_rpc"
 )
 
 const (

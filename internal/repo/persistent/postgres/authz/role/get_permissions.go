@@ -3,11 +3,10 @@ package role
 import (
 	"context"
 
-	"github.com/Masterminds/squirrel"
-	"github.com/google/uuid"
-
 	"gct/internal/domain"
 	apperrors "gct/pkg/errors"
+	"github.com/Masterminds/squirrel"
+	"github.com/google/uuid"
 )
 
 func (r *Repo) GetPermissions(ctx context.Context, roleID uuid.UUID) ([]*domain.Permission, error) {

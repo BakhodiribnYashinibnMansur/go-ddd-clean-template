@@ -5,11 +5,10 @@ import (
 	"fmt"
 	"log"
 
+	"gct/config"
 	"github.com/redis/go-redis/v9"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
-
-	"gct/config"
 )
 
 // RunRedisTestContainer is a function that runs a Redis test container

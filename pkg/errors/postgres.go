@@ -35,8 +35,8 @@ func HandlePgError(ctx context.Context, err error, table string, extraFields map
 		return appErr
 	}
 
-	pgErr, ok := err.(*pgconn.PgError)
-	if !ok {
+	var pgErr *pgconn.PgError
+	if !errors.As(err, &pgErr) {
 		// Not a PostgreSQL error, return generic database error
 		appErr := AutoSource(
 			WrapRepoError(ctx, err, ErrRepoDatabase,

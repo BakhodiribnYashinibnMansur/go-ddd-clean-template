@@ -1,8 +1,6 @@
 package redis
 
 import (
-	"github.com/redis/go-redis/v9"
-
 	"gct/internal/repo/persistent/redis/bitmap"
 	"gct/internal/repo/persistent/redis/geospatial"
 	"gct/internal/repo/persistent/redis/hyperloglog"
@@ -10,6 +8,7 @@ import (
 	"gct/internal/repo/persistent/redis/store"
 	"gct/internal/repo/persistent/redis/stream"
 	"gct/pkg/logger"
+	"github.com/redis/go-redis/v9"
 )
 
 type Repo struct {

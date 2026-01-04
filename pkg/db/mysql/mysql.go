@@ -7,11 +7,10 @@ import (
 	"fmt"
 	"time"
 
-	_ "github.com/go-sql-driver/mysql"
-	"go.uber.org/zap"
-
 	"gct/config"
 	"gct/pkg/logger"
+	_ "github.com/go-sql-driver/mysql"
+	"go.uber.org/zap"
 )
 
 const (

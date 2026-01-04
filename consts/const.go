@@ -12,6 +12,7 @@ const (
 	COOKIE_USER_FULLNAME string = "c_ufn"
 	COOKIE_USER_PHONE    string = "c_uph"
 	COOKIE_USER_ROLE_ID  string = "c_uro"
+	COOKIE_CSRF_TOKEN    string = "c_csrf"
 
 	CookieExpiredTime int    = 3600
 	CookieDomain      string = "localhost"
@@ -19,4 +20,8 @@ const (
 
 	// TELEGRAM
 	TelegramErrorTopicID string = "2"
+
+	// TOKEN TYPE
+	TokenTypeAccess  string = "access"
+	TokenTypeRefresh string = "refresh"
 )

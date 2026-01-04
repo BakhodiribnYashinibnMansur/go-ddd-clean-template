@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -40,17 +41,24 @@ func NewPriorityQueue[T any](db *redis.Client) *PriorityQueue[T] {
 func (p *PriorityQueue[T]) Get(key string, offset, limit int64) ([]T, error) {
 	valStrs, err := p.db.ZRange(context.Background(), key, offset, limit).Result()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get priority queue from key %s: %w", key, err)
 	}
 	return p.unmarshalSlice(valStrs)
 }
 
 func (p *PriorityQueue[T]) GetFull(key string) (int64, error) {
-	return p.db.ZCard(context.Background(), key).Result()
+	result, err := p.db.ZCard(context.Background(), key).Result()
+	if err != nil {
+		return 0, fmt.Errorf("failed to get priority queue size from key %s: %w", key, err)
+	}
+	return result, nil
 }
 
 func (p *PriorityQueue[T]) Delete(key string) error {
-	return p.db.Del(context.Background(), key).Err()
+	if err := p.db.Del(context.Background(), key).Err(); err != nil {
+		return fmt.Errorf("failed to delete priority queue key %s: %w", key, err)
+	}
+	return nil
 }
 
 func (p *PriorityQueue[T]) Push(key string, value []GenericZ[T]) error {
@@ -64,26 +72,38 @@ func (p *PriorityQueue[T]) Push(key string, value []GenericZ[T]) error {
 			Member: v.Member,
 		}
 	}
-	return p.db.ZAdd(context.Background(), key, zSlice...).Err()
+	if err := p.db.ZAdd(context.Background(), key, zSlice...).Err(); err != nil {
+		return fmt.Errorf("failed to push to priority queue key %s: %w", key, err)
+	}
+	return nil
 }
 
 func (p *PriorityQueue[T]) PopMin(key string) error {
-	return p.db.ZPopMin(context.Background(), key).Err()
+	if err := p.db.ZPopMin(context.Background(), key).Err(); err != nil {
+		return fmt.Errorf("failed to pop min from priority queue key %s: %w", key, err)
+	}
+	return nil
 }
 
 func (p *PriorityQueue[T]) PopMax(key string) error {
-	return p.db.ZPopMax(context.Background(), key).Err()
+	if err := p.db.ZPopMax(context.Background(), key).Err(); err != nil {
+		return fmt.Errorf("failed to pop max from priority queue key %s: %w", key, err)
+	}
+	return nil
 }
 
 func (p *PriorityQueue[T]) DeleteRange(key string, offset, limit int64) error {
-	return p.db.ZRemRangeByRank(context.Background(), key, offset, limit).Err()
+	if err := p.db.ZRemRangeByRank(context.Background(), key, offset, limit).Err(); err != nil {
+		return fmt.Errorf("failed to delete range from priority queue key %s: %w", key, err)
+	}
+	return nil
 }
 
 func (p *PriorityQueue[T]) Peek(key string) (T, error) {
 	var val T
 	valStrs, err := p.db.ZRange(context.Background(), key, 0, 0).Result()
 	if err != nil {
-		return val, err
+		return val, fmt.Errorf("failed to peek priority queue key %s: %w", key, err)
 	}
 	if len(valStrs) == 0 {
 		return val, nil
@@ -97,21 +117,31 @@ func (p *PriorityQueue[T]) IsEmpty(key string) (bool, error) {
 }
 
 func (p *PriorityQueue[T]) Size(key string) (int64, error) {
-	return p.db.ZCard(context.Background(), key).Result()
+	result, err := p.db.ZCard(context.Background(), key).Result()
+	if err != nil {
+		return 0, fmt.Errorf("failed to get size of priority queue key %s: %w", key, err)
+	}
+	return result, nil
 }
 
 func (p *PriorityQueue[T]) Clear(key string) error {
-	return p.db.Del(context.Background(), key).Err()
+	if err := p.db.Del(context.Background(), key).Err(); err != nil {
+		return fmt.Errorf("failed to clear priority queue key %s: %w", key, err)
+	}
+	return nil
 }
 
 func (p *PriorityQueue[T]) ChangePriority(key string, value T, priority int64) error {
-	return p.db.ZAdd(context.Background(), key, redis.Z{Score: float64(priority), Member: value}).Err()
+	if err := p.db.ZAdd(context.Background(), key, redis.Z{Score: float64(priority), Member: value}).Err(); err != nil {
+		return fmt.Errorf("failed to change priority for key %s: %w", key, err)
+	}
+	return nil
 }
 
 func (p *PriorityQueue[T]) ToArray(key string) ([]T, error) {
 	valStrs, err := p.db.ZRange(context.Background(), key, 0, -1).Result()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to convert priority queue to array for key %s: %w", key, err)
 	}
 	return p.unmarshalSlice(valStrs)
 }
@@ -121,7 +151,10 @@ func (p *PriorityQueue[T]) unmarshalOne(s string) (T, error) {
 	cmd := redis.NewStringCmd(context.Background())
 	cmd.SetVal(s)
 	err := cmd.Scan(&val)
-	return val, err
+	if err != nil {
+		return val, fmt.Errorf("failed to scan priority queue value: %w", err)
+	}
+	return val, nil
 }
 
 func (p *PriorityQueue[T]) unmarshalSlice(valStrs []string) ([]T, error) {

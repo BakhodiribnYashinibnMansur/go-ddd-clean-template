@@ -3,9 +3,8 @@ package minio
 import (
 	"context"
 
-	"github.com/minio/minio-go/v7"
-
 	apperrors "gct/pkg/errors"
+	"github.com/minio/minio-go/v7"
 )
 
 // ObjectExists checks if an object exists in the minio server

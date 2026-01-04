@@ -1,9 +1,8 @@
 package permission
 
 import (
-	"github.com/gin-gonic/gin"
-
 	"gct/consts"
+	"github.com/gin-gonic/gin"
 )
 
 func Route(api *gin.RouterGroup, c ControllerI) {

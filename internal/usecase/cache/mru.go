@@ -34,7 +34,7 @@ func (c *MRUCache) Set(key string, value any) {
 
 	if elem, ok := c.data[key]; ok {
 		// Update value and move to Front (Most Recently Used)
-		elem.Value.(*mruEntry).value = value //nolint:forcetypeassert // safe: we control the type
+		elem.Value.(*mruEntry).value = value // safe: we control the type
 		c.list.MoveToFront(elem)
 		return
 	}
@@ -55,7 +55,7 @@ func (c *MRUCache) Get(key string) (any, bool) {
 
 	if elem, ok := c.data[key]; ok {
 		c.list.MoveToFront(elem)
-		return elem.Value.(*mruEntry).value, true //nolint:forcetypeassert // safe: we control the type
+		return elem.Value.(*mruEntry).value, true // safe: we control the type
 	}
 	return nil, false
 }
@@ -80,7 +80,7 @@ func (c *MRUCache) evict() {
 
 func (c *MRUCache) removeElement(elem *list.Element) {
 	c.list.Remove(elem)
-	entry := elem.Value.(*mruEntry) //nolint:forcetypeassert // safe: we control the type
+	entry := elem.Value.(*mruEntry) // safe: we control the type
 	delete(c.data, entry.key)
 }
 

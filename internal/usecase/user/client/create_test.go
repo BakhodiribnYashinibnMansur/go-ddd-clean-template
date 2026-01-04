@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"gct/internal/domain"
-
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -67,7 +66,8 @@ func TestUseCase_Create_TableDriven(t *testing.T) {
 			},
 			expectError: false, // Create method doesn't validate
 			validateSaved: func(t *testing.T, u *domain.User) {
-				require.Equal(t, "", u.Phone)
+				require.NotNil(t, u.Phone)
+				require.Equal(t, "", *u.Phone)
 			},
 		},
 		{
@@ -100,7 +100,8 @@ func TestUseCase_Create_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateSaved: func(t *testing.T, u *domain.User) {
-				require.Equal(t, uuid.UUID{}, u.ID)
+				// Create replaces zero UUID with a new one
+				require.NotEqual(t, uuid.UUID{}, u.ID)
 			},
 		},
 		{
@@ -132,7 +133,7 @@ func TestUseCase_Create_TableDriven(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // parallel safety
+		// parallel safety
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 

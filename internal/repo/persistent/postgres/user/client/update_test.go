@@ -1,23 +1,21 @@
 package client
 
 import (
-	"context"
 	"errors"
 	"testing"
 	"time"
 
+	"gct/internal/domain"
+	"gct/pkg/logger"
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
 	"github.com/pashagolub/pgxmock/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"gct/internal/domain"
-	"gct/pkg/logger"
 )
 
 func TestRepo_Update(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	userID := uuid.MustParse("550e8400-e29b-41d4-a716-446655440000")
 	username := "updateduser"
@@ -86,7 +84,7 @@ func TestRepo_Update(t *testing.T) {
 			},
 			expectedError: true,
 			errorCheck: func(t *testing.T, err error) {
-				assert.NotNil(t, err)
+				assert.Error(t, err)
 			},
 		},
 		{
@@ -227,7 +225,7 @@ func TestRepo_Update(t *testing.T) {
 			},
 			expectedError: true,
 			errorCheck: func(t *testing.T, err error) {
-				assert.NotNil(t, err)
+				assert.Error(t, err)
 				assert.Contains(t, err.Error(), "password hash")
 			},
 		},
@@ -260,7 +258,7 @@ func TestRepo_Update(t *testing.T) {
 			},
 			expectedError: true,
 			errorCheck: func(t *testing.T, err error) {
-				assert.NotNil(t, err)
+				assert.Error(t, err)
 				assert.Contains(t, err.Error(), "invalid phone")
 			},
 		},
@@ -315,7 +313,7 @@ func TestRepo_Update(t *testing.T) {
 			},
 			expectedError: true,
 			errorCheck: func(t *testing.T, err error) {
-				assert.NotNil(t, err)
+				assert.Error(t, err)
 				assert.Contains(t, err.Error(), "timeout")
 			},
 		},
@@ -341,7 +339,7 @@ func TestRepo_Update(t *testing.T) {
 			},
 			expectedError: true,
 			errorCheck: func(t *testing.T, err error) {
-				assert.NotNil(t, err)
+				assert.Error(t, err)
 				assert.Contains(t, err.Error(), "foreign key")
 			},
 		},
@@ -374,7 +372,7 @@ func TestRepo_Update(t *testing.T) {
 			},
 			expectedError: true,
 			errorCheck: func(t *testing.T, err error) {
-				assert.NotNil(t, err)
+				assert.Error(t, err)
 				assert.Contains(t, err.Error(), "invalid user ID")
 			},
 		},
@@ -407,7 +405,7 @@ func TestRepo_Update(t *testing.T) {
 			},
 			expectedError: true,
 			errorCheck: func(t *testing.T, err error) {
-				assert.NotNil(t, err)
+				assert.Error(t, err)
 				assert.Contains(t, err.Error(), "invalid user ID")
 			},
 		},
@@ -433,7 +431,7 @@ func TestRepo_Update(t *testing.T) {
 			},
 			expectedError: true,
 			errorCheck: func(t *testing.T, err error) {
-				assert.NotNil(t, err)
+				assert.Error(t, err)
 				assert.Contains(t, err.Error(), "permission denied")
 			},
 		},
@@ -505,7 +503,7 @@ func TestRepo_Update(t *testing.T) {
 }
 
 func TestRepo_Update_WithNilFields(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	userID := uuid.MustParse("550e8400-e29b-41d4-a716-446655440000")
 

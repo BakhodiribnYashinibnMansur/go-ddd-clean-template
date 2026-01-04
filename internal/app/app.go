@@ -8,9 +8,6 @@ import (
 	"strconv"
 	"syscall"
 
-	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
-
 	"gct/config"
 	"gct/internal/controller/restapi"
 	"gct/internal/repo"
@@ -19,6 +16,8 @@ import (
 	redisPkg "gct/pkg/db/redis"
 	"gct/pkg/logger"
 	httpserver "gct/pkg/server/http"
+	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 // Run creates objects via constructors.

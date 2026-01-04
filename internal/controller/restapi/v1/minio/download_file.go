@@ -4,13 +4,17 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/gin-gonic/gin"
-
 	"gct/internal/controller/restapi/response"
+	"gct/internal/controller/restapi/util"
+	"github.com/gin-gonic/gin"
 )
 
 // DownloadFile handles file download
 func (h *Controller) DownloadFile(ctx *gin.Context) {
+	// Handle mock mode
+	if util.Mock(ctx, util.MockTypeGet, func() any { return string("file_content_mock") }) {
+		return
+	}
 	pathStr := ctx.Query(filePath)
 	if pathStr == "" {
 		response.ControllerResponse(ctx, http.StatusBadRequest, "file path required", nil, false)

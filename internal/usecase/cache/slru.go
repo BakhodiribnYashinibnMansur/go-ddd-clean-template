@@ -50,7 +50,7 @@ func (c *SLRUCache) Set(key string, value any) {
 	defer c.mu.Unlock()
 
 	if elem, ok := c.items[key]; ok {
-		entry := elem.Value.(*slruEntry) //nolint:forcetypeassert // safe: we control the type
+		entry := elem.Value.(*slruEntry) // safe: we control the type
 		entry.value = value
 		// Hit logic
 		if entry.isProtected {
@@ -89,7 +89,7 @@ func (c *SLRUCache) Get(key string) (any, bool) {
 		return nil, false
 	}
 
-	entry := elem.Value.(*slruEntry) //nolint:forcetypeassert // safe: we control the type
+	entry := elem.Value.(*slruEntry) // safe: we control the type
 	if entry.isProtected {
 		c.protected.MoveToFront(elem)
 	} else {
@@ -110,7 +110,7 @@ func (c *SLRUCache) ensureCapacity() {
 		back := c.protected.Back()
 		if back != nil {
 			c.protected.Remove(back)
-			entry := back.Value.(*slruEntry) //nolint:forcetypeassert // safe: we control the type
+			entry := back.Value.(*slruEntry) // safe: we control the type
 			entry.isProtected = false
 
 			// Move to probationary
@@ -129,7 +129,7 @@ func (c *SLRUCache) evictProbationary() {
 	back := c.probationary.Back()
 	if back != nil {
 		c.probationary.Remove(back)
-		entry := back.Value.(*slruEntry) //nolint:forcetypeassert // safe: we control the type
+		entry := back.Value.(*slruEntry) // safe: we control the type
 		delete(c.items, entry.key)
 	}
 }
@@ -143,7 +143,7 @@ func (c *SLRUCache) Remove(key string) {
 	if !ok {
 		return
 	}
-	entry := elem.Value.(*slruEntry) //nolint:forcetypeassert // safe: we control the type
+	entry := elem.Value.(*slruEntry) // safe: we control the type
 	if entry.isProtected {
 		c.protected.Remove(elem)
 	} else {

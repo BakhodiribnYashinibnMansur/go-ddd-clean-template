@@ -3,12 +3,12 @@ package role
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
-
 	"gct/consts"
 	"gct/internal/controller/restapi/response"
 	"gct/internal/controller/restapi/util"
 	"gct/internal/domain"
+	"gct/internal/domain/mock"
+	"github.com/gin-gonic/gin"
 )
 
 // Gets godoc
@@ -37,6 +37,11 @@ func (c *Controller) Gets(ctx *gin.Context) {
 	}
 	if roleName != "" {
 		filter.Name = &roleName
+	}
+
+	// Handle mock mode
+	if util.Mock(ctx, util.MockTypeGets, func(count int) any { return mock.Roles(count) }) {
+		return
 	}
 
 	roles, count, err := c.u.Authz.Role.Gets(ctx.Request.Context(), &filter)

@@ -3,9 +3,13 @@ package telegram
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 )
+
+// ErrTelegramAPI is returned when Telegram API returns non-OK status.
+var ErrTelegramAPI = errors.New("telegram api error")
 
 func (c *Client) SendMessage(msgType MessageType, text string) error {
 	if c.token == "" || c.chatID == "" {
@@ -33,7 +37,7 @@ func (c *Client) SendMessage(msgType MessageType, text string) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("telegram api error: status code %d", resp.StatusCode)
+		return fmt.Errorf("%w: status code %d", ErrTelegramAPI, resp.StatusCode)
 	}
 	return nil
 }
@@ -43,5 +47,5 @@ func (c *Client) SendError(err error) error {
 }
 
 func (c *Client) SendInfo(msg string) error {
-	return c.SendMessage(Info, fmt.Sprintf("ℹ️ Info: %s", msg))
+	return c.SendMessage(Info, "ℹ️ Info: "+msg)
 }

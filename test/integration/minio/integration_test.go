@@ -9,14 +9,13 @@ import (
 	"os"
 	"testing"
 
-	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/assert"
-
 	"gct/internal/controller/restapi"
 	"gct/internal/repo"
 	"gct/internal/usecase"
 	"gct/pkg/logger"
 	"gct/test/integration/common/setup"
+	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestMinioAPI_Integration_TableDriven(t *testing.T) {
@@ -47,7 +46,6 @@ func TestMinioAPI_Integration_TableDriven(t *testing.T) {
 		name          string
 		method        string
 		url           string
-		contentType   string
 		setupBody     func() ([]byte, string)
 		useToken      bool
 		expectedCode  int
@@ -175,7 +173,7 @@ func TestMinioAPI_Integration_TableDriven(t *testing.T) {
 			method: http.MethodGet,
 			url:    "/api/v1/files/download",
 			setupBody: func() ([]byte, string) {
-				tmp, _ := os.CreateTemp("", "integration-*.txt")
+				tmp, _ := os.CreateTemp(t.TempDir(), "integration-*.txt")
 				tmp.WriteString("download-me")
 				tmp.Close()
 				return nil, "file-path=" + tmp.Name()

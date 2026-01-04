@@ -5,7 +5,6 @@ import (
 	"time"
 
 	apperrors "gct/pkg/errors"
-
 	"github.com/google/uuid"
 )
 

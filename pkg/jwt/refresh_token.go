@@ -23,6 +23,7 @@ const (
 var (
 	ErrRefreshTokenInvalid = errors.New("invalid refresh token")
 	ErrRefreshTokenExpired = errors.New("refresh token has expired")
+	ErrHashMismatch        = errors.New("invalid refresh token: hash mismatch")
 )
 
 // RefreshToken represents a refresh token with its components
@@ -68,9 +69,9 @@ func GenerateRefreshToken(userID, sessionID, clientID string, expiresIn time.Dur
 	return token, nil
 }
 
-// String returns the full token string in format: rft_v1_<id>_<secret>
+// String returns the full token string in format: rft_v1_<session_id>_<id>_<secret>
 func (t *RefreshToken) String() string {
-	return fmt.Sprintf("%s%s_%s_%s", tokenPrefix, refreshTokenVersion, t.ID, t.Secret)
+	return fmt.Sprintf("%s%s_%s_%s_%s", tokenPrefix, refreshTokenVersion, t.SessionID, t.ID, t.Secret)
 }
 
 // Verify checks if the token is valid and matches the stored hash
@@ -95,7 +96,7 @@ func ParseRefreshToken(tokenString string) (*RefreshToken, error) {
 
 	// Remove prefix and split into parts
 	parts := strings.Split(tokenString[len(tokenPrefix):], "_")
-	if len(parts) < 3 {
+	if len(parts) < 4 {
 		return nil, fmt.Errorf("%w: invalid format", ErrRefreshTokenInvalid)
 	}
 
@@ -105,8 +106,9 @@ func ParseRefreshToken(tokenString string) (*RefreshToken, error) {
 	}
 
 	return &RefreshToken{
-		ID:     parts[1],
-		Secret: strings.Join(parts[2:], "_"), // In case secret contains underscores
+		SessionID: parts[1],
+		ID:        parts[2],
+		Secret:    strings.Join(parts[3:], "_"), // In case secret contains underscores
 	}, nil
 }
 
@@ -118,7 +120,7 @@ func VerifyRefreshToken(tokenString, hashedSecret string) (*RefreshToken, error)
 	}
 
 	if !token.Verify(hashedSecret) {
-		return nil, errors.New("invalid refresh token: hash mismatch")
+		return nil, ErrHashMismatch
 	}
 
 	// Add the hash to the token for consistency

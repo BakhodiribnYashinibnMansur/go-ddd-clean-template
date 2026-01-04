@@ -3,9 +3,8 @@ package relation
 import (
 	"context"
 
-	"github.com/google/uuid"
-
 	apperrors "gct/pkg/errors"
+	"github.com/google/uuid"
 )
 
 func (u *UseCase) AddUser(ctx context.Context, userID, relationID uuid.UUID) error {

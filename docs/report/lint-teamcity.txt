@@ -1,7 +1,0 @@
-##teamcity[inspectionType id='err113' name='err113' description='err113' category='Golangci-lint reports']
-##teamcity[inspection typeId='err113' message='do not define dynamic errors, use wrapped static errors instead: "errors.New(\"db error\")"' file='internal/cron/session/session_test.go' line='72' SEVERITY='ERROR']
-##teamcity[inspection typeId='err113' message='do not define dynamic errors, use wrapped static errors instead: "errors.New(\"redis scan error\")"' file='internal/cron/session/session_test.go' line='151' SEVERITY='ERROR']
-##teamcity[inspectionType id='revive' name='revive' description='revive' category='Golangci-lint reports']
-##teamcity[inspection typeId='revive' message='exported: type name will be used as cron.CronJobs by other packages, and that stutters; consider calling this Jobs' file='internal/cron/cron.go' line='15' SEVERITY='WARNING']
-##teamcity[inspectionType id='testpackage' name='testpackage' description='testpackage' category='Golangci-lint reports']
-##teamcity[inspection typeId='testpackage' message='package should be `cron_test` instead of `cron`' file='internal/cron/cron_test.go' line='1' SEVERITY='ERROR']

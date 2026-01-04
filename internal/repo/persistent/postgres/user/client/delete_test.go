@@ -1,21 +1,19 @@
 package client
 
 import (
-	"context"
 	"errors"
 	"testing"
 
+	"gct/pkg/logger"
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
 	"github.com/pashagolub/pgxmock/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"gct/pkg/logger"
 )
 
 func TestRepo_Delete(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	userID := uuid.MustParse("550e8400-e29b-41d4-a716-446655440000")
 
@@ -54,7 +52,7 @@ func TestRepo_Delete(t *testing.T) {
 			},
 			expectedError: true,
 			errorCheck: func(t *testing.T, err error) {
-				assert.NotNil(t, err)
+				assert.Error(t, err)
 			},
 		},
 		{
@@ -99,7 +97,7 @@ func TestRepo_Delete(t *testing.T) {
 			},
 			expectedError: true,
 			errorCheck: func(t *testing.T, err error) {
-				assert.NotNil(t, err)
+				assert.Error(t, err)
 				assert.Contains(t, err.Error(), "invalid user ID")
 			},
 		},
@@ -117,7 +115,7 @@ func TestRepo_Delete(t *testing.T) {
 			},
 			expectedError: true,
 			errorCheck: func(t *testing.T, err error) {
-				assert.NotNil(t, err)
+				assert.Error(t, err)
 				assert.Contains(t, err.Error(), "invalid user ID")
 			},
 		},
@@ -135,7 +133,7 @@ func TestRepo_Delete(t *testing.T) {
 			},
 			expectedError: true,
 			errorCheck: func(t *testing.T, err error) {
-				assert.NotNil(t, err)
+				assert.Error(t, err)
 				assert.Contains(t, err.Error(), "timeout")
 			},
 		},
@@ -153,7 +151,7 @@ func TestRepo_Delete(t *testing.T) {
 			},
 			expectedError: true,
 			errorCheck: func(t *testing.T, err error) {
-				assert.NotNil(t, err)
+				assert.Error(t, err)
 				assert.Contains(t, err.Error(), "foreign key")
 			},
 		},
@@ -199,7 +197,7 @@ func TestRepo_Delete(t *testing.T) {
 			},
 			expectedError: true,
 			errorCheck: func(t *testing.T, err error) {
-				assert.NotNil(t, err)
+				assert.Error(t, err)
 				assert.Contains(t, err.Error(), "locked")
 			},
 		},
@@ -217,7 +215,7 @@ func TestRepo_Delete(t *testing.T) {
 			},
 			expectedError: true,
 			errorCheck: func(t *testing.T, err error) {
-				assert.NotNil(t, err)
+				assert.Error(t, err)
 				assert.Contains(t, err.Error(), "permission denied")
 			},
 		},
@@ -260,7 +258,7 @@ func TestRepo_Delete(t *testing.T) {
 }
 
 func TestRepo_Delete_SoftDelete(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	userID := uuid.MustParse("550e8400-e29b-41d4-a716-446655440000")
 
 	mockPool, err := pgxmock.NewPool()

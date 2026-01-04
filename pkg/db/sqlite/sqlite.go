@@ -7,11 +7,10 @@ import (
 	"fmt"
 	"time"
 
-	_ "github.com/mattn/go-sqlite3"
-	"go.uber.org/zap"
-
 	"gct/config"
 	"gct/pkg/logger"
+	_ "github.com/mattn/go-sqlite3"
+	"go.uber.org/zap"
 )
 
 const (

@@ -1,11 +1,10 @@
 package v1
 
 import (
-	"github.com/go-playground/validator/v10"
-
 	"gct/internal/usecase"
 	"gct/pkg/broker/rabbitmq/rmq_rpc/server"
 	"gct/pkg/logger"
+	"github.com/go-playground/validator/v10"
 )
 
 // NewUserRoutes -.

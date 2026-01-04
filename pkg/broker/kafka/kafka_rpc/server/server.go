@@ -6,13 +6,13 @@ import (
 	"errors"
 	"time"
 
+	kafkarpc "gct/pkg/broker/kafka/kafka_rpc"
+	"gct/pkg/logger"
+
 	"github.com/goccy/go-json"
 	"github.com/segmentio/kafka-go"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
-
-	kafkarpc "gct/pkg/broker/kafka/kafka_rpc"
-	"gct/pkg/logger"
 )
 
 const (
@@ -24,8 +24,7 @@ type CallHandler func(kafka.Message) (any, error)
 
 // Server -.
 type Server struct {
-	ctx context.Context
-	eg  *errgroup.Group
+	eg *errgroup.Group
 
 	reader *kafka.Reader
 	writer *kafka.Writer
@@ -47,7 +46,7 @@ func New(
 	l logger.Log,
 	opts ...Option,
 ) (*Server, error) {
-	group, ctx := errgroup.WithContext(context.Background())
+	group, _ := errgroup.WithContext(context.Background())
 	group.SetLimit(1)
 
 	reader := kafka.NewReader(kafka.ReaderConfig{
@@ -65,7 +64,6 @@ func New(
 	}
 
 	s := &Server{
-		ctx:     ctx,
 		eg:      group,
 		reader:  reader,
 		writer:  writer,
@@ -86,15 +84,16 @@ func New(
 
 // Start -.
 func (s *Server) Start() {
+	ctx := context.Background()
 	s.eg.Go(func() error {
 		for {
 			select {
 			case <-s.stop:
 				return nil
-			case <-s.ctx.Done():
-				return s.ctx.Err()
+			case <-ctx.Done():
+				return ctx.Err()
 			default:
-				msg, err := s.reader.ReadMessage(s.ctx)
+				msg, err := s.reader.ReadMessage(ctx)
 				if err != nil {
 					if errors.Is(err, context.Canceled) {
 						return nil
@@ -140,6 +139,8 @@ func (s *Server) Shutdown() error {
 }
 
 func (s *Server) handleMessage(msg kafka.Message) {
+	ctx := context.Background()
+
 	var handlerName string
 	for _, h := range msg.Headers {
 		if h.Key == "Handler" {
@@ -150,28 +151,28 @@ func (s *Server) handleMessage(msg kafka.Message) {
 
 	handler, ok := s.router[handlerName]
 	if !ok {
-		s.publishResponse(msg, nil, kafkarpc.ErrBadHandler)
+		s.publishResponse(ctx, msg, nil, kafkarpc.ErrBadHandler)
 		return
 	}
 
 	response, err := handler(msg)
 	if err != nil {
 		s.logger.Errorw("kafka_rpc server - handleMessage - handler", zap.Error(err))
-		s.publishResponse(msg, nil, kafkarpc.ErrInternalServer)
+		s.publishResponse(ctx, msg, nil, kafkarpc.ErrInternalServer)
 		return
 	}
 
 	body, err := json.Marshal(response)
 	if err != nil {
 		s.logger.Errorw("kafka_rpc server - handleMessage - json.Marshal", zap.Error(err))
-		s.publishResponse(msg, nil, kafkarpc.ErrInternalServer)
+		s.publishResponse(ctx, msg, nil, kafkarpc.ErrInternalServer)
 		return
 	}
 
-	s.publishResponse(msg, body, kafkarpc.Success)
+	s.publishResponse(ctx, msg, body, kafkarpc.Success)
 }
 
-func (s *Server) publishResponse(req kafka.Message, body []byte, status string) {
+func (s *Server) publishResponse(ctx context.Context, req kafka.Message, body []byte, status string) {
 	var replyTopic string
 	var correlationID string
 
@@ -197,10 +198,10 @@ func (s *Server) publishResponse(req kafka.Message, body []byte, status string) 
 		},
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
+	writeCtx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
 
-	if err := s.writer.WriteMessages(ctx, res); err != nil {
+	if err := s.writer.WriteMessages(writeCtx, res); err != nil {
 		s.logger.Errorw("kafka_rpc server - publishResponse - s.writer.WriteMessages", zap.Error(err))
 	}
 }

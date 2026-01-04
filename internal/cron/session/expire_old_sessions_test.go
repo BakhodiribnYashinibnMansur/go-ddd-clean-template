@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"gct/pkg/logger"
-
 	"github.com/go-redis/redismock/v9"
 	"github.com/pashagolub/pgxmock/v4"
 	"github.com/stretchr/testify/assert"

@@ -16,7 +16,7 @@ func ParseNamedQuery(query *string, args map[string]any) (params []any) {
 		if strings.Contains(*query, key) {
 			params = append(params, value)
 			count++
-			*query = strings.Replace(*query, key, " $"+strconv.Itoa(count)+" ", -1)
+			*query = strings.ReplaceAll(*query, key, " $"+strconv.Itoa(count)+" ")
 		}
 	}
 	return params

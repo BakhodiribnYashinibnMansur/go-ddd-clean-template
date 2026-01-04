@@ -7,13 +7,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
-
 	"gct/config"
 	"gct/consts"
 	"gct/internal/controller/restapi/cookie"
 	"gct/internal/controller/restapi/response"
+	"gct/internal/controller/restapi/util"
 	"gct/internal/domain"
 	"gct/internal/usecase"
 	"gct/internal/usecase/authz"
@@ -21,6 +19,8 @@ import (
 	"gct/internal/usecase/user/session"
 	"gct/pkg/jwt"
 	"gct/pkg/logger"
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 var (
@@ -136,15 +136,14 @@ func (m *AuthMiddleware) AuthClientAccess(ctx *gin.Context) {
 
 func (m *AuthMiddleware) AuthClientRefresh(ctx *gin.Context) {
 	token := cookie.GetCookie(ctx, consts.COOKIE_REFRESH_TOKEN)
-	header := ctx.GetHeader(consts.AuthorizationHeader)
-
-	if header == "" && token == "" {
+	if token == "" {
 		token = ExtractBearerToken(ctx)
-		if token == "" {
-			response.ControllerResponse(ctx, http.StatusUnauthorized, errUnAuth.Error(), nil, false)
-			ctx.Abort()
-			return
-		}
+	}
+
+	if token == "" {
+		response.ControllerResponse(ctx, http.StatusUnauthorized, errUnAuth.Error(), nil, false)
+		ctx.Abort()
+		return
 	}
 
 	// Parse the refresh token
@@ -157,7 +156,14 @@ func (m *AuthMiddleware) AuthClientRefresh(ctx *gin.Context) {
 	}
 
 	// Get session from database
-	sessionID := uuid.MustParse(rt.ID)
+	sessionID, err := uuid.Parse(rt.SessionID)
+	if err != nil {
+		m.l.Errorw("AuthMiddleware - AuthClientRefresh - invalid session id in token", "session_id", rt.SessionID)
+		response.ControllerResponse(ctx, http.StatusUnauthorized, errInvalidSession.Error(), nil, false)
+		ctx.Abort()
+		return
+	}
+
 	session, err := (*m.sessionUC).Get(ctx, &domain.SessionFilter{ID: &sessionID})
 	if err != nil {
 		m.l.Errorw("AuthMiddleware - AuthClientRefresh - session not found", "error", err)
@@ -183,7 +189,8 @@ func (m *AuthMiddleware) AuthClientRefresh(ctx *gin.Context) {
 	}
 
 	// Set session ID in context for next handler
-	ctx.Set(consts.CtxSessionID, rt.ID)
+	ctx.Set(consts.CtxSessionID, rt.SessionID)
+	ctx.Set(consts.CtxRefreshToken, token)
 	ctx.Set(consts.CtxSession, session)
 	ctx.Set(consts.CtxUserID, session.UserID.String())
 
@@ -230,19 +237,18 @@ func (m *AuthMiddleware) AuthAdmin(ctx *gin.Context) {
 		return
 	}
 
-	// 6. Context injection
 	ctx.Set(consts.CtxSessionID, session.ID)
 	ctx.Set(consts.CtxSession, session)
 	ctx.Set(consts.CtxUserID, session.UserID.String())
-	ctx.Set("is_admin", true)
+	ctx.Set(consts.CtxIsAdmin, true)
 
 	ctx.Next()
 }
 
 func (m *AuthMiddleware) AuthApiKey(ctx *gin.Context) {
-	apiKey := ctx.GetHeader("X-API-KEY")
+	apiKey := util.GetAPIKey(ctx)
 	if apiKey == "" {
-		m.l.Warnw("AuthMiddleware - AuthApiKey - API key missing", "ip", ctx.ClientIP())
+		m.l.Warnw("AuthMiddleware - AuthApiKey - API key missing", "ip", util.GetIPAddress(ctx))
 		response.ControllerResponse(ctx, http.StatusUnauthorized, errApiKeyMissing.Error(), nil, false)
 		ctx.Abort()
 		return
@@ -250,13 +256,13 @@ func (m *AuthMiddleware) AuthApiKey(ctx *gin.Context) {
 
 	// Simple check against config - in real app, check DB or external service
 	if apiKey != m.cfg.APIKeys.XApiKey {
-		m.l.Warnw("AuthMiddleware - AuthApiKey - Invalid API key", "ip", ctx.ClientIP())
+		m.l.Warnw("AuthMiddleware - AuthApiKey - Invalid API key", "ip", util.GetIPAddress(ctx))
 		response.ControllerResponse(ctx, http.StatusUnauthorized, errInvalidApiKey.Error(), nil, false)
 		ctx.Abort()
 		return
 	}
 
-	ctx.Set("api_key_authenticated", true)
+	ctx.Set(consts.CtxApiKeyAuth, true)
 	ctx.Next()
 }
 
@@ -300,8 +306,8 @@ func (m *AuthMiddleware) Authz(ctx *gin.Context) {
 	method := ctx.Request.Method
 
 	env := map[string]any{
-		consts.PolicyKeyIP:        ctx.ClientIP(),
-		consts.PolicyKeyUserAgent: ctx.GetHeader("User-Agent"),
+		consts.PolicyKeyIP:        util.GetIPAddress(ctx),
+		consts.PolicyKeyUserAgent: util.GetUserAgent(ctx),
 		consts.PolicyKeyTime:      time.Now(),
 		consts.PolicyKeyUserID:    user.ID,
 		consts.PolicyKeyRoleID:    *user.RoleID,
@@ -329,7 +335,7 @@ func (m *AuthMiddleware) Authz(ctx *gin.Context) {
 }
 
 func ExtractBearerToken(ctx *gin.Context) string {
-	bearToken := ctx.GetHeader(consts.AuthorizationHeader)
+	bearToken := util.GetAuthorization(ctx)
 	token := bearToken
 	onlyToken := strings.Split(token, " ")
 
@@ -341,11 +347,11 @@ func ExtractBearerToken(ctx *gin.Context) string {
 }
 
 func ExtractBasicToken(ctx *gin.Context) string {
-	basicToken := ctx.GetHeader(consts.AuthorizationHeader)
+	basicToken := util.GetAuthorization(ctx)
 	token := basicToken
 	onlyToken := strings.Split(token, " ")
 
-	if len(onlyToken) != 2 || onlyToken[0] != "Basic" {
+	if len(onlyToken) != 2 || onlyToken[0] != consts.BasicToken {
 		return ""
 	}
 

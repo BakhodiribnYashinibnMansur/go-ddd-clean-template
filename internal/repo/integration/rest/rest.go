@@ -2,6 +2,7 @@ package rest
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/go-resty/resty/v2"
@@ -25,28 +26,40 @@ func New(timeout time.Duration) *Client {
 
 // SendPostBasicRequest sends a POST request with Basic Auth
 func (c *Client) SendPostBasicRequest(ctx context.Context, endpoint string, body any, login, password string) (*resty.Response, error) {
-	return c.resty.R().
+	resp, err := c.resty.R().
 		SetContext(ctx).
 		SetBody(body).
 		SetBasicAuth(login, password).
 		Post(endpoint)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send POST request to %s: %w", endpoint, err)
+	}
+	return resp, nil
 }
 
 // SendPostBearerRequest sends a POST request with Bearer Auth
 func (c *Client) SendPostBearerRequest(ctx context.Context, endpoint string, body any, token string, query map[string]string) (*resty.Response, error) {
-	return c.resty.R().
+	resp, err := c.resty.R().
 		SetContext(ctx).
 		SetBody(body).
 		SetAuthToken(token).
 		SetQueryParams(query).
 		Post(endpoint)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send POST request to %s: %w", endpoint, err)
+	}
+	return resp, nil
 }
 
 // SendGetBearerRequest sends a GET request with Bearer Auth
 func (c *Client) SendGetBearerRequest(ctx context.Context, endpoint, token string, query map[string]string) (*resty.Response, error) {
-	return c.resty.R().
+	resp, err := c.resty.R().
 		SetContext(ctx).
 		SetAuthToken(token).
 		SetQueryParams(query).
 		Get(endpoint)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send GET request to %s: %w", endpoint, err)
+	}
+	return resp, nil
 }

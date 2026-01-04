@@ -3,11 +3,10 @@ package client
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
-
 	"gct/internal/controller/restapi/response"
 	"gct/internal/controller/restapi/util"
 	"gct/internal/domain"
+	"github.com/gin-gonic/gin"
 )
 
 // Create godoc
@@ -32,6 +31,11 @@ func (c *Controller) Create(ctx *gin.Context) {
 	// Initialize attributes if nil
 	if user.Attributes == nil {
 		user.Attributes = make(map[string]any)
+	}
+
+	// Handle mock mode
+	if util.Mock(ctx, util.MockTypeCreate, "User created successfully") {
+		return
 	}
 
 	err := c.u.User.Client.Create(ctx.Request.Context(), &user)

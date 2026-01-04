@@ -4,14 +4,14 @@ package clickhouse
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
-	"github.com/ClickHouse/clickhouse-go/v2"
-	"go.uber.org/zap"
-
 	"gct/config"
 	"gct/pkg/logger"
+	"github.com/ClickHouse/clickhouse-go/v2"
+	"go.uber.org/zap"
 )
 
 const (
@@ -109,18 +109,18 @@ func (ch *ClickHouse) Close() error {
 	if ch != nil {
 		if ch.Conn != nil {
 			if err := ch.Conn.Close(); err != nil {
-				errs = append(errs, err)
+				errs = append(errs, fmt.Errorf("close connection: %w", err))
 			}
 		}
 		if ch.DB != nil {
 			if err := ch.DB.Close(); err != nil {
-				errs = append(errs, err)
+				errs = append(errs, fmt.Errorf("close database: %w", err))
 			}
 		}
 	}
 
 	if len(errs) > 0 {
-		return fmt.Errorf("close clickhouse: %v", errs)
+		return errors.Join(errs...)
 	}
 	return nil
 }

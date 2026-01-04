@@ -3,9 +3,8 @@ package mock
 import (
 	"time"
 
-	"github.com/brianvoe/gofakeit/v7"
-
 	"gct/internal/domain"
+	"github.com/brianvoe/gofakeit/v7"
 )
 
 // FileInfo generates a fake domain.FileInfo
@@ -103,26 +102,4 @@ func randomVideoContentType() string {
 		domain.ContentTypeWEBM,
 	}
 	return contentTypes[gofakeit.IntRange(0, len(contentTypes)-1)]
-}
-
-// randomContentType returns a random content type from all categories
-func randomContentType() string {
-	allTypes := []string{
-		domain.ContentTypeJPG,
-		domain.ContentTypeJPEG,
-		domain.ContentTypePNG,
-		domain.ContentTypeSVG,
-		domain.ContentTypeHEIC,
-		domain.ContentTypeHEIF,
-		domain.ContentTypePDF,
-		domain.ContentTypeDOC,
-		domain.ContentTypeDOCX,
-		domain.ContentTypeXLSX,
-		domain.ContentTypeMP4,
-		domain.ContentTypeMPEG,
-		domain.ContentTypeAVI,
-		domain.ContentType3GP,
-		domain.ContentTypeWEBM,
-	}
-	return allTypes[gofakeit.IntRange(0, len(allTypes)-1)]
 }

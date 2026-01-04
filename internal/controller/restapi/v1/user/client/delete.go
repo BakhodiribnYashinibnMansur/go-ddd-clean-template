@@ -3,12 +3,11 @@ package client
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
-
 	"gct/consts"
 	"gct/internal/controller/restapi/response"
 	"gct/internal/controller/restapi/util"
 	"gct/internal/domain"
+	"github.com/gin-gonic/gin"
 )
 
 // Delete godoc
@@ -28,6 +27,11 @@ func (c *Controller) Delete(ctx *gin.Context) {
 	if err != nil {
 		util.LogError(c.l, err, "http - v1 - client - delete - id")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid user id", nil, false)
+		return
+	}
+
+	// Handle mock mode
+	if util.Mock(ctx, util.MockTypeDelete, "User deleted successfully") {
 		return
 	}
 

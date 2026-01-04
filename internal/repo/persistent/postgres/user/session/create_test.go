@@ -1,24 +1,22 @@
 package session
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"testing"
 	"time"
 
+	"gct/internal/domain"
+	"gct/pkg/logger"
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
 	"github.com/pashagolub/pgxmock/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"gct/internal/domain"
-	"gct/pkg/logger"
 )
 
 func TestRepo_Create(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	sessionID := uuid.New()
 	deviceID := uuid.New()
@@ -138,7 +136,7 @@ func TestRepo_Create(t *testing.T) {
 			},
 			expectedError: true,
 			errorCheck: func(t *testing.T, err error) {
-				assert.NotNil(t, err)
+				assert.Error(t, err)
 			},
 		},
 		{
@@ -258,7 +256,7 @@ func TestRepo_Create(t *testing.T) {
 			},
 			expectedError: true,
 			errorCheck: func(t *testing.T, err error) {
-				assert.NotNil(t, err)
+				assert.Error(t, err)
 				assert.Contains(t, err.Error(), "invalid user ID")
 			},
 		},
@@ -301,7 +299,7 @@ func TestRepo_Create(t *testing.T) {
 			},
 			expectedError: true,
 			errorCheck: func(t *testing.T, err error) {
-				assert.NotNil(t, err)
+				assert.Error(t, err)
 				assert.Contains(t, err.Error(), "invalid company ID")
 			},
 		},
@@ -370,7 +368,7 @@ func TestRepo_Create(t *testing.T) {
 			},
 			expectedError: true,
 			errorCheck: func(t *testing.T, err error) {
-				assert.NotNil(t, err)
+				assert.Error(t, err)
 				assert.Contains(t, err.Error(), "timeout")
 			},
 		},
@@ -400,7 +398,7 @@ func TestRepo_Create(t *testing.T) {
 			},
 			expectedError: true,
 			errorCheck: func(t *testing.T, err error) {
-				assert.NotNil(t, err)
+				assert.Error(t, err)
 				assert.Contains(t, err.Error(), "foreign key")
 			},
 		},
@@ -430,7 +428,7 @@ func TestRepo_Create(t *testing.T) {
 			},
 			expectedError: true,
 			errorCheck: func(t *testing.T, err error) {
-				assert.NotNil(t, err)
+				assert.Error(t, err)
 				assert.Contains(t, err.Error(), "unique constraint")
 			},
 		},

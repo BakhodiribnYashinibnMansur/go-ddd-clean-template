@@ -7,7 +7,6 @@ import (
 	"gct/internal/domain"
 	apperrors "gct/pkg/errors"
 	"gct/pkg/jwt"
-
 	"github.com/google/uuid"
 )
 
@@ -27,8 +26,8 @@ func (uc *UseCase) SignIn(ctx context.Context, in *domain.SignInIn) (*domain.Sig
 	}
 
 	// Device Info
-	deviceID, err := uuid.Parse(in.DeviceID)
-	if err != nil {
+	deviceID := in.DeviceID
+	if deviceID == uuid.Nil {
 		deviceID = uuid.New()
 	}
 

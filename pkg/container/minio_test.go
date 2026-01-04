@@ -3,9 +3,8 @@ package container
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"gct/config"
+	"github.com/stretchr/testify/assert"
 )
 
 // TestMinioConfig_TableDriven tests Minio configuration scenarios

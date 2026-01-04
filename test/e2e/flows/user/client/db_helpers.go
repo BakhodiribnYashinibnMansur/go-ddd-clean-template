@@ -1,13 +1,11 @@
 package client
 
 import (
-	"context"
 	"testing"
-
-	"github.com/google/uuid"
 
 	"gct/internal/domain"
 	"gct/test/e2e/common/setup"
+	"github.com/google/uuid"
 )
 
 // getUserFromDB retrieves a user from the database using repository layer
@@ -20,7 +18,7 @@ func getUserFromDB(t *testing.T, userID string) *domain.User {
 		return nil
 	}
 
-	ctx := context.Background()
+	ctx := t.Context()
 	filter := &domain.UserFilter{
 		ID: &uid,
 	}
@@ -44,7 +42,7 @@ func getSessionFromDB(t *testing.T, sessionID string) *domain.Session {
 		return nil
 	}
 
-	ctx := context.Background()
+	ctx := t.Context()
 	filter := &domain.SessionFilter{
 		ID: &sid,
 	}

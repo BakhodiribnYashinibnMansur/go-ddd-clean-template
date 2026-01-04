@@ -1,9 +1,9 @@
 package mock
 
 import (
-	"github.com/brianvoe/gofakeit/v7"
-
 	"gct/internal/domain"
+	"github.com/brianvoe/gofakeit/v7"
+	"github.com/google/uuid"
 )
 
 // SignInIn generates a fake domain.SignInIn
@@ -11,7 +11,7 @@ func SignInIn() *domain.SignInIn {
 	return &domain.SignInIn{
 		Phone:     Phone(),
 		Password:  gofakeit.Password(true, true, true, true, false, 12),
-		DeviceID:  UUID().String(),
+		DeviceID:  UUID(),
 		IP:        gofakeit.IPv4Address(),
 		UserAgent: gofakeit.UserAgent(),
 	}
@@ -35,10 +35,13 @@ func SignInOut() *domain.SignInOut {
 // SignUpIn generates a fake domain.SignUpIn
 func SignUpIn() *domain.SignUpIn {
 	return &domain.SignUpIn{
-		Phone:    Phone(),
-		Password: gofakeit.Password(true, true, true, true, false, 12),
-		Username: gofakeit.Name(),
-		Email:    gofakeit.Email(),
+		Phone:     Phone(),
+		Password:  gofakeit.Password(true, true, true, true, false, 12),
+		Username:  gofakeit.Name(),
+		Email:     gofakeit.Email(),
+		DeviceID:  UUID(),
+		IP:        gofakeit.IPv4Address(),
+		UserAgent: gofakeit.UserAgent(),
 	}
 }
 
@@ -52,14 +55,22 @@ func SignUpInWithEmail(email string) *domain.SignUpIn {
 // SignOutIn generates a fake domain.SignOutIn
 func SignOutIn() *domain.SignOutIn {
 	return &domain.SignOutIn{
-		SessionID: UUID().String(),
-		UserID:    UUID().String(),
+		SessionID: UUID(),
+		UserID:    UUID(),
 	}
 }
 
 // SignOutInWithUserID generates a fake domain.SignOutIn with specific user ID
-func SignOutInWithUserID(userID string) *domain.SignOutIn {
+func SignOutInWithUserID(userID uuid.UUID) *domain.SignOutIn {
 	signOut := SignOutIn()
 	signOut.UserID = userID
 	return signOut
+}
+
+// RefreshIn generates a fake domain.RefreshIn
+func RefreshIn() *domain.RefreshIn {
+	return &domain.RefreshIn{
+		RefreshToken: gofakeit.LetterN(64),
+		SessionID:    UUID(),
+	}
 }

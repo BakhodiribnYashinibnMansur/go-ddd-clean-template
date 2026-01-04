@@ -52,6 +52,7 @@ func (c *Client) UploadImage(t *testing.T, token string, filename string, conten
 }
 
 func (c *Client) UploadImages(t *testing.T, token string, files map[string][]byte) *http.Response {
+	t.Helper()
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 	for filename, content := range files {
@@ -113,6 +114,7 @@ func (c *Client) UploadDoc(t *testing.T, token string, filename string, content 
 }
 
 func (c *Client) Download(t *testing.T, token string, filePath string) *http.Response {
+	t.Helper()
 	req, err := http.NewRequest(http.MethodGet, c.endpoint+"/api/v1/files/download?file-path="+filePath, nil)
 	if err != nil {
 		t.Fatal(err)

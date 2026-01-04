@@ -3,13 +3,18 @@ package minio
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
-
 	"gct/internal/controller/restapi/response"
+	"gct/internal/controller/restapi/util"
+	"gct/internal/domain/mock"
+	"github.com/gin-gonic/gin"
 )
 
 // UploadVideo handles video upload
 func (h *Controller) UploadVideo(ctx *gin.Context) {
+	// Handle mock mode
+	if util.Mock(ctx, util.MockTypeGet, func() any { return mock.FileInfoVideo().FileName }) {
+		return
+	}
 	file, err := ctx.FormFile("file")
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusBadRequest, err, nil, false)

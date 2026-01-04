@@ -6,7 +6,6 @@ import (
 	"io"
 
 	apperrors "gct/pkg/errors"
-
 	"github.com/disintegration/imaging"
 )
 

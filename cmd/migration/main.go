@@ -2,13 +2,11 @@ package main
 
 import (
 	"log"
-	"os"
-
-	"go.uber.org/zap"
 
 	"gct/config"
 	"gct/pkg/db/postgres"
 	"gct/pkg/logger"
+	"go.uber.org/zap"
 )
 
 func main() {
@@ -33,5 +31,4 @@ func main() {
 	}
 
 	l.Infow("Migrations applied successfully")
-	os.Exit(0)
 }

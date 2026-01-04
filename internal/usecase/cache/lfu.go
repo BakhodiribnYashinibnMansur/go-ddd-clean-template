@@ -87,7 +87,11 @@ func (c *LFUCache) evict() {
 	if c.pq.Len() == 0 {
 		return
 	}
-	item := heap.Pop(&c.pq).(*lfuItem)
+	popped := heap.Pop(&c.pq)
+	item, ok := popped.(*lfuItem)
+	if !ok {
+		return
+	}
 	delete(c.items, item.key)
 }
 
@@ -127,7 +131,10 @@ func (pq priorityQueue) Swap(i, j int) {
 
 func (pq *priorityQueue) Push(x any) {
 	n := len(*pq)
-	item := x.(*lfuItem)
+	item, ok := x.(*lfuItem)
+	if !ok {
+		return
+	}
 	item.index = n
 	*pq = append(*pq, item)
 }

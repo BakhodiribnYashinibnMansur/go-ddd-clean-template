@@ -3,13 +3,18 @@ package minio
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
-
 	"gct/internal/controller/restapi/response"
+	"gct/internal/controller/restapi/util"
+	"gct/internal/domain/mock"
+	"github.com/gin-gonic/gin"
 )
 
 // UploadImage handles single image upload
 func (h *Controller) UploadImage(ctx *gin.Context) {
+	// Handle mock mode
+	if util.Mock(ctx, util.MockTypeGet, func() any { return mock.FileInfoImage().FileName }) {
+		return
+	}
 	file, err := ctx.FormFile(formFileName)
 	if err != nil {
 		h.logger.Error(err)
@@ -42,6 +47,17 @@ func (h *Controller) UploadImage(ctx *gin.Context) {
 
 // UploadImages handles multiple image uploads
 func (h *Controller) UploadImages(ctx *gin.Context) {
+	// Handle mock mode
+	if util.Mock(ctx, util.MockTypeGets, func(count int) any {
+		files := mock.FileInfos(count)
+		names := make([]string, len(files))
+		for i, f := range files {
+			names[i] = f.FileName
+		}
+		return names
+	}) {
+		return
+	}
 	var uploadedFiles []string
 	form, err := ctx.MultipartForm()
 	if err != nil {

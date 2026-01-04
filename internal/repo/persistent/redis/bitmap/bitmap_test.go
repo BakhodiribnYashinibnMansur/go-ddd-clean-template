@@ -1,7 +1,6 @@
 package bitmap
 
 import (
-	"context"
 	"testing"
 
 	"github.com/alicebob/miniredis/v2"
@@ -73,7 +72,7 @@ func TestBitmap_SetGetBit(t *testing.T) {
 			expectedValue: 0,
 			expectError:   true,
 			errorCheck: func(t *testing.T, err error) {
-				assert.NotNil(t, err)
+				assert.Error(t, err)
 			},
 		},
 		{
@@ -85,20 +84,19 @@ func TestBitmap_SetGetBit(t *testing.T) {
 			expectedValue: 0,
 			expectError:   true,
 			errorCheck: func(t *testing.T, err error) {
-				assert.NotNil(t, err)
+				assert.Error(t, err)
 			},
 		},
 	}
 
 	for _, tt := range tests {
-		tt := tt // parallel safety
 		t.Run(tt.name, func(t *testing.T) {
 			// arrange
 			client, _ := newTestRedis(t)
 			defer client.Close()
 			b := New(client)
 			testKey := uuid.New().String()
-			testCtx := context.Background()
+			testCtx := t.Context()
 
 			// act
 			_, err := b.SetBit(testCtx, testKey, int64(tt.bitPosition), int(tt.expectedValue))
@@ -177,14 +175,13 @@ func TestBitmap_BitCount(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // parallel safety
 		t.Run(tt.name, func(t *testing.T) {
 			// arrange
 			client, _ := newTestRedis(t)
 			defer client.Close()
 			b := New(client)
 			testKey := uuid.New().String()
-			testCtx := context.Background()
+			testCtx := t.Context()
 
 			// setup bits
 			for _, pos := range tt.bitPositions {
@@ -225,7 +222,7 @@ func TestBitmap_BitPos(t *testing.T) {
 
 	b := New(client)
 	key := uuid.New().String()
-	ctx := context.Background()
+	ctx := t.Context()
 
 	b.SetBit(ctx, key, 10, 1)
 
@@ -245,7 +242,7 @@ func TestBitmap_BitOp(t *testing.T) {
 	defer client.Close()
 
 	b := New(client)
-	ctx := context.Background()
+	ctx := t.Context()
 	k1 := "k1"
 	k2 := "k2"
 	dest := "dest"
@@ -295,7 +292,7 @@ func TestBitmap_DeleteExits(t *testing.T) {
 
 	b := New(client)
 	key := uuid.New().String()
-	ctx := context.Background()
+	ctx := t.Context()
 
 	exists, err := b.Exists(ctx, key)
 	require.NoError(t, err)
@@ -323,7 +320,7 @@ func TestBitmap_BitField(t *testing.T) {
 
 	b := New(client)
 	key := uuid.New().String()
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// BITFIELD might not be supported by miniredis
 	t.Skip("Skipping BitField test: miniredis might not support BITFIELD")

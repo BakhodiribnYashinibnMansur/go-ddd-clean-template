@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"gct/internal/domain"
-
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -36,6 +35,7 @@ func TestUseCase_Gets_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateResult: func(t *testing.T, sessions []*domain.Session, total int) {
+				t.Helper()
 				require.Len(t, sessions, 2)
 				require.Equal(t, 2, total)
 				require.NotEqual(t, uuid.Nil, sessions[0].UserID)
@@ -58,6 +58,7 @@ func TestUseCase_Gets_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateResult: func(t *testing.T, sessions []*domain.Session, total int) {
+				t.Helper()
 				require.Len(t, sessions, 5)
 				require.Equal(t, 25, total)
 			},
@@ -78,6 +79,7 @@ func TestUseCase_Gets_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateResult: func(t *testing.T, sessions []*domain.Session, total int) {
+				t.Helper()
 				require.Len(t, sessions, 2)
 				for _, session := range sessions {
 					require.NotEqual(t, uuid.Nil, session.UserID)
@@ -100,6 +102,7 @@ func TestUseCase_Gets_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateResult: func(t *testing.T, sessions []*domain.Session, total int) {
+				t.Helper()
 				require.Len(t, sessions, 2)
 				for _, session := range sessions {
 					require.False(t, session.Revoked)
@@ -122,6 +125,7 @@ func TestUseCase_Gets_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateResult: func(t *testing.T, sessions []*domain.Session, total int) {
+				t.Helper()
 				require.Len(t, sessions, 2)
 				for _, session := range sessions {
 					require.True(t, session.Revoked)
@@ -138,7 +142,8 @@ func TestUseCase_Gets_TableDriven(t *testing.T) {
 			repoError:    nil,
 			expectError:  false,
 			validateResult: func(t *testing.T, sessions []*domain.Session, total int) {
-				require.Len(t, sessions, 0)
+				t.Helper()
+				require.Empty(t, sessions)
 				require.Equal(t, 0, total)
 			},
 		},
@@ -165,6 +170,7 @@ func TestUseCase_Gets_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateResult: func(t *testing.T, sessions []*domain.Session, total int) {
+				t.Helper()
 				require.Len(t, sessions, 2)
 				for _, session := range sessions {
 					require.NotNil(t, session.IPAddress)
@@ -187,6 +193,7 @@ func TestUseCase_Gets_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateResult: func(t *testing.T, sessions []*domain.Session, total int) {
+				t.Helper()
 				require.Len(t, sessions, 1)
 				require.NotEqual(t, uuid.Nil, sessions[0].UserID)
 				require.False(t, sessions[0].Revoked)
@@ -195,7 +202,7 @@ func TestUseCase_Gets_TableDriven(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // parallel safety
+		// parallel safety
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 

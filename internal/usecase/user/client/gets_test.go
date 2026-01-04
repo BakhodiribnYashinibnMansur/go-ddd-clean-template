@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"gct/internal/domain"
-
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -39,6 +38,7 @@ func TestUseCase_Gets_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateResult: func(t *testing.T, users []*domain.User, count int) {
+				t.Helper()
 				require.Len(t, users, 2)
 				require.Equal(t, 2, count)
 				require.Equal(t, uuid.MustParse("00000000-0000-0000-0000-000000000001"), users[0].ID)
@@ -58,7 +58,8 @@ func TestUseCase_Gets_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateResult: func(t *testing.T, users []*domain.User, count int) {
-				require.Len(t, users, 0)
+				t.Helper()
+				require.Empty(t, users)
 				require.Equal(t, 0, count)
 			},
 		},
@@ -79,6 +80,7 @@ func TestUseCase_Gets_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateResult: func(t *testing.T, users []*domain.User, count int) {
+				t.Helper()
 				require.Len(t, users, 3)
 				require.Equal(t, 25, count)
 				require.Equal(t, uuid.MustParse("00000000-0000-0000-0000-00000000000b"), users[0].ID)
@@ -96,6 +98,7 @@ func TestUseCase_Gets_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateResult: func(t *testing.T, users []*domain.User, count int) {
+				t.Helper()
 				require.Len(t, users, 1)
 				require.Equal(t, 1, count)
 			},
@@ -113,6 +116,7 @@ func TestUseCase_Gets_TableDriven(t *testing.T) {
 			repoError:   errors.New("database error"),
 			expectError: true,
 			validateResult: func(t *testing.T, users []*domain.User, count int) {
+				t.Helper()
 				// No validation expected on error
 			},
 		},
@@ -129,6 +133,7 @@ func TestUseCase_Gets_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateResult: func(t *testing.T, users []*domain.User, count int) {
+				t.Helper()
 				require.Len(t, users, 50)
 				require.Equal(t, 150, count)
 			},
@@ -146,7 +151,8 @@ func TestUseCase_Gets_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateResult: func(t *testing.T, users []*domain.User, count int) {
-				require.Len(t, users, 0)
+				t.Helper()
+				require.Empty(t, users)
 				require.Equal(t, 0, count)
 			},
 		},
@@ -167,6 +173,7 @@ func TestUseCase_Gets_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateResult: func(t *testing.T, users []*domain.User, count int) {
+				t.Helper()
 				require.Len(t, users, 3)
 				require.Equal(t, 3, count)
 				require.NotNil(t, users[0].Username)
@@ -177,7 +184,7 @@ func TestUseCase_Gets_TableDriven(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // parallel safety
+		// parallel safety
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 

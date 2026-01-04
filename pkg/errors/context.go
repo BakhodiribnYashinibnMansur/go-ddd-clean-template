@@ -6,6 +6,10 @@ import (
 	"strings"
 )
 
+const (
+	unknownValue = "unknown"
+)
+
 // WithSource adds source file and function information to error
 // This helps track where the error originated in the codebase
 func WithSource(err *AppError, file, function string) *AppError {
@@ -23,7 +27,7 @@ func WithSource(err *AppError, file, function string) *AppError {
 func GetCaller(skip int) (file, function string) {
 	pc, fullPath, _, ok := runtime.Caller(skip + 1)
 	if !ok {
-		return "unknown", "unknown"
+		return unknownValue, unknownValue
 	}
 
 	// Extract relative path from project root
@@ -43,7 +47,7 @@ func GetCaller(skip int) (file, function string) {
 	// Get function name
 	fn := runtime.FuncForPC(pc)
 	if fn == nil {
-		return file, "unknown"
+		return file, unknownValue
 	}
 
 	// Extract short function name (e.g., "Repo.Get" instead of full path)

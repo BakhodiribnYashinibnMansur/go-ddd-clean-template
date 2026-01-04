@@ -1,6 +1,7 @@
 package util
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"path"
@@ -12,7 +13,7 @@ import (
 func FileTransfer(ctx *gin.Context, filePath, contentType string) (err error) {
 	bytes, err := os.ReadFile(filePath)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to read file %s: %w", filePath, err)
 	}
 	ctx.Header("Content-Description", "File Transfer")
 	ctx.Header("Content-Disposition", "attachment; filename="+path.Base(filePath))
@@ -25,12 +26,12 @@ func DownloadFile(ctx *gin.Context, filePath string) error {
 	_, fileName := filepath.Split(filePath)
 	bytes, err := os.ReadFile("./" + filePath)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to read file %s: %w", filePath, err)
 	}
 	ctx.Header("Content-Type", "application/octet-stream")
 	ctx.Header("Content-Disposition", "attachment; filename="+fileName)
 	if _, err := ctx.Writer.Write(bytes); err != nil {
-		return err
+		return fmt.Errorf("failed to write file response: %w", err)
 	}
 	return nil
 }

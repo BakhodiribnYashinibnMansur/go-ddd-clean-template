@@ -4,10 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/google/uuid"
-
 	"gct/internal/domain"
 	apperrors "gct/pkg/errors"
+	"github.com/google/uuid"
 )
 
 func (r *Repo) Create(ctx context.Context, s *domain.Session) error {

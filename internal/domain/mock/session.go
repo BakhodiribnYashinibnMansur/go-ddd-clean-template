@@ -3,10 +3,9 @@ package mock
 import (
 	"time"
 
+	"gct/internal/domain"
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/google/uuid"
-
-	"gct/internal/domain"
 )
 
 // Session generates a fake domain.Session

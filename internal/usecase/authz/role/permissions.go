@@ -3,9 +3,8 @@ package role
 import (
 	"context"
 
-	"github.com/google/uuid"
-
 	apperrors "gct/pkg/errors"
+	"github.com/google/uuid"
 )
 
 func (u *UseCase) AddPermission(ctx context.Context, roleID, permID uuid.UUID) error {

@@ -3,9 +3,8 @@ package permission
 import (
 	"context"
 
-	"github.com/google/uuid"
-
 	"gct/internal/domain"
+	"github.com/google/uuid"
 )
 
 type RepoI interface {

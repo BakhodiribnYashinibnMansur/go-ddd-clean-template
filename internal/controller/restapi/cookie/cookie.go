@@ -3,10 +3,9 @@ package cookie
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
-
 	"gct/config"
 	"gct/consts"
+	"github.com/gin-gonic/gin"
 )
 
 // SaveCookies saves multiple cookies using settings from config.

@@ -1,13 +1,11 @@
 package session
 
 import (
-	"context"
 	"testing"
-
-	"github.com/google/uuid"
 
 	"gct/internal/domain"
 	"gct/test/e2e/common/setup"
+	"github.com/google/uuid"
 )
 
 // getSessionFromDB retrieves a session from the database using repository layer
@@ -20,7 +18,7 @@ func getSessionFromDB(t *testing.T, sessionID string) *domain.Session {
 		return nil
 	}
 
-	ctx := context.Background()
+	ctx := t.Context()
 	filter := &domain.SessionFilter{
 		ID: &sid,
 	}
@@ -32,28 +30,4 @@ func getSessionFromDB(t *testing.T, sessionID string) *domain.Session {
 	}
 
 	return session
-}
-
-// getUserFromDB retrieves a user from the database using repository layer
-func getUserFromDB(t *testing.T, userID string) *domain.User {
-	t.Helper()
-
-	uid, err := uuid.Parse(userID)
-	if err != nil {
-		t.Logf("invalid user ID: %v", err)
-		return nil
-	}
-
-	ctx := context.Background()
-	filter := &domain.UserFilter{
-		ID: &uid,
-	}
-
-	user, err := setup.TestRepo.Persistent.Postgres.User.Client.Get(ctx, filter)
-	if err != nil {
-		t.Logf("getUserFromDB error: %v", err)
-		return nil
-	}
-
-	return user
 }

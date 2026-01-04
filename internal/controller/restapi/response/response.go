@@ -1,6 +1,7 @@
 package response
 
 import (
+	"gct/consts"
 	"github.com/gin-gonic/gin"
 )
 
@@ -57,7 +58,7 @@ func ControllerResponse(c *gin.Context, code int, payload, meta any, success boo
 	data := payload
 
 	res := SuccessResponse{
-		Status:     "SUCCESS",
+		Status:     consts.ResponseStatusSuccess,
 		StatusCode: code,
 		Message:    message,
 		Data:       data,

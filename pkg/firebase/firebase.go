@@ -6,10 +6,9 @@ import (
 
 	firebase "firebase.google.com/go/v4"
 	"firebase.google.com/go/v4/messaging"
-	"google.golang.org/api/option"
-
 	"gct/config"
 	"gct/pkg/logger"
+	"google.golang.org/api/option"
 )
 
 type Firebase struct {

@@ -4,10 +4,9 @@ import (
 	"context"
 	"path/filepath"
 
+	apperrors "gct/pkg/errors"
 	"github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
-
-	apperrors "gct/pkg/errors"
 )
 
 // UploadFile uploads any file to the minio server from a local path

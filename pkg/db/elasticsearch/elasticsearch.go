@@ -3,18 +3,21 @@ package elasticsearch
 
 import (
 	"context"
+	"errors"
 	"fmt"
-
-	"github.com/elastic/go-elasticsearch/v8"
-	"go.uber.org/zap"
 
 	"gct/config"
 	"gct/pkg/logger"
+	"github.com/elastic/go-elasticsearch/v8"
+	"go.uber.org/zap"
 )
 
 const (
 	defaultMaxRetries = 3
 )
+
+// ErrElasticsearchStatus is returned when Elasticsearch returns an error status.
+var ErrElasticsearchStatus = errors.New("elasticsearch returned error status")
 
 // Elasticsearch struct wraps elasticsearch.Client.
 type Elasticsearch struct {
@@ -56,7 +59,7 @@ func New(ctx context.Context, env string, cfg config.Elasticsearch, l logger.Log
 
 	if res.IsError() {
 		l.Errorw("Elasticsearch returned error", zap.String("status", res.Status()))
-		return nil, fmt.Errorf("elasticsearch error: %s", res.Status())
+		return nil, fmt.Errorf("%w: %s", ErrElasticsearchStatus, res.Status())
 	}
 
 	e := &Elasticsearch{

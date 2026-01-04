@@ -1,8 +1,9 @@
 package session
 
 import (
-	"gct/test/e2e/common/setup"
 	"testing"
+
+	"gct/test/e2e/common/setup"
 )
 
 // Use shared setup from parent package
@@ -14,6 +15,5 @@ func TestMain(m *testing.M) {
 }
 
 func cleanDB(t *testing.T) {
-	t.Helper()
 	setup.CleanDB(t)
 }

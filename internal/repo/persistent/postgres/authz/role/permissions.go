@@ -4,10 +4,9 @@ import (
 	"context"
 	"time"
 
+	apperrors "gct/pkg/errors"
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
-
-	apperrors "gct/pkg/errors"
 )
 
 func (r *Repo) AddPermission(ctx context.Context, roleID, permID uuid.UUID) error {

@@ -5,9 +5,10 @@ import (
 	"testing"
 
 	"gct/internal/domain"
-
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func TestUseCase_SignUp_TableDriven(t *testing.T) {
@@ -32,7 +33,7 @@ func TestUseCase_SignUp_TableDriven(t *testing.T) {
 			validateSaved: func(t *testing.T, u *domain.User) {
 				require.NotNil(t, u.Username)
 				require.Equal(t, "testuser", *u.Username)
-				require.Equal(t, "123456789", u.Phone)
+				require.Equal(t, "123456789", *u.Phone)
 				// Password should be hashed by SignUp method
 				require.NotEmpty(t, u.PasswordHash)
 				require.NotEqual(t, "password", u.PasswordHash)
@@ -50,7 +51,7 @@ func TestUseCase_SignUp_TableDriven(t *testing.T) {
 			validateSaved: func(t *testing.T, u *domain.User) {
 				require.NotNil(t, u.Username)
 				require.Equal(t, "", *u.Username)
-				require.Equal(t, "123456789", u.Phone)
+				require.Equal(t, "123456789", *u.Phone)
 			},
 		},
 		{
@@ -63,7 +64,7 @@ func TestUseCase_SignUp_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateSaved: func(t *testing.T, u *domain.User) {
-				require.Equal(t, "", u.Phone)
+				require.Equal(t, "", *u.Phone)
 				require.NotNil(t, u.Username)
 				require.Equal(t, "testuser", *u.Username)
 			},
@@ -88,7 +89,7 @@ func TestUseCase_SignUp_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateSaved: func(t *testing.T, u *domain.User) {
-				require.Equal(t, "123456789", u.Phone)
+				require.Equal(t, "123456789", *u.Phone)
 				require.NotNil(t, u.Username)
 				require.Equal(t, "testuser", *u.Username)
 				// Even weak passwords should be hashed
@@ -129,7 +130,7 @@ func TestUseCase_SignUp_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateSaved: func(t *testing.T, u *domain.User) {
-				require.Equal(t, "123456789", u.Phone)
+				require.Equal(t, "123456789", *u.Phone)
 				require.NotNil(t, u.Username)
 				require.Equal(t, "testuser", *u.Username)
 				// Special characters should be handled and hashed
@@ -146,7 +147,7 @@ func TestUseCase_SignUp_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateSaved: func(t *testing.T, u *domain.User) {
-				require.Equal(t, "9876543210", u.Phone)
+				require.Equal(t, "9876543210", *u.Phone)
 				require.NotNil(t, u.Username)
 				require.Equal(t, "testuser", *u.Username)
 			},
@@ -154,17 +155,17 @@ func TestUseCase_SignUp_TableDriven(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // parallel safety
+		// parallel safety
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
 			// arrange
-			uc, clientRepo, _ := setup(t)
+			uc, clientRepo, sessionRepo := setup(t)
 			ctx := t.Context()
 
 			if tt.repoError != nil || tt.validateSaved != nil {
 				clientRepo.
-					On("Create", ctx, mock.MatchedBy(func(u *domain.User) bool {
+					On("Create", mock.Anything, mock.MatchedBy(func(u *domain.User) bool {
 						if tt.validateSaved != nil {
 							tt.validateSaved(t, u)
 						}
@@ -172,16 +173,33 @@ func TestUseCase_SignUp_TableDriven(t *testing.T) {
 					})).
 					Return(tt.repoError).
 					Once()
+
+				if tt.repoError == nil {
+					// SignUp calls SignIn which calls GetByPhone and Session Create
+					hash, _ := bcrypt.GenerateFromPassword([]byte(tt.input.Password), bcrypt.DefaultCost)
+					clientRepo.On("GetByPhone", mock.Anything, tt.input.Phone).
+						Return(&domain.User{
+							ID:           uuid.New(),
+							Phone:        &tt.input.Phone,
+							PasswordHash: string(hash),
+						}, nil).Once()
+
+					sessionRepo.On("Create", mock.Anything, mock.AnythingOfType("*domain.Session")).
+						Return(nil).Once()
+				}
 			}
 
 			// act
-			err := uc.SignUp(ctx, tt.input)
+			res, err := uc.SignUp(ctx, tt.input)
 
 			// assert
 			if tt.expectError {
 				require.Error(t, err)
+				require.Nil(t, res)
 			} else {
 				require.NoError(t, err)
+				require.NotNil(t, res)
+				require.NotEmpty(t, res.AccessToken)
 			}
 
 			clientRepo.AssertExpectations(t)

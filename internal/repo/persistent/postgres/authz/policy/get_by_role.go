@@ -3,11 +3,10 @@ package policy
 import (
 	"context"
 
-	"github.com/Masterminds/squirrel"
-	"github.com/google/uuid"
-
 	"gct/internal/domain"
 	apperrors "gct/pkg/errors"
+	"github.com/Masterminds/squirrel"
+	"github.com/google/uuid"
 )
 
 func (r *Repo) GetByRole(ctx context.Context, roleID uuid.UUID) ([]*domain.Policy, error) {

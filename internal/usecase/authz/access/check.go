@@ -1,16 +1,14 @@
 package access
 
 import (
-	"slices"
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	"gct/consts"
-
 	"gct/internal/domain"
 	apperrors "gct/pkg/errors"
-
 	"github.com/google/uuid"
 )
 

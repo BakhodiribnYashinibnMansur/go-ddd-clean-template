@@ -1,15 +1,14 @@
 package persistent
 
 import (
-	minioClient "github.com/minio/minio-go/v7"
-	redisClient "github.com/redis/go-redis/v9"
-
 	"gct/config"
 	"gct/internal/repo/persistent/minio"
 	"gct/internal/repo/persistent/postgres"
 	"gct/internal/repo/persistent/redis"
 	dbPostgres "gct/pkg/db/postgres"
 	"gct/pkg/logger"
+	minioClient "github.com/minio/minio-go/v7"
+	redisClient "github.com/redis/go-redis/v9"
 )
 
 type Repo struct {

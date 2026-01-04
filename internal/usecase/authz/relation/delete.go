@@ -3,9 +3,8 @@ package relation
 import (
 	"context"
 
-	"github.com/google/uuid"
-
 	apperrors "gct/pkg/errors"
+	"github.com/google/uuid"
 )
 
 func (u *UseCase) Delete(ctx context.Context, id uuid.UUID) error {

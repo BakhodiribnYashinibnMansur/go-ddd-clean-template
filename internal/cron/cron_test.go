@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"gct/pkg/logger"
-
 	getCron "github.com/robfig/cron/v3"
 	"github.com/stretchr/testify/assert"
 )

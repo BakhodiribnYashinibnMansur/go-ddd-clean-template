@@ -1,14 +1,14 @@
 package session
 
 import (
-	"github.com/gin-gonic/gin"
-
 	"gct/consts"
+	"github.com/gin-gonic/gin"
 )
 
-func Route(api *gin.RouterGroup, c ControllerI, authMiddleware gin.HandlerFunc) {
+func Route(api *gin.RouterGroup, c ControllerI, authMiddleware gin.HandlerFunc, csrfMiddleware gin.HandlerFunc) {
 	session := api.Group("/sessions")
 	session.Use(authMiddleware)
+	session.Use(csrfMiddleware)
 	{
 		session.POST("/", c.Create)
 		session.GET("/", c.Sessions)

@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -26,7 +27,7 @@ func TestMinio_ComprehensiveFlow(t *testing.T) {
 	// Unique user for this test run
 	ts := time.Now().UnixNano()
 	username := fmt.Sprintf("minio_user_%d", ts)
-	phone := fmt.Sprintf("%d", ts%1000000000000)
+	phone := strconv.FormatInt(ts%1000000000000, 10)
 	password := "password123"
 
 	// 1. Sign Up
@@ -78,7 +79,7 @@ func TestMinio_ComprehensiveFlow(t *testing.T) {
 		// The current API implementation of /files/download serves local files
 		// We create a temp file to verify the endpoint works
 		content := []byte("local-file-content-123")
-		tmpFile, err := os.CreateTemp("", "e2e-test-*.txt")
+		tmpFile, err := os.CreateTemp(t.TempDir(), "e2e-test-*.txt")
 		require.NoError(t, err)
 		defer os.Remove(tmpFile.Name())
 

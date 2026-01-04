@@ -3,10 +3,9 @@ package mock
 import (
 	"time"
 
+	"gct/internal/domain"
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/google/uuid"
-
-	"gct/internal/domain"
 )
 
 // Role generates a fake domain.Role
@@ -293,4 +292,41 @@ func PoliciesFilterWithPagination(limit, offset, total int64) *domain.PoliciesFi
 		PolicyFilter: *PolicyFilter(),
 		Pagination:   PaginationWithValues(limit, offset, total),
 	}
+}
+
+// Relation generates a fake domain.Relation
+func Relation() *domain.Relation {
+	return &domain.Relation{
+		ID:        UUID(),
+		Type:      domain.RelationTypeBranch,
+		Name:      gofakeit.Company(),
+		CreatedAt: time.Now(),
+	}
+}
+
+// Relations generates multiple fake domain.Relation
+func Relations(count int) []*domain.Relation {
+	relations := make([]*domain.Relation, count)
+	for i := range count {
+		relations[i] = Relation()
+	}
+	return relations
+}
+
+// Scope generates a fake domain.Scope
+func Scope() *domain.Scope {
+	return &domain.Scope{
+		Path:      gofakeit.URL(),
+		Method:    gofakeit.HTTPMethod(),
+		CreatedAt: time.Now(),
+	}
+}
+
+// Scopes generates multiple fake domain.Scope
+func Scopes(count int) []*domain.Scope {
+	scopes := make([]*domain.Scope, count)
+	for i := range count {
+		scopes[i] = Scope()
+	}
+	return scopes
 }

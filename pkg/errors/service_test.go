@@ -1,13 +1,12 @@
 package errors
 
 import (
-	"context"
 	"errors"
 	"testing"
 )
 
 func TestNewServiceError(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	tests := []struct {
 		name    string
@@ -65,7 +64,7 @@ func TestNewServiceError(t *testing.T) {
 }
 
 func TestWrapServiceError(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	baseErr := errors.New("service error")
 
 	tests := []struct {
@@ -126,7 +125,7 @@ func TestWrapServiceError(t *testing.T) {
 			if got.UserMsg != tt.want.UserMsg {
 				t.Errorf("WrapServiceError().UserMsg = %v, want %v", got.UserMsg, tt.want.UserMsg)
 			}
-			if got.Err != tt.want.Err {
+			if !errors.Is(got.Err, tt.want.Err) {
 				t.Errorf("WrapServiceError().Err = %v, want %v", got.Err, tt.want.Err)
 			}
 		})
@@ -134,7 +133,7 @@ func TestWrapServiceError(t *testing.T) {
 }
 
 func TestMapRepoToServiceError(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	tests := []struct {
 		name     string

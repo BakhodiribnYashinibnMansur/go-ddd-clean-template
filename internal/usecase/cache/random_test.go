@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"gct/internal/usecase/cache"
-
 	"github.com/stretchr/testify/assert"
 )
 
@@ -134,7 +133,7 @@ func TestRandomCache_TableDriven(t *testing.T) {
 						newRemaining++
 					}
 				}
-				assert.True(t, newRemaining > 0) // At least some new items should be present
+				assert.Positive(t, newRemaining) // At least some new items should be present
 			},
 		},
 		{

@@ -1,7 +1,6 @@
 package hyperloglog
 
 import (
-	"context"
 	"testing"
 
 	"github.com/alicebob/miniredis/v2"
@@ -85,14 +84,13 @@ func TestHyperLogLog_PFAddCount(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // parallel safety
 		t.Run(tt.name, func(t *testing.T) {
 			// arrange
 			client, _ := newTestRedis(t)
 			defer client.Close()
 			h := New(client)
 			testKey := uuid.New().String()
-			testCtx := context.Background()
+			testCtx := t.Context()
 
 			// act
 			elements := make([]any, len(tt.elements))
@@ -181,13 +179,12 @@ func TestHyperLogLog_PFMerge(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // parallel safety
 		t.Run(tt.name, func(t *testing.T) {
 			// arrange
 			client, _ := newTestRedis(t)
 			defer client.Close()
 			h := New(client)
-			testCtx := context.Background()
+			testCtx := t.Context()
 
 			// setup source hyperloglogs
 			if len(tt.sourceKeys) > 0 {
@@ -222,7 +219,7 @@ func TestHyperLogLog_DeleteExists(t *testing.T) {
 
 	h := New(client)
 	key := uuid.New().String()
-	ctx := context.Background()
+	ctx := t.Context()
 
 	exists, err := h.Exists(ctx, key)
 	require.NoError(t, err)

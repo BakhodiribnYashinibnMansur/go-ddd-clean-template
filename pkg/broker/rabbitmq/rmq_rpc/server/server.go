@@ -7,13 +7,12 @@ import (
 	"fmt"
 	"time"
 
+	rmqrpc "gct/pkg/broker/rabbitmq/rmq_rpc"
+	"gct/pkg/logger"
 	"github.com/goccy/go-json"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
-
-	rmqrpc "gct/pkg/broker/rabbitmq/rmq_rpc"
-	"gct/pkg/logger"
 )
 
 const (
@@ -27,8 +26,7 @@ type CallHandler func(*amqp.Delivery) (any, error)
 
 // Server -.
 type Server struct {
-	ctx context.Context
-	eg  *errgroup.Group
+	eg *errgroup.Group
 
 	conn   *rmqrpc.Connection
 	router map[string]CallHandler
@@ -42,7 +40,7 @@ type Server struct {
 
 // New -.
 func New(url, serverExchange string, router map[string]CallHandler, l logger.Log, opts ...Option) (*Server, error) {
-	group, ctx := errgroup.WithContext(context.Background())
+	group, _ := errgroup.WithContext(context.Background())
 	group.SetLimit(1) // Run only one goroutine
 
 	cfg := rmqrpc.Config{
@@ -52,7 +50,6 @@ func New(url, serverExchange string, router map[string]CallHandler, l logger.Log
 	}
 
 	s := &Server{
-		ctx:     ctx,
 		eg:      group,
 		conn:    rmqrpc.New(serverExchange, cfg),
 		router:  router,
@@ -127,10 +124,11 @@ func (s *Server) Shutdown() error {
 }
 
 func (s *Server) handleMessages() error {
+	ctx := context.Background()
 	for {
 		select {
-		case <-s.ctx.Done():
-			return s.ctx.Err()
+		case <-ctx.Done():
+			return ctx.Err()
 		case <-s.stop:
 			return nil
 		case d, opened := <-s.conn.Delivery:

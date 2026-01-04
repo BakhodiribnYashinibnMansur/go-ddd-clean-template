@@ -1,6 +1,10 @@
 package errors
 
-import "go.uber.org/zap"
+import (
+	"errors"
+
+	"go.uber.org/zap"
+)
 
 type Reporter interface {
 	SendError(err error) error
@@ -21,8 +25,8 @@ func LogError(logger *zap.Logger, err error) {
 		_ = reporter.SendError(err)
 	}
 
-	appErr, ok := err.(*AppError)
-	if !ok {
+	var appErr *AppError
+	if !errors.As(err, &appErr) {
 		// Not our custom error, log as standard error
 		logger.Error("error occurred", zap.Error(err))
 		return
@@ -55,8 +59,8 @@ func LogError(logger *zap.Logger, err error) {
 
 // LogWarn logs error as warning
 func LogWarn(logger *zap.Logger, err error) {
-	appErr, ok := err.(*AppError)
-	if !ok {
+	var appErr *AppError
+	if !errors.As(err, &appErr) {
 		logger.Warn("warning occurred", zap.Error(err))
 		return
 	}
@@ -76,8 +80,8 @@ func LogWarn(logger *zap.Logger, err error) {
 
 // LogInfo logs error information without full stack trace
 func LogInfo(logger *zap.Logger, err error, message string) {
-	appErr, ok := err.(*AppError)
-	if !ok {
+	var appErr *AppError
+	if !errors.As(err, &appErr) {
 		logger.Info(message, zap.Error(err))
 		return
 	}

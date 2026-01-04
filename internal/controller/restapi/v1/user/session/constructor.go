@@ -1,10 +1,9 @@
 package session
 
 import (
-	"github.com/gin-gonic/gin"
-
 	"gct/internal/usecase"
 	"gct/pkg/logger"
+	"github.com/gin-gonic/gin"
 )
 
 type ControllerI interface {

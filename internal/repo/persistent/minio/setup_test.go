@@ -6,12 +6,11 @@ import (
 	"os"
 	"testing"
 
+	"gct/config"
 	"github.com/johannesboyne/gofakes3"
 	"github.com/johannesboyne/gofakes3/backend/s3mem"
 	minioClient "github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
-
-	"gct/config"
 )
 
 var (

@@ -6,10 +6,10 @@ import (
 	"strconv"
 	"time"
 
+	"gct/consts"
+	apperrors "gct/pkg/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-
-	apperrors "gct/pkg/errors"
 )
 
 // ============================================================================
@@ -114,7 +114,7 @@ func RespondWithError(c *gin.Context, err error, fallbackCode int) {
 func parseErrorToResponse(c *gin.Context, err error, fallbackCode int) (int, ErrorResponse) {
 	var (
 		statusCode = 500
-		errorCode  = "INTERNAL_ERROR"
+		errorCode  = apperrors.ErrInternal
 		message    = "An unexpected error occurred."
 		details    = ""
 		// fields     map[string]any // unused
@@ -141,7 +141,7 @@ func parseErrorToResponse(c *gin.Context, err error, fallbackCode int) (int, Err
 	}
 
 	// Request ID
-	reqID := c.GetHeader("X-Request-ID")
+	reqID := c.GetHeader(consts.HeaderXRequestID)
 	if reqID == "" {
 		reqID = uuid.New().String()
 	}
@@ -164,7 +164,7 @@ func parseErrorToResponse(c *gin.Context, err error, fallbackCode int) (int, Err
 	docURL := fmt.Sprintf("%s/%d", DefaultDocsURL, statusCode)
 
 	return statusCode, ErrorResponse{
-		Status:     "error",
+		Status:     consts.ResponseStatusError,
 		StatusCode: statusCode,
 		Error: ErrorDetail{
 			Code:       errorCode,
@@ -202,6 +202,9 @@ func mapRepoStatus(code string) int {
 		return 409
 	case apperrors.CodeRepoTimeout, apperrors.ErrRepoTimeout:
 		return 504
+	case apperrors.CodeUserNotFound, apperrors.ErrUserNotFound,
+		apperrors.CodeSessionNotFound, apperrors.ErrSessionNotFound:
+		return 404
 	default:
 		return 0
 	}
@@ -210,9 +213,13 @@ func mapRepoStatus(code string) int {
 func mapServiceStatus(code string) int {
 	switch code {
 	case apperrors.CodeServiceInvalidInput, apperrors.ErrServiceInvalidInput,
-		apperrors.CodeServiceValidation, apperrors.ErrServiceValidation:
+		apperrors.CodeServiceValidation, apperrors.ErrServiceValidation,
+		apperrors.ErrBadRequest, apperrors.CodeBadRequest,
+		apperrors.ErrInvalidInput, apperrors.CodeInvalidInput,
+		apperrors.ErrValidation, apperrors.CodeValidation:
 		return 400
-	case apperrors.CodeServiceNotFound, apperrors.ErrServiceNotFound:
+	case apperrors.CodeServiceNotFound, apperrors.ErrServiceNotFound,
+		apperrors.ErrNotFound, apperrors.CodeNotFound:
 		return 404
 	case apperrors.CodeServiceAlreadyExists, apperrors.ErrServiceAlreadyExists,
 		apperrors.CodeServiceConflict, apperrors.ErrServiceConflict:

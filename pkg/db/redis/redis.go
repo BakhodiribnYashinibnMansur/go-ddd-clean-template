@@ -6,11 +6,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/redis/go-redis/v9"
-	"go.uber.org/zap"
-
 	"gct/config"
 	"gct/pkg/logger"
+	"github.com/redis/go-redis/v9"
+	"go.uber.org/zap"
 )
 
 const (

@@ -3,11 +3,10 @@ package admin
 import (
 	"strconv"
 
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
-
 	"gct/internal/controller/restapi/util"
 	"gct/internal/domain"
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 func (h *Handler) EndpointHistory(ctx *gin.Context) {

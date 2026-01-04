@@ -3,9 +3,8 @@ package minio
 import (
 	"context"
 
-	"github.com/minio/minio-go/v7"
-
 	apperrors "gct/pkg/errors"
+	"github.com/minio/minio-go/v7"
 )
 
 // DeleteFile deletes a file from the minio server

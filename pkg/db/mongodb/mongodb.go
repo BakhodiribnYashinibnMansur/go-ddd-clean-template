@@ -6,13 +6,12 @@ import (
 	"fmt"
 	"time"
 
+	"gct/config"
+	"gct/pkg/logger"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"go.uber.org/zap"
-
-	"gct/config"
-	"gct/pkg/logger"
 )
 
 const (

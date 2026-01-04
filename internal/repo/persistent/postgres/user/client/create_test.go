@@ -1,23 +1,21 @@
 package client
 
 import (
-	"context"
 	"errors"
 	"strings"
 	"testing"
 	"time"
 
+	"gct/internal/domain"
+	"gct/pkg/logger"
 	"github.com/Masterminds/squirrel"
 	"github.com/pashagolub/pgxmock/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"gct/internal/domain"
-	"gct/pkg/logger"
 )
 
 func TestRepo_Create(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	lastSeen := time.Now().Add(-1 * time.Hour)
 
 	username := "testuser"
@@ -88,7 +86,7 @@ func TestRepo_Create(t *testing.T) {
 			},
 			expectedError: true,
 			errorCheck: func(t *testing.T, err error) {
-				assert.NotNil(t, err)
+				assert.Error(t, err)
 			},
 		},
 		{
@@ -139,7 +137,7 @@ func TestRepo_Create(t *testing.T) {
 			},
 			expectedError: true,
 			errorCheck: func(t *testing.T, err error) {
-				assert.NotNil(t, err)
+				assert.Error(t, err)
 				assert.Contains(t, err.Error(), "duplicate key")
 			},
 		},
@@ -173,7 +171,7 @@ func TestRepo_Create(t *testing.T) {
 			},
 			expectedError: true,
 			errorCheck: func(t *testing.T, err error) {
-				assert.NotNil(t, err)
+				assert.Error(t, err)
 				assert.Contains(t, err.Error(), "invalid phone")
 			},
 		},
@@ -207,7 +205,7 @@ func TestRepo_Create(t *testing.T) {
 			},
 			expectedError: true,
 			errorCheck: func(t *testing.T, err error) {
-				assert.NotNil(t, err)
+				assert.Error(t, err)
 				assert.Contains(t, err.Error(), "password hash")
 			},
 		},
@@ -355,7 +353,7 @@ func TestRepo_Create(t *testing.T) {
 			},
 			expectedError: true,
 			errorCheck: func(t *testing.T, err error) {
-				assert.NotNil(t, err)
+				assert.Error(t, err)
 				assert.Contains(t, err.Error(), "timeout")
 			},
 		},
@@ -383,7 +381,7 @@ func TestRepo_Create(t *testing.T) {
 			},
 			expectedError: true,
 			errorCheck: func(t *testing.T, err error) {
-				assert.NotNil(t, err)
+				assert.Error(t, err)
 				assert.Contains(t, err.Error(), "foreign key")
 			},
 		},
@@ -417,7 +415,7 @@ func TestRepo_Create(t *testing.T) {
 			},
 			expectedError: true,
 			errorCheck: func(t *testing.T, err error) {
-				assert.NotNil(t, err)
+				assert.Error(t, err)
 				assert.Contains(t, err.Error(), "check constraint")
 			},
 		},
@@ -460,7 +458,7 @@ func TestRepo_Create(t *testing.T) {
 }
 
 func TestRepo_Create_WithNilFields(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	phone := "+998901234567"
 	user := &domain.User{

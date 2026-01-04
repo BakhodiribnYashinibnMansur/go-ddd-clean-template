@@ -19,6 +19,7 @@ func New(endpoint string) *Client {
 
 // List retrieves all sessions for the authenticated user
 func (c *Client) List(t *testing.T, token string) *http.Response {
+	t.Helper()
 	req, err := http.NewRequest(http.MethodGet, c.endpoint+"/api/v1/sessions/", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -34,6 +35,7 @@ func (c *Client) List(t *testing.T, token string) *http.Response {
 
 // Delete revokes/deletes a specific session
 func (c *Client) Delete(t *testing.T, token, sessionID string) *http.Response {
+	t.Helper()
 	req, err := http.NewRequest(http.MethodDelete, c.endpoint+"/api/v1/sessions/"+sessionID, nil)
 	if err != nil {
 		t.Fatal(err)
@@ -49,6 +51,7 @@ func (c *Client) Delete(t *testing.T, token, sessionID string) *http.Response {
 
 // RevokeAll revokes all sessions for the authenticated user
 func (c *Client) RevokeAll(t *testing.T, token string) *http.Response {
+	t.Helper()
 	req, err := http.NewRequest(http.MethodPost, c.endpoint+"/api/v1/sessions/revoke-all", nil)
 	if err != nil {
 		t.Fatal(err)

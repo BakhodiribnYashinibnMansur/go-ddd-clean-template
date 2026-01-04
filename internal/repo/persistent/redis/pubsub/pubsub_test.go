@@ -48,7 +48,7 @@ func TestPubSub_PublishSubscribe(t *testing.T) {
 			message:       "test message",
 			expectedError: true,
 			errorCheck: func(t *testing.T, err error) {
-				assert.NotNil(t, err)
+				assert.Error(t, err)
 				assert.Contains(t, err.Error(), "channel")
 			},
 		},
@@ -70,7 +70,7 @@ func TestPubSub_PublishSubscribe(t *testing.T) {
 			message:       "test message",
 			expectedError: true,
 			errorCheck: func(t *testing.T, err error) {
-				assert.NotNil(t, err)
+				assert.Error(t, err)
 				assert.Contains(t, err.Error(), "connection failed")
 			},
 		},
@@ -95,13 +95,12 @@ func TestPubSub_PublishSubscribe(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // parallel safety
 		t.Run(tt.name, func(t *testing.T) {
 			// arrange
 			client, _ := newTestRedis(t)
 			defer client.Close()
 			ps := New(client)
-			testCtx := context.Background()
+			testCtx := t.Context()
 
 			// act
 			err := ps.Publish(testCtx, tt.channel, tt.message)
@@ -124,7 +123,7 @@ func TestPubSub_PublishSubscribeOriginal(t *testing.T) {
 	defer client.Close()
 
 	ps := New(client)
-	ctx := context.Background()
+	ctx := t.Context()
 	channel := "test_channel"
 
 	// Subscribe
@@ -141,7 +140,7 @@ func TestPubSub_PublishSubscribeOriginal(t *testing.T) {
 	go func() {
 		// Small delay to ensure subscriber is ready (though Receive should have handled it)
 		time.Sleep(10 * time.Millisecond)
-		err := ps.Publish(context.Background(), channel, msgContent)
+		err := ps.Publish(t.Context(), channel, msgContent)
 		done <- err
 	}()
 
@@ -163,7 +162,7 @@ func TestPubSub_PSubscribe(t *testing.T) {
 	defer client.Close()
 
 	ps := New(client)
-	ctx := context.Background()
+	ctx := t.Context()
 	pattern := "test_*"
 
 	// PSubscribe
@@ -180,7 +179,7 @@ func TestPubSub_PSubscribe(t *testing.T) {
 	done := make(chan error, 1)
 	go func() {
 		time.Sleep(10 * time.Millisecond)
-		err := ps.Publish(context.Background(), channel, msgContent)
+		err := ps.Publish(t.Context(), channel, msgContent)
 		done <- err
 	}()
 

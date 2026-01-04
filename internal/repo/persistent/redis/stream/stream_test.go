@@ -1,7 +1,6 @@
 package stream
 
 import (
-	"context"
 	"errors"
 	"testing"
 
@@ -82,7 +81,7 @@ func TestStream_XAdd(t *testing.T) {
 			id:          "test_id_4",
 			expectError: true,
 			errorCheck: func(t *testing.T, err error) {
-				assert.NotNil(t, err)
+				assert.Error(t, err)
 				assert.Contains(t, err.Error(), "connection failed")
 			},
 		},
@@ -117,13 +116,12 @@ func TestStream_XAdd(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // parallel safety
 		t.Run(tt.name, func(t *testing.T) {
 			// arrange
 			client, _ := newTestRedis(t)
 			defer client.Close()
 			s := New(client)
-			testCtx := context.Background()
+			testCtx := t.Context()
 
 			// act
 			var id string

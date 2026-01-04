@@ -1,7 +1,6 @@
 package geospatial
 
 import (
-	"context"
 	"errors"
 	"testing"
 
@@ -72,7 +71,7 @@ func TestGeospatial_GeoAddPos(t *testing.T) {
 			expectedCount: 0,
 			expectError:   true,
 			errorCheck: func(t *testing.T, err error) {
-				assert.NotNil(t, err)
+				assert.Error(t, err)
 				assert.Contains(t, err.Error(), "connection failed")
 			},
 		},
@@ -87,7 +86,7 @@ func TestGeospatial_GeoAddPos(t *testing.T) {
 			expectedCount: 0,
 			expectError:   true,
 			errorCheck: func(t *testing.T, err error) {
-				assert.NotNil(t, err)
+				assert.Error(t, err)
 			},
 		},
 		{
@@ -101,20 +100,19 @@ func TestGeospatial_GeoAddPos(t *testing.T) {
 			expectedCount: 0,
 			expectError:   true,
 			errorCheck: func(t *testing.T, err error) {
-				assert.NotNil(t, err)
+				assert.Error(t, err)
 			},
 		},
 	}
 
 	for _, tt := range tests {
-		tt := tt // parallel safety
 		t.Run(tt.name, func(t *testing.T) {
 			// arrange
 			client, _ := newTestRedis(t)
 			defer client.Close()
 			g := New(client)
 			testKey := uuid.New().String()
-			testCtx := context.Background()
+			testCtx := t.Context()
 
 			// act
 			count, err := g.GeoAdd(testCtx, testKey, tt.locations...)
@@ -199,7 +197,7 @@ func TestGeospatial_GeoDist(t *testing.T) {
 			expectedDist: 0,
 			expectError:  true,
 			errorCheck: func(t *testing.T, err error) {
-				assert.NotNil(t, err)
+				assert.Error(t, err)
 				assert.Contains(t, err.Error(), "connection failed")
 			},
 		},
@@ -214,7 +212,7 @@ func TestGeospatial_GeoDist(t *testing.T) {
 			expectedDist: 0,
 			expectError:  true,
 			errorCheck: func(t *testing.T, err error) {
-				assert.NotNil(t, err)
+				assert.Error(t, err)
 			},
 		},
 		{
@@ -228,20 +226,19 @@ func TestGeospatial_GeoDist(t *testing.T) {
 			expectedDist: 0,
 			expectError:  true,
 			errorCheck: func(t *testing.T, err error) {
-				assert.NotNil(t, err)
+				assert.Error(t, err)
 			},
 		},
 	}
 
 	for _, tt := range tests {
-		tt := tt // parallel safety
 		t.Run(tt.name, func(t *testing.T) {
 			// arrange
 			client, _ := newTestRedis(t)
 			defer client.Close()
 			g := New(client)
 			testKey := uuid.New().String()
-			testCtx := context.Background()
+			testCtx := t.Context()
 
 			// setup locations
 			g.GeoAdd(testCtx, testKey,
@@ -272,7 +269,7 @@ func TestGeospatial_GeoHash(t *testing.T) {
 
 	g := New(client)
 	key := uuid.New().String()
-	ctx := context.Background()
+	ctx := t.Context()
 
 	t.Skip("Skipping GeoHash test: miniredis might not support GEOHASH")
 
@@ -382,7 +379,7 @@ func TestGeospatial_GeoRadius(t *testing.T) {
 			expectedCount: 0,
 			expectError:   true,
 			errorCheck: func(t *testing.T, err error) {
-				assert.NotNil(t, err)
+				assert.Error(t, err)
 				assert.Contains(t, err.Error(), "connection failed")
 			},
 		},
@@ -398,7 +395,7 @@ func TestGeospatial_GeoRadius(t *testing.T) {
 			expectedCount: 0,
 			expectError:   true,
 			errorCheck: func(t *testing.T, err error) {
-				assert.NotNil(t, err)
+				assert.Error(t, err)
 			},
 		},
 		{
@@ -413,20 +410,19 @@ func TestGeospatial_GeoRadius(t *testing.T) {
 			expectedCount: 0,
 			expectError:   true,
 			errorCheck: func(t *testing.T, err error) {
-				assert.NotNil(t, err)
+				assert.Error(t, err)
 			},
 		},
 	}
 
 	for _, tt := range tests {
-		tt := tt // parallel safety
 		t.Run(tt.name, func(t *testing.T) {
 			// arrange
 			client, _ := newTestRedis(t)
 			defer client.Close()
 			g := New(client)
 			testKey := uuid.New().String()
-			testCtx := context.Background()
+			testCtx := t.Context()
 
 			// setup locations
 			g.GeoAdd(testCtx, testKey,
@@ -449,7 +445,7 @@ func TestGeospatial_GeoRadius(t *testing.T) {
 				}
 			} else {
 				require.NoError(t, err)
-				assert.Equal(t, tt.expectedCount, len(locs))
+				assert.Len(t, locs, tt.expectedCount)
 			}
 		})
 	}
@@ -461,7 +457,7 @@ func TestGeospatial_GeoRadiusByMember(t *testing.T) {
 
 	g := New(client)
 	key := uuid.New().String()
-	ctx := context.Background()
+	ctx := t.Context()
 
 	g.GeoAdd(ctx, key,
 		&redis.GeoLocation{Name: "Palermo", Longitude: 13.361389, Latitude: 38.115556},
@@ -482,7 +478,7 @@ func TestGeospatial_GeoSearch(t *testing.T) {
 
 	g := New(client)
 	key := uuid.New().String()
-	ctx := context.Background()
+	ctx := t.Context()
 
 	_, err := g.GeoAdd(ctx, key,
 		&redis.GeoLocation{Name: "Palermo", Longitude: 13.361389, Latitude: 38.115556},
@@ -539,7 +535,7 @@ func TestGeospatial_GeoRemove(t *testing.T) {
 			expectedRemoved: 0,
 			expectError:     true,
 			errorCheck: func(t *testing.T, err error) {
-				assert.NotNil(t, err)
+				assert.Error(t, err)
 				assert.Contains(t, err.Error(), "connection failed")
 			},
 		},
@@ -555,14 +551,13 @@ func TestGeospatial_GeoRemove(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // parallel safety
 		t.Run(tt.name, func(t *testing.T) {
 			// arrange
 			client, _ := newTestRedis(t)
 			defer client.Close()
 			g := New(client)
 			testKey := uuid.New().String()
-			testCtx := context.Background()
+			testCtx := t.Context()
 
 			// setup location
 			g.GeoAdd(testCtx, testKey,

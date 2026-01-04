@@ -2,16 +2,10 @@ package client
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
 
 	"gct/internal/controller/restapi"
 	"gct/internal/domain"
@@ -19,6 +13,9 @@ import (
 	"gct/internal/usecase"
 	"gct/pkg/logger"
 	"gct/test/integration/common/setup"
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestUserAPI_Integration_Exhaustive(t *testing.T) {
@@ -29,7 +26,7 @@ func TestUserAPI_Integration_Exhaustive(t *testing.T) {
 
 	handler := gin.New()
 	restapi.NewRouter(handler, setup.TestCfg, useCases, l)
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// Pre-seed a user for some tests
 	seededPhone := "998901112233"
@@ -92,7 +89,8 @@ func TestUserAPI_Integration_Exhaustive(t *testing.T) {
 			checkResponse: func(t *testing.T, body []byte) {
 				var resp map[string]any
 				json.Unmarshal(body, &resp)
-				assert.Equal(t, "User created successfully", resp["data"])
+				data, _ := resp["data"].(map[string]any)
+				assert.NotEmpty(t, data["access_token"])
 
 				// DB Check
 				dbU, err := repositories.Persistent.Postgres.User.Client.GetByPhone(ctx, "998900000001")
@@ -133,10 +131,12 @@ func TestUserAPI_Integration_Exhaustive(t *testing.T) {
 				"password": "password123",
 			},
 			expectedCode: http.StatusCreated,
+
 			checkResponse: func(t *testing.T, body []byte) {
 				var resp map[string]any
 				json.Unmarshal(body, &resp)
-				assert.Equal(t, "User created successfully", resp["data"])
+				data, _ := resp["data"].(map[string]any)
+				assert.NotEmpty(t, data["access_token"])
 
 				// DB Check
 				dbU, err := repositories.Persistent.Postgres.User.Client.GetByPhone(ctx, unicodePhone)
@@ -156,10 +156,12 @@ func TestUserAPI_Integration_Exhaustive(t *testing.T) {
 				"password": "password",
 			},
 			expectedCode: http.StatusCreated,
+
 			checkResponse: func(t *testing.T, body []byte) {
 				var resp map[string]any
 				json.Unmarshal(body, &resp)
-				assert.Equal(t, "User created successfully", resp["data"])
+				data, _ := resp["data"].(map[string]any)
+				assert.NotEmpty(t, data["access_token"])
 
 				// DB Check
 				dbU, err := repositories.Persistent.Postgres.User.Client.GetByPhone(ctx, longPhone)
@@ -187,6 +189,7 @@ func TestUserAPI_Integration_Exhaustive(t *testing.T) {
 				"password": seededPass,
 			},
 			expectedCode: http.StatusOK,
+
 			checkResponse: func(t *testing.T, body []byte) {
 				var resp map[string]any
 				json.Unmarshal(body, &resp)
@@ -244,9 +247,10 @@ func TestUserAPI_Integration_Exhaustive(t *testing.T) {
 		{
 			name:         "USER GET: Success fetching profile",
 			method:       http.MethodGet,
-			url:          fmt.Sprintf("/api/v1/users/%s", dbUser.ID.String()),
+			url:          "/api/v1/users/" + dbUser.ID.String(),
 			useToken:     true,
 			expectedCode: http.StatusOK,
+
 			checkResponse: func(t *testing.T, body []byte) {
 				var resp map[string]any
 				json.Unmarshal(body, &resp)
@@ -259,17 +263,18 @@ func TestUserAPI_Integration_Exhaustive(t *testing.T) {
 		{
 			name:         "USER GET: Unauthorized (no token)",
 			method:       http.MethodGet,
-			url:          fmt.Sprintf("/api/v1/users/%s", dbUser.ID.String()),
+			url:          "/api/v1/users/" + dbUser.ID.String(),
 			useToken:     false,
 			expectedCode: http.StatusUnauthorized,
 		},
 		{
 			name:         "USER PATCH: Update username success",
 			method:       http.MethodPatch,
-			url:          fmt.Sprintf("/api/v1/users/%s", dbUser.ID.String()),
+			url:          "/api/v1/users/" + dbUser.ID.String(),
 			body:         map[string]string{"username": "new_seeded_name"},
 			useToken:     true,
 			expectedCode: http.StatusOK,
+
 			checkResponse: func(t *testing.T, body []byte) {
 				var resp map[string]any
 				json.Unmarshal(body, &resp)
@@ -286,7 +291,7 @@ func TestUserAPI_Integration_Exhaustive(t *testing.T) {
 		{
 			name:         "USER PATCH: Unauthorized update",
 			method:       http.MethodPatch,
-			url:          fmt.Sprintf("/api/v1/users/%s", dbUser.ID.String()),
+			url:          "/api/v1/users/" + dbUser.ID.String(),
 			body:         map[string]string{"username": "hacker"},
 			useToken:     false,
 			expectedCode: http.StatusUnauthorized,
@@ -297,6 +302,7 @@ func TestUserAPI_Integration_Exhaustive(t *testing.T) {
 			url:          "/api/v1/users/",
 			useToken:     true,
 			expectedCode: http.StatusOK,
+
 			checkResponse: func(t *testing.T, body []byte) {
 				var resp map[string]any
 				json.Unmarshal(body, &resp)
@@ -309,9 +315,10 @@ func TestUserAPI_Integration_Exhaustive(t *testing.T) {
 		{
 			name:         "USER DELETE: Success",
 			method:       http.MethodDelete,
-			url:          fmt.Sprintf("/api/v1/users/%s", dbUser.ID.String()),
+			url:          "/api/v1/users/" + dbUser.ID.String(),
 			useToken:     true,
 			expectedCode: http.StatusOK,
+
 			checkResponse: func(t *testing.T, body []byte) {
 				var resp map[string]any
 				json.Unmarshal(body, &resp)
@@ -326,9 +333,10 @@ func TestUserAPI_Integration_Exhaustive(t *testing.T) {
 		{
 			name:         "USER GET: Post-delete not found",
 			method:       http.MethodGet,
-			url:          fmt.Sprintf("/api/v1/users/%s", dbUser.ID.String()),
+			url:          "/api/v1/users/" + dbUser.ID.String(),
 			useToken:     true,                // Token still valid for check but user gone
 			expectedCode: http.StatusNotFound, // Correctly returns 404 for missing record
+
 			checkResponse: func(t *testing.T, body []byte) {
 				var resp map[string]any
 				json.Unmarshal(body, &resp)
@@ -341,6 +349,7 @@ func TestUserAPI_Integration_Exhaustive(t *testing.T) {
 			url:          "/api/v1/users/sign-out",
 			useToken:     true,
 			expectedCode: http.StatusOK,
+
 			checkResponse: func(t *testing.T, body []byte) {
 				var resp map[string]any
 				json.Unmarshal(body, &resp)

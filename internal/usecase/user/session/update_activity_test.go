@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"gct/internal/domain"
-
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -39,6 +38,7 @@ func TestUseCase_UpdateActivity_TableDriven(t *testing.T) {
 			updateRepoError: nil,
 			expectError:     false,
 			validateResult: func(t *testing.T, s *domain.Session) {
+				t.Helper()
 				require.False(t, s.LastActivity.IsZero())
 				require.False(t, s.UpdatedAt.IsZero())
 			},
@@ -108,7 +108,7 @@ func TestUseCase_UpdateActivity_TableDriven(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // parallel safety
+		// parallel safety
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 

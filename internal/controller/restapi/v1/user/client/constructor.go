@@ -3,19 +3,21 @@ package client
 import (
 	"crypto/rsa"
 
-	"github.com/gin-gonic/gin"
-
 	"gct/config"
 	"gct/internal/usecase"
+	"gct/pkg/csrf"
 	"gct/pkg/jwt"
 	"gct/pkg/logger"
+	"github.com/gin-gonic/gin"
 )
 
 type Controller struct {
-	u          *usecase.UseCase
-	l          logger.Log
-	cfg        *config.Config
-	privateKey *rsa.PrivateKey
+	u             *usecase.UseCase
+	l             logger.Log
+	cfg           *config.Config
+	privateKey    *rsa.PrivateKey
+	csrfGenerator *csrf.Generator
+	csrfStore     csrf.Store
 }
 
 type ControllerI interface {
@@ -27,6 +29,8 @@ type ControllerI interface {
 	SignIn(c *gin.Context)
 	SignUp(c *gin.Context)
 	SignOut(c *gin.Context)
+	CsrfToken(c *gin.Context)
+	RefreshToken(c *gin.Context)
 }
 
 func New(u *usecase.UseCase, cfg *config.Config, l logger.Log) ControllerI {
@@ -34,5 +38,20 @@ func New(u *usecase.UseCase, cfg *config.Config, l logger.Log) ControllerI {
 	if err != nil {
 		l.Error("ClientController - New - parsedPrivateKey error", err)
 	}
-	return &Controller{u: u, l: l, cfg: cfg, privateKey: pk}
+
+	// Initialize CSRF protection with dedicated secret
+	csrfGen := csrf.NewGenerator(csrf.Config{
+		Secret:     []byte(cfg.App.CSRFSecret),
+		Expiration: csrf.DefaultExpiration,
+	})
+	csrfStore := csrf.NewMemoryStore() // Use memory store (can be replaced with Redis)
+
+	return &Controller{
+		u:             u,
+		l:             l,
+		cfg:           cfg,
+		privateKey:    pk,
+		csrfGenerator: csrfGen,
+		csrfStore:     csrfStore,
+	}
 }

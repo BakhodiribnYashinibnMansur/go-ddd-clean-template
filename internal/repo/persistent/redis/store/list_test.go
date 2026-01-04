@@ -1,7 +1,6 @@
 package store
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -95,7 +94,6 @@ func TestList_SetGet(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // parallel safety
 		t.Run(tt.name, func(t *testing.T) {
 			// arrange
 			client, _ := newTestRedis(t)
@@ -162,7 +160,7 @@ func TestList_Pop(t *testing.T) {
 	// So it deletes the WHOLE key, not just popped elements?
 	// Yes: pipe.Del(ctx, key)
 
-	exists, err := client.Exists(context.Background(), key).Result()
+	exists, err := client.Exists(t.Context(), key).Result()
 	require.NoError(t, err)
 	assert.Equal(t, int64(0), exists)
 }

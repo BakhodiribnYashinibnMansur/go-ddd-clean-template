@@ -6,7 +6,6 @@ import (
 
 	"gct/internal/cron/session"
 	"gct/pkg/logger"
-
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 	"github.com/robfig/cron/v3"

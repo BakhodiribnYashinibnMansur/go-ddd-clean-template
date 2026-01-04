@@ -6,14 +6,12 @@ import (
 	"html/template"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
-	ginprometheus "github.com/zsais/go-gin-prometheus"
-
 	"gct/config"
+	"gct/consts"
 	docs "gct/docs/swagger" // Swagger docs.
 	"gct/internal/controller/restapi/middleware"
+	"gct/internal/controller/restapi/util"
+	"gct/internal/controller/restapi/v1/admin"
 	"gct/internal/controller/restapi/v1/audit"
 	"gct/internal/controller/restapi/v1/authz"
 	"gct/internal/controller/restapi/v1/minio"
@@ -21,6 +19,10 @@ import (
 	"gct/internal/usecase"
 	webAdmin "gct/internal/web/admin"
 	"gct/pkg/logger"
+	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+	ginprometheus "github.com/zsais/go-gin-prometheus"
 )
 
 // NewRouter -.
@@ -41,6 +43,7 @@ func NewRouter(handler *gin.Engine, cfg *config.Config, uc *usecase.UseCase, l l
 	handler.Use(sysErrM.Recovery())
 	handler.Use(sysErrM.Persist5xx())
 	handler.Use(middleware.CORSMiddleware())
+	handler.Use(middleware.MockMiddleware(cfg))
 
 	// Prometheus metrics
 	setupMetrics(handler, cfg)
@@ -67,13 +70,23 @@ func NewRouter(handler *gin.Engine, cfg *config.Config, uc *usecase.UseCase, l l
 	auditM := middleware.NewAuditMiddleware(uc, l)
 	handler.Use(auditM.EndpointHistory())
 
+	// CSRF Middleware
+	csrfM := middleware.HybridMiddleware(l, consts.COOKIE_CSRF_TOKEN)
+
 	// Routers
 	h := handler.Group("/api/v1")
 	{
-		user.UserRoute(h, c.User, am.AuthClientAccess)
-		minio.MinioRoute(h, c.Minio, am.AuthClientAccess)
-		authz.AuthzRoute(h, c.Authz, am.AuthClientAccess, am.Authz)
+		user.UserRoute(h, c.User, am.AuthClientAccess, am.AuthClientRefresh, csrfM)
+		minio.MinioRoute(h, c.Minio, am.AuthClientAccess, csrfM)
+		authz.AuthzRoute(h, c.Authz, am.AuthClientAccess, am.Authz, csrfM)
 		audit.AuditRoute(h, c.Audit)
+
+		// Admin API Controller
+		adminController := admin.New(l)
+		adminController.Register(h)
+
+		// Serve linter reports
+		handler.Static("/docs/report/linter", "./docs/report/linter")
 
 		// Web Admin Panel
 		adminHandler := webAdmin.New(uc, cfg, l)
@@ -290,7 +303,7 @@ const rootHTML = `
 func setupRoot(handler *gin.Engine, cfg *config.Config) {
 	handler.GET("/", func(c *gin.Context) {
 		scheme := "http"
-		if c.Request.TLS != nil || c.GetHeader("X-Forwarded-Proto") == "https" {
+		if c.Request.TLS != nil || util.GetForwardedProto(c) == "https" {
 			scheme = "https"
 		}
 		host := c.Request.Host

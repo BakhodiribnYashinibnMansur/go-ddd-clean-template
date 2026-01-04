@@ -3,12 +3,11 @@ package session
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
-
 	"gct/consts"
 	"gct/internal/controller/restapi/response"
 	"gct/internal/controller/restapi/util"
 	"gct/internal/domain"
+	"github.com/gin-gonic/gin"
 )
 
 // UpdateActivity godoc
@@ -27,6 +26,11 @@ func (c *Controller) UpdateActivity(ctx *gin.Context) {
 	if err != nil {
 		util.LogError(c.l, err, "http - v1 - session - updateActivity - id")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid session id", nil, false)
+		return
+	}
+
+	// Handle mock mode
+	if util.Mock(ctx, util.MockTypeUpdate, "Activity updated successfully") {
 		return
 	}
 

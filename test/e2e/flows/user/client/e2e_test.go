@@ -54,12 +54,12 @@ func TestSignUp(t *testing.T) {
 			if tt.checkResponse {
 				bodyBytes, _ := io.ReadAll(resp.Body)
 				var result struct {
-					Status string `json:"status"`
-					Data   string `json:"data"`
+					Status string         `json:"status"`
+					Data   map[string]any `json:"data"`
 				}
 				json.Unmarshal(bodyBytes, &result)
 				require.Equal(t, "SUCCESS", result.Status)
-				require.NotEmpty(t, result.Data)
+				require.NotEmpty(t, result.Data["access_token"])
 			}
 		})
 	}
@@ -104,7 +104,8 @@ func TestSignIn(t *testing.T) {
 	client := New(server.URL)
 
 	// Setup user
-	client.SignUp(t, "signin_test_user", "998901234510", "password123")
+	resp := client.SignUp(t, "signin_test_user", "998901234510", "password123")
+	resp.Body.Close()
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -170,7 +171,8 @@ func TestGetUser(t *testing.T) {
 	client := New(server.URL)
 
 	// Setup user and get token
-	client.SignUp(t, "get_test_user", "998901234520", "password123")
+	resp := client.SignUp(t, "get_test_user", "998901234520", "password123")
+	resp.Body.Close()
 	signInResp := client.SignIn(t, "998901234520", "password123")
 	var signInResult struct {
 		Data struct {
@@ -234,7 +236,8 @@ func TestUpdateUser(t *testing.T) {
 	client := New(server.URL)
 
 	// Setup user
-	client.SignUp(t, "update_test_user", "998901234530", "password123")
+	resp := client.SignUp(t, "update_test_user", "998901234530", "password123")
+	resp.Body.Close()
 	signInResp := client.SignIn(t, "998901234530", "password123")
 	var signInResult struct {
 		Data struct {
@@ -300,7 +303,8 @@ func TestDeleteUser(t *testing.T) {
 			client := New(server.URL)
 
 			// Setup user
-			client.SignUp(t, "delete_test_user", "998901234540", "password123")
+			resp := client.SignUp(t, "delete_test_user", "998901234540", "password123")
+			resp.Body.Close()
 			signInResp := client.SignIn(t, "998901234540", "password123")
 			var signInResult struct {
 				Data struct {
@@ -317,7 +321,7 @@ func TestDeleteUser(t *testing.T) {
 			}
 
 			// ✅ Use client method
-			resp := client.Delete(t, token, signInResult.Data.UserID)
+			resp = client.Delete(t, token, signInResult.Data.UserID)
 			defer resp.Body.Close()
 
 			require.Equal(t, tt.expectedStatus, resp.StatusCode)
@@ -362,7 +366,8 @@ func TestSignOut(t *testing.T) {
 	client := New(server.URL)
 
 	// Setup user
-	client.SignUp(t, "signout_test_user", "998901234550", "password123")
+	resp := client.SignUp(t, "signout_test_user", "998901234550", "password123")
+	resp.Body.Close()
 	signInResp := client.SignIn(t, "998901234550", "password123")
 	var signInResult struct {
 		Data struct {

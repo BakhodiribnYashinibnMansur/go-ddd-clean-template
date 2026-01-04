@@ -6,10 +6,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/gin-gonic/gin"
-
 	"gct/internal/controller/restapi/response"
 	apperrors "gct/pkg/errors"
+	"github.com/gin-gonic/gin"
 )
 
 // GetErrors godoc

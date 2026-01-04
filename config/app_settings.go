@@ -8,6 +8,7 @@ type (
 		Name        string `env:"APP_NAME,required"`
 		Version     string `env:"APP_VERSION,required"`
 		Environment string `env:"APP_ENV"              envDefault:"development"`
+		CSRFSecret  string `env:"CSRF_SECRET,required"` // Dedicated secret for CSRF token generation
 	}
 
 	// HTTP -.

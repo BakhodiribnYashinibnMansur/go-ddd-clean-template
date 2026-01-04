@@ -3,12 +3,12 @@ package session
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
-
 	"gct/consts"
 	"gct/internal/controller/restapi/response"
 	"gct/internal/controller/restapi/util"
 	"gct/internal/domain"
+	"gct/internal/domain/mock"
+	"github.com/gin-gonic/gin"
 )
 
 // Get godoc
@@ -27,6 +27,11 @@ func (c *Controller) Session(ctx *gin.Context) {
 	if err != nil {
 		util.LogError(c.l, err, "http - v1 - session - get - id")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid session id", nil, false)
+		return
+	}
+
+	// Handle mock mode
+	if util.Mock(ctx, util.MockTypeGet, func() any { return mock.Session() }) {
 		return
 	}
 

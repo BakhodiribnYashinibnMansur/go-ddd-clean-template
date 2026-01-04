@@ -1,13 +1,12 @@
 package postgres
 
 import (
-	"github.com/Masterminds/squirrel"
-
 	"gct/internal/repo/persistent/postgres/audit"
 	"gct/internal/repo/persistent/postgres/authz"
 	"gct/internal/repo/persistent/postgres/user"
 	"gct/pkg/db/postgres"
 	"gct/pkg/logger"
+	"github.com/Masterminds/squirrel"
 )
 
 type Repo struct {

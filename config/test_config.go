@@ -14,13 +14,13 @@ var (
 // NewTestConfig returns app config for testing (Singleton).
 // It fills the config with dummy data suitable for testing.
 func NewTestConfig() (*Config, error) {
-	var err error
 	testOnce.Do(func() {
 		cfg := &Config{
 			App: App{
 				Name:        "go-clean-template-test",
 				Version:     "1.0.0",
 				Environment: "test",
+				CSRFSecret:  "test-csrf-secret-key-for-testing-min-32-chars",
 			},
 			HTTP: HTTP{
 				Port:           "8080",
@@ -157,10 +157,6 @@ fwIDAQAB
 
 		testInstance = cfg
 	})
-
-	if err != nil {
-		return nil, err
-	}
 
 	return testInstance, nil
 }

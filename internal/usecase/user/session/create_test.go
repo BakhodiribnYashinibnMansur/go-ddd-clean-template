@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"gct/internal/domain"
-
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -37,6 +36,7 @@ func TestUseCase_Create_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateResult: func(t *testing.T, out *domain.Session) {
+				t.Helper()
 				require.NotEmpty(t, out.ID)
 				require.NotEqual(t, uuid.Nil, out.UserID)
 			},
@@ -55,6 +55,7 @@ func TestUseCase_Create_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateResult: func(t *testing.T, out *domain.Session) {
+				t.Helper()
 				require.NotEqual(t, uuid.Nil, out.UserID)
 				require.NotEqual(t, uuid.Nil, out.DeviceID)
 			},
@@ -73,6 +74,7 @@ func TestUseCase_Create_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateResult: func(t *testing.T, out *domain.Session) {
+				t.Helper()
 				require.NotEqual(t, uuid.Nil, out.UserID)
 				require.Equal(t, "Mozilla/5.0", *out.UserAgent)
 			},
@@ -91,6 +93,7 @@ func TestUseCase_Create_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateResult: func(t *testing.T, out *domain.Session) {
+				t.Helper()
 				require.NotEqual(t, uuid.Nil, out.UserID)
 				require.Equal(t, "192.168.1.1", *out.IPAddress)
 			},
@@ -108,6 +111,7 @@ func TestUseCase_Create_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateResult: func(t *testing.T, out *domain.Session) {
+				t.Helper()
 				require.True(t, out.ExpiresAt.After(time.Now()))
 				require.True(t, out.ExpiresAt.Before(time.Now().Add(25*time.Hour)))
 			},
@@ -136,6 +140,7 @@ func TestUseCase_Create_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateResult: func(t *testing.T, out *domain.Session) {
+				t.Helper()
 				require.Equal(t, uuid.Nil, out.UserID)
 			},
 		},
@@ -152,6 +157,7 @@ func TestUseCase_Create_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateResult: func(t *testing.T, out *domain.Session) {
+				t.Helper()
 				require.NotEqual(t, uuid.Nil, out.UserID)
 			},
 		},
@@ -168,6 +174,7 @@ func TestUseCase_Create_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateResult: func(t *testing.T, out *domain.Session) {
+				t.Helper()
 				require.NotEqual(t, uuid.Nil, out.ID)
 			},
 		},
@@ -184,6 +191,7 @@ func TestUseCase_Create_TableDriven(t *testing.T) {
 			repoError:   nil,
 			expectError: false,
 			validateResult: func(t *testing.T, out *domain.Session) {
+				t.Helper()
 				require.False(t, out.CreatedAt.IsZero())
 				require.False(t, out.UpdatedAt.IsZero())
 				require.True(t, out.CreatedAt.Before(time.Now().Add(time.Minute)))
@@ -193,7 +201,7 @@ func TestUseCase_Create_TableDriven(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // parallel safety
+		// parallel safety
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 

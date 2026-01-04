@@ -16,7 +16,6 @@ import (
 	"gct/internal/repo/persistent/postgres/user"
 	clientUC "gct/internal/usecase/user/client"
 	"gct/pkg/logger"
-
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 )

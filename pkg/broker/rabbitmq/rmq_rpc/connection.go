@@ -79,6 +79,10 @@ func (c *Connection) connect() error {
 		return fmt.Errorf("c.Connection.Channel: %w", err)
 	}
 
+	return c.setupQueue()
+}
+
+func (c *Connection) setupQueue() error {
 	queue, err := c.Channel.QueueDeclare(
 		"",
 		false,

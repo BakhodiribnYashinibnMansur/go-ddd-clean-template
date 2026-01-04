@@ -24,7 +24,7 @@ func TestRepo_UploadFile(t *testing.T) {
 			name: "success_upload_text_file",
 			setupFile: func(t *testing.T) (string, string) {
 				content := "Hello MinIO"
-				tmpFile, err := os.CreateTemp("", "test-file-*.txt")
+				tmpFile, err := os.CreateTemp(t.TempDir(), "test-file-*.txt")
 				require.NoError(t, err)
 				defer os.Remove(tmpFile.Name())
 
@@ -49,7 +49,7 @@ func TestRepo_UploadFile(t *testing.T) {
 			name: "success_upload_json_file",
 			setupFile: func(t *testing.T) (string, string) {
 				content := `{"name": "test", "value": 123}`
-				tmpFile, err := os.CreateTemp("", "test-file-*.json")
+				tmpFile, err := os.CreateTemp(t.TempDir(), "test-file-*.json")
 				require.NoError(t, err)
 				defer os.Remove(tmpFile.Name())
 
@@ -73,7 +73,7 @@ func TestRepo_UploadFile(t *testing.T) {
 			name: "success_upload_csv_file",
 			setupFile: func(t *testing.T) (string, string) {
 				content := "name,age,city\nJohn,25,NYC\nJane,30,LA"
-				tmpFile, err := os.CreateTemp("", "test-file-*.csv")
+				tmpFile, err := os.CreateTemp(t.TempDir(), "test-file-*.csv")
 				require.NoError(t, err)
 				defer os.Remove(tmpFile.Name())
 
@@ -121,7 +121,7 @@ func TestRepo_UploadFile(t *testing.T) {
 			setupFile: func(t *testing.T) (string, string) {
 				// Create a larger file
 				content := strings.Repeat("Large file content line\n", 1000)
-				tmpFile, err := os.CreateTemp("", "large-file-*.txt")
+				tmpFile, err := os.CreateTemp(t.TempDir(), "large-file-*.txt")
 				require.NoError(t, err)
 				defer os.Remove(tmpFile.Name())
 
@@ -144,7 +144,6 @@ func TestRepo_UploadFile(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // parallel safety
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 

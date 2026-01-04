@@ -3,13 +3,18 @@ package minio
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
-
 	"gct/internal/controller/restapi/response"
+	"gct/internal/controller/restapi/util"
+	"gct/internal/domain/mock"
+	"github.com/gin-gonic/gin"
 )
 
 // UploadDoc handles document upload
 func (h *Controller) UploadDoc(ctx *gin.Context) {
+	// Handle mock mode
+	if util.Mock(ctx, util.MockTypeGet, func() any { return mock.FileInfoDocument().FileName }) {
+		return
+	}
 	file, err := ctx.FormFile("file")
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusBadRequest, err, nil, false)

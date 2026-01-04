@@ -7,12 +7,11 @@ import (
 	"sync"
 	"time"
 
+	rmqrpc "gct/pkg/broker/rabbitmq/rmq_rpc"
 	"github.com/goccy/go-json"
 	"github.com/google/uuid"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"golang.org/x/sync/errgroup"
-
-	rmqrpc "gct/pkg/broker/rabbitmq/rmq_rpc"
 )
 
 // ErrConnectionClosed -.
@@ -42,8 +41,7 @@ type pendingCall struct {
 
 // Client -.
 type Client struct {
-	ctx context.Context
-	eg  *errgroup.Group
+	eg *errgroup.Group
 
 	conn           *rmqrpc.Connection
 	serverExchange string
@@ -58,7 +56,7 @@ type Client struct {
 
 // New -.
 func New(url, serverExchange, clientExchange string, opts ...Option) (*Client, error) {
-	group, ctx := errgroup.WithContext(context.Background())
+	group, _ := errgroup.WithContext(context.Background())
 	group.SetLimit(1) // Run only one goroutine
 
 	cfg := rmqrpc.Config{
@@ -68,7 +66,6 @@ func New(url, serverExchange, clientExchange string, opts ...Option) (*Client, e
 	}
 
 	c := &Client{
-		ctx:            ctx,
 		eg:             group,
 		conn:           rmqrpc.New(clientExchange, cfg),
 		serverExchange: serverExchange,
@@ -158,8 +155,6 @@ func (c *Client) RemoteCall(handler string, request, response any) error {
 
 func (c *Client) preRemoteCallWait() error {
 	select {
-	case <-c.ctx.Done():
-		return c.ctx.Err()
 	case err := <-c.notify:
 		return fmt.Errorf("rmq_rpc client - Client - RemoteCall - c.notify: %w", err)
 	case <-c.stop:
@@ -171,12 +166,13 @@ func (c *Client) preRemoteCallWait() error {
 }
 
 func (c *Client) remoteCallWait(call *pendingCall) error {
+	ctx := context.Background()
 	timeout := time.NewTimer(c.timeout)
 	defer timeout.Stop()
 
 	select {
-	case <-c.ctx.Done():
-		return c.ctx.Err()
+	case <-ctx.Done():
+		return ctx.Err()
 	case err := <-c.notify:
 		return fmt.Errorf("rmq_rpc client - Client - RemoteCall - c.notify: %w", err)
 	case <-c.stop:
@@ -205,10 +201,11 @@ func (c *Client) start() {
 }
 
 func (c *Client) handleMessages() error {
+	ctx := context.Background()
 	for {
 		select {
-		case <-c.ctx.Done():
-			return c.ctx.Err()
+		case <-ctx.Done():
+			return ctx.Err()
 		case <-c.stop:
 			return nil
 		case d, opened := <-c.conn.Delivery:
@@ -267,7 +264,7 @@ func (c *Client) deleteCall(corrID string) {
 }
 
 func (c *Client) ack(d *amqp.Delivery, multiple bool) {
-	d.Ack(multiple) //nolint:errcheck // we can't do anything with this error
+	d.Ack(multiple)
 }
 
 func (c *Client) publish(corrID, handler string, request any) error {

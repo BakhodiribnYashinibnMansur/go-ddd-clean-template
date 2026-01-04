@@ -1,11 +1,10 @@
 package admin
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
-
 	"gct/internal/controller/restapi/util"
 	"gct/internal/domain"
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 func (h *Handler) AuditLogs(ctx *gin.Context) {

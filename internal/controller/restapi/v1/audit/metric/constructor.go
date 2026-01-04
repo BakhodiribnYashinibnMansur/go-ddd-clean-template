@@ -1,11 +1,10 @@
 package metric
 
 import (
-	"github.com/gin-gonic/gin"
-
 	"gct/config"
 	"gct/internal/usecase"
 	"gct/pkg/logger"
+	"github.com/gin-gonic/gin"
 )
 
 type Controller struct {

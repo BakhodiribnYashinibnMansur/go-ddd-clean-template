@@ -1,8 +1,6 @@
 package access
 
 import (
-	"strings"
-
 	"gct/internal/repo/persistent"
 	"gct/pkg/logger"
 )
@@ -17,14 +15,4 @@ func New(r *persistent.Repo, logger logger.Log) UseCaseI {
 		repo:   r,
 		logger: logger,
 	}
-}
-
-// Helper to check if string slice contains string
-func contains(s []string, e string) bool {
-	for _, a := range s {
-		if strings.EqualFold(a, e) {
-			return true
-		}
-	}
-	return false
 }

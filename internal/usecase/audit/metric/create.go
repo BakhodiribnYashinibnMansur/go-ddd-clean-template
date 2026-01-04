@@ -3,10 +3,9 @@ package metric
 import (
 	"context"
 
-	"go.uber.org/zap"
-
 	"gct/internal/domain"
 	apperrors "gct/pkg/errors"
+	"go.uber.org/zap"
 )
 
 func (uc *UseCase) Create(ctx context.Context, in *domain.FunctionMetric) error {

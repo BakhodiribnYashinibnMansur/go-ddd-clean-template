@@ -515,21 +515,21 @@ output:
     - format: colored-line-number
       path: stdout
     - format: json
-      path: docs/report/lint-report.json
+      path: docs/report/linter/report.json
     - format: tab
-      path: docs/report/lint-report.txt
+      path: docs/report/linter/report.txt
     - format: html
-      path: docs/report/lint-report.html
+      path: docs/report/linter/report.html
     - format: checkstyle
-      path: docs/report/lint-report.xml
+      path: docs/report/linter/report.xml
     - format: code-climate
-      path: docs/report/lint-codeclimate.json
+      path: docs/report/linter/codeclimate.json
     - format: junit-xml
-      path: docs/report/lint-junit.xml
+      path: docs/report/linter/junit.xml
     - format: teamcity
-      path: docs/report/lint-teamcity.txt
+      path: docs/report/linter/teamcity.txt
     - format: sarif
-      path: docs/report/lint-sarif.json
+      path: docs/report/linter/sarif.json
   path-mode: "abs"
   sort-results: true
   sort-order:

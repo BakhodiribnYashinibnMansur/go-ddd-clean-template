@@ -2,6 +2,7 @@ package stream
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -25,7 +26,11 @@ func (s *Stream) XAdd(ctx context.Context, stream string, values map[string]any)
 		Stream: stream,
 		Values: values,
 	}
-	return s.client.XAdd(ctx, args).Result()
+	result, err := s.client.XAdd(ctx, args).Result()
+	if err != nil {
+		return "", fmt.Errorf("failed to add message to stream %s: %w", stream, err)
+	}
+	return result, nil
 }
 
 // XAddWithID adds a new message to a stream with a specific ID
@@ -35,7 +40,11 @@ func (s *Stream) XAddWithID(ctx context.Context, stream, id string, values map[s
 		ID:     id,
 		Values: values,
 	}
-	return s.client.XAdd(ctx, args).Result()
+	result, err := s.client.XAdd(ctx, args).Result()
+	if err != nil {
+		return "", fmt.Errorf("failed to add message with ID %s to stream %s: %w", id, stream, err)
+	}
+	return result, nil
 }
 
 // XAddWithMaxLen adds a message and maintains max length
@@ -46,7 +55,11 @@ func (s *Stream) XAddWithMaxLen(ctx context.Context, stream string, maxLen int64
 		Approx: true,
 		Values: values,
 	}
-	return s.client.XAdd(ctx, args).Result()
+	result, err := s.client.XAdd(ctx, args).Result()
+	if err != nil {
+		return "", fmt.Errorf("failed to add message with max length to stream %s: %w", stream, err)
+	}
+	return result, nil
 }
 
 // XRead reads messages from streams
@@ -55,7 +68,11 @@ func (s *Stream) XRead(ctx context.Context, streams map[string]string) ([]redis.
 		Streams: buildStreamsSlice(streams),
 		Block:   0,
 	}
-	return s.client.XRead(ctx, args).Result()
+	result, err := s.client.XRead(ctx, args).Result()
+	if err != nil {
+		return nil, fmt.Errorf("failed to read from streams %v: %w", streams, err)
+	}
+	return result, nil
 }
 
 // XReadWithBlock reads messages with blocking
@@ -64,7 +81,11 @@ func (s *Stream) XReadWithBlock(ctx context.Context, streams map[string]string, 
 		Streams: buildStreamsSlice(streams),
 		Block:   block,
 	}
-	return s.client.XRead(ctx, args).Result()
+	result, err := s.client.XRead(ctx, args).Result()
+	if err != nil {
+		return nil, fmt.Errorf("failed to read streams with block: %w", err)
+	}
+	return result, nil
 }
 
 // XReadGroup reads messages from a consumer group
@@ -75,7 +96,11 @@ func (s *Stream) XReadGroup(ctx context.Context, group, consumer string, streams
 		Streams:  buildStreamsSlice(streams),
 		Block:    0,
 	}
-	return s.client.XReadGroup(ctx, args).Result()
+	result, err := s.client.XReadGroup(ctx, args).Result()
+	if err != nil {
+		return nil, fmt.Errorf("failed to read from group %s: %w", group, err)
+	}
+	return result, nil
 }
 
 // XReadGroupWithBlock reads messages from a consumer group with blocking
@@ -86,32 +111,53 @@ func (s *Stream) XReadGroupWithBlock(ctx context.Context, group, consumer string
 		Streams:  buildStreamsSlice(streams),
 		Block:    block,
 	}
-	return s.client.XReadGroup(ctx, args).Result()
+	result, err := s.client.XReadGroup(ctx, args).Result()
+	if err != nil {
+		return nil, fmt.Errorf("failed to read from group %s: %w", group, err)
+	}
+	return result, nil
 }
 
 // XGroupCreate creates a consumer group
 func (s *Stream) XGroupCreate(ctx context.Context, stream, group, start string) error {
-	return s.client.XGroupCreate(ctx, stream, group, start).Err()
+	if err := s.client.XGroupCreate(ctx, stream, group, start).Err(); err != nil {
+		return fmt.Errorf("failed to create group %s in stream %s: %w", group, stream, err)
+	}
+	return nil
 }
 
 // XGroupCreateMkStream creates a consumer group and stream if it doesn't exist
 func (s *Stream) XGroupCreateMkStream(ctx context.Context, stream, group, start string) error {
-	return s.client.XGroupCreateMkStream(ctx, stream, group, start).Err()
+	if err := s.client.XGroupCreateMkStream(ctx, stream, group, start).Err(); err != nil {
+		return fmt.Errorf("failed to create group %s with stream %s: %w", group, stream, err)
+	}
+	return nil
 }
 
 // XGroupDestroy destroys a consumer group
 func (s *Stream) XGroupDestroy(ctx context.Context, stream, group string) error {
-	return s.client.XGroupDestroy(ctx, stream, group).Err()
+	if err := s.client.XGroupDestroy(ctx, stream, group).Err(); err != nil {
+		return fmt.Errorf("failed to destroy group %s in stream %s: %w", group, stream, err)
+	}
+	return nil
 }
 
 // XAck acknowledges messages
 func (s *Stream) XAck(ctx context.Context, stream, group string, ids ...string) (int64, error) {
-	return s.client.XAck(ctx, stream, group, ids...).Result()
+	result, err := s.client.XAck(ctx, stream, group, ids...).Result()
+	if err != nil {
+		return 0, fmt.Errorf("failed to acknowledge messages in group %s: %w", group, err)
+	}
+	return result, nil
 }
 
 // XPending gets pending messages info
 func (s *Stream) XPending(ctx context.Context, stream, group string) (*redis.XPending, error) {
-	return s.client.XPending(ctx, stream, group).Result()
+	result, err := s.client.XPending(ctx, stream, group).Result()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get pending messages for group %s: %w", group, err)
+	}
+	return result, nil
 }
 
 // XPendingExt gets extended pending messages info
@@ -123,7 +169,11 @@ func (s *Stream) XPendingExt(ctx context.Context, stream, group, start, end stri
 		End:    end,
 		Count:  count,
 	}
-	return s.client.XPendingExt(ctx, args).Result()
+	result, err := s.client.XPendingExt(ctx, args).Result()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get extended pending messages for group %s: %w", group, err)
+	}
+	return result, nil
 }
 
 // XClaim claims pending messages
@@ -135,47 +185,83 @@ func (s *Stream) XClaim(ctx context.Context, stream, group, consumer string, min
 		MinIdle:  minIdleTime,
 		Messages: ids,
 	}
-	return s.client.XClaim(ctx, args).Result()
+	result, err := s.client.XClaim(ctx, args).Result()
+	if err != nil {
+		return nil, fmt.Errorf("failed to claim messages for consumer %s: %w", consumer, err)
+	}
+	return result, nil
 }
 
 // XDel deletes messages from a stream
 func (s *Stream) XDel(ctx context.Context, stream string, ids ...string) (int64, error) {
-	return s.client.XDel(ctx, stream, ids...).Result()
+	result, err := s.client.XDel(ctx, stream, ids...).Result()
+	if err != nil {
+		return 0, fmt.Errorf("failed to delete messages from stream %s: %w", stream, err)
+	}
+	return result, nil
 }
 
 // XLen returns the length of a stream
 func (s *Stream) XLen(ctx context.Context, stream string) (int64, error) {
-	return s.client.XLen(ctx, stream).Result()
+	result, err := s.client.XLen(ctx, stream).Result()
+	if err != nil {
+		return 0, fmt.Errorf("failed to get length of stream %s: %w", stream, err)
+	}
+	return result, nil
 }
 
 // XRange reads a range of messages
 func (s *Stream) XRange(ctx context.Context, stream, start, stop string) ([]redis.XMessage, error) {
-	return s.client.XRange(ctx, stream, start, stop).Result()
+	result, err := s.client.XRange(ctx, stream, start, stop).Result()
+	if err != nil {
+		return nil, fmt.Errorf("failed to read range from stream %s: %w", stream, err)
+	}
+	return result, nil
 }
 
 // XRangeN reads N messages from a range
 func (s *Stream) XRangeN(ctx context.Context, stream, start, stop string, count int64) ([]redis.XMessage, error) {
-	return s.client.XRangeN(ctx, stream, start, stop, count).Result()
+	result, err := s.client.XRangeN(ctx, stream, start, stop, count).Result()
+	if err != nil {
+		return nil, fmt.Errorf("failed to read range %d from stream %s: %w", count, stream, err)
+	}
+	return result, nil
 }
 
 // XRevRange reads a range of messages in reverse order
 func (s *Stream) XRevRange(ctx context.Context, stream, start, stop string) ([]redis.XMessage, error) {
-	return s.client.XRevRange(ctx, stream, start, stop).Result()
+	result, err := s.client.XRevRange(ctx, stream, start, stop).Result()
+	if err != nil {
+		return nil, fmt.Errorf("failed to read reverse range from stream %s: %w", stream, err)
+	}
+	return result, nil
 }
 
 // XRevRangeN reads N messages from a range in reverse order
 func (s *Stream) XRevRangeN(ctx context.Context, stream, start, stop string, count int64) ([]redis.XMessage, error) {
-	return s.client.XRevRangeN(ctx, stream, start, stop, count).Result()
+	result, err := s.client.XRevRangeN(ctx, stream, start, stop, count).Result()
+	if err != nil {
+		return nil, fmt.Errorf("failed to read reverse range %d from stream %s: %w", count, stream, err)
+	}
+	return result, nil
 }
 
 // XTrim trims the stream to a maximum length
 func (s *Stream) XTrim(ctx context.Context, stream string, maxLen int64) (int64, error) {
-	return s.client.XTrimMaxLen(ctx, stream, maxLen).Result()
+	result, err := s.client.XTrimMaxLen(ctx, stream, maxLen).Result()
+	if err != nil {
+		return 0, fmt.Errorf("failed to trim stream %s to max length %d: %w", stream, maxLen, err)
+	}
+	return result, nil
 }
 
 // XTrimApprox trims the stream approximately
 func (s *Stream) XTrimApprox(ctx context.Context, stream string, maxLen int64) (int64, error) {
-	return s.client.XTrimMaxLenApprox(ctx, stream, maxLen, 0).Result()
+	result, err := s.client.XTrimMaxLenApprox(ctx, stream, maxLen, 0).Result()
+	if err != nil {
+		return 0, fmt.Errorf("failed to trim stream %s approximately to max length %d: %w", stream, maxLen, err)
+	}
+	return result, nil
 }
 
 // buildStreamsSlice converts map to slice for XRead operations

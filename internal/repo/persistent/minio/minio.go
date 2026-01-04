@@ -4,10 +4,9 @@ import (
 	"context"
 	"io"
 
-	"github.com/minio/minio-go/v7"
-
 	"gct/config"
 	"gct/internal/domain"
+	"github.com/minio/minio-go/v7"
 )
 
 // RepoI defines the interface for MinIO storage operations

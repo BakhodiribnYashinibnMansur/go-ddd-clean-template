@@ -1,15 +1,14 @@
 package user
 
 import (
-	"github.com/gin-gonic/gin"
-
 	"gct/internal/controller/restapi/v1/user/client"
 	"gct/internal/controller/restapi/v1/user/session"
+	"github.com/gin-gonic/gin"
 )
 
-func UserRoute(api *gin.RouterGroup, controller *Controller, authMiddleware gin.HandlerFunc) {
+func UserRoute(api *gin.RouterGroup, controller *Controller, authMiddleware, refreshMiddleware, csrfMiddleware gin.HandlerFunc) {
 	group := api.Group("/")
 
-	client.Route(group, controller.ClientI, authMiddleware)
-	session.Route(group, controller.SessionI, authMiddleware)
+	client.Route(group, controller.ClientI, authMiddleware, refreshMiddleware, csrfMiddleware)
+	session.Route(group, controller.SessionI, authMiddleware, csrfMiddleware)
 }

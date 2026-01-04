@@ -3,13 +3,15 @@ package util
 import (
 	"errors"
 
+	"gct/consts"
 	"gct/pkg/logger"
+	"go.uber.org/zap"
 )
 
 func LogError(l logger.Log, err error, msg string) {
 	l.Errorw(msg,
-		"error", err,
-		"type", "handler_error",
+		zap.Error(err),
+		zap.String("type", consts.TypeHandlerError),
 	)
 }
 
@@ -27,17 +29,11 @@ var (
 	ErrDateOrderEmpty     = errors.New("date-order query is empty")
 	ErrDateOrderInvalid   = errors.New("invalid date-order value. it is not same with asc or desc")
 	ErrApiKeyTypeNotFound = errors.New("API key type not found")
+	ErrCSRFMissing        = errors.New("CSRF token is missing")
+	ErrCSRFInvalid        = errors.New("CSRF token is invalid or mismatched")
 )
 
 const (
-	ParamInvalid     = "parameter %s is invalid"
-	QueryInvalid     = "query parameter %s is invalid"
-	ParseDate        = "2006-01-02"
-	FormatDate       = "2006-01-02"
-	OrderAsc         = "asc"
-	OrderDesc        = "desc"
-	AcceptedLanguage = "Accept-Language"
-	Language         = "Language"
-	ApiKeyTypeHeader = "X-Api-Key-Type"
-	AppVersionHeader = "appVersion"
+	ParamInvalid = "parameter %s is invalid"
+	QueryInvalid = "query parameter %s is invalid"
 )

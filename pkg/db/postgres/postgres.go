@@ -8,7 +8,6 @@ import (
 
 	"gct/config"
 	"gct/pkg/logger"
-
 	"github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -41,7 +40,7 @@ func New(ctx context.Context, env string, cfg config.Postgres, l logger.Log, opt
 		opt(poolConfig)
 	}
 
-	for i := 0; i < defaultConnAttempts; i++ {
+	for i := range defaultConnAttempts {
 		pg.Pool, err = pgxpool.NewWithConfig(ctx, poolConfig)
 		if err == nil {
 			break

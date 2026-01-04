@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"gct/internal/domain"
-
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -20,6 +19,7 @@ func TestUseCase_Update_TableDriven(t *testing.T) {
 		repoError     error
 		expectError   bool
 		validateSaved func(t *testing.T, u *domain.User)
+		setupExisting func(u *domain.User)
 	}{
 		{
 			name: "success_basic_update",
@@ -71,6 +71,9 @@ func TestUseCase_Update_TableDriven(t *testing.T) {
 			},
 			repoError:   nil,
 			expectError: false,
+			setupExisting: func(u *domain.User) {
+				u.Phone = stringPtr("111222333")
+			},
 			validateSaved: func(t *testing.T, u *domain.User) {
 				require.Equal(t, uuid.MustParse("00000000-0000-0000-0000-000000000001"), u.ID)
 				require.Equal(t, "111222333", *u.Phone)
@@ -85,6 +88,9 @@ func TestUseCase_Update_TableDriven(t *testing.T) {
 			},
 			repoError:   nil,
 			expectError: false,
+			setupExisting: func(u *domain.User) {
+				u.Username = nil
+			},
 			validateSaved: func(t *testing.T, u *domain.User) {
 				require.Equal(t, uuid.MustParse("00000000-0000-0000-0000-000000000001"), u.ID)
 				require.Nil(t, u.Username)
@@ -133,6 +139,11 @@ func TestUseCase_Update_TableDriven(t *testing.T) {
 			},
 			repoError:   nil,
 			expectError: false,
+			setupExisting: func(u *domain.User) {
+				u.Username = stringPtr("olduser")
+				u.Phone = stringPtr("111111111")
+				u.Password = "oldpass"
+			},
 			validateSaved: func(t *testing.T, u *domain.User) {
 				require.Equal(t, uuid.MustParse("00000000-0000-0000-0000-000000000001"), u.ID)
 				require.NotNil(t, u.Username)
@@ -144,13 +155,26 @@ func TestUseCase_Update_TableDriven(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // parallel safety
+		// parallel safety
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
 			// arrange
 			uc, clientRepo, _ := setup(t)
 			ctx := t.Context()
+
+			// Mock Get (Update now calls Get to fetch existing user)
+			existingUser := &domain.User{
+				ID:       tt.input.ID,
+				Phone:    stringPtr("old-phone"),
+				Username: stringPtr("old-username"),
+			}
+			if tt.setupExisting != nil {
+				tt.setupExisting(existingUser)
+			}
+			clientRepo.On("Get", ctx, mock.MatchedBy(func(f *domain.UserFilter) bool {
+				return f.ID != nil && *f.ID == tt.input.ID
+			})).Return(existingUser, nil).Maybe()
 
 			if tt.repoError != nil || tt.validateSaved != nil {
 				clientRepo.

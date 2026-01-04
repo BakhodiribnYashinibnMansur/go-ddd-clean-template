@@ -7,19 +7,19 @@ import (
 )
 
 type SystemError struct {
-	ID          uuid.UUID      `db:"id" json:"id"`
-	Code        string         `db:"code" json:"code"`
-	Message     string         `db:"message" json:"message"`
-	StackTrace  *string        `db:"stack_trace" json:"stack_trace,omitempty"`
-	Metadata    map[string]any `db:"metadata" json:"metadata,omitempty"`
-	Severity    string         `db:"severity" json:"severity"`
+	ID          uuid.UUID      `db:"id"           json:"id"`
+	Code        string         `db:"code"         json:"code"`
+	Message     string         `db:"message"      json:"message"`
+	StackTrace  *string        `db:"stack_trace"  json:"stack_trace,omitempty"`
+	Metadata    map[string]any `db:"metadata"     json:"metadata,omitempty"`
+	Severity    string         `db:"severity"     json:"severity"`
 	ServiceName *string        `db:"service_name" json:"service_name,omitempty"`
 
 	RequestID *uuid.UUID `db:"request_id" json:"request_id,omitempty"`
-	UserID    *uuid.UUID `db:"user_id" json:"user_id,omitempty"`
+	UserID    *uuid.UUID `db:"user_id"    json:"user_id,omitempty"`
 	IPAddress *string    `db:"ip_address" json:"ip_address,omitempty"`
-	Path      *string    `db:"path" json:"path,omitempty"`
-	Method    *string    `db:"method" json:"method,omitempty"`
+	Path      *string    `db:"path"       json:"path,omitempty"`
+	Method    *string    `db:"method"     json:"method,omitempty"`
 
 	IsResolved bool       `db:"is_resolved" json:"is_resolved"`
 	ResolvedAt *time.Time `db:"resolved_at" json:"resolved_at,omitempty"`

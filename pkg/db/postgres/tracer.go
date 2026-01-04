@@ -37,6 +37,8 @@ func (t *ZapTracer) Log(ctx context.Context, level tracelog.LogLevel, msg string
 		logger.Warn(msg)
 	case tracelog.LogLevelError:
 		logger.Error(msg)
+	case tracelog.LogLevelNone:
+		// No logging for LogLevelNone
 	default:
 		logger.Info(msg)
 	}

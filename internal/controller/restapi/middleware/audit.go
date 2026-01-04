@@ -4,14 +4,14 @@ import (
 	"context"
 	"time"
 
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
-	"go.uber.org/zap"
-
 	"gct/consts"
+	"gct/internal/controller/restapi/util"
 	"gct/internal/domain"
 	"gct/internal/usecase"
 	"gct/pkg/logger"
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"go.uber.org/zap"
 )
 
 type AuditMiddleware struct {
@@ -29,7 +29,7 @@ func (m *AuditMiddleware) EndpointHistory() gin.HandlerFunc {
 		path := c.Request.URL.Path
 		method := c.Request.Method
 		// Request ID
-		reqIDStr := c.GetHeader("X-Request-ID")
+		reqIDStr := util.GetRequestID(c)
 		var reqID *uuid.UUID
 		if reqIDStr != "" {
 			uid, err := uuid.Parse(reqIDStr)
@@ -43,8 +43,8 @@ func (m *AuditMiddleware) EndpointHistory() gin.HandlerFunc {
 
 		duration := time.Since(start)
 
-		ip := c.ClientIP()
-		ua := c.Request.UserAgent()
+		ip := util.GetIPAddress(c)
+		ua := util.GetUserAgent(c)
 		respSize := c.Writer.Size()
 		errMsg := ""
 		if len(c.Errors) > 0 {

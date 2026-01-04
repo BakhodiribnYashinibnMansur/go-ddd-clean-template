@@ -4,9 +4,8 @@ import (
 	"crypto/rsa"
 	"time"
 
-	jwt "github.com/dgrijalva/jwt-go"
-
 	"gct/consts"
+	jwt "github.com/dgrijalva/jwt-go"
 )
 
 // Tokens represents a pair of access and refresh tokens.

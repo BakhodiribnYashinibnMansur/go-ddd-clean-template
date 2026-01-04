@@ -107,6 +107,7 @@ func (s *Session) SetRefreshTokenHash(refreshTokenHash string) {
 	s.RefreshTokenHash = refreshTokenHash
 	s.UpdatedAt = time.Now()
 }
+
 func (s *Session) SetData(data RawMessage) {
 	s.Data = data
 	s.UpdatedAt = time.Now()

@@ -3,12 +3,12 @@ package permission
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
-
 	"gct/consts"
 	"gct/internal/controller/restapi/response"
 	"gct/internal/controller/restapi/util"
 	"gct/internal/domain"
+	"gct/internal/domain/mock"
+	"github.com/gin-gonic/gin"
 )
 
 // Get godoc
@@ -27,6 +27,11 @@ func (c *Controller) Get(ctx *gin.Context) {
 	if err != nil {
 		util.LogError(c.l, err, "http - v1 - authz - permission - get - uuid")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid permission id", nil, false)
+		return
+	}
+
+	// Handle mock mode
+	if util.Mock(ctx, util.MockTypeGet, func() any { return mock.PermissionWithID(id) }) {
 		return
 	}
 

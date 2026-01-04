@@ -4,8 +4,8 @@ import "errors"
 
 // Pagination handles pagination data.
 type Pagination struct {
-	Limit     int64  `default:"10" json:"limit"`
-	Offset    int64  `default:"0"  json:"offset"`
+	Limit     int64  `default:"10"      json:"limit"`
+	Offset    int64  `default:"0"       json:"offset"`
 	Total     int64  `json:"total"`
 	SortBy    string `json:"sort_by"`
 	SortOrder string `json:"sort_order"` // "ASC" or "DESC"

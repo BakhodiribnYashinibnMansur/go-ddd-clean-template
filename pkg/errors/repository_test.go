@@ -1,13 +1,12 @@
 package errors
 
 import (
-	"context"
 	"errors"
 	"testing"
 )
 
 func TestNewRepoError(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	tests := []struct {
 		name    string
@@ -65,7 +64,7 @@ func TestNewRepoError(t *testing.T) {
 }
 
 func TestWrapRepoError(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	baseErr := errors.New("database error")
 
 	tests := []struct {
@@ -126,7 +125,7 @@ func TestWrapRepoError(t *testing.T) {
 			if got.UserMsg != tt.want.UserMsg {
 				t.Errorf("WrapRepoError().UserMsg = %v, want %v", got.UserMsg, tt.want.UserMsg)
 			}
-			if got.Err != tt.want.Err {
+			if !errors.Is(got.Err, tt.want.Err) {
 				t.Errorf("WrapRepoError().Err = %v, want %v", got.Err, tt.want.Err)
 			}
 		})

@@ -86,45 +86,6 @@ func getClientIP(r *http.Request) string {
 	return r.RemoteAddr
 }
 
-// extractPlatform extracts platform info from user agent
-func extractPlatform(userAgent string) string {
-	ua := strings.ToLower(userAgent)
-
-	switch {
-	case strings.Contains(ua, "windows"):
-		return "windows"
-	case strings.Contains(ua, "mac"):
-		return "macos"
-	case strings.Contains(ua, "linux"):
-		return "linux"
-	case strings.Contains(ua, "android"):
-		return "android"
-	case strings.Contains(ua, "ios") || strings.Contains(ua, "iphone"):
-		return "ios"
-	default:
-		return "unknown"
-	}
-}
-
-// normalizeUserAgent normalizes user agent for comparison
-func normalizeUserAgent(ua string) string {
-	// Remove version numbers and minor variations
-	ua = strings.ToLower(ua)
-
-	// Replace common version patterns
-	replacements := []string{
-		"\\d+\\.\\d+\\.\\d+", "",
-		"\\d+\\.\\d+", "",
-		"\\([^\"]*\\)", "",
-	}
-
-	for _, repl := range replacements {
-		ua = strings.ReplaceAll(ua, repl, "")
-	}
-
-	return strings.TrimSpace(ua)
-}
-
 // verifyIP allows for some IP flexibility (e.g., mobile networks)
 func verifyIP(stored, current string) bool {
 	// Exact match

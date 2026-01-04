@@ -2,7 +2,9 @@ package middleware
 
 import (
 	"net/http"
+	"strings"
 
+	"gct/consts"
 	"github.com/gin-gonic/gin"
 )
 
@@ -21,7 +23,21 @@ func CORSMiddleware() gin.HandlerFunc {
 		ctx.Header("Access-Control-Allow-Origin", "*")
 		ctx.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
 
-		ctx.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, Accept, Origin, Cache-Control, X-Requested-With,Access-Control-Request-Method , Access-Control-Request-Headers,Language,language,Accept-Language")
+		ctx.Writer.Header().Set("Access-Control-Allow-Headers", strings.Join([]string{
+			consts.HeaderContentType,
+			"Content-Length",
+			"Accept-Encoding",
+			consts.HeaderXCSRFToken,
+			consts.HeaderAuthorization,
+			"Accept",
+			consts.HeaderOrigin,
+			consts.HeaderCacheControl,
+			consts.HeaderXRequestedWith,
+			"Access-Control-Request-Method",
+			"Access-Control-Request-Headers",
+			consts.HeaderLanguage,
+			consts.HeaderAcceptLanguage,
+		}, ", "))
 
 		ctx.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT , DELETE ,PATCH, HEAD")
 		ctx.Header("Access-Control-Max-Age", "3600")

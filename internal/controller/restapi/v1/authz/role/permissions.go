@@ -3,11 +3,10 @@ package role
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
-
 	"gct/consts"
 	"gct/internal/controller/restapi/response"
 	"gct/internal/controller/restapi/util"
+	"github.com/gin-gonic/gin"
 )
 
 // AddPermission godoc
@@ -34,6 +33,11 @@ func (c *Controller) AddPermission(ctx *gin.Context) {
 	if err != nil {
 		util.LogError(c.l, err, "http - v1 - authz - role - add_permission - perm uuid")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid permission id", nil, false)
+		return
+	}
+
+	// Handle mock mode
+	if util.Mock(ctx, util.MockTypeUpdate, "Permission added to role successfully") {
 		return
 	}
 
@@ -70,6 +74,11 @@ func (c *Controller) RemovePermission(ctx *gin.Context) {
 	if err != nil {
 		util.LogError(c.l, err, "http - v1 - authz - role - remove_permission - perm uuid")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid permission id", nil, false)
+		return
+	}
+
+	// Handle mock mode
+	if util.Mock(ctx, util.MockTypeDelete, "Permission removed from role successfully") {
 		return
 	}
 

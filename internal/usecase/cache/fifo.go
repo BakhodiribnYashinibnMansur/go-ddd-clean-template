@@ -34,7 +34,7 @@ func (c *FIFOCache) Set(key string, value any) {
 
 	if elem, ok := c.data[key]; ok {
 		// Update value, but don't move it (FIFO doesn't care about access)
-		elem.Value.(*fifoEntry).value = value //nolint:forcetypeassert // safe: we control the type
+		elem.Value.(*fifoEntry).value = value // safe: we control the type
 		return
 	}
 
@@ -53,7 +53,7 @@ func (c *FIFOCache) Get(key string) (any, bool) {
 	defer c.mu.RUnlock()
 
 	if elem, ok := c.data[key]; ok {
-		return elem.Value.(*fifoEntry).value, true //nolint:forcetypeassert // safe: we control the type
+		return elem.Value.(*fifoEntry).value, true // safe: we control the type
 	}
 	return nil, false
 }
@@ -78,7 +78,7 @@ func (c *FIFOCache) evict() {
 
 func (c *FIFOCache) removeElement(elem *list.Element) {
 	c.queue.Remove(elem)
-	entry := elem.Value.(*fifoEntry) //nolint:forcetypeassert // safe: we control the type
+	entry := elem.Value.(*fifoEntry) // safe: we control the type
 	delete(c.data, entry.key)
 }
 

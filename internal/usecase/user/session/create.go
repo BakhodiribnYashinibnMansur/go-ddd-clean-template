@@ -6,7 +6,6 @@ import (
 
 	"gct/internal/domain"
 	apperrors "gct/pkg/errors"
-
 	"github.com/google/uuid"
 )
 

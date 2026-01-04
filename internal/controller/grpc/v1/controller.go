@@ -1,10 +1,9 @@
 package v1
 
 import (
-	"github.com/go-playground/validator/v10"
-
 	"gct/internal/usecase"
 	"gct/pkg/logger"
+	"github.com/go-playground/validator/v10"
 )
 
 type V1 struct {

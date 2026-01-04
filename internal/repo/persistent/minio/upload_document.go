@@ -5,10 +5,9 @@ import (
 	"io"
 	"strings"
 
+	apperrors "gct/pkg/errors"
 	"github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
-
-	apperrors "gct/pkg/errors"
 )
 
 // UploadDocument uploads a document to the minio server

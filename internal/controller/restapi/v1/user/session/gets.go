@@ -3,11 +3,11 @@ package session
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
-
 	"gct/internal/controller/restapi/response"
 	"gct/internal/controller/restapi/util"
 	"gct/internal/domain"
+	"gct/internal/domain/mock"
+	"github.com/gin-gonic/gin"
 )
 
 // GetActiveSessions godoc
@@ -23,7 +23,7 @@ import (
 // @Failure     500 {object} response.ErrorResponse
 // @Router      /sessions [get]
 func (c *Controller) Sessions(ctx *gin.Context) {
-	userID, err := util.GetUserIDUUID(ctx)
+	userID, err := util.GetUserID(ctx)
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusUnauthorized, "unauthorized", nil, false)
 		return
@@ -40,6 +40,11 @@ func (c *Controller) Sessions(ctx *gin.Context) {
 			UserID: &userID,
 		},
 		Pagination: &pagination,
+	}
+
+	// Handle mock mode
+	if util.Mock(ctx, util.MockTypeGets, func(count int) any { return mock.Sessions(count) }) {
+		return
 	}
 
 	sessions, total, err := c.s.User.Session.Gets(ctx.Request.Context(), filter)

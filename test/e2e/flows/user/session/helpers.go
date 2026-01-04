@@ -3,13 +3,12 @@ package session
 import (
 	"net/http/httptest"
 
-	"github.com/gin-gonic/gin"
-
 	"gct/internal/controller/restapi"
 	"gct/internal/repo"
 	"gct/internal/usecase"
 	"gct/pkg/logger"
 	"gct/test/e2e/common/setup"
+	"github.com/gin-gonic/gin"
 )
 
 // startTestServer creates and starts a test HTTP server with full application stack

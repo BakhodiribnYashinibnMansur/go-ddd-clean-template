@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -45,17 +46,23 @@ func (p *Primitive[T]) Get(key string) (T, error) {
 	var val T
 	err := p.db.Get(context.Background(), key).Scan(&val)
 	if err != nil {
-		return val, err
+		return val, fmt.Errorf("failed to get primitive value from key %s: %w", key, err)
 	}
 	return val, nil
 }
 
 func (p *Primitive[T]) Set(key string, value T, expiration time.Duration) error {
-	return p.db.Set(context.Background(), key, value, expiration).Err()
+	if err := p.db.Set(context.Background(), key, value, expiration).Err(); err != nil {
+		return fmt.Errorf("failed to set primitive value to key %s: %w", key, err)
+	}
+	return nil
 }
 
 func (p *Primitive[T]) Delete(key string) error {
-	return p.db.Del(context.Background(), key).Err()
+	if err := p.db.Del(context.Background(), key).Err(); err != nil {
+		return fmt.Errorf("failed to delete primitive key %s: %w", key, err)
+	}
+	return nil
 }
 
 func (p *Primitive[T]) Pop(key string) (T, error) {
@@ -66,17 +73,20 @@ func (p *Primitive[T]) Pop(key string) (T, error) {
 	pipe.Del(ctx, key)
 	_, err := pipe.Exec(ctx)
 	if err != nil {
-		return val, err
+		return val, fmt.Errorf("failed to execute pipeline for primitive key %s: %w", key, err)
 	}
 
 	err = get.Scan(&val)
-	return val, err
+	if err != nil {
+		return val, fmt.Errorf("failed to scan primitive value: %w", err)
+	}
+	return val, nil
 }
 
 func (p *Primitive[T]) Exists(key string) (bool, error) {
 	val, err := p.db.Exists(context.Background(), key).Result()
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("failed to check existence of primitive key %s: %w", key, err)
 	}
 	return val > 0, nil
 }
@@ -91,7 +101,7 @@ func (p *Primitive[T]) Scan(pattern string) ([]string, error) {
 
 		scanKeys, cursor, err = p.db.Scan(context.Background(), cursor, pattern, 100).Result()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to scan primitive keys with pattern %s: %w", pattern, err)
 		}
 
 		keys = append(keys, scanKeys...)

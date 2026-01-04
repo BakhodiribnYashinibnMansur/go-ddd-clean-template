@@ -25,10 +25,11 @@ func TestUseCase_UploadDoc_TableDriven(t *testing.T) {
 			contentType: "text/plain",
 			expectError: false,
 			validateResult: func(t *testing.T, filename string) {
+				t.Helper()
 				require.NotEmpty(t, filename)
 				require.Contains(t, filename, ".dat") // Documents are saved as .dat
 				// Should be a UUID filename
-				require.True(t, len(filename) > 30) // UUID + .dat
+				require.Greater(t, len(filename), 30) // UUID + .dat
 			},
 		},
 		{
@@ -38,6 +39,7 @@ func TestUseCase_UploadDoc_TableDriven(t *testing.T) {
 			contentType: "application/json",
 			expectError: false,
 			validateResult: func(t *testing.T, filename string) {
+				t.Helper()
 				require.NotEmpty(t, filename)
 				require.Contains(t, filename, ".dat")
 			},
@@ -49,6 +51,7 @@ func TestUseCase_UploadDoc_TableDriven(t *testing.T) {
 			contentType: "application/xml",
 			expectError: false,
 			validateResult: func(t *testing.T, filename string) {
+				t.Helper()
 				require.NotEmpty(t, filename)
 				require.Contains(t, filename, ".dat")
 			},
@@ -60,6 +63,7 @@ func TestUseCase_UploadDoc_TableDriven(t *testing.T) {
 			contentType: "text/csv",
 			expectError: false,
 			validateResult: func(t *testing.T, filename string) {
+				t.Helper()
 				require.NotEmpty(t, filename)
 				require.Contains(t, filename, ".dat")
 			},
@@ -71,6 +75,7 @@ func TestUseCase_UploadDoc_TableDriven(t *testing.T) {
 			contentType: "text/plain",
 			expectError: false,
 			validateResult: func(t *testing.T, filename string) {
+				t.Helper()
 				require.NotEmpty(t, filename)
 				require.Contains(t, filename, ".dat")
 			},
@@ -82,6 +87,7 @@ func TestUseCase_UploadDoc_TableDriven(t *testing.T) {
 			contentType: "text/plain",
 			expectError: true,
 			validateResult: func(t *testing.T, filename string) {
+				t.Helper()
 				require.Empty(t, filename)
 			},
 		},
@@ -92,6 +98,7 @@ func TestUseCase_UploadDoc_TableDriven(t *testing.T) {
 			contentType: "text/plain",
 			expectError: true, // Zero size causes repository error
 			validateResult: func(t *testing.T, filename string) {
+				t.Helper()
 				require.Empty(t, filename)
 			},
 		},
@@ -102,6 +109,7 @@ func TestUseCase_UploadDoc_TableDriven(t *testing.T) {
 			contentType: "text/plain",
 			expectError: false, // Size validation is not performed
 			validateResult: func(t *testing.T, filename string) {
+				t.Helper()
 				require.NotEmpty(t, filename)
 				require.Contains(t, filename, ".dat")
 			},
@@ -113,6 +121,7 @@ func TestUseCase_UploadDoc_TableDriven(t *testing.T) {
 			contentType: "image/jpeg",
 			expectError: false, // Content type validation is not performed
 			validateResult: func(t *testing.T, filename string) {
+				t.Helper()
 				require.NotEmpty(t, filename)
 				require.Contains(t, filename, ".dat")
 			},
@@ -124,6 +133,7 @@ func TestUseCase_UploadDoc_TableDriven(t *testing.T) {
 			contentType: "text/plain",
 			expectError: false,
 			validateResult: func(t *testing.T, filename string) {
+				t.Helper()
 				require.NotEmpty(t, filename)
 				require.Contains(t, filename, ".dat")
 			},
@@ -135,6 +145,7 @@ func TestUseCase_UploadDoc_TableDriven(t *testing.T) {
 			contentType: "text/markdown",
 			expectError: false,
 			validateResult: func(t *testing.T, filename string) {
+				t.Helper()
 				require.NotEmpty(t, filename)
 				require.Contains(t, filename, ".dat")
 			},
@@ -142,7 +153,7 @@ func TestUseCase_UploadDoc_TableDriven(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // parallel safety
+		// parallel safety
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 

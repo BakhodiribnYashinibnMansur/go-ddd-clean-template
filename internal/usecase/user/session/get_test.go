@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"gct/internal/domain"
-
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -38,6 +37,7 @@ func TestUseCase_Get_TableDriven(t *testing.T) {
 			expectError:  false,
 			expectDelete: false,
 			validateResult: func(t *testing.T, s *domain.Session) {
+				t.Helper()
 				require.NotEqual(t, uuid.Nil, s.ID)
 				require.NotEqual(t, uuid.Nil, s.UserID)
 				require.True(t, s.ExpiresAt.After(time.Now()))
@@ -71,6 +71,7 @@ func TestUseCase_Get_TableDriven(t *testing.T) {
 			expectError:  false,
 			expectDelete: false,
 			validateResult: func(t *testing.T, s *domain.Session) {
+				t.Helper()
 				require.False(t, s.Revoked)
 			},
 		},
@@ -88,6 +89,7 @@ func TestUseCase_Get_TableDriven(t *testing.T) {
 			expectError:  false,
 			expectDelete: false,
 			validateResult: func(t *testing.T, s *domain.Session) {
+				t.Helper()
 				require.True(t, s.Revoked)
 			},
 		},
@@ -138,6 +140,7 @@ func TestUseCase_Get_TableDriven(t *testing.T) {
 			expectError:  false,
 			expectDelete: false,
 			validateResult: func(t *testing.T, s *domain.Session) {
+				t.Helper()
 				require.NotNil(t, s.IPAddress)
 				require.Equal(t, "192.168.1.1", *s.IPAddress)
 			},
@@ -156,6 +159,7 @@ func TestUseCase_Get_TableDriven(t *testing.T) {
 			expectError:  false,
 			expectDelete: false,
 			validateResult: func(t *testing.T, s *domain.Session) {
+				t.Helper()
 				require.NotNil(t, s.UserAgent)
 				require.Equal(t, "Mozilla/5.0", *s.UserAgent)
 			},
@@ -163,7 +167,7 @@ func TestUseCase_Get_TableDriven(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // parallel safety
+		// parallel safety
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 

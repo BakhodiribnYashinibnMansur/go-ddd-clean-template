@@ -7,6 +7,7 @@ func cleanConfigStrings(v reflect.Value) {
 	for i := range v.NumField() {
 		field := v.Field(i)
 
+		// We only need to handle String, Struct, and Pointer types
 		switch field.Kind() {
 		case reflect.String:
 			if field.CanSet() {
@@ -18,6 +19,8 @@ func cleanConfigStrings(v reflect.Value) {
 			if !field.IsNil() && field.Elem().Kind() == reflect.Struct {
 				cleanConfigStrings(field.Elem())
 			}
+		default:
+			// Other types don't need processing
 		}
 	}
 }
