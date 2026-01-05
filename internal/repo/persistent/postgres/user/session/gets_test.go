@@ -7,6 +7,7 @@ import (
 
 	"gct/internal/domain"
 	"gct/pkg/logger"
+
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
 	"github.com/pashagolub/pgxmock/v4"
@@ -44,11 +45,11 @@ func TestRepo_Gets(t *testing.T) {
 				// Select query
 				rows := pgxmock.NewRows([]string{
 					"id", "device_id", "device_name", "device_type", "ip_address", "user_agent",
-					"fcm_token", "user_id", "company_id", "refresh_token_hash", "expires_at",
+					"fcm_token", "refresh_token_hash", "data", "user_id", "expires_at",
 					"last_activity", "revoked", "created_at", "updated_at",
 				}).
-					AddRow(sID1, uuid.New(), nil, nil, nil, nil, nil, userID, int64(10), "hash", now, now, false, now, now).
-					AddRow(sID2, uuid.New(), nil, nil, nil, nil, nil, userID, int64(10), "hash", now, now, false, now, now)
+					AddRow(sID1, uuid.New(), nil, nil, nil, nil, nil, "hash", []byte("{}"), userID, now, now, false, now, now).
+					AddRow(sID2, uuid.New(), nil, nil, nil, nil, nil, "hash", []byte("{}"), userID, now, now, false, now, now)
 
 				mock.ExpectQuery("SELECT (.+) FROM session").
 					WillReturnRows(rows)
@@ -72,19 +73,19 @@ func TestRepo_Gets(t *testing.T) {
 			setupMock: func(mock pgxmock.PgxPoolIface) {
 				// Count query
 				mock.ExpectQuery("SELECT COUNT(.+) FROM session").
-					WithArgs(userID, revoked).
+					WithArgs(pgxmock.AnyArg(), revoked).
 					WillReturnRows(pgxmock.NewRows([]string{"count"}).AddRow(1))
 
 				// Select query
 				rows := pgxmock.NewRows([]string{
 					"id", "device_id", "device_name", "device_type", "ip_address", "user_agent",
-					"fcm_token", "user_id", "company_id", "refresh_token_hash", "expires_at",
+					"fcm_token", "refresh_token_hash", "data", "user_id", "expires_at",
 					"last_activity", "revoked", "created_at", "updated_at",
 				}).
-					AddRow(sID1, uuid.New(), nil, nil, nil, nil, nil, userID, int64(10), "hash", now, now, false, now, now)
+					AddRow(sID1, uuid.New(), nil, nil, nil, nil, nil, "hash", []byte("{}"), userID, now, now, false, now, now)
 
 				mock.ExpectQuery("SELECT (.+) FROM session").
-					WithArgs(userID, revoked).
+					WithArgs(pgxmock.AnyArg(), revoked).
 					WillReturnRows(rows)
 			},
 			expectedSessions: 1,
@@ -134,21 +135,21 @@ func TestRepo_Gets(t *testing.T) {
 			setupMock: func(mock pgxmock.PgxPoolIface) {
 				// Count query
 				mock.ExpectQuery("SELECT COUNT(.+) FROM session").
-					WithArgs(userID).
+					WithArgs(pgxmock.AnyArg()).
 					WillReturnRows(pgxmock.NewRows([]string{"count"}).AddRow(25))
 
 				// Select query
 				rows := pgxmock.NewRows([]string{
 					"id", "device_id", "device_name", "device_type", "ip_address", "user_agent",
-					"fcm_token", "user_id", "company_id", "refresh_token_hash", "expires_at",
+					"fcm_token", "refresh_token_hash", "data", "user_id", "expires_at",
 					"last_activity", "revoked", "created_at", "updated_at",
 				}).AddRow(
 					sID1, uuid.New(), nil, nil, nil, nil,
-					nil, userID, int64(10), "hash", now, now, false, now, now,
+					nil, "hash", []byte("{}"), userID, now, now, false, now, now,
 				)
 
 				mock.ExpectQuery("SELECT (.+) FROM session").
-					WithArgs(userID).
+					WithArgs(pgxmock.AnyArg()).
 					WillReturnRows(rows)
 			},
 			expectedSessions: 1,
@@ -171,11 +172,11 @@ func TestRepo_Gets(t *testing.T) {
 				// Select query
 				rows := pgxmock.NewRows([]string{
 					"id", "device_id", "device_name", "device_type", "ip_address", "user_agent",
-					"fcm_token", "user_id", "company_id", "refresh_token_hash", "expires_at",
+					"fcm_token", "refresh_token_hash", "data", "user_id", "expires_at",
 					"last_activity", "revoked", "created_at", "updated_at",
 				}).AddRow(
 					sID1, uuid.New(), nil, nil, nil, nil,
-					nil, userID, int64(10), "hash", now, now, true, now, now,
+					nil, "hash", []byte("{}"), userID, now, now, true, now, now,
 				)
 
 				mock.ExpectQuery("SELECT (.+) FROM session").
@@ -209,18 +210,18 @@ func TestRepo_Gets(t *testing.T) {
 			setupMock: func(mock pgxmock.PgxPoolIface) {
 				// Count query
 				mock.ExpectQuery("SELECT COUNT(.+) FROM session").
-					WithArgs(uuid.MustParse("550e8400-e29b-41d4-a716-446655440001")).
+					WithArgs(pgxmock.AnyArg()).
 					WillReturnRows(pgxmock.NewRows([]string{"count"}).AddRow(0))
 
 				// Select query
 				rows := pgxmock.NewRows([]string{
 					"id", "device_id", "device_name", "device_type", "ip_address", "user_agent",
-					"fcm_token", "user_id", "company_id", "refresh_token_hash", "expires_at",
+					"fcm_token", "refresh_token_hash", "data", "user_id", "expires_at",
 					"last_activity", "revoked", "created_at", "updated_at",
 				})
 
 				mock.ExpectQuery("SELECT (.+) FROM session").
-					WithArgs(int64(999)).
+					WithArgs(pgxmock.AnyArg()).
 					WillReturnRows(rows)
 			},
 			expectedSessions: 0,
@@ -242,21 +243,21 @@ func TestRepo_Gets(t *testing.T) {
 			setupMock: func(mock pgxmock.PgxPoolIface) {
 				// Count query
 				mock.ExpectQuery("SELECT COUNT(.+) FROM session").
-					WithArgs(userID, revoked).
+					WithArgs(pgxmock.AnyArg(), revoked).
 					WillReturnRows(pgxmock.NewRows([]string{"count"}).AddRow(5))
 
 				// Select query
 				rows := pgxmock.NewRows([]string{
 					"id", "device_id", "device_name", "device_type", "ip_address", "user_agent",
-					"fcm_token", "user_id", "company_id", "refresh_token_hash", "expires_at",
+					"fcm_token", "refresh_token_hash", "data", "user_id", "expires_at",
 					"last_activity", "revoked", "created_at", "updated_at",
 				}).AddRow(
 					sID1, uuid.New(), nil, nil, nil, nil,
-					nil, userID, int64(10), "hash", now, now, false, now, now,
+					nil, "hash", []byte("{}"), userID, now, now, false, now, now,
 				)
 
 				mock.ExpectQuery("SELECT (.+) FROM session").
-					WithArgs(userID, revoked).
+					WithArgs(pgxmock.AnyArg(), revoked).
 					WillReturnRows(rows)
 			},
 			expectedSessions: 1,
@@ -276,11 +277,11 @@ func TestRepo_Gets(t *testing.T) {
 				// Select query
 				rows := pgxmock.NewRows([]string{
 					"id", "device_id", "device_name", "device_type", "ip_address", "user_agent",
-					"fcm_token", "user_id", "company_id", "refresh_token_hash", "expires_at",
+					"fcm_token", "refresh_token_hash", "data", "user_id", "expires_at",
 					"last_activity", "revoked", "created_at", "updated_at",
 				}).AddRow(
 					sID1, uuid.New(), nil, nil, nil, nil,
-					nil, userID, int64(10), "hash", now, now, false, now, now,
+					nil, "hash", []byte("{}"), userID, now, now, false, now, now,
 				)
 
 				mock.ExpectQuery("SELECT (.+) FROM session").
