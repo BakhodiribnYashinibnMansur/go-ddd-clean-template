@@ -39,6 +39,10 @@ x-backend-app-environment: &x-backend-app-environment
   METRICS_ENABLED: "true"
   # Swagger
   SWAGGER_ENABLED: "true"
+  # Tracing
+  TRACING_ENABLED: "true"
+  TRACING_ENDPOINT: "http://jaeger:14268/api/traces"
+  TRACING_INSECURE: "true"
 
 
 services:
@@ -248,6 +252,21 @@ services:
       app_network:
         aliases:
           - nginx.lvh.me
+
+  jaeger:
+    container_name: jaeger
+    image: jaegertracing/all-in-one:1.64
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    ports:
+      - "16686:16686" # UI
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+      - "14268:14268" # Jaeger Collector HTTP
+    networks:
+      app_network:
+        aliases:
+          - jaeger.lvh.me
 
 
 networks:

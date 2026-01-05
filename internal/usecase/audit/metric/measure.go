@@ -6,11 +6,13 @@ import (
 	"time"
 
 	"gct/internal/domain"
+
 	"go.uber.org/zap"
 )
 
 // MeasureSafe is a helper to measure function execution time and catch panics, saving results to DB.
-func (uc *UseCase) MeasureSafe(name string) func() {
+// MeasureSafe is a helper to measure function execution time and catch panics, saving results to DB.
+func (uc *UseCase) MeasureSafe(ctx context.Context, name string) func() {
 	start := time.Now()
 
 	// Pre-log start if needed, but usually we log/save at the end
@@ -26,7 +28,7 @@ func (uc *UseCase) MeasureSafe(name string) func() {
 			panicErr = &errMsg
 
 			// Log panic
-			uc.logger.Errorw("panic recovered in function", "func", name, "error", r, "latency_ms", latency.Milliseconds())
+			uc.logger.WithContext(ctx).Errorw("panic recovered in function", "func", name, "error", r, "latency_ms", latency.Milliseconds())
 
 			// Re-panic after saving? Usually yes for "Safe" wrappers unless we want to suppress it.
 			// The user's snippet does panic(r).
@@ -35,7 +37,7 @@ func (uc *UseCase) MeasureSafe(name string) func() {
 
 		// Save to DB
 		// Create detached context because outer context might be cancelled
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		saveCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
 		metric := &domain.FunctionMetric{
@@ -46,11 +48,11 @@ func (uc *UseCase) MeasureSafe(name string) func() {
 			CreatedAt:  time.Now(),
 		}
 
-		err := uc.Create(ctx, metric)
+		err := uc.Create(saveCtx, metric)
 		if err != nil {
-			uc.logger.Errorw("failed to save function metric", "func", name, zap.Error(err))
+			uc.logger.WithContext(saveCtx).Errorw("failed to save function metric", "func", name, zap.Error(err))
 		} else {
-			uc.logger.Infow("function execution tracked", "func", name, "latency_ms", latency.Milliseconds())
+			uc.logger.WithContext(saveCtx).Infow("function execution tracked", "func", name, "latency_ms", latency.Milliseconds())
 		}
 	}
 }

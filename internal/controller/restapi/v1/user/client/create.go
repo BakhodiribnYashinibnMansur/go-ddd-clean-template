@@ -6,6 +6,7 @@ import (
 	"gct/internal/controller/restapi/response"
 	"gct/internal/controller/restapi/util"
 	"gct/internal/domain"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -40,7 +41,7 @@ func (c *Controller) Create(ctx *gin.Context) {
 
 	err := c.u.User.Client.Create(ctx.Request.Context(), &user)
 	if err != nil {
-		response.ControllerResponse(ctx, http.StatusInternalServerError, err, nil, false)
+		response.RespondWithError(ctx, err, http.StatusInternalServerError)
 		return
 	}
 

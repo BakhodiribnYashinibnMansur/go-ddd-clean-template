@@ -214,14 +214,14 @@ func TestUseCase_SignIn_TableDriven(t *testing.T) {
 			uc, clientRepo, sessionRepo := setup(t)
 			ctx := t.Context()
 
-			clientRepo.On("GetByPhone", ctx, tt.input.Phone).Return(tt.mockUser, tt.repoError)
+			clientRepo.On("GetByPhone", mock.Anything, tt.input.Phone).Return(tt.mockUser, tt.repoError)
 
 			// Mock session repository if user exists and password is correct
 			if tt.mockUser != nil && tt.repoError == nil && tt.input.Password != "wrongpassword" && tt.input.Password != "" {
 				if tt.sessionError != nil {
-					sessionRepo.On("Create", ctx, mock.AnythingOfType("*domain.Session")).Return(tt.sessionError)
+					sessionRepo.On("Create", mock.Anything, mock.AnythingOfType("*domain.Session")).Return(tt.sessionError)
 				} else {
-					sessionRepo.On("Create", ctx, mock.AnythingOfType("*domain.Session")).Return(nil)
+					sessionRepo.On("Create", mock.Anything, mock.AnythingOfType("*domain.Session")).Return(nil)
 				}
 			}
 

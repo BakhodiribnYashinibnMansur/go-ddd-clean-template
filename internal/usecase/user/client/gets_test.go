@@ -7,7 +7,8 @@ import (
 	"gct/internal/domain"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/mock"
+"github.com/stretchr/testify/require"
 )
 
 func TestUseCase_Gets_TableDriven(t *testing.T) {
@@ -192,7 +193,7 @@ func TestUseCase_Gets_TableDriven(t *testing.T) {
 			uc, clientRepo, _ := setup(t)
 			ctx := t.Context()
 
-			clientRepo.On("Gets", ctx, tt.filter).Return(tt.mockUsers, tt.mockTotal, tt.repoError).Once()
+			clientRepo.On("Gets", mock.Anything, tt.filter).Return(tt.mockUsers, tt.mockTotal, tt.repoError).Once()
 
 			// act
 			users, count, err := uc.Gets(ctx, tt.filter)

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"gct/internal/domain"
+
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -151,7 +152,7 @@ func TestUseCase_Create_TableDriven(t *testing.T) {
 
 			if tt.repoError != nil || tt.validateSaved != nil {
 				clientRepo.
-					On("Create", ctx, mock.MatchedBy(func(u *domain.User) bool {
+					On("Create", mock.Anything, mock.MatchedBy(func(u *domain.User) bool {
 						if tt.validateSaved != nil {
 							tt.validateSaved(t, u)
 						}

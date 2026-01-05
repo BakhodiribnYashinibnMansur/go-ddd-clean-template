@@ -8,6 +8,8 @@ import (
 
 	"gct/config"
 	"gct/pkg/logger"
+
+	"github.com/redis/go-redis/extra/redisotel/v9"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 )
@@ -58,6 +60,12 @@ func New(ctx context.Context, env string, cfg config.Redis, l logger.Log, opts .
 
 	client := redis.NewClient(options)
 
+	// Enable tracing
+	if err := redisotel.InstrumentTracing(client); err != nil {
+		l.WithContext(ctx).Errorw("failed to instrument redis with otel", zap.Error(err))
+		// We don't return error here to avoid breaking app if tracing fails
+	}
+
 	// Verify connection with ping
 	if err := verifyConnection(ctx, client, l); err != nil {
 		client.Close()
@@ -68,7 +76,7 @@ func New(ctx context.Context, env string, cfg config.Redis, l logger.Log, opts .
 		Client: client,
 	}
 
-	l.Infow("Redis connected successfully")
+	l.WithContext(ctx).Infow("Redis connected successfully")
 
 	return r, nil
 }
@@ -93,7 +101,7 @@ func verifyConnection(ctx context.Context, client *redis.Client, l logger.Log) e
 	defer cancel()
 
 	if err := client.Ping(pingCtx).Err(); err != nil {
-		l.Errorw("failed to ping Redis server", zap.Error(err))
+		l.WithContext(ctx).Errorw("failed to ping Redis server", zap.Error(err))
 		return fmt.Errorf("verify redis connection: %w", err)
 	}
 

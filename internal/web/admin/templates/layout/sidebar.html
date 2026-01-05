@@ -70,6 +70,13 @@
         </a>
         {{ end }}
 
+        {{ if .TracingEnabled }}
+        <a href="{{ .JaegerURL }}" target="_blank" class="nav-item">
+            <i class="material-symbols-outlined">account_tree</i>
+            Distributed Tracing
+        </a>
+        {{ end }}
+
         {{ if .Can.audit_logs_view }}
         <a href="/admin/audit/logs" class="nav-item {{ if eq .ActivePage " audit_logs" }}active{{ end }}">
             <i class="material-symbols-outlined">list_alt</i>
@@ -88,6 +95,13 @@
         <a href="/admin/linter" class="nav-item {{ if eq .ActivePage " linter" }}active{{ end }}">
             <i class="material-symbols-outlined">code</i>
             Code Linter
+        </a>
+        {{ end }}
+
+        {{ if .Can.asynq_view }}
+        <a href="/admin/asynq" class="nav-item {{ if eq .ActivePage " asynq" }}active{{ end }}">
+            <i class="material-symbols-outlined">queue_play_next</i>
+            Tasks (Asynq)
         </a>
         {{ end }}
 

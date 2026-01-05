@@ -47,7 +47,7 @@ func TestCache_CreatePublicCache(t *testing.T) {
 
 	mock.ExpectSet(cacheKey, dataBytes, duration).SetVal("OK")
 
-	err := c.CreatePublicCache(data, tableName, lang, pagination, duration)
+	err := c.CreatePublicCache(t.Context(), data, tableName, lang, pagination, duration)
 	require.NoError(t, err)
 
 	require.NoError(t, mock.ExpectationsWereMet())
@@ -68,7 +68,7 @@ func TestCache_GetPublicCache(t *testing.T) {
 	mock.ExpectGet(cacheKey).SetVal(string(dataBytes))
 
 	var out TestData
-	err := c.GetPublicCache(tableName, lang, pagination, &out)
+	err := c.GetPublicCache(t.Context(), tableName, lang, pagination, &out)
 	require.NoError(t, err)
 	assert.Equal(t, data, out)
 
@@ -87,7 +87,7 @@ func TestCache_GetPublicCache_Miss(t *testing.T) {
 	mock.ExpectGet(cacheKey).SetErr(redisClient.Nil)
 
 	var out TestData
-	err := c.GetPublicCache(tableName, lang, pagination, &out)
+	err := c.GetPublicCache(t.Context(), tableName, lang, pagination, &out)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "redis get")
 
@@ -105,7 +105,7 @@ func TestCache_DeletePublicCache(t *testing.T) {
 
 	mock.ExpectDel(cacheKey).SetVal(1)
 
-	err := c.DeletePublicCache(tableName, lang, pagination)
+	err := c.DeletePublicCache(t.Context(), tableName, lang, pagination)
 	require.NoError(t, err)
 
 	require.NoError(t, mock.ExpectationsWereMet())
@@ -124,7 +124,7 @@ func TestCache_DeletePublicCaches(t *testing.T) {
 	mock.ExpectDel(keys[0]).SetVal(1)
 	mock.ExpectDel(keys[1]).SetVal(1)
 
-	err := c.DeletePublicCaches(tableName)
+	err := c.DeletePublicCaches(t.Context(), tableName)
 	require.NoError(t, err)
 
 	require.NoError(t, mock.ExpectationsWereMet())
@@ -138,7 +138,7 @@ func TestCache_DeletePublicCaches_ScanError(t *testing.T) {
 
 	mock.ExpectScan(0, tableName+"*", 100).SetErr(errors.New("scan error"))
 
-	err := c.DeletePublicCaches(tableName)
+	err := c.DeletePublicCaches(t.Context(), tableName)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "redis scan")
 
@@ -157,20 +157,20 @@ func TestCache_CreatePublicCache_NoLangOrPagination(t *testing.T) {
 	// Case 1: No Lang, No Pagination
 	// Expected key: "users"
 	mock.ExpectSet("users", dataBytes, duration).SetVal("OK")
-	err := c.CreatePublicCache(data, tableName, "", nil, duration)
+	err := c.CreatePublicCache(t.Context(), data, tableName, "", nil, duration)
 	require.NoError(t, err)
 
 	// Case 2: No Lang, With Pagination
 	// Expected key: "users_0_10"
 	pagination := &domain.Pagination{Limit: 10, Offset: 0}
 	mock.ExpectSet("users_0_10", dataBytes, duration).SetVal("OK")
-	err = c.CreatePublicCache(data, tableName, "", pagination, duration)
+	err = c.CreatePublicCache(t.Context(), data, tableName, "", pagination, duration)
 	require.NoError(t, err)
 
 	// Case 3: With Lang, No Pagination
 	// Expected key: "users_en"
 	mock.ExpectSet("users_en", dataBytes, duration).SetVal("OK")
-	err = c.CreatePublicCache(data, tableName, "en", nil, duration)
+	err = c.CreatePublicCache(t.Context(), data, tableName, "en", nil, duration)
 	require.NoError(t, err)
 
 	require.NoError(t, mock.ExpectationsWereMet())

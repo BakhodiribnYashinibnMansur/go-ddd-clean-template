@@ -1,0 +1,111 @@
+# Internal - Domain - Mock
+
+## Overview
+The `mock` package.
+
+## Symbols
+### Exported Functions
+- `AuditLog`
+- `AuditLogs`
+- `Bool`
+- `Email`
+- `EndpointHistories`
+- `EndpointHistory`
+- `File`
+- `FileInfo`
+- `FileInfoDocument`
+- `FileInfoImage`
+- `FileInfoVideo`
+- `FileInfoWithContentType`
+- `FileInfos`
+- `FileUploadRequest`
+- `FileUploadRequestWithContentType`
+- `Files`
+- `FunctionMetric`
+- `FunctionMetrics`
+- `FutureTime`
+- `Int`
+- `Int64`
+- `Lang`
+- `Pagination`
+- `PaginationWithValues`
+- `PastTime`
+- `Permission`
+- `PermissionFilter`
+- `PermissionFilterWithID`
+- `PermissionFilterWithName`
+- `PermissionRoot`
+- `PermissionWithID`
+- `PermissionWithParentID`
+- `Permissions`
+- `PermissionsFilter`
+- `PermissionsFilterWithPagination`
+- `Phone`
+- `Policies`
+- `PoliciesFilter`
+- `PoliciesFilterWithPagination`
+- `Policy`
+- `PolicyActive`
+- `PolicyEffect`
+- `PolicyEffectAllow`
+- `PolicyEffectDeny`
+- `PolicyFilter`
+- `PolicyFilterWithActive`
+- `PolicyFilterWithID`
+- `PolicyFilterWithPermissionID`
+- `PolicyInactive`
+- `PolicyWithEffect`
+- `PolicyWithID`
+- `PolicyWithPermissionID`
+- `RefreshIn`
+- `Relation`
+- `Relations`
+- `Role`
+- `RoleFilter`
+- `RoleFilterWithID`
+- `RoleFilterWithName`
+- `RoleWithID`
+- `RoleWithName`
+- `Roles`
+- `RolesFilter`
+- `RolesFilterWithPagination`
+- `Scope`
+- `Scopes`
+- `Session`
+- `SessionActive`
+- `SessionDesktop`
+- `SessionExpired`
+- `SessionFilter`
+- `SessionFilterWithID`
+- `SessionMobile`
+- `SessionRevoked`
+- `SessionTablet`
+- `SessionWithDeviceType`
+- `SessionWithUserID`
+- `Sessions`
+- `SignInIn`
+- `SignInInWithPhone`
+- `SignInOut`
+- `SignOutIn`
+- `SignOutInWithUserID`
+- `SignUpIn`
+- `SignUpInWithEmail`
+- `String`
+- `Time`
+- `TimeRange`
+- `UUID`
+- `User`
+- `UserFilter`
+- `UserFilterWithID`
+- `UserFilterWithPhone`
+- `UserWithPassword`
+- `Users`
+- `UsersFilter`
+- `UsersFilterWithPagination`
+
+
+
+## Usage
+```go
+import "gct/internal/domain/mock"
+```

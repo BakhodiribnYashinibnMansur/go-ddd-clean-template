@@ -6,12 +6,13 @@ import (
 
 	"gct/internal/domain"
 	apperrors "gct/pkg/errors"
+
 	"github.com/google/uuid"
 )
 
 // Create creates a new session.
 func (uc *UseCase) Create(ctx context.Context, in *domain.Session) (*domain.Session, error) {
-	uc.logger.Infow("session create started", "input", in)
+	uc.logger.WithContext(ctx).Infow("session create started", "input", in)
 
 	in.ID = uuid.New()
 
@@ -35,10 +36,10 @@ func (uc *UseCase) Create(ctx context.Context, in *domain.Session) (*domain.Sess
 
 	err := uc.repo.Postgres.User.SessionRepo.Create(ctx, in)
 	if err != nil {
-		uc.logger.Errorw("session create failed", "error", err)
+		uc.logger.WithContext(ctx).Errorw("session create failed", "error", err)
 		return nil, apperrors.MapRepoToServiceError(ctx, err).WithInput(in)
 	}
 
-	uc.logger.Infow("session create success", "session_id", in.ID)
+	uc.logger.WithContext(ctx).Infow("session create success", "session_id", in.ID)
 	return in, nil
 }

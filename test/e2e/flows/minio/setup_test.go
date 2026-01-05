@@ -25,7 +25,7 @@ func startTestServer() *httptest.Server {
 	l := logger.New("debug")
 
 	repositories := repo.New(setup.TestPG, setup.TestMinio, setup.TestRedis, &setup.TestCfg.Minio, l)
-	useCases := usecase.NewUseCase(repositories, l, setup.TestCfg)
+	useCases := usecase.NewUseCase(repositories, l, setup.TestCfg, nil)
 
 	handler := gin.New()
 	restapi.NewRouter(handler, setup.TestCfg, useCases, l)

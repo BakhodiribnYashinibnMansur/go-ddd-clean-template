@@ -5,10 +5,16 @@ import (
 
 	"gct/internal/domain"
 	apperrors "gct/pkg/errors"
+	"gct/pkg/validator"
 )
 
 func (uc *UseCase) SignUp(ctx context.Context, in *domain.SignUpIn) (*domain.SignInOut, error) {
-	uc.logger.Infow("user sign up started", "input", in)
+	uc.logger.WithContext(ctx).Infow("user sign up started", "input", in)
+
+	// Validate input
+	if err := validator.ValidateStruct(ctx, in); err != nil {
+		return nil, err
+	}
 
 	user := &domain.User{
 		Username:   &in.Username,
@@ -17,7 +23,7 @@ func (uc *UseCase) SignUp(ctx context.Context, in *domain.SignUpIn) (*domain.Sig
 	}
 
 	if err := user.SetPassword(in.Password); err != nil {
-		uc.logger.Errorw("user sign up failed: set password", "error", err)
+		uc.logger.WithContext(ctx).Errorw("user sign up failed: set password", "error", err)
 		return nil, apperrors.MapRepoToServiceError(ctx, err).WithInput(in)
 	}
 
@@ -26,7 +32,7 @@ func (uc *UseCase) SignUp(ctx context.Context, in *domain.SignUpIn) (*domain.Sig
 		return nil, err
 	}
 
-	uc.logger.Infow("user sign up success, performing automatic sign in")
+	uc.logger.WithContext(ctx).Infow("user sign up success, performing automatic sign in")
 
 	return uc.SignIn(ctx, &domain.SignInIn{
 		Phone:     in.Phone,

@@ -29,14 +29,25 @@ type Config struct {
 	Proto        Proto
 	Admin        Admin
 	Cookie       Cookie
-	Minio        MinioStore `envPrefix:"MINIO_"`
-	Redis        RedisStore `envPrefix:"REDIS_"`
-	Telegram     Telegram   `envPrefix:"TELEGRAM_"`
+	Minio        MinioStore  `envPrefix:"MINIO_"`
+	Redis        RedisStore  `envPrefix:"REDIS_"`
+	Telegram     Telegram    `envPrefix:"TELEGRAM_"`
+	Tracing      Tracing     `envPrefix:"TRACING_"`
+	Limiter      Limiter     `envPrefix:"LIMITER_"`
+	Security     Security    `envPrefix:"SECURITY_"`
+	FeatureFlag  FeatureFlag `envPrefix:"FEATURE_FLAG_"`
+	Asynq        AsynqConfig `envPrefix:"ASYNQ_"`
+	Seeder       Seeder      `envPrefix:"SEEDER_"`
 }
 
 type Telegram struct {
 	BotToken string `env:"BOT_TOKEN"`
 	ChatID   string `env:"CHAT_ID"`
+}
+
+// Security -.
+type Security struct {
+	FetchMetadata bool `env:"FETCH_METADATA_ENABLED" envDefault:"true"`
 }
 
 // NewConfig returns app config (Singleton).

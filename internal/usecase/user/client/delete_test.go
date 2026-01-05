@@ -7,7 +7,8 @@ import (
 	"gct/internal/domain"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/mock"
+"github.com/stretchr/testify/require"
 )
 
 func TestUseCase_Delete_TableDriven(t *testing.T) {
@@ -96,7 +97,7 @@ func TestUseCase_Delete_TableDriven(t *testing.T) {
 			ctx := t.Context()
 
 			if tt.filter.ID != nil {
-				clientRepo.On("Delete", ctx, *tt.filter.ID).Return(tt.repoError).Once()
+				clientRepo.On("Delete", mock.Anything, *tt.filter.ID).Return(tt.repoError).Once()
 			}
 
 			// act

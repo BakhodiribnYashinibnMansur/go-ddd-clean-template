@@ -8,24 +8,30 @@ import (
 	"gct/internal/domain"
 	apperrors "gct/pkg/errors"
 	"gct/pkg/jwt"
+	"gct/pkg/validator"
 )
 
 // RotateSession performs refresh token rotation by generating new tokens for an existing valid session.
 func (uc *UseCase) RotateSession(ctx context.Context, in *domain.RefreshIn) (*domain.SignInOut, error) {
-	uc.logger.Infow("session rotate started", "session_id", in.SessionID)
+	uc.logger.WithContext(ctx).Infow("session rotate started", "session_id", in.SessionID)
+
+	// Validate input
+	if err := validator.ValidateStruct(ctx, in); err != nil {
+		return nil, err
+	}
 
 	sessionID := in.SessionID
 
 	// 1. Get existing session
 	session, err := uc.repo.Postgres.User.SessionRepo.Get(ctx, &domain.SessionFilter{ID: &sessionID})
 	if err != nil {
-		uc.logger.Errorw("session rotate failed: get session", "error", err)
+		uc.logger.WithContext(ctx).Errorw("session rotate failed: get session", "error", err)
 		return nil, apperrors.MapRepoToServiceError(ctx, err)
 	}
 
 	// 3. Double check state
 	if session.Revoked || session.IsExpired() {
-		uc.logger.Warnw("session rotate failed: session revoked or expired", "session_id", sessionID)
+		uc.logger.WithContext(ctx).Warnw("session rotate failed: session revoked or expired", "session_id", sessionID)
 		return nil, apperrors.NewServiceError(ctx, apperrors.ErrServiceUnauthorized, "Session revoked or expired")
 	}
 
@@ -37,7 +43,7 @@ func (uc *UseCase) RotateSession(ctx context.Context, in *domain.RefreshIn) (*do
 		uc.cfg.JWT.RefreshTTL,
 	)
 	if err != nil {
-		uc.logger.Errorw("session rotate failed: generate new refresh token", "error", err)
+		uc.logger.WithContext(ctx).Errorw("session rotate failed: generate new refresh token", "error", err)
 		return nil, apperrors.MapRepoToServiceError(ctx, err)
 	}
 
@@ -48,7 +54,7 @@ func (uc *UseCase) RotateSession(ctx context.Context, in *domain.RefreshIn) (*do
 
 	err = uc.repo.Postgres.User.SessionRepo.Update(ctx, session)
 	if err != nil {
-		uc.logger.Errorw("session rotate failed: update session", "error", err)
+		uc.logger.WithContext(ctx).Errorw("session rotate failed: update session", "error", err)
 		return nil, apperrors.MapRepoToServiceError(ctx, err)
 	}
 
@@ -62,11 +68,11 @@ func (uc *UseCase) RotateSession(ctx context.Context, in *domain.RefreshIn) (*do
 		PrivateKey: uc.privateKey,
 	})
 	if err != nil {
-		uc.logger.Errorw("session rotate failed: generate access token", "error", err)
+		uc.logger.WithContext(ctx).Errorw("session rotate failed: generate access token", "error", err)
 		return nil, apperrors.MapRepoToServiceError(ctx, err)
 	}
 
-	uc.logger.Infow("session rotate success", "user_id", session.UserID, "session_id", sessionID)
+	uc.logger.WithContext(ctx).Infow("session rotate success", "user_id", session.UserID, "session_id", sessionID)
 	return &domain.SignInOut{
 		UserID:       session.UserID,
 		SessionID:    session.ID,

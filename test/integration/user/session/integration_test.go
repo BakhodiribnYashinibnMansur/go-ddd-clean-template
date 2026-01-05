@@ -22,7 +22,7 @@ func TestSessionAPI_Integration(t *testing.T) {
 	cleanDB(t)
 	l := logger.New("debug")
 	repositories := repo.New(setup.TestPG, setup.TestMinio, setup.TestRedis, &setup.TestCfg.Minio, l)
-	useCases := usecase.NewUseCase(repositories, l, setup.TestCfg)
+	useCases := usecase.NewUseCase(repositories, l, setup.TestCfg, nil)
 	ctx := t.Context()
 
 	handler := gin.New()

@@ -5,3 +5,5 @@ system loglarini yoz.
 endpoint log. 
 admin panel ui.
 rbac, users, system logs, endpoint logs
+
+admen panelda uida socket bilan audit va endpointlar loglarini olib turish. 

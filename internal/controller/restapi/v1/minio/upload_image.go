@@ -6,6 +6,7 @@ import (
 	"gct/internal/controller/restapi/response"
 	"gct/internal/controller/restapi/util"
 	"gct/internal/domain/mock"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -35,7 +36,7 @@ func (h *Controller) UploadImage(ctx *gin.Context) {
 	}
 	defer fileMultipart.Close()
 
-	imageFileName, err := h.useCase.Minio.UploadImage(fileMultipart, file.Size, imageContentType)
+	imageFileName, err := h.useCase.Minio.UploadImage(ctx.Request.Context(), fileMultipart, file.Size, imageContentType)
 	if err != nil {
 		h.logger.Error(err)
 		response.ControllerResponse(ctx, http.StatusBadRequest, err, nil, false)
@@ -77,7 +78,7 @@ func (h *Controller) UploadImages(ctx *gin.Context) {
 			return
 		}
 
-		imageFileName, err := h.useCase.Minio.UploadImage(fileMultipart, file.Size, imageContentType)
+		imageFileName, err := h.useCase.Minio.UploadImage(ctx.Request.Context(), fileMultipart, file.Size, imageContentType)
 		fileMultipart.Close() // Close immediately
 
 		if err != nil {

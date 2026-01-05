@@ -7,8 +7,7 @@ import (
 	apperrors "gct/pkg/errors"
 )
 
-func (m *UseCase) UploadDoc(docFile io.Reader, docSize int64, contentType string) (string, error) {
-	ctx := context.Background()
+func (m *UseCase) UploadDoc(ctx context.Context, docFile io.Reader, docSize int64, contentType string) (string, error) {
 	docName, err := m.repo.Persistent.MinIO.UploadDocument(ctx, docFile, docSize, contentType)
 	if err != nil {
 		return "", apperrors.MapRepoToServiceError(ctx, err).

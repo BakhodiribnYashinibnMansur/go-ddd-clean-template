@@ -8,6 +8,7 @@ import (
 
 	"gct/consts"
 	apperrors "gct/pkg/errors"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -24,6 +25,12 @@ type ErrorDetail struct {
 	Path       string `example:"/api/v1/users/12345"                                         json:"path"`
 	Method     string `example:"GET"                                                         json:"method"`
 	Suggestion string `example:"Please check our documentation."                             json:"suggestion,omitempty"`
+
+	// Enhanced fields
+	Severity   string `example:"MEDIUM"                                                      json:"severity,omitempty"`
+	Category   string `example:"DATA"                                                        json:"category,omitempty"`
+	Retryable  bool   `example:"false"                                                       json:"retryable,omitempty"`
+	RetryAfter int    `example:"5"                                                           json:"retry_after,omitempty"` // seconds
 }
 
 // Error for backward compatibility
@@ -117,8 +124,22 @@ func parseErrorToResponse(c *gin.Context, err error, fallbackCode int) (int, Err
 		errorCode  = apperrors.ErrInternal
 		message    = "An unexpected error occurred."
 		details    = ""
+		severity   = ""
+		category   = ""
+		retryable  = false
+		retryAfter = 0
 		// fields     map[string]any // unused
 	)
+
+	// Get language from Accept-Language header
+	lang := c.GetHeader("Accept-Language")
+	if lang == "" {
+		lang = "en" // default to English
+	}
+	// Extract primary language (e.g., "en-US" -> "en", "uz-UZ" -> "uz")
+	if len(lang) >= 2 {
+		lang = lang[:2]
+	}
 
 	// Check if it's our AppError
 	var appErr *apperrors.AppError
@@ -130,8 +151,32 @@ func parseErrorToResponse(c *gin.Context, err error, fallbackCode int) (int, Err
 			errorCode = appErr.Code
 		}
 
-		message = appErr.Message
+		// Get user-friendly message in requested language
+		message = apperrors.GetUserMessage(errorCode, lang)
+		if message == "" {
+			message = appErr.Message
+		}
+
 		details = appErr.Details
+
+		// Get metadata
+		meta := appErr.GetMetadata()
+		severity = string(meta.Severity)
+		category = string(meta.Category)
+		retryable = meta.Retryable
+
+		// Calculate retry after based on strategy
+		if retryable {
+			switch meta.RetryStrategy {
+			case apperrors.RetryStrategyImmediate:
+				retryAfter = 1
+			case apperrors.RetryStrategyLinear:
+				retryAfter = 5
+			case apperrors.RetryStrategyExponential:
+				retryAfter = 10
+			}
+		}
+
 		// fields = appErr.Fields // unused
 	} else if err != nil {
 		message = err.Error()
@@ -174,6 +219,10 @@ func parseErrorToResponse(c *gin.Context, err error, fallbackCode int) (int, Err
 			Path:       c.Request.URL.Path,
 			Method:     c.Request.Method,
 			Suggestion: suggestion,
+			Severity:   severity,
+			Category:   category,
+			Retryable:  retryable,
+			RetryAfter: retryAfter,
 		},
 		RequestId:        reqID,
 		DocumentationUrl: docURL,

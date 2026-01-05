@@ -28,6 +28,7 @@ const (
 	AuditActionPaymentProcess  AuditActionType = "PAYMENT_PROCESS"
 	AuditActionPaymentCancel   AuditActionType = "PAYMENT_CANCEL"
 	AuditActionPolicyEvaluated AuditActionType = "POLICY_EVALUATED"
+	AuditActionAdminChange     AuditActionType = "ADMIN_CHANGE"
 )
 
 type AuditLog struct {

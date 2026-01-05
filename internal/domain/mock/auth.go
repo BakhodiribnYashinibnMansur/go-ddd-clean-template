@@ -2,6 +2,7 @@ package mock
 
 import (
 	"gct/internal/domain"
+
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/google/uuid"
 )
@@ -70,7 +71,6 @@ func SignOutInWithUserID(userID uuid.UUID) *domain.SignOutIn {
 // RefreshIn generates a fake domain.RefreshIn
 func RefreshIn() *domain.RefreshIn {
 	return &domain.RefreshIn{
-		RefreshToken: gofakeit.LetterN(64),
-		SessionID:    UUID(),
+		SessionID: UUID(),
 	}
 }

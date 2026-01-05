@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/controller/restapi/util"
 	"gct/pkg/logger"
+
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
@@ -22,7 +23,7 @@ func Logger(l logger.Log) gin.HandlerFunc {
 			path = path + "?" + raw
 		}
 
-		l.Infow("HTTP request", zap.String("method", c.Request.Method),
+		l.WithContext(c.Request.Context()).Infow("HTTP request", zap.String("method", c.Request.Method),
 			zap.String("path", path),
 			zap.Int("status", c.Writer.Status()),
 			zap.String("latency", time.Since(start).String()),

@@ -180,13 +180,13 @@ func TestUseCase_Update_TableDriven(t *testing.T) {
 			if tt.setupExisting != nil {
 				tt.setupExisting(existingUser)
 			}
-			clientRepo.On("Get", ctx, mock.MatchedBy(func(f *domain.UserFilter) bool {
+			clientRepo.On("Get", mock.Anything, mock.MatchedBy(func(f *domain.UserFilter) bool {
 				return f.ID != nil && *f.ID == tt.input.ID
 			})).Return(existingUser, nil).Maybe()
 
 			if tt.repoError != nil || tt.validateSaved != nil {
 				clientRepo.
-					On("Update", ctx, mock.MatchedBy(func(u *domain.User) bool {
+					On("Update", mock.Anything, mock.MatchedBy(func(u *domain.User) bool {
 						if tt.validateSaved != nil {
 							tt.validateSaved(t, u)
 						}

@@ -19,6 +19,7 @@ import (
 	"gct/internal/usecase/user/session"
 	"gct/pkg/jwt"
 	"gct/pkg/logger"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -83,13 +84,13 @@ func (m *AuthMiddleware) validateAccessToken(ctx *gin.Context) (*domain.Session,
 
 	sessionID, err := uuid.Parse(metadata.SessionID)
 	if err != nil {
-		m.l.Warnw("AuthMiddleware - validateAccessToken - Invalid session ID", "session_id", metadata.SessionID)
+		m.l.WithContext(ctx.Request.Context()).Warnw("AuthMiddleware - validateAccessToken - Invalid session ID", "session_id", metadata.SessionID)
 		return nil, errInvalidSession
 	}
 
 	session, err := (*m.sessionUC).Get(ctx, &domain.SessionFilter{ID: &sessionID})
 	if err != nil || session.Revoked || session.IsExpired() {
-		m.l.Errorw("AuthMiddleware - validateAccessToken - Get", "error", err)
+		m.l.WithContext(ctx.Request.Context()).Errorw("AuthMiddleware - validateAccessToken - Get", "error", err)
 		return nil, errRevokedToken
 	}
 
@@ -149,7 +150,7 @@ func (m *AuthMiddleware) AuthClientRefresh(ctx *gin.Context) {
 	// Parse the refresh token
 	rt, err := jwt.ParseRefreshToken(token)
 	if err != nil {
-		m.l.Errorw("AuthMiddleware - AuthClientRefresh - invalid refresh token format", "error", err)
+		m.l.WithContext(ctx.Request.Context()).Errorw("AuthMiddleware - AuthClientRefresh - invalid refresh token format", "error", err)
 		response.ControllerResponse(ctx, http.StatusUnauthorized, errInvalidRefreshFormat.Error(), nil, false)
 		ctx.Abort()
 		return
@@ -158,7 +159,7 @@ func (m *AuthMiddleware) AuthClientRefresh(ctx *gin.Context) {
 	// Get session from database
 	sessionID, err := uuid.Parse(rt.SessionID)
 	if err != nil {
-		m.l.Errorw("AuthMiddleware - AuthClientRefresh - invalid session id in token", "session_id", rt.SessionID)
+		m.l.WithContext(ctx.Request.Context()).Errorw("AuthMiddleware - AuthClientRefresh - invalid session id in token", "session_id", rt.SessionID)
 		response.ControllerResponse(ctx, http.StatusUnauthorized, errInvalidSession.Error(), nil, false)
 		ctx.Abort()
 		return
@@ -166,7 +167,7 @@ func (m *AuthMiddleware) AuthClientRefresh(ctx *gin.Context) {
 
 	session, err := (*m.sessionUC).Get(ctx, &domain.SessionFilter{ID: &sessionID})
 	if err != nil {
-		m.l.Errorw("AuthMiddleware - AuthClientRefresh - session not found", "error", err)
+		m.l.WithContext(ctx.Request.Context()).Errorw("AuthMiddleware - AuthClientRefresh - session not found", "error", err)
 		response.ControllerResponse(ctx, http.StatusUnauthorized, errInvalidRefreshSession.Error(), nil, false)
 		ctx.Abort()
 		return
@@ -174,7 +175,7 @@ func (m *AuthMiddleware) AuthClientRefresh(ctx *gin.Context) {
 
 	// Verify the refresh token
 	if !rt.Verify(session.RefreshTokenHash) {
-		m.l.Errorw("AuthMiddleware - AuthClientRefresh - invalid refresh token hash", "session_id", sessionID)
+		m.l.WithContext(ctx.Request.Context()).Errorw("AuthMiddleware - AuthClientRefresh - invalid refresh token hash", "session_id", sessionID)
 		response.ControllerResponse(ctx, http.StatusUnauthorized, errInvalidRefreshToken.Error(), nil, false)
 		ctx.Abort()
 		return
@@ -182,7 +183,7 @@ func (m *AuthMiddleware) AuthClientRefresh(ctx *gin.Context) {
 
 	// Check if session is still valid
 	if session.Revoked || session.IsExpired() {
-		m.l.Errorw("AuthMiddleware - AuthClientRefresh - session revoked or expired", "session_id", sessionID)
+		m.l.WithContext(ctx.Request.Context()).Errorw("AuthMiddleware - AuthClientRefresh - session revoked or expired", "session_id", sessionID)
 		response.ControllerResponse(ctx, http.StatusUnauthorized, errRevokedToken.Error(), nil, false)
 		ctx.Abort()
 		return
@@ -208,14 +209,14 @@ func (m *AuthMiddleware) AuthAdmin(ctx *gin.Context) {
 	// 5. Admin check - ensure user exists and has admin role
 	user, err := (*m.userUC).Get(ctx, &domain.UserFilter{ID: &session.UserID})
 	if err != nil {
-		m.l.Errorw("AuthMiddleware - AuthAdmin - User Get", "error", err)
+		m.l.WithContext(ctx.Request.Context()).Errorw("AuthMiddleware - AuthAdmin - User Get", "error", err)
 		response.ControllerResponse(ctx, http.StatusUnauthorized, errUserNotFound.Error(), nil, false)
 		ctx.Abort()
 		return
 	}
 
 	if user.RoleID == nil {
-		m.l.Warnw("AuthMiddleware - AuthAdmin - User has no role", "user_id", user.ID)
+		m.l.WithContext(ctx.Request.Context()).Warnw("AuthMiddleware - AuthAdmin - User has no role", "user_id", user.ID)
 		response.ControllerResponse(ctx, http.StatusForbidden, errAccessDenied.Error(), nil, false)
 		ctx.Abort()
 		return
@@ -223,7 +224,7 @@ func (m *AuthMiddleware) AuthAdmin(ctx *gin.Context) {
 
 	role, err := m.authzUC.Role.Get(ctx, &domain.RoleFilter{ID: user.RoleID})
 	if err != nil {
-		m.l.Errorw("AuthMiddleware - AuthAdmin - Role Get", "error", err)
+		m.l.WithContext(ctx.Request.Context()).Errorw("AuthMiddleware - AuthAdmin - Role Get", "error", err)
 		response.ControllerResponse(ctx, http.StatusForbidden, errAccessDenied.Error(), nil, false)
 		ctx.Abort()
 		return
@@ -231,7 +232,7 @@ func (m *AuthMiddleware) AuthAdmin(ctx *gin.Context) {
 
 	// Check if role name contains "admin" (case-insensitive)
 	if !strings.Contains(strings.ToLower(role.Name), "admin") {
-		m.l.Warnw("AuthMiddleware - AuthAdmin - User is not admin", "user_id", user.ID, "role", role.Name)
+		m.l.WithContext(ctx.Request.Context()).Warnw("AuthMiddleware - AuthAdmin - User is not admin", "user_id", user.ID, "role", role.Name)
 		response.ControllerResponse(ctx, http.StatusForbidden, errAccessDenied.Error(), nil, false)
 		ctx.Abort()
 		return
@@ -248,7 +249,7 @@ func (m *AuthMiddleware) AuthAdmin(ctx *gin.Context) {
 func (m *AuthMiddleware) AuthApiKey(ctx *gin.Context) {
 	apiKey := util.GetAPIKey(ctx)
 	if apiKey == "" {
-		m.l.Warnw("AuthMiddleware - AuthApiKey - API key missing", "ip", util.GetIPAddress(ctx))
+		m.l.WithContext(ctx.Request.Context()).Warnw("AuthMiddleware - AuthApiKey - API key missing", "ip", util.GetIPAddress(ctx))
 		response.ControllerResponse(ctx, http.StatusUnauthorized, errApiKeyMissing.Error(), nil, false)
 		ctx.Abort()
 		return
@@ -256,7 +257,7 @@ func (m *AuthMiddleware) AuthApiKey(ctx *gin.Context) {
 
 	// Simple check against config - in real app, check DB or external service
 	if apiKey != m.cfg.APIKeys.XApiKey {
-		m.l.Warnw("AuthMiddleware - AuthApiKey - Invalid API key", "ip", util.GetIPAddress(ctx))
+		m.l.WithContext(ctx.Request.Context()).Warnw("AuthMiddleware - AuthApiKey - Invalid API key", "ip", util.GetIPAddress(ctx))
 		response.ControllerResponse(ctx, http.StatusUnauthorized, errInvalidApiKey.Error(), nil, false)
 		ctx.Abort()
 		return
@@ -277,7 +278,7 @@ func (m *AuthMiddleware) Authz(ctx *gin.Context) {
 
 	session, ok := sessionVal.(*domain.Session)
 	if !ok {
-		m.l.Errorw("AuthMiddleware - Authz - session type cast error")
+		m.l.WithContext(ctx.Request.Context()).Errorw("AuthMiddleware - Authz - session type cast error")
 		response.ControllerResponse(ctx, http.StatusInternalServerError, "internal server error", nil, false)
 		ctx.Abort()
 		return
@@ -286,14 +287,14 @@ func (m *AuthMiddleware) Authz(ctx *gin.Context) {
 	// 1. Get User to check RBAC role existence
 	user, err := (*m.userUC).Get(ctx, &domain.UserFilter{ID: &session.UserID})
 	if err != nil {
-		m.l.Errorw("AuthMiddleware - Authz - Get User", "error", err)
+		m.l.WithContext(ctx.Request.Context()).Errorw("AuthMiddleware - Authz - Get User", "error", err)
 		response.ControllerResponse(ctx, http.StatusUnauthorized, errUserNotFound.Error(), nil, false)
 		ctx.Abort()
 		return
 	}
 
 	if user.RoleID == nil {
-		m.l.Warnw("AuthMiddleware - Authz - User has no role", "user_id", user.ID)
+		m.l.WithContext(ctx.Request.Context()).Warnw("AuthMiddleware - Authz - User has no role", "user_id", user.ID)
 		response.ControllerResponse(ctx, http.StatusForbidden, errAccessDenied.Error(), nil, false)
 		ctx.Abort()
 		return
@@ -319,7 +320,7 @@ func (m *AuthMiddleware) Authz(ctx *gin.Context) {
 
 	allowed, err := m.authzUC.Access.Check(ctx.Request.Context(), session.UserID, session, path, method, env)
 	if err != nil {
-		m.l.Errorw("AuthMiddleware - Authz - Check", "error", err)
+		m.l.WithContext(ctx.Request.Context()).Errorw("AuthMiddleware - Authz - Check", "error", err)
 		response.ControllerResponse(ctx, http.StatusInternalServerError, "internal server error", nil, false)
 		ctx.Abort()
 		return

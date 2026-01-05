@@ -9,6 +9,7 @@ import (
 	"gct/internal/domain"
 	"gct/internal/usecase"
 	"gct/pkg/logger"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -87,8 +88,72 @@ func (m *AuditMiddleware) EndpointHistory() gin.HandlerFunc {
 			err := m.uc.Audit.History.Create(ctx, h)
 			if err != nil {
 				// Use zap type as requested
-				m.logger.Errorw("failed to save endpoint history", zap.Error(err))
+				m.logger.WithContext(ctx).Errorw("failed to save endpoint history", zap.Error(err))
 			}
 		}(history)
+	}
+}
+
+// ChangeAudit records mutating actions (POST, PUT, DELETE, PATCH) to the audit log.
+func (m *AuditMiddleware) ChangeAudit() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		method := c.Request.Method
+		// We only care about mutations
+		if method == "GET" || method == "HEAD" || method == "OPTIONS" {
+			c.Next()
+			return
+		}
+
+		path := c.Request.URL.Path
+
+		// Process request
+		c.Next()
+
+		// Record if successful or if it's an admin path
+		// Typically we log all mutations in admin panel, even if they failed (for security auditing)
+
+		ip := util.GetIPAddress(c)
+		ua := util.GetUserAgent(c)
+
+		auditLog := &domain.AuditLog{
+			ID:        uuid.New(),
+			Action:    domain.AuditActionAdminChange,
+			IPAddress: &ip,
+			UserAgent: &ua,
+			Success:   c.Writer.Status() < 400,
+			CreatedAt: time.Now(),
+		}
+
+		if len(c.Errors) > 0 {
+			errStr := c.Errors.String()
+			auditLog.ErrorMessage = &errStr
+		}
+
+		// Extract user/session if available
+		if sessionVal, exists := c.Get(consts.CtxSession); exists {
+			if session, ok := sessionVal.(*domain.Session); ok {
+				auditLog.SessionID = &session.ID
+				auditLog.UserID = &session.UserID
+			}
+		}
+
+		// Metadata: capture detailed info for "Who did what"
+		auditLog.Metadata = map[string]any{
+			"path":   path,
+			"method": method,
+			"status": c.Writer.Status(),
+			"query":  c.Request.URL.RawQuery,
+		}
+
+		// Async save
+		go func(al *domain.AuditLog) {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+
+			err := m.uc.Audit.Log.Create(ctx, al)
+			if err != nil {
+				m.logger.WithContext(ctx).Errorw("failed to save change audit log", zap.Error(err))
+			}
+		}(auditLog)
 	}
 }

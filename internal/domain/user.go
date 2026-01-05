@@ -29,9 +29,9 @@ func NewUser() *User {
 type User struct {
 	ID           uuid.UUID      `db:"id"            json:"id"`
 	RoleID       *uuid.UUID     `db:"role_id"       json:"role_id,omitempty"`
-	Username     *string        `db:"username"      json:"username,omitempty"`
-	Email        *string        `db:"email"         json:"email,omitempty"`
-	Phone        *string        `db:"phone"         json:"phone,omitempty"`
+	Username     *string        `db:"username"      json:"username,omitempty" validate:"omitempty,min=3"`
+	Email        *string        `db:"email"         json:"email,omitempty" validate:"omitempty,email"`
+	Phone        *string        `db:"phone"         json:"phone,omitempty" validate:"required,min=9"`
 	PasswordHash string         `db:"password_hash" json:"-"`
 	Salt         *string        `db:"salt"          json:"-"`
 	Attributes   map[string]any `db:"attributes"    json:"attributes"` // JSONB for ABAC (region, branch, dept)

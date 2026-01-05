@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -14,6 +15,7 @@ import (
 
 // CreatePublicCache stores data in Redis cache with pagination info
 func (c *Cache) CreatePublicCache(
+	ctx context.Context,
 	data any,
 	key string,
 	lang string,
@@ -26,7 +28,7 @@ func (c *Cache) CreatePublicCache(
 	}
 
 	cacheKey := createCacheKey(key, lang, pagination)
-	if err := c.redis.Primitive.Byte.Set(cacheKey, bytes, duration); err != nil {
+	if err := c.redis.Primitive.Byte.Set(ctx, cacheKey, bytes, duration); err != nil {
 		return fmt.Errorf("redis set: %w", err)
 	}
 	return nil
@@ -34,6 +36,7 @@ func (c *Cache) CreatePublicCache(
 
 // GetPublicCache retrieves data from Redis cache using pagination info
 func (c *Cache) GetPublicCache(
+	ctx context.Context,
 	key string,
 	lang string,
 	pagination *domain.Pagination,
@@ -45,7 +48,7 @@ func (c *Cache) GetPublicCache(
 
 	cacheKey := createCacheKey(key, lang, pagination)
 
-	bytes, err := c.redis.Primitive.Byte.Get(cacheKey)
+	bytes, err := c.redis.Primitive.Byte.Get(ctx, cacheKey)
 	if err != nil {
 		return fmt.Errorf("redis get: %w", err)
 	}
@@ -58,10 +61,10 @@ func (c *Cache) GetPublicCache(
 }
 
 // DeletePublicCache removes an item from Redis cache
-func (c *Cache) DeletePublicCache(key string, lang string, pagination *domain.Pagination) error {
+func (c *Cache) DeletePublicCache(ctx context.Context, key string, lang string, pagination *domain.Pagination) error {
 	cacheKey := createCacheKey(key, lang, pagination)
-	if err := c.redis.Primitive.Byte.Delete(cacheKey); err != nil {
-		c.logger.Errorw("failed to delete public cache", zap.Error(err))
+	if err := c.redis.Primitive.Byte.Delete(ctx, cacheKey); err != nil {
+		c.logger.WithContext(ctx).Errorw("failed to delete public cache", zap.Error(err))
 		return fmt.Errorf("redis delete: %w", err)
 	}
 	return nil
@@ -70,17 +73,17 @@ func (c *Cache) DeletePublicCache(key string, lang string, pagination *domain.Pa
 // DeletePublicCaches removes all items matching the key pattern from Redis cache.
 // When triggered by Postgres notification, 'key' corresponds to the table name.
 // It can also be used manually with any specific key prefix.
-func (c *Cache) DeletePublicCaches(key string) error {
-	keys, err := c.redis.Primitive.String.Scan(key + "*")
+func (c *Cache) DeletePublicCaches(ctx context.Context, key string) error {
+	keys, err := c.redis.Primitive.String.Scan(ctx, key+"*")
 	if err != nil {
-		c.logger.Errorw("failed to scan public cache keys", zap.Error(err))
+		c.logger.WithContext(ctx).Errorw("failed to scan public cache keys", zap.Error(err))
 		return fmt.Errorf("redis scan: %w", err)
 	}
 
 	var firstErr error
 	for _, key := range keys {
-		if err := c.redis.Primitive.Byte.Delete(key); err != nil {
-			c.logger.Errorw("failed to delete public cache item", "key", key, zap.Error(err))
+		if err := c.redis.Primitive.Byte.Delete(ctx, key); err != nil {
+			c.logger.WithContext(ctx).Errorw("failed to delete public cache item", "key", key, zap.Error(err))
 			if firstErr == nil {
 				firstErr = err
 			}

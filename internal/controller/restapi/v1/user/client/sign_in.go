@@ -9,6 +9,7 @@ import (
 	"gct/internal/controller/restapi/util"
 	"gct/internal/domain"
 	"gct/internal/domain/mock"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -50,7 +51,7 @@ func (c *Controller) SignIn(ctx *gin.Context) {
 		IP:        util.GetIPAddress(ctx),
 	})
 	if err != nil {
-		response.ControllerResponse(ctx, http.StatusUnauthorized, "invalid credentials", nil, false)
+		response.RespondWithError(ctx, err, http.StatusUnauthorized)
 		return
 	}
 

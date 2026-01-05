@@ -15,6 +15,7 @@ import (
 	"gct/internal/domain"
 	"gct/internal/usecase"
 	"gct/pkg/logger"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -49,16 +50,23 @@ func (h *Handler) Register(r *gin.RouterGroup, authmw *middleware.AuthMiddleware
 	g.GET("/audit/logs", h.AuditLogs)
 	g.GET("/audit/history", h.EndpointHistory)
 	g.GET("/linter", h.Linter)
+	// Asynq Monitor
+	mon := h.NewAsynqMonitor()
+	g.Any("/asynq/*filepath", gin.WrapH(mon))
+	g.GET("/asynq", gin.WrapH(mon))
+
 	g.GET("/settings", h.Settings)
 }
 
 // PageData holds common data for all admin pages
 type PageData struct {
-	Title      string
-	ActivePage string
-	User       *domain.User
-	Can        map[string]bool
-	Data       any
+	Title          string
+	ActivePage     string
+	User           *domain.User
+	Can            map[string]bool
+	TracingEnabled bool
+	JaegerURL      string
+	Data           any
 }
 
 func (h *Handler) render(ctx *gin.Context, tmplName string, data PageData) {
@@ -325,6 +333,7 @@ func (h *Handler) servePage(ctx *gin.Context, tmplFile, title, activePage string
 		"audit_logs_view":       "/admin/audit/logs",
 		"endpoint_history_view": "/admin/audit/history",
 		"linter_view":           "/admin/linter",
+		"asynq_view":            "/admin/asynq",
 		"settings_view":         "/admin/settings",
 	}
 
@@ -334,10 +343,12 @@ func (h *Handler) servePage(ctx *gin.Context, tmplFile, title, activePage string
 	}
 
 	h.render(ctx, tmplFile, PageData{
-		Title:      title,
-		ActivePage: activePage,
-		User:       user,
-		Can:        can,
-		Data:       pageContent,
+		Title:          title,
+		ActivePage:     activePage,
+		User:           user,
+		Can:            can,
+		TracingEnabled: h.cfg.Tracing.Enabled,
+		JaegerURL:      h.cfg.Tracing.HttpEndpoint,
+		Data:           pageContent,
 	})
 }

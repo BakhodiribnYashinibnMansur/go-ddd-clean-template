@@ -22,7 +22,7 @@ func TestMinioAPI_Integration_TableDriven(t *testing.T) {
 	cleanDB(t)
 	l := logger.New("debug")
 	repositories := repo.New(setup.TestPG, setup.TestMinio, nil, &setup.TestCfg.Minio, l)
-	useCases := usecase.NewUseCase(repositories, l, setup.TestCfg)
+	useCases := usecase.NewUseCase(repositories, l, setup.TestCfg, nil)
 
 	handler := gin.New()
 	restapi.NewRouter(handler, setup.TestCfg, useCases, l)

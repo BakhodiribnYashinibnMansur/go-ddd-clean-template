@@ -9,6 +9,7 @@ import (
 	"gct/internal/controller/restapi/util"
 	"gct/internal/domain"
 	"gct/internal/domain/mock"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -36,11 +37,6 @@ func (c *Controller) SignUp(ctx *gin.Context) {
 		username = *user.Username
 	}
 
-	if user.Phone == nil {
-		response.ControllerResponse(ctx, http.StatusBadRequest, "phone is required", nil, false)
-		return
-	}
-
 	// Handle mock mode
 	if util.Mock(ctx, util.MockTypeGet, func() any { return mock.SignInOut() }) {
 		return
@@ -55,7 +51,7 @@ func (c *Controller) SignUp(ctx *gin.Context) {
 		IP:        util.GetIPAddress(ctx),
 	})
 	if err != nil {
-		response.ControllerResponse(ctx, http.StatusInternalServerError, err, nil, false)
+		response.RespondWithError(ctx, err, http.StatusInternalServerError)
 		return
 	}
 

@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"html/template"
 	"net/http"
+	"strings"
 
 	"gct/config"
 	"gct/consts"
@@ -12,6 +13,7 @@ import (
 	"gct/internal/controller/restapi/middleware"
 	"gct/internal/controller/restapi/util"
 	"gct/internal/controller/restapi/v1/admin"
+	asynqController "gct/internal/controller/restapi/v1/asynq"
 	"gct/internal/controller/restapi/v1/audit"
 	"gct/internal/controller/restapi/v1/authz"
 	"gct/internal/controller/restapi/v1/minio"
@@ -19,10 +21,12 @@ import (
 	"gct/internal/usecase"
 	webAdmin "gct/internal/web/admin"
 	"gct/pkg/logger"
+
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	ginprometheus "github.com/zsais/go-gin-prometheus"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 )
 
 // NewRouter -.
@@ -39,11 +43,29 @@ func NewRouter(handler *gin.Engine, cfg *config.Config, uc *usecase.UseCase, l l
 	// System Error Middleware
 	sysErrM := middleware.NewSystemErrorMiddleware(uc, l)
 
-	handler.Use(gin.Logger())
+	// Request ID
+	handler.Use(middleware.RequestID())
+
+	// Security Headers (Helmet)
+	handler.Use(middleware.Security())
+
+	// Fetch Metadata Protection (Sec-Fetch-* headers)
+	handler.Use(middleware.FetchMetadata(cfg))
+
+	// Tracing (OTEL) - Should be early to trace everything
+	if cfg.Tracing.Enabled {
+		handler.Use(otelgin.Middleware(cfg.Tracing.ServiceName))
+	}
+
+	// Logger (Zap)
+	handler.Use(middleware.Logger(l))
 	handler.Use(sysErrM.Recovery())
 	handler.Use(sysErrM.Persist5xx())
 	handler.Use(middleware.CORSMiddleware())
 	handler.Use(middleware.MockMiddleware(cfg))
+
+	// Rate Limiter
+	handler.Use(middleware.RateLimiter(cfg.Limiter, uc.Repo.Persistent.Redis.Client, l))
 
 	// Prometheus metrics
 	setupMetrics(handler, cfg)
@@ -58,7 +80,7 @@ func NewRouter(handler *gin.Engine, cfg *config.Config, uc *usecase.UseCase, l l
 	setupRoot(handler, cfg)
 
 	// K8s probe
-	setupHealthCheck(handler)
+	setupHealthCheck(handler, uc)
 
 	// Controller
 	c := NewController(uc, cfg, l)
@@ -69,6 +91,7 @@ func NewRouter(handler *gin.Engine, cfg *config.Config, uc *usecase.UseCase, l l
 	// Audit Middleware
 	auditM := middleware.NewAuditMiddleware(uc, l)
 	handler.Use(auditM.EndpointHistory())
+	handler.Use(auditM.ChangeAudit())
 
 	// CSRF Middleware
 	csrfM := middleware.HybridMiddleware(l, consts.COOKIE_CSRF_TOKEN)
@@ -80,6 +103,9 @@ func NewRouter(handler *gin.Engine, cfg *config.Config, uc *usecase.UseCase, l l
 		minio.MinioRoute(h, c.Minio, am.AuthClientAccess, csrfM)
 		authz.AuthzRoute(h, c.Authz, am.AuthClientAccess, am.Authz, csrfM)
 		audit.AuditRoute(h, c.Audit)
+
+		// Asynq test endpoints (for development/testing)
+		asynqController.NewRouter(h, uc.AsynqClient, l)
 
 		// Admin API Controller
 		adminController := admin.New(l)
@@ -96,7 +122,11 @@ func NewRouter(handler *gin.Engine, cfg *config.Config, uc *usecase.UseCase, l l
 
 func setupMetrics(handler *gin.Engine, cfg *config.Config) {
 	if cfg.Metrics.Enabled {
-		prometheus := ginprometheus.NewPrometheus("my_service_name")
+		// Prometheus generally prefers underscores over dashes
+		subsystem := strings.ReplaceAll(cfg.App.Name, "-", "_")
+		subsystem = strings.ReplaceAll(subsystem, " ", "_")
+
+		prometheus := ginprometheus.NewPrometheus(subsystem)
 		prometheus.Use(handler)
 	}
 }
@@ -342,7 +372,21 @@ func setupRoot(handler *gin.Engine, cfg *config.Config) {
 	})
 }
 
-func setupHealthCheck(handler *gin.Engine) {
+func setupHealthCheck(handler *gin.Engine, uc *usecase.UseCase) {
+	handler.GET("/health/live", func(c *gin.Context) {
+		c.Status(http.StatusOK)
+	})
+
+	handler.GET("/health/ready", func(c *gin.Context) {
+		// Basic check ensuring the application is up
+		// Ideally, this should check DB and Redis connectivity
+		if err := uc.HealthCheck(c.Request.Context()); err != nil {
+			c.JSON(http.StatusServiceUnavailable, gin.H{"status": "not ready", "error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"status": "ready"})
+	})
+	// Keep old endpoints for compatibility if needed, or remove them
 	handler.GET("/healthz", func(c *gin.Context) { c.Status(http.StatusOK) })
 	handler.GET("/ping", func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{"message": "pong"}) })
 }

@@ -9,6 +9,7 @@ import (
 	"gct/internal/controller/restapi/util"
 	"gct/pkg/csrf"
 	"gct/pkg/logger"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -44,7 +45,7 @@ func (m *CSRFMiddleware) Protect() gin.HandlerFunc {
 		// Get session ID from context (set by auth middleware)
 		sessionID, err := util.GetCtxSessionID(c)
 		if err != nil {
-			m.logger.Warnw("CSRF Middleware - No session ID in context",
+			m.logger.WithContext(c.Request.Context()).Warnw("CSRF Middleware - No session ID in context",
 				"ip", util.GetIPAddress(c),
 				"path", c.Request.URL.Path)
 			response.ControllerResponse(c, http.StatusUnauthorized, "unauthorized", nil, false)
@@ -55,7 +56,7 @@ func (m *CSRFMiddleware) Protect() gin.HandlerFunc {
 		// Get token from cookie
 		cookieToken, err := c.Cookie(m.cookieName)
 		if err != nil || cookieToken == "" {
-			m.logger.Warnw("CSRF Middleware - Missing cookie token",
+			m.logger.WithContext(c.Request.Context()).Warnw("CSRF Middleware - Missing cookie token",
 				"ip", util.GetIPAddress(c),
 				"path", c.Request.URL.Path,
 				"session_id", sessionID)
@@ -67,7 +68,7 @@ func (m *CSRFMiddleware) Protect() gin.HandlerFunc {
 		// Get token from header
 		headerToken := c.GetHeader(m.headerName)
 		if headerToken == "" {
-			m.logger.Warnw("CSRF Middleware - Missing header token",
+			m.logger.WithContext(c.Request.Context()).Warnw("CSRF Middleware - Missing header token",
 				"ip", util.GetIPAddress(c),
 				"path", c.Request.URL.Path,
 				"session_id", sessionID)
@@ -78,7 +79,7 @@ func (m *CSRFMiddleware) Protect() gin.HandlerFunc {
 
 		// Double submit check: cookie and header must match
 		if cookieToken != headerToken {
-			m.logger.Warnw("CSRF Middleware - Token mismatch",
+			m.logger.WithContext(c.Request.Context()).Warnw("CSRF Middleware - Token mismatch",
 				"ip", util.GetIPAddress(c),
 				"path", c.Request.URL.Path,
 				"session_id", sessionID)
@@ -90,7 +91,7 @@ func (m *CSRFMiddleware) Protect() gin.HandlerFunc {
 		// Get stored token hash from store
 		storedHash, expiresAt, err := m.store.Get(c.Request.Context(), sessionID.String())
 		if err != nil {
-			m.logger.Warnw("CSRF Middleware - Token not found in store",
+			m.logger.WithContext(c.Request.Context()).Warnw("CSRF Middleware - Token not found in store",
 				"ip", util.GetIPAddress(c),
 				"path", c.Request.URL.Path,
 				"session_id", sessionID,
@@ -102,7 +103,7 @@ func (m *CSRFMiddleware) Protect() gin.HandlerFunc {
 
 		// Validate token using HMAC
 		if err := m.generator.ValidateToken(cookieToken, storedHash, sessionID.String(), expiresAt); err != nil {
-			m.logger.Warnw("CSRF Middleware - Token validation failed",
+			m.logger.WithContext(c.Request.Context()).Warnw("CSRF Middleware - Token validation failed",
 				"ip", util.GetIPAddress(c),
 				"path", c.Request.URL.Path,
 				"session_id", sessionID,

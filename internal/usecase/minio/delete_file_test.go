@@ -2,6 +2,7 @@ package minio_test
 
 import (
 	"bytes"
+	"context"
 	"strings"
 	"testing"
 
@@ -113,14 +114,14 @@ func TestUseCase_DeleteFile_TableDriven(t *testing.T) {
 			if tt.setupUpload {
 				imgBytes := createTestImage()
 				reader := bytes.NewReader(imgBytes)
-				filename, err := uc.UploadImage(reader, int64(len(imgBytes)), "image/png")
+				filename, err := uc.UploadImage(context.Background(), reader, int64(len(imgBytes)), "image/png")
 				require.NoError(t, err)
 				// Use the actual uploaded filename for deletion
 				tt.fileName = filename
 			}
 
 			// act
-			err := uc.DeleteFile(tt.fileName)
+			err := uc.DeleteFile(context.Background(), tt.fileName)
 
 			// assert
 			if tt.expectError {

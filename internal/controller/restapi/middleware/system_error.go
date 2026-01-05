@@ -11,6 +11,7 @@ import (
 	"gct/internal/domain"
 	"gct/internal/usecase"
 	"gct/pkg/logger"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -30,7 +31,7 @@ func (m *SystemErrorMiddleware) Recovery() gin.HandlerFunc {
 		start := time.Now()
 		stack := string(debug.Stack())
 
-		m.logger.Errorw("panic recovered",
+		m.logger.WithContext(c.Request.Context()).Errorw("panic recovered",
 			"error", recovered,
 			"stack", stack,
 		)
@@ -112,7 +113,7 @@ func (m *SystemErrorMiddleware) saveError(c *gin.Context, errVal any, stack *str
 		defer cancel()
 
 		if err := m.uc.Audit.SystemError.Create(ctx, val); err != nil {
-			m.logger.Errorw("failed to persist system error", zap.Error(err), "original_error", val.Message)
+			m.logger.WithContext(ctx).Errorw("failed to persist system error", zap.Error(err), "original_error", val.Message)
 		}
 	}(sysErr)
 }

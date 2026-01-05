@@ -23,25 +23,33 @@ WHERE deleted_at IS NULL;
 
 -- name: CreateUser :one
 INSERT INTO users (
+    role_id,
     username,
+    email,
     phone,
     password_hash,
     salt,
+    attributes,
+    active,
     created_at,
     updated_at
 ) VALUES (
-    $1, $2, $3, $4, $5, $6
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
 )
 RETURNING *;
 
 -- name: UpdateUser :exec
 UPDATE users
 SET 
-    username = COALESCE($2, username),
-    phone = COALESCE($3, phone),
-    password_hash = COALESCE($4, password_hash),
-    salt = COALESCE($5, salt),
-    updated_at = $6
+    role_id = COALESCE($2, role_id),
+    username = COALESCE($3, username),
+    email = COALESCE($4, email),
+    phone = COALESCE($5, phone),
+    password_hash = COALESCE($6, password_hash),
+    salt = COALESCE($7, salt),
+    attributes = COALESCE($8, attributes),
+    active = COALESCE($9, active),
+    updated_at = $10
 WHERE id = $1 AND deleted_at IS NULL;
 
 -- name: DeleteUser :exec

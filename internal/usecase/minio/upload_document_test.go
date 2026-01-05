@@ -2,6 +2,7 @@ package minio_test
 
 import (
 	"bytes"
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -162,7 +163,7 @@ func TestUseCase_UploadDoc_TableDriven(t *testing.T) {
 			reader := bytes.NewReader(tt.docData)
 
 			// act
-			filename, err := uc.UploadDoc(reader, tt.docSize, tt.contentType)
+			filename, err := uc.UploadDoc(context.Background(), reader, tt.docSize, tt.contentType)
 
 			// assert
 			if tt.expectError {

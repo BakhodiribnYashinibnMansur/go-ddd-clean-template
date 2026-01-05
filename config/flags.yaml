@@ -1,0 +1,136 @@
+# Feature Flags Configuration
+# This file defines all feature flags for the application
+
+# Example: Simple boolean flag
+enable-new-ui:
+  variations:
+    true-var: true
+    false-var: false
+  defaultRule:
+    variation: false-var
+  targeting:
+    - name: "Enable for beta users"
+      query: beta eq true
+      variation: true-var
+    - name: "Enable for specific users"
+      query: email in ["user1@example.com", "user2@example.com"]
+      variation: true-var
+
+# Example: Percentage rollout
+enable-new-feature:
+  variations:
+    enabled: true
+    disabled: false
+  defaultRule:
+    variation: disabled
+    progressiveRollout:
+      initial:
+        variation: enabled
+        percentage: 10  # Start with 10% of users
+      end:
+        variation: enabled
+        percentage: 100  # Eventually roll out to 100%
+
+# Example: String variation (e.g., for A/B testing)
+homepage-variant:
+  variations:
+    variant-a: "variant-a"
+    variant-b: "variant-b"
+    variant-c: "variant-c"
+  defaultRule:
+    variation: variant-a
+    progressiveRollout:
+      initial:
+        variation: variant-a
+        percentage: 34
+      end:
+        variation: variant-b
+        percentage: 33
+
+# Example: Integer variation (e.g., for rate limiting)
+api-rate-limit:
+  variations:
+    low: 100
+    medium: 500
+    high: 1000
+  defaultRule:
+    variation: medium
+  targeting:
+    - name: "Premium users get higher limits"
+      query: plan eq "premium"
+      variation: high
+    - name: "Free users get lower limits"
+      query: plan eq "free"
+      variation: low
+
+# Example: JSON variation (e.g., for complex configuration)
+feature-config:
+  variations:
+    default-config:
+      maxItems: 10
+      enableCache: true
+      timeout: 30
+    premium-config:
+      maxItems: 100
+      enableCache: true
+      timeout: 60
+  defaultRule:
+    variation: default-config
+  targeting:
+    - name: "Premium users get premium config"
+      query: plan eq "premium"
+      variation: premium-config
+
+# Example: Environment-based flag
+enable-debug-mode:
+  variations:
+    enabled: true
+    disabled: false
+  defaultRule:
+    variation: disabled
+  targeting:
+    - name: "Enable in development"
+      query: environment eq "development"
+      variation: enabled
+
+# Example: Country-based targeting
+enable-payment-method:
+  variations:
+    enabled: true
+    disabled: false
+  defaultRule:
+    variation: disabled
+  targeting:
+    - name: "Enable for US users"
+      query: country eq "US"
+      variation: enabled
+    - name: "Enable for UK users"
+      query: country eq "UK"
+      variation: enabled
+
+# Example: Time-based flag (scheduled feature)
+enable-holiday-theme:
+  variations:
+    enabled: true
+    disabled: false
+  defaultRule:
+    variation: disabled
+  scheduling:
+    - start: 2026-12-01T00:00:00Z
+      end: 2026-12-31T23:59:59Z
+      variation: enabled
+
+# Example: User role-based flag
+enable-admin-panel:
+  variations:
+    enabled: true
+    disabled: false
+  defaultRule:
+    variation: disabled
+  targeting:
+    - name: "Enable for admins"
+      query: role eq "admin"
+      variation: enabled
+    - name: "Enable for moderators"
+      query: role eq "moderator"
+      variation: enabled

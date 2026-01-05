@@ -6,6 +6,7 @@ import (
 	"gct/internal/controller/restapi/response"
 	"gct/internal/controller/restapi/util"
 	"gct/internal/domain/mock"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -33,7 +34,7 @@ func (h *Controller) UploadVideo(ctx *gin.Context) {
 	}
 	defer fileMultipart.Close()
 
-	videoFileName, err := h.useCase.Minio.UploadVideo(fileMultipart, file.Size, fileContentType)
+	videoFileName, err := h.useCase.Minio.UploadVideo(ctx.Request.Context(), fileMultipart, file.Size, fileContentType)
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusBadRequest, err, nil, false)
 		return

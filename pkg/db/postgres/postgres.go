@@ -8,7 +8,9 @@ import (
 
 	"gct/config"
 	"gct/pkg/logger"
+
 	"github.com/Masterminds/squirrel"
+	"github.com/exaring/otelpgx"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -35,6 +37,7 @@ func New(ctx context.Context, env string, cfg config.Postgres, l logger.Log, opt
 	}
 
 	poolConfig.MaxConns = int32(cfg.PoolMax)
+	poolConfig.ConnConfig.Tracer = otelpgx.NewTracer()
 	l.Infof("Postgres Config: Host=%s Port=%d User=%s DB=%s PoolMax=%d", cfg.Host, cfg.Port, cfg.User, cfg.Name, cfg.PoolMax)
 	for _, opt := range opts {
 		opt(poolConfig)

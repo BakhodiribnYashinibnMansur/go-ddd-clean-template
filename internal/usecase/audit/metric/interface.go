@@ -9,5 +9,5 @@ import (
 type UseCaseI interface {
 	Create(ctx context.Context, in *domain.FunctionMetric) error
 	Gets(ctx context.Context, in *domain.FunctionMetricsFilter) ([]*domain.FunctionMetric, int, error)
-	MeasureSafe(name string) func()
+	MeasureSafe(ctx context.Context, name string) func()
 }

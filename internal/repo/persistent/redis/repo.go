@@ -1,6 +1,8 @@
 package redis
 
 import (
+	"context"
+
 	"gct/internal/repo/persistent/redis/bitmap"
 	"gct/internal/repo/persistent/redis/geospatial"
 	"gct/internal/repo/persistent/redis/hyperloglog"
@@ -8,10 +10,12 @@ import (
 	"gct/internal/repo/persistent/redis/store"
 	"gct/internal/repo/persistent/redis/stream"
 	"gct/pkg/logger"
+
 	"github.com/redis/go-redis/v9"
 )
 
 type Repo struct {
+	Client        *redis.Client
 	Primitive     *store.Primitives
 	Array         *store.Arrays
 	HashTable     *store.HashTables
@@ -29,6 +33,7 @@ type Repo struct {
 func New(redisConn *redis.Client, logger logger.Log) *Repo {
 	s := store.New(redisConn)
 	return &Repo{
+		Client:        redisConn,
 		Primitive:     s.Primitive,
 		Array:         s.Array,
 		HashTable:     s.HashTable,
@@ -42,4 +47,8 @@ func New(redisConn *redis.Client, logger logger.Log) *Repo {
 		HyperLogLog:   hyperloglog.New(redisConn),
 		Bitmap:        bitmap.New(redisConn),
 	}
+}
+
+func (r *Repo) Ping(ctx context.Context) error {
+	return r.Client.Ping(ctx).Err()
 }

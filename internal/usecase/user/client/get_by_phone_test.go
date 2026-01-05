@@ -7,7 +7,8 @@ import (
 	"gct/internal/domain"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/mock"
+"github.com/stretchr/testify/require"
 )
 
 func TestUseCase_GetByPhone_TableDriven(t *testing.T) {
@@ -158,7 +159,7 @@ func TestUseCase_GetByPhone_TableDriven(t *testing.T) {
 
 			// Only mock repo call if phone is not empty (validation passes)
 			if tt.phone != "" {
-				clientRepo.On("GetByPhone", ctx, tt.phone).Return(tt.mockUser, tt.repoError)
+				clientRepo.On("GetByPhone", mock.Anything, tt.phone).Return(tt.mockUser, tt.repoError)
 			}
 
 			// act

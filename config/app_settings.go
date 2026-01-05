@@ -13,8 +13,9 @@ type (
 
 	// HTTP -.
 	HTTP struct {
-		Port           string `env:"HTTP_PORT,required"`
-		UsePreforkMode bool   `env:"HTTP_USE_PREFORK_MODE" envDefault:"false"`
+		Port            string `env:"HTTP_PORT,required"`
+		UsePreforkMode  bool   `env:"HTTP_USE_PREFORK_MODE" envDefault:"false"`
+		ShutdownTimeout int64  `env:"HTTP_SHUTDOWN_TIMEOUT" envDefault:"5"` // Seconds
 	}
 
 	// Log -.

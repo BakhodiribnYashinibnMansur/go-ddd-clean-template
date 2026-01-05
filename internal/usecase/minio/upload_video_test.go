@@ -2,6 +2,7 @@ package minio_test
 
 import (
 	"bytes"
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -184,7 +185,7 @@ func TestUseCase_UploadVideo_TableDriven(t *testing.T) {
 			reader := bytes.NewReader(tt.videoData)
 
 			// act
-			filename, err := uc.UploadVideo(reader, tt.videoSize, tt.contentType)
+			filename, err := uc.UploadVideo(context.Background(), reader, tt.videoSize, tt.contentType)
 
 			// assert
 			if tt.expectError {

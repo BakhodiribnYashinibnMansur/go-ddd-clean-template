@@ -8,6 +8,7 @@ import (
 	"gct/internal/controller/restapi/response"
 	"gct/internal/controller/restapi/util"
 	"gct/internal/domain"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -33,7 +34,7 @@ func (c *Controller) RefreshToken(ctx *gin.Context) {
 	// Rotate session
 	out, err := c.u.User.Client.RotateSession(ctx.Request.Context(), &req)
 	if err != nil {
-		response.ControllerResponse(ctx, http.StatusUnauthorized, "invalid refresh token or session", nil, false)
+		response.RespondWithError(ctx, err, http.StatusUnauthorized)
 		return
 	}
 

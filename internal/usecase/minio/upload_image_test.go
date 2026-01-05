@@ -2,6 +2,7 @@ package minio_test
 
 import (
 	"bytes"
+	"context"
 	"image"
 	"image/color"
 	"image/png"
@@ -56,7 +57,7 @@ func TestUseCase_UploadImage_TableDriven(t *testing.T) {
 			validateResult: func(t *testing.T, filename string) {
 				t.Helper()
 				require.NotEmpty(t, filename)
-				require.Contains(t, filename, ".webp")
+				require.Contains(t, filename, ".jpeg")
 				// Should be a UUID filename
 				require.Greater(t, len(filename), 40) // UUID + .webp
 			},
@@ -70,7 +71,7 @@ func TestUseCase_UploadImage_TableDriven(t *testing.T) {
 			validateResult: func(t *testing.T, filename string) {
 				t.Helper()
 				require.NotEmpty(t, filename)
-				require.Contains(t, filename, ".webp")
+				require.Contains(t, filename, ".jpeg")
 			},
 		},
 		{
@@ -82,7 +83,7 @@ func TestUseCase_UploadImage_TableDriven(t *testing.T) {
 			validateResult: func(t *testing.T, filename string) {
 				t.Helper()
 				require.NotEmpty(t, filename)
-				require.Contains(t, filename, ".webp")
+				require.Contains(t, filename, ".jpeg")
 			},
 		},
 		{
@@ -116,7 +117,7 @@ func TestUseCase_UploadImage_TableDriven(t *testing.T) {
 			validateResult: func(t *testing.T, filename string) {
 				t.Helper()
 				require.NotEmpty(t, filename)
-				require.Contains(t, filename, ".webp")
+				require.Contains(t, filename, ".jpeg")
 			},
 		},
 		{
@@ -128,7 +129,7 @@ func TestUseCase_UploadImage_TableDriven(t *testing.T) {
 			validateResult: func(t *testing.T, filename string) {
 				t.Helper()
 				require.NotEmpty(t, filename)
-				require.Contains(t, filename, ".webp")
+				require.Contains(t, filename, ".jpeg")
 			},
 		},
 		{
@@ -140,7 +141,7 @@ func TestUseCase_UploadImage_TableDriven(t *testing.T) {
 			validateResult: func(t *testing.T, filename string) {
 				t.Helper()
 				require.NotEmpty(t, filename)
-				require.Contains(t, filename, ".webp")
+				require.Contains(t, filename, ".jpeg")
 			},
 		},
 		{
@@ -152,7 +153,7 @@ func TestUseCase_UploadImage_TableDriven(t *testing.T) {
 			validateResult: func(t *testing.T, filename string) {
 				t.Helper()
 				require.NotEmpty(t, filename)
-				require.Contains(t, filename, ".webp")
+				require.Contains(t, filename, ".jpeg")
 			},
 		},
 		{
@@ -178,7 +179,7 @@ func TestUseCase_UploadImage_TableDriven(t *testing.T) {
 			reader := bytes.NewReader(tt.imageData)
 
 			// act
-			filename, err := uc.UploadImage(reader, tt.imageSize, tt.contentType)
+			filename, err := uc.UploadImage(context.Background(), reader, tt.imageSize, tt.contentType)
 
 			// assert
 			if tt.expectError {

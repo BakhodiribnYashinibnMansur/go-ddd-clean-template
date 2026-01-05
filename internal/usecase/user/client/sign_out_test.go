@@ -62,7 +62,7 @@ func TestUseCase_SignOut_TableDriven(t *testing.T) {
 				SessionID: tt.sessionID,
 			}
 
-			sessionRepo.On("Revoke", ctx, mock.MatchedBy(func(f *domain.SessionFilter) bool {
+			sessionRepo.On("Revoke", mock.Anything, mock.MatchedBy(func(f *domain.SessionFilter) bool {
 				if tt.validateFilter != nil {
 					tt.validateFilter(t, f)
 				}

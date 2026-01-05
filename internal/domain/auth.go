@@ -32,14 +32,13 @@ type SignUpIn struct {
 
 // SignOutIn represents the input for sign out operation
 type SignOutIn struct {
-	SessionID uuid.UUID `binding:"required" json:"session_id"`
+	SessionID uuid.UUID `json:"session_id" validate:"required"`
 	UserID    uuid.UUID `json:"user_id"`
 }
 
 // RefreshIn represents the input for refresh token operation
 type RefreshIn struct {
-	RefreshToken string    `binding:"required" json:"refresh_token"`
-	SessionID    uuid.UUID `binding:"required" json:"session_id"`
+	SessionID uuid.UUID `json:"session_id" validate:"required"`
 }
 
 // RevokeSessionsIn represents the input for revoking sessions

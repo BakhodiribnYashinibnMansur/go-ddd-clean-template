@@ -5,26 +5,28 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"time"
 
 	"gct/consts"
 	"gct/internal/domain"
 	apperrors "gct/pkg/errors"
+
 	"github.com/google/uuid"
 )
 
 func (u *UseCase) Check(ctx context.Context, userID uuid.UUID, session *domain.Session, path, method string, env map[string]any) (bool, error) {
-	u.logger.Infow("access check started", "user_id", userID, "path", path, "method", method)
+	u.logger.WithContext(ctx).Infow("access check started", "user_id", userID, "path", path, "method", method)
 
 	// 1. Get User
 	user, err := u.repo.Postgres.User.Client.Get(ctx, &domain.UserFilter{ID: &userID})
 	if err != nil {
 		appErr := apperrors.MapRepoToServiceError(ctx, err, apperrors.ErrUserNotFound).WithInput(userID)
-		u.logger.Errorw("access check failed: get user", "error", appErr)
+		u.logger.WithContext(ctx).Errorw("access check failed: get user", "error", appErr)
 		return false, appErr
 	}
 	if user.RoleID == nil {
 		err := apperrors.New(ctx, apperrors.ErrServiceRoleNotFound, "user has no role").WithInput(userID)
-		u.logger.Warnw("access check denied: user has no role", "user_id", userID)
+		u.logger.WithContext(ctx).Warnw("access check denied: user has no role", "user_id", userID)
 		return false, err
 	}
 
@@ -32,20 +34,21 @@ func (u *UseCase) Check(ctx context.Context, userID uuid.UUID, session *domain.S
 	role, err := u.repo.Postgres.Authz.Role.Get(ctx, &domain.RoleFilter{ID: user.RoleID})
 	if err != nil {
 		appErr := apperrors.MapRepoToServiceError(ctx, err, apperrors.ErrServiceRoleNotFound).WithInput(user.RoleID)
-		u.logger.Errorw("access check failed: get role", "error", appErr)
+		u.logger.WithContext(ctx).Errorw("access check failed: get role", "error", appErr)
 		return false, appErr
 	}
 
 	// Allow Admin everywhere
 	if strings.Contains(strings.ToLower(role.Name), "admin") {
-		u.logger.Infow("access check allowed: admin role", "role", role.Name)
+		u.logger.WithContext(ctx).Infow("access check allowed: admin role", "role", role.Name)
+		u.logAudit(ctx, userID, session, path, method, true, "admin allowed", nil)
 		return true, nil
 	}
 
 	// 2. Get Policies for Role (ABAC)
 	policies, err := u.repo.Postgres.Authz.Policy.GetByRole(ctx, *user.RoleID)
 	if err != nil {
-		u.logger.Errorw("access check failed: get policies", "error", err)
+		u.logger.WithContext(ctx).Errorw("access check failed: get policies", "error", err)
 		// Fallback to strict deny if policy fetch fails? Or continue to pure RBAC?
 		// Let's assume strict fail-safe
 		return false, nil
@@ -59,14 +62,16 @@ func (u *UseCase) Check(ctx context.Context, userID uuid.UUID, session *domain.S
 
 		// Condition met, apply effect
 		if policy.Effect == domain.PolicyEffectDeny {
-			u.logger.Infow("access check denied: policy deny", "policy_id", policy.ID)
+			u.logger.WithContext(ctx).Infow("access check denied: policy deny", "policy_id", policy.ID)
+			u.logAudit(ctx, userID, session, path, method, false, "policy deny", &policy.ID)
 			return false, nil
 		}
 		if policy.Effect == domain.PolicyEffectAllow {
 			// Explicit allow from policy?
 			// Usually in hybrid systems, Policy Allow grants access, OR generic RBAC grants access.
 			// But Policy Deny overrides everything.
-			u.logger.Infow("access check allowed: policy allow", "policy_id", policy.ID)
+			u.logger.WithContext(ctx).Infow("access check allowed: policy allow", "policy_id", policy.ID)
+			u.logAudit(ctx, userID, session, path, method, true, "policy allow", &policy.ID)
 			return true, nil
 		}
 	}
@@ -74,7 +79,7 @@ func (u *UseCase) Check(ctx context.Context, userID uuid.UUID, session *domain.S
 	// 3. Get Permissions for Role (RBAC)
 	perms, err := u.repo.Postgres.Authz.Role.GetPermissions(ctx, *user.RoleID)
 	if err != nil {
-		u.logger.Errorw("access check failed: get permissions", "error", err)
+		u.logger.WithContext(ctx).Errorw("access check failed: get permissions", "error", err)
 		// Don't return error to user, just deny access (fail safe)
 		return false, nil
 	}
@@ -83,7 +88,7 @@ func (u *UseCase) Check(ctx context.Context, userID uuid.UUID, session *domain.S
 	for _, perm := range perms {
 		scopes, err := u.repo.Postgres.Authz.Permission.GetScopes(ctx, perm.ID)
 		if err != nil {
-			u.logger.Errorw("access check failed: get scopes", "error", err, "perm_id", perm.ID)
+			u.logger.WithContext(ctx).Errorw("access check failed: get scopes", "error", err, "perm_id", perm.ID)
 			continue
 		}
 
@@ -96,7 +101,8 @@ func (u *UseCase) Check(ctx context.Context, userID uuid.UUID, session *domain.S
 			// Check Path (Exact match or Prefix match if needed)
 			// For simplicity: Exact match or simple wildcard
 			if scope.Path == path || scope.Path == "*" {
-				u.logger.Infow("access check allowed: permission granted", "perm", perm.Name, "scope", scope.Path)
+				u.logger.WithContext(ctx).Infow("access check allowed: permission granted", "perm", perm.Name, "scope", scope.Path)
+				u.logAudit(ctx, userID, session, path, method, true, "permission granted: "+perm.Name, nil)
 				return true, nil
 			}
 
@@ -104,15 +110,45 @@ func (u *UseCase) Check(ctx context.Context, userID uuid.UUID, session *domain.S
 			if strings.HasSuffix(scope.Path, "*") {
 				prefix := strings.TrimSuffix(scope.Path, "*")
 				if strings.HasPrefix(path, prefix) {
-					u.logger.Infow("access check allowed: permission granted (wildcard)", "perm", perm.Name, "scope", scope.Path)
+					u.logger.WithContext(ctx).Infow("access check allowed: permission granted (wildcard)", "perm", perm.Name, "scope", scope.Path)
+					u.logAudit(ctx, userID, session, path, method, true, "permission granted: "+perm.Name, nil)
 					return true, nil
 				}
 			}
 		}
 	}
 
-	u.logger.Infow("access check denied: insufficient permissions/policies", "role", role.Name)
+	u.logger.WithContext(ctx).Infow("access check denied: insufficient permissions/policies", "role", role.Name)
+	u.logAudit(ctx, userID, session, path, method, false, "insufficient permissions", nil)
 	return false, nil
+}
+
+func (u *UseCase) logAudit(_ context.Context, userID uuid.UUID, session *domain.Session, path, method string, success bool, decision string, policyID *uuid.UUID) {
+	al := &domain.AuditLog{
+		ID:        uuid.New(),
+		UserID:    &userID,
+		Action:    domain.AuditActionPolicyEvaluated,
+		Platform:  nil, // Can be inferred from UA if needed
+		Decision:  &decision,
+		PolicyID:  policyID,
+		Success:   success,
+		CreatedAt: time.Now(),
+		Metadata: map[string]any{
+			"path":   path,
+			"method": method,
+		},
+	}
+
+	if session != nil {
+		al.SessionID = &session.ID
+	}
+
+	// Async save
+	go func() {
+		bgCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		_ = u.repo.Postgres.Audit.Log.Create(bgCtx, al)
+	}()
 }
 
 func evaluateConditions(conditions map[string]any, env map[string]any) bool {

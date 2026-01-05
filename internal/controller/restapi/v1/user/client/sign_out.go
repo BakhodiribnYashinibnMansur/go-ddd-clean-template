@@ -8,6 +8,7 @@ import (
 	"gct/internal/controller/restapi/response"
 	"gct/internal/controller/restapi/util"
 	"gct/internal/domain"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -26,7 +27,7 @@ import (
 func (c *Controller) SignOut(ctx *gin.Context) {
 	userId, err := util.GetUserID(ctx)
 	if err != nil {
-		response.ControllerResponse(ctx, http.StatusUnauthorized, "unauthorized", nil, false)
+		response.RespondWithError(ctx, err, http.StatusUnauthorized)
 		return
 	}
 
@@ -45,7 +46,7 @@ func (c *Controller) SignOut(ctx *gin.Context) {
 
 	err = c.u.User.Client.SignOut(ctx.Request.Context(), &req)
 	if err != nil {
-		response.ControllerResponse(ctx, http.StatusInternalServerError, err, nil, false)
+		response.RespondWithError(ctx, err, http.StatusInternalServerError)
 		return
 	}
 

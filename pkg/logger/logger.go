@@ -1,12 +1,21 @@
 package logger
 
 import (
+	"context"
 	"os"
 	"strings"
 	"sync"
 
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+)
+
+type ctxKey string
+
+const (
+	// KeyRequestID is the context key for Request ID.
+	KeyRequestID ctxKey = "request_id"
 )
 
 var (
@@ -39,6 +48,7 @@ type Log interface {
 
 	WithField(key string, value any) *Logger
 	WithFields(fields map[string]any) *Logger
+	WithContext(ctx context.Context) Log
 	GetZap() *zap.Logger
 	Sync()
 }
@@ -99,6 +109,30 @@ func New(level string) *Logger {
 	return &Logger{
 		Entity: baseLogger.Sugar(),
 	}
+}
+
+// WithContext returns a logger with context fields (Request ID, Trace ID, Span ID).
+func (log *Logger) WithContext(ctx context.Context) Log {
+	var args []interface{}
+	if ctx == nil {
+		return log
+	}
+
+	if id, ok := ctx.Value(KeyRequestID).(string); ok {
+		args = append(args, zap.String("request_id", id))
+	}
+
+	span := trace.SpanFromContext(ctx)
+	if span.SpanContext().IsValid() {
+		args = append(args, zap.String("trace_id", span.SpanContext().TraceID().String()))
+		args = append(args, zap.String("span_id", span.SpanContext().SpanID().String()))
+	}
+
+	if len(args) > 0 {
+		return &Logger{Entity: log.Entity.With(args...)}
+	}
+
+	return log
 }
 
 // WithField creates a logger with an additional field.

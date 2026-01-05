@@ -19,6 +19,7 @@ type Cache struct {
 	lfu      *pkgCache.LFUCache
 	slru     *pkgCache.SLRUCache
 	clock    *pkgCache.ClockCache
+	jitter   *Jitter
 }
 
 func NewCache(redis *redis.Repo, logger logger.Log) *Cache {
@@ -39,5 +40,6 @@ func NewCache(redis *redis.Repo, logger logger.Log) *Cache {
 		lfu:      pkgCache.NewLFUCache(1000),
 		slru:     pkgCache.NewSLRUCache(1000, 0.8),
 		clock:    pkgCache.NewClockCache(1000),
+		jitter:   NewJitter(redis, logger),
 	}
 }

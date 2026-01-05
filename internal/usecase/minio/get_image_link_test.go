@@ -2,6 +2,7 @@ package minio_test
 
 import (
 	"bytes"
+	"context"
 	"strings"
 	"testing"
 
@@ -20,23 +21,23 @@ func TestUseCase_GetImageLink_TableDriven(t *testing.T) {
 	}{
 		{
 			name:        "success_get_existing_image_link",
-			fileName:    "test-image.webp",
+			fileName:    "test-image.jpeg",
 			setupUpload: true,
 			expectError: false,
 			validateResult: func(t *testing.T, link string) {
 				require.NotEmpty(t, link)
-				require.Contains(t, link, ".webp")
+				require.Contains(t, link, ".jpeg")
 				require.Contains(t, link, "http")
 			},
 		},
 		{
 			name:        "success_get_nonexistent_image_link",
-			fileName:    "nonexistent-image.webp",
+			fileName:    "nonexistent-image.jpeg",
 			setupUpload: false,
 			expectError: false, // Should still generate a link even if file doesn't exist
 			validateResult: func(t *testing.T, link string) {
 				require.NotEmpty(t, link)
-				require.Contains(t, link, ".webp")
+				require.Contains(t, link, ".jpeg")
 				require.Contains(t, link, "http")
 			},
 		},
@@ -51,47 +52,47 @@ func TestUseCase_GetImageLink_TableDriven(t *testing.T) {
 		},
 		{
 			name:        "success_get_with_extension",
-			fileName:    "test-file-with-dashes.webp",
+			fileName:    "test-file-with-dashes.jpeg",
 			setupUpload: true,
 			expectError: false,
 			validateResult: func(t *testing.T, link string) {
 				require.NotEmpty(t, link)
-				require.Contains(t, link, ".webp")
+				require.Contains(t, link, ".jpeg")
 			},
 		},
 		{
 			name:        "success_get_special_chars",
-			fileName:    "test_file_123.webp",
+			fileName:    "test_file_123.jpeg",
 			setupUpload: true,
 			expectError: false,
 			validateResult: func(t *testing.T, link string) {
 				require.NotEmpty(t, link)
-				require.Contains(t, link, ".webp")
+				require.Contains(t, link, ".jpeg")
 			},
 		},
 		{
 			name:        "error_filename_with_path",
-			fileName:    "path/to/file.webp",
+			fileName:    "path/to/file.jpeg",
 			setupUpload: false,
 			expectError: false, // GetImageLink doesn't validate filenames
 			validateResult: func(t *testing.T, link string) {
 				require.NotEmpty(t, link)
-				require.Contains(t, link, ".webp")
+				require.Contains(t, link, ".jpeg")
 			},
 		},
 		{
 			name:        "error_filename_with_slash",
-			fileName:    "file/name.webp",
+			fileName:    "file/name.jpeg",
 			setupUpload: false,
 			expectError: false, // GetImageLink doesn't validate filenames
 			validateResult: func(t *testing.T, link string) {
 				require.NotEmpty(t, link)
-				require.Contains(t, link, ".webp")
+				require.Contains(t, link, ".jpeg")
 			},
 		},
 		{
 			name:        "success_get_long_filename",
-			fileName:    strings.Repeat("a", 50) + ".webp",
+			fileName:    strings.Repeat("a", 50) + ".jpeg",
 			setupUpload: true,
 			expectError: false,
 			validateResult: func(t *testing.T, link string) {
@@ -110,22 +111,22 @@ func TestUseCase_GetImageLink_TableDriven(t *testing.T) {
 		},
 		{
 			name:        "success_get_uuid_filename",
-			fileName:    "550e8400-e29b-41d4-a716-446655440000.webp",
+			fileName:    "550e8400-e29b-41d4-a716-446655440000.jpeg",
 			setupUpload: true,
 			expectError: false,
 			validateResult: func(t *testing.T, link string) {
 				require.NotEmpty(t, link)
-				require.Contains(t, link, ".webp")
+				require.Contains(t, link, ".jpeg")
 			},
 		},
 		{
 			name:        "success_get_numeric_filename",
-			fileName:    "123456789.webp",
+			fileName:    "123456789.jpeg",
 			setupUpload: true,
 			expectError: false,
 			validateResult: func(t *testing.T, link string) {
 				require.NotEmpty(t, link)
-				require.Contains(t, link, ".webp")
+				require.Contains(t, link, ".jpeg")
 			},
 		},
 	}
@@ -142,14 +143,14 @@ func TestUseCase_GetImageLink_TableDriven(t *testing.T) {
 			if tt.setupUpload {
 				imgBytes := createTestImage()
 				reader := bytes.NewReader(imgBytes)
-				filename, err := uc.UploadImage(reader, int64(len(imgBytes)), "image/png")
+				filename, err := uc.UploadImage(context.Background(), reader, int64(len(imgBytes)), "image/png")
 				require.NoError(t, err)
 				// Use the actual uploaded filename for getting link
 				tt.fileName = filename
 			}
 
 			// act
-			link, err := uc.GetImageLink(tt.fileName)
+			link, err := uc.GetImageLink(context.Background(), tt.fileName)
 
 			// assert
 			if tt.expectError {

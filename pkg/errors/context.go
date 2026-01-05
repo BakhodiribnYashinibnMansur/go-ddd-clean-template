@@ -1,6 +1,8 @@
 package errors
 
 import (
+	"context"
+	"fmt"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -9,6 +11,72 @@ import (
 const (
 	unknownValue = "unknown"
 )
+
+// ErrorContext provides additional context for errors
+type ErrorContext struct {
+	UserID     string         `json:"user_id,omitempty"`
+	RequestID  string         `json:"request_id,omitempty"`
+	TraceID    string         `json:"trace_id,omitempty"`
+	SpanID     string         `json:"span_id,omitempty"`
+	Operation  string         `json:"operation,omitempty"`
+	Resource   string         `json:"resource,omitempty"`
+	ResourceID string         `json:"resource_id,omitempty"`
+	IPAddress  string         `json:"ip_address,omitempty"`
+	UserAgent  string         `json:"user_agent,omitempty"`
+	Path       string         `json:"path,omitempty"`
+	Method     string         `json:"method,omitempty"`
+	Metadata   map[string]any `json:"metadata,omitempty"`
+}
+
+// ContextKey type for context keys
+type ContextKey string
+
+const (
+	ContextKeyErrorContext ContextKey = "error_context"
+	ContextKeyUserID       ContextKey = "user_id"
+	ContextKeyRequestID    ContextKey = "request_id"
+	ContextKeyTraceID      ContextKey = "trace_id"
+	ContextKeySpanID       ContextKey = "span_id"
+)
+
+// GetErrorContext extracts ErrorContext from context
+func GetErrorContext(ctx context.Context) *ErrorContext {
+	if ctx == nil {
+		return &ErrorContext{
+			Metadata: make(map[string]any),
+		}
+	}
+
+	// Try to get existing error context
+	if ec, ok := ctx.Value(ContextKeyErrorContext).(*ErrorContext); ok {
+		return ec
+	}
+
+	// Build from individual context values
+	ec := &ErrorContext{
+		Metadata: make(map[string]any),
+	}
+
+	if userID, ok := ctx.Value(ContextKeyUserID).(string); ok {
+		ec.UserID = userID
+	}
+	if reqID, ok := ctx.Value(ContextKeyRequestID).(string); ok {
+		ec.RequestID = reqID
+	}
+	if traceID, ok := ctx.Value(ContextKeyTraceID).(string); ok {
+		ec.TraceID = traceID
+	}
+	if spanID, ok := ctx.Value(ContextKeySpanID).(string); ok {
+		ec.SpanID = spanID
+	}
+
+	return ec
+}
+
+// WithErrorContext adds ErrorContext to context
+func WithErrorContext(ctx context.Context, ec *ErrorContext) context.Context {
+	return context.WithValue(ctx, ContextKeyErrorContext, ec)
+}
 
 // WithSource adds source file and function information to error
 // This helps track where the error originated in the codebase
@@ -90,4 +158,143 @@ func AutoSource(err *AppError) *AppError {
 	return err.
 		WithField("file", file).
 		WithField("function", function)
+}
+
+// WithOperation adds operation name to error context
+func (e *AppError) WithOperation(operation string) *AppError {
+	if e.Fields == nil {
+		e.Fields = make(map[string]any)
+	}
+	e.Fields["operation"] = operation
+	return e
+}
+
+// WithResource adds resource information to error
+func (e *AppError) WithResource(resource, resourceID string) *AppError {
+	if e.Fields == nil {
+		e.Fields = make(map[string]any)
+	}
+	e.Fields["resource"] = resource
+	if resourceID != "" {
+		e.Fields["resource_id"] = resourceID
+	}
+	return e
+}
+
+// WithContext enriches error with context information
+func (e *AppError) WithContext(ctx context.Context) *AppError {
+	ec := GetErrorContext(ctx)
+
+	if e.Fields == nil {
+		e.Fields = make(map[string]any)
+	}
+
+	if ec.UserID != "" {
+		e.Fields["user_id"] = ec.UserID
+	}
+	if ec.RequestID != "" {
+		e.Fields["request_id"] = ec.RequestID
+	}
+	if ec.TraceID != "" {
+		e.Fields["trace_id"] = ec.TraceID
+	}
+	if ec.SpanID != "" {
+		e.Fields["span_id"] = ec.SpanID
+	}
+	if ec.Operation != "" {
+		e.Fields["operation"] = ec.Operation
+	}
+	if ec.Resource != "" {
+		e.Fields["resource"] = ec.Resource
+	}
+	if ec.ResourceID != "" {
+		e.Fields["resource_id"] = ec.ResourceID
+	}
+	if ec.IPAddress != "" {
+		e.Fields["ip_address"] = ec.IPAddress
+	}
+	if ec.UserAgent != "" {
+		e.Fields["user_agent"] = ec.UserAgent
+	}
+	if ec.Path != "" {
+		e.Fields["path"] = ec.Path
+	}
+	if ec.Method != "" {
+		e.Fields["method"] = ec.Method
+	}
+
+	// Add metadata
+	for k, v := range ec.Metadata {
+		e.Fields[k] = v
+	}
+
+	return e
+}
+
+// WithMetadata adds metadata to error
+func (e *AppError) WithMetadata(key string, value any) *AppError {
+	if e.Fields == nil {
+		e.Fields = make(map[string]any)
+	}
+	e.Fields[key] = value
+	return e
+}
+
+// WithTag adds a tag to error
+func (e *AppError) WithTag(tag string) *AppError {
+	if e.Fields == nil {
+		e.Fields = make(map[string]any)
+	}
+
+	tags, ok := e.Fields["tags"].([]string)
+	if !ok {
+		tags = []string{}
+	}
+
+	tags = append(tags, tag)
+	e.Fields["tags"] = tags
+
+	return e
+}
+
+// GetMetadata returns error metadata
+func (e *AppError) GetMetadata() ErrorMetadata {
+	meta := GetErrorMetadata(e.Type)
+
+	// Override with custom data from Fields if present
+	if e.Fields != nil {
+		if tags, ok := e.Fields["tags"].([]string); ok {
+			meta.Tags = tags
+		}
+		meta.CustomData = e.Fields
+	}
+
+	return meta
+}
+
+// IsRetryable checks if this error is retryable
+func (e *AppError) IsRetryable() bool {
+	return IsRetryable(e.Type)
+}
+
+// GetSeverity returns the severity of this error
+func (e *AppError) GetSeverity() ErrorSeverity {
+	return GetSeverity(e.Type)
+}
+
+// GetCategory returns the category of this error
+func (e *AppError) GetCategory() ErrorCategory {
+	return GetCategory(e.Type)
+}
+
+// String returns a formatted string representation
+func (e *AppError) String() string {
+	meta := e.GetMetadata()
+	return fmt.Sprintf("[%s][%s][%s] %s: %s",
+		meta.Severity,
+		meta.Category,
+		e.Code,
+		e.Type,
+		e.Message,
+	)
 }

@@ -7,21 +7,28 @@ import (
 	"gct/internal/domain"
 	apperrors "gct/pkg/errors"
 	"gct/pkg/jwt"
+	"gct/pkg/validator"
+
 	"github.com/google/uuid"
 )
 
 func (uc *UseCase) SignIn(ctx context.Context, in *domain.SignInIn) (*domain.SignInOut, error) {
-	uc.logger.Infow("user sign in started", "phone", in.Phone)
+	uc.logger.WithContext(ctx).Infow("user sign in started", "phone", in.Phone)
+
+	// Validate input
+	if err := validator.ValidateStruct(ctx, in); err != nil {
+		return nil, err
+	}
 
 	user, err := uc.repo.Postgres.User.Client.GetByPhone(ctx, in.Phone)
 	if err != nil {
-		uc.logger.Errorw("user sign in failed: get by phone", "error", err)
+		uc.logger.WithContext(ctx).Errorw("user sign in failed: get by phone", "error", err)
 		return nil, apperrors.MapRepoToServiceError(ctx, err).WithInput(in)
 	}
 
 	if !user.ComparePassword(in.Password) {
 		err := domain.ErrInvalidPassword
-		uc.logger.Errorw("user sign in failed: invalid password", "error", err)
+		uc.logger.WithContext(ctx).Errorw("user sign in failed: invalid password", "error", err)
 		return nil, apperrors.MapRepoToServiceError(ctx, err).WithInput(in)
 	}
 
@@ -41,7 +48,7 @@ func (uc *UseCase) SignIn(ctx context.Context, in *domain.SignInIn) (*domain.Sig
 		uc.cfg.JWT.RefreshTTL,
 	)
 	if err != nil {
-		uc.logger.Errorw("user sign in failed: generate refresh token", "error", err)
+		uc.logger.WithContext(ctx).Errorw("user sign in failed: generate refresh token", "error", err)
 		return nil, apperrors.MapRepoToServiceError(ctx, err).WithInput(in)
 	}
 
@@ -58,7 +65,7 @@ func (uc *UseCase) SignIn(ctx context.Context, in *domain.SignInIn) (*domain.Sig
 
 	err = uc.repo.Postgres.User.SessionRepo.Create(ctx, session)
 	if err != nil {
-		uc.logger.Errorw("user sign in failed: create session", "error", err)
+		uc.logger.WithContext(ctx).Errorw("user sign in failed: create session", "error", err)
 		return nil, apperrors.MapRepoToServiceError(ctx, err).WithInput(in)
 	}
 
@@ -72,11 +79,11 @@ func (uc *UseCase) SignIn(ctx context.Context, in *domain.SignInIn) (*domain.Sig
 		PrivateKey: uc.privateKey,
 	})
 	if err != nil {
-		uc.logger.Errorw("user sign in failed: generate access token", "error", err)
+		uc.logger.WithContext(ctx).Errorw("user sign in failed: generate access token", "error", err)
 		return nil, apperrors.MapRepoToServiceError(ctx, err).WithInput(in)
 	}
 
-	uc.logger.Infow("user sign in success", "user_id", user.ID, "session_id", sessionID)
+	uc.logger.WithContext(ctx).Infow("user sign in success", "user_id", user.ID, "session_id", sessionID)
 	return &domain.SignInOut{
 		UserID:       user.ID,
 		SessionID:    sessionID,

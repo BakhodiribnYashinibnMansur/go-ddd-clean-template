@@ -101,7 +101,7 @@ func TestPrimitive_SetGet(t *testing.T) {
 			testKey := uuid.New().String()
 
 			// act
-			err := p.Set(testKey, tt.value, tt.ttl)
+			err := p.Set(t.Context(), testKey, tt.value, tt.ttl)
 
 			// assert
 			if tt.expectedError {
@@ -111,7 +111,7 @@ func TestPrimitive_SetGet(t *testing.T) {
 				}
 			} else {
 				require.NoError(t, err)
-				got, err := p.Get(testKey)
+				got, err := p.Get(t.Context(), testKey)
 				require.NoError(t, err)
 				assert.Equal(t, tt.value, got)
 			}
@@ -127,10 +127,10 @@ func TestPrimitive_Integers(t *testing.T) {
 	key := uuid.New().String()
 	val := int64(12345)
 
-	err := p.Set(key, val, time.Minute)
+	err := p.Set(t.Context(), key, val, time.Minute)
 	require.NoError(t, err)
 
-	got, err := p.Get(key)
+	got, err := p.Get(t.Context(), key)
 	require.NoError(t, err)
 	assert.Equal(t, val, got)
 }
@@ -143,13 +143,13 @@ func TestPrimitive_Delete(t *testing.T) {
 	key := uuid.New().String()
 	val := "to_delete"
 
-	err := p.Set(key, val, time.Minute)
+	err := p.Set(t.Context(), key, val, time.Minute)
 	require.NoError(t, err)
 
-	err = p.Delete(key)
+	err = p.Delete(t.Context(), key)
 	require.NoError(t, err)
 
-	_, err = p.Get(key)
+	_, err = p.Get(t.Context(), key)
 	assert.Error(t, err)
 	assert.Equal(t, redis.Nil, err)
 }
@@ -162,15 +162,15 @@ func TestPrimitive_Pop(t *testing.T) {
 	key := uuid.New().String()
 	val := "pop_me"
 
-	err := p.Set(key, val, time.Minute)
+	err := p.Set(t.Context(), key, val, time.Minute)
 	require.NoError(t, err)
 
-	got, err := p.Pop(key)
+	got, err := p.Pop(t.Context(), key)
 	require.NoError(t, err)
 	assert.Equal(t, val, got)
 
 	// Should be deleted
-	exists, err := p.Exists(key)
+	exists, err := p.Exists(t.Context(), key)
 	require.NoError(t, err)
 	assert.False(t, exists)
 }
@@ -182,14 +182,14 @@ func TestPrimitive_Exists(t *testing.T) {
 	p := NewPrimitive[string](client)
 	key := uuid.New().String()
 
-	exists, err := p.Exists(key)
+	exists, err := p.Exists(t.Context(), key)
 	require.NoError(t, err)
 	assert.False(t, exists)
 
-	err = p.Set(key, "val", time.Minute)
+	err = p.Set(t.Context(), key, "val", time.Minute)
 	require.NoError(t, err)
 
-	exists, err = p.Exists(key)
+	exists, err = p.Exists(t.Context(), key)
 	require.NoError(t, err)
 	assert.True(t, exists)
 }
@@ -208,11 +208,11 @@ func TestPrimitive_Scan(t *testing.T) {
 	}
 
 	for _, k := range keys {
-		err := p.Set(k, "val", time.Minute)
+		err := p.Set(t.Context(), k, "val", time.Minute)
 		require.NoError(t, err)
 	}
 
-	foundKeys, err := p.Scan(prefix + "*")
+	foundKeys, err := p.Scan(t.Context(), prefix+"*")
 	require.NoError(t, err)
 	assert.Len(t, foundKeys, 3)
 	assert.ElementsMatch(t, keys, foundKeys)

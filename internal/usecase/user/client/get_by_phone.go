@@ -9,19 +9,19 @@ import (
 
 // GetByPhone gets a user by phone.
 func (uc *UseCase) GetByPhone(ctx context.Context, in *domain.UserFilter) (*domain.User, error) {
-	uc.logger.Infow("user get by phone started", "input", in)
+	uc.logger.WithContext(ctx).Infow("user get by phone started", "input", in)
 
 	if in.Phone == nil || *in.Phone == "" {
 		err := apperrors.New(ctx, apperrors.ErrServiceInvalidInput, "phone is required").WithInput(in)
-		uc.logger.Errorw("user get by phone failed: missing phone", "error", err)
+		uc.logger.WithContext(ctx).Errorw("user get by phone failed: missing phone", "error", err)
 		return nil, err
 	}
 
 	user, err := uc.repo.Postgres.User.Client.GetByPhone(ctx, *in.Phone)
 	if err != nil {
-		uc.logger.Errorw("user get by phone failed", "error", err)
+		uc.logger.WithContext(ctx).Errorw("user get by phone failed", "error", err)
 		return nil, apperrors.MapRepoToServiceError(ctx, err).WithInput(in)
 	}
-	uc.logger.Infow("user get by phone success", "user_id", user.ID)
+	uc.logger.WithContext(ctx).Infow("user get by phone success", "user_id", user.ID)
 	return user, nil
 }

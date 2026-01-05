@@ -5,18 +5,24 @@ import (
 
 	"gct/internal/domain"
 	apperrors "gct/pkg/errors"
+	"gct/pkg/validator"
 )
 
 func (uc *UseCase) SignOut(ctx context.Context, in *domain.SignOutIn) error {
-	uc.logger.Infow("user sign out started", "input", in)
+	uc.logger.WithContext(ctx).Infow("user sign out started", "input", in)
+
+	// Validate input
+	if err := validator.ValidateStruct(ctx, in); err != nil {
+		return err
+	}
 
 	sessionID := in.SessionID
 
 	err := uc.repo.Postgres.User.SessionRepo.Revoke(ctx, &domain.SessionFilter{ID: &sessionID})
 	if err != nil {
-		uc.logger.Errorw("user sign out failed: revoke", "error", err)
+		uc.logger.WithContext(ctx).Errorw("user sign out failed: revoke", "error", err)
 		return apperrors.MapRepoToServiceError(ctx, err).WithInput(in)
 	}
-	uc.logger.Infow("user sign out success")
+	uc.logger.WithContext(ctx).Infow("user sign out success")
 	return nil
 }

@@ -6,6 +6,7 @@ import (
 	"gct/internal/controller/restapi/response"
 	"gct/internal/controller/restapi/util"
 	"gct/internal/domain/mock"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -35,9 +36,9 @@ func (h *Controller) UploadDoc(ctx *gin.Context) {
 
 	var docFileName string
 	if fileContentType != pdfContentType {
-		docFileName, err = h.useCase.Minio.UploadDoc(fileMultipart, file.Size, fileContentType)
+		docFileName, err = h.useCase.Minio.UploadDoc(ctx.Request.Context(), fileMultipart, file.Size, fileContentType)
 	} else {
-		docFileName, err = h.useCase.Minio.UploadPDF(fileMultipart, file.Size, fileContentType)
+		docFileName, err = h.useCase.Minio.UploadPDF(ctx.Request.Context(), fileMultipart, file.Size, fileContentType)
 	}
 
 	if err != nil {

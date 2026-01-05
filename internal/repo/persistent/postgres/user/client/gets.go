@@ -5,57 +5,20 @@ import (
 
 	"gct/internal/domain"
 	apperrors "gct/pkg/errors"
+
 	"github.com/Masterminds/squirrel"
 )
 
 func (r *Repo) Gets(ctx context.Context, filter *domain.UsersFilter) ([]*domain.User, int, error) {
-	qb := r.builder.
-		Select("id, role_id, username, email, phone, password_hash, salt, attributes, active, created_at, updated_at, deleted_at, last_seen").
+	// Base query
+	baseQb := r.builder.Select("id, role_id, username, email, phone, password_hash, salt, attributes, active, created_at, updated_at, deleted_at, last_seen").
 		From("users").
 		Where("deleted_at = 0")
 
-	// Apply filter from UserFilter
-	if filter.ID != nil {
-		qb = qb.Where(squirrel.Eq{"id": *filter.ID})
-	}
-	if filter.RoleID != nil {
-		qb = qb.Where(squirrel.Eq{"role_id": *filter.RoleID})
-	}
-	if filter.Username != nil {
-		qb = qb.Where(squirrel.Eq{"username": *filter.Username})
-	}
-	if filter.Phone != nil {
-		qb = qb.Where(squirrel.Eq{"phone": *filter.Phone})
-	}
-	if filter.Email != nil {
-		qb = qb.Where(squirrel.Eq{"email": *filter.Email})
-	}
-	if filter.Active != nil {
-		qb = qb.Where(squirrel.Eq{"active": *filter.Active})
-	}
+	// Apply dynamic filters
+	qb := r.applyFilters(baseQb, &filter.UserFilter)
 
-	// Count qb
-	countQb := r.builder.Select("COUNT(*)").From("users").Where("deleted_at = 0")
-	// Re-apply filters for count
-	if filter.ID != nil {
-		countQb = countQb.Where(squirrel.Eq{"id": *filter.ID})
-	}
-	if filter.RoleID != nil {
-		countQb = countQb.Where(squirrel.Eq{"role_id": *filter.RoleID})
-	}
-	if filter.Username != nil {
-		countQb = countQb.Where(squirrel.Eq{"username": *filter.Username})
-	}
-	if filter.Phone != nil {
-		countQb = countQb.Where(squirrel.Eq{"phone": *filter.Phone})
-	}
-	if filter.Email != nil {
-		countQb = countQb.Where(squirrel.Eq{"email": *filter.Email})
-	}
-	if filter.Active != nil {
-		countQb = countQb.Where(squirrel.Eq{"active": *filter.Active})
-	}
-
+	// Apply Sorting & Pagination
 	if filter.Pagination != nil {
 		if filter.Pagination.SortBy != "" {
 			order := "ASC"
@@ -93,7 +56,11 @@ func (r *Repo) Gets(ctx context.Context, filter *domain.UsersFilter) ([]*domain.
 		users = append(users, &u)
 	}
 
-	// Count
+	// Count Query
+	// Start fresh from builder but reuse filter logic
+	countBaseQb := r.builder.Select("COUNT(*)").From("users").Where("deleted_at = 0")
+	countQb := r.applyFilters(countBaseQb, &filter.UserFilter)
+
 	countSql, countArgs, err := countQb.ToSql()
 	if err != nil {
 		return nil, 0, apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase, "failed to build count query")
@@ -104,4 +71,26 @@ func (r *Repo) Gets(ctx context.Context, filter *domain.UsersFilter) ([]*domain.
 	}
 
 	return users, count, nil
+}
+
+func (r *Repo) applyFilters(qb squirrel.SelectBuilder, filter *domain.UserFilter) squirrel.SelectBuilder {
+	if filter.ID != nil {
+		qb = qb.Where(squirrel.Eq{"id": *filter.ID})
+	}
+	if filter.RoleID != nil {
+		qb = qb.Where(squirrel.Eq{"role_id": *filter.RoleID})
+	}
+	if filter.Username != nil {
+		qb = qb.Where(squirrel.Eq{"username": *filter.Username})
+	}
+	if filter.Phone != nil {
+		qb = qb.Where(squirrel.Eq{"phone": *filter.Phone})
+	}
+	if filter.Email != nil {
+		qb = qb.Where(squirrel.Eq{"email": *filter.Email})
+	}
+	if filter.Active != nil {
+		qb = qb.Where(squirrel.Eq{"active": *filter.Active})
+	}
+	return qb
 }
