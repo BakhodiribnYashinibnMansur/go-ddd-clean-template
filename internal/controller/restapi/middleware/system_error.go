@@ -109,7 +109,7 @@ func (m *SystemErrorMiddleware) saveError(c *gin.Context, errVal any, stack *str
 
 	// Async save
 	go func(val *domain.SystemError) {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 		defer cancel()
 
 		if err := m.uc.Audit.SystemError.Create(ctx, val); err != nil {

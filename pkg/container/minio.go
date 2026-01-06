@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"gct/config"
+
 	minio_client "github.com/minio/minio-go/v7"
 	minio_credentials "github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/testcontainers/testcontainers-go"

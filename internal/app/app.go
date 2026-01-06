@@ -36,7 +36,8 @@ func Run(cfg *config.Config) {
 	l := logger.New(cfg.Log.Level)
 
 	// Context for initialization
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	// Initialize Tracing
 	shutdown, err := telemetry.InitTracer(ctx, cfg.Tracing)
@@ -166,6 +167,7 @@ func Run(cfg *config.Config) {
 
 	// 6. Wait for Termination Signal
 	waitForSignal(l)
+	cancel()
 
 	// 7. Graceful Shutdown
 	shutdownServer(httpServer, l, cfg.HTTP.ShutdownTimeout)

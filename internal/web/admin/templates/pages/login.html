@@ -4,44 +4,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Admin Panel</title>
-    <!-- Core CSS -->
-    <link rel="stylesheet" href="/static/css/material.css">
-    <link rel="stylesheet" href="/static/css/admin.css">
+    <title>Admin Portal | Login</title>
+    <meta name="description" content="Secure Admin Portal Login">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Icons -->
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="/static/css/login-premium.css">
 </head>
 
 <body>
+
     <div class="login-container">
-        <div class="login-card">
-            <h2 style="text-align: center; margin-bottom: 2rem; color: var(--primary-color);">Admin Login</h2>
+        <!-- Animated Background Elements -->
+        <div class="background-shape shape-1"></div>
+        <div class="background-shape shape-2"></div>
+
+        <div class="login-card glass-effect">
+            <div class="login-header">
+                <div class="logo">
+                    <i class='bx bxs-dashboard'></i>
+                    <span>AdminPortal</span>
+                </div>
+                <h2>Welcome Back</h2>
+                <p class="subtitle">Enter your credentials to access your account.</p>
+            </div>
 
             {{ if .Error }}
-            <div
-                style="background: #fee2e2; color: #991b1b; padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1rem;">
-                {{ .Error }}
+            <div class="alert-error">
+                <i class='bx bx-error-circle'></i> {{ .Error }}
             </div>
             {{ end }}
 
-            <form action="/admin/login" method="POST">
-                <!-- CSRF Token Placeholder -->
+            <form id="loginForm" class="login-form" action="/admin/login" method="POST">
+                <!-- CSRF Token -->
                 <input type="hidden" name="_csrf" value="{{ .CSRF }}">
 
-                <div class="form-group">
-                    <label class="form-label">Email Address</label>
-                    <input type="email" name="email" class="form-input" required placeholder="admin@example.com">
+                <div class="input-group">
+                    <label for="email" class="input-label">Email Address</label>
+                    <div class="input-wrapper">
+                        <i class='bx bx-envelope input-icon'></i>
+                        <input type="email" id="email" name="email" placeholder="name@company.com" required
+                            autocomplete="email">
+                        <div class="input-border"></div>
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label">Password</label>
-                    <input type="password" name="password" class="form-input" required placeholder="••••••••">
+                <div class="input-group">
+                    <label for="password" class="input-label">Password</label>
+                    <div class="input-wrapper">
+                        <i class='bx bx-lock-alt input-icon'></i>
+                        <input type="password" id="password" name="password" placeholder="••••••••" required
+                            autocomplete="current-password">
+                        <i class='bx bx-hide toggle-password' id="togglePassword"></i>
+                        <div class="input-border"></div>
+                    </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
-                    Sign In
+                <div class="form-actions">
+                    <label class="checkbox-container">
+                        <input type="checkbox" name="remember" id="remember">
+                        <span class="checkmark"></span>
+                        <span class="text">Remember me</span>
+                    </label>
+                    <a href="#" class="forgot-password">Forgot password?</a>
+                </div>
+
+                <button type="submit" class="btn-primary" id="loginBtn">
+                    <span class="btn-text">Sign In</span>
+                    <i class='bx bx-right-arrow-alt btn-icon'></i>
+                    <div class="loader" id="loader"></div>
                 </button>
             </form>
+
+            <div class="login-footer">
+                <p>Don't have an account? <a href="#">Contact Support</a></p>
+            </div>
         </div>
     </div>
+
+    <script src="/static/js/login-premium.js"></script>
 </body>
 
 </html>

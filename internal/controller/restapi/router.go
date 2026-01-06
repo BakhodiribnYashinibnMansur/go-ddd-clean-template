@@ -29,6 +29,14 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 )
 
+const (
+	swaggerPath  = "/docs/swagger/index.html"
+	swaggerRoute = "/docs/swagger/*any"
+	protoPath    = "/docs/proto"
+	adminPath    = "/admin/dashboard"
+	lintPath     = "/docs/linter"
+)
+
 // NewRouter -.
 // Swagger spec:
 // @title       Go Clean Template API
@@ -112,7 +120,7 @@ func NewRouter(handler *gin.Engine, cfg *config.Config, uc *usecase.UseCase, l l
 		adminController.Register(h)
 
 		// Serve linter reports
-		handler.Static("/docs/report/linter", "./docs/report/linter")
+		handler.Static(lintPath, "./docs/report/linter")
 
 		// Web Admin Panel
 		adminHandler := webAdmin.New(uc, cfg, l)
@@ -135,7 +143,7 @@ func setupSwagger(handler *gin.Engine, cfg *config.Config) {
 	docs.SwaggerInfo.Version = cfg.App.Version
 
 	if cfg.Swagger.Enabled {
-		handler.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler,
+		handler.GET(swaggerRoute, ginSwagger.WrapHandler(swaggerFiles.Handler,
 			func() func(*ginSwagger.Config) {
 				return func(c *ginSwagger.Config) {
 					c.Title = "Golang Clean Architecture Swagger Docs"
@@ -347,9 +355,9 @@ func setupRoot(handler *gin.Engine, cfg *config.Config) {
 			AdminEnabled   bool
 			IsProduction   bool
 		}{
-			SwaggerURL:     scheme + "://" + host + "/swagger/index.html",
-			ProtoURL:       scheme + "://" + host + "/docs/proto",
-			AdminURL:       scheme + "://" + host + "/admin/dashboard",
+			SwaggerURL:     scheme + "://" + host + swaggerPath,
+			ProtoURL:       scheme + "://" + host + protoPath,
+			AdminURL:       scheme + "://" + host + adminPath,
 			SwaggerEnabled: cfg.Swagger.Enabled,
 			ProtoEnabled:   cfg.Proto.Enabled,
 			AdminEnabled:   cfg.Admin.Enabled,
@@ -393,6 +401,6 @@ func setupHealthCheck(handler *gin.Engine, uc *usecase.UseCase) {
 
 func setupProtoDocs(handler *gin.Engine, cfg *config.Config) {
 	if cfg.Proto.Enabled {
-		handler.StaticFile("/docs/proto", "./docs/protobuf/doc/index.html")
+		handler.StaticFile(protoPath, "./docs/protobuf/doc/index.html")
 	}
 }

@@ -33,7 +33,7 @@ func NewCronJobs(pool *pgxpool.Pool, redis *redis.Client, logger logger.Log) *Jo
 func (c *Jobs) Start() {
 	location, err := time.LoadLocation("Asia/Tashkent")
 	if err != nil {
-		c.logger.WithContext(context.Background()).Errorw("Failed to load timezone, using UTC", "error", err)
+		c.logger.Errorw("Failed to load timezone, using UTC", "error", err)
 		location = time.UTC
 	}
 
@@ -47,7 +47,7 @@ func (c *Jobs) Start() {
 	c.AddCronJobWithName(expireCfg.Expression, expireCfg.Name, c.session.ExpireOldSessions)
 
 	c.cron.Start()
-	c.logger.WithContext(context.Background()).Infow("Cron jobs started successfully")
+	c.logger.Infow("Cron jobs started successfully")
 }
 
 // Stop gracefully stops all cron jobs
@@ -55,6 +55,6 @@ func (c *Jobs) Stop() {
 	if c.cron != nil {
 		ctx := c.cron.Stop()
 		<-ctx.Done()
-		c.logger.WithContext(context.Background()).Infow("Cron jobs stopped successfully")
+		c.logger.Infow("Cron jobs stopped successfully")
 	}
 }

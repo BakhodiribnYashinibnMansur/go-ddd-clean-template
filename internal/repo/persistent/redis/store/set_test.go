@@ -102,7 +102,7 @@ func TestSet_SetGet(t *testing.T) {
 			testKey := uuid.New().String()
 
 			// act
-			err := s.Set(testKey, tt.values, tt.ttl)
+			err := s.Set(t.Context(), testKey, tt.values, tt.ttl)
 
 			// assert
 			if tt.expectedError {
@@ -112,7 +112,7 @@ func TestSet_SetGet(t *testing.T) {
 				}
 			} else {
 				require.NoError(t, err)
-				got, err := s.Get(testKey)
+				got, err := s.Get(t.Context(), testKey)
 				require.NoError(t, err)
 				assert.ElementsMatch(t, tt.values, got)
 			}
@@ -128,13 +128,13 @@ func TestSet_Delete(t *testing.T) {
 	key := uuid.New().String()
 	val := []string{"to_delete"}
 
-	err := s.Set(key, val, time.Minute)
+	err := s.Set(t.Context(), key, val, time.Minute)
 	require.NoError(t, err)
 
-	err = s.Delete(key)
+	err = s.Delete(t.Context(), key)
 	require.NoError(t, err)
 
-	got, err := s.Get(key)
+	got, err := s.Get(t.Context(), key)
 	require.NoError(t, err)
 	assert.Empty(t, got)
 }
@@ -147,15 +147,15 @@ func TestSet_Pop(t *testing.T) {
 	key := uuid.New().String()
 	val := []string{"pop_me"}
 
-	err := s.Set(key, val, time.Minute)
+	err := s.Set(t.Context(), key, val, time.Minute)
 	require.NoError(t, err)
 
-	got, err := s.Pop(key)
+	got, err := s.Pop(t.Context(), key)
 	require.NoError(t, err)
 	assert.ElementsMatch(t, val, got)
 
 	// Should be deleted
-	res, err := s.Get(key)
+	res, err := s.Get(t.Context(), key)
 	require.NoError(t, err)
 	assert.Empty(t, res)
 }

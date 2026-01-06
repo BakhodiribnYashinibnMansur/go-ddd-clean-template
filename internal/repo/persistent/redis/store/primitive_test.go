@@ -151,7 +151,7 @@ func TestPrimitive_Delete(t *testing.T) {
 
 	_, err = p.Get(t.Context(), key)
 	assert.Error(t, err)
-	assert.Equal(t, redis.Nil, err)
+	assert.ErrorIs(t, err, redis.Nil)
 }
 
 func TestPrimitive_Pop(t *testing.T) {

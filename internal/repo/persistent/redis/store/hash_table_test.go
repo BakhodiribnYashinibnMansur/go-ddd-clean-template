@@ -102,7 +102,7 @@ func TestHashTable_SetGet(t *testing.T) {
 			testKey := uuid.New().String()
 
 			// act
-			err := h.Set(testKey, tt.values, tt.ttl)
+			err := h.Set(t.Context(), testKey, tt.values, tt.ttl)
 
 			// assert
 			if tt.expectedError {
@@ -112,7 +112,7 @@ func TestHashTable_SetGet(t *testing.T) {
 				}
 			} else {
 				require.NoError(t, err)
-				got, err := h.Get(testKey, false)
+				got, err := h.Get(t.Context(), testKey, false)
 				require.NoError(t, err)
 				assert.Equal(t, tt.values, got)
 			}
@@ -128,10 +128,10 @@ func TestHashTable_Pop(t *testing.T) {
 	key := uuid.New().String()
 	val := map[string]string{"f": "v"}
 
-	err := h.Set(key, val, time.Minute)
+	err := h.Set(t.Context(), key, val, time.Minute)
 	require.NoError(t, err)
 
-	got, err := h.Pop(key)
+	got, err := h.Pop(t.Context(), key)
 	require.NoError(t, err)
 	assert.Equal(t, val, got)
 
@@ -149,10 +149,10 @@ func TestHashTable_Delete(t *testing.T) {
 	key := uuid.New().String()
 	val := map[string]string{"f": "v"}
 
-	err := h.Set(key, val, time.Minute)
+	err := h.Set(t.Context(), key, val, time.Minute)
 	require.NoError(t, err)
 
-	err = h.Delete(key)
+	err = h.Delete(t.Context(), key)
 	require.NoError(t, err)
 
 	exists, err := client.Exists(t.Context(), key).Result()

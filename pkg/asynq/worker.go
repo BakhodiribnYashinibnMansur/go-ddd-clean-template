@@ -50,14 +50,10 @@ func NewWorker(cfg config.AsynqConfig, log logger.Log) *Worker {
 // RegisterHandler registers a task handler.
 func (w *Worker) RegisterHandler(taskType string, handler func(context.Context, *asynq.Task) error) {
 	w.mux.HandleFunc(taskType, handler)
-	w.log.WithContext(context.Background()).Infow("registered task handler",
-		zap.String("task_type", taskType),
-	)
 }
 
 // Start starts the worker server.
 func (w *Worker) Start() error {
-	w.log.WithContext(context.Background()).Infow("starting asynq worker")
 	if err := w.server.Start(w.mux); err != nil {
 		return fmt.Errorf("start worker: %w", err)
 	}
@@ -66,7 +62,6 @@ func (w *Worker) Start() error {
 
 // Stop gracefully stops the worker server.
 func (w *Worker) Stop() {
-	w.log.WithContext(context.Background()).Infow("stopping asynq worker")
 	w.server.Stop()
 	w.server.Shutdown()
 }
@@ -82,21 +77,21 @@ func NewAsynqLogger(log logger.Log) *AsynqLogger {
 }
 
 func (l *AsynqLogger) Debug(args ...interface{}) {
-	l.log.WithContext(context.Background()).Debugw(fmt.Sprint(args...))
+	l.log.Debug(fmt.Sprint(args...))
 }
 
 func (l *AsynqLogger) Info(args ...interface{}) {
-	l.log.WithContext(context.Background()).Infow(fmt.Sprint(args...))
+	// Suppress info logs from asynq
 }
 
 func (l *AsynqLogger) Warn(args ...interface{}) {
-	l.log.WithContext(context.Background()).Warnw(fmt.Sprint(args...))
+	l.log.Warn(fmt.Sprint(args...))
 }
 
 func (l *AsynqLogger) Error(args ...interface{}) {
-	l.log.WithContext(context.Background()).Errorw(fmt.Sprint(args...))
+	l.log.Error(fmt.Sprint(args...))
 }
 
 func (l *AsynqLogger) Fatal(args ...interface{}) {
-	l.log.WithContext(context.Background()).Fatalw(fmt.Sprint(args...))
+	l.log.Fatal(fmt.Sprint(args...))
 }

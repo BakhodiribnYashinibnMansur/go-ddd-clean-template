@@ -9,10 +9,10 @@ import (
 )
 
 type HashTableI[V any] interface {
-	Get(key string, delete bool) (map[string]V, error)
-	Pop(key string) (map[string]V, error)
-	Set(key string, hashKey map[string]V, expirationTime time.Duration) error
-	Delete(key string) error
+	Get(ctx context.Context, key string, delete bool) (map[string]V, error)
+	Pop(ctx context.Context, key string) (map[string]V, error)
+	Set(ctx context.Context, key string, hashKey map[string]V, expirationTime time.Duration) error
+	Delete(ctx context.Context, key string) error
 }
 
 type HashTable[V any] struct {
@@ -25,8 +25,7 @@ func NewHashTable[V any](db *redis.Client) *HashTable[V] {
 	}
 }
 
-func (h *HashTable[V]) Get(key string, delete bool) (map[string]V, error) {
-	ctx := context.Background()
+func (h *HashTable[V]) Get(ctx context.Context, key string, delete bool) (map[string]V, error) {
 	valMap, err := h.db.HGetAll(ctx, key).Result()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get hash table from key %s: %w", key, err)
@@ -53,12 +52,11 @@ func (h *HashTable[V]) Get(key string, delete bool) (map[string]V, error) {
 	return res, nil
 }
 
-func (h *HashTable[V]) Pop(key string) (map[string]V, error) {
-	return h.Get(key, true)
+func (h *HashTable[V]) Pop(ctx context.Context, key string) (map[string]V, error) {
+	return h.Get(ctx, key, true)
 }
 
-func (h *HashTable[V]) Set(key string, hashKey map[string]V, expirationTime time.Duration) error {
-	ctx := context.Background()
+func (h *HashTable[V]) Set(ctx context.Context, key string, hashKey map[string]V, expirationTime time.Duration) error {
 
 	// If empty map, delete the key
 	if len(hashKey) == 0 {
@@ -87,8 +85,8 @@ func (h *HashTable[V]) Set(key string, hashKey map[string]V, expirationTime time
 	return nil
 }
 
-func (h *HashTable[V]) Delete(key string) error {
-	if err := h.db.Del(context.Background(), key).Err(); err != nil {
+func (h *HashTable[V]) Delete(ctx context.Context, key string) error {
+	if err := h.db.Del(ctx, key).Err(); err != nil {
 		return fmt.Errorf("failed to delete hash table key %s: %w", key, err)
 	}
 	return nil

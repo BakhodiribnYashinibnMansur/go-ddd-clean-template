@@ -36,26 +36,42 @@ func New(uc *usecase.UseCase, cfg *config.Config, l logger.Log) *Handler {
 
 func (h *Handler) Register(r *gin.RouterGroup, authmw *middleware.AuthMiddleware) {
 	g := r.Group("/admin")
-	g.Use(authmw.AuthClientAccess)
+	g.GET("/login", h.Login)
 
-	g.GET("/dashboard", h.Dashboard)
-	g.GET("/users", h.Users)
-	g.GET("/sessions", h.Sessions)
-	g.GET("/rbac/roles", h.Roles)
-	g.GET("/rbac/permissions", h.Permissions)
-	g.GET("/rbac/scopes", h.Scopes)
-	g.GET("/abac/policies", h.Policies)
-	g.GET("/system-errors", h.SystemErrors)
-	g.GET("/functions", h.FunctionMetrics)
-	g.GET("/audit/logs", h.AuditLogs)
-	g.GET("/audit/history", h.EndpointHistory)
-	g.GET("/linter", h.Linter)
+	protected := g.Group("/")
+	protected.Use(authmw.AuthWeb)
+
+	protected.GET("/dashboard", h.Dashboard)
+	protected.GET("/users", h.Users)
+	protected.GET("/sessions", h.Sessions)
+	protected.GET("/rbac/roles", h.Roles)
+	protected.GET("/rbac/permissions", h.Permissions)
+	protected.GET("/rbac/scopes", h.Scopes)
+	protected.GET("/abac/policies", h.Policies)
+	protected.GET("/system-errors", h.SystemErrors)
+	protected.GET("/functions", h.FunctionMetrics)
+	protected.GET("/audit/logs", h.AuditLogs)
+	protected.GET("/audit/history", h.EndpointHistory)
+	protected.GET("/linter", h.Linter)
 	// Asynq Monitor
 	mon := h.NewAsynqMonitor()
-	g.Any("/asynq/*filepath", gin.WrapH(mon))
-	g.GET("/asynq", gin.WrapH(mon))
+	protected.Any("/asynq/*filepath", gin.WrapH(mon))
+	protected.GET("/asynq", gin.WrapH(mon))
 
-	g.GET("/settings", h.Settings)
+	protected.GET("/settings", h.Settings)
+}
+
+func (h *Handler) Login(ctx *gin.Context) {
+	tmpl, err := template.ParseFiles("internal/web/admin/templates/pages/login.html")
+	if err != nil {
+		h.l.Errorw("failed to parse login template", "error", err)
+		ctx.String(http.StatusInternalServerError, "Internal Server Error")
+		return
+	}
+	// TODO: Inject CSRF token
+	if err := tmpl.Execute(ctx.Writer, map[string]any{"Error": ctx.Query("error")}); err != nil {
+		h.l.Errorw("failed to execute login template", "error", err)
+	}
 }
 
 // PageData holds common data for all admin pages

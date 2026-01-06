@@ -9,10 +9,10 @@ import (
 )
 
 type ArrayI[T any] interface {
-	Get(key string) ([]T, error)
-	Set(key string, value []T, expiration time.Duration) error
-	Delete(key string) error
-	Pop(key string) ([]T, error)
+	Get(ctx context.Context, key string) ([]T, error)
+	Set(ctx context.Context, key string, value []T, expiration time.Duration) error
+	Delete(ctx context.Context, key string) error
+	Pop(ctx context.Context, key string) ([]T, error)
 }
 
 type Array[T any] struct {
@@ -25,16 +25,15 @@ func NewArray[T any](db *redis.Client) *Array[T] {
 	}
 }
 
-func (a *Array[T]) Get(key string) ([]T, error) {
-	valStrs, err := a.db.LRange(context.Background(), key, 0, -1).Result()
+func (a *Array[T]) Get(ctx context.Context, key string) ([]T, error) {
+	valStrs, err := a.db.LRange(ctx, key, 0, -1).Result()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get array from key %s: %w", key, err)
 	}
-	return a.unmarshalSlice(valStrs)
+	return a.unmarshalSlice(ctx, valStrs)
 }
 
-func (a *Array[T]) Set(key string, value []T, expiration time.Duration) error {
-	ctx := context.Background()
+func (a *Array[T]) Set(ctx context.Context, key string, value []T, expiration time.Duration) error {
 	if len(value) == 0 {
 		if err := a.db.Del(ctx, key).Err(); err != nil {
 			return fmt.Errorf("failed to delete empty array key %s: %w", key, err)
@@ -61,15 +60,14 @@ func (a *Array[T]) Set(key string, value []T, expiration time.Duration) error {
 	return nil
 }
 
-func (a *Array[T]) Delete(key string) error {
-	if err := a.db.Del(context.Background(), key).Err(); err != nil {
+func (a *Array[T]) Delete(ctx context.Context, key string) error {
+	if err := a.db.Del(ctx, key).Err(); err != nil {
 		return fmt.Errorf("failed to delete array key %s: %w", key, err)
 	}
 	return nil
 }
 
-func (a *Array[T]) Pop(key string) ([]T, error) {
-	ctx := context.Background()
+func (a *Array[T]) Pop(ctx context.Context, key string) ([]T, error) {
 	pipe := a.db.TxPipeline()
 	get := pipe.LRange(ctx, key, 0, -1)
 	pipe.Del(ctx, key)
@@ -82,12 +80,12 @@ func (a *Array[T]) Pop(key string) ([]T, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get array result for key %s: %w", key, err)
 	}
-	return a.unmarshalSlice(valStrs)
+	return a.unmarshalSlice(ctx, valStrs)
 }
 
-func (a *Array[T]) unmarshalOne(s string) (T, error) {
+func (a *Array[T]) unmarshalOne(ctx context.Context, s string) (T, error) {
 	var val T
-	cmd := redis.NewStringCmd(context.Background())
+	cmd := redis.NewStringCmd(ctx)
 	cmd.SetVal(s)
 	err := cmd.Scan(&val)
 	if err != nil {
@@ -96,10 +94,10 @@ func (a *Array[T]) unmarshalOne(s string) (T, error) {
 	return val, nil
 }
 
-func (a *Array[T]) unmarshalSlice(valStrs []string) ([]T, error) {
+func (a *Array[T]) unmarshalSlice(ctx context.Context, valStrs []string) ([]T, error) {
 	res := make([]T, len(valStrs))
 	for i, s := range valStrs {
-		v, err := a.unmarshalOne(s)
+		v, err := a.unmarshalOne(ctx, s)
 		if err != nil {
 			return nil, err
 		}

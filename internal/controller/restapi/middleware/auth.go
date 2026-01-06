@@ -4,6 +4,7 @@ import (
 	"crypto/rsa"
 	"errors"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -54,7 +55,7 @@ type AuthMiddleware struct {
 func NewAuthMiddleware(u *usecase.UseCase, cfg *config.Config, l logger.Log) *AuthMiddleware {
 	pubKey, err := jwt.ParseRSAPublicKey(cfg.JWT.PublicKey)
 	if err != nil {
-		l.Errorw("AuthMiddleware - NewAuthMiddleware - ParseRSAPublicKey", "error", err)
+		l.Fatalw("AuthMiddleware - NewAuthMiddleware - ParseRSAPublicKey", "error", err)
 	}
 
 	return &AuthMiddleware{
@@ -264,6 +265,22 @@ func (m *AuthMiddleware) AuthApiKey(ctx *gin.Context) {
 	}
 
 	ctx.Set(consts.CtxApiKeyAuth, true)
+	ctx.Next()
+}
+
+func (m *AuthMiddleware) AuthWeb(ctx *gin.Context) {
+	session, err := m.validateAccessToken(ctx)
+	if err != nil {
+		ctx.Redirect(http.StatusFound, "/admin/login?return_url="+url.QueryEscape(ctx.Request.RequestURI))
+		ctx.Abort()
+		return
+	}
+
+	// 5. Context injection
+	ctx.Set(consts.CtxSessionID, session.ID)
+	ctx.Set(consts.CtxSession, session)
+	ctx.Set(consts.CtxUserID, session.UserID.String())
+
 	ctx.Next()
 }
 

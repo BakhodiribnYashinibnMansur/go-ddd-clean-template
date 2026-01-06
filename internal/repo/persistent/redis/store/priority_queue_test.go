@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -108,7 +109,7 @@ func TestPriorityQueue_PushPop(t *testing.T) {
 			testKey := uuid.New().String()
 
 			// act
-			err := pq.Push(testKey, tt.items)
+			err := pq.Push(context.Background(), testKey, tt.items)
 
 			// assert
 			if tt.expectedError {
@@ -118,7 +119,7 @@ func TestPriorityQueue_PushPop(t *testing.T) {
 				}
 			} else {
 				require.NoError(t, err)
-				sz, err := pq.Size(testKey)
+				sz, err := pq.Size(context.Background(), testKey)
 				require.NoError(t, err)
 				assert.Equal(t, tt.expectedSize, sz)
 			}
@@ -138,16 +139,16 @@ func TestPriorityQueue_Get(t *testing.T) {
 		{Score: 2, Member: "two"},
 		{Score: 3, Member: "three"},
 	}
-	err := pq.Push(key, items)
+	err := pq.Push(context.Background(), key, items)
 	require.NoError(t, err)
 
 	// Get range 0-1
-	slice, err := pq.Get(key, 0, 1)
+	slice, err := pq.Get(context.Background(), key, 0, 1)
 	require.NoError(t, err)
 	assert.Equal(t, []string{"one", "two"}, slice)
 
 	// ToArray (all)
-	all, err := pq.ToArray(key)
+	all, err := pq.ToArray(context.Background(), key)
 	require.NoError(t, err)
 	assert.Equal(t, []string{"one", "two", "three"}, all)
 }
@@ -162,10 +163,10 @@ func TestPriorityQueue_ChangePriority(t *testing.T) {
 	items := []GenericZ[string]{
 		{Score: 10, Member: "item"},
 	}
-	err := pq.Push(key, items)
+	err := pq.Push(context.Background(), key, items)
 	require.NoError(t, err)
 
-	err = pq.ChangePriority(key, "item", 100)
+	err = pq.ChangePriority(context.Background(), key, "item", 100)
 	require.NoError(t, err)
 
 	// Check if score updated (by checking order if we had multiple, or just by popping)
@@ -188,14 +189,14 @@ func TestPriorityQueue_DeleteRange(t *testing.T) {
 		{Score: 2, Member: "2"},
 		{Score: 3, Member: "3"},
 	}
-	err := pq.Push(key, items)
+	err := pq.Push(context.Background(), key, items)
 	require.NoError(t, err)
 
 	// Delete rank 0 (lowest score: "1")
-	err = pq.DeleteRange(key, 0, 0)
+	err = pq.DeleteRange(context.Background(), key, 0, 0)
 	require.NoError(t, err)
 
-	all, err := pq.ToArray(key)
+	all, err := pq.ToArray(context.Background(), key)
 	require.NoError(t, err)
 	assert.Equal(t, []string{"2", "3"}, all)
 }
@@ -207,12 +208,12 @@ func TestPriorityQueue_Clear(t *testing.T) {
 	pq := NewPriorityQueue[string](client)
 	key := uuid.New().String()
 
-	pq.Push(key, []GenericZ[string]{{Score: 1, Member: "a"}})
+	pq.Push(context.Background(), key, []GenericZ[string]{{Score: 1, Member: "a"}})
 
-	err := pq.Clear(key)
+	err := pq.Clear(context.Background(), key)
 	require.NoError(t, err)
 
-	empty, err := pq.IsEmpty(key)
+	empty, err := pq.IsEmpty(context.Background(), key)
 	require.NoError(t, err)
 	assert.True(t, empty)
 }

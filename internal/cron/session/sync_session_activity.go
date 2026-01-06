@@ -16,7 +16,7 @@ var errNoSessionsToUpdate = errors.New("no sessions to update")
 
 // SyncSessionActivityToPostgres syncs session last_activity from Redis to PostgreSQL
 func (c *CronJobs) SyncSessionActivityToPostgres() {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	sessions, err := c.collectSessionActivities(ctx)

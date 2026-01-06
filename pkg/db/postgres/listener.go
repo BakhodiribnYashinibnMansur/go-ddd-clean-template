@@ -47,9 +47,9 @@ func (p *Postgres) Listen(ctx context.Context, channel string, onNotify func(ctx
 			if err != nil {
 				// check if it's just context cancellation
 				if ctx.Err() != nil {
+					l.WithContext(ctx).Errorw("error waiting for notification", zap.Error(err))
 					return
 				}
-				l.WithContext(ctx).Errorw("error waiting for notification", zap.Error(err))
 				// Connection might be broken, exit the loop.
 				// In a real-world scenario, we might want a retry mechanism with backoff.
 				return

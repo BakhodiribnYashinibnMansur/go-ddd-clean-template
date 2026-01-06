@@ -102,7 +102,7 @@ func TestList_SetGet(t *testing.T) {
 			testKey := uuid.New().String()
 
 			// act
-			err := l.Set(testKey, tt.values, tt.ttl)
+			err := l.Set(t.Context(), testKey, tt.values, tt.ttl)
 
 			// assert
 			if tt.expectedError {
@@ -112,7 +112,7 @@ func TestList_SetGet(t *testing.T) {
 				}
 			} else {
 				require.NoError(t, err)
-				got, err := l.Get(testKey)
+				got, err := l.Get(t.Context(), testKey)
 				require.NoError(t, err)
 				assert.Equal(t, tt.values, got)
 			}
@@ -128,10 +128,10 @@ func TestList_SetGetFull(t *testing.T) {
 	key := uuid.New().String()
 	val := []string{"a", "b"}
 
-	err := l.Set(key, val, time.Minute)
+	err := l.Set(t.Context(), key, val, time.Minute)
 	require.NoError(t, err)
 
-	len, err := l.GetFull(key)
+	len, err := l.GetFull(t.Context(), key)
 	require.NoError(t, err)
 	assert.Equal(t, int64(2), len)
 }
@@ -145,11 +145,11 @@ func TestList_Pop(t *testing.T) {
 	// Set uses RPush to preserve order. "1", "2", "3" -> List: "1", "2", "3"
 	val := []string{"1", "2", "3"}
 
-	err := l.Set(key, val, time.Minute)
+	err := l.Set(t.Context(), key, val, time.Minute)
 	require.NoError(t, err)
 
 	// Pop with limit 2, offset 0. Should get "1", "2"
-	got, err := l.Pop(key, 2, 0)
+	got, err := l.Pop(t.Context(), key, 2, 0)
 	require.NoError(t, err)
 	assert.Equal(t, []string{"1", "2"}, got)
 
@@ -173,10 +173,10 @@ func TestList_Len(t *testing.T) {
 	key := uuid.New().String()
 	val := []string{"x"}
 
-	err := l.Set(key, val, time.Minute)
+	err := l.Set(t.Context(), key, val, time.Minute)
 	require.NoError(t, err)
 
-	n, err := l.Len(key)
+	n, err := l.Len(t.Context(), key)
 	require.NoError(t, err)
 	assert.Equal(t, int64(1), n)
 }

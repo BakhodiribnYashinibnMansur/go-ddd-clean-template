@@ -102,7 +102,7 @@ func TestArray_SetGet(t *testing.T) {
 			testKey := uuid.New().String()
 
 			// act
-			err := a.Set(testKey, tt.values, tt.ttl)
+			err := a.Set(t.Context(), testKey, tt.values, tt.ttl)
 
 			// assert
 			if tt.expectedError {
@@ -112,7 +112,7 @@ func TestArray_SetGet(t *testing.T) {
 				}
 			} else {
 				require.NoError(t, err)
-				got, err := a.Get(testKey)
+				got, err := a.Get(t.Context(), testKey)
 				require.NoError(t, err)
 				assert.Equal(t, tt.values, got)
 			}
@@ -128,10 +128,10 @@ func TestArray_Integers(t *testing.T) {
 	key := uuid.New().String()
 	val := []int64{10, 20, 30}
 
-	err := a.Set(key, val, time.Minute)
+	err := a.Set(t.Context(), key, val, time.Minute)
 	require.NoError(t, err)
 
-	got, err := a.Get(key)
+	got, err := a.Get(t.Context(), key)
 	require.NoError(t, err)
 	assert.Equal(t, val, got)
 }
@@ -144,13 +144,13 @@ func TestArray_Delete(t *testing.T) {
 	key := uuid.New().String()
 	val := []string{"to_delete"}
 
-	err := a.Set(key, val, time.Minute)
+	err := a.Set(t.Context(), key, val, time.Minute)
 	require.NoError(t, err)
 
-	err = a.Delete(key)
+	err = a.Delete(t.Context(), key)
 	require.NoError(t, err)
 
-	got, err := a.Get(key)
+	got, err := a.Get(t.Context(), key)
 	require.NoError(t, err)
 	assert.Empty(t, got)
 }
@@ -163,15 +163,15 @@ func TestArray_Pop(t *testing.T) {
 	key := uuid.New().String()
 	val := []string{"pop_me"}
 
-	err := a.Set(key, val, time.Minute)
+	err := a.Set(t.Context(), key, val, time.Minute)
 	require.NoError(t, err)
 
-	got, err := a.Pop(key)
+	got, err := a.Pop(t.Context(), key)
 	require.NoError(t, err)
 	assert.Equal(t, val, got)
 
 	// Should be deleted (empty)
-	res, err := a.Get(key)
+	res, err := a.Get(t.Context(), key)
 	require.NoError(t, err)
 	assert.Empty(t, res)
 }

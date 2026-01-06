@@ -9,10 +9,10 @@ import (
 )
 
 type SetI[T any] interface {
-	Get(key string) ([]T, error)
-	Set(key string, value []T, expiration time.Duration) error
-	Delete(key string) error
-	Pop(key string) ([]T, error)
+	Get(ctx context.Context, key string) ([]T, error)
+	Set(ctx context.Context, key string, value []T, expiration time.Duration) error
+	Delete(ctx context.Context, key string) error
+	Pop(ctx context.Context, key string) ([]T, error)
 }
 
 type Set[T any] struct {
@@ -25,16 +25,15 @@ func NewSet[T any](db *redis.Client) *Set[T] {
 	}
 }
 
-func (s *Set[T]) Get(key string) ([]T, error) {
-	valStrs, err := s.db.SMembers(context.Background(), key).Result()
+func (s *Set[T]) Get(ctx context.Context, key string) ([]T, error) {
+	valStrs, err := s.db.SMembers(ctx, key).Result()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get set from key %s: %w", key, err)
 	}
-	return s.unmarshalSlice(valStrs)
+	return s.unmarshalSlice(ctx, valStrs)
 }
 
-func (s *Set[T]) Pop(key string) ([]T, error) {
-	ctx := context.Background()
+func (s *Set[T]) Pop(ctx context.Context, key string) ([]T, error) {
 	pipe := s.db.TxPipeline()
 	get := pipe.SMembers(ctx, key)
 	pipe.Del(ctx, key)
@@ -46,12 +45,12 @@ func (s *Set[T]) Pop(key string) ([]T, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get set result for key %s: %w", key, err)
 	}
-	return s.unmarshalSlice(valStrs)
+	return s.unmarshalSlice(ctx, valStrs)
 }
 
-func (s *Set[T]) Set(key string, value []T, expiration time.Duration) error {
+func (s *Set[T]) Set(ctx context.Context, key string, value []T, expiration time.Duration) error {
 	if len(value) == 0 {
-		if err := s.db.Del(context.Background(), key).Err(); err != nil {
+		if err := s.db.Del(ctx, key).Err(); err != nil {
 			return fmt.Errorf("failed to delete empty set key %s: %w", key, err)
 		}
 		return nil
@@ -61,7 +60,6 @@ func (s *Set[T]) Set(key string, value []T, expiration time.Duration) error {
 		return err
 	}
 
-	ctx := context.Background()
 	err = s.db.SAdd(ctx, key, marshalled...).Err()
 	if err != nil {
 		return fmt.Errorf("failed to add elements to set key %s: %w", key, err)
@@ -75,16 +73,16 @@ func (s *Set[T]) Set(key string, value []T, expiration time.Duration) error {
 	return nil
 }
 
-func (s *Set[T]) Delete(key string) error {
-	if err := s.db.Del(context.Background(), key).Err(); err != nil {
+func (s *Set[T]) Delete(ctx context.Context, key string) error {
+	if err := s.db.Del(ctx, key).Err(); err != nil {
 		return fmt.Errorf("failed to delete set key %s: %w", key, err)
 	}
 	return nil
 }
 
-func (s *Set[T]) unmarshalOne(vStr string) (T, error) {
+func (s *Set[T]) unmarshalOne(ctx context.Context, vStr string) (T, error) {
 	var val T
-	cmd := redis.NewStringCmd(context.Background())
+	cmd := redis.NewStringCmd(ctx)
 	cmd.SetVal(vStr)
 	err := cmd.Scan(&val)
 	if err != nil {
@@ -93,10 +91,10 @@ func (s *Set[T]) unmarshalOne(vStr string) (T, error) {
 	return val, nil
 }
 
-func (s *Set[T]) unmarshalSlice(valStrs []string) ([]T, error) {
+func (s *Set[T]) unmarshalSlice(ctx context.Context, valStrs []string) ([]T, error) {
 	res := make([]T, len(valStrs))
 	for i, vStr := range valStrs {
-		v, err := s.unmarshalOne(vStr)
+		v, err := s.unmarshalOne(ctx, vStr)
 		if err != nil {
 			return nil, err
 		}

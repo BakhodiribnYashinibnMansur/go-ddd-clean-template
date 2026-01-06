@@ -91,7 +91,7 @@ func TestQueue_PushPop(t *testing.T) {
 			testKey := uuid.New().String()
 
 			// act
-			err := q.PushBack(testKey, tt.items)
+			err := q.PushBack(t.Context(), testKey, tt.items)
 
 			// assert
 			if tt.expectedError {
@@ -101,7 +101,7 @@ func TestQueue_PushPop(t *testing.T) {
 				}
 			} else {
 				require.NoError(t, err)
-				sz, err := q.Len(testKey)
+				sz, err := q.Len(t.Context(), testKey)
 				require.NoError(t, err)
 				assert.Equal(t, tt.expectedSize, sz)
 			}
@@ -116,18 +116,18 @@ func TestQueue_Get(t *testing.T) {
 	q := NewQueue[string](client)
 	key := uuid.New().String()
 
-	err := q.PushBack(key, []string{"1", "2", "3", "4"})
+	err := q.PushBack(t.Context(), key, []string{"1", "2", "3", "4"})
 	require.NoError(t, err)
 
-	slice, err := q.Get(key, 0, 1) // 0 to 1 inclusive
+	slice, err := q.Get(t.Context(), key, 0, 1) // 0 to 1 inclusive
 	require.NoError(t, err)
 	assert.Equal(t, []string{"1", "2"}, slice)
 
-	fullLen, err := q.GetFull(key)
+	fullLen, err := q.GetFull(t.Context(), key)
 	require.NoError(t, err)
 	assert.Equal(t, int64(4), fullLen)
 
-	arr, err := q.ToArray(key)
+	arr, err := q.ToArray(t.Context(), key)
 	require.NoError(t, err)
 	assert.Equal(t, []string{"1", "2", "3", "4"}, arr)
 }
@@ -139,7 +139,7 @@ func TestQueue_Contains(t *testing.T) {
 	q := NewQueue[string](client)
 	key := uuid.New().String()
 
-	err := q.PushBack(key, []string{"target"})
+	err := q.PushBack(t.Context(), key, []string{"target"})
 	require.NoError(t, err)
 
 	// Note: Contains implementation only checks index 0
@@ -148,16 +148,16 @@ func TestQueue_Contains(t *testing.T) {
 	//     ...
 	// }
 
-	ok, err := q.Contains(key, "target")
+	ok, err := q.Contains(t.Context(), key, "target")
 	require.NoError(t, err)
 	assert.True(t, ok)
 
 	// If we push front another element, target moves to index 1
-	err = q.PushFront(key, []string{"new_front"})
+	err = q.PushFront(t.Context(), key, []string{"new_front"})
 	require.NoError(t, err)
 
 	// Contains checks index 0, so it will be "new_front"
-	ok, err = q.Contains(key, "target")
+	ok, err = q.Contains(t.Context(), key, "target")
 	require.NoError(t, err)
 	assert.False(t, ok) // This confirms the limitation/behavior of current Contains implementation
 }
@@ -169,10 +169,10 @@ func TestQueue_Peek(t *testing.T) {
 	q := NewQueue[string](client)
 	key := uuid.New().String()
 
-	err := q.PushBack(key, []string{"first"})
+	err := q.PushBack(t.Context(), key, []string{"first"})
 	require.NoError(t, err)
 
-	val, err := q.Peek(key)
+	val, err := q.Peek(t.Context(), key)
 	require.NoError(t, err)
 	assert.Equal(t, "first", val)
 }
@@ -185,14 +185,14 @@ func TestQueue_DeleteRange(t *testing.T) {
 	key := uuid.New().String()
 
 	// 1, 2, 3, 4
-	err := q.PushBack(key, []string{"1", "2", "3", "4"})
+	err := q.PushBack(t.Context(), key, []string{"1", "2", "3", "4"})
 	require.NoError(t, err)
 
 	// Keep 1 to 2 (indices) -> "2", "3"
-	err = q.DeleteRange(key, 1, 2)
+	err = q.DeleteRange(t.Context(), key, 1, 2)
 	require.NoError(t, err)
 
-	arr, err := q.ToArray(key)
+	arr, err := q.ToArray(t.Context(), key)
 	require.NoError(t, err)
 	assert.Equal(t, []string{"2", "3"}, arr)
 }
@@ -204,10 +204,10 @@ func TestQueue_Integers(t *testing.T) {
 	q := NewQueue[int](client)
 	key := uuid.New().String()
 
-	err := q.PushBack(key, []int{100})
+	err := q.PushBack(t.Context(), key, []int{100})
 	require.NoError(t, err)
 
-	val, err := q.PopFront(key)
+	val, err := q.PopFront(t.Context(), key)
 	require.NoError(t, err)
 	assert.Equal(t, 100, val)
 }
@@ -219,15 +219,15 @@ func TestQueue_Contains_Behavior(t *testing.T) {
 
 	q := NewQueue[string](client)
 	key := uuid.New().String()
-	err := q.PushBack(key, []string{"a", "b"})
+	err := q.PushBack(t.Context(), key, []string{"a", "b"})
 	require.NoError(t, err)
 
 	// "b" is at index 1
-	found, err := q.Contains(key, "b")
+	found, err := q.Contains(t.Context(), key, "b")
 	require.NoError(t, err)
 	assert.False(t, found, "Contains only checks index 0 currently")
 
-	found, err = q.Contains(key, "a")
+	found, err = q.Contains(t.Context(), key, "a")
 	require.NoError(t, err)
 	assert.True(t, found)
 }

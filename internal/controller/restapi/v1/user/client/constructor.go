@@ -8,6 +8,7 @@ import (
 	"gct/pkg/csrf"
 	"gct/pkg/jwt"
 	"gct/pkg/logger"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -36,7 +37,7 @@ type ControllerI interface {
 func New(u *usecase.UseCase, cfg *config.Config, l logger.Log) ControllerI {
 	pk, err := jwt.ParseRSAPrivateKey(cfg.JWT.PrivateKey)
 	if err != nil {
-		l.Error("ClientController - New - parsedPrivateKey error", err)
+		l.Fatal("ClientController - New - parsedPrivateKey error", err)
 	}
 
 	// Initialize CSRF protection with dedicated secret

@@ -79,7 +79,7 @@ func (m *AuditMiddleware) EndpointHistory() gin.HandlerFunc {
 		// Async save to avoid blocking response
 		// Note: Creating a detached context or using background
 		go func(h *domain.EndpointHistory) {
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 			defer cancel()
 
 			// We can't use c.Request.Context() because it might be cancelled
@@ -147,7 +147,7 @@ func (m *AuditMiddleware) ChangeAudit() gin.HandlerFunc {
 
 		// Async save
 		go func(al *domain.AuditLog) {
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 			defer cancel()
 
 			err := m.uc.Audit.Log.Create(ctx, al)
