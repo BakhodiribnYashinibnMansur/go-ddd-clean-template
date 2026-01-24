@@ -6,10 +6,7 @@ import (
 )
 
 // ExpireOldSessions marks sessions older than 30 days as expired
-func (c *CronJobs) ExpireOldSessions() {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
+func (c *CronJobs) ExpireOldSessions(ctx context.Context) {
 	// Calculate the expiration timestamp (30 days ago)
 	expirationTime := time.Now().AddDate(0, 0, -SessionExpirationDays)
 

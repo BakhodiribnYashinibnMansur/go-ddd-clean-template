@@ -68,12 +68,7 @@ func TestUseCase_Create_TableDriven(t *testing.T) {
 				Phone:    stringPtr(""),
 				Password: "password",
 			},
-			expectError: false, // Create method doesn't validate
-			validateSaved: func(t *testing.T, u *domain.User) {
-				t.Helper()
-				require.NotNil(t, u.Phone)
-				require.Equal(t, "", *u.Phone)
-			},
+			expectError: true,
 		},
 		{
 			name: "error_weak_password",

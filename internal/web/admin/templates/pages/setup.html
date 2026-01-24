@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Portal | Setup</title>
+    <meta name="description" content="Initial Setup for Admin Portal">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Icons -->
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="/static/css/login-premium.css">
+</head>
+
+<body>
+
+    <div class="login-container">
+        <!-- Animated Background Elements -->
+        <div class="background-shape shape-1"></div>
+        <div class="background-shape shape-2"></div>
+        <div class="background-shape shape-3"></div>
+
+        <div class="login-card glass-effect">
+            <div class="login-header">
+                <div class="logo">
+                    <i class='bx bxs-rocket'></i>
+                    <span>AdminPortal</span>
+                </div>
+                <h2>Initial Setup</h2>
+                <p class="subtitle">Create the first Super Admin account.</p>
+            </div>
+
+            {{ if .Error }}
+            <div class="alert-error">
+                <i class='bx bx-error-circle'></i> {{ .Error }}
+            </div>
+            {{ end }}
+
+            <form id="setupForm" class="login-form" action="/admin/setup" method="POST">
+                <!-- CSRF Token -->
+                <input type="hidden" name="_csrf" value="{{ .CSRF }}">
+
+                <div class="input-group">
+                    <label for="email" class="input-label">Email Address</label>
+                    <div class="input-wrapper">
+                        <i class='bx bx-envelope input-icon'></i>
+                        <input type="email" id="email" name="email" placeholder="admin@company.com" required
+                            autocomplete="username">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="phone" class="input-label">Phone Number</label>
+                    <div class="input-wrapper">
+                        <i class='bx bx-phone input-icon'></i>
+                        <input type="tel" id="phone" name="phone" placeholder="+998901234567" required
+                            autocomplete="tel">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="password" class="input-label">Password</label>
+                    <div class="input-wrapper">
+                        <i class='bx bx-lock-alt input-icon'></i>
+                        <input type="password" id="password" name="password" placeholder="••••••••" required
+                            autocomplete="new-password">
+                        <i class='bx bx-hide toggle-password' id="togglePassword"></i>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="confirm_password" class="input-label">Confirm Password</label>
+                    <div class="input-wrapper">
+                        <i class='bx bx-lock-alt input-icon'></i>
+                        <input type="password" id="confirm_password" name="confirm_password" placeholder="••••••••"
+                            required autocomplete="new-password">
+                    </div>
+                </div>
+
+
+                <button type="submit" class="btn-primary" id="setupBtn">
+                    <span class="btn-text">Create Admin</span>
+                    <i class='bx bx-check btn-icon'></i>
+                    <div class="loader" id="loader"></div>
+                </button>
+            </form>
+
+            <div class="login-footer">
+                <p>Already installed? <a href="/admin/login">Go to Login</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/login-premium.js"></script>
+    <script>
+        // Simple password match validation
+        const form = document.getElementById('setupForm');
+        form.addEventListener('submit', function (e) {
+            const password = document.getElementById('password').value;
+            const confirm = document.getElementById('confirm_password').value;
+            if (password !== confirm) {
+                e.preventDefault();
+                alert("Passwords do not match!");
+            }
+        });
+    </script>
+</body>
+
+</html>

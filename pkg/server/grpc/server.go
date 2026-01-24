@@ -7,7 +7,6 @@ import (
 	"net"
 
 	"gct/pkg/logger"
-
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 	pbgrpc "google.golang.org/grpc"

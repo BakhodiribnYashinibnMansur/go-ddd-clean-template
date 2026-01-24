@@ -8,7 +8,6 @@ import (
 	"time"
 
 	rmqrpc "gct/pkg/broker/rabbitmq/rmq_rpc"
-
 	"github.com/goccy/go-json"
 	"github.com/google/uuid"
 	amqp "github.com/rabbitmq/amqp091-go"

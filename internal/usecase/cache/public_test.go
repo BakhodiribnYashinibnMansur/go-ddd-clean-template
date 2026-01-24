@@ -11,7 +11,6 @@ import (
 	"gct/internal/repo/persistent/redis"
 	"gct/internal/usecase/cache"
 	"gct/pkg/logger"
-
 	"github.com/go-redis/redismock/v9"
 	redisClient "github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"

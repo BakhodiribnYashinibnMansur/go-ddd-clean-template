@@ -1,0 +1,71 @@
+{{ template "base" . }}
+
+{{ define "content" }}
+<div style="margin-bottom: 32px;">
+    <div class="flex-between" style="margin-bottom: 24px;">
+        <div>
+            <h2 style="margin-bottom: 4px;">Database Tables</h2>
+            <p class="text-body" style="margin: 0; font-size: 14px; opacity: 0.7;">
+                Browse and manage database tables
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="card" style="padding: 0; overflow: hidden;">
+    <div class="table-container" style="border: none; background: transparent;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width: 60px;">#</th>
+                    <th>Table Name</th>
+                    <th style="width: 100px;">Columns</th>
+                    <th style="width: 120px;">Rows</th>
+                    <th style="width: 120px;">Table Size</th>
+                    <th style="width: 120px;">Index Size</th>
+                    <th style="width: 140px;">Total Size</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{ range $index, $table := .Tables }}
+                <tr onclick="window.location='/admin/database/table/{{ $table.TableName }}'"
+                    style="cursor: pointer; transition: background 0.2s;"
+                    onmouseover="this.style.background='var(--hover-bg)'" onmouseout="this.style.background=''">
+                    <td style="text-align: center; font-weight: 600; color: var(--text-secondary);">
+                        {{ add $index 1 }}
+                    </td>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <i class="material-symbols-outlined" style="color: var(--primary-color);">table_view</i>
+                            <span style="font-weight: 500;">{{ $table.TableName }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <span style="color: var(--text-muted); font-family: monospace;">{{ $table.ColumnCount }}
+                            cols</span>
+                    </td>
+                    <td>
+                        <span class="badge badge-neutral">{{ $table.RowCount }}</span>
+                    </td>
+                    <td>{{ $table.TableSize }}</td>
+                    <td>{{ $table.IndexSize }}</td>
+                    <td style="font-weight: 600;">{{ $table.TotalSize }}</td>
+                </tr>
+                {{ else }}
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 48px; color: var(--text-muted);">
+                        No tables found
+                    </td>
+                </tr>
+                {{ end }}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+    .data-table tbody tr:hover {
+        background: var(--hover-bg);
+    }
+</style>
+{{ end }}

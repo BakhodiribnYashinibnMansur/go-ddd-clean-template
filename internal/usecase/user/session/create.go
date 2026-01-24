@@ -27,7 +27,7 @@ func (uc *UseCase) Create(ctx context.Context, in *domain.Session) (*domain.Sess
 		// This might need adjustment based on your requirements
 	}
 
-	duration := 24 * time.Hour
+	duration := 7 * 24 * time.Hour // 7 days
 	in.ExpiresAt = time.Now().Add(duration)
 	in.CreatedAt = time.Now()
 	in.UpdatedAt = time.Now()

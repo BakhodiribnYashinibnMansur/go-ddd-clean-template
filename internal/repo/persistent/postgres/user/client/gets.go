@@ -11,7 +11,7 @@ import (
 
 func (r *Repo) Gets(ctx context.Context, filter *domain.UsersFilter) ([]*domain.User, int, error) {
 	// Base query
-	baseQb := r.builder.Select("id, role_id, username, email, phone, password_hash, salt, attributes, active, created_at, updated_at, deleted_at, last_seen").
+	baseQb := r.builder.Select("id, role_id, username, email, phone, password_hash, salt, attributes, active, is_approved, created_at, updated_at, deleted_at, last_seen").
 		From("users").
 		Where("deleted_at = 0")
 
@@ -48,7 +48,7 @@ func (r *Repo) Gets(ctx context.Context, filter *domain.UsersFilter) ([]*domain.
 		var u domain.User
 		if err := rows.Scan(
 			&u.ID, &u.RoleID, &u.Username, &u.Email, &u.Phone, &u.PasswordHash, &u.Salt,
-			&u.Attributes, &u.Active,
+			&u.Attributes, &u.Active, &u.IsApproved,
 			&u.CreatedAt, &u.UpdatedAt, &u.DeletedAt, &u.LastSeen,
 		); err != nil {
 			return nil, 0, apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase, "failed to scan row")
@@ -91,6 +91,9 @@ func (r *Repo) applyFilters(qb squirrel.SelectBuilder, filter *domain.UserFilter
 	}
 	if filter.Active != nil {
 		qb = qb.Where(squirrel.Eq{"active": *filter.Active})
+	}
+	if filter.IsApproved != nil {
+		qb = qb.Where(squirrel.Eq{"is_approved": *filter.IsApproved})
 	}
 	return qb
 }

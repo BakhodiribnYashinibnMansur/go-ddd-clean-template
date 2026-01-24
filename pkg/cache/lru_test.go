@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"gct/pkg/cache"
-
 	"github.com/stretchr/testify/assert"
 )
 

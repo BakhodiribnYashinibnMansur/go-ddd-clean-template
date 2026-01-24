@@ -1,0 +1,78 @@
+{{ define "content" }}
+<div class="page-content-wrapper">
+    <!-- Header -->
+    <div class="content-header flex-between" style="margin-bottom: 32px;">
+        <div>
+            <h2 style="margin-bottom: 8px;">User Management</h2>
+            <p class="text-muted">Overview of system users and sessions</p>
+        </div>
+    </div>
+
+    <!-- Quick Actions (Top Buttons) -->
+    <div style="display: flex; gap: 16px; margin-bottom: 32px;">
+        <a href="/admin/users" class="btn btn-primary" style="flex: 1; justify-content: center; height: 50px;">
+            <i class="material-symbols-outlined" style="margin-right: 8px;">person</i>
+            All Users
+        </a>
+        <a href="/admin/approvals" class="btn btn-secondary" style="flex: 1; justify-content: center; height: 50px;">
+            <i class="material-symbols-outlined" style="margin-right: 8px;">verified_user</i>
+            Pending Approvals
+            {{ if gt .PendingCount 0 }}
+            <span
+                style="background: var(--danger); color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; margin-left: 8px;">{{
+                .PendingCount }}</span>
+            {{ end }}
+        </a>
+        <a href="/admin/sessions" class="btn btn-secondary" style="flex: 1; justify-content: center; height: 50px;">
+            <i class="material-symbols-outlined" style="margin-right: 8px;">device_hub</i>
+            Active Sessions
+        </a>
+    </div>
+
+    <!-- Statistics Grid -->
+    <div class="neon-stats-grid" style="grid-template-columns: repeat(2, 1fr) !important;">
+        <!-- Total Users -->
+        <div class="neon-card">
+            <div class="flex-between" style="margin-bottom: 16px;">
+                <div style="background: rgba(99, 102, 241, 0.1); padding: 10px; border-radius: 12px;">
+                    <i class="material-symbols-outlined" style="color: var(--primary-400);">group</i>
+                </div>
+                <!-- Mini Chart Sparkline visual -->
+                <div
+                    style="height: 30px; width: 60px; background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.2), transparent);">
+                </div>
+            </div>
+            <div class="stat-value-big">{{ .UsersCount }}</div>
+            <div class="text-muted" style="font-size: 14px; margin-top: 4px;">Total Registered Users</div>
+        </div>
+
+        <!-- Active Sessions -->
+        <div class="neon-card">
+            <div class="flex-between" style="margin-bottom: 16px;">
+                <div style="background: rgba(239, 68, 68, 0.1); padding: 10px; border-radius: 12px;">
+                    <i class="material-symbols-outlined" style="color: var(--danger);">devices</i>
+                </div>
+            </div>
+            <div class="stat-value-big">{{ .SessionsCount }}</div>
+            <div class="text-muted" style="font-size: 14px; margin-top: 4px;">Active Sessions</div>
+        </div>
+    </div>
+
+    <!-- Pending Approvals Widget -->
+    {{ if gt .PendingCount 0 }}
+    <div class="card" style="margin-top: 24px; border-left: 4px solid var(--warning);">
+        <div class="flex-between">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <i class="material-symbols-outlined" style="color: var(--warning); font-size: 32px;">warning</i>
+                <div>
+                    <h3 style="margin-bottom: 4px; color: var(--text-main);">{{ .PendingCount }} Users Waiting</h3>
+                    <p class="text-muted" style="margin: 0;">There are users waiting for your approval.</p>
+                </div>
+            </div>
+            <a href="/admin/approvals" class="btn btn-primary">Review Now</a>
+        </div>
+    </div>
+    {{ end }}
+
+</div>
+{{ end }}

@@ -5,7 +5,6 @@ import (
 	"runtime/debug"
 
 	"gct/pkg/logger"
-
 	"github.com/gin-gonic/gin"
 )
 

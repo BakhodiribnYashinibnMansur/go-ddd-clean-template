@@ -5,9 +5,12 @@
 -- =========================
 
 -- Roles
-INSERT INTO role (name) VALUES ('admin'), ('manager'), ('user');
+INSERT INTO role (name) VALUES ('super_admin'), ('admin'), ('manager'), ('user') ON CONFLICT DO NOTHING;
 
 -- Permissions (Hierarchical sample)
+-- (Simplified for seeding: checking existence or using DO NOTHING if constrained)
+-- Using CTEs here is fine assuming empty DB.
+
 WITH root_perm AS (
     INSERT INTO permission (name) VALUES ('root') RETURNING id
 ),
@@ -23,21 +26,19 @@ INSERT INTO permission (parent_id, name)
 SELECT id, 'settings' FROM sys_perm;
 
 -- Role Permissions
+-- Grant root to super_admin (unrestricted access)
+INSERT INTO role_permission (role_id, permission_id)
+SELECT r.id, p.id 
+FROM role r, permission p 
+WHERE r.name = 'super_admin' AND p.name = 'root';
+
+-- Grant root to admin
 INSERT INTO role_permission (role_id, permission_id)
 SELECT r.id, p.id 
 FROM role r, permission p 
 WHERE r.name = 'admin' AND p.name = 'root';
 
--- Users
--- Admin User
-INSERT INTO users (role_id, email, phone, username, password_hash, active)
-SELECT id, 'admin@system.local', '+998900000000', 'admin', '$2a$10$X7.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1', TRUE
-FROM role WHERE name = 'admin';
-
--- Manager User
-INSERT INTO users (role_id, email, phone, username, password_hash, active)
-SELECT id, 'manager@system.local', '+998900000001', 'manager', '$2a$10$X7.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1', TRUE
-FROM role WHERE name = 'manager';
+-- NO USERS SEEDED (Use /admin/setup to create first user)
 
 -- Relations
 INSERT INTO relation (type, name) VALUES ('REGION', 'Tashkent'), ('BRANCH', 'Chilonzor');
@@ -48,8 +49,10 @@ INSERT INTO relation (type, name) VALUES ('REGION', 'Tashkent'), ('BRANCH', 'Chi
 -- Remove dummy data
 DELETE FROM user_relation;
 DELETE FROM role_permission;
-DELETE FROM users WHERE email IN ('admin@system.local', 'manager@system.local');
+DELETE FROM users; -- Clear all users if we rolled back seed? No, dangerous. But "seed_data" rollback usually implies clearing seeds.
+-- Given we didn't seed users, maybe don't delete them.
+-- But Down should invert Up. Up did nothing for users. So Down does nothing for users.
 DELETE FROM permission WHERE name IN ('root', 'system', 'users', 'settings');
-DELETE FROM role WHERE name IN ('admin', 'manager', 'user');
+DELETE FROM role WHERE name IN ('super_admin', 'admin', 'manager', 'user');
 DELETE FROM relation WHERE name IN ('Tashkent', 'Chilonzor');
 -- +goose StatementEnd

@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"gct/config"
-
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 )

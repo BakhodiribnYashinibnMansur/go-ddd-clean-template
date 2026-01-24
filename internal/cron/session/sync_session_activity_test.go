@@ -51,7 +51,7 @@ func TestCronJobs_SyncSessionActivityToPostgres(t *testing.T) {
 		WillReturnResult(pgxmock.NewResult("UPDATE", 1))
 	mockPool.ExpectCommit()
 
-	c.SyncSessionActivityToPostgres()
+	c.SyncSessionActivityToPostgres(t.Context())
 
 	assert.NoError(t, redisMock.ExpectationsWereMet())
 	assert.NoError(t, mockPool.ExpectationsWereMet())
@@ -76,7 +76,7 @@ func TestCronJobs_SyncSessionActivityToPostgres_NoData(t *testing.T) {
 	// Redis expectations: No keys found
 	redisMock.ExpectScan(0, sessionPattern, 0).SetVal([]string{}, 0)
 
-	c.SyncSessionActivityToPostgres()
+	c.SyncSessionActivityToPostgres(t.Context())
 
 	assert.NoError(t, redisMock.ExpectationsWereMet())
 	assert.NoError(t, mockPool.ExpectationsWereMet())
@@ -101,7 +101,7 @@ func TestCronJobs_SyncSessionActivityToPostgres_RedisError(t *testing.T) {
 	// Redis expectations: Scan error
 	redisMock.ExpectScan(0, sessionPattern, 0).SetErr(errors.New("redis scan error"))
 
-	c.SyncSessionActivityToPostgres()
+	c.SyncSessionActivityToPostgres(t.Context())
 
 	assert.NoError(t, redisMock.ExpectationsWereMet())
 	assert.NoError(t, mockPool.ExpectationsWereMet())

@@ -7,7 +7,6 @@ import (
 
 	"gct/internal/domain"
 	"gct/pkg/logger"
-
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
 	"github.com/pashagolub/pgxmock/v4"

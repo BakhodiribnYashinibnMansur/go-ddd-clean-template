@@ -16,8 +16,13 @@ func (uc *UseCase) SignUp(ctx context.Context, in *domain.SignUpIn) (*domain.Sig
 		return nil, err
 	}
 
+	var username *string
+	if in.Username != "" {
+		username = &in.Username
+	}
+
 	user := &domain.User{
-		Username:   &in.Username,
+		Username:   username,
 		Phone:      &in.Phone,
 		Attributes: make(map[string]any),
 	}
@@ -34,11 +39,13 @@ func (uc *UseCase) SignUp(ctx context.Context, in *domain.SignUpIn) (*domain.Sig
 
 	uc.logger.WithContext(ctx).Infow("user sign up success, performing automatic sign in")
 
-	return uc.SignIn(ctx, &domain.SignInIn{
-		Phone:     in.Phone,
-		Password:  in.Password,
-		DeviceID:  in.DeviceID,
-		IP:        in.IP,
-		UserAgent: in.UserAgent,
-	})
+	signInInput := &domain.SignInIn{
+		Login:    in.Phone,
+		Password: in.Password,
+	}
+	signInInput.Session.DeviceID = in.Session.DeviceID
+	signInInput.Session.IP = in.Session.IP
+	signInInput.Session.UserAgent = in.Session.UserAgent
+
+	return uc.SignIn(ctx, signInInput)
 }

@@ -15,7 +15,6 @@ import (
 
 	"gct/internal/controller/restapi/response"
 	"gct/pkg/logger"
-
 	"github.com/gin-gonic/gin"
 )
 

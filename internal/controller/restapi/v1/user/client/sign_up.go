@@ -42,14 +42,16 @@ func (c *Controller) SignUp(ctx *gin.Context) {
 		return
 	}
 
-	out, err := c.u.User.Client.SignUp(ctx.Request.Context(), &domain.SignUpIn{
-		Username:  username,
-		Phone:     *user.Phone,
-		Password:  user.Password,
-		DeviceID:  util.GetDeviceIDUUID(ctx),
-		UserAgent: util.GetUserAgent(ctx),
-		IP:        util.GetIPAddress(ctx),
-	})
+	signUpIn := &domain.SignUpIn{
+		Username: username,
+		Phone:    *user.Phone,
+		Password: user.Password,
+	}
+	signUpIn.Session.DeviceID = util.GetDeviceIDUUID(ctx)
+	signUpIn.Session.UserAgent = util.GetUserAgent(ctx)
+	signUpIn.Session.IP = util.GetIPAddress(ctx)
+
+	out, err := c.u.User.Client.SignUp(ctx.Request.Context(), signUpIn)
 	if err != nil {
 		response.RespondWithError(ctx, err, http.StatusInternalServerError)
 		return

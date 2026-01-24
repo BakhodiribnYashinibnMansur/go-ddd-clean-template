@@ -2,7 +2,6 @@ package featureflag
 
 import (
 	"gct/pkg/logger"
-
 	"github.com/gin-gonic/gin"
 )
 

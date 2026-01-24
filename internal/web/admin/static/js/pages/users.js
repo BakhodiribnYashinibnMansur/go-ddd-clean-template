@@ -5,30 +5,28 @@ document.addEventListener('DOMContentLoaded', () => {
     initUserActions();
 });
 
-function initUserActions(): void {
+function initUserActions() {
     const blockBtns = document.querySelectorAll('.block-user-btn');
     const unblockBtns = document.querySelectorAll('.unblock-user-btn');
 
     blockBtns.forEach((btn) => {
-        const element = btn as HTMLElement;
-        element.addEventListener('click', () => {
-            if (element.dataset.id) {
-                handleUserAction(element.dataset.id, 'block');
+        btn.addEventListener('click', () => {
+            if (btn.dataset.id) {
+                handleUserAction(btn.dataset.id, 'block');
             }
         });
     });
 
     unblockBtns.forEach((btn) => {
-        const element = btn as HTMLElement;
-        element.addEventListener('click', () => {
-            if (element.dataset.id) {
-                handleUserAction(element.dataset.id, 'unblock');
+        btn.addEventListener('click', () => {
+            if (btn.dataset.id) {
+                handleUserAction(btn.dataset.id, 'unblock');
             }
         });
     });
 }
 
-async function handleUserAction(userId: string, action: 'block' | 'unblock'): Promise<void> {
+async function handleUserAction(userId, action) {
     if (!userId) return;
 
     const actionText = action === 'block' ? 'Block' : 'Unblock';
@@ -43,14 +41,13 @@ async function handleUserAction(userId: string, action: 'block' | 'unblock'): Pr
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                // 'X-CSRF-Token': getCsrfToken() // function to get token from meta or cookie
             }
         });
 
         if (response.ok) {
             window.location.reload();
         } else {
-            const data: { message?: string } = await response.json();
+            const data = await response.json();
             alert(`Error: ${data.message || 'Action failed'}`);
         }
     } catch (error) {

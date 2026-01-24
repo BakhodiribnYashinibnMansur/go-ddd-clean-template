@@ -2,6 +2,7 @@ package access
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -20,6 +21,9 @@ func (u *UseCase) Check(ctx context.Context, userID uuid.UUID, session *domain.S
 	// 1. Get User
 	user, err := u.repo.Postgres.User.Client.Get(ctx, &domain.UserFilter{ID: &userID})
 	if err != nil {
+		if errors.Is(err, context.Canceled) || strings.Contains(err.Error(), "context canceled") {
+			return false, err
+		}
 		appErr := apperrors.MapRepoToServiceError(ctx, err, apperrors.ErrUserNotFound).WithInput(userID)
 		u.logger.WithContext(ctx).Errorw("access check failed: get user", "error", appErr)
 		return false, appErr
@@ -121,6 +125,114 @@ func (u *UseCase) Check(ctx context.Context, userID uuid.UUID, session *domain.S
 	u.logger.WithContext(ctx).Infow("access check denied: insufficient permissions/policies", "role", role.Name)
 	u.logAudit(ctx, userID, session, path, method, false, "insufficient permissions", nil)
 	return false, nil
+}
+
+func (u *UseCase) CheckBatch(ctx context.Context, userID uuid.UUID, session *domain.Session, targets map[string]string, method string, env map[string]any) (map[string]bool, error) {
+	u.logger.WithContext(ctx).Infow("access check batch started", "user_id", userID, "count", len(targets))
+	results := make(map[string]bool)
+
+	// 1. Get User
+	user, err := u.repo.Postgres.User.Client.Get(ctx, &domain.UserFilter{ID: &userID})
+	if err != nil {
+		u.logger.WithContext(ctx).Errorw("access check batch failed: get user", "error", err)
+		return nil, err
+	}
+	if user.RoleID == nil {
+		u.logger.WithContext(ctx).Warnw("access check batch denied: user has no role", "user_id", userID)
+		return nil, nil // Return nil or empty results (all false)
+	}
+
+	// 2. Mock RBAC: Check Role Name
+	role, err := u.repo.Postgres.Authz.Role.Get(ctx, &domain.RoleFilter{ID: user.RoleID})
+	if err != nil {
+		u.logger.WithContext(ctx).Errorw("access check batch failed: get role", "error", err)
+		return nil, err
+	}
+
+	// Admin Access
+	if strings.Contains(strings.ToLower(role.Name), "admin") {
+		for k := range targets {
+			results[k] = true
+		}
+		u.logger.WithContext(ctx).Infow("access check batch allowed: admin role", "role", role.Name)
+		return results, nil
+	}
+
+	// 3. Get Policies
+	policies, err := u.repo.Postgres.Authz.Policy.GetByRole(ctx, *user.RoleID)
+	if err != nil {
+		u.logger.WithContext(ctx).Errorw("access check batch failed: get policies", "error", err)
+		return nil, err
+	}
+
+	// 4. Get Permissions & Scopes (Optimization: Fetch all ONCE)
+	perms, err := u.repo.Postgres.Authz.Role.GetPermissions(ctx, *user.RoleID)
+	if err != nil {
+		u.logger.WithContext(ctx).Errorw("access check batch failed: get permissions", "error", err)
+		return nil, err
+	}
+
+	var allScopes []*domain.Scope
+	for _, perm := range perms {
+		scopes, err := u.repo.Postgres.Authz.Permission.GetScopes(ctx, perm.ID)
+		if err == nil {
+			allScopes = append(allScopes, scopes...)
+		}
+	}
+
+	// 5. Evaluate for each target
+	for key, path := range targets {
+		allowed := false
+		policyDeny := false
+		policyAllow := false
+
+		// Check Policies
+		for _, policy := range policies {
+			// Note: env might need path update if policies depend on it.
+			// Currently re-using env. To be strictly correct, we should copy env and set "path".
+			// But for now assuming policies are mostly Env/User based.
+			if !evaluateConditions(policy.Conditions, env) {
+				continue
+			}
+			if policy.Effect == domain.PolicyEffectDeny {
+				policyDeny = true
+				break
+			}
+			if policy.Effect == domain.PolicyEffectAllow {
+				policyAllow = true
+			}
+		}
+
+		if policyDeny {
+			results[key] = false
+			continue
+		}
+		if policyAllow {
+			results[key] = true
+			continue
+		}
+
+		// Check RBAC Scopes
+		for _, scope := range allScopes {
+			if scope.Method == method || scope.Method == "*" {
+				if scope.Path == path || scope.Path == "*" {
+					allowed = true
+					break
+				}
+				if strings.HasSuffix(scope.Path, "*") {
+					prefix := strings.TrimSuffix(scope.Path, "*")
+					if strings.HasPrefix(path, prefix) {
+						allowed = true
+						break
+					}
+				}
+			}
+		}
+		results[key] = allowed
+	}
+
+	u.logger.WithContext(ctx).Infow("access check batch completed")
+	return results, nil
 }
 
 func (u *UseCase) logAudit(_ context.Context, userID uuid.UUID, session *domain.Session, path, method string, success bool, decision string, policyID *uuid.UUID) {

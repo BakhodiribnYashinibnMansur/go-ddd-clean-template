@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	apperrors "gct/pkg/errors"
-
 	"github.com/go-playground/validator/v10"
 )
 

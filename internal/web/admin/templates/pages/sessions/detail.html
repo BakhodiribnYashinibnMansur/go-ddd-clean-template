@@ -1,0 +1,223 @@
+{{ template "base" . }} {{ define "content" }}
+<div style="margin-bottom: 24px;"> <a href="/admin/sessions" class="btn btn-secondary"
+        style="margin-bottom: 16px; text-decoration: none;"> <i class="material-symbols-outlined"
+            style="font-size: 18px;">arrow_back</i> Back to Sessions
+    </a>
+    <div class="flex-between">
+        <h2 style="margin: 0;">Session Details</h2>
+        <div style="gap: 12px; display: flex;">
+            {{ if .Session.Revoked }} <button class="btn btn-secondary" disabled
+                style="opacity: 0.7; cursor: not-allowed;"> <i class="material-symbols-outlined"
+                    style="font-size: 18px;">block</i> Already Revoked
+            </button>
+            {{ else }} <button class="btn btn-primary revoke-session-btn" data-id="{{ .Session.ID }}"
+                style="background: var(--danger); border-color: var(--danger);"> <i class="material-symbols-outlined"
+                    style="font-size: 18px;">cancel</i> Revoke Session
+            </button>
+            {{ end }}
+        </div>
+    </div>
+</div>
+<div class="dashboard-grid" style="grid-template-columns: 2fr 1fr;">
+    <!-- Main Info -->
+    <div class="card">
+        <h3
+            style="margin-bottom: 20px; color: var(--text-muted); text-transform: uppercase; font-size: 12px; letter-spacing: 1px;">
+            Connection Information
+        </h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+            <div> <label class="form-label"
+                    style="display: block; margin-bottom: 8px; font-size: 12px; color: var(--text-muted);">Session
+                    ID</label>
+                <div class="form-control"
+                    style="padding: 10px 16px; display: flex; align-items: center; font-family: monospace; font-size: 13px; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-subtle); border-radius: 8px;">
+                    {{ .Session.ID }}
+                </div>
+            </div>
+            <div> <label class="form-label"
+                    style="display: block; margin-bottom: 8px; font-size: 12px; color: var(--text-muted);">User
+                    ID</label>
+                <div class="form-control"
+                    style="padding: 10px 16px; display: flex; align-items: center; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-subtle); border-radius: 8px;">
+                    <a href="/admin/users/{{ .Session.UserID }}"
+                        style="color: var(--primary-400); text-decoration: none; font-family: monospace;">
+                        {{ .Session.UserID }}
+                    </a>
+                </div>
+            </div>
+            <div> <label class="form-label"
+                    style="display: block; margin-bottom: 8px; font-size: 12px; color: var(--text-muted);">IP
+                    Address</label>
+                <div class="form-control"
+                    style="padding: 10px 16px; display: flex; align-items: center; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-subtle); border-radius: 8px; gap: 8px;">
+                    <span style="font-family: monospace;">{{ if .Session.IPAddress }}{{ derefString .Session.IPAddress
+                        }}{{ else }}--{{ end }}</span>
+                    {{ if .Session.IPAddress }} <button class="btn-icon"
+                        onclick="copyToClipboard('{{ derefString .Session.IPAddress }}', this)" title="Copy IP"
+                        style="padding: 2px;"> <i class="material-symbols-outlined"
+                            style="font-size: 14px;">content_copy</i>
+                    </button>
+                    {{ end }}
+                </div>
+            </div>
+            <div> <label class="form-label"
+                    style="display: block; margin-bottom: 8px; font-size: 12px; color: var(--text-muted);">User
+                    Agent</label>
+                <div class="form-control"
+                    style="padding: 10px 16px; display: flex; align-items: center; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-subtle); border-radius: 8px; overflow: hidden;">
+                    <span style="font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+                        title="{{ if .Session.UserAgent }}{{ derefString .Session.UserAgent }}{{ end }}">
+                        {{ if .Session.UserAgent }}{{ derefString .Session.UserAgent }}{{ else }}--{{ end }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Device Info -->
+    <div class="card">
+        <h3
+            style="margin-bottom: 20px; color: var(--text-muted); text-transform: uppercase; font-size: 12px; letter-spacing: 1px;">
+            Device & Status
+        </h3>
+        <div style="margin-bottom: 24px;"> <label class="form-label"
+                style="display: block; margin-bottom: 8px; font-size: 12px; color: var(--text-muted);">Device</label>
+            <div
+                style="display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(255, 255, 255, 0.03); border-radius: 8px; border: 1px solid var(--border-subtle);">
+                {{ $iconClass := "material-symbols-outlined" }}
+                {{ $iconName := "devices" }}
+                {{ $iconColor := "#94a3b8" }}
+
+                {{ $deviceType := derefDeviceType .Session.DeviceType }}
+                {{ if $deviceType }}
+                {{ if eq $deviceType "MOBILE" }}
+                {{ $iconName = "smartphone" }} {{ $iconColor = "#10b981" }}
+                {{ else if eq $deviceType "TABLET" }}
+                {{ $iconName = "tablet" }} {{ $iconColor = "#f59e0b" }}
+                {{ else if eq $deviceType "DESKTOP" }}
+                {{ $iconName = "computer" }} {{ $iconColor = "#6366f1" }}
+                {{ else if eq $deviceType "TV" }}
+                {{ $iconName = "tv" }} {{ $iconColor = "#ec4899" }}
+                {{ else if eq $deviceType "BOT" }}
+                {{ $iconName = "smart_toy" }} {{ $iconColor = "#ef4444" }}
+                {{ end }}
+                {{ end }}
+
+                {{/* Override with OS specific icon if available */}}
+                {{ if .Session.UserAgent }}
+                {{ $ua := derefString .Session.UserAgent }}
+                {{ if contains $ua "Mac" }}
+                {{ $iconClass = "bx" }} {{ $iconName = "bxl-apple" }} {{ $iconColor = "var(--text-primary)" }}
+                {{ else if contains $ua "Windows" }}
+                {{ $iconClass = "bx" }} {{ $iconName = "bxl-windows" }} {{ $iconColor = "#00a4ef" }}
+                {{ else if contains $ua "Android" }}
+                {{ $iconClass = "bx" }} {{ $iconName = "bxl-android" }} {{ $iconColor = "#3ddc84" }}
+                {{ else if contains $ua "Linux" }}
+                {{ $iconClass = "bx" }} {{ $iconName = "bxl-tux" }} {{ $iconColor = "var(--text-primary)" }}
+                {{ else if contains $ua "iPhone" }}
+                {{ $iconClass = "bx" }} {{ $iconName = "bxl-apple" }} {{ $iconColor = "var(--text-primary)" }}
+                {{ else if contains $ua "iPad" }}
+                {{ $iconClass = "bx" }} {{ $iconName = "bxl-apple" }} {{ $iconColor = "var(--text-primary)" }}
+                {{ end }}
+                {{ end }}
+
+                <i class="{{ $iconClass }} {{ if ne $iconClass " material-symbols-outlined" }}{{ $iconName }}{{ end }}"
+                    style="color: {{ $iconColor }}; font-size: 28px;">
+                    {{ if eq $iconClass "material-symbols-outlined" }}{{ $iconName }}{{ end }}
+                </i>
+                <div>
+                    <div style="font-weight: 600; font-size: 15px;">
+                        {{ if .Session.DeviceName }}{{ derefString .Session.DeviceName }}{{ else }}Unknown Device{{ end
+                        }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div style="margin-bottom: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div> <label class="form-label"
+                    style="display: block; margin-bottom: 4px; font-size: 11px; color: var(--text-muted);">Browser</label>
+                <div style="color: var(--text-main); font-weight: 500;">
+                    {{ if .Session.Browser }}{{ derefString .Session.Browser }}{{ else }}--{{ end }}
+                    {{ if .Session.BrowserVersion }}<span
+                        style="color: var(--text-muted); font-size: 11px; margin-left: 4px;">{{ derefString
+                        .Session.BrowserVersion }}</span>{{ end }}
+                </div>
+            </div>
+            <div> <label class="form-label"
+                    style="display: block; margin-bottom: 4px; font-size: 11px; color: var(--text-muted);">OS</label>
+                <div style="color: var(--text-main); font-weight: 500;">
+                    {{ if .Session.OS }}{{ derefString .Session.OS }}{{ else }}--{{ end }}
+                    {{ if .Session.OSVersion }}<span
+                        style="color: var(--text-muted); font-size: 11px; margin-left: 4px;">{{ derefString
+                        .Session.OSVersion }}</span>{{ end }}
+                </div>
+            </div>
+        </div>
+        <div style="margin-bottom: 24px;"> <label class="form-label"
+                style="display: block; margin-bottom: 8px; font-size: 12px; color: var(--text-muted);">Current
+                Status</label>
+            {{ if .Session.Revoked }} <span class="badge badge-danger">Revoked</span>
+            {{ else if .Session.IsExpired }} <span class="badge badge-warning">Expired</span>
+            {{ else }} <span class="badge badge-success">Active</span>
+            {{ end }}
+        </div>
+
+        <div> <label class="form-label"
+                style="display: block; margin-bottom: 8px; font-size: 12px; color: var(--text-muted);">Timestamps</label>
+            <div style="font-size: 13px; color: var(--text-dim); line-height: 1.6;">
+                <div style="display: flex; justify-content: space-between;">
+                    <span>Created:</span> <span style="color: var(--text-main); font-family: monospace;">{{
+                        .Session.CreatedAt.Format "Jan 02, 2006 15:04:05" }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span>Expires:</span> <span style="color: var(--text-main); font-family: monospace;">{{
+                        .Session.ExpiresAt.Format "Jan 02, 2006 15:04:05" }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Revoke Session Handler
+        const revokeBtn = document.querySelector('.revoke-session-btn');
+        if (revokeBtn) {
+            revokeBtn.addEventListener('click', function () {
+                const sessionId = this.getAttribute('data-id');
+                if (confirm('Are you sure you want to revoke this session? The user will be logged out properly on their connection.')) {
+                    fetch(`/admin/sessions/${sessionId}/revoke`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                        .then(response => {
+                            if (response.ok) {
+                                window.location.reload();
+                            } else {
+                                alert('Failed to revoke session');
+                            }
+                        })
+                        .catch(err => {
+                            console.error('Error:', err);
+                            alert('An error occurred');
+                        });
+                }
+            });
+        }
+    });
+
+    function copyToClipboard(text, btnElement) {
+        navigator.clipboard.writeText(text).then(() => {
+            const originalIcon = btnElement.innerHTML;
+            btnElement.innerHTML = '<i class="material-symbols-outlined" style="font-size: 14px; color: var(--success);">check</i>';
+            setTimeout(() => {
+                btnElement.innerHTML = originalIcon;
+            }, 2000);
+        }).catch(err => {
+            console.error('Failed to copy: ', err);
+        });
+    }
+</script>
+{{ end }}

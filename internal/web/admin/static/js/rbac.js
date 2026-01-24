@@ -1,5 +1,5 @@
 /**
- * RBAC Management Scripts
+ * RBAC Management Scripts (Compiled)
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -9,17 +9,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-function initRoleForm(): void {
-    const form = document.getElementById('roleForm') as HTMLFormElement;
+function initRoleForm() {
+    const form = document.getElementById('roleForm');
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
         const formData = new FormData(form);
-        const data: any = Object.fromEntries(formData.entries());
+        const data = Object.fromEntries(formData.entries());
 
         // Handle multi-select checkboxes for permissions
         const checkboxes = form.querySelectorAll('input[name="permissions"]:checked');
-        data.permissions = Array.from(checkboxes).map((cb) => (cb as HTMLInputElement).value);
+        data.permissions = Array.from(checkboxes).map((cb) => cb.value);
 
         const method = data.id ? 'PUT' : 'POST';
         const url = data.id ? `/admin/rbac/roles/${data.id}` : '/admin/rbac/roles';
@@ -47,7 +47,7 @@ function initRoleForm(): void {
 }
 
 // Exposed to global scope for button onclick attributes
-(window as any).deleteRole = async (id: string) => {
+window.deleteRole = async (id) => {
     if (!confirm('Are you sure you want to delete this role? This might affect assigned users.')) return;
 
     try {

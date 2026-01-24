@@ -51,11 +51,47 @@
         <table class="data-table">
             <thead>
                 <tr>
-                    <th>Time</th>
-                    <th>Method</th>
+                    <th>
+                        <a href="?sort_by=created_at&sort_order={{ if eq .Pagination.SortOrder " ASC" }}DESC{{ else
+                            }}ASC{{ end }}" style="color: inherit; display: flex; align-items: center; gap: 4px;">
+                            Time {{ if eq .Pagination.SortBy "created_at" }}
+                            <i class="material-symbols-outlined" style="font-size: 16px;">
+                                {{ if eq .Pagination.SortOrder "ASC" }}arrow_upward{{ else }}arrow_downward{{ end }}
+                            </i>
+                            {{ end }}
+                        </a>
+                    </th>
+                    <th>
+                        <a href="?sort_by=method&sort_order={{ if eq .Pagination.SortOrder " ASC" }}DESC{{ else }}ASC{{
+                            end }}" style="color: inherit; display: flex; align-items: center; gap: 4px;">
+                            Method {{ if eq .Pagination.SortBy "method" }}
+                            <i class="material-symbols-outlined" style="font-size: 16px;">
+                                {{ if eq .Pagination.SortOrder "ASC" }}arrow_upward{{ else }}arrow_downward{{ end }}
+                            </i>
+                            {{ end }}
+                        </a>
+                    </th>
                     <th>Path</th>
-                    <th>Status</th>
-                    <th>Duration</th>
+                    <th>
+                        <a href="?sort_by=status_code&sort_order={{ if eq .Pagination.SortOrder " ASC" }}DESC{{ else
+                            }}ASC{{ end }}" style="color: inherit; display: flex; align-items: center; gap: 4px;">
+                            Status {{ if eq .Pagination.SortBy "status_code" }}
+                            <i class="material-symbols-outlined" style="font-size: 16px;">
+                                {{ if eq .Pagination.SortOrder "ASC" }}arrow_upward{{ else }}arrow_downward{{ end }}
+                            </i>
+                            {{ end }}
+                        </a>
+                    </th>
+                    <th>
+                        <a href="?sort_by=duration_ms&sort_order={{ if eq .Pagination.SortOrder " ASC" }}DESC{{ else
+                            }}ASC{{ end }}" style="color: inherit; display: flex; align-items: center; gap: 4px;">
+                            Duration {{ if eq .Pagination.SortBy "duration_ms" }}
+                            <i class="material-symbols-outlined" style="font-size: 16px;">
+                                {{ if eq .Pagination.SortOrder "ASC" }}arrow_upward{{ else }}arrow_downward{{ end }}
+                            </i>
+                            {{ end }}
+                        </a>
+                    </th>
                     <th>User</th>
                     <th>IP</th>
                 </tr>
@@ -107,7 +143,7 @@
         </table>
     </div>
     <div class="card-footer">
-        {{ template "pagination" .Pagination }}
+        {{ template "pagination" . }}
     </div>
 </div>
 

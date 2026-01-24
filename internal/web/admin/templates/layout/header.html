@@ -1,13 +1,119 @@
 {{ define "header" }}
 <header class="top-bar">
-    <div class="header-left">
-        <!-- Breadcrumbs or Page Title could go here -->
+    <div class="header-left" style="display: flex; align-items: center; gap: 16px;">
+        <!-- Sidebar toggle moved to sidebar footer -->
     </div>
-    <div class="header-right flex-between gap-sm">
-        <span class="text-body" style="font-size: 0.875rem;">Admin User</span>
-        <button class="btn btn-secondary btn-icon" id="logoutBtn" title="Logout">
-            Logout
-        </button>
+    <div class="header-right flex-between gap-sm" style="position: relative;">
+        <div onclick="toggleUserMenu()" class="header-profile"
+            style="display: flex; align-items: center; gap: 12px; cursor: pointer; padding: 6px 12px; border-radius: 99px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--card-border); transition: all 0.2s ease; user-select: none;">
+            <div class="user-avatar" style="width: 32px; height: 32px; font-size: 14px; box-shadow: none;">
+                {{ if .User }}{{ printf "%.1s" (currUserEmail) }}{{ else }}G{{ end }}
+            </div>
+            <div class="profile-info" style="display: flex; flex-direction: column; line-height: 1.2;">
+                <span class="text-body" style="font-size: 0.85rem; font-weight: 600;">
+                    {{ if .User }}{{ currUserEmail }}{{ else }}Guest{{ end }}
+                </span>
+                <span class="text-muted" style="font-size: 0.7rem;">
+                    {{ if .RoleName }}{{ .RoleName }}{{ else }}Visitor{{ end }}
+                </span>
+            </div>
+            <i class="material-symbols-outlined" style="font-size: 18px; color: var(--text-muted);">expand_more</i>
+        </div>
+
+        <div id="userDropdown" class="dropdown-menu">
+            <a href="/admin/profile" class="dropdown-item">
+                <i class="material-symbols-outlined">person</i>
+                Profile
+            </a>
+            <div class="dropdown-divider"></div>
+            <a href="/auth/logout" class="dropdown-item text-danger">
+                <i class="material-symbols-outlined">logout</i>
+                Logout
+            </a>
+        </div>
     </div>
 </header>
+
+<style>
+    .dropdown-menu {
+        display: none;
+        position: absolute;
+        top: 100%;
+        right: 0;
+        margin-top: 8px;
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        min-width: 180px;
+        z-index: 1000;
+        overflow: hidden;
+        animation: fadeIn 0.1s ease-out;
+    }
+
+    .dropdown-menu.show {
+        display: block;
+    }
+
+    .dropdown-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 16px;
+        color: var(--text-primary);
+        text-decoration: none;
+        font-size: 13px;
+        transition: background 0.1s;
+    }
+
+    .dropdown-item:hover {
+        background: var(--hover-bg);
+    }
+
+    .dropdown-item i {
+        font-size: 18px;
+        opacity: 0.7;
+    }
+
+    .dropdown-divider {
+        height: 1px;
+        background: var(--card-border);
+        margin: 4px 0;
+    }
+
+    .text-danger {
+        color: var(--error-color) !important;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-5px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
+<script>
+    function toggleUserMenu() {
+        document.getElementById("userDropdown").classList.toggle("show");
+    }
+
+    // Close the dropdown if the user clicks outside of it
+    window.onclick = function (event) {
+        if (!event.target.closest('.header-profile')) {
+            var dropdowns = document.getElementsByClassName("dropdown-menu");
+            for (var i = 0; i < dropdowns.length; i++) {
+                var openDropdown = dropdowns[i];
+                if (openDropdown.classList.contains('show')) {
+                    openDropdown.classList.remove('show');
+                }
+            }
+        }
+    }
+</script>
 {{ end }}

@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/repo/persistent/postgres/audit"
 	"gct/internal/repo/persistent/postgres/authz"
+	sitesetting "gct/internal/repo/persistent/postgres/site_setting"
 	"gct/internal/repo/persistent/postgres/user"
 	"gct/pkg/db/postgres"
 	"gct/pkg/logger"
@@ -13,19 +14,21 @@ import (
 )
 
 type Repo struct {
-	User  *user.User
-	Authz *authz.Authz
-	Audit *audit.Audit
-	DB    *postgres.Postgres
+	User        *user.User
+	Authz       *authz.Authz
+	Audit       *audit.Audit
+	SiteSetting *sitesetting.Repo
+	DB          *postgres.Postgres
 }
 
 func New(pg *postgres.Postgres, logger logger.Log) (*Repo, error) {
 	pg.Builder.PlaceholderFormat(squirrel.Dollar)
 	return &Repo{
-		User:  user.New(pg, logger),
-		Authz: authz.New(pg, logger),
-		Audit: audit.New(pg, logger),
-		DB:    pg,
+		User:        user.New(pg, logger),
+		Authz:       authz.New(pg, logger),
+		Audit:       audit.New(pg, logger),
+		SiteSetting: sitesetting.New(pg.Pool),
+		DB:          pg,
 	}, nil
 }
 

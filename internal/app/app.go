@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"strconv"
 	"syscall"
+	"time"
 
 	"gct/config"
 	"gct/consts"
@@ -17,15 +18,12 @@ import (
 	"gct/internal/seeder"
 	"gct/internal/usecase"
 	"gct/internal/usecase/cache"
+	"gct/pkg/asynq"
 	"gct/pkg/db/postgres"
 	redisPkg "gct/pkg/db/redis"
 	"gct/pkg/logger"
 	httpserver "gct/pkg/server/http"
 	"gct/pkg/telemetry"
-	"time"
-
-	"gct/pkg/asynq"
-
 	"github.com/gin-gonic/gin"
 	hibikenAsynq "github.com/hibiken/asynq"
 	"go.uber.org/zap"

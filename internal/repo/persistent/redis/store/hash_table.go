@@ -57,7 +57,6 @@ func (h *HashTable[V]) Pop(ctx context.Context, key string) (map[string]V, error
 }
 
 func (h *HashTable[V]) Set(ctx context.Context, key string, hashKey map[string]V, expirationTime time.Duration) error {
-
 	// If empty map, delete the key
 	if len(hashKey) == 0 {
 		if err := h.db.Del(ctx, key).Err(); err != nil {

@@ -7,7 +7,6 @@ import (
 
 	"gct/internal/cron/session"
 	"gct/pkg/logger"
-
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 	"github.com/robfig/cron/v3"
@@ -17,15 +16,20 @@ type Jobs struct {
 	cron        *cron.Cron
 	logger      logger.Log
 	runningJobs sync.Map // jobName -> bool (running status)
+	ctx         context.Context
+	cancel      context.CancelFunc
 
 	// Sub-packages
 	session *session.CronJobs
 }
 
 func NewCronJobs(pool *pgxpool.Pool, redis *redis.Client, logger logger.Log) *Jobs {
+	ctx, cancel := context.WithCancel(context.Background())
 	return &Jobs{
 		logger:  logger,
 		session: session.NewSessionCronJobs(pool, redis, logger),
+		ctx:     ctx,
+		cancel:  cancel,
 	}
 }
 
@@ -53,6 +57,7 @@ func (c *Jobs) Start() {
 // Stop gracefully stops all cron jobs
 func (c *Jobs) Stop() {
 	if c.cron != nil {
+		c.cancel()
 		ctx := c.cron.Stop()
 		<-ctx.Done()
 		c.logger.Infow("Cron jobs stopped successfully")

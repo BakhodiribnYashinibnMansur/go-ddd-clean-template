@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"gct/internal/domain"
+
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -21,12 +22,13 @@ func TestUseCase_SignIn_TableDriven(t *testing.T) {
 		repoError     error
 		sessionError  error
 		expectError   bool
+		skipRepoMock  bool
 		validateToken func(t *testing.T, out *domain.SignInOut)
 	}{
 		{
 			name: "success_basic_signin",
 			input: &domain.SignInIn{
-				Phone:    "123456789",
+				Login:    "123456789",
 				Password: "password",
 			},
 			mockUser: func() *domain.User {
@@ -35,6 +37,7 @@ func TestUseCase_SignIn_TableDriven(t *testing.T) {
 					ID:           uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 					Phone:        stringPtr("123456789"),
 					PasswordHash: string(hashedPassword),
+					IsApproved:   true,
 				}
 			}(),
 			expectError: false,
@@ -46,17 +49,21 @@ func TestUseCase_SignIn_TableDriven(t *testing.T) {
 		},
 		{
 			name: "success_with_device_id",
-			input: &domain.SignInIn{
-				Phone:    "123456789",
-				Password: "password",
-				DeviceID: uuid.MustParse("00000000-0000-0000-0000-000000000123"),
-			},
+			input: func() *domain.SignInIn {
+				in := &domain.SignInIn{
+					Login:    "123456789",
+					Password: "password",
+				}
+				in.Session.DeviceID = uuid.MustParse("00000000-0000-0000-0000-000000000123")
+				return in
+			}(),
 			mockUser: func() *domain.User {
 				hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("password"), bcrypt.DefaultCost)
 				return &domain.User{
 					ID:           uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 					Phone:        stringPtr("123456789"),
 					PasswordHash: string(hashedPassword),
+					IsApproved:   true,
 				}
 			}(),
 			expectError: false,
@@ -68,17 +75,21 @@ func TestUseCase_SignIn_TableDriven(t *testing.T) {
 		},
 		{
 			name: "success_with_user_agent",
-			input: &domain.SignInIn{
-				Phone:     "123456789",
-				Password:  "password",
-				UserAgent: "Mozilla/5.0",
-			},
+			input: func() *domain.SignInIn {
+				in := &domain.SignInIn{
+					Login:    "123456789",
+					Password: "password",
+				}
+				in.Session.UserAgent = "Mozilla/5.0"
+				return in
+			}(),
 			mockUser: func() *domain.User {
 				hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("password"), bcrypt.DefaultCost)
 				return &domain.User{
 					ID:           uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 					Phone:        stringPtr("123456789"),
 					PasswordHash: string(hashedPassword),
+					IsApproved:   true,
 				}
 			}(),
 			expectError: false,
@@ -90,17 +101,21 @@ func TestUseCase_SignIn_TableDriven(t *testing.T) {
 		},
 		{
 			name: "success_with_ip",
-			input: &domain.SignInIn{
-				Phone:    "123456789",
-				Password: "password",
-				IP:       "192.168.1.1",
-			},
+			input: func() *domain.SignInIn {
+				in := &domain.SignInIn{
+					Login:    "123456789",
+					Password: "password",
+				}
+				in.Session.IP = "192.168.1.1"
+				return in
+			}(),
 			mockUser: func() *domain.User {
 				hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("password"), bcrypt.DefaultCost)
 				return &domain.User{
 					ID:           uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 					Phone:        stringPtr("123456789"),
 					PasswordHash: string(hashedPassword),
+					IsApproved:   true,
 				}
 			}(),
 			expectError: false,
@@ -113,7 +128,7 @@ func TestUseCase_SignIn_TableDriven(t *testing.T) {
 		{
 			name: "error_user_not_found",
 			input: &domain.SignInIn{
-				Phone:    "123456789",
+				Login:    "123456789",
 				Password: "password",
 			},
 			mockUser:    nil,
@@ -123,7 +138,7 @@ func TestUseCase_SignIn_TableDriven(t *testing.T) {
 		{
 			name: "error_invalid_password",
 			input: &domain.SignInIn{
-				Phone:    "123456789",
+				Login:    "123456789",
 				Password: "wrongpassword",
 			},
 			mockUser: func() *domain.User {
@@ -132,6 +147,7 @@ func TestUseCase_SignIn_TableDriven(t *testing.T) {
 					ID:           uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 					Phone:        stringPtr("123456789"),
 					PasswordHash: string(hashedPassword),
+					IsApproved:   true,
 				}
 			}(),
 			expectError: true,
@@ -139,17 +155,18 @@ func TestUseCase_SignIn_TableDriven(t *testing.T) {
 		{
 			name: "error_empty_phone",
 			input: &domain.SignInIn{
-				Phone:    "",
+				Login:    "",
 				Password: "password",
 			},
-			mockUser:    nil,
-			repoError:   errors.New("user not found"),
-			expectError: true,
+			mockUser:     nil,
+			repoError:    errors.New("user not found"),
+			expectError:  true,
+			skipRepoMock: true,
 		},
 		{
 			name: "error_empty_password",
 			input: &domain.SignInIn{
-				Phone:    "123456789",
+				Login:    "123456789",
 				Password: "",
 			},
 			mockUser: func() *domain.User {
@@ -158,14 +175,16 @@ func TestUseCase_SignIn_TableDriven(t *testing.T) {
 					ID:           uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 					Phone:        stringPtr("123456789"),
 					PasswordHash: string(hashedPassword),
+					IsApproved:   true,
 				}
 			}(),
-			expectError: true,
+			expectError:  true,
+			skipRepoMock: true,
 		},
 		{
 			name: "error_session_creation_failed",
 			input: &domain.SignInIn{
-				Phone:    "123456789",
+				Login:    "123456789",
 				Password: "password",
 			},
 			mockUser: func() *domain.User {
@@ -174,6 +193,7 @@ func TestUseCase_SignIn_TableDriven(t *testing.T) {
 					ID:           uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 					Phone:        stringPtr("123456789"),
 					PasswordHash: string(hashedPassword),
+					IsApproved:   true,
 				}
 			}(),
 			sessionError: errors.New("session creation failed"),
@@ -181,19 +201,23 @@ func TestUseCase_SignIn_TableDriven(t *testing.T) {
 		},
 		{
 			name: "success_all_metadata",
-			input: &domain.SignInIn{
-				Phone:     "123456789",
-				Password:  "password",
-				DeviceID:  uuid.MustParse("00000000-0000-0000-0000-000000000123"),
-				UserAgent: "Mozilla/5.0",
-				IP:        "192.168.1.1",
-			},
+			input: func() *domain.SignInIn {
+				in := &domain.SignInIn{
+					Login:    "123456789",
+					Password: "password",
+				}
+				in.Session.DeviceID = uuid.MustParse("00000000-0000-0000-0000-000000000123")
+				in.Session.UserAgent = "Mozilla/5.0"
+				in.Session.IP = "192.168.1.1"
+				return in
+			}(),
 			mockUser: func() *domain.User {
 				hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("password"), bcrypt.DefaultCost)
 				return &domain.User{
 					ID:           uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 					Phone:        stringPtr("123456789"),
 					PasswordHash: string(hashedPassword),
+					IsApproved:   true,
 				}
 			}(),
 			expectError: false,
@@ -214,7 +238,9 @@ func TestUseCase_SignIn_TableDriven(t *testing.T) {
 			uc, clientRepo, sessionRepo := setup(t)
 			ctx := t.Context()
 
-			clientRepo.On("GetByPhone", mock.Anything, tt.input.Phone).Return(tt.mockUser, tt.repoError)
+			if !tt.skipRepoMock {
+				clientRepo.On("GetByPhone", mock.Anything, tt.input.Login).Return(tt.mockUser, tt.repoError)
+			}
 
 			// Mock session repository if user exists and password is correct
 			if tt.mockUser != nil && tt.repoError == nil && tt.input.Password != "wrongpassword" && tt.input.Password != "" {

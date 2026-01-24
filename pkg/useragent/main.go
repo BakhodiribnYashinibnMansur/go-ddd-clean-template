@@ -24,20 +24,18 @@ type UserAgent struct {
 }
 
 func getDeviceType(ua *useragent.UserAgent) string {
-	deviceType := DeviceTypeUnknown
-	switch {
-	case ua.Mobile:
-		deviceType = DeviceTypeMobile
-	case ua.Tablet:
-		deviceType = DeviceTypeTablet
-	case ua.Desktop:
-		deviceType = DeviceTypeDesktop
-	case ua.Bot:
-		deviceType = DeviceTypeBot
-	default:
-		deviceType = DeviceTypeUnknown
+	// Check in priority order
+	if ua.Bot {
+		return DeviceTypeBot
 	}
-	return deviceType
+	if ua.Mobile {
+		return DeviceTypeMobile
+	}
+	if ua.Tablet {
+		return DeviceTypeTablet
+	}
+	// Default to desktop for all other cases (browsers on PC/Mac/Linux)
+	return DeviceTypeDesktop
 }
 
 func ParseUserAgent(userAgentTxt string) *UserAgent {

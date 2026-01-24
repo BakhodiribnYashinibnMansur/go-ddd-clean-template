@@ -3,9 +3,9 @@ package seeder
 import (
 	"context"
 	"fmt"
-	"gct/internal/domain"
 	"time"
 
+	"gct/internal/domain"
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/google/uuid"
 	"go.uber.org/zap"

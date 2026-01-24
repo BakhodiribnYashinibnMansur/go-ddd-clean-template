@@ -21,7 +21,6 @@ import (
 	tc "gct/pkg/container"
 	dbPostgres "gct/pkg/db/postgres"
 	"gct/pkg/logger"
-
 	"github.com/minio/minio-go/v7"
 	"github.com/redis/go-redis/v9"
 )

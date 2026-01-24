@@ -1,13 +1,14 @@
 package cron
 
 import (
+	"context"
 	"time"
 
 	"go.uber.org/zap"
 )
 
 // AddCronJobWithName adds a cron job with job wrapper for tracking execution
-func (c *Jobs) AddCronJobWithName(expression, name string, fn func()) {
+func (c *Jobs) AddCronJobWithName(expression, name string, fn func(ctx context.Context)) {
 	_, err := c.cron.AddFunc(expression, func() {
 		c.runJobWithWrapper(name, fn)
 	})
@@ -27,7 +28,7 @@ func (c *Jobs) AddCronJobWithName(expression, name string, fn func()) {
 }
 
 // runJobWithWrapper wraps job execution with logging and prevents duplicate runs
-func (c *Jobs) runJobWithWrapper(name string, fn func()) {
+func (c *Jobs) runJobWithWrapper(name string, fn func(ctx context.Context)) {
 	// Check if job is already running
 	if _, loaded := c.runningJobs.LoadOrStore(name, true); loaded {
 		c.logger.Warn("Cronjob already running, skipping",
@@ -45,7 +46,7 @@ func (c *Jobs) runJobWithWrapper(name string, fn func()) {
 	)
 
 	// Execute the job
-	fn()
+	fn(c.ctx)
 
 	duration := time.Since(startTime)
 	c.logger.Info("Cronjob completed",

@@ -1,0 +1,49 @@
+{{ define "content" }}
+<div class="page-content-wrapper">
+    <div class="content-header flex-between" style="margin-bottom: 32px;">
+        <div>
+            <h2 style="margin-bottom: 8px;">Database Management</h2>
+            <p class="text-muted">Inspect and query your database</p>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div style="display: flex; gap: 16px; margin-bottom: 32px;">
+        <a href="/admin/database/monitoring" class="btn btn-secondary"
+            style="flex: 1; justify-content: center; height: 50px;">
+            <i class="material-symbols-outlined" style="margin-right: 8px;">monitor_heart</i>
+            DB Monitoring
+        </a>
+        <a href="/admin/database/tables" class="btn btn-primary"
+            style="flex: 1; justify-content: center; height: 50px;">
+            <i class="material-symbols-outlined" style="margin-right: 8px;">table_chart</i>
+            Browse Tables
+        </a>
+        <a href="/admin/database/sql-editor" class="btn btn-secondary"
+            style="flex: 1; justify-content: center; height: 50px;">
+            <i class="material-symbols-outlined" style="margin-right: 8px;">code</i>
+            SQL Editor
+        </a>
+    </div>
+
+    <!-- DB Stats -->
+    <div class="neon-stats-grid" style="grid-template-columns: repeat(2, 1fr);">
+        <div class="neon-card">
+            <div class="flex-between" style="margin-bottom: 12px;">
+                <span class="text-muted">Tables</span>
+                <i class="material-symbols-outlined" style="color: var(--primary-400);">dataset</i>
+            </div>
+            <div class="stat-value-big">{{ .TablesCount }}</div>
+            <div class="text-muted" style="margin-top: 5px;">Public Schema</div>
+        </div>
+        <div class="neon-card">
+            <div class="flex-between" style="margin-bottom: 12px;">
+                <span class="text-muted">Status</span>
+                <i class="material-symbols-outlined" style="color: var(--success);">check_circle</i>
+            </div>
+            <div class="stat-value-big" style="font-size: 24px;">Healthy</div>
+            <div class="text-muted" style="margin-top: 5px;">Connection Active</div>
+        </div>
+    </div>
+</div>
+{{ end }}

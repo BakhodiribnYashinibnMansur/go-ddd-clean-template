@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"gct/config"
-
 	"github.com/gin-gonic/gin"
 )
 

@@ -3,16 +3,19 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"gct/config"
 	"gct/internal/domain"
 	"gct/internal/repo"
 	"gct/internal/usecase/audit"
 	"gct/internal/usecase/authz"
+	"gct/internal/usecase/database"
 	"gct/internal/usecase/minio"
+	"gct/internal/usecase/sitesetting"
 	"gct/internal/usecase/user"
 	"gct/pkg/asynq"
 	"gct/pkg/logger"
-	"time"
 
 	"github.com/google/uuid"
 )
@@ -24,6 +27,8 @@ type UseCase struct {
 	Minio       *minio.UseCase
 	Authz       *authz.UseCase
 	Audit       *audit.UseCase
+	SiteSetting *sitesetting.UseCase
+	Database    *database.UseCase
 	AsynqClient *asynq.Client
 }
 
@@ -35,6 +40,8 @@ func NewUseCase(repos *repo.Repo, logger logger.Log, cfg *config.Config, asynqCl
 		Minio:       minio.New(repos, logger),
 		Authz:       authz.New(repos, logger, cfg),
 		Audit:       audit.New(repos.Persistent, logger),
+		SiteSetting: sitesetting.New(repos.Persistent, logger),
+		Database:    database.New(repos.Persistent.Postgres, logger, cfg),
 		AsynqClient: asynqClient,
 	}
 }

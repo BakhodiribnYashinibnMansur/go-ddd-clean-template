@@ -1,4 +1,4 @@
-basePath: /api
+basePath: /api/v1
 definitions:
   domain.AuditActionType:
     enum:
@@ -175,6 +175,10 @@ definitions:
     type: object
   domain.Session:
     properties:
+      browser:
+        type: string
+      browser_version:
+        type: string
       created_at:
         type: string
       data:
@@ -196,6 +200,10 @@ definitions:
       ip_address:
         type: string
       last_activity:
+        type: string
+      os:
+        type: string
+      os_version:
         type: string
       refresh_token_hash:
         type: string
@@ -247,6 +255,8 @@ definitions:
         type: string
       id:
         type: string
+      is_approved:
+        type: boolean
       last_seen:
         type: string
       password:
@@ -1887,4 +1897,9 @@ paths:
       summary: Update user
       tags:
       - users
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

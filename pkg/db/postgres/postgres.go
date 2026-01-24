@@ -8,7 +8,6 @@ import (
 
 	"gct/config"
 	"gct/pkg/logger"
-
 	"github.com/Masterminds/squirrel"
 	"github.com/exaring/otelpgx"
 	"github.com/jackc/pgx/v5/pgxpool"

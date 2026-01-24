@@ -8,7 +8,6 @@ import (
 	"gct/pkg/csrf"
 	"gct/pkg/jwt"
 	"gct/pkg/logger"
-
 	"github.com/gin-gonic/gin"
 )
 

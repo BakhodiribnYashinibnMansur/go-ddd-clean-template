@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"gct/config"
-
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/jaeger"
 	"go.opentelemetry.io/otel/propagation"

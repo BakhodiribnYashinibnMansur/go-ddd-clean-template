@@ -33,7 +33,7 @@ func TestCronJobs_ExpireOldSessions(t *testing.T) {
 		WithArgs(pgxmock.AnyArg()).
 		WillReturnResult(pgxmock.NewResult("UPDATE", 10))
 
-	c.ExpireOldSessions()
+	c.ExpireOldSessions(t.Context())
 
 	assert.NoError(t, mockPool.ExpectationsWereMet())
 }
@@ -59,7 +59,7 @@ func TestCronJobs_ExpireOldSessions_Error(t *testing.T) {
 		WithArgs(pgxmock.AnyArg()).
 		WillReturnError(errors.New("db error"))
 
-	c.ExpireOldSessions()
+	c.ExpireOldSessions(t.Context())
 
 	assert.NoError(t, mockPool.ExpectationsWereMet())
 }

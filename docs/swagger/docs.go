@@ -2550,6 +2550,12 @@ const docTemplate = `{
         "domain.Session": {
             "type": "object",
             "properties": {
+                "browser": {
+                    "type": "string"
+                },
+                "browser_version": {
+                    "type": "string"
+                },
                 "created_at": {
                     "type": "string"
                 },
@@ -2581,6 +2587,12 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "last_activity": {
+                    "type": "string"
+                },
+                "os": {
+                    "type": "string"
+                },
+                "os_version": {
                     "type": "string"
                 },
                 "refresh_token_hash": {
@@ -2656,6 +2668,9 @@ const docTemplate = `{
                 },
                 "id": {
                     "type": "string"
+                },
+                "is_approved": {
+                    "type": "boolean"
                 },
                 "last_seen": {
                     "type": "string"
@@ -2860,6 +2875,13 @@ const docTemplate = `{
                 }
             }
         }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
     }
 }`
 
@@ -2867,7 +2889,7 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "localhost:8080",
-	BasePath:         "/api",
+	BasePath:         "/api/v1",
 	Schemes:          []string{},
 	Title:            "Go Clean Template API",
 	Description:      "Using a user management service as an example",

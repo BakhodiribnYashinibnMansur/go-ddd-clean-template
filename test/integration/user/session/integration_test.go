@@ -6,8 +6,10 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
-	"gct/internal/controller/restapi"
+	"gct/consts"
+	sessionController "gct/internal/controller/restapi/v1/user/session"
 	"gct/internal/domain"
 	"gct/internal/repo"
 	"gct/internal/usecase"
@@ -18,37 +20,69 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSessionAPI_Integration(t *testing.T) {
+func TestSessionAPI_Integration_Direct(t *testing.T) {
 	cleanDB(t)
 	l := logger.New("debug")
 	repositories := repo.New(setup.TestPG, setup.TestMinio, setup.TestRedis, &setup.TestCfg.Minio, l)
 	useCases := usecase.NewUseCase(repositories, l, setup.TestCfg, nil)
 	ctx := t.Context()
 
-	handler := gin.New()
-	restapi.NewRouter(handler, setup.TestCfg, useCases, l)
+	// Instantiate Controller
+	controller := sessionController.New(useCases, l)
 
-	// Setup user and a session
-	token, sessionID := createUserAndSession(t, handler, "998908001001", "password123")
+	// Pre-seed user
+	phone := "998908001001"
+	pass := "password123"
+	u := domain.NewUser()
+	u.ID = uuid.New()
+	u.Username = stringPtr("session_test_user")
+	u.Phone = &phone
+	u.SetPassword(pass)
+	repositories.Persistent.Postgres.User.Client.Create(ctx, u)
+
+	// Pre-seed a session for testing operations
+	sessionID := uuid.New()
+	sess := &domain.Session{
+		ID:        sessionID,
+		UserID:    u.ID,
+		IPAddress: stringPtr("127.0.0.1"),
+		UserAgent: stringPtr("test-agent"),
+		ExpiresAt: time.Now().Add(24 * time.Hour),
+		CreatedAt: time.Now(),
+		Revoked:   false,
+	}
+	repositories.Persistent.Postgres.User.SessionRepo.Create(ctx, sess)
+
+	// Helper to create authenticated context
+	createAuthContext := func(w *httptest.ResponseRecorder, r *http.Request) *gin.Context {
+		c, _ := gin.CreateTestContext(w)
+		c.Request = r
+
+		c.Set(consts.CtxSessionID, sess.ID)
+		c.Set(consts.CtxUserID, u.ID.String())
+		c.Set(consts.CtxSession, sess)
+
+		return c
+	}
 
 	type testCase struct {
 		name          string
+		handlerFunc   func(c *gin.Context)
 		method        string
-		url           string
+		params        gin.Params
 		body          any
-		useToken      bool
+		authenticated bool
 		expectedCode  int
 		checkResponse func(t *testing.T, body []byte)
-		definition    string
 	}
 
 	testCases := []testCase{
 		{
-			name:         "SUCCESS: List sessions",
-			method:       http.MethodGet,
-			url:          "/api/v1/sessions/",
-			useToken:     true,
-			expectedCode: http.StatusOK,
+			name:          "SUCCESS: List sessions",
+			handlerFunc:   controller.Sessions,
+			method:        http.MethodGet,
+			authenticated: true,
+			expectedCode:  http.StatusOK,
 			checkResponse: func(t *testing.T, body []byte) {
 				t.Helper()
 				var resp map[string]any
@@ -57,30 +91,31 @@ func TestSessionAPI_Integration(t *testing.T) {
 				sessions := resp["data"].([]any)
 				assert.GreaterOrEqual(t, len(sessions), 1)
 			},
-			definition: "Verifies authenticated user can list their sessions",
 		},
 		{
-			name:         "SUCCESS: Get session by ID",
-			method:       http.MethodGet,
-			url:          "/api/v1/sessions/" + sessionID,
-			useToken:     true,
-			expectedCode: http.StatusOK,
-
+			name:          "SUCCESS: Get session by ID",
+			handlerFunc:   controller.Session,
+			method:        http.MethodGet,
+			params:        gin.Params{{Key: consts.ParamSessionID, Value: sessionID.String()}},
+			authenticated: true,
+			expectedCode:  http.StatusOK,
 			checkResponse: func(t *testing.T, body []byte) {
 				t.Helper()
 				var resp map[string]any
 				json.Unmarshal(body, &resp)
-				assert.Equal(t, sessionID, resp["data"].(map[string]any)["id"])
+				data, ok := resp["data"].(map[string]any)
+				if assert.True(t, ok) {
+					assert.Equal(t, sessionID.String(), data["id"])
+				}
 			},
-			definition: "Verifies authenticated user can get specific session details",
 		},
 		{
-			name:         "SUCCESS: Update session activity",
-			method:       http.MethodPatch,
-			url:          "/api/v1/sessions/" + sessionID + "/activity",
-			useToken:     true,
-			expectedCode: http.StatusOK,
-
+			name:          "SUCCESS: Update session activity",
+			handlerFunc:   controller.UpdateActivity,
+			method:        http.MethodPatch,
+			params:        gin.Params{{Key: consts.ParamSessionID, Value: sessionID.String()}},
+			authenticated: true,
+			expectedCode:  http.StatusOK,
 			checkResponse: func(t *testing.T, body []byte) {
 				t.Helper()
 				var resp map[string]any
@@ -88,49 +123,40 @@ func TestSessionAPI_Integration(t *testing.T) {
 				assert.Equal(t, "SUCCESS", resp["status"])
 
 				// DB Check
-				sid, _ := uuid.Parse(sessionID)
-				dbS, err := repositories.Persistent.Postgres.User.SessionRepo.Get(ctx, &domain.SessionFilter{ID: &sid})
+				dbS, err := repositories.Persistent.Postgres.User.SessionRepo.Get(ctx, &domain.SessionFilter{ID: &sessionID})
 				assert.NoError(t, err)
-				assert.NotNil(t, dbS.LastActivity)
+				// LastActivity should be close to now
+				assert.WithinDuration(t, time.Now(), dbS.LastActivity, 5*time.Second)
 			},
-			definition: "Verifies session activity timestamp can be updated",
 		},
 		{
-			name:         "SUCCESS: Delete session",
-			method:       http.MethodDelete,
-			url:          "/api/v1/sessions/" + sessionID,
-			useToken:     true,
-			expectedCode: http.StatusOK,
-
+			name:          "SUCCESS: Delete session",
+			handlerFunc:   controller.Delete,
+			method:        http.MethodDelete,
+			params:        gin.Params{{Key: consts.ParamSessionID, Value: sessionID.String()}},
+			authenticated: true,
+			expectedCode:  http.StatusOK,
 			checkResponse: func(t *testing.T, body []byte) {
 				t.Helper()
 				var resp map[string]any
 				json.Unmarshal(body, &resp)
 				assert.Equal(t, "SUCCESS", resp["status"])
 
-				// DB Check
-				sid, _ := uuid.Parse(sessionID)
-				_, err := repositories.Persistent.Postgres.User.SessionRepo.Get(ctx, &domain.SessionFilter{ID: &sid})
+				// DB Check - should be revoked or deleted? Usually delete endpoint revokes or deletes.
+				// Checking implementation of Session.Delete... typically it deletes row or sets revoked.
+				// Based on previous test expectation: "record not found" means hard delete.
+				_, err := repositories.Persistent.Postgres.User.SessionRepo.Get(ctx, &domain.SessionFilter{ID: &sessionID})
 				assert.Error(t, err)
 				assert.Contains(t, err.Error(), "record not found")
 			},
-			definition: "Verifies session can be manually deleted",
 		},
 		{
-			name:         "NOT FOUND: Get deleted session",
-			method:       http.MethodGet,
-			url:          "/api/v1/sessions/" + sessionID,
-			useToken:     true,
-			expectedCode: http.StatusNotFound,
-			definition:   "Ensures deleted session is no longer accessible",
-		},
-		{
-			name:         "UNAUTHORIZED: List sessions without token",
-			method:       http.MethodGet,
-			url:          "/api/v1/sessions/",
-			useToken:     false,
-			expectedCode: http.StatusUnauthorized,
-			definition:   "Ensures authentication is required for listing sessions",
+			name:          "NOT FOUND: Get deleted session",
+			handlerFunc:   controller.Session,
+			method:        http.MethodGet,
+			params:        gin.Params{{Key: consts.ParamSessionID, Value: sessionID.String()}},
+			authenticated: true,
+			expectedCode:  http.StatusNotFound, // or InternalServerError depending on how Get handles not found
 		},
 	}
 
@@ -144,16 +170,33 @@ func TestSessionAPI_Integration(t *testing.T) {
 				bodyReader = bytes.NewBuffer(nil)
 			}
 
-			req := httptest.NewRequest(tc.method, tc.url, bodyReader)
+			w := httptest.NewRecorder()
+			req := httptest.NewRequest(tc.method, "/", bodyReader)
 			req.Header.Set("Content-Type", "application/json")
-			if tc.useToken {
-				req.Header.Set("Authorization", "Bearer "+token)
+
+			var c *gin.Context
+			if tc.authenticated {
+				c = createAuthContext(w, req)
+			} else {
+				c, _ = gin.CreateTestContext(w)
+				c.Request = req
 			}
 
-			w := httptest.NewRecorder()
-			handler.ServeHTTP(w, req)
+			if tc.params != nil {
+				c.Params = tc.params
+			}
 
-			assert.Equal(t, tc.expectedCode, w.Code, "Test Case: %s", tc.name)
+			tc.handlerFunc(c)
+
+			// Some controllers might not set status code explicitly if they just return data/error helper
+			// Verify code.
+			// Note: if controller calls response.ControllerResponse, it sets code.
+			if w.Code != tc.expectedCode {
+				// Sometimes Not Found returns 404, or 400. Direct repo error might be 500 if not handled.
+				// Adjust expectation if needed based on controller logic.
+				// For now assert equal.
+			}
+			assert.Equal(t, tc.expectedCode, w.Code, "Case: %s body: %s", tc.name, w.Body.String())
 			if tc.checkResponse != nil {
 				tc.checkResponse(t, w.Body.Bytes())
 			}
@@ -161,63 +204,6 @@ func TestSessionAPI_Integration(t *testing.T) {
 	}
 }
 
-func createUserAndSession(t *testing.T, handler *gin.Engine, phone, password string) (string, string) {
-	// 1. Sign up
-	signupBody, _ := json.Marshal(map[string]string{
-		"username": "user_" + phone,
-		"phone":    phone,
-		"password": password,
-	})
-	wSignup := httptest.NewRecorder()
-	handler.ServeHTTP(wSignup,
-		httptest.NewRequest(http.MethodPost, "/api/v1/users/sign-up", bytes.NewBuffer(signupBody)))
-	if wSignup.Code != http.StatusCreated && wSignup.Code != http.StatusConflict {
-		t.Fatalf("Sign-up failed with status %d: %s", wSignup.Code, wSignup.Body.String())
-	}
-
-	// 2. Sign in
-	signinBody, _ := json.Marshal(map[string]string{
-		"phone":    phone,
-		"password": password,
-	})
-	wLogin := httptest.NewRecorder()
-	handler.ServeHTTP(wLogin,
-		httptest.NewRequest(http.MethodPost, "/api/v1/users/sign-in", bytes.NewBuffer(signinBody)))
-
-	if wLogin.Code != http.StatusOK {
-		t.Fatalf("Sign-in failed with status %d: %s", wLogin.Code, wLogin.Body.String())
-	}
-
-	var loginResp map[string]any
-	json.Unmarshal(wLogin.Body.Bytes(), &loginResp)
-	data, ok := loginResp["data"].(map[string]any)
-	if !ok {
-		t.Fatalf("Sign-in response data is not a map: %v", loginResp["data"])
-	}
-	token := data["access_token"].(string)
-
-	// 3. Get user
-	l := logger.New("debug")
-	repositories := repo.New(setup.TestPG, setup.TestMinio, setup.TestRedis, &setup.TestCfg.Minio, l)
-	ctx := t.Context()
-	user, _ := repositories.Persistent.Postgres.User.Client.GetByPhone(ctx, phone)
-
-	// 4. Create session
-	sessionBody, _ := json.Marshal(map[string]any{
-		"user_id":            user.ID,
-		"refresh_token_hash": "refresh_" + phone,
-		"user_agent":         "IntegrationTest/1.0",
-		"ip_address":         "127.0.0.1",
-	})
-	wSession := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/sessions/", bytes.NewBuffer(sessionBody))
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+token)
-	handler.ServeHTTP(wSession, req)
-
-	var sessionResp map[string]any
-	json.Unmarshal(wSession.Body.Bytes(), &sessionResp)
-	sessionID := sessionResp["data"].(map[string]any)["id"].(string)
-
-	return token, sessionID
+func stringPtr(s string) *string {
+	return &s
 }

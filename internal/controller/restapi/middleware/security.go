@@ -31,9 +31,9 @@ func Security() gin.HandlerFunc {
 		// Note: 'unsafe-inline' is used for styles because the current root template and admin panel use it.
 		csp := []string{
 			"default-src 'self'",
-			"script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com",
-			"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com",
-			"font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com data:",
+			"script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://unpkg.com https://cdn.jsdelivr.net",
+			"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://unpkg.com https://cdn.jsdelivr.net https://boxicons.com",
+			"font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com https://unpkg.com https://boxicons.com data:",
 			"img-src 'self' data: https:",
 			"connect-src 'self'",
 			"frame-ancestors 'none'",

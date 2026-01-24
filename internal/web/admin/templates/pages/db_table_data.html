@@ -1,0 +1,539 @@
+{{ template "base" . }}
+
+{{ define "content" }}
+<div style="margin-bottom: 24px;">
+    <div class="flex-between">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="background: var(--bg-secondary); padding: 8px; border-radius: 8px; display: flex;">
+                <i class="material-symbols-outlined">table_chart</i>
+            </div>
+            <div>
+                <h2 style="margin: 0; font-size: 20px;">{{ .TableName }}</h2>
+                <div style="display: flex; gap: 8px; align-items: center; margin-top: 4px;">
+                    <span style="color: var(--text-muted); font-size: 13px;">{{ .Schema.RowCount }} rows</span>
+                </div>
+            </div>
+        </div>
+        <div style="display: flex; gap: 12px;">
+            <button onclick="loadData()" class="btn btn-secondary">
+                <i class="material-symbols-outlined">refresh</i>
+            </button>
+            <button onclick="showAddModal()" class="btn btn-primary">
+                <i class="material-symbols-outlined">add</i>
+                <span style="margin-left: 8px;">Add Record</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Data Studio Grid -->
+<div class="card"
+    style="padding: 0; overflow: hidden; display: flex; flex-direction: column; height: calc(100vh - 200px); border: 1px solid var(--card-border);">
+
+    <!-- Toolbar -->
+    <div
+        style="padding: 8px 16px; border-bottom: 1px solid var(--card-border); background: var(--bg-secondary); display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; gap: 8px; align-items: center;">
+            <button class="btn-icon" title="Filter" style="width: 32px; height: 32px;">
+                <i class="material-symbols-outlined" style="font-size: 18px;">filter_list</i>
+            </button>
+            <button class="btn-icon" title="Sort" style="width: 32px; height: 32px;">
+                <i class="material-symbols-outlined" style="font-size: 18px;">sort</i>
+            </button>
+            <div style="width: 1px; height: 20px; background: var(--card-border); margin: 0 4px;"></div>
+            <span id="selectionInfo" style="font-size: 12px; color: var(--text-muted);">0 selected</span>
+        </div>
+
+        <div style="display: flex; gap: 16px; align-items: center;">
+            <div class="input-group" style="width: 200px;">
+                <i class="material-symbols-outlined" style="font-size: 16px; opacity: 0.5;">search</i>
+                <input type="text" placeholder="Search data..."
+                    style="border: none; background: transparent; height: 100%; font-size: 13px; color: var(--text-color); width: 100%;">
+            </div>
+        </div>
+    </div>
+
+    <!-- Table Container -->
+    <div style="overflow: auto; flex: 1; position: relative;">
+        <table class="data-table" id="dataTable" style="border-collapse: separate; border-spacing: 0; width: 100%;">
+            <thead style="position: sticky; top: 0; z-index: 10; background: var(--card-bg);">
+                <tr>
+                    <th
+                        style="width: 40px; text-align: center; border-bottom: 1px solid var(--card-border); background: var(--card-bg);">
+                        <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                    </th>
+                    <th style="width: 60px; border-bottom: 1px solid var(--card-border); background: var(--card-bg);">#
+                    </th>
+                    {{ range .Schema.Columns }}
+                    <th
+                        style="border-bottom: 1px solid var(--card-border); background: var(--card-bg); white-space: nowrap; min-width: 150px;">
+                        <div style="display: flex; flex-direction: column; gap: 2px;">
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                {{ if .IsPrimaryKey }}
+                                <i class="material-symbols-outlined"
+                                    style="font-size: 14px; color: var(--primary-color);" title="Primary Key">key</i>
+                                {{ end }}
+                                <span style="font-weight: 500;">{{ .Name }}</span>
+                            </div>
+                            <span
+                                style="font-size: 10px; color: var(--text-muted); font-family: 'Roboto Mono', monospace;">{{
+                                .DataType }}</span>
+                        </div>
+                    </th>
+                    {{ end }}
+                    <th
+                        style="width: 100px; text-align: right; position: sticky; right: 0; background: var(--card-bg); border-bottom: 1px solid var(--card-border); z-index: 20; box-shadow: -2px 0 5px rgba(0,0,0,0.1);">
+                        Actions
+                    </th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <tr>
+                    <td colspan="{{ add (len .Schema.Columns) 3 }}" style="text-align: center; padding: 48px;">
+                        <div class="loading">Loading data...</div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Footer / Pagination -->
+    <div
+        style="padding: 12px 16px; border-top: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center; background: var(--bg-secondary);">
+        <div style="color: var(--text-muted); font-size: 13px;" id="paginationInfo">
+            Showing 0 - 0 of 0
+        </div>
+        <div style="display: flex; gap: 8px;" id="paginationControls">
+            <button onclick="changePage(-1)" class="btn btn-secondary btn-sm" id="prevBtn" disabled>
+                <i class="material-symbols-outlined" style="font-size: 16px;">chevron_left</i>
+            </button>
+            <span style="display: flex; align-items: center; padding: 0 8px; font-size: 13px; font-weight: 500;"
+                id="pageIndicator">Page 1</span>
+            <button onclick="changePage(1)" class="btn btn-secondary btn-sm" id="nextBtn" disabled>
+                <i class="material-symbols-outlined" style="font-size: 16px;">chevron_right</i>
+            </button>
+            <select onchange="changeLimit(this.value)"
+                style="background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-color); border-radius: 4px; padding: 4px; font-size: 12px; margin-left: 12px;">
+                <option value="50">50 rows</option>
+                <option value="100">100 rows</option>
+                <option value="500">500 rows</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Modal (Same as before but styled better) -->
+<div id="recordModal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 600px;">
+        <div class="modal-header">
+            <h3 id="modalTitle">Add Record</h3>
+            <button onclick="closeModal()" class="btn-icon">
+                <i class="material-symbols-outlined">close</i>
+            </button>
+        </div>
+        <form id="recordForm" onsubmit="submitRecord(event)">
+            <div class="modal-body" id="formFields" style="max-height: 60vh; overflow-y: auto;">
+                {{ range .Schema.Columns }}
+                {{ if not .IsPrimaryKey }}
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 8px; font-size: 13px; color: var(--text-muted);">
+                        {{ .Name }} <span style="opacity: 0.5;">({{ .DataType }})</span>
+                        {{ if not .IsNullable }}<span style="color: var(--danger-color);">*</span>{{ end }}
+                    </label>
+                    <input type="text" name="{{ .Name }}" {{ if not .IsNullable }}required{{ end }} class="form-input"
+                        style="width: 100%;">
+                </div>
+                {{ end }}
+                {{ end }}
+            </div>
+            <div class="modal-footer">
+                <button type="button" onclick="closeModal()" class="btn btn-secondary">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Schema Data Block -->
+<script type="application/json" id="schema-json">
+{{ .Schema | toJSON }}
+</script>
+
+<script>
+    const tableName = '{{ .TableName }}';
+    // Robust schema parsing
+    let schema;
+    try {
+        schema = JSON.parse(document.getElementById('schema-json').textContent);
+    } catch (e) {
+        console.error("Failed to parse schema", e);
+        alert("System Error: Failed to parse table schema.");
+    }
+
+    let currentPage = 1;
+    let limit = 50;
+    let totalRows = 0;
+    let editingId = null;
+    let selectedRows = new Set(); // Store PKs of selected rows
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadData();
+    });
+
+    async function loadData() {
+        if (!schema) return;
+
+        try {
+            document.querySelector('.loading').style.display = 'block';
+            const response = await fetch(`/admin/database/api/table/${tableName}/data?page=${currentPage}&limit=${limit}`);
+            const result = await response.json();
+
+            if (result.success) {
+                renderTable(result.data);
+                updatePagination(result.data);
+            }
+        } catch (err) {
+            console.error('Failed to load data:', err);
+            // showError('Failed to load table data');
+        }
+    }
+
+    function renderTable(data) {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+        selectedRows.clear();
+        updateSelectionUI();
+        document.getElementById('selectAll').checked = false;
+
+        if (!data.Rows || data.Rows.length === 0) {
+            tbody.innerHTML = `
+            <tr>
+                <td colspan="${schema.Columns.length + 3}" style="text-align: center; padding: 48px; color: var(--text-muted);">
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 12px;">
+                        <i class="material-symbols-outlined" style="font-size: 48px; opacity: 0.2;">table_rows</i>
+                        <span>No records found</span>
+                    </div>
+                </td>
+            </tr>
+        `;
+            return;
+        }
+
+        data.Rows.forEach((row, idx) => {
+            const tr = document.createElement('tr');
+            tr.className = 'data-row';
+            const pkValue = row[schema.PrimaryKey];
+
+            // Checkbox
+            const checkCell = document.createElement('td');
+            checkCell.style.textAlign = 'center';
+            checkCell.style.borderBottom = '1px solid var(--card-border)';
+            checkCell.innerHTML = `<input type="checkbox" class="row-checkbox" value="${pkValue}" onchange="toggleRow('${pkValue}')">`;
+            tr.appendChild(checkCell);
+
+            // Row number
+            const numCell = document.createElement('td');
+            numCell.textContent = (currentPage - 1) * limit + idx + 1;
+            numCell.style.textAlign = 'center';
+            numCell.style.color = 'var(--text-muted)';
+            numCell.style.fontSize = '12px';
+            numCell.style.borderBottom = '1px solid var(--card-border)';
+            tr.appendChild(numCell);
+
+            // Data cells
+            data.Columns.forEach(col => {
+                const td = document.createElement('td');
+                const value = row[col];
+                td.style.borderBottom = '1px solid var(--card-border)';
+                td.style.fontSize = '13px';
+                td.style.whiteSpace = 'nowrap';
+                td.style.maxWidth = '300px';
+                td.style.overflow = 'hidden';
+                td.style.textOverflow = 'ellipsis';
+                td.title = value; // Tooltip
+
+                if (value === null || value === undefined) {
+                    td.innerHTML = '<span style="color: var(--text-muted); font-size: 11px; font-style: italic; border: 1px solid var(--card-border); padding: 2px 4px; border-radius: 4px;">NULL</span>';
+                } else if (typeof value === 'boolean') {
+                    td.innerHTML = value ?
+                        '<span style="color: #4caf50; font-weight: 500;">true</span>' :
+                        '<span style="color: #f44336; font-weight: 500;">false</span>';
+                } else if (typeof value === 'object' && !Array.isArray(value)) {
+                    td.textContent = JSON.stringify(value);
+                    td.style.fontFamily = 'monospace';
+                    td.style.color = 'var(--primary-color)';
+                } else {
+                    // Try to format
+                    td.textContent = formatCellValue(value);
+                }
+
+                tr.appendChild(td);
+            });
+
+            // Actions
+            const actionsCell = document.createElement('td');
+            actionsCell.style.textAlign = 'right';
+            actionsCell.style.borderBottom = '1px solid var(--card-border)';
+            actionsCell.style.position = 'sticky';
+            actionsCell.style.right = '0';
+            actionsCell.style.background = 'var(--card-bg)';
+            actionsCell.style.zIndex = '5';
+            actionsCell.style.boxShadow = '-2px 0 5px rgba(0,0,0,0.1)';
+
+            actionsCell.innerHTML = `
+            <div style="display: flex; gap: 4px; justify-content: flex-end;">
+                <button onclick='editRecord(${JSON.stringify(row)})' class="btn-icon" title="Edit">
+                    <i class="material-symbols-outlined" style="font-size: 16px;">edit</i>
+                </button>
+                <button onclick="deleteRecord('${pkValue}')" class="btn-icon" style="color: var(--danger-color);" title="Delete">
+                    <i class="material-symbols-outlined" style="font-size: 16px;">delete</i>
+                </button>
+            </div>
+        `;
+            tr.appendChild(actionsCell);
+
+            tbody.appendChild(tr);
+        });
+    }
+
+    function toggleRow(id) {
+        if (selectedRows.has(id)) {
+            selectedRows.delete(id);
+        } else {
+            selectedRows.add(id);
+        }
+        updateSelectionUI();
+    }
+
+    function toggleSelectAll() {
+        const checkboxes = document.querySelectorAll('.row-checkbox');
+        const selectAll = document.getElementById('selectAll');
+
+        if (selectAll.checked) {
+            checkboxes.forEach(cb => {
+                cb.checked = true;
+                selectedRows.add(cb.value);
+            });
+        } else {
+            checkboxes.forEach(cb => {
+                cb.checked = false;
+                selectedRows.delete(cb.value);
+            });
+        }
+        updateSelectionUI();
+    }
+
+    function updateSelectionUI() {
+        const count = selectedRows.size;
+        document.getElementById('selectionInfo').textContent = `${count} selected`;
+        // enable/disable batch actions if implemented
+    }
+
+    function updatePagination(data) {
+        totalRows = data.Total;
+        const start = (currentPage - 1) * limit + 1;
+        const end = Math.min(currentPage * limit, totalRows);
+
+        if (totalRows === 0) {
+            document.getElementById('paginationInfo').textContent = 'No records';
+        } else {
+            document.getElementById('paginationInfo').textContent = `Showing ${start} - ${end} of ${totalRows}`;
+        }
+
+        document.getElementById('prevBtn').disabled = currentPage === 1;
+        document.getElementById('nextBtn').disabled = end >= totalRows;
+        document.getElementById('pageIndicator').textContent = `Page ${currentPage}`;
+    }
+
+    function changePage(delta) {
+        currentPage += delta;
+        if (currentPage < 1) currentPage = 1;
+        loadData();
+    }
+
+    function changeLimit(val) {
+        limit = parseInt(val);
+        currentPage = 1;
+        loadData();
+    }
+
+    // ... Modal functions (same as before) ...
+    function showAddModal() {
+        editingId = null;
+        document.getElementById('modalTitle').textContent = 'Add Record';
+        document.getElementById('recordForm').reset();
+        document.getElementById('recordModal').style.display = 'flex';
+    }
+
+    function editRecord(row) {
+        editingId = row[schema.PrimaryKey];
+        document.getElementById('modalTitle').textContent = 'Edit Record';
+
+        const form = document.getElementById('recordForm');
+        schema.Columns.forEach(col => {
+            if (!col.IsPrimaryKey) {
+                const input = form.elements[col.Name];
+                if (input) {
+                    input.value = row[col.Name] || '';
+                }
+            }
+        });
+
+        document.getElementById('recordModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('recordModal').style.display = 'none';
+        document.getElementById('recordForm').reset();
+        editingId = null;
+    }
+
+    async function submitRecord(e) {
+        e.preventDefault();
+
+        const formData = new FormData(e.target);
+        const data = {};
+
+        for (let [key, value] of formData.entries()) {
+            data[key] = value || null;
+        }
+
+        try {
+            let response;
+            if (editingId) {
+                // Update
+                response = await fetch(`/admin/database/api/table/${tableName}/record/${editingId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        primary_key: schema.PrimaryKey,
+                        data: data
+                    })
+                });
+            } else {
+                // Create
+                response = await fetch(`/admin/database/api/table/${tableName}/record`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+            }
+
+            const result = await response.json();
+            if (result.success) {
+                closeModal();
+                loadData();
+                showSuccess(result.message);
+            } else {
+                showError(result.error);
+            }
+        } catch (err) {
+            console.error('Failed to save record:', err);
+            showError('Failed to save record');
+        }
+    }
+
+    async function deleteRecord(id) {
+        if (!confirm('Are you sure you want to delete this record?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(
+                `/admin/database/api/table/${tableName}/record/${id}?pk_column=${schema.PrimaryKey}`,
+                { method: 'DELETE' }
+            );
+
+            const result = await response.json();
+            if (result.success) {
+                loadData();
+                showSuccess(result.message);
+            } else {
+                showError(result.error);
+            }
+        } catch (err) {
+            console.error('Failed to delete record:', err);
+            showError('Failed to delete record');
+        }
+    }
+
+    function showSuccess(msg) { alert(msg); }
+    function showError(msg) { alert('Error: ' + msg); }
+
+    function formatCellValue(val) {
+        // Handle UUID array [16 bytes]
+        if (Array.isArray(val) && val.length === 16 && val.every(n => typeof n === 'number')) {
+            return uuidFromBytes(val);
+        }
+        // Handle Timestamp string (ISO)
+        if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(val)) {
+            const d = new Date(val);
+            if (!isNaN(d)) {
+                return d.toLocaleString('en-US', { month: 'short', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
+            }
+        }
+        if (Array.isArray(val)) {
+            return JSON.stringify(val);
+        }
+        return val;
+    }
+
+    function uuidFromBytes(bytes) {
+        const hex = bytes.map(b => b.toString(16).padStart(2, '0'));
+        return [
+            hex.slice(0, 4).join(''),
+            hex.slice(4, 6).join(''),
+            hex.slice(6, 8).join(''),
+            hex.slice(8, 10).join(''),
+            hex.slice(10, 16).join('')
+        ].join('-');
+    }
+
+</script>
+
+<style>
+    /* Premium Table Styles */
+    .data-table th,
+    .data-table td {
+        padding: 8px 12px;
+        text-align: left;
+    }
+
+    .data-table tbody tr:hover {
+        background: var(--bg-hover);
+    }
+
+    .data-row {
+        transition: background 0.2s;
+    }
+
+    .input-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--bg-secondary);
+        border: 1px solid var(--card-border);
+        padding: 4px 8px;
+        border-radius: 6px;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: var(--bg-secondary);
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: var(--border-color);
+        border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: var(--text-muted);
+    }
+</style>
+{{ end }}

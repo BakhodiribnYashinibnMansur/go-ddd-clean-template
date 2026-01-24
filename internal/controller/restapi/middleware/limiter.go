@@ -6,7 +6,6 @@ import (
 
 	"gct/config"
 	"gct/pkg/logger"
-
 	"github.com/gin-gonic/gin"
 	libredis "github.com/redis/go-redis/v9"
 	"github.com/ulule/limiter/v3"

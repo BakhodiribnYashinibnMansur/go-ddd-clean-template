@@ -2,6 +2,7 @@ package consts
 
 const (
 	CtxUserID           string = "user_id"
+	CtxUser             string = "user"
 	CtxCompanyID        string = "company_id"
 	CtxRoleID           string = "role_id"
 	CtxRoleTitle        string = "role_title"

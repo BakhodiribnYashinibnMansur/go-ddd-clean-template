@@ -4,11 +4,9 @@ import "github.com/google/uuid"
 
 // SignInIn represents the input for sign in operation
 type SignInIn struct {
-	Phone     string    `json:"phone"      validate:"required"`
-	Password  string    `json:"password"   validate:"required"`
-	DeviceID  uuid.UUID `json:"device_id"`
-	IP        string    `json:"ip"`
-	UserAgent string    `json:"user_agent"`
+	Login    string    `json:"login"`
+	Password string    `json:"password"   validate:"required"`
+	Session  SessionIn `json:"session" validate:"required"`
 }
 
 // SignInOut represents the output for sign in operation
@@ -21,13 +19,11 @@ type SignInOut struct {
 
 // SignUpIn represents the input for sign up operation
 type SignUpIn struct {
-	Phone     string    `json:"phone"      validate:"required"`
-	Password  string    `json:"password"   validate:"required"`
-	Username  string    `json:"username"`
-	Email     string    `json:"email"`
-	DeviceID  uuid.UUID `json:"device_id"`
-	IP        string    `json:"ip"`
-	UserAgent string    `json:"user_agent"`
+	Phone    string    `json:"phone"      validate:"required"`
+	Password string    `json:"password"   validate:"required"`
+	Username string    `json:"username"`
+	Email    string    `json:"email"`
+	Session  SessionIn `json:"session" validate:"required"`
 }
 
 // SignOutIn represents the input for sign out operation

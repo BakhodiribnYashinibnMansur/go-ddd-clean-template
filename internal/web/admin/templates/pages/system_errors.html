@@ -41,12 +41,39 @@
         <table class="data-table">
             <thead>
                 <tr>
-                    <th>Severity</th>
+                    <th>
+                        <a href="?sort_by=severity&sort_order={{ if eq .Pagination.SortOrder " ASC" }}DESC{{ else
+                            }}ASC{{ end }}" style="color: inherit; display: flex; align-items: center; gap: 4px;">
+                            Severity {{ if eq .Pagination.SortBy "severity" }}
+                            <i class="material-symbols-outlined" style="font-size: 16px;">
+                                {{ if eq .Pagination.SortOrder "ASC" }}arrow_upward{{ else }}arrow_downward{{ end }}
+                            </i>
+                            {{ end }}
+                        </a>
+                    </th>
                     <th>Code</th>
                     <th>Message</th>
                     <th>Path / Method</th>
-                    <th>Time</th>
-                    <th>Status</th>
+                    <th>
+                        <a href="?sort_by=created_at&sort_order={{ if eq .Pagination.SortOrder " ASC" }}DESC{{ else
+                            }}ASC{{ end }}" style="color: inherit; display: flex; align-items: center; gap: 4px;">
+                            Time {{ if eq .Pagination.SortBy "created_at" }}
+                            <i class="material-symbols-outlined" style="font-size: 16px;">
+                                {{ if eq .Pagination.SortOrder "ASC" }}arrow_upward{{ else }}arrow_downward{{ end }}
+                            </i>
+                            {{ end }}
+                        </a>
+                    </th>
+                    <th>
+                        <a href="?sort_by=is_resolved&sort_order={{ if eq .Pagination.SortOrder " ASC" }}DESC{{ else
+                            }}ASC{{ end }}" style="color: inherit; display: flex; align-items: center; gap: 4px;">
+                            Status {{ if eq .Pagination.SortBy "is_resolved" }}
+                            <i class="material-symbols-outlined" style="font-size: 16px;">
+                                {{ if eq .Pagination.SortOrder "ASC" }}arrow_upward{{ else }}arrow_downward{{ end }}
+                            </i>
+                            {{ end }}
+                        </a>
+                    </th>
                     <th class="text-right">Actions</th>
                 </tr>
             </thead>
@@ -88,7 +115,7 @@
         </table>
     </div>
     <div class="card-footer">
-        {{ template "pagination" .Pagination }}
+        {{ template "pagination" . }}
     </div>
 </div>
 

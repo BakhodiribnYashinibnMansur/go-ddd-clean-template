@@ -3,7 +3,10 @@
 // @description Using a user management service as an example
 // @version     1.0
 // @host        localhost:8080
-// @BasePath    /api
+// @BasePath    /api/v1
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
 package main
 
 import (

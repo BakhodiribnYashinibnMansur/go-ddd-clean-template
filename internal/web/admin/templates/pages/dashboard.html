@@ -1,31 +1,265 @@
 {{ define "content" }}
-<div class="flex-between" style="margin-bottom: var(--spacing-lg);">
-    <h2>Dashboard</h2>
-    <span class="text-body">{{ .CurrentDate }}</span>
-</div>
+<div class="page-content-wrapper">
+    <!-- Header -->
+    <div class="content-header flex-between" style="margin-bottom: 32px;">
+        <div>
+            <h2
+                style="margin-bottom: 8px; background: linear-gradient(135deg, var(--primary-400), var(--secondary-400)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; font-size: 28px;">
+                Dashboard Overview</h2>
+            <p class="text-muted" style="font-size: 13px;">{{ .Data.CurrentDate }}</p>
+        </div>
+        <div class="flex-center" style="gap: 12px;">
+            <button class="btn btn-secondary" style="padding: 8px 16px; font-size: 13px;">
+                <i class="material-symbols-outlined" style="font-size: 18px;">tune</i> Filter
+            </button>
+            <button class="btn btn-primary" style="padding: 8px 16px; font-size: 13px;">
+                <i class="material-symbols-outlined" style="font-size: 18px;">refresh</i> Refresh
+            </button>
+        </div>
+    </div>
 
-<!-- Stats Cards -->
-<div class="dashboard-grid">
-    <div class="card stat-card">
-        <span class="stat-label">Total Users</span>
-        <span class="stat-value">1,234</span>
-        <span class="badge badge-success">+12% this month</span>
-    </div>
-    <div class="card stat-card">
-        <span class="stat-label">Active Sessions</span>
-        <span class="stat-value">56</span>
-        <span class="badge badge-neutral">Live</span>
-    </div>
-    <div class="card stat-card">
-        <span class="stat-label">System Load</span>
-        <span class="stat-value">0.8%</span>
-        <span class="badge badge-success">Healthy</span>
-    </div>
-</div>
+    <!-- Main Grid Layout -->
+    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 24px; margin-bottom: 24px;">
 
-<!-- Recent Activity Placeholder -->
-<div class="card">
-    <h3>Recent Activity</h3>
-    <p class="text-body">System logs and recent user actions will appear here.</p>
+        <!-- Left Sidebar: Stat List with Sparklines -->
+        <div class="neon-card" style="min-height: 500px;">
+            <h3
+                style="font-weight: 600; margin-bottom: 20px; font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-dim);">
+                System Metrics</h3>
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+                <!-- Metric Row 1 -->
+                <div class="metric-row">
+                    <div class="metric-info">
+                        <span class="metric-value" id="stat-users">{{ .Data.UsersCount }}</span>
+                        <span class="metric-label">Total Users</span>
+                    </div>
+                    <div class="sparkline-container">
+                        <canvas class="sparkline" data-values="12,19,15,25,22,30,28,35,32,38"></canvas>
+                    </div>
+                </div>
+
+                <!-- Metric Row 2 -->
+                <div class="metric-row">
+                    <div class="metric-info">
+                        <span class="metric-value" id="stat-sessions">{{ .Data.SessionsCount }}</span>
+                        <span class="metric-label">Active Sessions</span>
+                    </div>
+                    <div class="sparkline-container">
+                        <canvas class="sparkline" data-values="15,12,18,16,22,19,25,23,28,26"></canvas>
+                    </div>
+                </div>
+
+                <!-- Metric Row 3 -->
+                <div class="metric-row">
+                    <div class="metric-info">
+                        <span class="metric-value">{{ .Data.RolesCount }}</span>
+                        <span class="metric-label">Roles</span>
+                    </div>
+                    <div class="sparkline-container">
+                        <canvas class="sparkline" data-values="8,14,11,17,13,19,15,21,18,24"></canvas>
+                    </div>
+                </div>
+
+                <!-- Metric Row 4 -->
+                <div class="metric-row">
+                    <div class="metric-info">
+                        <span class="metric-value">{{ .Data.PermsCount }}</span>
+                        <span class="metric-label">Permissions</span>
+                    </div>
+                    <div class="sparkline-container">
+                        <canvas class="sparkline" data-values="20,16,22,18,24,20,26,22,28,25"></canvas>
+                    </div>
+                </div>
+
+                <!-- Metric Row 5 -->
+                <div class="metric-row">
+                    <div class="metric-info">
+                        <span class="metric-value">{{ .Data.ScopesCount }}</span>
+                        <span class="metric-label">Scopes</span>
+                    </div>
+                    <div class="sparkline-container">
+                        <canvas class="sparkline" data-values="10,12,14,11,15,13,17,14,18,16"></canvas>
+                    </div>
+                </div>
+
+                <!-- Metric Row 6 -->
+                <div class="metric-row">
+                    <div class="metric-info">
+                        <span class="metric-value">{{ .Data.PoliciesCount }}</span>
+                        <span class="metric-label">Policies</span>
+                    </div>
+                    <div class="sparkline-container">
+                        <canvas class="sparkline" data-values="5,8,6,9,7,10,8,11,9,12"></canvas>
+                    </div>
+                </div>
+
+                <!-- Metric Row 7 -->
+                <div class="metric-row">
+                    <div class="metric-info">
+                        <span class="metric-value">{{ .Data.AuditCount }}</span>
+                        <span class="metric-label">Audit Logs</span>
+                    </div>
+                    <div class="sparkline-container">
+                        <canvas class="sparkline" data-values="18,22,19,25,21,27,23,29,25,31"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Circular Gauges Grid -->
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+            <!-- Gauge 1: Users -->
+            <div class="neon-card gauge-card">
+                <div class="circular-gauge">
+                    <svg viewBox="0 0 160 160" class="gauge-svg">
+                        <circle cx="80" cy="80" r="70" class="gauge-bg"></circle>
+                        <circle cx="80" cy="80" r="70" class="gauge-progress cyan-stroke"
+                            style="stroke-dasharray: 440; stroke-dashoffset: 150;"></circle>
+                        <text x="80" y="75" class="gauge-number">66</text>
+                        <text x="80" y="95" class="gauge-suffix">%</text>
+                    </svg>
+                </div>
+                <button class="gauge-reset-btn cyan-btn">RESET</button>
+                <p class="gauge-caption">User Engagement</p>
+            </div>
+
+            <!-- Gauge 2: Performance -->
+            <div class="neon-card gauge-card">
+                <div class="circular-gauge">
+                    <svg viewBox="0 0 160 160" class="gauge-svg">
+                        <circle cx="80" cy="80" r="70" class="gauge-bg"></circle>
+                        <circle cx="80" cy="80" r="70" class="gauge-progress orange-stroke"
+                            style="stroke-dasharray: 440; stroke-dashoffset: 97;"></circle>
+                        <text x="80" y="75" class="gauge-number">78</text>
+                        <text x="80" y="95" class="gauge-suffix">%</text>
+                    </svg>
+                </div>
+                <button class="gauge-reset-btn orange-btn">RESET</button>
+                <p class="gauge-caption">System Performance</p>
+            </div>
+
+            <!-- Gauge 3: Cache -->
+            <div class="neon-card gauge-card">
+                <div class="circular-gauge">
+                    <svg viewBox="0 0 160 160" class="gauge-svg">
+                        <circle cx="80" cy="80" r="70" class="gauge-bg"></circle>
+                        <circle cx="80" cy="80" r="70" class="gauge-progress purple-stroke"
+                            style="stroke-dasharray: 440; stroke-dashoffset: 185;"></circle>
+                        <text x="80" y="75" class="gauge-number">58</text>
+                        <text x="80" y="95" class="gauge-suffix">%</text>
+                    </svg>
+                </div>
+                <button class="gauge-reset-btn purple-btn">RESET</button>
+                <p class="gauge-caption">Cache Hit Rate</p>
+            </div>
+
+            <!-- Gauge 4: API -->
+            <div class="neon-card gauge-card">
+                <div class="circular-gauge">
+                    <svg viewBox="0 0 160 160" class="gauge-svg">
+                        <circle cx="80" cy="80" r="70" class="gauge-bg"></circle>
+                        <circle cx="80" cy="80" r="70" class="gauge-progress purple-stroke"
+                            style="stroke-dasharray: 440; stroke-dashoffset: 194;"></circle>
+                        <text x="80" y="75" class="gauge-number">56</text>
+                        <text x="80" y="95" class="gauge-suffix">%</text>
+                    </svg>
+                </div>
+                <button class="gauge-reset-btn purple-btn">RESET</button>
+                <p class="gauge-caption">API Response Time</p>
+            </div>
+
+            <!-- Gauge 5: Database -->
+            <div class="neon-card gauge-card">
+                <div class="circular-gauge">
+                    <svg viewBox="0 0 160 160" class="gauge-svg">
+                        <circle cx="80" cy="80" r="70" class="gauge-bg"></circle>
+                        <circle cx="80" cy="80" r="70" class="gauge-progress cyan-stroke"
+                            style="stroke-dasharray: 440; stroke-dashoffset: 335;"></circle>
+                        <text x="80" y="75" class="gauge-number">24</text>
+                        <text x="80" y="95" class="gauge-suffix">%</text>
+                    </svg>
+                </div>
+                <button class="gauge-reset-btn cyan-btn">RESET</button>
+                <p class="gauge-caption">Database Load</p>
+            </div>
+
+            <!-- Gauge 6: Memory -->
+            <div class="neon-card gauge-card">
+                <div class="circular-gauge">
+                    <svg viewBox="0 0 160 160" class="gauge-svg">
+                        <circle cx="80" cy="80" r="70" class="gauge-bg"></circle>
+                        <circle cx="80" cy="80" r="70" class="gauge-progress orange-stroke"
+                            style="stroke-dasharray: 440; stroke-dashoffset: 26;"></circle>
+                        <text x="80" y="75" class="gauge-number">94</text>
+                        <text x="80" y="95" class="gauge-suffix">%</text>
+                    </svg>
+                </div>
+                <button class="gauge-reset-btn orange-btn">RESET</button>
+                <p class="gauge-caption">Memory Usage</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="neon-card chart-glow-container" style="margin-bottom: 24px; padding: 30px;">
+        <div class="flex-between" style="margin-bottom: 24px;">
+            <h3 style="font-weight: 600; font-size: 16px;">Traffic Analytics</h3>
+            <div class="flex-center" style="gap: 8px;">
+                <span class="badge badge-neutral" style="font-size: 11px;">7 Days</span>
+            </div>
+        </div>
+        <div style="position: relative; height: 320px;">
+            <canvas id="mainAreaChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Bottom Metrics Bar -->
+    <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 12px;">
+        <div class="mini-metric-card cyan-theme">
+            <i class="material-symbols-outlined metric-icon">analytics</i>
+            <span class="mini-value">56</span>
+            <span class="mini-label">Analytics</span>
+        </div>
+        <div class="mini-metric-card cyan-accent">
+            <i class="material-symbols-outlined metric-icon">speed</i>
+            <span class="mini-value">35</span>
+            <span class="mini-label">Performance</span>
+        </div>
+        <div class="mini-metric-card cyan-bright">
+            <i class="material-symbols-outlined metric-icon">verified</i>
+            <span class="mini-value">21</span>
+            <span class="mini-label">Verified</span>
+        </div>
+        <div class="mini-metric-card neutral-theme">
+            <i class="material-symbols-outlined metric-icon">trending_up</i>
+            <span class="mini-value">90</span>
+            <span class="mini-label">Growth</span>
+        </div>
+        <div class="mini-metric-card neutral-theme">
+            <i class="material-symbols-outlined metric-icon">insert_chart</i>
+            <span class="mini-value">34</span>
+            <span class="mini-label">Reports</span>
+        </div>
+        <div class="mini-metric-card neutral-theme">
+            <i class="material-symbols-outlined metric-icon">workspace_premium</i>
+            <span class="mini-value">33</span>
+            <span class="mini-label">Premium</span>
+        </div>
+        <div class="mini-metric-card neutral-theme">
+            <i class="material-symbols-outlined metric-icon">shield</i>
+            <span class="mini-value">61</span>
+            <span class="mini-label">Security</span>
+        </div>
+        <div class="mini-metric-card neutral-theme">
+            <i class="material-symbols-outlined metric-icon">monitoring</i>
+            <span class="mini-value">70</span>
+            <span class="mini-label">Monitor</span>
+        </div>
+    </div>
 </div>
+{{ end }}
+
+{{ define "scripts" }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="/static/js/dashboard.js"></script>
 {{ end }}

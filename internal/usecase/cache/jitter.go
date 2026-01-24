@@ -10,7 +10,6 @@ import (
 	"gct/internal/repo/persistent/redis"
 	pkgCache "gct/pkg/cache"
 	"gct/pkg/logger"
-
 	"go.uber.org/zap"
 )
 

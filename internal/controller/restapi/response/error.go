@@ -8,7 +8,6 @@ import (
 
 	"gct/consts"
 	apperrors "gct/pkg/errors"
-
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )

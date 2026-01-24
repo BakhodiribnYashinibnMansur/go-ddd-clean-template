@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"gct/internal/domain"
+
+	"github.com/google/uuid"
 )
 
 type UseCaseI interface {
@@ -17,4 +19,6 @@ type UseCaseI interface {
 	SignOut(ctx context.Context, in *domain.SignOutIn) error
 	RotateSession(ctx context.Context, in *domain.RefreshIn) (*domain.SignInOut, error)
 	GetByPhone(ctx context.Context, in *domain.UserFilter) (*domain.User, error)
+	ActivateUser(ctx context.Context, userID string) error
+	SetStatus(ctx context.Context, id uuid.UUID, active bool) error
 }

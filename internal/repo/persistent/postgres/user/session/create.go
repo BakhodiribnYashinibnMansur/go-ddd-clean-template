@@ -6,6 +6,7 @@ import (
 
 	"gct/internal/domain"
 	apperrors "gct/pkg/errors"
+
 	"github.com/google/uuid"
 )
 
@@ -13,6 +14,10 @@ func (r *Repo) Create(ctx context.Context, s *domain.Session) error {
 	if s.ID == uuid.Nil {
 		s.ID = uuid.New()
 	}
+	// Ensure timestamps are set
+	now := time.Now()
+	s.LastActivity = now
+
 	query := r.builder.Insert("session").
 		Columns(
 			"id",
@@ -45,8 +50,8 @@ func (r *Repo) Create(ctx context.Context, s *domain.Session) error {
 			s.Revoked,
 			s.ExpiresAt,
 			s.LastActivity,
-			time.Now(),
-			time.Now(),
+			now,
+			now,
 		)
 
 	sql, args, err := query.ToSql()

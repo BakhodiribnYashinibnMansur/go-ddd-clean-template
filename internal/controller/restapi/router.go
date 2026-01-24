@@ -21,7 +21,6 @@ import (
 	"gct/internal/usecase"
 	webAdmin "gct/internal/web/admin"
 	"gct/pkg/logger"
-
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -95,6 +94,9 @@ func NewRouter(handler *gin.Engine, cfg *config.Config, uc *usecase.UseCase, l l
 
 	// Middleware
 	am := middleware.NewAuthMiddleware(uc, cfg, l)
+
+	// Serve Static Assets (Skip Audit)
+	handler.Static("/static", "./internal/web/admin/static")
 
 	// Audit Middleware
 	auditM := middleware.NewAuditMiddleware(uc, l)

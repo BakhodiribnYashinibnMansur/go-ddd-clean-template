@@ -552,56 +552,67 @@
     let allIssues = [];
     let issuesByLinter = {};
 
-    runLinterBtn.addEventListener('click', async () => {
-        runLinterBtn.disabled = true;
-        statusCard.style.display = 'flex';
-        statsGrid.style.display = 'none';
-        searchSection.style.display = 'none';
-        issuesSection.style.display = 'none';
+    document.addEventListener('DOMContentLoaded', () => {
+        // Re-select elements inside DOMContentLoaded to be safe
+        const runLinterBtn = document.getElementById('runLinterBtn');
+        const statusCard = document.getElementById('statusCard');
+        const statusIcon = document.getElementById('statusIcon');
+        const statusTitle = document.getElementById('statusTitle');
+        const statusMessage = document.getElementById('statusMessage');
+        const statsGrid = document.getElementById('statsGrid');
+        const searchSection = document.getElementById('searchSection');
+        const issuesSection = document.getElementById('issuesSection');
 
-        statusIcon.className = 'status-icon spinning';
-        statusIcon.innerHTML = '<i class="material-symbols-outlined">pending</i>';
-        statusTitle.textContent = 'Running Linter...';
-        statusMessage.textContent = 'Please wait while we analyze your code (this may take a few minutes)';
+        if (runLinterBtn) {
+            runLinterBtn.addEventListener('click', async () => {
+                runLinterBtn.disabled = true;
+                if (statusCard) statusCard.style.display = 'flex';
+                if (statsGrid) statsGrid.style.display = 'none';
+                if (searchSection) searchSection.style.display = 'none';
+                if (issuesSection) issuesSection.style.display = 'none';
 
-        try {
-            const response = await fetch('/api/v1/admin/linter/run', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
+                if (statusIcon) {
+                    statusIcon.className = 'status-icon spinning';
+                    statusIcon.innerHTML = '<i class="material-symbols-outlined">pending</i>';
+                }
+                if (statusTitle) statusTitle.textContent = 'Running Linter...';
+                if (statusMessage) statusMessage.textContent = 'Please wait while we analyze your code (this may take a few minutes)';
+
+                try {
+                    const response = await fetch('/admin/linter/run', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    });
+
+                    const contentType = response.headers.get("content-type");
+                    if (!contentType || !contentType.includes("application/json")) {
+                        throw new Error("Invalid response from server");
+                    }
+
+                    const issues = await response.json();
+
+                    if (issues.error) {
+                        showError(issues.error);
+                    } else {
+                        // GolangCI-Lint JSON output handler
+                        const newIssues = Array.isArray(issues) ? issues : (issues.Issues || []);
+
+                        // Update global allIssues
+                        // Note: processIssues expects the array
+                        allIssues = newIssues;
+                        processIssues(allIssues);
+                        showSuccess();
+                    }
+                } catch (error) {
+                    showError('Network error: ' + error.message);
+                } finally {
+                    runLinterBtn.disabled = false;
                 }
             });
-
-            const data = await response.json();
-
-            if (response.ok && data.success) {
-                await loadJSONReport();
-            } else {
-                showError(data.message || 'Failed to run linter');
-            }
-        } catch (error) {
-            showError('Network error: ' + error.message);
-        } finally {
-            runLinterBtn.disabled = false;
         }
     });
-
-    async function loadJSONReport() {
-        try {
-            const response = await fetch('/docs/report/linter/report.json');
-            const jsonData = await response.json();
-
-            if (jsonData.Issues && jsonData.Issues.length > 0) {
-                allIssues = jsonData.Issues;
-                processIssues(allIssues);
-                showSuccess();
-            } else {
-                showError('No issues found in the report');
-            }
-        } catch (error) {
-            showError('Failed to load JSON report: ' + error.message);
-        }
-    }
 
     function processIssues(issues) {
         issuesByLinter = {};
@@ -813,5 +824,9 @@
     downloadHTMLBtn.addEventListener('click', () => {
         window.open('/docs/report/linter/report.html', '_blank');
     });
+
+
+
+
 </script>
 {{ end }}

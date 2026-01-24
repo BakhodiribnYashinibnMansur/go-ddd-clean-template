@@ -8,7 +8,6 @@ import (
 
 	kafkarpc "gct/pkg/broker/kafka/kafka_rpc"
 	"gct/pkg/logger"
-
 	"github.com/goccy/go-json"
 	"github.com/segmentio/kafka-go"
 	"go.uber.org/zap"

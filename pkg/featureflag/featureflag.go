@@ -8,7 +8,6 @@ import (
 
 	"gct/config"
 	"gct/pkg/logger"
-
 	"github.com/redis/go-redis/v9"
 	ffclient "github.com/thomaspoignant/go-feature-flag"
 	"github.com/thomaspoignant/go-feature-flag/retriever"

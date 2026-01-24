@@ -19,6 +19,7 @@ func (r *Repo) Update(ctx context.Context, u *domain.User) error {
 		Set("salt", u.Salt).
 		Set("attributes", u.Attributes).
 		Set("active", u.Active).
+		Set("is_approved", u.IsApproved).
 		Set("updated_at", time.Now()).
 		Set("last_seen", u.LastSeen).
 		Where("id = ? AND deleted_at = 0", u.ID).

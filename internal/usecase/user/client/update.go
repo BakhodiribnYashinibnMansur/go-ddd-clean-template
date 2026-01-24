@@ -2,9 +2,12 @@ package client
 
 import (
 	"context"
+	"time"
 
 	"gct/internal/domain"
 	apperrors "gct/pkg/errors"
+
+	"github.com/google/uuid"
 )
 
 func (uc *UseCase) Update(ctx context.Context, u *domain.User) error {
@@ -45,5 +48,26 @@ func (uc *UseCase) Update(ctx context.Context, u *domain.User) error {
 	}
 
 	uc.logger.Infow("user update success")
+	return nil
+}
+
+func (uc *UseCase) SetStatus(ctx context.Context, id uuid.UUID, active bool) error {
+	uc.logger.Infow("user set status started", "id", id, "active", active)
+
+	existing, err := uc.repo.Postgres.User.Client.Get(ctx, &domain.UserFilter{ID: &id})
+	if err != nil {
+		return apperrors.MapRepoToServiceError(ctx, err)
+	}
+
+	existing.Active = active
+	existing.UpdatedAt = time.Now() // Ensure updated_at is refreshed
+
+	err = uc.repo.Postgres.User.Client.Update(ctx, existing)
+	if err != nil {
+		uc.logger.Errorw("user set status failed", "error", err)
+		return apperrors.MapRepoToServiceError(ctx, err)
+	}
+
+	uc.logger.Infow("user set status success")
 	return nil
 }

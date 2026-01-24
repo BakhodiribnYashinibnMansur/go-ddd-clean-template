@@ -1,0 +1,84 @@
+{{ template "base" . }}
+
+{{ define "content" }}
+<div class="content-header">
+    <div class="header-title">
+        <h1>Initial Approvals</h1>
+        <p>Review and activate new user accounts.</p>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width: 60px;">#</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Created At</th>
+                    <th class="text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{ range $index, $user := .Data.Users }}
+                <tr>
+                    <td style="text-align: center; font-weight: 600; color: var(--text-secondary);">
+                        {{ add $.Data.Pagination.Offset $index 1 }}
+                    </td>
+                    <td>
+                        <div class="user-info">
+                            <div class="user-avatar">
+                                {{ if $user.Email }}{{ printf "%.1s" (derefString $user.Email) }}{{ else }}?{{ end }}
+                            </div>
+                            <div>
+                                <div class="user-name">
+                                    {{ if $user.Email }}{{ derefString $user.Email }}{{ else }}No Email{{ end }}
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>{{ if $user.Phone }}{{ derefString $user.Phone }}{{ else }}--{{ end }}</td>
+                    <td>{{ $user.CreatedAt.Format "Jan 02, 2006" }}</td>
+                    <td class="text-right">
+                        <form action="/admin/users/{{ $user.ID }}/approve" method="POST" style="display:inline;">
+                            <input type="hidden" name="_csrf" value="{{ $.CSRF }}">
+                            <button type="submit" class="btn btn-sm btn-success">
+                                <i class="material-symbols-outlined">check</i> Approve
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {{ else }}
+                <tr>
+                    <td colspan="5" class="text-center py-4 text-muted">No pending approvals found.</td>
+                </tr>
+                {{ end }}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {{ template "pagination" .Data.Pagination }}
+</div>
+
+<style>
+    .btn-success {
+        background-color: var(--md-sys-color-primary);
+        color: var(--md-sys-color-on-primary);
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 6px 12px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-success:hover {
+        background-color: var(--md-sys-color-primary-container);
+        color: var(--md-sys-color-on-primary-container);
+    }
+</style>
+{{ end }}

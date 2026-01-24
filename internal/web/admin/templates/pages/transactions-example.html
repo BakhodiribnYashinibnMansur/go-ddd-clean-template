@@ -1,0 +1,245 @@
+{{ define "content" }}
+<div class="page-content-wrapper">
+    <!-- Header -->
+    <div class="content-header flex-between" style="margin-bottom: 24px;">
+        <div>
+            <h2 style="margin-bottom: 8px;">Transactions</h2>
+            <p class="text-muted">Manage your account transactions</p>
+        </div>
+        <div class="flex-center" style="gap: 12px;">
+            <button class="btn btn-secondary">
+                <i class="material-symbols-outlined">filter_list</i>
+                All transactions
+            </button>
+            <button class="btn btn-primary">
+                <i class="material-symbols-outlined">add</i>
+                New Transfer
+            </button>
+        </div>
+    </div>
+
+    <!-- Account Card -->
+    <div class="card" style="margin-bottom: 24px; padding: 20px 24px;">
+        <div class="flex-between">
+            <div>
+                <span class="text-muted" style="font-size: 12px; text-transform: uppercase;">Current Account</span>
+                <h3 style="margin: 4px 0;">4422 2156 0567 9000</h3>
+            </div>
+            <div style="text-align: right;">
+                <div style="margin-bottom: 8px;">
+                    <span class="text-muted" style="font-size: 12px;">Balance:</span>
+                    <span style="font-size: 18px; font-weight: 700; color: var(--success); margin-left: 8px;">+
+                        $1,742.66</span>
+                </div>
+                <div>
+                    <span class="text-muted" style="font-size: 12px;">Available:</span>
+                    <span style="font-size: 18px; font-weight: 700; margin-left: 8px;">+ $6,396.32</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expandable Table -->
+    <div class="expandable-table">
+        <!-- Header -->
+        <div class="table-header" style="grid-template-columns: 120px 1fr 120px 120px 60px;">
+            <span>Date</span>
+            <span>Concept</span>
+            <span>Import</span>
+            <span>Balance</span>
+            <span></span>
+        </div>
+
+        <!-- Row 1 -->
+        <div class="table-row-wrapper">
+            <div class="table-row" style="grid-template-columns: 120px 1fr 120px 120px 60px;">
+                <span style="color: var(--primary-400); font-weight: 500;">10/27/2017</span>
+                <span>Lemman concert</span>
+                <span class="amount-negative">-$54.00</span>
+                <span>$1742.66</span>
+                <div class="expand-btn">
+                    <i class="material-symbols-outlined">expand_more</i>
+                </div>
+            </div>
+            <div class="row-details">
+                <div class="row-details-content">
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <span class="detail-label">Transaction ID</span>
+                            <span class="detail-value">#TXN-20171027-001</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Category</span>
+                            <span class="detail-value">Entertainment</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Payment Method</span>
+                            <span class="detail-value">Debit Card</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Status</span>
+                            <span class="status-badge status-closed">Completed</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Merchant</span>
+                            <span class="detail-value">Ticketmaster Inc.</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Location</span>
+                            <span class="detail-value">New York, NY</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 2 -->
+        <div class="table-row-wrapper">
+            <div class="table-row" style="grid-template-columns: 120px 1fr 120px 120px 60px;">
+                <span style="color: var(--primary-400); font-weight: 500;">10/21/2017</span>
+                <span>For party dress</span>
+                <span class="amount-negative">-$157.70</span>
+                <span>$1796.66</span>
+                <div class="expand-btn">
+                    <i class="material-symbols-outlined">expand_more</i>
+                </div>
+            </div>
+            <div class="row-details">
+                <div class="row-details-content">
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <span class="detail-label">Transaction ID</span>
+                            <span class="detail-value">#TXN-20171021-002</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Category</span>
+                            <span class="detail-value">Shopping</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Payment Method</span>
+                            <span class="detail-value">Credit Card</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Status</span>
+                            <span class="status-badge status-closed">Completed</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 3 -->
+        <div class="table-row-wrapper">
+            <div class="table-row" style="grid-template-columns: 120px 1fr 120px 120px 60px;">
+                <span style="color: var(--primary-400); font-weight: 500;">10/18/2017</span>
+                <span>Loan payment</span>
+                <span class="amount-positive">+$210.90</span>
+                <span>$1954.36</span>
+                <div class="expand-btn">
+                    <i class="material-symbols-outlined">expand_more</i>
+                </div>
+            </div>
+            <div class="row-details">
+                <div class="row-details-content">
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <span class="detail-label">Transaction ID</span>
+                            <span class="detail-value">#TXN-20171018-003</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Category</span>
+                            <span class="detail-value">Income</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Payment Method</span>
+                            <span class="detail-value">Bank Transfer</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Status</span>
+                            <span class="status-badge status-in-review">Processed</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 4 -->
+        <div class="table-row-wrapper">
+            <div class="table-row" style="grid-template-columns: 120px 1fr 120px 120px 60px;">
+                <span style="color: var(--primary-400); font-weight: 500;">10/11/2017</span>
+                <span>Saturday lunch</span>
+                <span class="amount-negative">-$120.87</span>
+                <span>$1743.46</span>
+                <div class="expand-btn">
+                    <i class="material-symbols-outlined">expand_more</i>
+                </div>
+            </div>
+            <div class="row-details">
+                <div class="row-details-content">
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <span class="detail-label">Transaction ID</span>
+                            <span class="detail-value">#TXN-20171011-004</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Category</span>
+                            <span class="detail-value">Food & Dining</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Payment Method</span>
+                            <span class="detail-value">Debit Card</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Status</span>
+                            <span class="status-badge status-closed">Completed</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 5 -->
+        <div class="table-row-wrapper">
+            <div class="table-row" style="grid-template-columns: 120px 1fr 120px 120px 60px;">
+                <span style="color: var(--primary-400); font-weight: 500;">10/10/2017</span>
+                <span>Theater tickets</span>
+                <span class="amount-positive">+$245.90</span>
+                <span>$1864.33</span>
+                <div class="expand-btn">
+                    <i class="material-symbols-outlined">expand_more</i>
+                </div>
+            </div>
+            <div class="row-details">
+                <div class="row-details-content">
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <span class="detail-label">Transaction ID</span>
+                            <span class="detail-value">#TXN-20171010-005</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Category</span>
+                            <span class="detail-value">Refund</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Payment Method</span>
+                            <span class="detail-value">Credit Card</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Status</span>
+                            <span class="status-badge status-in-review">Refunded</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{ end }}
+
+{{ define "styles" }}
+<link rel="stylesheet" href="/static/css/expandable-table.css">
+{{ end }}
+
+{{ define "scripts" }}
+<script src="/static/js/expandable-table.js"></script>
+{{ end }}

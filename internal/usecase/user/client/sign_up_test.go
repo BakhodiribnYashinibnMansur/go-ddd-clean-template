@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"gct/internal/domain"
+
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -51,26 +52,19 @@ func TestUseCase_SignUp_TableDriven(t *testing.T) {
 			expectError: false,
 			validateSaved: func(t *testing.T, u *domain.User) {
 				t.Helper()
-				require.NotNil(t, u.Username)
-				require.Equal(t, "", *u.Username)
+				require.Nil(t, u.Username)
 				require.Equal(t, "123456789", *u.Phone)
 			},
 		},
 		{
-			name: "success_empty_phone",
+			name: "error_empty_phone",
 			input: &domain.SignUpIn{
 				Username: "testuser",
 				Phone:    "",
 				Password: "password",
 			},
 			repoError:   nil,
-			expectError: false,
-			validateSaved: func(t *testing.T, u *domain.User) {
-				t.Helper()
-				require.Equal(t, "", *u.Phone)
-				require.NotNil(t, u.Username)
-				require.Equal(t, "testuser", *u.Username)
-			},
+			expectError: true,
 		},
 		{
 			name: "error_empty_password",
@@ -189,6 +183,7 @@ func TestUseCase_SignUp_TableDriven(t *testing.T) {
 							ID:           uuid.New(),
 							Phone:        &tt.input.Phone,
 							PasswordHash: string(hash),
+							IsApproved:   true,
 						}, nil).Once()
 
 					sessionRepo.On("Create", mock.Anything, mock.AnythingOfType("*domain.Session")).

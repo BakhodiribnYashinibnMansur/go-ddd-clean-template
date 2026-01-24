@@ -28,6 +28,24 @@
     </div>
 </div>
 
+<!-- Filters -->
+<div class="card" style="margin-bottom: 32px;">
+    <form method="GET" action="/admin/rbac/roles" class="filter-bar" style="margin-bottom: 0; align-items: end;">
+        <div>
+            <label class="text-body" style="font-size: 14px; margin-bottom: 8px; display: block;">Search Name</label>
+            <div style="position: relative;">
+                <i class="material-symbols-outlined"
+                    style="position: absolute; left: 12px; top: 10px; font-size: 20px; color: var(--text-muted);">search</i>
+                <input type="text" name="name" class="search-input" style="padding-left: 40px;" placeholder="admin"
+                    value="{{ if .Filter.Name }}{{ derefString .Filter.Name }}{{ end }}">
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary" style="height: 42px;">Filter</button>
+        <a href="/admin/rbac/roles" class="btn btn-secondary" style="height: 42px;">Reset</a>
+    </form>
+</div>
+
+<!-- Table -->
 <div class="card" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
     <div class="table-container">
         <table class="table">
@@ -58,10 +76,9 @@
                 <tr>
                     <td>
                         <div style="font-weight: 600; color: var(--primary-color);">{{ .Name }}</div>
-                        <!-- <div style="font-size: 12px; color: var(--md-sys-color-outline);">{{ .Description }}</div> -->
                     </td>
                     <td>
-                        <span class="badge badge-neutral">{{ .PermissionsCount }} perms</span>
+                        <span class="badge badge-neutral">--</span>
                     </td>
                     <td>{{ .CreatedAt.Format "Jan 02, 2006" }}</td>
                     <td style="text-align: right;">
@@ -80,7 +97,7 @@
     </div>
 
     <!-- Pagination Partial -->
-    {{ template "pagination" .Pagination }}
+    {{ template "pagination" . }}
 </div>
 {{ end }}
 {{ define "scripts" }}

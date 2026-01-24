@@ -6,4 +6,9 @@ type Tracing struct {
 	Endpoint     string `env:"ENDPOINT" envDefault:"http://localhost:14268/api/traces"`
 	HttpEndpoint string `env:"HTTP_ENDPOINT" envDefault:"http://localhost:16686"`
 	Insecure     bool   `env:"INSECURE" envDefault:"true"`
+	Jaeger       Jaeger `envPrefix:"JAEGER_"`
+}
+
+type Jaeger struct {
+	URL string `env:"URL"`
 }

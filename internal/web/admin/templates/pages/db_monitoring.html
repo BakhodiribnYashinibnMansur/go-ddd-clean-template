@@ -1,0 +1,110 @@
+{{ template "base" . }}
+
+{{ define "content" }}
+<div style="margin-bottom: 24px;">
+    <h2>Database Monitoring</h2>
+    <p class="text-muted">Real-time database performance metrics.</p>
+</div>
+
+<div class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 24px;">
+    <div class="card stat-card">
+        <div class="flex-between">
+            <span class="stat-label">Active Connections</span>
+            <i class="material-symbols-outlined text-primary">lan</i>
+        </div>
+        <div class="stat-value">{{ if .Metrics }}{{ .Metrics.ActiveConnections }}{{ else }}0{{ end }}</div>
+    </div>
+    <div class="card stat-card">
+        <div class="flex-between">
+            <span class="stat-label">Cache Hit Ratio</span>
+            <i class="material-symbols-outlined text-success">memory</i>
+        </div>
+        <div class="stat-value">{{ if .Metrics }}{{ printf "%.2f" .Metrics.CacheHitRatio }}%{{ else }}0%{{ end }}</div>
+    </div>
+    <div class="card stat-card">
+        <div class="flex-between">
+            <span class="stat-label">Dead Tuples</span>
+            <i class="material-symbols-outlined text-warning">delete_sweep</i>
+        </div>
+        <div class="stat-value">{{ if .Metrics }}{{ .Metrics.DeadTuples }}{{ else }}0{{ end }}</div>
+    </div>
+</div>
+
+<div class="grid-container" style="display: grid; gap: 24px;">
+    <!-- Active Sessions -->
+    <div class="card">
+        <h3 style="margin-bottom: 16px;">Active Sessions</h3>
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>PID</th>
+                        <th>User</th>
+                        <th>App</th>
+                        <th>State</th>
+                        <th>Duration</th>
+                        <th>Query</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{ range .Sessions }}
+                    <tr>
+                        <td>{{ .PID }}</td>
+                        <td>{{ .Username }}</td>
+                        <td>{{ .ApplicationName }}</td>
+                        <td>
+                            <span class="badge {{ if eq .State " active" }}badge-success{{ else }}badge-neutral{{ end
+                                }}">{{ .State }}</span>
+                        </td>
+                        <td>{{ .Duration }}</td>
+                        <td title="{{ .Query }}"
+                            style="max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{
+                            .Query }}</td>
+                    </tr>
+                    {{ else }}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">No active sessions</td>
+                    </tr>
+                    {{ end }}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Slow Queries -->
+    <div class="card">
+        <h3 style="margin-bottom: 16px;">Slow Queries</h3>
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Calls</th>
+                        <th>Total Time</th>
+                        <th>Mean Time</th>
+                        <th>Rows</th>
+                        <th>Query</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{ range .SlowQueries }}
+                    <tr>
+                        <td>{{ .Calls }}</td>
+                        <td>{{ printf "%.2f" .TotalTime }}ms</td>
+                        <td>{{ printf "%.2f" .MeanTime }}ms</td>
+                        <td>{{ .Rows }}</td>
+                        <td title="{{ .Query }}"
+                            style="max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{
+                            .Query }}</td>
+                    </tr>
+                    {{ else }}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">No slow query data (pg_stat_statements might be
+                            disabled)</td>
+                    </tr>
+                    {{ end }}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{{ end }}

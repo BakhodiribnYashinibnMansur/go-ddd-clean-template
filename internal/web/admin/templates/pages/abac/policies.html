@@ -28,6 +28,25 @@
     </div>
 </div>
 
+<!-- Filters -->
+<div class="card" style="margin-bottom: 32px;">
+    <form method="GET" action="/admin/abac/policies" class="filter-bar" style="margin-bottom: 0; align-items: end;">
+        <div>
+            <label class="text-body" style="font-size: 14px; margin-bottom: 8px; display: block;">Status</label>
+            <select name="active" class="search-input" style="width: 150px; appearance: none; cursor: pointer;">
+                <option value="">All</option>
+                <option value="true" {{ if .Filter.Active }}{{ if derefBool .Filter.Active }}selected{{ end }}{{ end }}>
+                    Active</option>
+                <option value="false" {{ if .Filter.Active }}{{ if not (derefBool .Filter.Active) }}selected{{ end }}{{
+                    end }}>Inactive</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary" style="height: 42px;">Filter</button>
+        <a href="/admin/abac/policies" class="btn btn-secondary" style="height: 42px;">Reset</a>
+    </form>
+</div>
+
+<!-- Table -->
 <div class="card" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
     <div class="table-container">
         <table class="table">
@@ -97,7 +116,7 @@
     </div>
 
     <!-- Pagination Partial -->
-    {{ template "pagination" .Pagination }}
+    {{ template "pagination" . }}
 </div>
 {{ end }}
 {{ define "scripts" }}

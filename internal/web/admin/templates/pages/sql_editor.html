@@ -1,0 +1,307 @@
+{{ template "base" . }}
+
+{{ define "styles" }}
+<!-- CodeMirror CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/dracula.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/hint/show-hint.min.css">
+<style>
+    .CodeMirror {
+        height: 300px;
+        border-radius: 8px;
+        font-family: "Intel One Mono", monospace;
+        font-size: 14px;
+        border: 1px solid var(--border-color);
+    }
+
+    .query-result {
+        margin-bottom: 32px;
+        animation: fadeIn 0.3s ease-in-out;
+    }
+
+    .result-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        padding-left: 8px;
+        border-left: 4px solid var(--primary-color);
+    }
+
+    .result-meta {
+        font-size: 12px;
+        color: var(--text-muted);
+        font-family: 'Roboto Mono', monospace;
+    }
+
+    .status-badge {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .status-success {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+    }
+
+    .status-error {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+    }
+
+    .sql-snippet {
+        font-family: 'Roboto Mono', monospace;
+        background: var(--bg-secondary);
+        padding: 2px 6px;
+        border-radius: 4px;
+        color: var(--text-primary);
+        font-size: 12px;
+        max-width: 400px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: inline-block;
+        vertical-align: middle;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+{{ end }}
+
+{{ define "content" }}
+<div class="content-header">
+    <div>
+        <h1 class="content-title">SQL Editor</h1>
+        <p class="content-subtitle">Execute read-only queries against the database.</p>
+    </div>
+    <div class="header-actions">
+        <button onclick="clearEditor()" class="btn btn-secondary">
+            <i class="material-symbols-outlined">restart_alt</i>
+            Clear
+        </button>
+        <button onclick="runQuery()" class="btn btn-primary" id="runBtn">
+            <i class="material-symbols-outlined">play_arrow</i>
+            Run Query (Cmd+Enter)
+        </button>
+    </div>
+</div>
+
+<div class="grid-container" style="grid-template-columns: 1fr;">
+    <!-- Editor Card -->
+    <div class="card" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
+        <div
+            style="padding: 12px 16px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; gap: 12px; font-size: 12px; color: var(--text-muted);">
+                <span><i class="material-symbols-outlined" style="font-size: 14px; vertical-align: bottom;">database</i>
+                    Postgres</span>
+                <span><i class="material-symbols-outlined" style="font-size: 14px; vertical-align: bottom;">lock</i>
+                    Read-Only</span>
+            </div>
+            <div style="font-size: 11px; opacity: 0.7;">
+                Ctrl+Space for Autocomplete
+            </div>
+        </div>
+        <textarea id="sqlInput">-- Write your SQL query here
+-- Support multiple queries separated by semicolons (;)
+SELECT * FROM users LIMIT 5;</textarea>
+    </div>
+
+    <!-- Results Container -->
+    <div id="resultsContainer"></div>
+</div>
+{{ end }}
+
+{{ define "scripts" }}
+<!-- CodeMirror JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/sql/sql.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/hint/show-hint.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/hint/sql-hint.min.js"></script>
+
+<script>
+    let editor;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        editor = CodeMirror.fromTextArea(document.getElementById('sqlInput'), {
+            mode: 'text/x-pgsql',
+            theme: 'dracula',
+            lineNumbers: true,
+            indentWithTabs: false,
+            smartIndent: true,
+            lineWrapping: true,
+            matchBrackets: true,
+            autofocus: true,
+            extraKeys: {
+                "Cmd-Enter": runQuery,
+                "Ctrl-Enter": runQuery,
+                "Tab": "autocomplete"
+            },
+            hintOptions: {
+                completeSingle: false, // Don't auto-complete if only 1 match, show list
+                tables: {
+                    users: ["id", "email", "role_id", "active", "created_at", "attributes"],
+                    roles: ["id", "name", "description", "created_at"],
+                    permissions: ["id", "scope", "action", "resource"],
+                    schema_migrations: ["version", "dirty"]
+                }
+            }
+        });
+    });
+
+    function clearEditor() {
+        editor.setValue('');
+        editor.focus();
+    }
+
+    async function runQuery() {
+        const sql = editor.getValue().trim();
+        if (!sql) {
+            alert("Please enter a SQL query");
+            return;
+        }
+
+        const btn = document.getElementById('runBtn');
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="material-symbols-outlined spin">refresh</i> Running...';
+
+        const container = document.getElementById('resultsContainer');
+        container.innerHTML = ''; // Clear previous results
+
+        try {
+            const response = await fetch('/admin/database/sql-editor/execute', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sql })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                if (!result.results || result.results.length === 0) {
+                    container.innerHTML = `
+                        <div class="card" style="text-align: center; padding: 48px; color: var(--text-muted);">
+                            <i class="material-symbols-outlined" style="font-size: 48px; opacity: 0.5;">check_circle</i>
+                            <p style="margin-top: 16px;">Executed successfully, but no results returned.</p>
+                        </div>
+                    `;
+                } else {
+                    result.results.forEach((res, index) => {
+                        renderQueryResult(res, index);
+                    });
+                }
+            } else {
+                showError(result.error || "Unknown error occurred");
+            }
+        } catch (err) {
+            console.error(err);
+            showError("Failed to execute query: " + err.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    }
+
+    function renderQueryResult(res, index) {
+        const container = document.getElementById('resultsContainer');
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'card query-result';
+
+        // Header
+        let headerHtml = `
+            <div class="result-header">
+                <div>
+                    <span class="status-badge ${res.error ? 'status-error' : 'status-success'}">
+                        ${res.error ? 'ERROR' : 'SUCCESS'}
+                    </span>
+                    <span class="sql-snippet" title="${res.sql}">${res.sql}</span>
+                </div>
+                <div class="result-meta">
+                    <span style="margin-right: 12px;"><i class="material-symbols-outlined" style="font-size: 12px; vertical-align: middle;">timer</i> ${res.duration}</span>
+                    <span>${res.row_count || 0} rows</span>
+                </div>
+            </div>
+        `;
+
+        // Body
+        let bodyHtml = '';
+        if (res.error) {
+            bodyHtml = `
+                <div style="padding: 16px; background: rgba(239, 68, 68, 0.05); color: #ef4444; border-radius: 8px; font-family: 'Roboto Mono', monospace; font-size: 13px;">
+                    <i class="material-symbols-outlined" style="vertical-align: bottom; font-size: 16px; margin-right: 8px;">error</i>
+                    ${res.error}
+                </div>
+            `;
+        } else if (res.rows && res.rows.length > 0) {
+            bodyHtml = `
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">#</th>
+                                ${res.columns.map(col => `<th>${col}</th>`).join('')}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${res.rows.map((row, i) => `
+                                <tr>
+                                    <td class="text-muted text-center" style="font-size: 11px;">${i + 1}</td>
+                                    ${res.columns.map(col => {
+                let val = row[col];
+                if (val === null) return '<td style="color: var(--text-muted); font-style: italic;">NULL</td>';
+                if (typeof val === 'object') return '<td>' + JSON.stringify(val) + '</td>';
+                return '<td>' + escapeHtml(String(val)) + '</td>';
+            }).join('')}
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        } else {
+            bodyHtml = `
+                <div style="text-align: center; padding: 24px; color: var(--text-muted); font-style: italic;">
+                    No rows returned.
+                </div>
+            `;
+        }
+
+        wrapper.innerHTML = headerHtml + bodyHtml;
+        container.appendChild(wrapper);
+    }
+
+    function showError(msg) {
+        const container = document.getElementById('resultsContainer');
+        container.innerHTML = `
+            <div class="card" style="border-left: 4px solid var(--danger-color);">
+                <h3 style="color: var(--danger-color); font-size: 16px; margin-bottom: 8px;">Execution Failed</h3>
+                <p>${msg}</p>
+            </div>
+        `;
+    }
+
+    function escapeHtml(text) {
+        if (!text) return text;
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+</script>
+{{ end }}

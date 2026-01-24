@@ -14,6 +14,7 @@ var (
 	ErrPasswordRequired     = errors.New("password is required")
 	ErrPasswordHashRequired = errors.New("password hash is required")
 	ErrInvalidPassword      = errors.New("invalid password")
+	ErrUserNotApproved      = errors.New("user is not approved by admin")
 )
 
 // NewUser creates a new User with initialized fields
@@ -36,6 +37,7 @@ type User struct {
 	Salt         *string        `db:"salt"          json:"-"`
 	Attributes   map[string]any `db:"attributes"    json:"attributes"` // JSONB for ABAC (region, branch, dept)
 	Active       bool           `db:"active"        json:"active"`
+	IsApproved   bool           `db:"is_approved"   json:"is_approved"`
 	LastSeen     *time.Time     `db:"last_seen"     json:"last_seen,omitempty"`
 	DeletedAt    int64          `db:"deleted_at"    json:"deleted_at"`
 	CreatedAt    time.Time      `db:"created_at"    json:"created_at"`
@@ -46,12 +48,13 @@ type User struct {
 
 // UserFilter represents a filter for user queries.
 type UserFilter struct {
-	ID       *uuid.UUID `json:"id"`
-	RoleID   *uuid.UUID `json:"role_id"`
-	Username *string    `json:"username"`
-	Phone    *string    `json:"phone"`
-	Email    *string    `json:"email"`
-	Active   *bool      `json:"active"`
+	ID         *uuid.UUID `json:"id"`
+	RoleID     *uuid.UUID `json:"role_id"`
+	Username   *string    `json:"username"`
+	Phone      *string    `json:"phone"`
+	Email      *string    `json:"email"`
+	Active     *bool      `json:"active"`
+	IsApproved *bool      `json:"is_approved"`
 }
 
 func (f UserFilter) IsIDNull() bool {

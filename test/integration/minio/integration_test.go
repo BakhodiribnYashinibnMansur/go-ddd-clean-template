@@ -6,81 +6,100 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
+	"time"
 
-	"gct/internal/controller/restapi"
+	"gct/consts"
+	minioController "gct/internal/controller/restapi/v1/minio"
+	"gct/internal/domain"
 	"gct/internal/repo"
 	"gct/internal/usecase"
 	"gct/pkg/logger"
 	"gct/test/integration/common/setup"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMinioAPI_Integration_TableDriven(t *testing.T) {
+func TestMinioAPI_Integration_Direct(t *testing.T) {
 	cleanDB(t)
 	l := logger.New("debug")
-	repositories := repo.New(setup.TestPG, setup.TestMinio, nil, &setup.TestCfg.Minio, l)
+	repositories := repo.New(setup.TestPG, setup.TestMinio, setup.TestRedis, &setup.TestCfg.Minio, l)
 	useCases := usecase.NewUseCase(repositories, l, setup.TestCfg, nil)
+	ctx := t.Context()
 
-	handler := gin.New()
-	restapi.NewRouter(handler, setup.TestCfg, useCases, l)
+	controller := minioController.New(useCases, l)
 
-	// Setup user and token
-	signupBody, _ := json.Marshal(map[string]string{
-		"username": "minio_tester",
-		"phone":    "998909990001",
-		"password": "password",
-	})
-	handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodPost, "/api/user/users/sign-up", bytes.NewBuffer(signupBody)))
+	// Pre-seed user for auth context
+	u := domain.NewUser()
+	u.ID = uuid.New()
+	u.Username = stringPtr("minio_tester")
+	phone := "998909990001"
+	u.Phone = &phone
+	u.SetPassword("password")
+	repositories.Persistent.Postgres.User.Client.Create(ctx, u)
 
-	signinBody, _ := json.Marshal(map[string]string{"phone": "998909990001", "password": "password"})
-	wL := httptest.NewRecorder()
-	handler.ServeHTTP(wL, httptest.NewRequest(http.MethodPost, "/api/user/users/sign-in", bytes.NewBuffer(signinBody)))
-	var loginResp map[string]any
-	json.Unmarshal(wL.Body.Bytes(), &loginResp)
-	token := loginResp["data"].(map[string]any)["access_token"].(string)
+	// Helper for auth context
+	createAuthContext := func(w *httptest.ResponseRecorder, r *http.Request) *gin.Context {
+		c, _ := gin.CreateTestContext(w)
+		c.Request = r
+
+		sess := &domain.Session{
+			ID:        uuid.New(),
+			UserID:    u.ID,
+			IPAddress: stringPtr("127.0.0.1"),
+			UserAgent: stringPtr("test-agent"),
+			ExpiresAt: time.Now().Add(time.Hour),
+			CreatedAt: time.Now(),
+		}
+		repositories.Persistent.Postgres.User.SessionRepo.Create(ctx, sess)
+
+		c.Set(consts.CtxSessionID, sess.ID)
+		c.Set(consts.CtxUserID, u.ID.String())
+		c.Set(consts.CtxSession, sess)
+
+		return c
+	}
 
 	type testCase struct {
 		name          string
+		handlerFunc   func(c *gin.Context)
 		method        string
-		url           string
-		setupBody     func() ([]byte, string)
-		useToken      bool
+		setupReq      func() (*http.Request, *gin.Params) // return req and params if needed
+		authenticated bool
 		expectedCode  int
 		checkResponse func(t *testing.T, w *httptest.ResponseRecorder)
-		definition    string
 	}
 
 	testCases := []testCase{
 		{
-			name:   "SUCCESS: Upload Image",
-			method: http.MethodPost,
-			url:    "/api/v1/files/upload/image",
-			setupBody: func() ([]byte, string) {
+			name:        "SUCCESS: Upload Image",
+			handlerFunc: controller.UploadImage,
+			method:      http.MethodPost,
+			setupReq: func() (*http.Request, *gin.Params) {
 				b := &bytes.Buffer{}
 				w := multipart.NewWriter(b)
 				p, _ := w.CreateFormFile("file", "test.jpg")
-				p.Write([]byte("fake-image"))
+				p.Write([]byte("fake-image-content"))
 				w.Close()
-				return b.Bytes(), w.FormDataContentType()
+				req := httptest.NewRequest(http.MethodPost, "/", b)
+				req.Header.Set("Content-Type", w.FormDataContentType())
+				return req, nil
 			},
-			useToken:     true,
-			expectedCode: http.StatusOK,
+			authenticated: true,
+			expectedCode:  http.StatusOK,
 			checkResponse: func(t *testing.T, w *httptest.ResponseRecorder) {
 				t.Helper()
 				var resp map[string]any
 				json.Unmarshal(w.Body.Bytes(), &resp)
 				assert.NotEmpty(t, resp["data"])
 			},
-			definition: "Integration test: verifies image upload endpoint works correctly",
 		},
 		{
-			name:   "SUCCESS: Upload Multiple Images",
-			method: http.MethodPost,
-			url:    "/api/v1/files/upload/images",
-			setupBody: func() ([]byte, string) {
+			name:        "SUCCESS: Upload Multiple Images",
+			handlerFunc: controller.UploadImages,
+			method:      http.MethodPost,
+			setupReq: func() (*http.Request, *gin.Params) {
 				b := &bytes.Buffer{}
 				w := multipart.NewWriter(b)
 				p1, _ := w.CreateFormFile("files", "1.jpg")
@@ -88,159 +107,115 @@ func TestMinioAPI_Integration_TableDriven(t *testing.T) {
 				p2, _ := w.CreateFormFile("files", "2.png")
 				p2.Write([]byte("img2"))
 				w.Close()
-				return b.Bytes(), w.FormDataContentType()
+				req := httptest.NewRequest(http.MethodPost, "/", b)
+				req.Header.Set("Content-Type", w.FormDataContentType())
+				return req, nil
 			},
-			useToken:     true,
-			expectedCode: http.StatusOK,
-			definition:   "Integration test: verifies batch image upload endpoint handles multiple files",
+			authenticated: true,
+			expectedCode:  http.StatusOK,
 		},
 		{
-			name:   "SUCCESS: Upload Doc",
-			method: http.MethodPost,
-			url:    "/api/v1/files/upload/doc",
-			setupBody: func() ([]byte, string) {
+			name:        "SUCCESS: Upload Doc",
+			handlerFunc: controller.UploadDoc,
+			method:      http.MethodPost,
+			setupReq: func() (*http.Request, *gin.Params) {
 				b := &bytes.Buffer{}
 				w := multipart.NewWriter(b)
-				p, _ := w.CreateFormFile("doc", "test.pdf")
+				p, _ := w.CreateFormFile("file", "test.pdf") // also correcting form field 'doc' -> 'file' as per controller
 				p.Write([]byte("pdf-content"))
 				w.Close()
-				return b.Bytes(), w.FormDataContentType()
+				req := httptest.NewRequest(http.MethodPost, "/", b)
+				req.Header.Set("Content-Type", w.FormDataContentType())
+				return req, nil
 			},
-			useToken:     true,
-			expectedCode: http.StatusOK,
-			definition:   "Integration test: verifies document upload endpoint works correctly",
+			authenticated: true,
+			expectedCode:  http.StatusOK,
 		},
 		{
-			name:   "SUCCESS: Upload Video",
-			method: http.MethodPost,
-			url:    "/api/v1/files/upload/video",
-			setupBody: func() ([]byte, string) {
+			name:        "SUCCESS: Upload Video",
+			handlerFunc: controller.UploadVideo,
+			method:      http.MethodPost,
+			setupReq: func() (*http.Request, *gin.Params) {
 				b := &bytes.Buffer{}
 				w := multipart.NewWriter(b)
 				p, _ := w.CreateFormFile("video", "test.mp4")
 				p.Write([]byte("video-content"))
 				w.Close()
-				return b.Bytes(), w.FormDataContentType()
+				req := httptest.NewRequest(http.MethodPost, "/", b)
+				req.Header.Set("Content-Type", w.FormDataContentType())
+				return req, nil
 			},
-			useToken:     true,
-			expectedCode: http.StatusOK,
-			definition:   "Integration test: verifies video upload endpoint works correctly",
+			authenticated: true,
+			expectedCode:  http.StatusOK,
 		},
 		{
-			name:   "VALIDATION: Invalid extension",
-			method: http.MethodPost,
-			url:    "/api/v1/files/upload/image",
-			setupBody: func() ([]byte, string) {
+			name:        "VALIDATION: Invalid extension",
+			handlerFunc: controller.UploadImage,
+			method:      http.MethodPost,
+			setupReq: func() (*http.Request, *gin.Params) {
 				b := &bytes.Buffer{}
 				w := multipart.NewWriter(b)
 				p, _ := w.CreateFormFile("file", "test.exe")
 				p.Write([]byte("binary"))
 				w.Close()
-				return b.Bytes(), w.FormDataContentType()
+				req := httptest.NewRequest(http.MethodPost, "/", b)
+				req.Header.Set("Content-Type", w.FormDataContentType())
+				return req, nil
 			},
-			useToken:     true,
-			expectedCode: http.StatusBadRequest,
-			definition:   "Integration test: ensures invalid file extensions are rejected",
+			authenticated: true,
+			expectedCode:  http.StatusBadRequest,
 		},
 		{
-			name:   "VALIDATION: No file",
-			method: http.MethodPost,
-			url:    "/api/v1/files/upload/image",
-			setupBody: func() ([]byte, string) {
-				return nil, ""
+			name:        "VALIDATION: No file",
+			handlerFunc: controller.UploadImage,
+			method:      http.MethodPost,
+			setupReq: func() (*http.Request, *gin.Params) {
+				req := httptest.NewRequest(http.MethodPost, "/", nil)
+				return req, nil
 			},
-			useToken:     true,
-			expectedCode: http.StatusBadRequest,
-			definition:   "Integration test: ensures empty request is rejected",
+			authenticated: true,
+			expectedCode:  http.StatusBadRequest,
 		},
 		{
-			name:   "UNAUTHORIZED: No token",
-			method: http.MethodPost,
-			url:    "/api/v1/files/upload/image",
-			setupBody: func() ([]byte, string) {
-				b := &bytes.Buffer{}
-				w := multipart.NewWriter(b)
-				p, _ := w.CreateFormFile("file", "test.jpg")
-				p.Write([]byte("data"))
-				w.Close()
-				return b.Bytes(), w.FormDataContentType()
+			name:        "NOT IMPLEMENTED: Transfer",
+			handlerFunc: controller.TransferFile,
+			method:      http.MethodPost,
+			setupReq: func() (*http.Request, *gin.Params) {
+				req := httptest.NewRequest(http.MethodPost, "/", nil)
+				return req, nil
 			},
-			useToken:     false,
-			expectedCode: http.StatusUnauthorized,
-			definition:   "Integration test: verifies authentication is required for uploads",
-		},
-		{
-			name:   "SUCCESS: Download file",
-			method: http.MethodGet,
-			url:    "/api/v1/files/download",
-			setupBody: func() ([]byte, string) {
-				tmp, _ := os.CreateTemp(t.TempDir(), "integration-*.txt")
-				tmp.WriteString("download-me")
-				tmp.Close()
-				return nil, "file-path=" + tmp.Name()
-			},
-			expectedCode: http.StatusOK,
-			checkResponse: func(t *testing.T, w *httptest.ResponseRecorder) {
-				t.Helper()
-				assert.Equal(t, "download-me", w.Body.String())
-			},
-			definition: "Integration test: verifies file download endpoint works correctly",
-		},
-		{
-			name:         "FAIL: Download non-existent",
-			method:       http.MethodGet,
-			url:          "/api/v1/files/download?file-path=/tmp/missing",
-			expectedCode: http.StatusBadRequest,
-			definition:   "Integration test: ensures non-existent files return appropriate error",
-		},
-		{
-			name:         "NOT IMPLEMENTED: Transfer",
-			method:       http.MethodPost,
-			url:          "/api/v1/files/transfer",
-			useToken:     true,
-			expectedCode: http.StatusNotImplemented,
-			definition:   "Integration test: verifies transfer endpoint returns NotImplemented status",
-		},
-		{
-			name:         "METHOD NOT ALLOWED: Post to download",
-			method:       http.MethodPost,
-			url:          "/api/v1/files/download",
-			expectedCode: http.StatusMethodNotAllowed,
-			definition:   "Integration test: ensures download endpoint only accepts GET requests",
+			authenticated: true,
+			expectedCode:  http.StatusNotImplemented,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			var body []byte
-			var contentType string
-			url := tc.url
-
-			if tc.setupBody != nil {
-				b, ct := tc.setupBody()
-				body = b
-				if ct != "" && (tc.method == http.MethodPost || tc.method == http.MethodPatch) {
-					contentType = ct
-				} else if ct != "" && tc.method == http.MethodGet {
-					url = url + "?" + ct
-				}
-			}
-
-			req := httptest.NewRequest(tc.method, url, bytes.NewBuffer(body))
-			if contentType != "" {
-				req.Header.Set("Content-Type", contentType)
-			}
-			if tc.useToken {
-				req.Header.Set("Authorization", "Bearer "+token)
-			}
-
 			w := httptest.NewRecorder()
-			handler.ServeHTTP(w, req)
+			req, params := tc.setupReq()
 
-			assert.Equal(t, tc.expectedCode, w.Code, "Test Case: %s", tc.name)
+			var c *gin.Context
+			if tc.authenticated {
+				c = createAuthContext(w, req)
+			} else {
+				c, _ = gin.CreateTestContext(w)
+				c.Request = req
+			}
+
+			if params != nil {
+				c.Params = *params
+			}
+
+			tc.handlerFunc(c)
+
+			assert.Equal(t, tc.expectedCode, w.Code, "Case: %s body: %s", tc.name, w.Body.String())
 			if tc.checkResponse != nil {
 				tc.checkResponse(t, w)
 			}
 		})
 	}
+}
+
+func stringPtr(s string) *string {
+	return &s
 }

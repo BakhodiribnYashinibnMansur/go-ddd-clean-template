@@ -243,6 +243,7 @@ func (m *AuthMiddleware) AuthAdmin(ctx *gin.Context) {
 	ctx.Set(consts.CtxSession, session)
 	ctx.Set(consts.CtxUserID, session.UserID.String())
 	ctx.Set(consts.CtxIsAdmin, true)
+	ctx.Set(consts.CtxUser, user)
 
 	ctx.Next()
 }
@@ -271,6 +272,60 @@ func (m *AuthMiddleware) AuthApiKey(ctx *gin.Context) {
 func (m *AuthMiddleware) AuthWeb(ctx *gin.Context) {
 	session, err := m.validateAccessToken(ctx)
 	if err != nil {
+		// Attempt Auto-Refresh if token expired
+		if errors.Is(err, errExpiredToken) {
+			refreshToken := cookie.GetCookie(ctx, consts.COOKIE_REFRESH_TOKEN)
+			if refreshToken != "" {
+				rt, pErr := jwt.ParseRefreshToken(refreshToken)
+
+				// Validate refresh token format
+				if pErr == nil {
+					sID, _ := uuid.Parse(rt.SessionID)
+					// Verify session existence and validity
+					sess, sErr := (*m.sessionUC).Get(ctx, &domain.SessionFilter{ID: &sID})
+
+					// Logic similar to AuthClientRefresh but internal
+					if sErr == nil && !sess.Revoked && !sess.IsExpired() && rt.Verify(sess.RefreshTokenHash) {
+						// Valid Refresh Token -> Rotate
+						res, rErr := (*m.userUC).RotateSession(ctx.Request.Context(), &domain.RefreshIn{SessionID: sID})
+						if rErr == nil {
+							// Refresh Success - Update Cookies
+							isSecure := ctx.Request.TLS != nil || ctx.Request.Header.Get("X-Forwarded-Proto") == "https"
+
+							// We set MaxAge based on Config. Assuming persistence is desired if we are refreshing.
+							ctx.SetCookie(consts.COOKIE_ACCESS_TOKEN, res.AccessToken, int(m.cfg.JWT.AccessTTL.Seconds()), "/", "", isSecure, true)
+							ctx.SetCookie(consts.COOKIE_REFRESH_TOKEN, res.RefreshToken, int(m.cfg.JWT.RefreshTTL.Seconds()), "/", "", isSecure, true)
+
+							// Fetch fresh session for context (updated hash/expiry)
+							freshSess, fErr := (*m.sessionUC).Get(ctx, &domain.SessionFilter{ID: &sID})
+							if fErr != nil {
+								// Should not happen, but fallback
+								m.l.Errorw("AuthWeb - Failed to fetch fresh session", "error", fErr)
+								ctx.Redirect(http.StatusFound, "/admin/login")
+								ctx.Abort()
+								return
+							}
+
+							// Context injection
+							ctx.Set(consts.CtxSessionID, freshSess.ID)
+							ctx.Set(consts.CtxSession, freshSess)
+							ctx.Set(consts.CtxUserID, freshSess.UserID.String())
+
+							// Fetch and set user
+							u, uErr := (*m.userUC).Get(ctx, &domain.UserFilter{ID: &freshSess.UserID})
+							if uErr == nil {
+								ctx.Set(consts.CtxUser, u)
+							}
+							ctx.Next()
+							return
+						} else {
+							m.l.Warnw("AuthWeb - Auto-refresh rotation failed", "error", rErr)
+						}
+					}
+				}
+			}
+		}
+
 		ctx.Redirect(http.StatusFound, "/admin/login?return_url="+url.QueryEscape(ctx.Request.RequestURI))
 		ctx.Abort()
 		return
@@ -280,6 +335,24 @@ func (m *AuthMiddleware) AuthWeb(ctx *gin.Context) {
 	ctx.Set(consts.CtxSessionID, session.ID)
 	ctx.Set(consts.CtxSession, session)
 	ctx.Set(consts.CtxUserID, session.UserID.String())
+
+	// Fetch and set user in context for UI
+	user, uErr := (*m.userUC).Get(ctx, &domain.UserFilter{ID: &session.UserID})
+	if uErr == nil {
+		ctx.Set(consts.CtxUser, user)
+
+		// Fetch and set role title
+		if user.RoleID != nil {
+			role, rErr := m.authzUC.Role.Get(ctx, &domain.RoleFilter{ID: user.RoleID})
+			if rErr == nil {
+				ctx.Set(consts.CtxRoleTitle, role.Name)
+			} else {
+				m.l.Warnw("AuthWeb - Failed to fetch role", "role_id", user.RoleID, "error", rErr)
+			}
+		}
+	} else {
+		m.l.Warnw("AuthWeb - Failed to fetch user for context", "user_id", session.UserID, "error", uErr)
+	}
 
 	ctx.Next()
 }
@@ -314,6 +387,22 @@ func (m *AuthMiddleware) Authz(ctx *gin.Context) {
 		m.l.WithContext(ctx.Request.Context()).Warnw("AuthMiddleware - Authz - User has no role", "user_id", user.ID)
 		response.ControllerResponse(ctx, http.StatusForbidden, errAccessDenied.Error(), nil, false)
 		ctx.Abort()
+		return
+	}
+
+	// Check if user is super_admin - they have unrestricted access
+	role, err := m.authzUC.Role.Get(ctx, &domain.RoleFilter{ID: user.RoleID})
+	if err != nil {
+		m.l.WithContext(ctx.Request.Context()).Errorw("AuthMiddleware - Authz - Role Get", "error", err)
+		response.ControllerResponse(ctx, http.StatusForbidden, errAccessDenied.Error(), nil, false)
+		ctx.Abort()
+		return
+	}
+
+	// Super admin bypasses all permission checks
+	if strings.ToLower(role.Name) == "super_admin" {
+		m.l.WithContext(ctx.Request.Context()).Infow("Super admin access granted", "user_id", user.ID)
+		ctx.Next()
 		return
 	}
 

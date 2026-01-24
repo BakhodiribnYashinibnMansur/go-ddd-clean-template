@@ -44,7 +44,6 @@ func newBufferedLogger(level string) (*Logger, *bytes.Buffer) {
 }
 
 func TestNew(t *testing.T) {
-
 	cases := []struct {
 		in   string
 		name string

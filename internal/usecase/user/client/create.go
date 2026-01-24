@@ -6,7 +6,6 @@ import (
 	"gct/internal/domain"
 	apperrors "gct/pkg/errors"
 	"gct/pkg/validator"
-
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel"
 )

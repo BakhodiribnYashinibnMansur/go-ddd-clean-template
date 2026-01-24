@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/domain"
 	apperrors "gct/pkg/errors"
+
 	"github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5"
 )
@@ -61,6 +62,15 @@ func (r *Repo) buildSelectSessionsQuery(filter *domain.SessionsFilter) squirrel.
 	}
 	if filter.IsValidOffset() {
 		qb = qb.Offset(uint64(filter.Pagination.Offset))
+	}
+
+	// Default sort by created_at DESC if not specified (or always for now)
+	if filter.IsPaginationNull() || filter.Pagination.SortBy == "" {
+		qb = qb.OrderBy("created_at DESC")
+	} else {
+		// Handle dynamic sort if needed, but for now fallback/default to created_at DESC
+		// to ensure consistent latest-first view
+		qb = qb.OrderBy(filter.Pagination.SortBy + " " + filter.Pagination.SortOrder)
 	}
 
 	return qb

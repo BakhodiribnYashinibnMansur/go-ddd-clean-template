@@ -7,7 +7,7 @@
         "version": "1.0"
     },
     "host": "localhost:8080",
-    "basePath": "/api",
+    "basePath": "/api/v1",
     "paths": {
         "/api/v1/asynq/email/test": {
             "post": {
@@ -2543,6 +2543,12 @@
         "domain.Session": {
             "type": "object",
             "properties": {
+                "browser": {
+                    "type": "string"
+                },
+                "browser_version": {
+                    "type": "string"
+                },
                 "created_at": {
                     "type": "string"
                 },
@@ -2574,6 +2580,12 @@
                     "type": "string"
                 },
                 "last_activity": {
+                    "type": "string"
+                },
+                "os": {
+                    "type": "string"
+                },
+                "os_version": {
                     "type": "string"
                 },
                 "refresh_token_hash": {
@@ -2649,6 +2661,9 @@
                 },
                 "id": {
                     "type": "string"
+                },
+                "is_approved": {
+                    "type": "boolean"
                 },
                 "last_seen": {
                     "type": "string"
@@ -2852,6 +2867,13 @@
                     "type": "string"
                 }
             }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }

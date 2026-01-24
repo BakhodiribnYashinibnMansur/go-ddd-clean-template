@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"gct/pkg/featureflag"
-
 	"github.com/stretchr/testify/assert"
 )
 

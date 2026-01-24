@@ -1,29 +1,31 @@
 {{ define "pagination" }}
-{{ if gt .Total 0 }}
-<div class="flex-between"
-    style="padding: var(--spacing-md); border-top: 1px solid var(--border-color); margin-top: auto;">
+{{ if gt .Pagination.Total 0 }}
+<div class="flex-between" style="padding-top: 16px; margin-top: auto;">
     <div class="text-body" style="font-size: 0.875rem;">
-        Showing {{ add .Offset 1 }} to
-        {{ if gt (add .Offset .Limit) .Total }}{{ .Total }}{{ else }}{{ add .Offset .Limit }}{{ end }}
-        of {{ .Total }} entries
+        Showing {{ add .Pagination.Offset 1 }} to
+        {{ if gt (add .Pagination.Offset .Pagination.Limit) .Pagination.Total }}{{ .Pagination.Total }}{{ else }}{{ add
+        .Pagination.Offset .Pagination.Limit }}{{ end }}
+        of {{ .Pagination.Total }} entries
     </div>
 
-    <div class="gap-sm" style="display: flex; align-items: center;">
+    <div style="display: flex; align-items: center; gap: 8px;">
         <!-- Previous Page -->
-        <a href="{{ if gt .Offset 0 }}{{ paginationLink $.QueryParams (sub (currPage .Offset .Limit) 1) .Limit }}{{ else }}#{{ end }}"
-            class="btn btn-secondary {{ if eq .Offset 0 }}disabled{{ end }}" {{ if eq .Offset 0 }}disabled{{ end }}>
+        <a href="{{ if gt .Pagination.Offset 0 }}{{ paginationLink .QueryParams (sub (currPage .Pagination.Offset .Pagination.Limit) 1) .Pagination.Limit }}{{ else }}#{{ end }}"
+            class="btn btn-secondary {{ if eq .Pagination.Offset 0 }}disabled{{ end }}" {{ if eq .Pagination.Offset 0
+            }}disabled{{ end }}>
             <i class="material-symbols-outlined">chevron_left</i>
         </a>
 
-        <!-- Page Numbers (Simplified: just current/total) -->
+        <!-- Page Numbers -->
         <span class="text-body" style="font-size: 0.875rem; font-weight: 500;">
-            Page {{ currPage .Offset .Limit }} of {{ totalPages .Total .Limit }}
+            Page {{ currPage .Pagination.Offset .Pagination.Limit }} of {{ totalPages .Pagination.Total
+            .Pagination.Limit }}
         </span>
 
         <!-- Next Page -->
-        <a href="{{ if lt (add .Offset .Limit) .Total }}{{ paginationLink $.QueryParams (add (currPage .Offset .Limit) 1) .Limit }}{{ else }}#{{ end }}"
-            class="btn btn-secondary {{ if ge (add .Offset .Limit) .Total }}disabled{{ end }}" {{ if ge (add .Offset
-            .Limit) .Total }}disabled{{ end }}>
+        <a href="{{ if lt (add .Pagination.Offset .Pagination.Limit) .Pagination.Total }}{{ paginationLink .QueryParams (add (currPage .Pagination.Offset .Pagination.Limit) 1) .Pagination.Limit }}{{ else }}#{{ end }}"
+            class="btn btn-secondary {{ if ge (add .Pagination.Offset .Pagination.Limit) .Pagination.Total }}disabled{{ end }}"
+            {{ if ge (add .Pagination.Offset .Pagination.Limit) .Pagination.Total }}disabled{{ end }}>
             <i class="material-symbols-outlined">chevron_right</i>
         </a>
     </div>

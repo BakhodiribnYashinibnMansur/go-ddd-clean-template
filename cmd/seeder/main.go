@@ -3,11 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
+
 	"gct/config"
 	"gct/pkg/asynq"
 	"gct/pkg/logger"
-	"os"
-
 	"go.uber.org/zap"
 )
 

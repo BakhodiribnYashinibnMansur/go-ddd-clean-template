@@ -26,16 +26,11 @@ import (
 // @Failure     500 {object} response.ErrorResponse
 // @Router      /auth/sign-in [post]
 func (c *Controller) SignIn(ctx *gin.Context) {
-	var user domain.User
-	if err := ctx.ShouldBindJSON(&user); err != nil {
+	var in domain.SignInIn
+	if err := ctx.ShouldBindJSON(&in); err != nil {
 		util.LogError(c.l, err, "http - v1 - auth - signin - bind")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid request body", nil, false)
 		return
-	}
-
-	phone := ""
-	if user.Phone != nil {
-		phone = *user.Phone
 	}
 
 	// Handle mock mode
@@ -43,13 +38,12 @@ func (c *Controller) SignIn(ctx *gin.Context) {
 		return
 	}
 
-	out, err := c.u.User.Client.SignIn(ctx.Request.Context(), &domain.SignInIn{
-		Phone:     phone,
-		Password:  user.Password,
-		DeviceID:  util.GetDeviceIDUUID(ctx),
-		UserAgent: util.GetUserAgent(ctx),
-		IP:        util.GetIPAddress(ctx),
-	})
+	// Populate session info from request context
+	in.Session.DeviceID = util.GetDeviceIDUUID(ctx)
+	in.Session.UserAgent = util.GetUserAgent(ctx)
+	in.Session.IP = util.GetIPAddress(ctx)
+
+	out, err := c.u.User.Client.SignIn(ctx.Request.Context(), &in)
 	if err != nil {
 		response.RespondWithError(ctx, err, http.StatusUnauthorized)
 		return

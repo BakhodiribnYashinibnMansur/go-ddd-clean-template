@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"gct/pkg/logger"
-
 	"github.com/hibiken/asynq"
 	"go.uber.org/zap"
 )

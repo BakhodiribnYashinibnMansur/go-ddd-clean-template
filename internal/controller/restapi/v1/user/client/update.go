@@ -7,7 +7,6 @@ import (
 	"gct/internal/controller/restapi/response"
 	"gct/internal/controller/restapi/util"
 	"gct/internal/domain"
-
 	"github.com/gin-gonic/gin"
 )
 

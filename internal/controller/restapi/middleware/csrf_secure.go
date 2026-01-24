@@ -9,7 +9,6 @@ import (
 	"gct/internal/controller/restapi/util"
 	"gct/pkg/csrf"
 	"gct/pkg/logger"
-
 	"github.com/gin-gonic/gin"
 )
 

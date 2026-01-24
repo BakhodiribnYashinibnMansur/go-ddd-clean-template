@@ -6,6 +6,7 @@ import (
 
 	"gct/internal/domain"
 	apperrors "gct/pkg/errors"
+
 	"github.com/Masterminds/squirrel"
 )
 
@@ -18,7 +19,7 @@ func (r *Repo) Gets(ctx context.Context, filter *domain.AuditLogsFilter) ([]*dom
 		"resource_type",
 		"resource_id",
 		"platform",
-		"ip_address",
+		"ip_address::text",
 		"user_agent",
 		"permission",
 		"policy_id",

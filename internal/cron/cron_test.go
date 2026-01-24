@@ -1,6 +1,7 @@
 package cron
 
 import (
+	"context"
 	"testing"
 
 	"gct/pkg/logger"
@@ -32,14 +33,14 @@ func TestJobs_AddCronJobWithName(t *testing.T) {
 	c.cron = getCron.New()
 
 	executed := false
-	c.AddCronJobWithName("* * * * *", "test_job", func() {
+	c.AddCronJobWithName("* * * * *", "test_job", func(ctx context.Context) {
 		executed = true
 	})
 
 	entries := c.cron.Entries()
 	assert.Len(t, entries, 1)
 
-	c.runJobWithWrapper("test_job", func() {
+	c.runJobWithWrapper("test_job", func(ctx context.Context) {
 		executed = true
 	})
 	assert.True(t, executed)

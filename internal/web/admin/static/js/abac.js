@@ -1,5 +1,5 @@
 /**
- * ABAC Policy Management Scripts
+ * ABAC Policy Management Scripts (Compiled)
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -8,9 +8,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-function initPolicyForm(): void {
-    const form = document.getElementById('policyForm') as HTMLFormElement;
-    const jsonInput = document.getElementById('conditionsJson') as HTMLTextAreaElement;
+function initPolicyForm() {
+    const form = document.getElementById('policyForm');
+    const jsonInput = document.getElementById('conditionsJson');
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -24,7 +24,7 @@ function initPolicyForm(): void {
         }
 
         const formData = new FormData(form);
-        const data: any = Object.fromEntries(formData.entries());
+        const data = Object.fromEntries(formData.entries());
         data.priority = parseInt(data.priority, 10) || 0;
 
         const method = data.id ? 'PUT' : 'POST';
@@ -52,7 +52,7 @@ function initPolicyForm(): void {
     });
 }
 
-(window as any).deletePolicy = async (id: string) => {
+window.deletePolicy = async (id) => {
     if (!confirm('Delete this policy?')) return;
 
     try {

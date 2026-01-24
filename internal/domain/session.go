@@ -32,6 +32,10 @@ type Session struct {
 	DeviceType       *SessionDeviceType `db:"device_type"        json:"device_type,omitempty"`
 	IPAddress        *string            `db:"ip_address"         json:"ip_address,omitempty"`
 	UserAgent        *string            `db:"user_agent"         json:"user_agent,omitempty"`
+	OS               *string            `db:"os"                 json:"os,omitempty"`
+	OSVersion        *string            `db:"os_version"         json:"os_version,omitempty"`
+	Browser          *string            `db:"browser"            json:"browser,omitempty"`
+	BrowserVersion   *string            `db:"browser_version"    json:"browser_version,omitempty"`
 	FCMToken         *string            `db:"fcm_token"          json:"fcm_token,omitempty"`
 	Data             RawMessage         `db:"data"               json:"data,omitempty"`
 	RefreshTokenHash string             `db:"refresh_token_hash" json:"refresh_token_hash"`
@@ -40,6 +44,21 @@ type Session struct {
 	Revoked          bool               `db:"revoked"            json:"revoked"`
 	CreatedAt        time.Time          `db:"created_at"         json:"created_at"`
 	UpdatedAt        time.Time          `db:"updated_at"         json:"updated_at"`
+}
+
+// Session represents a user session.
+// SessionIn represents session-related input data
+type SessionIn struct {
+	DeviceID       uuid.UUID `db:"device_id"          json:"-"`
+	DeviceName     string    `db:"device_name"        json:"device_name,omitempty"`
+	DeviceType     string    `db:"device_type"        json:"device_type,omitempty"`
+	IP             string    `db:"ip_address"         json:"-"`
+	UserAgent      string    `db:"user_agent"         json:"-"`
+	OS             string    `db:"os"                 json:"os,omitempty"`
+	OSVersion      string    `db:"os_version"         json:"os_version,omitempty"`
+	Browser        string    `db:"browser"            json:"browser,omitempty"`
+	BrowserVersion string    `db:"browser_version"    json:"browser_version,omitempty"`
+	FCMToken       string    `db:"fcm_token"          json:"fcm_token,omitempty"`
 }
 
 // SessionFilter represents a filter for session queries. for get and gets endpoints
@@ -131,6 +150,8 @@ func (s *Session) IsActive() bool {
 func (s *Session) UpdateActivity() {
 	s.LastActivity = time.Now()
 	s.UpdatedAt = time.Now()
+	// Extend session expiry by 7 days on each activity
+	s.ExpiresAt = time.Now().Add(7 * 24 * time.Hour)
 }
 
 func (s *Session) Revoke() {
@@ -151,3 +172,41 @@ func (s *Session) Extend(duration time.Duration) {
 // Getters and Setters for SessionFilter
 func (f *SessionFilter) GetID() *uuid.UUID  { return f.ID }
 func (f *SessionFilter) SetID(id uuid.UUID) { f.ID = &id }
+
+// SessionContext represents data stored in session.Data JSONB field
+// This should contain only frequently-accessed, small data needed on every request
+type SessionContext struct {
+	RoleID      *uuid.UUID `json:"role_id,omitempty"`
+	Language    string     `json:"language,omitempty"`
+	Theme       string     `json:"theme,omitempty"`
+	TwoFAPassed bool       `json:"2fa_passed,omitempty"`
+}
+
+// GetContext unmarshals session.Data into SessionContext
+func (s *Session) GetContext() (*SessionContext, error) {
+	if len(s.Data) == 0 {
+		return &SessionContext{}, nil
+	}
+
+	var ctx SessionContext
+	if err := json.Unmarshal(s.Data, &ctx); err != nil {
+		return nil, err
+	}
+	return &ctx, nil
+}
+
+// SetContext marshals SessionContext into session.Data
+func (s *Session) SetContext(ctx *SessionContext) error {
+	if ctx == nil {
+		s.Data = nil
+		return nil
+	}
+
+	data, err := json.Marshal(ctx)
+	if err != nil {
+		return err
+	}
+	s.Data = data
+	s.UpdatedAt = time.Now()
+	return nil
+}

@@ -1,0 +1,225 @@
+{{ template "base" . }} {{ define "content" }}
+<div style="margin-bottom: 24px;"> <a href="/admin/users" class="btn btn-secondary"
+        style="margin-bottom: 16px; text-decoration: none;"> <i class="material-symbols-outlined"
+            style="font-size: 18px;">arrow_back</i> Back to Users
+    </a>
+    <div class="flex-between">
+        <h2 style="margin: 0;">User Details</h2>
+        <div style="gap: 12px; display: flex;"> <a href="/admin/users/{{ .User.ID }}/edit" class="btn btn-secondary"
+                style="text-decoration: none;"> <i class="material-symbols-outlined" style="font-size: 18px;">edit</i>
+                Edit User
+            </a>
+            {{ if .User.Active }} <button class="btn btn-primary block-user-btn" data-id="{{ .User.ID }}"
+                style="background: var(--danger-color); border-color: var(--danger-color);"> <i
+                    class="material-symbols-outlined" style="font-size: 18px;">block</i> Block User
+            </button>
+            {{ else }} <button class="btn btn-primary unblock-user-btn" data-id="{{ .User.ID }}"
+                style="background: var(--success-color); border-color: var(--success-color);"> <i
+                    class="material-symbols-outlined" style="font-size: 18px;">check_circle</i> Unblock User
+            </button>
+            {{ end }}
+        </div>
+    </div>
+</div>
+<div class="dashboard-grid" style="grid-template-columns: 2fr 1fr;">
+    <!-- Main Info -->
+    <div class="card">
+        <h3
+            style="margin-bottom: 20px; color: var(--text-secondary); text-transform: uppercase; font-size: 12px; letter-spacing: 1px;">
+            Profile Information</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+            <div> <label class="form-label">User ID</label>
+                <div class="form-control"
+                    style="padding-left: 16px; display: flex; align-items: center; font-family: monospace; font-size: 13px;">
+                    {{ .User.ID }}
+                </div>
+            </div>
+            <div> <label class="form-label">Username</label>
+                <div class="form-control" style="padding-left: 16px; display: flex; align-items: center;">
+                    {{ if .User.Username }}{{ .User.Username }}{{ else }}<span
+                        style="color: var(--text-muted); font-style: italic;">Not Set</span>{{ end }}
+                </div>
+            </div>
+            <div> <label class="form-label">Email</label>
+                <div class="form-control" style="padding-left: 16px; display: flex; align-items: center;">
+                    {{ if .User.Email }}{{ .User.Email }}{{ else }}--{{ end }}
+                </div>
+            </div>
+            <div> <label class="form-label">Phone</label>
+                <div class="form-control" style="padding-left: 16px; display: flex; align-items: center;">
+                    {{ if .User.Phone }}{{ .User.Phone }}{{ else }}--{{ end }}
+                </div>
+            </div>
+            <div style="grid-column: span 2;"> <label class="form-label">Role</label>
+                <div class="form-control" style="padding-left: 16px; display: flex; align-items: center;">
+                    {{ if .Role }}{{ .Role.Name }} <span
+                        style="font-size: 10px; color: var(--text-muted); margin-left: 8px;">({{ .Role.ID }})</span>{{
+                    else }}No Role Assigned{{ end }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Meta Info -->
+    <div class="card">
+        <h3
+            style="margin-bottom: 20px; color: var(--text-secondary); text-transform: uppercase; font-size: 12px; letter-spacing: 1px;">
+            Status & Activity</h3>
+        <div style="margin-bottom: 24px;"> <label class="form-label">Current Status</label>
+            {{ if .User.Active }} <span class="badge badge-success">Active</span>
+            {{ else }} <span class="badge badge-danger">Inactive</span>
+            {{ end }}
+        </div>
+
+        <div> <label class="form-label">Timestamps</label>
+            <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                <div>Created: <span style="color: var(--text-primary);">{{ .User.CreatedAt.Format "Jan 02, 2006 15:04"
+                        }}</span></div>
+                <div>Updated: <span style="color: var(--text-primary);">{{ .User.UpdatedAt.Format "Jan 02, 2006 15:04"
+                        }}</span></div>
+            </div>
+        </div>
+    </div>
+</div> <!-- Sessions Section -->
+<div class="card" style="margin-top: 24px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3
+            style="margin: 0; color: var(--text-secondary); text-transform: uppercase; font-size: 12px; letter-spacing: 1px;">
+            Active Sessions ({{ len .Sessions }})
+        </h3>
+        {{ if .Sessions }} <span class="badge badge-info" style="font-size: 11px;">Total: {{ len .Sessions }}</span>
+        {{ end }}
+    </div>
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Device & Location</th>
+                    <th style="width: 140px;">Last Active</th>
+                    <th style="width: 140px;">Created</th>
+                    <th style="width: 100px;">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{ range .Sessions }}
+                <tr>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            {{ $iconClass := "material-symbols-outlined" }}
+                            {{ $iconName := "devices" }}
+                            {{ $iconColor := "var(--text-muted)" }}
+
+                            {{/* 1. Determine base icon from Device Type */}}
+                            {{ if .DeviceType }}
+                            {{ if eq .DeviceType "MOBILE" }}
+                            {{ $iconName = "smartphone" }} {{ $iconColor = "#10b981" }}
+                            {{ else if eq .DeviceType "TABLET" }}
+                            {{ $iconName = "tablet" }} {{ $iconColor = "#f59e0b" }}
+                            {{ else if eq .DeviceType "DESKTOP" }}
+                            {{ $iconName = "computer" }} {{ $iconColor = "#6366f1" }}
+                            {{ else if eq .DeviceType "TV" }}
+                            {{ $iconName = "tv" }} {{ $iconColor = "#ec4899" }}
+                            {{ else if eq .DeviceType "BOT" }}
+                            {{ $iconName = "smart_toy" }} {{ $iconColor = "#ef4444" }}
+                            {{ end }}
+                            {{ end }}
+
+                            {{/* 2. Override with OS specific icon if available */}}
+                            {{ if .UserAgent }}
+                            {{ $ua := .UserAgent }}
+                            {{ if or (contains $ua "Mac") (contains $ua "mac") }}
+                            {{ $iconClass = "bx" }} {{ $iconName = "bxl-apple" }} {{ $iconColor = "var(--text-primary)"
+                            }}
+                            {{ else if contains $ua "Windows" }}
+                            {{ $iconClass = "bx" }} {{ $iconName = "bxl-windows" }} {{ $iconColor = "#00a4ef" }}
+                            {{ else if contains $ua "Android" }}
+                            {{ $iconClass = "bx" }} {{ $iconName = "bxl-android" }} {{ $iconColor = "#3ddc84" }}
+                            {{ else if contains $ua "Linux" }}
+                            {{ $iconClass = "bx" }} {{ $iconName = "bxl-tux" }} {{ $iconColor = "var(--text-primary)" }}
+                            {{ else if contains $ua "iPhone" }}
+                            {{ $iconClass = "bx" }} {{ $iconName = "bxl-apple" }} {{ $iconColor = "var(--text-primary)"
+                            }}
+                            {{ else if contains $ua "iPad" }}
+                            {{ $iconClass = "bx" }} {{ $iconName = "bxl-apple" }} {{ $iconColor = "var(--text-primary)"
+                            }}
+                            {{ end }}
+                            {{ end }}
+
+                            <i class="{{ $iconClass }} {{ if ne $iconClass " material-symbols-outlined" }}{{ $iconName
+                                }}{{ end }}" style="color: {{ $iconColor }}; font-size: 26px;"
+                                title="{{ if .DeviceType }}{{ .DeviceType }}{{ else }}Unknown{{ end }}">
+                                {{ if eq $iconClass "material-symbols-outlined" }}{{ $iconName }}{{ end }}
+                            </i>
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="font-weight: 500; font-size: 14px; color: var(--text-primary);">
+                                    {{ if .DeviceName }}{{ .DeviceName }}{{ else }}Unknown Device{{ end }}
+                                </div>
+                                <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+                                    {{ if .IPAddress }}{{ .IPAddress }}{{ else }}Unknown IP{{ end }}
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div style="display: flex; flex-direction: column; gap: 2px;"> <span style="font-size: 13px;">{{
+                                .LastActivity.Format "Jan 02, 2006" }}</span> <span
+                                style="font-size: 11px; color: var(--text-muted);">{{ .LastActivity.Format "15:04:05"
+                                }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div style="display: flex; flex-direction: column; gap: 2px;"> <span style="font-size: 13px;">{{
+                                .CreatedAt.Format "Jan 02, 2006" }}</span> <span
+                                style="font-size: 11px; color: var(--text-muted);">{{ .CreatedAt.Format "15:04:05"
+                                }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        {{ if .Revoked }} <span class="badge badge-danger"> <i class="material-symbols-outlined"
+                                style="font-size: 14px;">block</i>
+                            Revoked
+                        </span>
+                        {{ else if .IsExpired }} <span class="badge badge-warning"> <i class="material-symbols-outlined"
+                                style="font-size: 14px;">schedule</i>
+                            Expired
+                        </span>
+                        {{ else }} <span class="badge badge-success"> <i class="material-symbols-outlined"
+                                style="font-size: 14px;">check_circle</i>
+                            Active
+                        </span>
+                        {{ end }}
+                    </td>
+                </tr>
+                {{ else }}
+                <tr>
+                    <td colspan="4" style="text-align: center; padding: 48px;">
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 12px;"> <i
+                                class="material-symbols-outlined"
+                                style="font-size: 48px; color: var(--text-muted); opacity: 0.5;">event_busy</i> <span
+                                style="color: var(--text-muted); font-size: 14px;">No sessions found for this
+                                user.</span>
+                        </div>
+                    </td>
+                </tr>
+                {{ end }}
+            </tbody>
+        </table>
+    </div>
+</div> <!-- Access/Permissions (Optional, if Role available) -->
+{{ if .Role }}
+<div class="card" style="margin-top: 24px;">
+    <h3
+        style="margin-bottom: 20px; color: var(--text-secondary); text-transform: uppercase; font-size: 12px; letter-spacing: 1px;">
+        Role Access Control</h3>
+    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 24px;">
+        <div> <label class="form-label">Role Name</label>
+            <div class="text-body" style="color: var(--text-primary); font-weight: 500;">{{ .Role.Name }}</div>
+        </div>
+
+    </div>
+</div>
+{{ end }}
+
+{{ end }} {{ define "scripts" }}
+<script src="/static/js/users.js"></script>
+{{ end }}

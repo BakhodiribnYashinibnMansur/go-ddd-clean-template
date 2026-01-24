@@ -5,7 +5,6 @@ import (
 
 	"gct/pkg/asynq"
 	"gct/pkg/logger"
-
 	"github.com/gin-gonic/gin"
 )
 

@@ -5,7 +5,6 @@ import (
 
 	"gct/internal/domain"
 	apperrors "gct/pkg/errors"
-
 	"go.uber.org/zap"
 )
 
