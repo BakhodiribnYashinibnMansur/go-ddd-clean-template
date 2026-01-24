@@ -15,7 +15,7 @@ func (uc *UseCase) Create(ctx context.Context, u *domain.User) error {
 	defer span.End()
 
 	// Validate input
-	if err := validator.ValidateStruct(ctx, u); err != nil {
+	if err := validator.ValidateStruct(u); err != nil {
 		return err
 	}
 
@@ -27,7 +27,7 @@ func (uc *UseCase) Create(ctx context.Context, u *domain.User) error {
 	err := uc.repo.Postgres.User.Client.Create(ctx, u)
 	if err != nil {
 		uc.logger.WithContext(ctx).Errorw("user create failed", "error", err)
-		return apperrors.MapRepoToServiceError(ctx, err).WithInput(u)
+		return apperrors.MapRepoToServiceError(err).WithInput(u)
 	}
 
 	uc.logger.WithContext(ctx).Infow("user create success")

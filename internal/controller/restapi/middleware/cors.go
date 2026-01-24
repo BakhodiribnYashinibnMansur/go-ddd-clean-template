@@ -2,53 +2,85 @@ package middleware
 
 import (
 	"net/http"
+	"strconv"
 	"strings"
 
+	"gct/config"
 	"gct/consts"
+
 	"github.com/gin-gonic/gin"
 )
 
-// var allowedOrigins = map[string]bool{
-// 	"http://localhost:3000": true,
-// 	"http://localhost:5173": true,
-// }
-
-func CORSMiddleware() gin.HandlerFunc {
+// CORSMiddleware configures Cross-Origin Resource Sharing (CORS) policies for the API.
+// It sets required headers to allow designated origins to access the resources and
+// handles preflight OPTIONS requests by signaling valid methods and headers.
+func CORSMiddleware(cfg config.CORS) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		// accessURL := "*"
-		// clientHost := ctx.Request.Header.Get("Origin")
-		// if clientHost != "" {
-		// 	accessURL = clientHost
-		// }
-		ctx.Header("Access-Control-Allow-Origin", "*")
-		ctx.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+		// Resolve allowed origin
+		requestOrigin := ctx.GetHeader("Origin")
+		allowOrigin := ""
 
-		ctx.Writer.Header().Set("Access-Control-Allow-Headers", strings.Join([]string{
-			consts.HeaderContentType,
-			"Content-Length",
-			"Accept-Encoding",
-			consts.HeaderXCSRFToken,
-			consts.HeaderAuthorization,
-			"Accept",
-			consts.HeaderOrigin,
-			consts.HeaderCacheControl,
-			consts.HeaderXRequestedWith,
-			"Access-Control-Request-Method",
-			"Access-Control-Request-Headers",
-			consts.HeaderLanguage,
-			consts.HeaderAcceptLanguage,
-		}, ", "))
+		for _, o := range cfg.AllowedOrigins {
+			// Exact match has priority
+			if o == requestOrigin {
+				allowOrigin = requestOrigin
+				break
+			}
+			// Wildcard match
+			if o == "*" {
+				if cfg.AllowCredentials {
+					// Browsers require specific origin if credentials are used, even if configuration allows all
+					if requestOrigin != "" {
+						allowOrigin = requestOrigin
+					} else {
+						allowOrigin = "*"
+					}
+				} else {
+					allowOrigin = "*"
+				}
+				break
+			}
+		}
 
-		ctx.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT , DELETE ,PATCH, HEAD")
-		ctx.Header("Access-Control-Max-Age", "3600")
+		// Set standard CORS headers.
+		// "Access-Control-Allow-Origin" controls which domains can access resources.
+		if allowOrigin != "" {
+			ctx.Header(consts.HeaderAccessControlAllowOrigin, allowOrigin)
+		}
+
+		// "Access-Control-Allow-Credentials" enables cookies/auth headers in cross-origin requests.
+		if cfg.AllowCredentials {
+			ctx.Writer.Header().Set(consts.HeaderAccessControlAllowCredentials, "true")
+		}
+
+		// Define the whitelist of allowed request headers.
+		if len(cfg.AllowedHeaders) > 0 {
+			ctx.Writer.Header().Set(consts.HeaderAccessControlAllowHeaders, strings.Join(cfg.AllowedHeaders, ", "))
+		}
+
+		// Define the whitelist of exposed request headers.
+		if len(cfg.ExposedHeaders) > 0 {
+			ctx.Writer.Header().Set(consts.HeaderAccessControlExposeHeaders, strings.Join(cfg.ExposedHeaders, ", "))
+		}
+
+		// Define the whitelist of allowed HTTP methods.
+		if len(cfg.AllowedMethods) > 0 {
+			ctx.Writer.Header().Set(consts.HeaderAccessControlAllowMethods, strings.Join(cfg.AllowedMethods, ", "))
+		}
+
+		// Cache the preflight response (OPTIONS) to reduce server load.
+		if cfg.MaxAge > 0 {
+			ctx.Header(consts.HeaderAccessControlMaxAge, strconv.Itoa(cfg.MaxAge))
+		}
+
+		// Handle Preflight Request:
+		// If the method is OPTIONS, the browser is querying permission to make the actual request.
+		// We respond with 204 No Content and the headers above to grant permission.
 		if ctx.Request.Method == http.MethodOptions {
-			ctx.AbortWithStatus(204)
+			ctx.AbortWithStatus(http.StatusNoContent)
 			return
 		}
-		// if !allowedOrigins[clientHost] {
-		// 	ctx.AbortWithStatus(403)
-		// 	return
-		// }
+
 		ctx.Next()
 	}
 }

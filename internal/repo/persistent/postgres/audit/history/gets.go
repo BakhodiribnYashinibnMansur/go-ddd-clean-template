@@ -6,6 +6,7 @@ import (
 
 	"gct/internal/domain"
 	apperrors "gct/pkg/errors"
+
 	"github.com/Masterminds/squirrel"
 )
 
@@ -72,13 +73,13 @@ func (r *Repo) Gets(ctx context.Context, filter *domain.EndpointHistoriesFilter)
 
 	sql, args, err := countQuery.ToSql()
 	if err != nil {
-		return nil, 0, apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase, "failed to build count query")
+		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, "failed to build count query")
 	}
 
 	var count int
 	err = r.pool.QueryRow(ctx, sql, args...).Scan(&count)
 	if err != nil {
-		return nil, 0, apperrors.HandlePgError(ctx, err, tableName, nil)
+		return nil, 0, apperrors.HandlePgError(err, tableName, nil)
 	}
 
 	// Apply pagination
@@ -96,12 +97,12 @@ func (r *Repo) Gets(ctx context.Context, filter *domain.EndpointHistoriesFilter)
 
 	sql, args, err = query.ToSql()
 	if err != nil {
-		return nil, 0, apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase, "failed to build select query")
+		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, "failed to build select query")
 	}
 
 	rows, err := r.pool.Query(ctx, sql, args...)
 	if err != nil {
-		return nil, 0, apperrors.HandlePgError(ctx, err, tableName, nil)
+		return nil, 0, apperrors.HandlePgError(err, tableName, nil)
 	}
 	defer rows.Close()
 
@@ -128,9 +129,13 @@ func (r *Repo) Gets(ctx context.Context, filter *domain.EndpointHistoriesFilter)
 			&h.CreatedAt,
 		)
 		if err != nil {
-			return nil, 0, apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase, fmt.Sprintf("failed to scan row: %s", err))
+			return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, fmt.Sprintf("failed to scan row: %s", err))
 		}
 		histories = append(histories, &h)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, 0, apperrors.HandlePgError(err, tableName, nil)
 	}
 
 	return histories, count, nil

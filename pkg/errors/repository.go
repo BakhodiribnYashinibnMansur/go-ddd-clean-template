@@ -1,7 +1,5 @@
 package errors
 
-import "context"
-
 // ============================================================================
 // Repository Layer Error Codes
 // ============================================================================
@@ -46,11 +44,11 @@ var repoMessages = map[string]string{
 }
 
 // NewRepoError creates a new repository error
-func NewRepoError(ctx context.Context, code, message string) *AppError {
-	return New(ctx, code, message)
+func NewRepoError(code, message string) *AppError {
+	return New(code, message)
 }
 
 // WrapRepoError wraps an error as repository error
-func WrapRepoError(ctx context.Context, err error, code, message string) *AppError {
-	return Wrap(ctx, err, code, message)
+func WrapRepoError(err error, code, message string) *AppError {
+	return Wrap(err, code, message)
 }

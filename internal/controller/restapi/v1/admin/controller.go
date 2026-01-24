@@ -1,3 +1,4 @@
+// Package admin provides administrative endpoints, such as system health checks and linter report generation.
 package admin
 
 import (
@@ -15,24 +16,30 @@ import (
 
 	"gct/internal/controller/restapi/response"
 	"gct/pkg/logger"
+
 	"github.com/gin-gonic/gin"
 )
 
+// Controller handles administrative tasks for the application.
 type Controller struct {
 	l logger.Log
 }
 
+// New instantiates a new admin controller with the provided logger.
 func New(l logger.Log) *Controller {
 	return &Controller{
 		l: l,
 	}
 }
 
+// Register adds admin-specific routes to the provided router group.
 func (c *Controller) Register(r *gin.RouterGroup) {
 	g := r.Group("/admin")
 	g.POST("/linter/run", c.RunLinter)
 }
 
+// LinterResponse defines the structure of the linter execution results,
+// including summarized statistics and paths to detailed report files.
 type LinterResponse struct {
 	TotalIssues    int               `json:"totalIssues"`
 	TotalLinters   int               `json:"totalLinters"`
@@ -42,8 +49,10 @@ type LinterResponse struct {
 	ReportPaths    map[string]string `json:"reportPaths"`
 }
 
+// RunLinter triggers an asynchronous execution of golangci-lint on the project.
+// It generates reports in text, JSON, and HTML formats and returns summarized statistics.
 func (c *Controller) RunLinter(ctx *gin.Context) {
-	// Get project root directory
+	// Identify project root to determine where to store reports
 	projectRoot, err := os.Getwd()
 	if err != nil {
 		c.l.Errorw("failed to get working directory", "error", err)
@@ -51,7 +60,7 @@ func (c *Controller) RunLinter(ctx *gin.Context) {
 		return
 	}
 
-	// Create report directory if it doesn't exist
+	// Ensure the report directory exists locally
 	reportDir := filepath.Join(projectRoot, "docs", "report", "linter")
 	if err := os.MkdirAll(reportDir, 0o755); err != nil {
 		c.l.Errorw("failed to create report directory", "error", err)
@@ -59,38 +68,36 @@ func (c *Controller) RunLinter(ctx *gin.Context) {
 		return
 	}
 
-	// Define report paths
+	// Paths for multi-format report output
 	reportTextPath := filepath.Join(reportDir, "report.txt")
 	reportJSONPath := filepath.Join(reportDir, "report.json")
 	reportHTMLPath := filepath.Join(reportDir, "report.html")
 
-	// Run golangci-lint with timeout
-	// The .golangci.yml config will automatically generate all formats
+	// Execute linter with a strict timeout to prevent blocking resources
 	cmdCtx, cancel := context.WithTimeout(ctx.Request.Context(), 3*time.Minute)
 	defer cancel()
 
 	cmd := exec.CommandContext(cmdCtx, "golangci-lint", "run")
 	cmd.Dir = projectRoot
 
-	// Capture both stdout and stderr
+	// Capture all output for parsing and debugging
 	output, err := cmd.CombinedOutput()
 
-	// golangci-lint returns non-zero exit code when issues are found, which is expected
-	// Only treat it as error if context deadline exceeded
+	// Handle execution timeouts explicitly
 	if err != nil && errors.Is(cmdCtx.Err(), context.DeadlineExceeded) {
 		c.l.Errorw("linter command timeout", "error", err)
 		response.ControllerResponse(ctx, http.StatusRequestTimeout, "Linter execution timeout", nil, false)
 		return
 	}
 
-	// Read the generated text report for parsing
+	// Read generated textual report to extract summary stats
 	textContent, err := os.ReadFile(reportTextPath)
 	if err != nil {
 		c.l.Warnw("failed to read text report", "error", err)
-		textContent = output // fallback to command output
+		textContent = output // Fallback to raw process output if file read fails
 	}
 
-	// Parse the report
+	// Parse textual output into structured response data
 	linterData := parseReport(string(textContent))
 	linterData.ReportPaths = map[string]string{
 		"text": reportTextPath,
@@ -101,6 +108,8 @@ func (c *Controller) RunLinter(ctx *gin.Context) {
 	response.ControllerResponse(ctx, http.StatusOK, "Linter completed successfully", linterData, true)
 }
 
+// parseReport uses regex to extract issue counts, file counts, and linter-specific stats
+// from the raw textual output of golangci-lint.
 func parseReport(report string) *LinterResponse {
 	result := &LinterResponse{
 		IssuesByLinter: make(map[string]int),
@@ -111,15 +120,13 @@ func parseReport(report string) *LinterResponse {
 		return result
 	}
 
-	// Parse the summary at the end of the report
-	// Example: "2616 issues:"
+	// Extract total issue count from the summary line
 	issuesPattern := regexp.MustCompile(`(\d+) issues?:`)
 	if matches := issuesPattern.FindStringSubmatch(report); len(matches) > 1 {
 		_, _ = fmt.Sscanf(matches[1], "%d", &result.TotalIssues)
 	}
 
-	// Parse linter counts from summary
-	// Example: "* bodyclose: 5"
+	// Iterate through lines to map issues back to specific linters and files
 	scanner := bufio.NewScanner(strings.NewReader(report))
 	inSummary := false
 	filesMap := make(map[string]bool)
@@ -127,15 +134,14 @@ func parseReport(report string) *LinterResponse {
 	for scanner.Scan() {
 		line := scanner.Text()
 
-		// Detect summary section
+		// Summary section usually follows the detailed findings
 		if strings.Contains(line, "issues:") {
 			inSummary = true
 			continue
 		}
 
 		if inSummary {
-			// Parse linter statistics
-			// Format: "* lintername: count"
+			// Extract counts formatted as "* linter: count"
 			linterPattern := regexp.MustCompile(`^\* ([a-z0-9]+): (\d+)`)
 			if matches := linterPattern.FindStringSubmatch(line); len(matches) > 2 {
 				linterName := matches[1]
@@ -144,8 +150,7 @@ func parseReport(report string) *LinterResponse {
 				result.IssuesByLinter[linterName] = count
 			}
 		} else {
-			// Parse file paths from issue lines
-			// Format: "path/to/file.go:123:45: message (linter)"
+			// Extract file paths from issue lines to determine unique file count
 			filePattern := regexp.MustCompile(`^([^:]+\.go):\d+:\d+:`)
 			if matches := filePattern.FindStringSubmatch(line); len(matches) > 1 {
 				filesMap[matches[1]] = true

@@ -24,12 +24,12 @@ func (u *UseCase) Check(ctx context.Context, userID uuid.UUID, session *domain.S
 		if errors.Is(err, context.Canceled) || strings.Contains(err.Error(), "context canceled") {
 			return false, err
 		}
-		appErr := apperrors.MapRepoToServiceError(ctx, err, apperrors.ErrUserNotFound).WithInput(userID)
+		appErr := apperrors.MapRepoToServiceError(err, apperrors.ErrUserNotFound).WithInput(userID)
 		u.logger.WithContext(ctx).Errorw("access check failed: get user", "error", appErr)
 		return false, appErr
 	}
 	if user.RoleID == nil {
-		err := apperrors.New(ctx, apperrors.ErrServiceRoleNotFound, "user has no role").WithInput(userID)
+		err := apperrors.New(apperrors.ErrServiceRoleNotFound, "user has no role").WithInput(userID)
 		u.logger.WithContext(ctx).Warnw("access check denied: user has no role", "user_id", userID)
 		return false, err
 	}
@@ -37,13 +37,13 @@ func (u *UseCase) Check(ctx context.Context, userID uuid.UUID, session *domain.S
 	// Mock RBAC: Check Role Name
 	role, err := u.repo.Postgres.Authz.Role.Get(ctx, &domain.RoleFilter{ID: user.RoleID})
 	if err != nil {
-		appErr := apperrors.MapRepoToServiceError(ctx, err, apperrors.ErrServiceRoleNotFound).WithInput(user.RoleID)
+		appErr := apperrors.MapRepoToServiceError(err, apperrors.ErrServiceRoleNotFound).WithInput(user.RoleID)
 		u.logger.WithContext(ctx).Errorw("access check failed: get role", "error", appErr)
 		return false, appErr
 	}
 
 	// Allow Admin everywhere
-	if strings.Contains(strings.ToLower(role.Name), "admin") {
+	if strings.Contains(strings.ToLower(role.Name), consts.RoleAdmin) {
 		u.logger.WithContext(ctx).Infow("access check allowed: admin role", "role", role.Name)
 		u.logAudit(ctx, userID, session, path, method, true, "admin allowed", nil)
 		return true, nil
@@ -150,7 +150,7 @@ func (u *UseCase) CheckBatch(ctx context.Context, userID uuid.UUID, session *dom
 	}
 
 	// Admin Access
-	if strings.Contains(strings.ToLower(role.Name), "admin") {
+	if strings.Contains(strings.ToLower(role.Name), consts.RoleAdmin) {
 		for k := range targets {
 			results[k] = true
 		}
@@ -257,7 +257,7 @@ func (u *UseCase) logAudit(_ context.Context, userID uuid.UUID, session *domain.
 
 	// Async save
 	go func() {
-		bgCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		bgCtx, cancel := context.WithTimeout(context.Background(), consts.DurationAuditSave*time.Second)
 		defer cancel()
 		_ = u.repo.Postgres.Audit.Log.Create(bgCtx, al)
 	}()

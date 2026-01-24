@@ -1,7 +1,6 @@
 package errors
 
 import (
-	"context"
 	"errors"
 )
 
@@ -78,18 +77,17 @@ var serviceMessages = map[string]string{
 }
 
 // NewServiceError creates a new service error
-func NewServiceError(ctx context.Context, code, message string) *AppError {
-	return New(ctx, code, message)
+func NewServiceError(code, message string) *AppError {
+	return New(code, message)
 }
 
 // WrapServiceError wraps an error as service error
-func WrapServiceError(ctx context.Context, err error, code, message string) *AppError {
-	return Wrap(ctx, err, code, message)
+func WrapServiceError(err error, code, message string) *AppError {
+	return Wrap(err, code, message)
 }
 
 // MapRepoToServiceError maps repository error to service error
-// MapRepoToServiceError maps repository error to service error
-func MapRepoToServiceError(ctx context.Context, err error, notFoundCode ...string) *AppError {
+func MapRepoToServiceError(err error, notFoundCode ...string) *AppError {
 	if err == nil {
 		return nil
 	}
@@ -107,19 +105,19 @@ func MapRepoToServiceError(ctx context.Context, err error, notFoundCode ...strin
 					msg = m
 				}
 			}
-			return NewServiceError(ctx, code, msg).
+			return NewServiceError(code, msg).
 				WithDetails(appErr.Message)
 		case ErrRepoAlreadyExists:
-			return NewServiceError(ctx, ErrServiceAlreadyExists, "Resource already exists").
+			return NewServiceError(ErrServiceAlreadyExists, "Resource already exists").
 				WithDetails(appErr.Message)
 		case ErrRepoConstraint:
-			return NewServiceError(ctx, ErrServiceConflict, "Resource conflict").
+			return NewServiceError(ErrServiceConflict, "Resource conflict").
 				WithDetails(appErr.Message)
 		default:
-			return WrapServiceError(ctx, err, ErrServiceDependency, "Repository error")
+			return WrapServiceError(err, ErrServiceDependency, "Repository error")
 		}
 	}
 
 	// For non-AppError, wrap as unknown
-	return WrapServiceError(ctx, err, ErrServiceUnknown, "Unknown error occurred")
+	return WrapServiceError(err, ErrServiceUnknown, "Unknown error occurred")
 }

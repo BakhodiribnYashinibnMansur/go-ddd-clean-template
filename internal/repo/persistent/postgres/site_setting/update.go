@@ -27,7 +27,7 @@ func (r *Repo) Update(ctx context.Context, setting *domain.SiteSetting) error {
 		setting.ID,
 	)
 	if err != nil {
-		return apperrors.HandlePgError(ctx, err, tableName, nil)
+		return apperrors.HandlePgError(err, tableName, nil)
 	}
 
 	return nil
@@ -43,7 +43,7 @@ func (r *Repo) UpdateByKey(ctx context.Context, key, value string) error {
 
 	_, err := r.pool.Exec(ctx, sql, value, time.Now(), key)
 	if err != nil {
-		return apperrors.HandlePgError(ctx, err, tableName, nil)
+		return apperrors.HandlePgError(err, tableName, nil)
 	}
 
 	return nil

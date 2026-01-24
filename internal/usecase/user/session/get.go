@@ -15,13 +15,13 @@ func (uc *UseCase) Get(ctx context.Context, in *domain.SessionFilter) (*domain.S
 	s, err := repo.Get(ctx, in)
 	if err != nil {
 		uc.logger.WithContext(ctx).Errorw("session get failed", "error", err)
-		return nil, apperrors.MapRepoToServiceError(ctx, err).WithInput(in)
+		return nil, apperrors.MapRepoToServiceError(err).WithInput(in)
 	}
 
 	if s.IsExpired() {
 		uc.logger.WithContext(ctx).Warnw("session expired, deleting", "session_id", s.ID)
 		_ = repo.Delete(ctx, in)
-		err := apperrors.NewServiceError(ctx, apperrors.ErrServiceInvalidInput, "session expired").WithInput(in)
+		err := apperrors.NewServiceError(apperrors.ErrServiceInvalidInput, "session expired").WithInput(in)
 		uc.logger.WithContext(ctx).Errorw("session get failed: expired", "error", err)
 		return nil, err
 	}

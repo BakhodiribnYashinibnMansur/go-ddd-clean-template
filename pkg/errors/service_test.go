@@ -6,7 +6,6 @@ import (
 )
 
 func TestNewServiceError(t *testing.T) {
-	ctx := t.Context()
 
 	tests := []struct {
 		name    string
@@ -42,7 +41,7 @@ func TestNewServiceError(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := NewServiceError(ctx, tt.code, tt.message)
+			got := NewServiceError(tt.code, tt.message)
 
 			if got.Type != tt.want.Type {
 				t.Errorf("NewServiceError().Type = %v, want %v", got.Type, tt.want.Type)
@@ -64,7 +63,6 @@ func TestNewServiceError(t *testing.T) {
 }
 
 func TestWrapServiceError(t *testing.T) {
-	ctx := t.Context()
 	baseErr := errors.New("service error")
 
 	tests := []struct {
@@ -101,7 +99,7 @@ func TestWrapServiceError(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := WrapServiceError(ctx, tt.err, tt.code, tt.message)
+			got := WrapServiceError(tt.err, tt.code, tt.message)
 
 			if tt.wantNil {
 				if got != nil {
@@ -133,7 +131,6 @@ func TestWrapServiceError(t *testing.T) {
 }
 
 func TestMapRepoToServiceError(t *testing.T) {
-	ctx := t.Context()
 
 	tests := []struct {
 		name     string
@@ -149,25 +146,25 @@ func TestMapRepoToServiceError(t *testing.T) {
 		},
 		{
 			name:     "repo not found error",
-			err:      NewRepoError(ctx, ErrRepoNotFound, "Record not found"),
+			err:      NewRepoError(ErrRepoNotFound, "Record not found"),
 			wantType: ErrServiceNotFound,
 			wantCode: CodeServiceNotFound,
 		},
 		{
 			name:     "repo already exists error",
-			err:      NewRepoError(ctx, ErrRepoAlreadyExists, "Record already exists"),
+			err:      NewRepoError(ErrRepoAlreadyExists, "Record already exists"),
 			wantType: ErrServiceAlreadyExists,
 			wantCode: CodeServiceAlreadyExists,
 		},
 		{
 			name:     "repo constraint error",
-			err:      NewRepoError(ctx, ErrRepoConstraint, "Constraint violation"),
+			err:      NewRepoError(ErrRepoConstraint, "Constraint violation"),
 			wantType: ErrServiceConflict,
 			wantCode: CodeServiceConflict,
 		},
 		{
 			name:     "repo database error",
-			err:      NewRepoError(ctx, ErrRepoDatabase, "Database error"),
+			err:      NewRepoError(ErrRepoDatabase, "Database error"),
 			wantType: ErrServiceDependency,
 			wantCode: CodeServiceDependency,
 		},
@@ -181,7 +178,7 @@ func TestMapRepoToServiceError(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := MapRepoToServiceError(ctx, tt.err)
+			got := MapRepoToServiceError(tt.err)
 
 			if tt.wantType == "" {
 				if got != nil {

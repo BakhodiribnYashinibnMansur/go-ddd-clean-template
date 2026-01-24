@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"time"
 
+	"gct/pkg/validation"
+
 	"github.com/google/uuid"
 )
 
@@ -22,6 +24,16 @@ const (
 	DeviceTypeBot     SessionDeviceType = "BOT"
 	DeviceTypeTV      SessionDeviceType = "TV"
 )
+
+func (s SessionDeviceType) IsValid() bool {
+	return validation.IsEnumValid(s, []SessionDeviceType{
+		DeviceTypeDesktop,
+		DeviceTypeMobile,
+		DeviceTypeTablet,
+		DeviceTypeBot,
+		DeviceTypeTV,
+	})
+}
 
 // Session represents a user session.
 type Session struct {

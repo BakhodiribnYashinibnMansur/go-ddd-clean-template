@@ -12,7 +12,7 @@ func (u *UseCase) Get(ctx context.Context, filter *domain.RelationFilter) (*doma
 
 	relation, err := u.repo.Postgres.Authz.Relation.Get(ctx, filter)
 	if err != nil {
-		appErr := apperrors.MapRepoToServiceError(ctx, err, apperrors.ErrServiceRelationNotFound).WithInput(filter)
+		appErr := apperrors.MapRepoToServiceError(err, apperrors.ErrServiceRelationNotFound).WithInput(filter)
 		u.logger.WithContext(ctx).Errorw("relation get failed", "error", appErr)
 		return nil, appErr
 	}

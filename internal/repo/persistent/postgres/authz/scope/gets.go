@@ -6,12 +6,13 @@ import (
 
 	"gct/internal/domain"
 	apperrors "gct/pkg/errors"
+
 	"github.com/Masterminds/squirrel"
 )
 
 func (r *Repo) Gets(ctx context.Context, filter *domain.ScopesFilter) ([]*domain.Scope, int, error) {
-	query := r.builder.Select("path", "method", "created_at").From("scope")
-	countQuery := r.builder.Select("COUNT(*)").From("scope")
+	query := r.builder.Select("path", "method", "created_at").From(tableName)
+	countQuery := r.builder.Select("COUNT(*)").From(tableName)
 
 	if filter.Path != nil {
 		query = query.Where(squirrel.Eq{"path": *filter.Path})
@@ -28,12 +29,12 @@ func (r *Repo) Gets(ctx context.Context, filter *domain.ScopesFilter) ([]*domain
 
 	sql, args, err := query.ToSql()
 	if err != nil {
-		return nil, 0, apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase, "failed to build select query")
+		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, "failed to build select query")
 	}
 
 	rows, err := r.pool.Query(ctx, sql, args...)
 	if err != nil {
-		return nil, 0, apperrors.HandlePgError(ctx, err, "scope", nil)
+		return nil, 0, apperrors.HandlePgError(err, tableName, nil)
 	}
 	defer rows.Close()
 
@@ -41,19 +42,23 @@ func (r *Repo) Gets(ctx context.Context, filter *domain.ScopesFilter) ([]*domain
 	for rows.Next() {
 		var s domain.Scope
 		if err := rows.Scan(&s.Path, &s.Method, &s.CreatedAt); err != nil {
-			return nil, 0, apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase, fmt.Sprintf("failed to scan row: %v", err))
+			return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, fmt.Sprintf("failed to scan row: %v", err))
 		}
 		scopes = append(scopes, &s)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, 0, apperrors.HandlePgError(err, tableName, nil)
 	}
 
 	var count int
 	countSql, countArgs, err := countQuery.ToSql()
 	if err != nil {
-		return nil, 0, apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase, "failed to build count query")
+		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, "failed to build count query")
 	}
 	err = r.pool.QueryRow(ctx, countSql, countArgs...).Scan(&count)
 	if err != nil {
-		return nil, 0, apperrors.HandlePgError(ctx, err, "scope", nil)
+		return nil, 0, apperrors.HandlePgError(err, tableName, nil)
 	}
 
 	return scopes, count, nil

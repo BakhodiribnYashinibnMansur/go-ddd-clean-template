@@ -328,6 +328,9 @@ var (
 		ErrRepoNotFound:      CodeRepoNotFound,
 		ErrRepoAlreadyExists: CodeRepoAlreadyExists,
 		ErrRepoConstraint:    CodeRepoConstraint,
+		ErrRepoConnection:    CodeRepoConnection,
+		ErrRepoTimeout:       CodeRepoTimeout,
+		ErrRepoTransaction:   CodeRepoTransaction,
 		ErrRepoUnknown:       CodeRepoUnknown,
 	}
 

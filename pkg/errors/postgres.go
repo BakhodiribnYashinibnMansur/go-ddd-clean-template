@@ -1,7 +1,6 @@
 package errors
 
 import (
-	"context"
 	"errors"
 	"strings"
 
@@ -11,7 +10,7 @@ import (
 
 // HandlePgError handles PostgreSQL errors and converts them to AppError
 // This centralizes all PostgreSQL error handling logic
-func HandlePgError(ctx context.Context, err error, table string, extraFields map[string]any) *AppError {
+func HandlePgError(err error, table string, extraFields map[string]any) *AppError {
 	if err == nil {
 		return nil
 	}
@@ -19,7 +18,7 @@ func HandlePgError(ctx context.Context, err error, table string, extraFields map
 	// Check for pgx.ErrNoRows (special case)
 	if errors.Is(err, pgx.ErrNoRows) {
 		appErr := AutoSource(
-			NewRepoError(ctx, ErrRepoNotFound,
+			NewRepoError(ErrRepoNotFound,
 				"record not found"))
 
 		if table != "" {
@@ -39,7 +38,7 @@ func HandlePgError(ctx context.Context, err error, table string, extraFields map
 	if !errors.As(err, &pgErr) {
 		// Not a PostgreSQL error, return generic database error
 		appErr := AutoSource(
-			WrapRepoError(ctx, err, ErrRepoDatabase,
+			WrapRepoError(err, ErrRepoDatabase,
 				"database operation failed"))
 
 		if table != "" {
@@ -60,20 +59,20 @@ func HandlePgError(ctx context.Context, err error, table string, extraFields map
 	// Class 08 — Connection Exception
 	// ============================================================================
 	case strings.HasPrefix(pgErr.Code, "08"):
-		return handleConnectionError(ctx, pgErr, table, extraFields)
+		return handleConnectionError(pgErr, table, extraFields)
 
 	// ============================================================================
 	// Class 22 — Data Exception
 	// ============================================================================
 	case strings.HasPrefix(pgErr.Code, "22"):
-		return handleDataException(ctx, pgErr, table, extraFields)
+		return handleDataException(pgErr, table, extraFields)
 
 	// ============================================================================
 	// Class 23 — Integrity Constraint Violation
 	// ============================================================================
 	case pgErr.Code == "23505": // unique_violation
 		appErr := AutoSource(
-			NewRepoError(ctx, ErrRepoAlreadyExists,
+			NewRepoError(ErrRepoAlreadyExists,
 				"record already exists"))
 
 		if table != "" {
@@ -90,7 +89,7 @@ func HandlePgError(ctx context.Context, err error, table string, extraFields map
 
 	case pgErr.Code == "23503": // foreign_key_violation
 		appErr := AutoSource(
-			NewRepoError(ctx, ErrRepoConstraint,
+			NewRepoError(ErrRepoConstraint,
 				"foreign key constraint violation"))
 
 		if table != "" {
@@ -107,7 +106,7 @@ func HandlePgError(ctx context.Context, err error, table string, extraFields map
 
 	case pgErr.Code == "23502": // not_null_violation
 		appErr := AutoSource(
-			NewRepoError(ctx, ErrRepoConstraint,
+			NewRepoError(ErrRepoConstraint,
 				"null value constraint violation"))
 
 		if table != "" {
@@ -125,7 +124,7 @@ func HandlePgError(ctx context.Context, err error, table string, extraFields map
 
 	case pgErr.Code == "23514": // check_violation
 		appErr := AutoSource(
-			NewRepoError(ctx, ErrRepoConstraint,
+			NewRepoError(ErrRepoConstraint,
 				"check constraint violation"))
 
 		if table != "" {
@@ -142,7 +141,7 @@ func HandlePgError(ctx context.Context, err error, table string, extraFields map
 
 	case strings.HasPrefix(pgErr.Code, "23"): // Other integrity constraints
 		appErr := AutoSource(
-			NewRepoError(ctx, ErrRepoConstraint,
+			NewRepoError(ErrRepoConstraint,
 				"database constraint violation"))
 
 		if table != "" {
@@ -161,86 +160,86 @@ func HandlePgError(ctx context.Context, err error, table string, extraFields map
 	// Class 25 — Invalid Transaction State
 	// ============================================================================
 	case strings.HasPrefix(pgErr.Code, "25"):
-		return handleTransactionError(ctx, pgErr, table, extraFields)
+		return handleTransactionError(pgErr, table, extraFields)
 
 	// ============================================================================
 	// Class 28 — Invalid Authorization Specification
 	// ============================================================================
 	case strings.HasPrefix(pgErr.Code, "28"):
-		return handleAuthError(ctx, pgErr, table, extraFields)
+		return handleAuthError(pgErr, table, extraFields)
 
 	// ============================================================================
 	// Class 40 — Transaction Rollback
 	// ============================================================================
 	case strings.HasPrefix(pgErr.Code, "40"):
-		return handleTransactionRollback(ctx, pgErr, table, extraFields)
+		return handleTransactionRollback(pgErr, table, extraFields)
 
 	// ============================================================================
 	// Class 42 — Syntax Error or Access Rule Violation
 	// ============================================================================
 	case strings.HasPrefix(pgErr.Code, "42"):
-		return handleSyntaxOrAccessError(ctx, pgErr, table, extraFields)
+		return handleSyntaxOrAccessError(pgErr, table, extraFields)
 
 	// ============================================================================
 	// Class 53 — Insufficient Resources
 	// ============================================================================
 	case strings.HasPrefix(pgErr.Code, "53"):
-		return handleResourceError(ctx, pgErr, table, extraFields)
+		return handleResourceError(pgErr, table, extraFields)
 
 	// ============================================================================
 	// Class 54 — Program Limit Exceeded
 	// ============================================================================
 	case strings.HasPrefix(pgErr.Code, "54"):
-		return handleProgramLimitError(ctx, pgErr, table, extraFields)
+		return handleProgramLimitError(pgErr, table, extraFields)
 
 	// ============================================================================
 	// Class 55 — Object Not In Prerequisite State
 	// ============================================================================
 	case strings.HasPrefix(pgErr.Code, "55"):
-		return handlePrerequisiteError(ctx, pgErr, table, extraFields)
+		return handlePrerequisiteError(pgErr, table, extraFields)
 
 	// ============================================================================
 	// Class 57 — Operator Intervention
 	// ============================================================================
 	case strings.HasPrefix(pgErr.Code, "57"):
-		return handleOperatorIntervention(ctx, pgErr, table, extraFields)
+		return handleOperatorIntervention(pgErr, table, extraFields)
 
 	// ============================================================================
 	// Class 58 — System Error
 	// ============================================================================
 	case strings.HasPrefix(pgErr.Code, "58"):
-		return handleSystemError(ctx, pgErr, table, extraFields)
+		return handleSystemError(pgErr, table, extraFields)
 
 	// ============================================================================
 	// Class F0 — Configuration File Error
 	// ============================================================================
 	case strings.HasPrefix(pgErr.Code, "F0"):
-		return handleConfigError(ctx, pgErr, table, extraFields)
+		return handleConfigError(pgErr, table, extraFields)
 
 	// ============================================================================
 	// Class HV — Foreign Data Wrapper Error
 	// ============================================================================
 	case strings.HasPrefix(pgErr.Code, "HV"):
-		return handleFDWError(ctx, pgErr, table, extraFields)
+		return handleFDWError(pgErr, table, extraFields)
 
 	// ============================================================================
 	// Class P0 — PL/pgSQL Error
 	// ============================================================================
 	case strings.HasPrefix(pgErr.Code, "P0"):
-		return handlePLpgSQLError(ctx, pgErr, table, extraFields)
+		return handlePLpgSQLError(pgErr, table, extraFields)
 
 	// ============================================================================
 	// Class XX — Internal Error
 	// ============================================================================
 	case strings.HasPrefix(pgErr.Code, "XX"):
-		return handleInternalError(ctx, pgErr, table, extraFields)
+		return handleInternalError(pgErr, table, extraFields)
 
 	// ============================================================================
 	// Default: Generic PostgreSQL error
 	// ============================================================================
 	default:
 		appErr := AutoSource(
-			WrapRepoError(ctx, err, ErrRepoDatabase,
+			WrapRepoError(err, ErrRepoDatabase,
 				"database error occurred"))
 
 		if table != "" {
@@ -258,9 +257,9 @@ func HandlePgError(ctx context.Context, err error, table string, extraFields map
 }
 
 // handleConnectionError handles Class 08 errors
-func handleConnectionError(ctx context.Context, pgErr *pgconn.PgError, table string, extraFields map[string]any) *AppError {
+func handleConnectionError(pgErr *pgconn.PgError, table string, extraFields map[string]any) *AppError {
 	appErr := AutoSource(
-		NewRepoError(ctx, ErrRepoConnection,
+		NewRepoError(ErrRepoConnection,
 			"database connection error"))
 
 	if table != "" {
@@ -277,9 +276,9 @@ func handleConnectionError(ctx context.Context, pgErr *pgconn.PgError, table str
 }
 
 // handleDataException handles Class 22 errors
-func handleDataException(ctx context.Context, pgErr *pgconn.PgError, table string, extraFields map[string]any) *AppError {
+func handleDataException(pgErr *pgconn.PgError, table string, extraFields map[string]any) *AppError {
 	appErr := AutoSource(
-		NewRepoError(ctx, ErrRepoDatabase,
+		NewRepoError(ErrRepoDatabase,
 			"data validation error"))
 
 	if table != "" {
@@ -297,9 +296,9 @@ func handleDataException(ctx context.Context, pgErr *pgconn.PgError, table strin
 }
 
 // handleTransactionError handles Class 25 errors
-func handleTransactionError(ctx context.Context, pgErr *pgconn.PgError, table string, extraFields map[string]any) *AppError {
+func handleTransactionError(pgErr *pgconn.PgError, table string, extraFields map[string]any) *AppError {
 	appErr := AutoSource(
-		NewRepoError(ctx, ErrRepoTransaction,
+		NewRepoError(ErrRepoTransaction,
 			"invalid transaction state"))
 
 	if table != "" {
@@ -316,11 +315,11 @@ func handleTransactionError(ctx context.Context, pgErr *pgconn.PgError, table st
 }
 
 // handleTransactionRollback handles Class 40 errors
-func handleTransactionRollback(ctx context.Context, pgErr *pgconn.PgError, table string, extraFields map[string]any) *AppError {
+func handleTransactionRollback(pgErr *pgconn.PgError, table string, extraFields map[string]any) *AppError {
 	// 40P01 is deadlock_detected - special case
 	if pgErr.Code == "40P01" {
 		appErr := AutoSource(
-			NewRepoError(ctx, ErrRepoDatabase,
+			NewRepoError(ErrRepoDatabase,
 				"deadlock detected"))
 
 		if table != "" {
@@ -336,7 +335,7 @@ func handleTransactionRollback(ctx context.Context, pgErr *pgconn.PgError, table
 	}
 
 	appErr := AutoSource(
-		NewRepoError(ctx, ErrRepoTransaction,
+		NewRepoError(ErrRepoTransaction,
 			"transaction rollback"))
 
 	if table != "" {
@@ -353,9 +352,9 @@ func handleTransactionRollback(ctx context.Context, pgErr *pgconn.PgError, table
 }
 
 // handleResourceError handles Class 53 errors
-func handleResourceError(ctx context.Context, pgErr *pgconn.PgError, table string, extraFields map[string]any) *AppError {
+func handleResourceError(pgErr *pgconn.PgError, table string, extraFields map[string]any) *AppError {
 	appErr := AutoSource(
-		NewRepoError(ctx, ErrRepoConnection,
+		NewRepoError(ErrRepoConnection,
 			"insufficient database resources"))
 
 	if table != "" {
@@ -372,9 +371,9 @@ func handleResourceError(ctx context.Context, pgErr *pgconn.PgError, table strin
 }
 
 // handleProgramLimitError handles Class 54 errors
-func handleProgramLimitError(ctx context.Context, pgErr *pgconn.PgError, table string, extraFields map[string]any) *AppError {
+func handleProgramLimitError(pgErr *pgconn.PgError, table string, extraFields map[string]any) *AppError {
 	appErr := AutoSource(
-		NewRepoError(ctx, ErrRepoDatabase,
+		NewRepoError(ErrRepoDatabase,
 			"program limit exceeded"))
 
 	if table != "" {
@@ -391,11 +390,11 @@ func handleProgramLimitError(ctx context.Context, pgErr *pgconn.PgError, table s
 }
 
 // handlePrerequisiteError handles Class 55 errors (e.g., lock not available)
-func handlePrerequisiteError(ctx context.Context, pgErr *pgconn.PgError, table string, extraFields map[string]any) *AppError {
+func handlePrerequisiteError(pgErr *pgconn.PgError, table string, extraFields map[string]any) *AppError {
 	// 55P03 is lock_not_available
 	if pgErr.Code == "55P03" {
 		appErr := AutoSource(
-			NewRepoError(ctx, ErrRepoTimeout,
+			NewRepoError(ErrRepoTimeout,
 				"lock timeout"))
 
 		if table != "" {
@@ -411,7 +410,7 @@ func handlePrerequisiteError(ctx context.Context, pgErr *pgconn.PgError, table s
 	}
 
 	appErr := AutoSource(
-		NewRepoError(ctx, ErrRepoDatabase,
+		NewRepoError(ErrRepoDatabase,
 			"object not in prerequisite state"))
 
 	if table != "" {
@@ -428,11 +427,11 @@ func handlePrerequisiteError(ctx context.Context, pgErr *pgconn.PgError, table s
 }
 
 // handleOperatorIntervention handles Class 57 errors
-func handleOperatorIntervention(ctx context.Context, pgErr *pgconn.PgError, table string, extraFields map[string]any) *AppError {
+func handleOperatorIntervention(pgErr *pgconn.PgError, table string, extraFields map[string]any) *AppError {
 	// 57014 is query_canceled
 	if pgErr.Code == "57014" {
 		appErr := AutoSource(
-			NewRepoError(ctx, ErrRepoTimeout,
+			NewRepoError(ErrRepoTimeout,
 				"query canceled"))
 
 		if table != "" {
@@ -448,7 +447,7 @@ func handleOperatorIntervention(ctx context.Context, pgErr *pgconn.PgError, tabl
 	}
 
 	appErr := AutoSource(
-		NewRepoError(ctx, ErrRepoConnection,
+		NewRepoError(ErrRepoConnection,
 			"database is unavailable"))
 
 	if table != "" {
@@ -465,9 +464,9 @@ func handleOperatorIntervention(ctx context.Context, pgErr *pgconn.PgError, tabl
 }
 
 // handleSystemError handles Class 58 errors
-func handleSystemError(ctx context.Context, pgErr *pgconn.PgError, table string, extraFields map[string]any) *AppError {
+func handleSystemError(pgErr *pgconn.PgError, table string, extraFields map[string]any) *AppError {
 	appErr := AutoSource(
-		NewRepoError(ctx, ErrRepoDatabase,
+		NewRepoError(ErrRepoDatabase,
 			"system error"))
 
 	if table != "" {

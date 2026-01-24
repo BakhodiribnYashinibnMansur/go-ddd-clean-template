@@ -12,7 +12,7 @@ func (uc *UseCase) Gets(ctx context.Context, in *domain.FunctionMetricsFilter) (
 	metrics, count, err := uc.repo.Postgres.Audit.Metric.Gets(ctx, in)
 	if err != nil {
 		uc.logger.WithContext(ctx).Errorw("failed to retrieve function metrics", zap.Error(err))
-		return nil, 0, apperrors.MapRepoToServiceError(ctx, err)
+		return nil, 0, apperrors.MapRepoToServiceError(err)
 	}
 	return metrics, count, nil
 }

@@ -17,7 +17,7 @@ func (r *Repo) GetFileURLs(ctx context.Context, files []domain.File) ([]domain.F
 		if len(files[i].Name) != 0 {
 			presignedURL, err := r.client.PresignedGetObject(ctx, r.config.Bucket, files[i].Name, expiry, url.Values{})
 			if err != nil {
-				return files, apperrors.HandleMinioError(ctx, err, map[string]any{"filename": files[i].Name})
+				return files, apperrors.HandleMinioError(err, map[string]any{"filename": files[i].Name})
 			}
 			files[i].Link = presignedURL.String()
 		}

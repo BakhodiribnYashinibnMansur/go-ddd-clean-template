@@ -12,7 +12,7 @@ func (u *UseCase) Delete(ctx context.Context, path, method string) error {
 	err := u.repo.Postgres.Authz.Scope.Delete(ctx, path, method)
 	if err != nil {
 		u.logger.WithContext(ctx).Errorw("scope delete failed", "error", err)
-		return apperrors.MapRepoToServiceError(ctx, err).WithInput(map[string]string{"path": path, "method": method})
+		return apperrors.MapRepoToServiceError(err).WithInput(map[string]string{"path": path, "method": method})
 	}
 	u.logger.WithContext(ctx).Infow("scope delete success")
 	return nil

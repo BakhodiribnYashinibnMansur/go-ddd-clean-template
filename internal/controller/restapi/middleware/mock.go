@@ -4,32 +4,39 @@ import (
 	"gct/config"
 	"gct/consts"
 	"gct/internal/controller/restapi/util"
+
 	"github.com/gin-gonic/gin"
 )
 
-// MockMiddleware handles mocking requests based on query parameters
+// MockMiddleware facilitates frontend and integration testing by simulating server behaviors.
+// It intercepts requests based on query parameters to inject delays, errors, or empty responses.
+// This allows UI developers to test edge cases without needing backend code changes.
 func MockMiddleware(cfg *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Only enable in Dev or Test environments
+		// Safety Guard: Disable mocking capabilities in Production to prevent abuse.
 		if cfg.IsProd() {
 			c.Next()
 			return
 		}
 
-		// 1. Handle mock_delay
+		// 1. Latency Simulation: "mock_delay"
+		// Useful for testing loading spinners and timeout handling in clients.
 		util.HandleMockDelay(c)
 
-		// 2. Handle mock_error
+		// 2. Error Injection: "mock_error"
+		// Forces the endpoint to return a specific error code.
 		if util.HandleMockError(c) {
 			return
 		}
 
-		// 3. Handle mock_empty
+		// 3. Empty Response: "mock_empty"
+		// Returns a 200 OK with null/empty body.
 		if util.HandleMockEmpty(c) {
 			return
 		}
 
-		// 4. Handle mock flag (pass to context)
+		// 4. Mock Data Mode: "mock=true"
+		// Signals the controller logic to return fake/static data instead of querying the database.
 		if c.Query(consts.QueryMock) == "true" {
 			c.Set(consts.CtxMockMode, true)
 		}

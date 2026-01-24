@@ -12,7 +12,7 @@ func (u *UseCase) Get(ctx context.Context, filter *domain.ScopeFilter) (*domain.
 
 	scope, err := u.repo.Postgres.Authz.Scope.Get(ctx, filter)
 	if err != nil {
-		appErr := apperrors.MapRepoToServiceError(ctx, err, apperrors.ErrServiceScopeNotFound).WithInput(filter)
+		appErr := apperrors.MapRepoToServiceError(err, apperrors.ErrServiceScopeNotFound).WithInput(filter)
 		u.logger.WithContext(ctx).Errorw("scope get failed", "error", appErr)
 		return nil, appErr
 	}

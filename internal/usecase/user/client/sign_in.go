@@ -18,7 +18,7 @@ func (uc *UseCase) SignIn(ctx context.Context, in *domain.SignInIn) (*domain.Sig
 	uc.logger.WithContext(ctx).Infow("user sign in started", "login", in.Login)
 
 	// Validate input
-	if err := validator.ValidateStruct(ctx, in); err != nil {
+	if err := validator.ValidateStruct(in); err != nil {
 		return nil, err
 	}
 
@@ -39,19 +39,19 @@ func (uc *UseCase) SignIn(ctx context.Context, in *domain.SignInIn) (*domain.Sig
 
 	if err != nil {
 		uc.logger.WithContext(ctx).Errorw("user sign in failed: get user", "error", err)
-		return nil, apperrors.MapRepoToServiceError(ctx, err).WithInput(in)
+		return nil, apperrors.MapRepoToServiceError(err).WithInput(in)
 	}
 
 	if !user.ComparePassword(in.Password) {
 		err := domain.ErrInvalidPassword
 		uc.logger.WithContext(ctx).Errorw("user sign in failed: invalid password", "error", err)
-		return nil, apperrors.MapRepoToServiceError(ctx, err).WithInput(in)
+		return nil, apperrors.MapRepoToServiceError(err).WithInput(in)
 	}
 
 	if !user.IsApproved {
 		err := domain.ErrUserNotApproved
 		uc.logger.WithContext(ctx).Warnw("user sign in failed: not approved", "user_id", user.ID)
-		return nil, apperrors.MapRepoToServiceError(ctx, err).WithInput(in)
+		return nil, apperrors.MapRepoToServiceError(err).WithInput(in)
 	}
 
 	// Device Info
@@ -71,7 +71,7 @@ func (uc *UseCase) SignIn(ctx context.Context, in *domain.SignInIn) (*domain.Sig
 	)
 	if err != nil {
 		uc.logger.WithContext(ctx).Errorw("user sign in failed: generate refresh token", "error", err)
-		return nil, apperrors.MapRepoToServiceError(ctx, err).WithInput(in)
+		return nil, apperrors.MapRepoToServiceError(err).WithInput(in)
 	}
 
 	// Parse User-Agent
@@ -143,13 +143,13 @@ func (uc *UseCase) SignIn(ctx context.Context, in *domain.SignInIn) (*domain.Sig
 	// Set session context
 	if err := session.SetContext(sessionCtx); err != nil {
 		uc.logger.WithContext(ctx).Errorw("user sign in failed: set session context", "error", err)
-		return nil, apperrors.MapRepoToServiceError(ctx, err).WithInput(in)
+		return nil, apperrors.MapRepoToServiceError(err).WithInput(in)
 	}
 
 	err = uc.repo.Postgres.User.SessionRepo.Create(ctx, session)
 	if err != nil {
 		uc.logger.WithContext(ctx).Errorw("user sign in failed: create session", "error", err)
-		return nil, apperrors.MapRepoToServiceError(ctx, err).WithInput(in)
+		return nil, apperrors.MapRepoToServiceError(err).WithInput(in)
 	}
 
 	// Generate Access Token
@@ -163,7 +163,7 @@ func (uc *UseCase) SignIn(ctx context.Context, in *domain.SignInIn) (*domain.Sig
 	})
 	if err != nil {
 		uc.logger.WithContext(ctx).Errorw("user sign in failed: generate access token", "error", err)
-		return nil, apperrors.MapRepoToServiceError(ctx, err).WithInput(in)
+		return nil, apperrors.MapRepoToServiceError(err).WithInput(in)
 	}
 
 	uc.logger.WithContext(ctx).Infow("user sign in success", "user_id", user.ID, "session_id", sessionID)

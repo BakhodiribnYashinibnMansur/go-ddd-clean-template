@@ -5,16 +5,17 @@ import (
 
 	"gct/internal/domain"
 	apperrors "gct/pkg/errors"
+
 	"github.com/Masterminds/squirrel"
 )
 
 func (r *Repo) Delete(ctx context.Context, filter *domain.SessionFilter) error {
 	if filter == nil {
-		return apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase,
+		return apperrors.NewRepoError(apperrors.ErrRepoDatabase,
 			"session filter cannot be nil")
 	}
 
-	query := r.builder.Delete("session")
+	query := r.builder.Delete(tableName)
 
 	if !filter.IsIDNull() {
 		query = query.Where(squirrel.Eq{"id": *filter.ID})
@@ -28,13 +29,13 @@ func (r *Repo) Delete(ctx context.Context, filter *domain.SessionFilter) error {
 
 	sql, args, err := query.ToSql()
 	if err != nil {
-		return apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase,
+		return apperrors.NewRepoError(apperrors.ErrRepoDatabase,
 			"failed to build delete SQL query")
 	}
 
 	_, err = r.pool.Exec(ctx, sql, args...)
 	if err != nil {
-		return apperrors.HandlePgError(ctx, err, "session", nil)
+		return apperrors.HandlePgError(err, tableName, nil)
 	}
 
 	return nil

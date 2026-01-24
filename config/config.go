@@ -1,70 +1,89 @@
+// Package config manages application-wide settings by parsing environment variables and .env files.
+// It leverages a singleton pattern to ensure consistent configuration across all packages.
 package config
 
 import (
 	"fmt"
+	"os"
 	"reflect"
 	"sync"
 
 	"github.com/caarlos0/env/v11"
 	"github.com/subosito/gotenv"
+	"gopkg.in/yaml.v3"
 )
 
 var (
-	instance *Config
-	once     sync.Once
+	instance *Config   // Cached single instance of the configuration.
+	once     sync.Once // Ensures thread-safe initialization of the singleton.
 )
 
-// Config - main configuration structure.
+// Config represents the root configuration tree for the entire application.
+// It is composed of specialized sub-structures, each mapped to specific logical components.
 type Config struct {
-	App          App
-	HTTP         HTTP
-	Log          Log
-	Database     Database
-	Connectivity Connectivity
-	JWT          JWT
-	Firebase     Firebase `envPrefix:"FIREBASE_"`
-	APIKeys      APIKeys
-	Metrics      Metrics
-	Swagger      Swagger
-	Proto        Proto
-	Admin        Admin
-	Cookie       Cookie
-	Minio        MinioStore  `envPrefix:"MINIO_"`
-	Redis        RedisStore  `envPrefix:"REDIS_"`
-	Telegram     Telegram    `envPrefix:"TELEGRAM_"`
-	Tracing      Tracing     `envPrefix:"TRACING_"`
-	Limiter      Limiter     `envPrefix:"LIMITER_"`
-	Security     Security    `envPrefix:"SECURITY_"`
-	FeatureFlag  FeatureFlag `envPrefix:"FEATURE_FLAG_"`
-	Asynq        AsynqConfig `envPrefix:"ASYNQ_"`
-	Seeder       Seeder      `envPrefix:"SEEDER_"`
+	App          App          // Global application metadata (env, name, version).
+	HTTP         HTTP         // Web server settings (port, timeouts).
+	Log          Log          // Logging preferences (level, format).
+	Database     Database     // Persistent storage connection details (Postgres).
+	Connectivity Connectivity // Remote service health check parameters.
+	JWT          JWT          // Authentication token parameters (secrets, TTL).
+	Firebase     Firebase     `envPrefix:"FIREBASE_"` // Firebase Admin SDK integration.
+	APIKeys      APIKeys      // Registered keys for service-to-service auth.
+	Metrics      Metrics      // Observability and monitoring exports.
+	Swagger      Swagger      // API documentation visibility and metadata.
+	Proto        Proto        // Protocol Buffer and gRPC generated settings.
+	Admin        Admin        // Reserved administrative account credentials.
+	Cookie       Cookie       // HTTP cookie attributes (SameSite, Secure).
+	CORS         CORS         `yaml:"cors"`                       // Cross-Origin Resource Sharing settings.
+	Minio        MinioStore   `envPrefix:"MINIO_"`                // S3-compatible storage configuration.
+	Redis        RedisStore   `envPrefix:"REDIS_"`                // Distributed caching and locking.
+	Telegram     Telegram     `envPrefix:"TELEGRAM_"`             // Bot integration for notifications.
+	Tracing      Tracing      `envPrefix:"TRACING_"`              // Distributed tracing export settings.
+	Limiter      Limiter      `envPrefix:"LIMITER_"`              // Global and per-IP rate limit rules.
+	Security     Security     `envPrefix:"SECURITY_"`             // Cross-cutting safety flags.
+	FeatureFlag  FeatureFlag  `envPrefix:"FEATURE_FLAG_"`         // dynamic toggle controls.
+	Asynq        AsynqConfig  `yaml:"asynq" envPrefix:"ASYNQ_"`   // background task queue settings.
+	Seeder       Seeder       `yaml:"seeder" envPrefix:"SEEDER_"` // Mock data generation parameters.
+	Middleware   Middleware   `yaml:"middleware"`                 // Middleware toggle flags.
 }
 
+// Telegram holds credentials for interacting with the Telegram Bot API.
 type Telegram struct {
 	BotToken string `env:"BOT_TOKEN"`
 	ChatID   string `env:"CHAT_ID"`
 }
 
-// Security -.
+// Security contains flags to toggle specialized safety measures.
 type Security struct {
 	FetchMetadata bool `env:"FETCH_METADATA_ENABLED" envDefault:"true"`
 }
 
-// NewConfig returns app config (Singleton).
+// NewConfig initializes or returns the existing application configuration.
+// It attempts to load from a .env file before parsing system environment variables.
 func NewConfig() (*Config, error) {
 	var err error
 	once.Do(func() {
-		// Load .env file if it exists
+		// Attempt to load .env into process environment. Failures are ignored if the file is missing.
 		_ = gotenv.Load()
 
 		cfg := &Config{}
+		// Map environment variables to struct fields using "env" tags.
 		if e := env.Parse(cfg); e != nil {
-			err = fmt.Errorf("config error: %w", e)
+			err = fmt.Errorf("config parse error: %w", e)
 			return
 		}
 
-		// Clean up string fields from quotes
+		// Perform sanitation (e.g. removing stray quotes from env strings).
 		cleanConfigStrings(reflect.ValueOf(cfg).Elem())
+
+		// Load YAML configuration
+		yamlFile, errYaml := os.ReadFile("config.yaml")
+		if errYaml == nil {
+			if errYaml := yaml.Unmarshal(yamlFile, cfg); errYaml != nil {
+				err = fmt.Errorf("yaml parse error: %w", errYaml)
+				return
+			}
+		}
 
 		instance = cfg
 	})
@@ -76,17 +95,17 @@ func NewConfig() (*Config, error) {
 	return instance, nil
 }
 
-// IsProd delegates to App.IsProd
+// IsProd returns true if the current environment is set to production.
 func (c *Config) IsProd() bool {
 	return c.App.IsProd()
 }
 
-// IsDev delegates to App.IsDev
+// IsDev returns true if the current environment is set to development.
 func (c *Config) IsDev() bool {
 	return c.App.IsDev()
 }
 
-// IsTest delegates to App.IsTest
+// IsTest returns true if the current environment is set to testing.
 func (c *Config) IsTest() bool {
 	return c.App.IsTest()
 }

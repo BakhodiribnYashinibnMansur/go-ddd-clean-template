@@ -13,7 +13,7 @@ func (u *UseCase) AddUser(ctx context.Context, userID, relationID uuid.UUID) err
 	err := u.repo.Postgres.Authz.Relation.AddUser(ctx, relationID, userID)
 	if err != nil {
 		u.logger.WithContext(ctx).Errorw("relation add user failed", "error", err)
-		return apperrors.MapRepoToServiceError(ctx, err).WithInput(map[string]any{"userID": userID, "relationID": relationID})
+		return apperrors.MapRepoToServiceError(err).WithInput(map[string]any{"userID": userID, "relationID": relationID})
 	}
 	u.logger.WithContext(ctx).Infow("relation add user success")
 	return nil

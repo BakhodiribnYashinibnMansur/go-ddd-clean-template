@@ -14,7 +14,7 @@ func (r *Repo) GetFileURL(ctx context.Context, fileName string) (string, error) 
 
 	presignedURL, err := r.client.PresignedGetObject(ctx, r.config.Bucket, fileName, expiry, url.Values{})
 	if err != nil {
-		return "", apperrors.HandleMinioError(ctx, err, map[string]any{"filename": fileName})
+		return "", apperrors.HandleMinioError(err, map[string]any{"filename": fileName})
 	}
 	return presignedURL.String(), nil
 }

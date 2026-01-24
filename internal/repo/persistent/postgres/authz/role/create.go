@@ -10,18 +10,18 @@ import (
 
 func (r *Repo) Create(ctx context.Context, role *domain.Role) error {
 	sql, args, err := r.builder.
-		Insert("role").
+		Insert(tableName).
 		Columns("name", "created_at").
 		Values(role.Name, time.Now()).
 		Suffix("RETURNING id, created_at").
 		ToSql()
 	if err != nil {
-		return apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase, "failed to build insert SQL query")
+		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, "failed to build insert SQL query")
 	}
 
 	err = r.pool.QueryRow(ctx, sql, args...).Scan(&role.ID, &role.CreatedAt)
 	if err != nil {
-		return apperrors.HandlePgError(ctx, err, "role", nil)
+		return apperrors.HandlePgError(err, tableName, nil)
 	}
 
 	return nil

@@ -21,7 +21,7 @@ func (r *Repo) UploadVideo(ctx context.Context, file io.Reader, fileSize int64, 
 	videoFileName := fileName.String() + "." + fileExtension
 	_, err := r.client.PutObject(ctx, r.config.Bucket, videoFileName, file, fileSize, minio.PutObjectOptions{ContentType: contentType})
 	if err != nil {
-		return "", apperrors.HandleMinioError(ctx, err, map[string]any{"filename": videoFileName})
+		return "", apperrors.HandleMinioError(err, map[string]any{"filename": videoFileName})
 	}
 	return videoFileName, nil
 }

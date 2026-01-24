@@ -1,14 +1,16 @@
 package history
 
 import (
+	"gct/consts"
 	"gct/pkg/db/postgres"
 	"gct/pkg/logger"
+
 	"github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 const (
-	tableName = "endpoint_history"
+	tableName = consts.TableEndpointHistory
 )
 
 type Repo struct {

@@ -13,7 +13,7 @@ func (uc *UseCase) Gets(ctx context.Context, in *domain.SessionsFilter) ([]*doma
 	sessions, total, err := uc.repo.Postgres.User.SessionRepo.Gets(ctx, in)
 	if err != nil {
 		uc.logger.WithContext(ctx).Errorw("session gets failed", "error", err)
-		return nil, 0, apperrors.MapRepoToServiceError(ctx, err).WithInput(in)
+		return nil, 0, apperrors.MapRepoToServiceError(err).WithInput(in)
 	}
 	uc.logger.WithContext(ctx).Infow("session gets success", "count", len(sessions), "total", total)
 	return sessions, total, nil

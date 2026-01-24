@@ -10,7 +10,7 @@ import (
 
 func (r *Repo) Update(ctx context.Context, u *domain.User) error {
 	sql, args, err := r.builder.
-		Update("users").
+		Update(tableName).
 		Set("role_id", u.RoleID).
 		Set("username", u.Username).
 		Set("email", u.Email).
@@ -25,13 +25,13 @@ func (r *Repo) Update(ctx context.Context, u *domain.User) error {
 		Where("id = ? AND deleted_at = 0", u.ID).
 		ToSql()
 	if err != nil {
-		return apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase,
+		return apperrors.NewRepoError(apperrors.ErrRepoDatabase,
 			"failed to build update SQL query")
 	}
 
 	_, err = r.pool.Exec(ctx, sql, args...)
 	if err != nil {
-		return apperrors.HandlePgError(ctx, err, "users", nil)
+		return apperrors.HandlePgError(err, tableName, nil)
 	}
 
 	return nil

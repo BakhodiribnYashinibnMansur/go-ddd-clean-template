@@ -8,6 +8,7 @@ import (
 	"gct/consts"
 	"gct/internal/controller/restapi/response"
 	apperrors "gct/pkg/errors"
+
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/gin-gonic/gin"
 )
@@ -125,7 +126,7 @@ func HandleMockDelay(c *gin.Context) {
 // HandleMockError triggers a specific application error if ?mock_error=CODE is provided
 func HandleMockError(c *gin.Context) bool {
 	if errCode := c.Query(consts.QueryMockError); errCode != "" {
-		appErr := apperrors.New(c.Request.Context(), errCode, "Mock error triggered via query parameter")
+		appErr := apperrors.New(errCode, "Mock error triggered via query parameter")
 		response.RespondWithError(c, appErr, 0)
 		c.Abort()
 		return true

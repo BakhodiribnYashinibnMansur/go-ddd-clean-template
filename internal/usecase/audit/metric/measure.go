@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	"gct/consts"
 	"gct/internal/domain"
+
 	"go.uber.org/zap"
 )
 
@@ -36,7 +38,7 @@ func (uc *UseCase) MeasureSafe(ctx context.Context, name string) func() {
 
 		// Save to DB
 		// Create detached context because outer context might be cancelled
-		saveCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		saveCtx, cancel := context.WithTimeout(context.Background(), consts.DurationAuditSave*time.Second)
 		defer cancel()
 
 		metric := &domain.FunctionMetric{

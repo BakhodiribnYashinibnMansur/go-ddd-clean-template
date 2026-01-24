@@ -1,7 +1,6 @@
 package errors
 
 import (
-	"context"
 	"errors"
 	"strings"
 
@@ -10,33 +9,33 @@ import (
 
 // HandleMinioError handles MinIO errors and converts them to AppError
 // This centralizes all MinIO error handling logic
-func HandleMinioError(ctx context.Context, err error, extraFields map[string]any) *AppError {
+func HandleMinioError(err error, extraFields map[string]any) *AppError {
 	if err == nil {
 		return nil
 	}
 
 	var minioErr minio.ErrorResponse
 	if errors.As(err, &minioErr) {
-		return handleMinioResponseError(ctx, minioErr, extraFields)
+		return handleMinioResponseError(minioErr, extraFields)
 	}
 
-	return handleMinioGenericError(ctx, err, extraFields)
+	return handleMinioGenericError(err, extraFields)
 }
 
-func handleMinioResponseError(ctx context.Context, minioErr minio.ErrorResponse, extraFields map[string]any) *AppError {
+func handleMinioResponseError(minioErr minio.ErrorResponse, extraFields map[string]any) *AppError {
 	var appErr *AppError
 
 	switch minioErr.Code {
 	case "NoSuchKey", "NoSuchBucket", "NoSuchUpload", "NoSuchVersion", "ResourceNotFound":
-		appErr = AutoSource(NewRepoError(ctx, ErrRepoNotFound, "minio resource not found"))
+		appErr = AutoSource(NewRepoError(ErrRepoNotFound, "minio resource not found"))
 	case "AccessDenied":
-		appErr = AutoSource(NewRepoError(ctx, ErrRepoDatabase, "minio access denied"))
+		appErr = AutoSource(NewRepoError(ErrRepoDatabase, "minio access denied"))
 	case "EntityTooLarge":
-		appErr = AutoSource(NewRepoError(ctx, ErrRepoDatabase, "minio entity too large"))
+		appErr = AutoSource(NewRepoError(ErrRepoDatabase, "minio entity too large"))
 	case "BucketAlreadyExists", "BucketAlreadyOwnedByYou":
-		appErr = AutoSource(NewRepoError(ctx, ErrRepoAlreadyExists, "minio bucket already exists"))
+		appErr = AutoSource(NewRepoError(ErrRepoAlreadyExists, "minio bucket already exists"))
 	default:
-		appErr = AutoSource(NewRepoError(ctx, ErrRepoDatabase, "minio operation failed"))
+		appErr = AutoSource(NewRepoError(ErrRepoDatabase, "minio operation failed"))
 	}
 
 	_ = appErr.WithField("minio_code", minioErr.Code)
@@ -49,16 +48,16 @@ func handleMinioResponseError(ctx context.Context, minioErr minio.ErrorResponse,
 	return appErr
 }
 
-func handleMinioGenericError(ctx context.Context, err error, extraFields map[string]any) *AppError {
+func handleMinioGenericError(err error, extraFields map[string]any) *AppError {
 	errMsg := err.Error()
 	var appErr *AppError
 
 	if strings.Contains(errMsg, "connection") || strings.Contains(errMsg, "dial tcp") {
-		appErr = AutoSource(NewRepoError(ctx, ErrRepoConnection, "minio connection error"))
+		appErr = AutoSource(NewRepoError(ErrRepoConnection, "minio connection error"))
 	} else if strings.Contains(errMsg, "timeout") {
-		appErr = AutoSource(NewRepoError(ctx, ErrRepoTimeout, "minio operation timeout"))
+		appErr = AutoSource(NewRepoError(ErrRepoTimeout, "minio operation timeout"))
 	} else {
-		appErr = AutoSource(WrapRepoError(ctx, err, ErrRepoDatabase, "minio operation failed"))
+		appErr = AutoSource(WrapRepoError(err, ErrRepoDatabase, "minio operation failed"))
 	}
 
 	for k, value := range extraFields {

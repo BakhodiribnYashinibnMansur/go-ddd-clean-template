@@ -6,7 +6,6 @@ import (
 )
 
 func TestNewHandlerError(t *testing.T) {
-	ctx := t.Context()
 
 	tests := []struct {
 		name    string
@@ -42,7 +41,7 @@ func TestNewHandlerError(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := NewHandlerError(ctx, tt.code, tt.message)
+			got := NewHandlerError(tt.code, tt.message)
 
 			if got.Type != tt.want.Type {
 				t.Errorf("NewHandlerError().Type = %v, want %v", got.Type, tt.want.Type)
@@ -64,7 +63,6 @@ func TestNewHandlerError(t *testing.T) {
 }
 
 func TestWrapHandlerError(t *testing.T) {
-	ctx := t.Context()
 	baseErr := errors.New("handler error")
 
 	tests := []struct {
@@ -101,7 +99,7 @@ func TestWrapHandlerError(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := WrapHandlerError(ctx, tt.err, tt.code, tt.message)
+			got := WrapHandlerError(tt.err, tt.code, tt.message)
 
 			if tt.wantNil {
 				if got != nil {
@@ -133,7 +131,6 @@ func TestWrapHandlerError(t *testing.T) {
 }
 
 func TestMapServiceToHandlerError(t *testing.T) {
-	ctx := t.Context()
 
 	tests := []struct {
 		name     string
@@ -149,49 +146,49 @@ func TestMapServiceToHandlerError(t *testing.T) {
 		},
 		{
 			name:     "service not found error",
-			err:      NewServiceError(ctx, ErrServiceNotFound, "Resource not found"),
+			err:      NewServiceError(ErrServiceNotFound, "Resource not found"),
 			wantType: ErrHandlerNotFound,
 			wantCode: CodeHandlerNotFound,
 		},
 		{
 			name:     "service invalid input error",
-			err:      NewServiceError(ctx, ErrServiceInvalidInput, "Invalid input"),
+			err:      NewServiceError(ErrServiceInvalidInput, "Invalid input"),
 			wantType: ErrHandlerBadRequest,
 			wantCode: CodeHandlerBadRequest,
 		},
 		{
 			name:     "service validation error",
-			err:      NewServiceError(ctx, ErrServiceValidation, "Validation failed"),
+			err:      NewServiceError(ErrServiceValidation, "Validation failed"),
 			wantType: ErrHandlerBadRequest,
 			wantCode: CodeHandlerBadRequest,
 		},
 		{
 			name:     "service unauthorized error",
-			err:      NewServiceError(ctx, ErrServiceUnauthorized, "Unauthorized"),
+			err:      NewServiceError(ErrServiceUnauthorized, "Unauthorized"),
 			wantType: ErrHandlerUnauthorized,
 			wantCode: CodeHandlerUnauthorized,
 		},
 		{
 			name:     "service forbidden error",
-			err:      NewServiceError(ctx, ErrServiceForbidden, "Forbidden"),
+			err:      NewServiceError(ErrServiceForbidden, "Forbidden"),
 			wantType: ErrHandlerForbidden,
 			wantCode: CodeHandlerForbidden,
 		},
 		{
 			name:     "service conflict error",
-			err:      NewServiceError(ctx, ErrServiceConflict, "Conflict"),
+			err:      NewServiceError(ErrServiceConflict, "Conflict"),
 			wantType: ErrHandlerConflict,
 			wantCode: CodeHandlerConflict,
 		},
 		{
 			name:     "service already exists error",
-			err:      NewServiceError(ctx, ErrServiceAlreadyExists, "Already exists"),
+			err:      NewServiceError(ErrServiceAlreadyExists, "Already exists"),
 			wantType: ErrHandlerConflict,
 			wantCode: CodeHandlerConflict,
 		},
 		{
 			name:     "service unknown error",
-			err:      NewServiceError(ctx, ErrServiceUnknown, "Unknown error"),
+			err:      NewServiceError(ErrServiceUnknown, "Unknown error"),
 			wantType: ErrHandlerInternal,
 			wantCode: CodeHandlerInternal,
 		},
@@ -205,7 +202,7 @@ func TestMapServiceToHandlerError(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := MapServiceToHandlerError(ctx, tt.err)
+			got := MapServiceToHandlerError(tt.err)
 
 			if tt.wantType == "" {
 				if got != nil {

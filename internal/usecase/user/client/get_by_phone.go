@@ -12,7 +12,7 @@ func (uc *UseCase) GetByPhone(ctx context.Context, in *domain.UserFilter) (*doma
 	uc.logger.WithContext(ctx).Infow("user get by phone started", "input", in)
 
 	if in.Phone == nil || *in.Phone == "" {
-		err := apperrors.New(ctx, apperrors.ErrServiceInvalidInput, "phone is required").WithInput(in)
+		err := apperrors.New(apperrors.ErrServiceInvalidInput, "phone is required").WithInput(in)
 		uc.logger.WithContext(ctx).Errorw("user get by phone failed: missing phone", "error", err)
 		return nil, err
 	}
@@ -20,7 +20,7 @@ func (uc *UseCase) GetByPhone(ctx context.Context, in *domain.UserFilter) (*doma
 	user, err := uc.repo.Postgres.User.Client.GetByPhone(ctx, *in.Phone)
 	if err != nil {
 		uc.logger.WithContext(ctx).Errorw("user get by phone failed", "error", err)
-		return nil, apperrors.MapRepoToServiceError(ctx, err).WithInput(in)
+		return nil, apperrors.MapRepoToServiceError(err).WithInput(in)
 	}
 	uc.logger.WithContext(ctx).Infow("user get by phone success", "user_id", user.ID)
 	return user, nil

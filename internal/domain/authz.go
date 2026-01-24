@@ -3,6 +3,8 @@ package domain
 import (
 	"time"
 
+	"gct/pkg/validation"
+
 	"github.com/google/uuid"
 )
 
@@ -53,6 +55,13 @@ const (
 	PolicyEffectDeny  PolicyEffect = "DENY"
 )
 
+func (e PolicyEffect) IsValid() bool {
+	return validation.IsEnumValid(e, []PolicyEffect{
+		PolicyEffectAllow,
+		PolicyEffectDeny,
+	})
+}
+
 // Policy represents an ABAC policy
 type Policy struct {
 	ID           uuid.UUID      `json:"id"`
@@ -85,6 +94,14 @@ const (
 	RelationTypeBranch     RelationType = "BRANCH"
 	RelationTypeRegion     RelationType = "REGION"
 )
+
+func (r RelationType) IsValid() bool {
+	return validation.IsEnumValid(r, []RelationType{
+		RelationTypeUnrevealed,
+		RelationTypeBranch,
+		RelationTypeRegion,
+	})
+}
 
 // Relation represents an organizational relation (branch/region).
 type Relation struct {

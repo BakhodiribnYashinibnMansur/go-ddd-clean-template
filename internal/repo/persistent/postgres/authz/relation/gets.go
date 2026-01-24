@@ -6,12 +6,13 @@ import (
 
 	"gct/internal/domain"
 	apperrors "gct/pkg/errors"
+
 	"github.com/Masterminds/squirrel"
 )
 
 func (r *Repo) Gets(ctx context.Context, filter *domain.RelationsFilter) ([]*domain.Relation, int, error) {
-	query := r.builder.Select("id", "type", "name", "created_at").From("relation")
-	countQuery := r.builder.Select("COUNT(*)").From("relation")
+	query := r.builder.Select("id", "type", "name", "created_at").From(tableName)
+	countQuery := r.builder.Select("COUNT(*)").From(tableName)
 
 	if filter.ID != nil {
 		query = query.Where(squirrel.Eq{"id": *filter.ID})
@@ -32,12 +33,12 @@ func (r *Repo) Gets(ctx context.Context, filter *domain.RelationsFilter) ([]*dom
 
 	sql, args, err := query.ToSql()
 	if err != nil {
-		return nil, 0, apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase, "failed to build select query")
+		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, "failed to build select query")
 	}
 
 	rows, err := r.pool.Query(ctx, sql, args...)
 	if err != nil {
-		return nil, 0, apperrors.HandlePgError(ctx, err, "relation", nil)
+		return nil, 0, apperrors.HandlePgError(err, tableName, nil)
 	}
 	defer rows.Close()
 
@@ -45,20 +46,24 @@ func (r *Repo) Gets(ctx context.Context, filter *domain.RelationsFilter) ([]*dom
 	for rows.Next() {
 		var relation domain.Relation
 		if err := rows.Scan(&relation.ID, &relation.Type, &relation.Name, &relation.CreatedAt); err != nil {
-			return nil, 0, apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase, fmt.Sprintf("failed to scan row: %v", err))
+			return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, fmt.Sprintf("failed to scan row: %v", err))
 		}
 		relations = append(relations, &relation)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, 0, apperrors.HandlePgError(err, tableName, nil)
 	}
 
 	// Count
 	var count int
 	countSql, countArgs, err := countQuery.ToSql()
 	if err != nil {
-		return nil, 0, apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase, "failed to build count query")
+		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, "failed to build count query")
 	}
 	err = r.pool.QueryRow(ctx, countSql, countArgs...).Scan(&count)
 	if err != nil {
-		return nil, 0, apperrors.HandlePgError(ctx, err, "relation", nil)
+		return nil, 0, apperrors.HandlePgError(err, tableName, nil)
 	}
 
 	return relations, count, nil

@@ -18,7 +18,7 @@ func (r *Repo) Create(ctx context.Context, s *domain.Session) error {
 	now := time.Now()
 	s.LastActivity = now
 
-	query := r.builder.Insert("session").
+	query := r.builder.Insert(tableName).
 		Columns(
 			"id",
 			"device_id",
@@ -56,13 +56,13 @@ func (r *Repo) Create(ctx context.Context, s *domain.Session) error {
 
 	sql, args, err := query.ToSql()
 	if err != nil {
-		return apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase,
+		return apperrors.NewRepoError(apperrors.ErrRepoDatabase,
 			"failed to build insert SQL query")
 	}
 
 	_, err = r.pool.Exec(ctx, sql, args...)
 	if err != nil {
-		return apperrors.HandlePgError(ctx, err, "session", nil)
+		return apperrors.HandlePgError(err, tableName, nil)
 	}
 
 	return nil

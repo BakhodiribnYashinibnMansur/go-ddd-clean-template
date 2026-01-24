@@ -4,17 +4,29 @@ import (
 	"net/http"
 	"runtime/debug"
 
+	"gct/internal/controller/restapi/response"
+	"gct/internal/controller/restapi/util"
 	"gct/pkg/logger"
+
 	"github.com/gin-gonic/gin"
 )
 
-// Recovery -.
+// Recovery returns a Gin middleware that catches any unhandled panics during request processing.
+// It logs the panic error along with a full stack trace to help with debugging, and sends
+// a standardized 500 Internal Server Error response to the client instead of crashing the process.
+//
+// See: https://github.com/gin-gonic/gin#custom-recovery-behavior
 func Recovery(l logger.Log) gin.HandlerFunc {
 	return gin.CustomRecovery(func(c *gin.Context, recovered any) {
+		// Log the critical failure with structured context.
+		// Including the stack trace is vital for post-mortem analysis.
 		l.WithContext(c.Request.Context()).Errorw("panic recovered",
 			"error", recovered,
 			"stack", string(debug.Stack()),
 		)
-		c.AbortWithStatus(http.StatusInternalServerError)
+
+		// Return a generic error to the client to avoid leaking sensitive internal state.
+		response.ControllerResponse(c, http.StatusInternalServerError, util.ErrPanicRecovered, nil, false)
+		c.Abort()
 	})
 }

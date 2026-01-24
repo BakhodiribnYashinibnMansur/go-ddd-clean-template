@@ -12,7 +12,7 @@ func (u *UseCase) Get(ctx context.Context, filter *domain.PermissionFilter) (*do
 
 	perm, err := u.repo.Postgres.Authz.Permission.Get(ctx, filter)
 	if err != nil {
-		appErr := apperrors.MapRepoToServiceError(ctx, err, apperrors.ErrServicePermissionNotFound).WithInput(filter)
+		appErr := apperrors.MapRepoToServiceError(err, apperrors.ErrServicePermissionNotFound).WithInput(filter)
 		u.logger.WithContext(ctx).Errorw("permission get failed", "error", appErr)
 		return nil, appErr
 	}

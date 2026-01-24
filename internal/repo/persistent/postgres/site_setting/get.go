@@ -39,7 +39,7 @@ func (r *Repo) Get(ctx context.Context, filter *domain.SiteSettingFilter) (*doma
 
 	sql, args, err := query.ToSql()
 	if err != nil {
-		return nil, apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase, "failed to build query")
+		return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, "failed to build query")
 	}
 
 	var setting domain.SiteSetting
@@ -55,7 +55,7 @@ func (r *Repo) Get(ctx context.Context, filter *domain.SiteSettingFilter) (*doma
 		&setting.UpdatedAt,
 	)
 	if err != nil {
-		return nil, apperrors.HandlePgError(ctx, err, tableName, nil)
+		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 
 	return &setting, nil

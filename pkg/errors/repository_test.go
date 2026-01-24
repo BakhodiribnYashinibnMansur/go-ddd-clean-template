@@ -6,7 +6,6 @@ import (
 )
 
 func TestNewRepoError(t *testing.T) {
-	ctx := t.Context()
 
 	tests := []struct {
 		name    string
@@ -42,7 +41,7 @@ func TestNewRepoError(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := NewRepoError(ctx, tt.code, tt.message)
+			got := NewRepoError(tt.code, tt.message)
 
 			if got.Type != tt.want.Type {
 				t.Errorf("NewRepoError().Type = %v, want %v", got.Type, tt.want.Type)
@@ -64,7 +63,6 @@ func TestNewRepoError(t *testing.T) {
 }
 
 func TestWrapRepoError(t *testing.T) {
-	ctx := t.Context()
 	baseErr := errors.New("database error")
 
 	tests := []struct {
@@ -101,7 +99,7 @@ func TestWrapRepoError(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := WrapRepoError(ctx, tt.err, tt.code, tt.message)
+			got := WrapRepoError(tt.err, tt.code, tt.message)
 
 			if tt.wantNil {
 				if got != nil {

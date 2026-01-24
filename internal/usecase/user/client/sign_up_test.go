@@ -27,7 +27,7 @@ func TestUseCase_SignUp_TableDriven(t *testing.T) {
 			input: &domain.SignUpIn{
 				Username: "testuser",
 				Phone:    "123456789",
-				Password: "password",
+				Password: "Password123!",
 			},
 			repoError:   nil,
 			expectError: false,
@@ -38,7 +38,7 @@ func TestUseCase_SignUp_TableDriven(t *testing.T) {
 				require.Equal(t, "123456789", *u.Phone)
 				// Password should be hashed by SignUp method
 				require.NotEmpty(t, u.PasswordHash)
-				require.NotEqual(t, "password", u.PasswordHash)
+				require.NotEqual(t, "Password123!", u.PasswordHash)
 			},
 		},
 		{
@@ -46,7 +46,7 @@ func TestUseCase_SignUp_TableDriven(t *testing.T) {
 			input: &domain.SignUpIn{
 				Username: "",
 				Phone:    "123456789",
-				Password: "password",
+				Password: "Password123!",
 			},
 			repoError:   nil,
 			expectError: false,
@@ -61,7 +61,7 @@ func TestUseCase_SignUp_TableDriven(t *testing.T) {
 			input: &domain.SignUpIn{
 				Username: "testuser",
 				Phone:    "",
-				Password: "password",
+				Password: "Password123!",
 			},
 			repoError:   nil,
 			expectError: true,
@@ -77,29 +77,21 @@ func TestUseCase_SignUp_TableDriven(t *testing.T) {
 			expectError: true,
 		},
 		{
-			name: "success_weak_password",
+			name: "error_weak_password",
 			input: &domain.SignUpIn{
 				Username: "testuser",
 				Phone:    "123456789",
 				Password: "123",
 			},
 			repoError:   nil,
-			expectError: false,
-			validateSaved: func(t *testing.T, u *domain.User) {
-				t.Helper()
-				require.Equal(t, "123456789", *u.Phone)
-				require.NotNil(t, u.Username)
-				require.Equal(t, "testuser", *u.Username)
-				// Even weak passwords should be hashed
-				require.NotEmpty(t, u.PasswordHash)
-			},
+			expectError: true,
 		},
 		{
 			name: "error_repository_failure",
 			input: &domain.SignUpIn{
 				Username: "testuser",
 				Phone:    "123456789",
-				Password: "password",
+				Password: "Password123!",
 			},
 			repoError:   errors.New("database error"),
 			expectError: true,
@@ -109,7 +101,7 @@ func TestUseCase_SignUp_TableDriven(t *testing.T) {
 			input: &domain.SignUpIn{
 				Username: "verylongusernamethatmightstillwork",
 				Phone:    "123456789",
-				Password: "password",
+				Password: "Password123!",
 			},
 			repoError:   nil,
 			expectError: false,
@@ -124,7 +116,7 @@ func TestUseCase_SignUp_TableDriven(t *testing.T) {
 			input: &domain.SignUpIn{
 				Username: "testuser",
 				Phone:    "123456789",
-				Password: "p@ssw0rd!#",
+				Password: "P@ssw0rd!1",
 			},
 			repoError:   nil,
 			expectError: false,
@@ -142,7 +134,7 @@ func TestUseCase_SignUp_TableDriven(t *testing.T) {
 			input: &domain.SignUpIn{
 				Username: "testuser",
 				Phone:    "9876543210",
-				Password: "password",
+				Password: "Password123!",
 			},
 			repoError:   nil,
 			expectError: false,

@@ -13,7 +13,7 @@ func (u *UseCase) Delete(ctx context.Context, id uuid.UUID) error {
 	err := u.repo.Postgres.Authz.Permission.Delete(ctx, id)
 	if err != nil {
 		u.logger.WithContext(ctx).Errorw("permission delete failed", "error", err)
-		return apperrors.MapRepoToServiceError(ctx, err).WithInput(id)
+		return apperrors.MapRepoToServiceError(err).WithInput(id)
 	}
 
 	u.logger.WithContext(ctx).Infow("permission delete success")

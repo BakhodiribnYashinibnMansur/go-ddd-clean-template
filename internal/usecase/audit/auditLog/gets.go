@@ -12,7 +12,7 @@ func (uc *UseCase) Gets(ctx context.Context, in *domain.AuditLogsFilter) ([]*dom
 	logs, count, err := uc.repo.Postgres.Audit.Log.Gets(ctx, in)
 	if err != nil {
 		uc.logger.WithContext(ctx).Errorw("audit log retrieval failed", zap.Error(err))
-		return nil, 0, apperrors.MapRepoToServiceError(ctx, err)
+		return nil, 0, apperrors.MapRepoToServiceError(err)
 	}
 
 	return logs, count, nil

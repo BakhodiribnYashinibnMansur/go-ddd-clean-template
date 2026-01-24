@@ -6,6 +6,7 @@ import (
 	"strings"
 )
 
+// Standard error definitions for database configuration validation.
 var (
 	ErrMissingDBHost     = errors.New("database host is required")
 	ErrMissingDBPort     = errors.New("database port is required")
@@ -14,7 +15,8 @@ var (
 	ErrMissingDBPassword = errors.New("database password is required")
 )
 
-// Database groups all supported databases -.
+// Database aggregates configurations for all supported storage engines.
+// Each field uses an environment prefix to avoid naming collisions when loading from OS variables.
 type Database struct {
 	Postgres      Postgres      `envPrefix:"PG_"`
 	MySQL         MySQL         `envPrefix:"MYSQL_"`
@@ -26,18 +28,18 @@ type Database struct {
 	SqlLite       SqlLite       `envPrefix:"SQLITE_"`
 }
 
-// BaseDB contains common database connection fields -.
+// BaseDB identifies common connectivity fields used across most relational and NoSQL databases.
 type BaseDB struct {
-	Host     string `env:"HOST,required"`
-	Port     int    `env:"PORT,required"`
-	Name     string `env:"NAME,required"`
-	User     string `env:"USER,required"`
-	Password string `env:"PASSWORD,required"`
-	SSLMode  string `env:"SSL_MODE"          envDefault:"disable"`
-	PoolMax  int    `env:"POOL_MAX"          envDefault:"10"`
+	Host     string `env:"HOST,required"`                 // IP address or hostname of the server.
+	Port     int    `env:"PORT,required"`                 // Communication port for the protocol.
+	Name     string `env:"NAME,required"`                 // Target database/schema name.
+	User     string `env:"USER,required"`                 // Authentication username.
+	Password string `env:"PASSWORD,required"`             // Authentication password.
+	SSLMode  string `env:"SSL_MODE" envDefault:"disable"` // encryption settings.
+	PoolMax  int    `env:"POOL_MAX" envDefault:"10"`      // Maximum concurrent connections in the pool.
 }
 
-// Database specific configs -.
+// Specialized driver configurations inheriting common connection logic.
 type (
 	Postgres      struct{ BaseDB }
 	MySQL         struct{ BaseDB }
@@ -47,18 +49,19 @@ type (
 	Elasticsearch struct{ BaseDB }
 	ClickHouse    struct{ BaseDB }
 
+	// SqlLite uses local file-based storage instead of network connections.
 	SqlLite struct {
 		File string `env:"FILE,required"`
 	}
 )
 
-// URL returns connection string for Postgres.
+// URL formats the connection string for the Postgres driver.
 func (p *Postgres) URL() string {
 	return fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s",
 		p.User, p.Password, p.Host, p.Port, p.Name, p.SSLMode)
 }
 
-// Validate validates database configuration.
+// Validate checks for the presence of mandatory Postgres connectivity fields.
 func (p *Postgres) Validate() error {
 	if p.Host == "" {
 		return ErrMissingDBHost
@@ -78,19 +81,19 @@ func (p *Postgres) Validate() error {
 	return nil
 }
 
-// IsSecure returns true if SSL mode is enabled.
+// IsSecure returns true if the connection requires an encrypted SSL handshake.
 func (p *Postgres) IsSecure() bool {
 	mode := strings.ToLower(p.SSLMode)
 	return mode != "disable" && mode != ""
 }
 
-// URL returns connection string for MySQL.
+// URL generates the DSN required for MySQL protocol interaction.
 func (m *MySQL) URL() string {
 	return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?parseTime=true",
 		m.User, m.Password, m.Host, m.Port, m.Name)
 }
 
-// DSN returns connection string for SqlLite.
+// DSN returns the path to the localized SQLite database file.
 func (s *SqlLite) DSN() string {
 	return s.File
 }

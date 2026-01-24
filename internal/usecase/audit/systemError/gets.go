@@ -12,7 +12,7 @@ func (uc *UseCase) Gets(ctx context.Context, in *domain.SystemErrorsFilter) ([]*
 	errors, count, err := uc.repo.Postgres.Audit.SystemError.Gets(ctx, in)
 	if err != nil {
 		uc.logger.WithContext(ctx).Errorw("system error retrieval failed", zap.Error(err))
-		return nil, 0, apperrors.MapRepoToServiceError(ctx, err)
+		return nil, 0, apperrors.MapRepoToServiceError(err)
 	}
 
 	return errors, count, nil

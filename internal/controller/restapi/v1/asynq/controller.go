@@ -1,3 +1,5 @@
+// Package asynqController provides HTTP endpoints to trigger background tasks
+// using the Asynq task queue system.
 package asynqController
 
 import (
@@ -5,16 +7,17 @@ import (
 
 	"gct/pkg/asynq"
 	"gct/pkg/logger"
+
 	"github.com/gin-gonic/gin"
 )
 
-// Controller handles queue-related HTTP requests.
+// Controller facilitates the enqueuing of various asynchronous tasks via HTTP requests.
 type Controller struct {
 	asynqClient *asynq.Client
 	log         logger.Log
 }
 
-// NewController creates a new queue controller.
+// NewController initializes a new queue controller with an Asynq client and a logger.
 func NewController(asynqClient *asynq.Client, log logger.Log) *Controller {
 	return &Controller{
 		asynqClient: asynqClient,
@@ -24,14 +27,14 @@ func NewController(asynqClient *asynq.Client, log logger.Log) *Controller {
 
 // SendTestEmail godoc
 // @Summary Send test email
-// @Description Enqueue a test email task
+// @Description Enqueue a test email task into the queue system
 // @Tags asynq
 // @Accept json
 // @Produce json
-// @Param request body EmailRequest true "Email request"
-// @Success 200 {object} map[string]interface{}
-// @Failure 400 {object} map[string]interface{}
-// @Failure 500 {object} map[string]interface{}
+// @Param request body EmailRequest true "Email details: recipient, subject, and body"
+// @Success 200 {object} map[string]interface{} "Returns task ID and queue name on success"
+// @Failure 400 {object} map[string]interface{} "Malformed request body or invalid email format"
+// @Failure 500 {object} map[string]interface{} "Failed to connect to the task queue"
 // @Router /api/v1/asynq/email/test [post]
 func (ctrl *Controller) SendTestEmail(c *gin.Context) {
 	var req EmailRequest
@@ -47,6 +50,7 @@ func (ctrl *Controller) SendTestEmail(c *gin.Context) {
 		Data:    req.Data,
 	}
 
+	// Schedule the email task using the Asynq client
 	info, err := ctrl.asynqClient.EnqueueEmail(c.Request.Context(), asynq.TypeEmailWelcome, payload)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to enqueue email"})
@@ -62,11 +66,11 @@ func (ctrl *Controller) SendTestEmail(c *gin.Context) {
 
 // SendTestNotification godoc
 // @Summary Send test notification
-// @Description Enqueue a test notification task
+// @Description Enqueue a push notification task for a specific user
 // @Tags asynq
 // @Accept json
 // @Produce json
-// @Param request body NotificationRequest true "Notification request"
+// @Param request body NotificationRequest true "Notification details: userID, title, and message"
 // @Success 200 {object} map[string]interface{}
 // @Failure 400 {object} map[string]interface{}
 // @Failure 500 {object} map[string]interface{}
@@ -85,6 +89,7 @@ func (ctrl *Controller) SendTestNotification(c *gin.Context) {
 		Data:    req.Data,
 	}
 
+	// Schedule the notification task
 	info, err := ctrl.asynqClient.EnqueueNotification(c.Request.Context(), asynq.TypePushNotification, payload)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to enqueue notification"})
@@ -100,11 +105,11 @@ func (ctrl *Controller) SendTestNotification(c *gin.Context) {
 
 // SeedDatabase godoc
 // @Summary Seed database
-// @Description Enqueue a database seeding task
+// @Description Enqueue a task to populate the database with mock data for testing
 // @Tags asynq
 // @Accept json
 // @Produce json
-// @Param request body SeedRequest true "Seed request"
+// @Param request body SeedRequest true "Seeding parameters: counts for users, roles, etc."
 // @Success 200 {object} map[string]interface{}
 // @Failure 400 {object} map[string]interface{}
 // @Failure 500 {object} map[string]interface{}
@@ -124,6 +129,7 @@ func (ctrl *Controller) SeedDatabase(c *gin.Context) {
 		ClearData:        req.ClearData,
 	}
 
+	// Schedule the seeding task; this can be time-consuming, so it's best handled in a queue
 	info, err := ctrl.asynqClient.EnqueueSeed(c.Request.Context(), payload)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to enqueue seed task"})
@@ -137,7 +143,11 @@ func (ctrl *Controller) SeedDatabase(c *gin.Context) {
 	})
 }
 
-// Request types
+// ============================================================================
+// Request Models
+// ============================================================================
+
+// EmailRequest represents the JSON payload for triggering an email task.
 type EmailRequest struct {
 	To      string            `json:"to" binding:"required,email"`
 	Subject string            `json:"subject" binding:"required"`
@@ -145,6 +155,7 @@ type EmailRequest struct {
 	Data    map[string]string `json:"data,omitempty"`
 }
 
+// NotificationRequest represents the JSON payload for triggering a notification task.
 type NotificationRequest struct {
 	UserID  string            `json:"user_id" binding:"required"`
 	Title   string            `json:"title" binding:"required"`
@@ -152,6 +163,7 @@ type NotificationRequest struct {
 	Data    map[string]string `json:"data,omitempty"`
 }
 
+// SeedRequest represents the configuration parameters for a database seeding task.
 type SeedRequest struct {
 	UsersCount       int   `json:"users_count"`
 	RolesCount       int   `json:"roles_count"`

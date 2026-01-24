@@ -1,7 +1,6 @@
 package errors
 
 import (
-	"context"
 	"errors"
 	"strings"
 
@@ -10,24 +9,24 @@ import (
 
 // HandleRedisError handles Redis errors and converts them to AppError
 // This centralizes all Redis error handling logic
-func HandleRedisError(ctx context.Context, err error, key string, extraFields map[string]any) *AppError {
+func HandleRedisError(err error, key string, extraFields map[string]any) *AppError {
 	if err == nil {
 		return nil
 	}
 
 	if errors.Is(err, redis.Nil) {
-		return handleRedisNil(ctx, key, extraFields)
+		return handleRedisNil(key, extraFields)
 	}
 
 	errMsg := err.Error()
 
 	// Try specific error types
-	if appErr := tryHandleSpecificRedisErrors(ctx, errMsg, key, extraFields); appErr != nil {
+	if appErr := tryHandleSpecificRedisErrors(errMsg, key, extraFields); appErr != nil {
 		return appErr
 	}
 
 	// Default: Generic Redis error
-	appErr := AutoSource(WrapRepoError(ctx, err, ErrRepoDatabase, "redis operation failed"))
+	appErr := AutoSource(WrapRepoError(err, ErrRepoDatabase, "redis operation failed"))
 	_ = appErr.WithField("key", key)
 	_ = appErr.WithDetails(errMsg)
 
@@ -37,8 +36,8 @@ func HandleRedisError(ctx context.Context, err error, key string, extraFields ma
 	return appErr
 }
 
-func handleRedisNil(ctx context.Context, key string, extraFields map[string]any) *AppError {
-	appErr := AutoSource(NewRepoError(ctx, ErrRepoNotFound, "key not found in cache"))
+func handleRedisNil(key string, extraFields map[string]any) *AppError {
+	appErr := AutoSource(NewRepoError(ErrRepoNotFound, "key not found in cache"))
 	if key != "" {
 		_ = appErr.WithField("key", key)
 	}
@@ -50,33 +49,33 @@ func handleRedisNil(ctx context.Context, key string, extraFields map[string]any)
 	return appErr
 }
 
-func tryHandleSpecificRedisErrors(ctx context.Context, errMsg, key string, extraFields map[string]any) *AppError {
-	if isRedisConnectionError(errMsg) {
-		return handleRedisConnectionError(ctx, key, extraFields)
-	}
+func tryHandleSpecificRedisErrors(errMsg, key string, extraFields map[string]any) *AppError {
 	if isRedisTimeoutError(errMsg) {
-		return handleRedisTimeoutError(ctx, key, extraFields)
+		return handleRedisTimeoutError(key, extraFields)
+	}
+	if isRedisConnectionError(errMsg) {
+		return handleRedisConnectionError(key, extraFields)
 	}
 	if isRedisAuthError(errMsg) {
-		return handleRedisAuthError(ctx, key, extraFields)
+		return handleRedisAuthError(key, extraFields)
 	}
 	if isRedisTypeError(errMsg) {
-		return handleRedisTypeError(ctx, key, extraFields)
+		return handleRedisTypeError(key, extraFields)
 	}
 	if isRedisMemoryError(errMsg) {
-		return handleRedisMemoryError(ctx, key, extraFields)
+		return handleRedisMemoryError(key, extraFields)
 	}
 	if isRedisReadOnlyError(errMsg) {
-		return handleRedisReadOnlyError(ctx, key, extraFields)
+		return handleRedisReadOnlyError(key, extraFields)
 	}
 	if isRedisClusterError(errMsg) {
-		return handleRedisClusterError(ctx, key, extraFields)
+		return handleRedisClusterError(key, extraFields)
 	}
 	if isRedisNoScriptError(errMsg) {
-		return handleRedisNoScriptError(ctx, key, extraFields)
+		return handleRedisNoScriptError(key, extraFields)
 	}
 	if isRedisNoAuthError(errMsg) {
-		return handleRedisNoAuthError(ctx, key, extraFields)
+		return handleRedisNoAuthError(key, extraFields)
 	}
 	return nil
 }
@@ -140,9 +139,9 @@ func isRedisNoAuthError(msg string) bool {
 // Error Handler Functions
 // ============================================================================
 
-func handleRedisConnectionError(ctx context.Context, key string, extraFields map[string]any) *AppError {
+func handleRedisConnectionError(key string, extraFields map[string]any) *AppError {
 	appErr := AutoSource(
-		NewRepoError(ctx, ErrRepoConnection,
+		NewRepoError(ErrRepoConnection,
 			"redis connection error"))
 
 	if key != "" {
@@ -157,9 +156,9 @@ func handleRedisConnectionError(ctx context.Context, key string, extraFields map
 	return appErr
 }
 
-func handleRedisTimeoutError(ctx context.Context, key string, extraFields map[string]any) *AppError {
+func handleRedisTimeoutError(key string, extraFields map[string]any) *AppError {
 	appErr := AutoSource(
-		NewRepoError(ctx, ErrRepoTimeout,
+		NewRepoError(ErrRepoTimeout,
 			"redis operation timeout"))
 
 	if key != "" {
@@ -174,9 +173,9 @@ func handleRedisTimeoutError(ctx context.Context, key string, extraFields map[st
 	return appErr
 }
 
-func handleRedisAuthError(ctx context.Context, key string, extraFields map[string]any) *AppError {
+func handleRedisAuthError(key string, extraFields map[string]any) *AppError {
 	appErr := AutoSource(
-		NewRepoError(ctx, ErrRepoDatabase,
+		NewRepoError(ErrRepoDatabase,
 			"redis authentication failed"))
 
 	if key != "" {
@@ -191,9 +190,9 @@ func handleRedisAuthError(ctx context.Context, key string, extraFields map[strin
 	return appErr
 }
 
-func handleRedisTypeError(ctx context.Context, key string, extraFields map[string]any) *AppError {
+func handleRedisTypeError(key string, extraFields map[string]any) *AppError {
 	appErr := AutoSource(
-		NewRepoError(ctx, ErrRepoDatabase,
+		NewRepoError(ErrRepoDatabase,
 			"redis wrong type error"))
 
 	if key != "" {
@@ -208,9 +207,9 @@ func handleRedisTypeError(ctx context.Context, key string, extraFields map[strin
 	return appErr
 }
 
-func handleRedisMemoryError(ctx context.Context, key string, extraFields map[string]any) *AppError {
+func handleRedisMemoryError(key string, extraFields map[string]any) *AppError {
 	appErr := AutoSource(
-		NewRepoError(ctx, ErrRepoDatabase,
+		NewRepoError(ErrRepoDatabase,
 			"redis out of memory"))
 
 	if key != "" {
@@ -225,9 +224,9 @@ func handleRedisMemoryError(ctx context.Context, key string, extraFields map[str
 	return appErr
 }
 
-func handleRedisReadOnlyError(ctx context.Context, key string, extraFields map[string]any) *AppError {
+func handleRedisReadOnlyError(key string, extraFields map[string]any) *AppError {
 	appErr := AutoSource(
-		NewRepoError(ctx, ErrRepoDatabase,
+		NewRepoError(ErrRepoDatabase,
 			"redis is read-only"))
 
 	if key != "" {
@@ -242,9 +241,9 @@ func handleRedisReadOnlyError(ctx context.Context, key string, extraFields map[s
 	return appErr
 }
 
-func handleRedisClusterError(ctx context.Context, key string, extraFields map[string]any) *AppError {
+func handleRedisClusterError(key string, extraFields map[string]any) *AppError {
 	appErr := AutoSource(
-		NewRepoError(ctx, ErrRepoDatabase,
+		NewRepoError(ErrRepoDatabase,
 			"redis cluster error"))
 
 	if key != "" {
@@ -259,9 +258,9 @@ func handleRedisClusterError(ctx context.Context, key string, extraFields map[st
 	return appErr
 }
 
-func handleRedisNoScriptError(ctx context.Context, key string, extraFields map[string]any) *AppError {
+func handleRedisNoScriptError(key string, extraFields map[string]any) *AppError {
 	appErr := AutoSource(
-		NewRepoError(ctx, ErrRepoDatabase,
+		NewRepoError(ErrRepoDatabase,
 			"redis script not found"))
 
 	if key != "" {
@@ -276,9 +275,9 @@ func handleRedisNoScriptError(ctx context.Context, key string, extraFields map[s
 	return appErr
 }
 
-func handleRedisNoAuthError(ctx context.Context, key string, extraFields map[string]any) *AppError {
+func handleRedisNoAuthError(key string, extraFields map[string]any) *AppError {
 	appErr := AutoSource(
-		NewRepoError(ctx, ErrRepoDatabase,
+		NewRepoError(ErrRepoDatabase,
 			"redis authentication required"))
 
 	if key != "" {

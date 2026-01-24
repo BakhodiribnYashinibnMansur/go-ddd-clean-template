@@ -37,7 +37,7 @@ func (uc *UseCase) Create(ctx context.Context, in *domain.Session) (*domain.Sess
 	err := uc.repo.Postgres.User.SessionRepo.Create(ctx, in)
 	if err != nil {
 		uc.logger.WithContext(ctx).Errorw("session create failed", "error", err)
-		return nil, apperrors.MapRepoToServiceError(ctx, err).WithInput(in)
+		return nil, apperrors.MapRepoToServiceError(err).WithInput(in)
 	}
 
 	uc.logger.WithContext(ctx).Infow("session create success", "session_id", in.ID)

@@ -1,7 +1,6 @@
 package errors
 
 import (
-	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -12,7 +11,7 @@ import (
 
 // HandleMySQLError handles MySQL errors and converts them to AppError
 // This centralizes all MySQL error handling logic
-func HandleMySQLError(ctx context.Context, err error, table string, extraFields map[string]any) *AppError {
+func HandleMySQLError(err error, table string, extraFields map[string]any) *AppError {
 	if err == nil {
 		return nil
 	}
@@ -22,7 +21,7 @@ func HandleMySQLError(ctx context.Context, err error, table string, extraFields 
 	// ============================================================================
 	if errors.Is(err, sql.ErrNoRows) {
 		appErr := AutoSource(
-			NewRepoError(ctx, ErrRepoNotFound,
+			NewRepoError(ErrRepoNotFound,
 				"record not found"))
 
 		if table != "" {
@@ -39,20 +38,20 @@ func HandleMySQLError(ctx context.Context, err error, table string, extraFields 
 	// Try to cast to mysql.MySQLError
 	var mysqlErr *mysql.MySQLError
 	if errors.As(err, &mysqlErr) {
-		return handleMySQLSpecificError(ctx, mysqlErr, table, extraFields)
+		return handleMySQLSpecificError(mysqlErr, table, extraFields)
 	}
 
 	// Check for connection errors in error message
 	errMsg := err.Error()
 	if isMySQLConnectionError(errMsg) {
-		return handleMySQLConnectionError(ctx, table, extraFields)
+		return handleMySQLConnectionError(table, extraFields)
 	}
 
 	// ============================================================================
 	// Default: Generic MySQL error
 	// ============================================================================
 	appErr := AutoSource(
-		WrapRepoError(ctx, err, ErrRepoDatabase,
+		WrapRepoError(err, ErrRepoDatabase,
 			"mysql operation failed"))
 
 	if table != "" {
@@ -67,14 +66,14 @@ func HandleMySQLError(ctx context.Context, err error, table string, extraFields 
 }
 
 // handleMySQLSpecificError handles MySQL-specific errors by error code
-func handleMySQLSpecificError(ctx context.Context, mysqlErr *mysql.MySQLError, table string, extraFields map[string]any) *AppError {
+func handleMySQLSpecificError(mysqlErr *mysql.MySQLError, table string, extraFields map[string]any) *AppError {
 	switch mysqlErr.Number {
 	// ============================================================================
 	// 1062 — Duplicate Entry (Unique Violation)
 	// ============================================================================
 	case 1062:
 		appErr := AutoSource(
-			NewRepoError(ctx, ErrRepoAlreadyExists,
+			NewRepoError(ErrRepoAlreadyExists,
 				"duplicate entry"))
 
 		if table != "" {
@@ -94,7 +93,7 @@ func handleMySQLSpecificError(ctx context.Context, mysqlErr *mysql.MySQLError, t
 	// ============================================================================
 	case 1452:
 		appErr := AutoSource(
-			NewRepoError(ctx, ErrRepoConstraint,
+			NewRepoError(ErrRepoConstraint,
 				"foreign key constraint violation"))
 
 		if table != "" {
@@ -114,7 +113,7 @@ func handleMySQLSpecificError(ctx context.Context, mysqlErr *mysql.MySQLError, t
 	// ============================================================================
 	case 1451:
 		appErr := AutoSource(
-			NewRepoError(ctx, ErrRepoConstraint,
+			NewRepoError(ErrRepoConstraint,
 				"cannot delete or update parent row"))
 
 		if table != "" {
@@ -134,7 +133,7 @@ func handleMySQLSpecificError(ctx context.Context, mysqlErr *mysql.MySQLError, t
 	// ============================================================================
 	case 1048:
 		appErr := AutoSource(
-			NewRepoError(ctx, ErrRepoConstraint,
+			NewRepoError(ErrRepoConstraint,
 				"null value constraint violation"))
 
 		if table != "" {
@@ -154,7 +153,7 @@ func handleMySQLSpecificError(ctx context.Context, mysqlErr *mysql.MySQLError, t
 	// ============================================================================
 	case 1146:
 		appErr := AutoSource(
-			NewRepoError(ctx, ErrRepoDatabase,
+			NewRepoError(ErrRepoDatabase,
 				"table does not exist"))
 
 		if table != "" {
@@ -174,7 +173,7 @@ func handleMySQLSpecificError(ctx context.Context, mysqlErr *mysql.MySQLError, t
 	// ============================================================================
 	case 1054:
 		appErr := AutoSource(
-			NewRepoError(ctx, ErrRepoDatabase,
+			NewRepoError(ErrRepoDatabase,
 				"unknown column"))
 
 		if table != "" {
@@ -194,7 +193,7 @@ func handleMySQLSpecificError(ctx context.Context, mysqlErr *mysql.MySQLError, t
 	// ============================================================================
 	case 1205:
 		appErr := AutoSource(
-			NewRepoError(ctx, ErrRepoTimeout,
+			NewRepoError(ErrRepoTimeout,
 				"lock wait timeout"))
 
 		if table != "" {
@@ -214,7 +213,7 @@ func handleMySQLSpecificError(ctx context.Context, mysqlErr *mysql.MySQLError, t
 	// ============================================================================
 	case 1213:
 		appErr := AutoSource(
-			NewRepoError(ctx, ErrRepoDatabase,
+			NewRepoError(ErrRepoDatabase,
 				"deadlock detected"))
 
 		if table != "" {
@@ -234,7 +233,7 @@ func handleMySQLSpecificError(ctx context.Context, mysqlErr *mysql.MySQLError, t
 	// ============================================================================
 	case 1040:
 		appErr := AutoSource(
-			NewRepoError(ctx, ErrRepoConnection,
+			NewRepoError(ErrRepoConnection,
 				"too many connections"))
 
 		if table != "" {
@@ -254,7 +253,7 @@ func handleMySQLSpecificError(ctx context.Context, mysqlErr *mysql.MySQLError, t
 	// ============================================================================
 	case 1045:
 		appErr := AutoSource(
-			NewRepoError(ctx, ErrRepoDatabase,
+			NewRepoError(ErrRepoDatabase,
 				"access denied"))
 
 		if table != "" {
@@ -274,7 +273,7 @@ func handleMySQLSpecificError(ctx context.Context, mysqlErr *mysql.MySQLError, t
 	// ============================================================================
 	case 1044:
 		appErr := AutoSource(
-			NewRepoError(ctx, ErrRepoDatabase,
+			NewRepoError(ErrRepoDatabase,
 				"access denied for database"))
 
 		if table != "" {
@@ -294,7 +293,7 @@ func handleMySQLSpecificError(ctx context.Context, mysqlErr *mysql.MySQLError, t
 	// ============================================================================
 	case 1364:
 		appErr := AutoSource(
-			NewRepoError(ctx, ErrRepoConstraint,
+			NewRepoError(ErrRepoConstraint,
 				"field has no default value"))
 
 		if table != "" {
@@ -314,7 +313,7 @@ func handleMySQLSpecificError(ctx context.Context, mysqlErr *mysql.MySQLError, t
 	// ============================================================================
 	case 1406:
 		appErr := AutoSource(
-			NewRepoError(ctx, ErrRepoDatabase,
+			NewRepoError(ErrRepoDatabase,
 				"data too long"))
 
 		if table != "" {
@@ -334,7 +333,7 @@ func handleMySQLSpecificError(ctx context.Context, mysqlErr *mysql.MySQLError, t
 	// ============================================================================
 	default:
 		appErr := AutoSource(
-			WrapRepoError(ctx, fmt.Errorf("mysql error: %s", mysqlErr.Message), ErrRepoDatabase,
+			WrapRepoError(fmt.Errorf("mysql error: %s", mysqlErr.Message), ErrRepoDatabase,
 				"mysql error"))
 
 		if table != "" {
@@ -366,9 +365,9 @@ func isMySQLConnectionError(msg string) bool {
 		strings.Contains(msg, "can't connect to MySQL server")
 }
 
-func handleMySQLConnectionError(ctx context.Context, table string, extraFields map[string]any) *AppError {
+func handleMySQLConnectionError(table string, extraFields map[string]any) *AppError {
 	appErr := AutoSource(
-		NewRepoError(ctx, ErrRepoConnection,
+		NewRepoError(ErrRepoConnection,
 			"mysql connection error"))
 
 	if table != "" {

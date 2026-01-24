@@ -1,14 +1,16 @@
 package metric
 
 import (
+	"gct/consts"
 	"gct/pkg/db/postgres"
 	"gct/pkg/logger"
+
 	"github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 const (
-	tableName = "function_metrics"
+	tableName = consts.TableFunctionMetric
 )
 
 type Repo struct {

@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 
+	"gct/consts"
 	"gct/internal/domain"
 	apperrors "gct/pkg/errors"
 
@@ -12,7 +13,7 @@ import (
 func (r *Repo) Gets(ctx context.Context, filter *domain.UsersFilter) ([]*domain.User, int, error) {
 	// Base query
 	baseQb := r.builder.Select("id, role_id, username, email, phone, password_hash, salt, attributes, active, is_approved, created_at, updated_at, deleted_at, last_seen").
-		From("users").
+		From(tableName).
 		Where("deleted_at = 0")
 
 	// Apply dynamic filters
@@ -34,12 +35,12 @@ func (r *Repo) Gets(ctx context.Context, filter *domain.UsersFilter) ([]*domain.
 
 	sql, args, err := qb.ToSql()
 	if err != nil {
-		return nil, 0, apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase, "failed to build SQL query")
+		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, "failed to build SQL query")
 	}
 
 	rows, err := r.pool.Query(ctx, sql, args...)
 	if err != nil {
-		return nil, 0, apperrors.HandlePgError(ctx, err, "users", nil)
+		return nil, 0, apperrors.HandlePgError(err, tableName, nil)
 	}
 	defer rows.Close()
 
@@ -51,23 +52,27 @@ func (r *Repo) Gets(ctx context.Context, filter *domain.UsersFilter) ([]*domain.
 			&u.Attributes, &u.Active, &u.IsApproved,
 			&u.CreatedAt, &u.UpdatedAt, &u.DeletedAt, &u.LastSeen,
 		); err != nil {
-			return nil, 0, apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase, "failed to scan row")
+			return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, "failed to scan row")
 		}
 		users = append(users, &u)
 	}
 
+	if err := rows.Err(); err != nil {
+		return nil, 0, apperrors.HandlePgError(err, tableName, nil)
+	}
+
 	// Count Query
 	// Start fresh from builder but reuse filter logic
-	countBaseQb := r.builder.Select("COUNT(*)").From("users").Where("deleted_at = 0")
+	countBaseQb := r.builder.Select("COUNT(*)").From(tableName).Where("deleted_at = 0")
 	countQb := r.applyFilters(countBaseQb, &filter.UserFilter)
 
 	countSql, countArgs, err := countQb.ToSql()
 	if err != nil {
-		return nil, 0, apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase, "failed to build count query")
+		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, "failed to build count query")
 	}
 	var count int
 	if err := r.pool.QueryRow(ctx, countSql, countArgs...).Scan(&count); err != nil {
-		return nil, 0, apperrors.HandlePgError(ctx, err, "users", nil)
+		return nil, 0, apperrors.HandlePgError(err, consts.TableUsers, nil)
 	}
 
 	return users, count, nil

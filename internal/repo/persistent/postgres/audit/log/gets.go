@@ -79,13 +79,13 @@ func (r *Repo) Gets(ctx context.Context, filter *domain.AuditLogsFilter) ([]*dom
 
 	sql, args, err := countQuery.ToSql()
 	if err != nil {
-		return nil, 0, apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase, "failed to build count query")
+		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, "failed to build count query")
 	}
 
 	var count int
 	err = r.pool.QueryRow(ctx, sql, args...).Scan(&count)
 	if err != nil {
-		return nil, 0, apperrors.HandlePgError(ctx, err, tableName, nil)
+		return nil, 0, apperrors.HandlePgError(err, tableName, nil)
 	}
 
 	// Apply pagination
@@ -103,12 +103,12 @@ func (r *Repo) Gets(ctx context.Context, filter *domain.AuditLogsFilter) ([]*dom
 
 	sql, args, err = query.ToSql()
 	if err != nil {
-		return nil, 0, apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase, "failed to build select query")
+		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, "failed to build select query")
 	}
 
 	rows, err := r.pool.Query(ctx, sql, args...)
 	if err != nil {
-		return nil, 0, apperrors.HandlePgError(ctx, err, tableName, nil)
+		return nil, 0, apperrors.HandlePgError(err, tableName, nil)
 	}
 	defer rows.Close()
 
@@ -137,9 +137,13 @@ func (r *Repo) Gets(ctx context.Context, filter *domain.AuditLogsFilter) ([]*dom
 			&l.CreatedAt,
 		)
 		if err != nil {
-			return nil, 0, apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase, fmt.Sprintf("failed to scan row: %s", err))
+			return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, fmt.Sprintf("failed to scan row: %s", err))
 		}
 		logs = append(logs, &l)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, 0, apperrors.HandlePgError(err, tableName, nil)
 	}
 
 	return logs, count, nil

@@ -15,7 +15,7 @@ func (uc *UseCase) Revoke(ctx context.Context, in *domain.SessionFilter) error {
 	err := repo.Revoke(ctx, in)
 	if err != nil {
 		uc.logger.WithContext(ctx).Errorw("session revoke failed", "error", err)
-		return apperrors.MapRepoToServiceError(ctx, err).WithInput(in)
+		return apperrors.MapRepoToServiceError(err).WithInput(in)
 	}
 	uc.logger.WithContext(ctx).Infow("session revoke success")
 	return nil

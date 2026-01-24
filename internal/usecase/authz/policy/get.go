@@ -12,7 +12,7 @@ func (u *UseCase) Get(ctx context.Context, filter *domain.PolicyFilter) (*domain
 
 	policy, err := u.repo.Postgres.Authz.Policy.Get(ctx, filter)
 	if err != nil {
-		appErr := apperrors.MapRepoToServiceError(ctx, err, apperrors.ErrServicePolicyViolation).WithInput(filter)
+		appErr := apperrors.MapRepoToServiceError(err, apperrors.ErrServicePolicyViolation).WithInput(filter)
 		u.logger.WithContext(ctx).Errorw("policy get failed", "error", appErr)
 		return nil, appErr
 	}

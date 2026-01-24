@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/domain"
 	apperrors "gct/pkg/errors"
+
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
 )
@@ -17,12 +18,12 @@ func (r *Repo) GetScopes(ctx context.Context, permID uuid.UUID) ([]*domain.Scope
 		Where(squirrel.Eq{"ps.permission_id": permID}).
 		ToSql()
 	if err != nil {
-		return nil, apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase, "failed to build select query")
+		return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, "failed to build select query")
 	}
 
 	rows, err := r.pool.Query(ctx, sql, args...)
 	if err != nil {
-		return nil, apperrors.HandlePgError(ctx, err, "scope", nil)
+		return nil, apperrors.HandlePgError(err, "scope", nil)
 	}
 	defer rows.Close()
 
@@ -30,9 +31,13 @@ func (r *Repo) GetScopes(ctx context.Context, permID uuid.UUID) ([]*domain.Scope
 	for rows.Next() {
 		var s domain.Scope
 		if err := rows.Scan(&s.Path, &s.Method, &s.CreatedAt); err != nil {
-			return nil, apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase, "failed to scan row")
+			return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, "failed to scan row")
 		}
 		scopes = append(scopes, &s)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, apperrors.HandlePgError(err, "scope", nil)
 	}
 
 	return scopes, nil

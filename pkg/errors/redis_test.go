@@ -8,8 +8,7 @@ import (
 )
 
 func TestHandleRedisError_NoError(t *testing.T) {
-	ctx := t.Context()
-	result := HandleRedisError(ctx, nil, "user:123", nil)
+	result := HandleRedisError(nil, "user:123", nil)
 
 	if result != nil {
 		t.Errorf("HandleRedisError(nil) should return nil, got %v", result)
@@ -17,8 +16,7 @@ func TestHandleRedisError_NoError(t *testing.T) {
 }
 
 func TestHandleRedisError_Nil(t *testing.T) {
-	ctx := t.Context()
-	result := HandleRedisError(ctx, redis.Nil, "user:123", map[string]any{
+	result := HandleRedisError(redis.Nil, "user:123", map[string]any{
 		"operation": "get",
 	})
 
@@ -26,8 +24,8 @@ func TestHandleRedisError_Nil(t *testing.T) {
 		t.Fatal("HandleRedisError(redis.Nil) should return AppError")
 	}
 
-	if result.Code != ErrRepoNotFound {
-		t.Errorf("Expected code %s, got %s", ErrRepoNotFound, result.Code)
+	if result.Type != ErrRepoNotFound {
+		t.Errorf("Expected type %s, got %s", ErrRepoNotFound, result.Type)
 	}
 
 	if result.Fields["key"] != "user:123" {
@@ -40,17 +38,16 @@ func TestHandleRedisError_Nil(t *testing.T) {
 }
 
 func TestHandleRedisError_ConnectionRefused(t *testing.T) {
-	ctx := t.Context()
 	err := errors.New("dial tcp 127.0.0.1:6379: connection refused")
 
-	result := HandleRedisError(ctx, err, "user:123", nil)
+	result := HandleRedisError(err, "user:123", nil)
 
 	if result == nil {
 		t.Fatal("HandleRedisError should return AppError for connection error")
 	}
 
-	if result.Code != ErrRepoConnection {
-		t.Errorf("Expected code %s, got %s", ErrRepoConnection, result.Code)
+	if result.Type != ErrRepoConnection {
+		t.Errorf("Expected type %s, got %s", ErrRepoConnection, result.Type)
 	}
 
 	if result.Fields["error_type"] != "connection" {
@@ -59,17 +56,16 @@ func TestHandleRedisError_ConnectionRefused(t *testing.T) {
 }
 
 func TestHandleRedisError_Timeout(t *testing.T) {
-	ctx := t.Context()
 	err := errors.New("i/o timeout")
 
-	result := HandleRedisError(ctx, err, "session:456", nil)
+	result := HandleRedisError(err, "session:456", nil)
 
 	if result == nil {
 		t.Fatal("HandleRedisError should return AppError for timeout")
 	}
 
-	if result.Code != ErrRepoTimeout {
-		t.Errorf("Expected code %s, got %s", ErrRepoTimeout, result.Code)
+	if result.Type != ErrRepoTimeout {
+		t.Errorf("Expected type %s, got %s", ErrRepoTimeout, result.Type)
 	}
 
 	if result.Fields["error_type"] != "timeout" {
@@ -78,32 +74,30 @@ func TestHandleRedisError_Timeout(t *testing.T) {
 }
 
 func TestHandleRedisError_DeadlineExceeded(t *testing.T) {
-	ctx := t.Context()
 	err := errors.New("context deadline exceeded")
 
-	result := HandleRedisError(ctx, err, "cache:data", nil)
+	result := HandleRedisError(err, "cache:data", nil)
 
 	if result == nil {
 		t.Fatal("HandleRedisError should return AppError for deadline exceeded")
 	}
 
-	if result.Code != ErrRepoTimeout {
-		t.Errorf("Expected code %s, got %s", ErrRepoTimeout, result.Code)
+	if result.Type != ErrRepoTimeout {
+		t.Errorf("Expected type %s, got %s", ErrRepoTimeout, result.Type)
 	}
 }
 
 func TestHandleRedisError_WrongPassword(t *testing.T) {
-	ctx := t.Context()
 	err := errors.New("WRONGPASS invalid username-password pair")
 
-	result := HandleRedisError(ctx, err, "", nil)
+	result := HandleRedisError(err, "", nil)
 
 	if result == nil {
 		t.Fatal("HandleRedisError should return AppError for auth error")
 	}
 
-	if result.Code != ErrRepoDatabase {
-		t.Errorf("Expected code %s, got %s", ErrRepoDatabase, result.Code)
+	if result.Type != ErrRepoDatabase {
+		t.Errorf("Expected type %s, got %s", ErrRepoDatabase, result.Type)
 	}
 
 	if result.Fields["error_type"] != "auth" {
@@ -112,17 +106,16 @@ func TestHandleRedisError_WrongPassword(t *testing.T) {
 }
 
 func TestHandleRedisError_WrongType(t *testing.T) {
-	ctx := t.Context()
 	err := errors.New("WRONGTYPE Operation against a key holding the wrong kind of value")
 
-	result := HandleRedisError(ctx, err, "mykey", nil)
+	result := HandleRedisError(err, "mykey", nil)
 
 	if result == nil {
 		t.Fatal("HandleRedisError should return AppError for type error")
 	}
 
-	if result.Code != ErrRepoDatabase {
-		t.Errorf("Expected code %s, got %s", ErrRepoDatabase, result.Code)
+	if result.Type != ErrRepoDatabase {
+		t.Errorf("Expected type %s, got %s", ErrRepoDatabase, result.Type)
 	}
 
 	if result.Fields["error_type"] != "wrongtype" {
@@ -131,17 +124,16 @@ func TestHandleRedisError_WrongType(t *testing.T) {
 }
 
 func TestHandleRedisError_OutOfMemory(t *testing.T) {
-	ctx := t.Context()
 	err := errors.New("OOM command not allowed when used memory > 'maxmemory'")
 
-	result := HandleRedisError(ctx, err, "data", nil)
+	result := HandleRedisError(err, "data", nil)
 
 	if result == nil {
 		t.Fatal("HandleRedisError should return AppError for OOM")
 	}
 
-	if result.Code != ErrRepoDatabase {
-		t.Errorf("Expected code %s, got %s", ErrRepoDatabase, result.Code)
+	if result.Type != ErrRepoDatabase {
+		t.Errorf("Expected type %s, got %s", ErrRepoDatabase, result.Type)
 	}
 
 	if result.Fields["error_type"] != "oom" {
@@ -150,17 +142,16 @@ func TestHandleRedisError_OutOfMemory(t *testing.T) {
 }
 
 func TestHandleRedisError_ReadOnly(t *testing.T) {
-	ctx := t.Context()
 	err := errors.New("READONLY You can't write against a read only replica")
 
-	result := HandleRedisError(ctx, err, "key", nil)
+	result := HandleRedisError(err, "key", nil)
 
 	if result == nil {
 		t.Fatal("HandleRedisError should return AppError for readonly")
 	}
 
-	if result.Code != ErrRepoDatabase {
-		t.Errorf("Expected code %s, got %s", ErrRepoDatabase, result.Code)
+	if result.Type != ErrRepoDatabase {
+		t.Errorf("Expected type %s, got %s", ErrRepoDatabase, result.Type)
 	}
 
 	if result.Fields["error_type"] != "readonly" {
@@ -169,17 +160,16 @@ func TestHandleRedisError_ReadOnly(t *testing.T) {
 }
 
 func TestHandleRedisError_ClusterDown(t *testing.T) {
-	ctx := t.Context()
 	err := errors.New("CLUSTERDOWN The cluster is down")
 
-	result := HandleRedisError(ctx, err, "key", nil)
+	result := HandleRedisError(err, "key", nil)
 
 	if result == nil {
 		t.Fatal("HandleRedisError should return AppError for cluster down")
 	}
 
-	if result.Code != ErrRepoDatabase {
-		t.Errorf("Expected code %s, got %s", ErrRepoDatabase, result.Code)
+	if result.Type != ErrRepoDatabase {
+		t.Errorf("Expected type %s, got %s", ErrRepoDatabase, result.Type)
 	}
 
 	if result.Fields["error_type"] != "cluster" {
@@ -188,17 +178,16 @@ func TestHandleRedisError_ClusterDown(t *testing.T) {
 }
 
 func TestHandleRedisError_NoScript(t *testing.T) {
-	ctx := t.Context()
 	err := errors.New("NOSCRIPT No matching script. Please use EVAL")
 
-	result := HandleRedisError(ctx, err, "", nil)
+	result := HandleRedisError(err, "", nil)
 
 	if result == nil {
 		t.Fatal("HandleRedisError should return AppError for noscript")
 	}
 
-	if result.Code != ErrRepoDatabase {
-		t.Errorf("Expected code %s, got %s", ErrRepoDatabase, result.Code)
+	if result.Type != ErrRepoDatabase {
+		t.Errorf("Expected type %s, got %s", ErrRepoDatabase, result.Type)
 	}
 
 	if result.Fields["error_type"] != "noscript" {
@@ -207,17 +196,16 @@ func TestHandleRedisError_NoScript(t *testing.T) {
 }
 
 func TestHandleRedisError_NoAuth(t *testing.T) {
-	ctx := t.Context()
 	err := errors.New("NOAUTH Authentication required")
 
-	result := HandleRedisError(ctx, err, "", nil)
+	result := HandleRedisError(err, "", nil)
 
 	if result == nil {
 		t.Fatal("HandleRedisError should return AppError for noauth")
 	}
 
-	if result.Code != ErrRepoDatabase {
-		t.Errorf("Expected code %s, got %s", ErrRepoDatabase, result.Code)
+	if result.Type != ErrRepoDatabase {
+		t.Errorf("Expected type %s, got %s", ErrRepoDatabase, result.Type)
 	}
 
 	if result.Fields["error_type"] != "noauth" {
@@ -226,40 +214,37 @@ func TestHandleRedisError_NoAuth(t *testing.T) {
 }
 
 func TestHandleRedisError_EOF(t *testing.T) {
-	ctx := t.Context()
 	err := errors.New("EOF")
 
-	result := HandleRedisError(ctx, err, "key", nil)
+	result := HandleRedisError(err, "key", nil)
 
 	if result == nil {
 		t.Fatal("HandleRedisError should return AppError for EOF")
 	}
 
-	if result.Code != ErrRepoConnection {
-		t.Errorf("Expected code %s, got %s", ErrRepoConnection, result.Code)
+	if result.Type != ErrRepoConnection {
+		t.Errorf("Expected type %s, got %s", ErrRepoConnection, result.Type)
 	}
 }
 
 func TestHandleRedisError_BrokenPipe(t *testing.T) {
-	ctx := t.Context()
 	err := errors.New("write: broken pipe")
 
-	result := HandleRedisError(ctx, err, "key", nil)
+	result := HandleRedisError(err, "key", nil)
 
 	if result == nil {
 		t.Fatal("HandleRedisError should return AppError for broken pipe")
 	}
 
-	if result.Code != ErrRepoConnection {
-		t.Errorf("Expected code %s, got %s", ErrRepoConnection, result.Code)
+	if result.Type != ErrRepoConnection {
+		t.Errorf("Expected type %s, got %s", ErrRepoConnection, result.Type)
 	}
 }
 
 func TestHandleRedisError_GenericError(t *testing.T) {
-	ctx := t.Context()
 	err := errors.New("some random redis error")
 
-	result := HandleRedisError(ctx, err, "mykey", map[string]any{
+	result := HandleRedisError(err, "mykey", map[string]any{
 		"operation": "set",
 		"ttl":       3600,
 	})
@@ -268,8 +253,8 @@ func TestHandleRedisError_GenericError(t *testing.T) {
 		t.Fatal("HandleRedisError should return AppError for generic error")
 	}
 
-	if result.Code != ErrRepoDatabase {
-		t.Errorf("Expected code %s, got %s", ErrRepoDatabase, result.Code)
+	if result.Type != ErrRepoDatabase {
+		t.Errorf("Expected type %s, got %s", ErrRepoDatabase, result.Type)
 	}
 
 	if result.Fields["operation"] != "set" {
@@ -282,22 +267,20 @@ func TestHandleRedisError_GenericError(t *testing.T) {
 }
 
 func TestHandleRedisError_EmptyKey(t *testing.T) {
-	ctx := t.Context()
 
-	result := HandleRedisError(ctx, redis.Nil, "", nil)
+	result := HandleRedisError(redis.Nil, "", nil)
 
 	if result == nil {
 		t.Fatal("HandleRedisError should return AppError")
 	}
 
 	// Should work with empty key
-	if result.Code != ErrRepoNotFound {
-		t.Errorf("Expected code %s, got %s", ErrRepoNotFound, result.Code)
+	if result.Type != ErrRepoNotFound {
+		t.Errorf("Expected type %s, got %s", ErrRepoNotFound, result.Type)
 	}
 }
 
 func TestHandleRedisError_ExtraFields(t *testing.T) {
-	ctx := t.Context()
 
 	extraFields := map[string]any{
 		"user_id":   123,
@@ -305,7 +288,7 @@ func TestHandleRedisError_ExtraFields(t *testing.T) {
 		"ttl":       3600,
 	}
 
-	result := HandleRedisError(ctx, redis.Nil, "user:123", extraFields)
+	result := HandleRedisError(redis.Nil, "user:123", extraFields)
 
 	if result == nil {
 		t.Fatal("HandleRedisError should return AppError")
@@ -346,17 +329,16 @@ func TestHandleRedisError_MultiplePatterns(t *testing.T) {
 		},
 	}
 
-	ctx := t.Context()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := HandleRedisError(ctx, tt.err, "key", nil)
+			result := HandleRedisError(tt.err, "key", nil)
 
 			if result == nil {
 				t.Fatal("HandleRedisError should return AppError")
 			}
 
-			if result.Code != tt.expectedCode {
-				t.Errorf("Expected code %s, got %s", tt.expectedCode, result.Code)
+			if result.Type != tt.expectedCode {
+				t.Errorf("Expected type %s, got %s", tt.expectedCode, result.Type)
 			}
 
 			if tt.expectedType != "" {
@@ -370,38 +352,34 @@ func TestHandleRedisError_MultiplePatterns(t *testing.T) {
 
 // Benchmark tests
 func BenchmarkHandleRedisError_Nil(b *testing.B) {
-	ctx := b.Context()
 	for range b.N {
-		HandleRedisError(ctx, redis.Nil, "key", nil)
+		HandleRedisError(redis.Nil, "key", nil)
 	}
 }
 
 func BenchmarkHandleRedisError_ConnectionError(b *testing.B) {
-	ctx := b.Context()
 	err := errors.New("connection refused")
 
 	b.ResetTimer()
 	for range b.N {
-		HandleRedisError(ctx, err, "key", nil)
+		HandleRedisError(err, "key", nil)
 	}
 }
 
 func BenchmarkHandleRedisError_Timeout(b *testing.B) {
-	ctx := b.Context()
 	err := errors.New("i/o timeout")
 
 	b.ResetTimer()
 	for range b.N {
-		HandleRedisError(ctx, err, "key", nil)
+		HandleRedisError(err, "key", nil)
 	}
 }
 
 func BenchmarkHandleRedisError_GenericError(b *testing.B) {
-	ctx := b.Context()
 	err := errors.New("some redis error")
 
 	b.ResetTimer()
 	for range b.N {
-		HandleRedisError(ctx, err, "key", nil)
+		HandleRedisError(err, "key", nil)
 	}
 }

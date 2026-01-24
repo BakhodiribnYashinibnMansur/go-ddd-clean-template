@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/domain"
 	apperrors "gct/pkg/errors"
+
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
 )
@@ -24,12 +25,12 @@ func (r *Repo) GetByRole(ctx context.Context, roleID uuid.UUID) ([]*domain.Polic
 		OrderBy("p.priority DESC"). // Higher priority first
 		ToSql()
 	if err != nil {
-		return nil, apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase, "failed to build select query")
+		return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, "failed to build select query")
 	}
 
 	rows, err := r.pool.Query(ctx, sql, args...)
 	if err != nil {
-		return nil, apperrors.HandlePgError(ctx, err, "policy", nil)
+		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 	defer rows.Close()
 
@@ -37,9 +38,13 @@ func (r *Repo) GetByRole(ctx context.Context, roleID uuid.UUID) ([]*domain.Polic
 	for rows.Next() {
 		var p domain.Policy
 		if err := rows.Scan(&p.ID, &p.PermissionID, &p.Effect, &p.Priority, &p.Active, &p.Conditions, &p.CreatedAt); err != nil {
-			return nil, apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase, "failed to scan row")
+			return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, "failed to scan row")
 		}
 		policies = append(policies, &p)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 
 	return policies, nil

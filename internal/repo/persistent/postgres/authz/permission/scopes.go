@@ -5,6 +5,7 @@ import (
 	"time"
 
 	apperrors "gct/pkg/errors"
+
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
 )
@@ -16,12 +17,12 @@ func (r *Repo) AddScope(ctx context.Context, permID uuid.UUID, path, method stri
 		Values(permID, path, method, time.Now()).
 		ToSql()
 	if err != nil {
-		return apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase, "failed to build insert query")
+		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, "failed to build insert query")
 	}
 
 	_, err = r.pool.Exec(ctx, sql, args...)
 	if err != nil {
-		return apperrors.HandlePgError(ctx, err, "permission_scope", nil)
+		return apperrors.HandlePgError(err, "permission_scope", nil)
 	}
 
 	return nil
@@ -35,16 +36,16 @@ func (r *Repo) RemoveScope(ctx context.Context, permID uuid.UUID, path, method s
 		Where(squirrel.Eq{"method": method}).
 		ToSql()
 	if err != nil {
-		return apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase, "failed to build delete query")
+		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, "failed to build delete query")
 	}
 
 	tag, err := r.pool.Exec(ctx, sql, args...)
 	if err != nil {
-		return apperrors.HandlePgError(ctx, err, "permission_scope", nil)
+		return apperrors.HandlePgError(err, "permission_scope", nil)
 	}
 
 	if tag.RowsAffected() == 0 {
-		return apperrors.NewRepoError(ctx, apperrors.ErrRepoNotFound, "permission scope not found")
+		return apperrors.NewRepoError(apperrors.ErrRepoNotFound, "permission scope not found")
 	}
 
 	return nil

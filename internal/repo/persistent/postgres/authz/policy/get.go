@@ -5,11 +5,12 @@ import (
 
 	"gct/internal/domain"
 	apperrors "gct/pkg/errors"
+
 	"github.com/Masterminds/squirrel"
 )
 
 func (r *Repo) Get(ctx context.Context, filter *domain.PolicyFilter) (*domain.Policy, error) {
-	query := r.builder.Select("id", "permission_id", "effect", "priority", "active", "conditions", "created_at").From("policy")
+	query := r.builder.Select("id", "permission_id", "effect", "priority", "active", "conditions", "created_at").From(tableName)
 
 	if filter.ID != nil {
 		query = query.Where(squirrel.Eq{"id": *filter.ID})
@@ -23,13 +24,13 @@ func (r *Repo) Get(ctx context.Context, filter *domain.PolicyFilter) (*domain.Po
 
 	sql, args, err := query.ToSql()
 	if err != nil {
-		return nil, apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase, "failed to build select query")
+		return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, "failed to build select query")
 	}
 
 	var p domain.Policy
 	err = r.pool.QueryRow(ctx, sql, args...).Scan(&p.ID, &p.PermissionID, &p.Effect, &p.Priority, &p.Active, &p.Conditions, &p.CreatedAt)
 	if err != nil {
-		return nil, apperrors.HandlePgError(ctx, err, "policy", nil)
+		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 
 	return &p, nil

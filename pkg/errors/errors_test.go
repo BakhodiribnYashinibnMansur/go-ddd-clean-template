@@ -209,7 +209,6 @@ func TestAppError_WithDetails(t *testing.T) {
 }
 
 func TestNew(t *testing.T) {
-	ctx := t.Context()
 
 	tests := []struct {
 		name    string
@@ -245,7 +244,7 @@ func TestNew(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := New(ctx, tt.code, tt.message)
+			got := New(tt.code, tt.message)
 
 			if got.Type != tt.want.Type {
 				t.Errorf("New().Type = %v, want %v", got.Type, tt.want.Type)
@@ -270,7 +269,6 @@ func TestNew(t *testing.T) {
 }
 
 func TestWrap(t *testing.T) {
-	ctx := t.Context()
 	baseErr := errors.New("base error")
 
 	tests := []struct {
@@ -307,7 +305,7 @@ func TestWrap(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := Wrap(ctx, tt.err, tt.code, tt.message)
+			got := Wrap(tt.err, tt.code, tt.message)
 
 			if tt.wantNil {
 				if got != nil {
@@ -342,7 +340,6 @@ func TestWrap(t *testing.T) {
 }
 
 func TestIs(t *testing.T) {
-	ctx := t.Context()
 
 	tests := []struct {
 		name string
@@ -352,13 +349,13 @@ func TestIs(t *testing.T) {
 	}{
 		{
 			name: "matching AppError code",
-			err:  New(ctx, ErrBadRequest, "Bad request"),
+			err:  New(ErrBadRequest, "Bad request"),
 			code: ErrBadRequest,
 			want: true,
 		},
 		{
 			name: "non-matching AppError code",
-			err:  New(ctx, ErrBadRequest, "Bad request"),
+			err:  New(ErrBadRequest, "Bad request"),
 			code: ErrNotFound,
 			want: false,
 		},
@@ -386,7 +383,6 @@ func TestIs(t *testing.T) {
 }
 
 func TestGetCode(t *testing.T) {
-	ctx := t.Context()
 
 	tests := []struct {
 		name string
@@ -395,7 +391,7 @@ func TestGetCode(t *testing.T) {
 	}{
 		{
 			name: "AppError with code",
-			err:  New(ctx, ErrBadRequest, "Bad request"),
+			err:  New(ErrBadRequest, "Bad request"),
 			want: ErrBadRequest,
 		},
 		{

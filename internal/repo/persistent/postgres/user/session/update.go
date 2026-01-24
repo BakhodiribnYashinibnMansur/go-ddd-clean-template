@@ -6,11 +6,12 @@ import (
 
 	"gct/internal/domain"
 	apperrors "gct/pkg/errors"
+
 	"github.com/Masterminds/squirrel"
 )
 
 func (r *Repo) Update(ctx context.Context, s *domain.Session) error {
-	qb := r.builder.Update("session")
+	qb := r.builder.Update(tableName)
 
 	if s.FCMToken != nil {
 		qb = qb.Set("fcm_token", s.FCMToken)
@@ -29,13 +30,13 @@ func (r *Repo) Update(ctx context.Context, s *domain.Session) error {
 		Where(squirrel.Eq{"id": s.ID}).
 		ToSql()
 	if err != nil {
-		return apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase,
+		return apperrors.NewRepoError(apperrors.ErrRepoDatabase,
 			"failed to build update SQL query")
 	}
 
 	_, err = r.pool.Exec(ctx, sql, args...)
 	if err != nil {
-		return apperrors.HandlePgError(ctx, err, "session", nil)
+		return apperrors.HandlePgError(err, tableName, nil)
 	}
 
 	return nil
@@ -43,11 +44,11 @@ func (r *Repo) Update(ctx context.Context, s *domain.Session) error {
 
 func (r *Repo) Revoke(ctx context.Context, filter *domain.SessionFilter) error {
 	if filter == nil {
-		return apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase,
+		return apperrors.NewRepoError(apperrors.ErrRepoDatabase,
 			"session filter cannot be nil")
 	}
 
-	query := r.builder.Update("session").
+	query := r.builder.Update(tableName).
 		Set("revoked", true).
 		Set("updated_at", time.Now())
 
@@ -63,13 +64,13 @@ func (r *Repo) Revoke(ctx context.Context, filter *domain.SessionFilter) error {
 
 	sql, args, err := query.ToSql()
 	if err != nil {
-		return apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase,
+		return apperrors.NewRepoError(apperrors.ErrRepoDatabase,
 			"failed to build update SQL query")
 	}
 
 	_, err = r.pool.Exec(ctx, sql, args...)
 	if err != nil {
-		return apperrors.HandlePgError(ctx, err, "session", nil)
+		return apperrors.HandlePgError(err, tableName, nil)
 	}
 
 	return nil

@@ -12,7 +12,7 @@ func (uc *UseCase) SignOut(ctx context.Context, in *domain.SignOutIn) error {
 	uc.logger.WithContext(ctx).Infow("user sign out started", "input", in)
 
 	// Validate input
-	if err := validator.ValidateStruct(ctx, in); err != nil {
+	if err := validator.ValidateStruct(in); err != nil {
 		return err
 	}
 
@@ -21,7 +21,7 @@ func (uc *UseCase) SignOut(ctx context.Context, in *domain.SignOutIn) error {
 	err := uc.repo.Postgres.User.SessionRepo.Revoke(ctx, &domain.SessionFilter{ID: &sessionID})
 	if err != nil {
 		uc.logger.WithContext(ctx).Errorw("user sign out failed: revoke", "error", err)
-		return apperrors.MapRepoToServiceError(ctx, err).WithInput(in)
+		return apperrors.MapRepoToServiceError(err).WithInput(in)
 	}
 	uc.logger.WithContext(ctx).Infow("user sign out success")
 	return nil

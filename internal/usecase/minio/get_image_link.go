@@ -12,7 +12,7 @@ func (m *UseCase) GetImageLink(ctx context.Context, imageName string) (string, e
 	imageLink, err := m.repo.Persistent.MinIO.GetFileURL(ctx, imageName)
 	if err != nil {
 		// m.logger.WithContext(ctx).Errorw("get image link failed", "error", err)
-		return "", apperrors.MapRepoToServiceError(ctx, err).
+		return "", apperrors.MapRepoToServiceError(err).
 			WithInput(map[string]any{"imageName": imageName})
 	}
 	// m.logger.WithContext(ctx).Infow("get image link success")

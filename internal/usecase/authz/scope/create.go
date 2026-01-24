@@ -13,7 +13,7 @@ func (u *UseCase) Create(ctx context.Context, scope *domain.Scope) error {
 	err := u.repo.Postgres.Authz.Scope.Create(ctx, scope)
 	if err != nil {
 		u.logger.WithContext(ctx).Errorw("scope create failed", "error", err)
-		return apperrors.MapRepoToServiceError(ctx, err).WithInput(scope)
+		return apperrors.MapRepoToServiceError(err).WithInput(scope)
 	}
 	u.logger.WithContext(ctx).Infow("scope create success")
 	return nil

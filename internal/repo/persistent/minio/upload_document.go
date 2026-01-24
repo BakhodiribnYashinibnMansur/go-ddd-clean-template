@@ -29,7 +29,7 @@ func (r *Repo) UploadDocument(ctx context.Context, file io.Reader, fileSize int6
 	docFileName := fileName.String() + "." + fileExtension
 	_, err := r.client.PutObject(ctx, r.config.Bucket, docFileName, file, fileSize, minio.PutObjectOptions{ContentType: contentType})
 	if err != nil {
-		return "", apperrors.HandleMinioError(ctx, err, map[string]any{"filename": docFileName})
+		return "", apperrors.HandleMinioError(err, map[string]any{"filename": docFileName})
 	}
 	return docFileName, nil
 }

@@ -9,19 +9,21 @@ import (
 	"gct/internal/controller/restapi/util"
 	"gct/pkg/csrf"
 	"gct/pkg/logger"
+
 	"github.com/gin-gonic/gin"
 )
 
-// CSRFMiddleware provides production-grade CSRF protection
+// CSRFMiddleware provides production-grade CSRF protection using HMAC signatures.
+// Unlike simple "Double Submit", this validates the token integrity against a server-side secret.
 type CSRFMiddleware struct {
-	generator  *csrf.Generator
-	store      csrf.Store
-	logger     logger.Log
-	cookieName string
-	headerName string
+	generator  *csrf.Generator // Cryptographic utility for token signing/verification.
+	store      csrf.Store      // Storage interface (e.g. Redis) for tracking issued tokens.
+	logger     logger.Log      // Standardized logger.
+	cookieName string          // Name of the cookie containing the token.
+	headerName string          // Name of the header expected to carry the token.
 }
 
-// NewCSRFMiddleware creates a new CSRF middleware with HMAC-based token validation
+// NewCSRFMiddleware initializes the secure middleware component.
 func NewCSRFMiddleware(generator *csrf.Generator, store csrf.Store, l logger.Log) *CSRFMiddleware {
 	return &CSRFMiddleware{
 		generator:  generator,
@@ -32,62 +34,64 @@ func NewCSRFMiddleware(generator *csrf.Generator, store csrf.Store, l logger.Log
 	}
 }
 
-// Protect enforces CSRF protection for state-changing requests
+// Protect enforces strict CSRF verification for all state-changing HTTP requests.
+// It ensures that the token provided in the header matches the one in the cookie
+// AND that the token is cryptographically valid and bound to the current session.
 func (m *CSRFMiddleware) Protect() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Only check for state-changing methods
+		// Filter: Skip check for safe methods (GET, HEAD, OPTIONS).
 		if !isStateChangingMethod(c.Request.Method) {
 			c.Next()
 			return
 		}
 
-		// Get session ID from context (set by auth middleware)
+		// Prerequisite: A valid session ID is required to bind the CSRF token.
 		sessionID, err := util.GetCtxSessionID(c)
 		if err != nil {
 			m.logger.WithContext(c.Request.Context()).Warnw("CSRF Middleware - No session ID in context",
 				"ip", util.GetIPAddress(c),
 				"path", c.Request.URL.Path)
-			response.ControllerResponse(c, http.StatusUnauthorized, "unauthorized", nil, false)
+			response.ControllerResponse(c, http.StatusUnauthorized, util.ErrSessionIDNotFound, nil, false)
 			c.Abort()
 			return
 		}
 
-		// Get token from cookie
+		// 1. Extract Token from Cookie.
 		cookieToken, err := c.Cookie(m.cookieName)
 		if err != nil || cookieToken == "" {
 			m.logger.WithContext(c.Request.Context()).Warnw("CSRF Middleware - Missing cookie token",
 				"ip", util.GetIPAddress(c),
 				"path", c.Request.URL.Path,
 				"session_id", sessionID)
-			response.ControllerResponse(c, http.StatusForbidden, util.ErrCSRFMissing.Error(), nil, false)
+			response.ControllerResponse(c, http.StatusForbidden, util.ErrCSRFMissing, nil, false)
 			c.Abort()
 			return
 		}
 
-		// Get token from header
+		// 2. Extract Token from Header.
 		headerToken := c.GetHeader(m.headerName)
 		if headerToken == "" {
 			m.logger.WithContext(c.Request.Context()).Warnw("CSRF Middleware - Missing header token",
 				"ip", util.GetIPAddress(c),
 				"path", c.Request.URL.Path,
 				"session_id", sessionID)
-			response.ControllerResponse(c, http.StatusForbidden, util.ErrCSRFMissing.Error(), nil, false)
+			response.ControllerResponse(c, http.StatusForbidden, util.ErrCSRFMissing, nil, false)
 			c.Abort()
 			return
 		}
 
-		// Double submit check: cookie and header must match
+		// 3. Double-Submit Check: Tokens must match.
 		if cookieToken != headerToken {
 			m.logger.WithContext(c.Request.Context()).Warnw("CSRF Middleware - Token mismatch",
 				"ip", util.GetIPAddress(c),
 				"path", c.Request.URL.Path,
 				"session_id", sessionID)
-			response.ControllerResponse(c, http.StatusForbidden, util.ErrCSRFInvalid.Error(), nil, false)
+			response.ControllerResponse(c, http.StatusForbidden, util.ErrCSRFInvalid, nil, false)
 			c.Abort()
 			return
 		}
 
-		// Get stored token hash from store
+		// 4. Retrieve Reference Token (Hash) from Storage.
 		storedHash, expiresAt, err := m.store.Get(c.Request.Context(), sessionID.String())
 		if err != nil {
 			m.logger.WithContext(c.Request.Context()).Warnw("CSRF Middleware - Token not found in store",
@@ -95,19 +99,20 @@ func (m *CSRFMiddleware) Protect() gin.HandlerFunc {
 				"path", c.Request.URL.Path,
 				"session_id", sessionID,
 				"error", err)
-			response.ControllerResponse(c, http.StatusForbidden, util.ErrCSRFInvalid.Error(), nil, false)
+			response.ControllerResponse(c, http.StatusForbidden, util.ErrCSRFInvalid, nil, false)
 			c.Abort()
 			return
 		}
 
-		// Validate token using HMAC
+		// 5. Cryptographic Validation.
+		// Verifies the HMAC signature and expiration time.
 		if err := m.generator.ValidateToken(cookieToken, storedHash, sessionID.String(), expiresAt); err != nil {
 			m.logger.WithContext(c.Request.Context()).Warnw("CSRF Middleware - Token validation failed",
 				"ip", util.GetIPAddress(c),
 				"path", c.Request.URL.Path,
 				"session_id", sessionID,
 				"error", err)
-			response.ControllerResponse(c, http.StatusForbidden, util.ErrCSRFInvalid.Error(), nil, false)
+			response.ControllerResponse(c, http.StatusForbidden, util.ErrCSRFInvalid, nil, false)
 			c.Abort()
 			return
 		}
@@ -116,22 +121,24 @@ func (m *CSRFMiddleware) Protect() gin.HandlerFunc {
 	}
 }
 
-// HybridProtect skips CSRF for JWT clients, enforces for cookie clients
+// HybridProtect applies logic to skip CSRF for authorized native clients (e.g. Mobile Apps),
+// while strictly enforcing it for browser-based sessions.
 func (m *CSRFMiddleware) HybridProtect() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// JWT client (Mobile/Desktop App with Bearer token) -> skip CSRF
+		// Native Client Detection: Presence of Authorization Bearer header.
+		// These clients typically store tokens securely and aren't subject to browser cookie vulnerabilities.
 		auth := util.GetAuthorization(c)
-		if auth != "" && strings.HasPrefix(auth, "Bearer ") {
+		if auth != "" && strings.HasPrefix(auth, consts.AuthBearer) {
 			c.Next()
 			return
 		}
 
-		// Cookie client (Web Browser) -> enforce CSRF
+		// Default to Browser protection.
 		m.Protect()(c)
 	}
 }
 
-// isStateChangingMethod checks if the HTTP method modifies state
+// isStateChangingMethod returns true if the HTTP verb implies a modification of server state.
 func isStateChangingMethod(method string) bool {
 	switch method {
 	case http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete:

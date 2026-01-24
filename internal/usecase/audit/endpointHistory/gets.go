@@ -12,7 +12,7 @@ func (uc *UseCase) Gets(ctx context.Context, in *domain.EndpointHistoriesFilter)
 	histories, count, err := uc.repo.Postgres.Audit.History.Gets(ctx, in)
 	if err != nil {
 		uc.logger.WithContext(ctx).Errorw("endpoint history retrieval failed", zap.Error(err))
-		return nil, 0, apperrors.MapRepoToServiceError(ctx, err)
+		return nil, 0, apperrors.MapRepoToServiceError(err)
 	}
 
 	return histories, count, nil

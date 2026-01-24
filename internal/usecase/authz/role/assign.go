@@ -14,14 +14,14 @@ func (u *UseCase) Assign(ctx context.Context, userID, roleID uuid.UUID) error {
 	user, err := u.repo.Postgres.User.Client.Get(ctx, &domain.UserFilter{ID: &userID})
 	if err != nil {
 		u.logger.WithContext(ctx).Errorw("role assign failed: get user", "error", err)
-		return apperrors.MapRepoToServiceError(ctx, err).WithInput(userID)
+		return apperrors.MapRepoToServiceError(err).WithInput(userID)
 	}
 
 	user.RoleID = &roleID
 	err = u.repo.Postgres.User.Client.Update(ctx, user)
 	if err != nil {
 		u.logger.WithContext(ctx).Errorw("role assign failed: update user", "error", err)
-		return apperrors.MapRepoToServiceError(ctx, err).WithInput(map[string]any{"userID": userID, "roleID": roleID})
+		return apperrors.MapRepoToServiceError(err).WithInput(map[string]any{"userID": userID, "roleID": roleID})
 	}
 
 	u.logger.WithContext(ctx).Infow("role assign success")

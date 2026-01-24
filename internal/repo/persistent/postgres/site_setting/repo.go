@@ -1,11 +1,13 @@
 package sitesetting
 
 import (
+	"gct/consts"
+
 	"github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-const tableName = "site_settings"
+const tableName = consts.TableSiteSetting
 
 type Repo struct {
 	pool    *pgxpool.Pool

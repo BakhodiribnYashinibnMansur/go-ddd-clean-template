@@ -19,11 +19,11 @@ type SignInOut struct {
 
 // SignUpIn represents the input for sign up operation
 type SignUpIn struct {
-	Phone    string    `json:"phone"      validate:"required"`
-	Password string    `json:"password"   validate:"required"`
+	Phone    string    `json:"phone"      validate:"required,phone"`
+	Password string    `json:"password"   validate:"required,strong_password"`
 	Username string    `json:"username"`
-	Email    string    `json:"email"`
-	Session  SessionIn `json:"session" validate:"required"`
+	Email    string    `json:"email"      validate:"omitempty,email"`
+	Session  SessionIn `json:"session"    validate:"required"`
 }
 
 // SignOutIn represents the input for sign out operation

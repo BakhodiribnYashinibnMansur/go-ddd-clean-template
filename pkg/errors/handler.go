@@ -1,7 +1,6 @@
 package errors
 
 import (
-	"context"
 	"errors"
 )
 
@@ -26,6 +25,9 @@ const (
 	ErrHandlerConflict  = "HANDLER_CONFLICT"
 	CodeHandlerConflict = "4009"
 
+	ErrHandlerTooManyRequests  = "HANDLER_TOO_MANY_REQUESTS"
+	CodeHandlerTooManyRequests = "4029"
+
 	ErrHandlerInternal  = "HANDLER_INTERNAL_ERROR"
 	CodeHandlerInternal = "5000"
 
@@ -35,27 +37,28 @@ const (
 
 // Handler error messages
 var handlerMessages = map[string]string{
-	ErrHandlerBadRequest:   "Bad request",
-	ErrHandlerUnauthorized: "Unauthorized access",
-	ErrHandlerForbidden:    "Forbidden access",
-	ErrHandlerNotFound:     "Resource not found",
-	ErrHandlerConflict:     "Resource conflict",
-	ErrHandlerInternal:     "Internal server error",
-	ErrHandlerUnknown:      "Unknown error",
+	ErrHandlerBadRequest:      "Bad request",
+	ErrHandlerUnauthorized:    "Unauthorized access",
+	ErrHandlerForbidden:       "Forbidden access",
+	ErrHandlerNotFound:        "Resource not found",
+	ErrHandlerConflict:        "Resource conflict",
+	ErrHandlerTooManyRequests: "Too many requests",
+	ErrHandlerInternal:        "Internal server error",
+	ErrHandlerUnknown:         "Unknown error",
 }
 
 // NewHandlerError creates a new handler error
-func NewHandlerError(ctx context.Context, code, message string) *AppError {
-	return New(ctx, code, message)
+func NewHandlerError(code, message string) *AppError {
+	return New(code, message)
 }
 
 // WrapHandlerError wraps an error as handler error
-func WrapHandlerError(ctx context.Context, err error, code, message string) *AppError {
-	return Wrap(ctx, err, code, message)
+func WrapHandlerError(err error, code, message string) *AppError {
+	return Wrap(err, code, message)
 }
 
 // MapServiceToHandlerError maps service error to handler error
-func MapServiceToHandlerError(ctx context.Context, err error) *AppError {
+func MapServiceToHandlerError(err error) *AppError {
 	if err == nil {
 		return nil
 	}
@@ -65,32 +68,32 @@ func MapServiceToHandlerError(ctx context.Context, err error) *AppError {
 	if errors.As(err, &appErr) {
 		switch appErr.Type {
 		case ErrServiceNotFound:
-			return NewHandlerError(ctx, ErrHandlerNotFound, "Resource not found").
+			return NewHandlerError(ErrHandlerNotFound, "Resource not found").
 				WithDetails(appErr.Message)
 
 		case ErrServiceInvalidInput, ErrServiceValidation:
-			return NewHandlerError(ctx, ErrHandlerBadRequest, "Invalid request").
+			return NewHandlerError(ErrHandlerBadRequest, "Invalid request").
 				WithDetails(appErr.Message)
 
 		case ErrServiceUnauthorized:
-			return NewHandlerError(ctx, ErrHandlerUnauthorized, "Unauthorized").
+			return NewHandlerError(ErrHandlerUnauthorized, "Unauthorized").
 				WithDetails(appErr.Message)
 
 		case ErrServiceForbidden:
-			return NewHandlerError(ctx, ErrHandlerForbidden, "Forbidden").
+			return NewHandlerError(ErrHandlerForbidden, "Forbidden").
 				WithDetails(appErr.Message)
 
 		case ErrServiceConflict, ErrServiceAlreadyExists:
-			return NewHandlerError(ctx, ErrHandlerConflict, "Resource conflict").
+			return NewHandlerError(ErrHandlerConflict, "Resource conflict").
 				WithDetails(appErr.Message)
 
 		default:
-			return WrapHandlerError(ctx, err, ErrHandlerInternal, "Internal server error")
+			return WrapHandlerError(err, ErrHandlerInternal, "Internal server error")
 		}
 	}
 
 	// For non-AppError, wrap as internal error
-	return WrapHandlerError(ctx, err, ErrHandlerInternal, "Internal server error")
+	return WrapHandlerError(err, ErrHandlerInternal, "Internal server error")
 }
 
 // MapToHTTPStatus maps error code to HTTP status code

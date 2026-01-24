@@ -12,7 +12,7 @@ func (u *UseCase) Get(ctx context.Context, filter *domain.RoleFilter) (*domain.R
 
 	role, err := u.repo.Postgres.Authz.Role.Get(ctx, filter)
 	if err != nil {
-		appErr := apperrors.MapRepoToServiceError(ctx, err, apperrors.ErrServiceRoleNotFound).WithInput(filter)
+		appErr := apperrors.MapRepoToServiceError(err, apperrors.ErrServiceRoleNotFound).WithInput(filter)
 		u.logger.WithContext(ctx).Errorw("role get failed", "error", appErr)
 		return nil, appErr
 	}

@@ -12,7 +12,7 @@ func (uc *UseCase) SignUp(ctx context.Context, in *domain.SignUpIn) (*domain.Sig
 	uc.logger.WithContext(ctx).Infow("user sign up started", "input", in)
 
 	// Validate input
-	if err := validator.ValidateStruct(ctx, in); err != nil {
+	if err := validator.ValidateStruct(in); err != nil {
 		return nil, err
 	}
 
@@ -29,7 +29,7 @@ func (uc *UseCase) SignUp(ctx context.Context, in *domain.SignUpIn) (*domain.Sig
 
 	if err := user.SetPassword(in.Password); err != nil {
 		uc.logger.WithContext(ctx).Errorw("user sign up failed: set password", "error", err)
-		return nil, apperrors.MapRepoToServiceError(ctx, err).WithInput(in)
+		return nil, apperrors.MapRepoToServiceError(err).WithInput(in)
 	}
 
 	err := uc.Create(ctx, user)

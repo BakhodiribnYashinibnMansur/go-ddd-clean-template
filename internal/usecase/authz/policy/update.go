@@ -15,7 +15,7 @@ func (u *UseCase) Update(ctx context.Context, policy *domain.Policy) error {
 	if policy.Conditions != nil {
 		for k := range policy.Conditions {
 			if !consts.AllowedPolicyKeys[k] {
-				err := apperrors.New(ctx, apperrors.ErrValidation, "invalid policy condition key: "+k).WithInput(map[string]string{"key": k})
+				err := apperrors.New(apperrors.ErrValidation, "invalid policy condition key: "+k).WithInput(map[string]string{"key": k})
 				u.logger.WithContext(ctx).Warnw("policy update failed: invalid key", "key", k)
 				return err
 			}
@@ -25,7 +25,7 @@ func (u *UseCase) Update(ctx context.Context, policy *domain.Policy) error {
 	err := u.repo.Postgres.Authz.Policy.Update(ctx, policy)
 	if err != nil {
 		u.logger.WithContext(ctx).Errorw("policy update failed", "error", err)
-		return apperrors.MapRepoToServiceError(ctx, err).WithInput(policy)
+		return apperrors.MapRepoToServiceError(err).WithInput(policy)
 	}
 	u.logger.WithContext(ctx).Infow("policy update success")
 	return nil

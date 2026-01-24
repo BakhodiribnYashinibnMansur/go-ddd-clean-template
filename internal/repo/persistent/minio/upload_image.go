@@ -21,7 +21,7 @@ func (r *Repo) UploadImage(ctx context.Context, file io.Reader, fileSize int64, 
 
 	_, err := r.client.PutObject(ctx, r.config.Bucket, imageName, file, fileSize, minio.PutObjectOptions{ContentType: contentType})
 	if err != nil {
-		return "", apperrors.HandleMinioError(ctx, err, map[string]any{"filename": imageName})
+		return "", apperrors.HandleMinioError(err, map[string]any{"filename": imageName})
 	}
 	return imageName, nil
 }

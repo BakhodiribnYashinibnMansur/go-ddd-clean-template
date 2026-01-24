@@ -13,7 +13,7 @@ func (u *UseCase) Gets(ctx context.Context, filter *domain.PoliciesFilter) ([]*d
 	policies, count, err := u.repo.Postgres.Authz.Policy.Gets(ctx, filter)
 	if err != nil {
 		u.logger.WithContext(ctx).Errorw("policy gets failed", "error", err)
-		return nil, 0, apperrors.MapRepoToServiceError(ctx, err).WithInput(filter)
+		return nil, 0, apperrors.MapRepoToServiceError(err).WithInput(filter)
 	}
 
 	u.logger.WithContext(ctx).Infow("policy gets success", "count", len(policies), "total", count)

@@ -7,6 +7,7 @@ import (
 	"net"
 
 	"gct/pkg/logger"
+
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 	pbgrpc "google.golang.org/grpc"
@@ -29,7 +30,7 @@ type Server struct {
 
 // New -.
 func New(l logger.Log, opts ...Option) *Server {
-	group, _ := errgroup.WithContext(context.TODO())
+	group, _ := errgroup.WithContext(context.Background())
 	group.SetLimit(1) // Run only one goroutine
 
 	s := &Server{
@@ -50,7 +51,7 @@ func New(l logger.Log, opts ...Option) *Server {
 
 // Start -.
 func (s *Server) Start() {
-	ctx := context.TODO()
+	ctx := context.Background()
 	s.eg.Go(func() error {
 		var lc net.ListenConfig
 

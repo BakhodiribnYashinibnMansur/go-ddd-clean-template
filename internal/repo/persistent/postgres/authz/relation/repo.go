@@ -3,12 +3,16 @@ package relation
 import (
 	"context"
 
+	"gct/consts"
 	"gct/pkg/db/postgres"
 	"gct/pkg/logger"
+
 	"github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 )
+
+const tableName = consts.TableRelation
 
 type Pool interface {
 	Exec(ctx context.Context, sql string, arguments ...any) (pgconn.CommandTag, error)

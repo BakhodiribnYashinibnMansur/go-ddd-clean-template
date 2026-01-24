@@ -9,8 +9,7 @@ import (
 )
 
 func TestHandlePgError_NoError(t *testing.T) {
-	ctx := t.Context()
-	result := HandlePgError(ctx, nil, "users", nil)
+	result := HandlePgError(nil, "users", nil)
 
 	if result != nil {
 		t.Errorf("HandlePgError(nil) should return nil, got %v", result)
@@ -18,8 +17,7 @@ func TestHandlePgError_NoError(t *testing.T) {
 }
 
 func TestHandlePgError_NoRows(t *testing.T) {
-	ctx := t.Context()
-	result := HandlePgError(ctx, pgx.ErrNoRows, "users", map[string]any{
+	result := HandlePgError(pgx.ErrNoRows, "users", map[string]any{
 		"user_id": 123,
 	})
 
@@ -27,8 +25,8 @@ func TestHandlePgError_NoRows(t *testing.T) {
 		t.Fatal("HandlePgError(pgx.ErrNoRows) should return AppError")
 	}
 
-	if result.Code != ErrRepoNotFound {
-		t.Errorf("Expected code %s, got %s", ErrRepoNotFound, result.Code)
+	if result.Type != ErrRepoNotFound {
+		t.Errorf("Expected type %s, got %s", ErrRepoNotFound, result.Type)
 	}
 
 	if result.Fields["table"] != "users" {
@@ -41,7 +39,6 @@ func TestHandlePgError_NoRows(t *testing.T) {
 }
 
 func TestHandlePgError_UniqueViolation(t *testing.T) {
-	ctx := t.Context()
 	pgErr := &pgconn.PgError{
 		Code:           "23505",
 		Message:        "duplicate key value violates unique constraint",
@@ -49,7 +46,7 @@ func TestHandlePgError_UniqueViolation(t *testing.T) {
 		Severity:       "ERROR",
 	}
 
-	result := HandlePgError(ctx, pgErr, "users", map[string]any{
+	result := HandlePgError(pgErr, "users", map[string]any{
 		"username": "john",
 	})
 
@@ -57,8 +54,8 @@ func TestHandlePgError_UniqueViolation(t *testing.T) {
 		t.Fatal("HandlePgError should return AppError for unique violation")
 	}
 
-	if result.Code != ErrRepoAlreadyExists {
-		t.Errorf("Expected code %s, got %s", ErrRepoAlreadyExists, result.Code)
+	if result.Type != ErrRepoAlreadyExists {
+		t.Errorf("Expected type %s, got %s", ErrRepoAlreadyExists, result.Type)
 	}
 
 	if result.Fields["constraint"] != "users_username_key" {
@@ -71,7 +68,6 @@ func TestHandlePgError_UniqueViolation(t *testing.T) {
 }
 
 func TestHandlePgError_ForeignKeyViolation(t *testing.T) {
-	ctx := t.Context()
 	pgErr := &pgconn.PgError{
 		Code:           "23503",
 		Message:        "insert or update violates foreign key constraint",
@@ -79,19 +75,18 @@ func TestHandlePgError_ForeignKeyViolation(t *testing.T) {
 		Severity:       "ERROR",
 	}
 
-	result := HandlePgError(ctx, pgErr, "posts", nil)
+	result := HandlePgError(pgErr, "posts", nil)
 
 	if result == nil {
 		t.Fatal("HandlePgError should return AppError for FK violation")
 	}
 
-	if result.Code != ErrRepoConstraint {
-		t.Errorf("Expected code %s, got %s", ErrRepoConstraint, result.Code)
+	if result.Type != ErrRepoConstraint {
+		t.Errorf("Expected type %s, got %s", ErrRepoConstraint, result.Type)
 	}
 }
 
 func TestHandlePgError_NotNullViolation(t *testing.T) {
-	ctx := t.Context()
 	pgErr := &pgconn.PgError{
 		Code:           "23502",
 		Message:        "null value in column violates not-null constraint",
@@ -100,14 +95,14 @@ func TestHandlePgError_NotNullViolation(t *testing.T) {
 		Severity:       "ERROR",
 	}
 
-	result := HandlePgError(ctx, pgErr, "users", nil)
+	result := HandlePgError(pgErr, "users", nil)
 
 	if result == nil {
 		t.Fatal("HandlePgError should return AppError for not-null violation")
 	}
 
-	if result.Code != ErrRepoConstraint {
-		t.Errorf("Expected code %s, got %s", ErrRepoConstraint, result.Code)
+	if result.Type != ErrRepoConstraint {
+		t.Errorf("Expected type %s, got %s", ErrRepoConstraint, result.Type)
 	}
 
 	if result.Fields["column"] != "email" {
@@ -116,7 +111,6 @@ func TestHandlePgError_NotNullViolation(t *testing.T) {
 }
 
 func TestHandlePgError_CheckViolation(t *testing.T) {
-	ctx := t.Context()
 	pgErr := &pgconn.PgError{
 		Code:           "23514",
 		Message:        "new row violates check constraint",
@@ -124,98 +118,93 @@ func TestHandlePgError_CheckViolation(t *testing.T) {
 		Severity:       "ERROR",
 	}
 
-	result := HandlePgError(ctx, pgErr, "users", nil)
+	result := HandlePgError(pgErr, "users", nil)
 
 	if result == nil {
 		t.Fatal("HandlePgError should return AppError for check violation")
 	}
 
-	if result.Code != ErrRepoConstraint {
-		t.Errorf("Expected code %s, got %s", ErrRepoConstraint, result.Code)
+	if result.Type != ErrRepoConstraint {
+		t.Errorf("Expected type %s, got %s", ErrRepoConstraint, result.Type)
 	}
 }
 
 func TestHandlePgError_ConnectionError(t *testing.T) {
-	ctx := t.Context()
 	pgErr := &pgconn.PgError{
 		Code:     "08006",
 		Message:  "connection failure",
 		Severity: "FATAL",
 	}
 
-	result := HandlePgError(ctx, pgErr, "users", nil)
+	result := HandlePgError(pgErr, "users", nil)
 
 	if result == nil {
 		t.Fatal("HandlePgError should return AppError for connection error")
 	}
 
-	if result.Code != ErrRepoConnection {
-		t.Errorf("Expected code %s, got %s", ErrRepoConnection, result.Code)
+	if result.Type != ErrRepoConnection {
+		t.Errorf("Expected type %s, got %s", ErrRepoConnection, result.Type)
 	}
 }
 
 func TestHandlePgError_Deadlock(t *testing.T) {
-	ctx := t.Context()
 	pgErr := &pgconn.PgError{
 		Code:     "40P01",
 		Message:  "deadlock detected",
 		Severity: "ERROR",
 	}
 
-	result := HandlePgError(ctx, pgErr, "orders", nil)
+	result := HandlePgError(pgErr, "orders", nil)
 
 	if result == nil {
 		t.Fatal("HandlePgError should return AppError for deadlock")
 	}
 
-	if result.Code != ErrRepoDatabase {
-		t.Errorf("Expected code %s, got %s", ErrRepoDatabase, result.Code)
+	if result.Type != ErrRepoDatabase {
+		t.Errorf("Expected type %s, got %s", ErrRepoDatabase, result.Type)
 	}
 }
 
 func TestHandlePgError_LockTimeout(t *testing.T) {
-	ctx := t.Context()
 	pgErr := &pgconn.PgError{
 		Code:     "55P03",
 		Message:  "lock not available",
 		Severity: "ERROR",
 	}
 
-	result := HandlePgError(ctx, pgErr, "users", nil)
+	result := HandlePgError(pgErr, "users", nil)
 
 	if result == nil {
 		t.Fatal("HandlePgError should return AppError for lock timeout")
 	}
 
-	if result.Code != ErrRepoTimeout {
-		t.Errorf("Expected code %s, got %s", ErrRepoTimeout, result.Code)
+	if result.Type != ErrRepoTimeout {
+		t.Errorf("Expected type %s, got %s", ErrRepoTimeout, result.Type)
 	}
 }
 
 func TestHandlePgError_QueryCanceled(t *testing.T) {
-	ctx := t.Context()
 	pgErr := &pgconn.PgError{
 		Code:     "57014",
 		Message:  "query canceled",
 		Severity: "ERROR",
 	}
 
-	result := HandlePgError(ctx, pgErr, "users", nil)
+	result := HandlePgError(pgErr, "users", nil)
 
 	if result == nil {
 		t.Fatal("HandlePgError should return AppError for query canceled")
 	}
 
-	if result.Code != ErrRepoTimeout {
-		t.Errorf("Expected code %s, got %s", ErrRepoTimeout, result.Code)
+	if result.Type != ErrRepoTimeout {
+		t.Errorf("Expected type %s, got %s", ErrRepoTimeout, result.Type)
 	}
 }
 
 func TestHandlePgError_GenericError(t *testing.T) {
-	ctx := t.Context()
 	genericErr := errors.New("some database error")
 
-	result := HandlePgError(ctx, genericErr, "users", map[string]any{
+	result := HandlePgError(genericErr, "users", map[string]any{
 		"operation": "insert",
 	})
 
@@ -223,8 +212,8 @@ func TestHandlePgError_GenericError(t *testing.T) {
 		t.Fatal("HandlePgError should return AppError for generic error")
 	}
 
-	if result.Code != ErrRepoDatabase {
-		t.Errorf("Expected code %s, got %s", ErrRepoDatabase, result.Code)
+	if result.Type != ErrRepoDatabase {
+		t.Errorf("Expected type %s, got %s", ErrRepoDatabase, result.Type)
 	}
 
 	if result.Fields["operation"] != "insert" {
@@ -233,7 +222,6 @@ func TestHandlePgError_GenericError(t *testing.T) {
 }
 
 func TestHandlePgError_ExtraFields(t *testing.T) {
-	ctx := t.Context()
 	pgErr := &pgconn.PgError{
 		Code:           "23505",
 		Message:        "duplicate key",
@@ -247,7 +235,7 @@ func TestHandlePgError_ExtraFields(t *testing.T) {
 		"operation": "create_user",
 	}
 
-	result := HandlePgError(ctx, pgErr, "users", extraFields)
+	result := HandlePgError(pgErr, "users", extraFields)
 
 	if result == nil {
 		t.Fatal("HandlePgError should return AppError")
@@ -262,121 +250,114 @@ func TestHandlePgError_ExtraFields(t *testing.T) {
 }
 
 func TestHandlePgError_DataException(t *testing.T) {
-	ctx := t.Context()
 	pgErr := &pgconn.PgError{
 		Code:     "22003",
 		Message:  "numeric value out of range",
 		Severity: "ERROR",
 	}
 
-	result := HandlePgError(ctx, pgErr, "products", nil)
+	result := HandlePgError(pgErr, "products", nil)
 
 	if result == nil {
 		t.Fatal("HandlePgError should return AppError for data exception")
 	}
 
-	if result.Code != ErrRepoDatabase {
-		t.Errorf("Expected code %s, got %s", ErrRepoDatabase, result.Code)
+	if result.Type != ErrRepoDatabase {
+		t.Errorf("Expected type %s, got %s", ErrRepoDatabase, result.Type)
 	}
 }
 
 func TestHandlePgError_TransactionError(t *testing.T) {
-	ctx := t.Context()
 	pgErr := &pgconn.PgError{
 		Code:     "25P02",
 		Message:  "in failed sql transaction",
 		Severity: "ERROR",
 	}
 
-	result := HandlePgError(ctx, pgErr, "users", nil)
+	result := HandlePgError(pgErr, "users", nil)
 
 	if result == nil {
 		t.Fatal("HandlePgError should return AppError for transaction error")
 	}
 
-	if result.Code != ErrRepoTransaction {
-		t.Errorf("Expected code %s, got %s", ErrRepoTransaction, result.Code)
+	if result.Type != ErrRepoTransaction {
+		t.Errorf("Expected type %s, got %s", ErrRepoTransaction, result.Type)
 	}
 }
 
 func TestHandlePgError_AuthError(t *testing.T) {
-	ctx := t.Context()
 	pgErr := &pgconn.PgError{
 		Code:     "28P01",
 		Message:  "invalid password",
 		Severity: "FATAL",
 	}
 
-	result := HandlePgError(ctx, pgErr, "", nil)
+	result := HandlePgError(pgErr, "", nil)
 
 	if result == nil {
 		t.Fatal("HandlePgError should return AppError for auth error")
 	}
 
-	if result.Code != ErrRepoDatabase {
-		t.Errorf("Expected code %s, got %s", ErrRepoDatabase, result.Code)
+	if result.Type != ErrRepoDatabase {
+		t.Errorf("Expected type %s, got %s", ErrRepoDatabase, result.Type)
 	}
 }
 
 func TestHandlePgError_SyntaxError(t *testing.T) {
-	ctx := t.Context()
 	pgErr := &pgconn.PgError{
 		Code:     "42601",
 		Message:  "syntax error at or near",
 		Severity: "ERROR",
 	}
 
-	result := HandlePgError(ctx, pgErr, "users", nil)
+	result := HandlePgError(pgErr, "users", nil)
 
 	if result == nil {
 		t.Fatal("HandlePgError should return AppError for syntax error")
 	}
 
-	if result.Code != ErrRepoDatabase {
-		t.Errorf("Expected code %s, got %s", ErrRepoDatabase, result.Code)
+	if result.Type != ErrRepoDatabase {
+		t.Errorf("Expected type %s, got %s", ErrRepoDatabase, result.Type)
 	}
 }
 
 func TestHandlePgError_InsufficientPrivilege(t *testing.T) {
-	ctx := t.Context()
 	pgErr := &pgconn.PgError{
 		Code:     "42501",
 		Message:  "permission denied",
 		Severity: "ERROR",
 	}
 
-	result := HandlePgError(ctx, pgErr, "users", nil)
+	result := HandlePgError(pgErr, "users", nil)
 
 	if result == nil {
 		t.Fatal("HandlePgError should return AppError for permission error")
 	}
 
-	if result.Code != ErrRepoDatabase {
-		t.Errorf("Expected code %s, got %s", ErrRepoDatabase, result.Code)
+	if result.Type != ErrRepoDatabase {
+		t.Errorf("Expected type %s, got %s", ErrRepoDatabase, result.Type)
 	}
 }
 
 func TestHandlePgError_TableNotFound(t *testing.T) {
-	ctx := t.Context()
 	pgErr := &pgconn.PgError{
 		Code:     "42P01",
 		Message:  "relation does not exist",
 		Severity: "ERROR",
 	}
 
-	result := HandlePgError(ctx, pgErr, "nonexistent", nil)
+	result := HandlePgError(pgErr, "nonexistent", nil)
 
 	if result == nil {
 		t.Fatal("HandlePgError should return AppError for table not found")
 	}
 
-	if result.Code != ErrRepoDatabase {
-		t.Errorf("Expected code %s, got %s", ErrRepoDatabase, result.Code)
+	if result.Type != ErrRepoDatabase {
+		t.Errorf("Expected type %s, got %s", ErrRepoDatabase, result.Type)
 	}
 }
 
 func TestHandlePgError_EmptyTable(t *testing.T) {
-	ctx := t.Context()
 	pgErr := &pgconn.PgError{
 		Code:           "23505",
 		Message:        "duplicate key",
@@ -384,48 +365,45 @@ func TestHandlePgError_EmptyTable(t *testing.T) {
 		Severity:       "ERROR",
 	}
 
-	result := HandlePgError(ctx, pgErr, "", nil)
+	result := HandlePgError(pgErr, "", nil)
 
 	if result == nil {
 		t.Fatal("HandlePgError should return AppError")
 	}
 
 	// Should work without table name
-	if result.Code != ErrRepoAlreadyExists {
-		t.Errorf("Expected code %s, got %s", ErrRepoAlreadyExists, result.Code)
+	if result.Type != ErrRepoAlreadyExists {
+		t.Errorf("Expected type %s, got %s", ErrRepoAlreadyExists, result.Type)
 	}
 }
 
 func TestHandlePgError_NilExtraFields(t *testing.T) {
-	ctx := t.Context()
 	pgErr := &pgconn.PgError{
 		Code:     "23505",
 		Message:  "duplicate",
 		Severity: "ERROR",
 	}
 
-	result := HandlePgError(ctx, pgErr, "users", nil)
+	result := HandlePgError(pgErr, "users", nil)
 
 	if result == nil {
 		t.Fatal("HandlePgError should return AppError")
 	}
 
 	// Should work with nil extra fields
-	if result.Code != ErrRepoAlreadyExists {
-		t.Errorf("Expected code %s, got %s", ErrRepoAlreadyExists, result.Code)
+	if result.Type != ErrRepoAlreadyExists {
+		t.Errorf("Expected type %s, got %s", ErrRepoAlreadyExists, result.Type)
 	}
 }
 
 // Benchmark tests
 func BenchmarkHandlePgError_NoRows(b *testing.B) {
-	ctx := b.Context()
 	for range b.N {
-		HandlePgError(ctx, pgx.ErrNoRows, "users", nil)
+		HandlePgError(pgx.ErrNoRows, "users", nil)
 	}
 }
 
 func BenchmarkHandlePgError_UniqueViolation(b *testing.B) {
-	ctx := b.Context()
 	pgErr := &pgconn.PgError{
 		Code:           "23505",
 		Message:        "duplicate key",
@@ -435,16 +413,15 @@ func BenchmarkHandlePgError_UniqueViolation(b *testing.B) {
 
 	b.ResetTimer()
 	for range b.N {
-		HandlePgError(ctx, pgErr, "users", nil)
+		HandlePgError(pgErr, "users", nil)
 	}
 }
 
 func BenchmarkHandlePgError_GenericError(b *testing.B) {
-	ctx := b.Context()
 	err := errors.New("database error")
 
 	b.ResetTimer()
 	for range b.N {
-		HandlePgError(ctx, err, "users", nil)
+		HandlePgError(err, "users", nil)
 	}
 }

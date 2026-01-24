@@ -1,7 +1,6 @@
 package errors
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"runtime"
@@ -63,7 +62,7 @@ func (e *AppError) WithDetails(details string) *AppError {
 }
 
 // New creates new error
-func New(ctx context.Context, code, message string) *AppError {
+func New(code, message string) *AppError {
 	return &AppError{
 		Type:       code,
 		Code:       getNumericCode(code),
@@ -75,7 +74,7 @@ func New(ctx context.Context, code, message string) *AppError {
 }
 
 // Wrap wraps an existing error
-func Wrap(ctx context.Context, err error, code, message string) *AppError {
+func Wrap(err error, code, message string) *AppError {
 	if err == nil {
 		return nil
 	}
@@ -147,6 +146,10 @@ func getHTTPStatus(code string) int {
 	// 504 errors
 	case ErrTimeout, ErrRepoTimeout:
 		return 504
+
+	// 429 errors
+	case ErrHandlerTooManyRequests:
+		return 429
 
 	default:
 		return 500

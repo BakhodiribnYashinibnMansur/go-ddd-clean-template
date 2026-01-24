@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"gct/internal/domain"
+
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -56,14 +57,14 @@ func TestUseCase_Update_TableDriven(t *testing.T) {
 			input: &domain.User{
 				ID:       uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				Phone:    stringPtr("111222333"),
-				Password: "newpassword",
+				Password: "Password123!",
 			},
 			repoError:   nil,
 			expectError: false,
 			validateSaved: func(t *testing.T, u *domain.User) {
 				t.Helper()
 				require.Equal(t, uuid.MustParse("00000000-0000-0000-0000-000000000001"), u.ID)
-				require.Equal(t, "newpassword", u.Password)
+				require.Equal(t, "Password123!", u.Password)
 			},
 		},
 		{
@@ -142,7 +143,7 @@ func TestUseCase_Update_TableDriven(t *testing.T) {
 				ID:       uuid.MustParse("00000000-0000-0000-0000-000000000001"),
 				Username: stringPtr("fulluser"),
 				Phone:    stringPtr("999888777"),
-				Password: "fullpass",
+				Password: "Password123!",
 			},
 			repoError:   nil,
 			expectError: false,
@@ -157,7 +158,7 @@ func TestUseCase_Update_TableDriven(t *testing.T) {
 				require.NotNil(t, u.Username)
 				require.Equal(t, "fulluser", *u.Username)
 				require.Equal(t, "999888777", *u.Phone)
-				require.Equal(t, "fullpass", u.Password)
+				require.Equal(t, "Password123!", u.Password)
 			},
 		},
 	}

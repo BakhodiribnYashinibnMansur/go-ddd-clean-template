@@ -5,8 +5,8 @@ import "strings"
 type (
 	// App -.
 	App struct {
-		Name        string `env:"APP_NAME,required"`
-		Version     string `env:"APP_VERSION,required"`
+		Name        string `yaml:"name"`
+		Version     string `yaml:"version"`
 		Environment string `env:"APP_ENV"              envDefault:"development"`
 		CSRFSecret  string `env:"CSRF_SECRET,required"` // Dedicated secret for CSRF token generation
 	}
@@ -20,7 +20,7 @@ type (
 
 	// Log -.
 	Log struct {
-		Level string `env:"LOG_LEVEL,required"`
+		Level string `yaml:"level"`
 	}
 
 	// APIKeys configuration -.
@@ -30,31 +30,57 @@ type (
 
 	// Metrics -.
 	Metrics struct {
-		Enabled bool `env:"METRICS_ENABLED" envDefault:"true"`
+		Enabled bool `yaml:"enabled"`
 	}
 
 	// Swagger -.
 	Swagger struct {
-		Enabled bool `env:"SWAGGER_ENABLED" envDefault:"false"`
+		Enabled bool `yaml:"enabled"`
 	}
 
 	// Proto -.
 	Proto struct {
-		Enabled bool `env:"PROTO_DOCS_ENABLED" envDefault:"false"`
+		Enabled bool `yaml:"enabled"`
 	}
 
 	// Admin -.
 	Admin struct {
-		Enabled bool `env:"ADMIN_ENABLED" envDefault:"true"`
+		Enabled bool `yaml:"enabled"`
 	}
 
 	// Cookie -.
 	Cookie struct {
-		Domain   string `env:"COOKIE_DOMAIN"    envDefault:"localhost"`
-		Path     string `env:"COOKIE_PATH"      envDefault:"/"`
-		HttpOnly bool   `env:"COOKIE_HTTP_ONLY" envDefault:"true"`
-		MaxAge   int    `env:"COOKIE_MAX_AGE"   envDefault:"3600"`
-		Secure   bool   `env:"COOKIE_SECURE"    envDefault:"false"`
+		Domain   string `yaml:"domain"`
+		Path     string `yaml:"path"`
+		HttpOnly bool   `yaml:"http_only"`
+		MaxAge   int    `yaml:"max_age"`
+		Secure   bool   `yaml:"secure"`
+	}
+
+	// CORS -.
+	CORS struct {
+		AllowedOrigins   []string `yaml:"allowed_origins"`
+		AllowedMethods   []string `yaml:"allowed_methods"`
+		AllowedHeaders   []string `yaml:"allowed_headers"`
+		ExposedHeaders   []string `yaml:"exposed_headers"`
+		AllowCredentials bool     `yaml:"allow_credentials"`
+		MaxAge           int      `yaml:"max_age"`
+	}
+
+	// Middleware -.
+	Middleware struct {
+		RequestID    bool `yaml:"request_id"`
+		Security     bool `yaml:"security"`
+		MetaData     bool `yaml:"metadata"`
+		Logger       bool `yaml:"logger"`
+		Recovery     bool `yaml:"recovery"`
+		Persist5xx   bool `yaml:"persist_5xx"`
+		Mock         bool `yaml:"mock"`
+		RateLimiter  bool `yaml:"rate_limiter"`
+		AuditHistory bool `yaml:"audit_history"`
+		AuditChange  bool `yaml:"audit_change"`
+		Metrics      bool `yaml:"metrics"`
+		HealthCheck  bool `yaml:"health_check"`
 	}
 )
 

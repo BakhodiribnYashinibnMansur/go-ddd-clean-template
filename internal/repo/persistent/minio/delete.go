@@ -11,7 +11,7 @@ import (
 func (r *Repo) DeleteFile(ctx context.Context, fileName string) error {
 	err := r.client.RemoveObject(ctx, r.config.Bucket, fileName, minio.RemoveObjectOptions{})
 	if err != nil {
-		return apperrors.HandleMinioError(ctx, err, map[string]any{"filename": fileName})
+		return apperrors.HandleMinioError(err, map[string]any{"filename": fileName})
 	}
 	return nil
 }

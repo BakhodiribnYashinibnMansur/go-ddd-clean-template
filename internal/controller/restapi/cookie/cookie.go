@@ -1,3 +1,5 @@
+// Package cookie provides utilities for managing HTTP cookies within the Gin web framework,
+// supporting consistent configuration for security attributes like HttpOnly, Secure, and SameSite.
 package cookie
 
 import (
@@ -5,10 +7,12 @@ import (
 
 	"gct/config"
 	"gct/consts"
+
 	"github.com/gin-gonic/gin"
 )
 
-// SaveCookies saves multiple cookies using settings from config.
+// SaveCookies persists a map of cookie keys and values to the HTTP response.
+// It applies security and lifecycle settings defined in the application's cookie configuration.
 func SaveCookies(ctx *gin.Context, data map[string]string, cfg config.Cookie) {
 	for k, v := range data {
 		http.SetCookie(ctx.Writer, &http.Cookie{
@@ -24,7 +28,8 @@ func SaveCookies(ctx *gin.Context, data map[string]string, cfg config.Cookie) {
 	}
 }
 
-// GetCookie retrieves a cookie value from the request.
+// GetCookie safely extracts a cookie's value from the incoming request.
+// Returns an empty string if the cookie does not exist or an error occurs.
 func GetCookie(ctx *gin.Context, key string) string {
 	data, err := ctx.Request.Cookie(key)
 	if err != nil {
@@ -33,7 +38,8 @@ func GetCookie(ctx *gin.Context, key string) string {
 	return data.Value
 }
 
-// ExpireCookies expires specified cookies using settings from config and consts.
+// ExpireCookies removes specified cookies from the client by setting their MaxAge to -1.
+// This effectively instructs the browser to delete the cookies immediately.
 func ExpireCookies(ctx *gin.Context, cfg config.Cookie, keys ...string) {
 	for _, key := range keys {
 		http.SetCookie(ctx.Writer, &http.Cookie{
@@ -49,7 +55,8 @@ func ExpireCookies(ctx *gin.Context, cfg config.Cookie, keys ...string) {
 	}
 }
 
-// GetCookieConfig returns a cookie configuration based on constants.
+// GetCookieConfig instantiates a new http.Cookie with default application settings.
+// Useful for creating specialized cookies that don't follow the global config.
 func GetCookieConfig(key, value string) *http.Cookie {
 	return &http.Cookie{
 		Name:     key,

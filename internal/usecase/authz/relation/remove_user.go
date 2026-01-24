@@ -13,7 +13,7 @@ func (u *UseCase) RemoveUser(ctx context.Context, userID, relationID uuid.UUID) 
 	err := u.repo.Postgres.Authz.Relation.RemoveUser(ctx, relationID, userID)
 	if err != nil {
 		u.logger.WithContext(ctx).Errorw("relation remove user failed", "error", err)
-		return apperrors.MapRepoToServiceError(ctx, err).WithInput(map[string]any{"userID": userID, "relationID": relationID})
+		return apperrors.MapRepoToServiceError(err).WithInput(map[string]any{"userID": userID, "relationID": relationID})
 	}
 	u.logger.WithContext(ctx).Infow("relation remove user success")
 	return nil

@@ -3,6 +3,7 @@ package domain
 import (
 	"errors"
 	"fmt"
+	"gct/pkg/validation"
 	"time"
 
 	"github.com/google/uuid"
@@ -32,7 +33,7 @@ type User struct {
 	RoleID       *uuid.UUID     `db:"role_id"       json:"role_id,omitempty"`
 	Username     *string        `db:"username"      json:"username,omitempty" validate:"omitempty,min=3"`
 	Email        *string        `db:"email"         json:"email,omitempty" validate:"omitempty,email"`
-	Phone        *string        `db:"phone"         json:"phone,omitempty" validate:"required,min=9"`
+	Phone        *string        `db:"phone"         json:"phone,omitempty" validate:"required,phone"`
 	PasswordHash string         `db:"password_hash" json:"-"`
 	Salt         *string        `db:"salt"          json:"-"`
 	Attributes   map[string]any `db:"attributes"    json:"attributes"` // JSONB for ABAC (region, branch, dept)
@@ -108,6 +109,9 @@ func (u *User) SetPhone(phone *string) {
 func (u *User) SetPassword(password string) error {
 	if password == "" {
 		return ErrPasswordRequired
+	}
+	if !validation.IsValidPassword(password) {
+		return ErrInvalidPassword
 	}
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {

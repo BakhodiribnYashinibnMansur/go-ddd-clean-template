@@ -1,12 +1,13 @@
 package validator
 
 import (
-	"context"
 	"fmt"
 	"reflect"
 	"strings"
 
 	apperrors "gct/pkg/errors"
+	"gct/pkg/validation"
+
 	"github.com/go-playground/validator/v10"
 )
 
@@ -23,10 +24,18 @@ func init() {
 		}
 		return name
 	})
+
+	_ = validate.RegisterValidation("phone", func(fl validator.FieldLevel) bool {
+		return validation.IsValidPhone(fl.Field().String())
+	})
+
+	_ = validate.RegisterValidation("strong_password", func(fl validator.FieldLevel) bool {
+		return validation.IsValidPassword(fl.Field().String())
+	})
 }
 
 // ValidateStruct validates a struct and returns a standardized AppError if validation fails
-func ValidateStruct(ctx context.Context, s any) error {
+func ValidateStruct(s any) error {
 	err := validate.Struct(s)
 	if err == nil {
 		return nil
@@ -39,10 +48,10 @@ func ValidateStruct(ctx context.Context, s any) error {
 		}
 
 		msg := "Validation failed: " + strings.Join(details, ", ")
-		return apperrors.NewValidationError(ctx, msg).
+		return apperrors.NewValidationError(msg).
 			WithDetails(strings.Join(details, "\n")).
 			WithField("validation_errors", details)
 	}
 
-	return apperrors.NewInternalError(ctx, "Validation process failed: "+err.Error())
+	return apperrors.NewInternalError("Validation process failed: " + err.Error())
 }

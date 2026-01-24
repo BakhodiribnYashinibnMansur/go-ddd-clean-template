@@ -12,7 +12,7 @@ import (
 func (r *Repo) Get(ctx context.Context, filter *domain.UserFilter) (*domain.User, error) {
 	qb := r.builder.
 		Select("id, role_id, username, email, phone, password_hash, salt, attributes, active, is_approved, created_at, updated_at, deleted_at, last_seen").
-		From("users").
+		From(tableName).
 		Where("deleted_at = 0")
 
 	if filter.ID != nil {
@@ -45,7 +45,7 @@ func (r *Repo) Get(ctx context.Context, filter *domain.UserFilter) (*domain.User
 
 	sql, args, err := qb.ToSql()
 	if err != nil {
-		return nil, apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase,
+		return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase,
 			"failed to build SQL query")
 	}
 
@@ -56,7 +56,7 @@ func (r *Repo) Get(ctx context.Context, filter *domain.UserFilter) (*domain.User
 		&u.CreatedAt, &u.UpdatedAt, &u.DeletedAt, &u.LastSeen,
 	)
 	if err != nil {
-		return nil, apperrors.HandlePgError(ctx, err, "users", map[string]any{
+		return nil, apperrors.HandlePgError(err, tableName, map[string]any{
 			"filter": filter,
 		})
 	}

@@ -14,7 +14,7 @@ func (r *Repo) UploadFile(ctx context.Context, filePath, contentType string) (st
 	fileName := uuid.New().String() + filepath.Ext(filePath)
 	_, err := r.client.FPutObject(ctx, r.config.Bucket, fileName, filePath, minio.PutObjectOptions{ContentType: contentType})
 	if err != nil {
-		return "", apperrors.HandleMinioError(ctx, err, map[string]any{"filename": fileName})
+		return "", apperrors.HandleMinioError(err, map[string]any{"filename": fileName})
 	}
 	return fileName, nil
 }

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	apperrors "gct/pkg/errors"
+
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
 )
@@ -16,12 +17,12 @@ func (r *Repo) AddPermission(ctx context.Context, roleID, permID uuid.UUID) erro
 		Values(roleID, permID, time.Now()).
 		ToSql()
 	if err != nil {
-		return apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase, "failed to build insert query")
+		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, "failed to build insert query")
 	}
 
 	_, err = r.pool.Exec(ctx, sql, args...)
 	if err != nil {
-		return apperrors.HandlePgError(ctx, err, "role_permission", nil)
+		return apperrors.HandlePgError(err, "role_permission", nil)
 	}
 
 	return nil
@@ -34,16 +35,16 @@ func (r *Repo) RemovePermission(ctx context.Context, roleID, permID uuid.UUID) e
 		Where(squirrel.Eq{"permission_id": permID}).
 		ToSql()
 	if err != nil {
-		return apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase, "failed to build delete query")
+		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, "failed to build delete query")
 	}
 
 	tag, err := r.pool.Exec(ctx, sql, args...)
 	if err != nil {
-		return apperrors.HandlePgError(ctx, err, "role_permission", nil)
+		return apperrors.HandlePgError(err, "role_permission", nil)
 	}
 
 	if tag.RowsAffected() == 0 {
-		return apperrors.NewRepoError(ctx, apperrors.ErrRepoNotFound, "role permission not found")
+		return apperrors.NewRepoError(apperrors.ErrRepoNotFound, "role permission not found")
 	}
 
 	return nil

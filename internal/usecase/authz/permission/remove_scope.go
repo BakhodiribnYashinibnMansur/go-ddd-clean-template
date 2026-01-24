@@ -13,7 +13,7 @@ func (u *UseCase) RemoveScope(ctx context.Context, permID uuid.UUID, path, metho
 	err := u.repo.Postgres.Authz.Permission.RemoveScope(ctx, permID, path, method)
 	if err != nil {
 		u.logger.WithContext(ctx).Errorw("permission remove scope failed", "error", err)
-		return apperrors.MapRepoToServiceError(ctx, err).WithInput(map[string]any{"permID": permID, "path": path, "method": method})
+		return apperrors.MapRepoToServiceError(err).WithInput(map[string]any{"permID": permID, "path": path, "method": method})
 	}
 	u.logger.WithContext(ctx).Infow("permission remove scope success")
 	return nil

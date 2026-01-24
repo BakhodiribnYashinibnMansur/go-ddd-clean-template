@@ -1,15 +1,13 @@
 package errors
 
 import (
-	"context"
-
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
 // handleAuthError handles Class 28 errors (Authorization)
-func handleAuthError(ctx context.Context, pgErr *pgconn.PgError, table string, extraFields map[string]any) *AppError {
+func handleAuthError(pgErr *pgconn.PgError, table string, extraFields map[string]any) *AppError {
 	appErr := AutoSource(
-		NewRepoError(ctx, ErrRepoDatabase,
+		NewRepoError(ErrRepoDatabase,
 			"authentication failed"))
 
 	if table != "" {
@@ -26,11 +24,11 @@ func handleAuthError(ctx context.Context, pgErr *pgconn.PgError, table string, e
 }
 
 // handleSyntaxOrAccessError handles Class 42 errors
-func handleSyntaxOrAccessError(ctx context.Context, pgErr *pgconn.PgError, table string, extraFields map[string]any) *AppError {
+func handleSyntaxOrAccessError(pgErr *pgconn.PgError, table string, extraFields map[string]any) *AppError {
 	// 42501 is insufficient_privilege
 	if pgErr.Code == "42501" {
 		appErr := AutoSource(
-			NewRepoError(ctx, ErrRepoDatabase,
+			NewRepoError(ErrRepoDatabase,
 				"insufficient privilege"))
 
 		if table != "" {
@@ -48,7 +46,7 @@ func handleSyntaxOrAccessError(ctx context.Context, pgErr *pgconn.PgError, table
 	// 42P01 is undefined_table
 	if pgErr.Code == "42P01" {
 		appErr := AutoSource(
-			NewRepoError(ctx, ErrRepoDatabase,
+			NewRepoError(ErrRepoDatabase,
 				"table does not exist"))
 
 		if table != "" {
@@ -64,7 +62,7 @@ func handleSyntaxOrAccessError(ctx context.Context, pgErr *pgconn.PgError, table
 	}
 
 	appErr := AutoSource(
-		NewRepoError(ctx, ErrRepoDatabase,
+		NewRepoError(ErrRepoDatabase,
 			"syntax error or access violation"))
 
 	if table != "" {
@@ -81,9 +79,9 @@ func handleSyntaxOrAccessError(ctx context.Context, pgErr *pgconn.PgError, table
 }
 
 // handleConfigError handles Class F0 errors
-func handleConfigError(ctx context.Context, pgErr *pgconn.PgError, table string, extraFields map[string]any) *AppError {
+func handleConfigError(pgErr *pgconn.PgError, table string, extraFields map[string]any) *AppError {
 	appErr := AutoSource(
-		NewRepoError(ctx, ErrRepoDatabase,
+		NewRepoError(ErrRepoDatabase,
 			"configuration file error"))
 
 	if table != "" {
@@ -100,9 +98,9 @@ func handleConfigError(ctx context.Context, pgErr *pgconn.PgError, table string,
 }
 
 // handleFDWError handles Class HV errors (Foreign Data Wrapper)
-func handleFDWError(ctx context.Context, pgErr *pgconn.PgError, table string, extraFields map[string]any) *AppError {
+func handleFDWError(pgErr *pgconn.PgError, table string, extraFields map[string]any) *AppError {
 	appErr := AutoSource(
-		NewRepoError(ctx, ErrRepoDatabase,
+		NewRepoError(ErrRepoDatabase,
 			"foreign data wrapper error"))
 
 	if table != "" {
@@ -119,9 +117,9 @@ func handleFDWError(ctx context.Context, pgErr *pgconn.PgError, table string, ex
 }
 
 // handlePLpgSQLError handles Class P0 errors
-func handlePLpgSQLError(ctx context.Context, pgErr *pgconn.PgError, table string, extraFields map[string]any) *AppError {
+func handlePLpgSQLError(pgErr *pgconn.PgError, table string, extraFields map[string]any) *AppError {
 	appErr := AutoSource(
-		NewRepoError(ctx, ErrRepoDatabase,
+		NewRepoError(ErrRepoDatabase,
 			"PL/pgSQL error"))
 
 	if table != "" {
@@ -138,9 +136,9 @@ func handlePLpgSQLError(ctx context.Context, pgErr *pgconn.PgError, table string
 }
 
 // handleInternalError handles Class XX errors
-func handleInternalError(ctx context.Context, pgErr *pgconn.PgError, table string, extraFields map[string]any) *AppError {
+func handleInternalError(pgErr *pgconn.PgError, table string, extraFields map[string]any) *AppError {
 	appErr := AutoSource(
-		NewRepoError(ctx, ErrRepoDatabase,
+		NewRepoError(ErrRepoDatabase,
 			"internal database error"))
 
 	if table != "" {

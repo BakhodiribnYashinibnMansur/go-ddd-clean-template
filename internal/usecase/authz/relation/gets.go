@@ -13,7 +13,7 @@ func (u *UseCase) Gets(ctx context.Context, filter *domain.RelationsFilter) ([]*
 	relations, count, err := u.repo.Postgres.Authz.Relation.Gets(ctx, filter)
 	if err != nil {
 		u.logger.WithContext(ctx).Errorw("relation gets failed", "error", err)
-		return nil, 0, apperrors.MapRepoToServiceError(ctx, err).WithInput(filter)
+		return nil, 0, apperrors.MapRepoToServiceError(err).WithInput(filter)
 	}
 
 	u.logger.WithContext(ctx).Infow("relation gets success", "count", len(relations), "total", count)

@@ -13,7 +13,7 @@ func (u *UseCase) Update(ctx context.Context, relation *domain.Relation) error {
 	err := u.repo.Postgres.Authz.Relation.Update(ctx, relation)
 	if err != nil {
 		u.logger.WithContext(ctx).Errorw("relation update failed", "error", err)
-		return apperrors.MapRepoToServiceError(ctx, err).WithInput(relation)
+		return apperrors.MapRepoToServiceError(err).WithInput(relation)
 	}
 
 	u.logger.WithContext(ctx).Infow("relation update success")

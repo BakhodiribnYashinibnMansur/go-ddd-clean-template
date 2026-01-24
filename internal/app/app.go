@@ -1,4 +1,5 @@
-// Package app configures and runs application.
+// Package app contains the highest-level logic for configuring and launching the application.
+// It orchestrates the initialization of databases, repositories, usecases, and network servers.
 package app
 
 import (
@@ -24,20 +25,23 @@ import (
 	"gct/pkg/logger"
 	httpserver "gct/pkg/server/http"
 	"gct/pkg/telemetry"
+
 	"github.com/gin-gonic/gin"
 	hibikenAsynq "github.com/hibiken/asynq"
 	"go.uber.org/zap"
 )
 
-// Run creates objects via constructors.
+// Run initializes the entire application component stack in the correct dependency order.
+// This includes telemetry, SQL/NoSQL databases, task queues, and finally the HTTP server.
 func Run(cfg *config.Config) {
+	// Initialize the centralized logger with the configured severity level.
 	l := logger.New(cfg.Log.Level)
 
-	// Context for initialization
+	// Context for tracking the initialization phase.
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// Initialize Tracing
+	// Initialize OpenTelemetry Tracing to monitor application performance and trace requests.
 	shutdown, err := telemetry.InitTracer(ctx, cfg.Tracing)
 	if err != nil {
 		l.WithContext(ctx).Errorw("failed to init tracer", zap.Error(err))
@@ -48,23 +52,16 @@ func Run(cfg *config.Config) {
 		}
 	}()
 
-	// 1. Initialize Postgres
+	// 1. Initialize PostgresSQL
+	// Sets up the connection pool and applies any pre-run logic like migrations checks.
 	pg, err := postgres.New(ctx, cfg.App.Environment, cfg.Database.Postgres, l)
 	if err != nil {
 		l.WithContext(ctx).Fatalw("app - Run - postgres.New", zap.Error(err))
 	}
 	defer pg.Close()
 
-	// 2. Initialize MinIO
-	// minioClient, err := minioPkg.New(cfg.Minio.Endpoint,
-	// 	minioPkg.WithCredentials(cfg.Minio.AccessKey, cfg.Minio.SecretKey),
-	// 	minioPkg.WithSecure(cfg.Minio.UseSSL),
-	// 	minioPkg.WithBucket(cfg.Minio.Bucket, cfg.Minio.Region),
-	// )
-	// if err != nil {
-	// 	l.Fatalw("app - Run - minio.New", zap.Error(err))
-	// }
-	// 3. Initialize Redis
+	// 2. Initialize Redis
+	// Provides the primary storage for caching, rate limiting, and session management.
 	redisInstance, err := redisPkg.New(ctx, cfg.App.Environment, cfg.Database.Redis, l)
 	if err != nil {
 		l.WithContext(ctx).Fatalw("app - Run - redis.New", zap.Error(err))
@@ -73,7 +70,8 @@ func Run(cfg *config.Config) {
 
 	redisClient := redisInstance.Client
 
-	// 4. Initialize Asynq Client
+	// 3. Initialize Asynq Client
+	// Used by API handlers to push tasks into background queues.
 	asynqClient := asynq.NewClient(
 		cfg.Redis.Addr(),
 		cfg.Redis.Password,
@@ -82,20 +80,24 @@ func Run(cfg *config.Config) {
 	)
 	defer asynqClient.Close()
 
-	// 5. Initialize Layers (pass asynqClient to UseCase)
+	// 4. Initialize Data Access and Business Layers
+	// repositories layer handles raw data retrieval and persistence.
 	repositories := repo.New(pg, nil, redisClient, &cfg.Minio, l)
+	// useCases layer contains the core business rules and domain logic.
 	useCases := usecase.NewUseCase(repositories, l, cfg, asynqClient)
 
-	// Initialize Cache service
+	// 5. Initialize Reactive Components
+	// cacheService manages memory-efficient data invalidation across clusters.
 	cacheService := cache.NewCache(repositories.Persistent.Redis, l)
 
-	// Start listener for postgres notifications
+	// Start a background listener for database-driven cache invalidation events.
 	go pg.Listen(ctx, consts.CacheInvalidationChannel, cacheService.DeletePublicCaches, l)
 
-	// 6. Initialize Asynq Worker (if enabled)
+	// 6. Initialize Background Workers
+	// Asynq workers process time-consuming tasks outside the HTTP request/response cycle.
 	var asynqWorker *asynq.Worker
 	if cfg.Asynq.WorkerEnabled {
-		// Set Redis config for Asynq if not explicitly set
+		// Cluster configuration for the worker.
 		if cfg.Asynq.RedisAddr == "" {
 			cfg.Asynq.RedisAddr = cfg.Redis.Addr()
 			cfg.Asynq.RedisPassword = cfg.Redis.Password
@@ -104,24 +106,21 @@ func Run(cfg *config.Config) {
 
 		asynqWorker = asynq.NewWorker(cfg.Asynq, l)
 
-		// Initialize Seeder for background jobs
-		s := seeder.New(repositories, l, cfg)
-
-		// Register task handlers
+		// Setup task handlers (Email, Notifications, Image processing).
 		handlers := asynq.NewHandlers(l)
 		asynqWorker.RegisterHandler(asynq.TypeEmailWelcome, handlers.HandleEmailWelcome)
 		asynqWorker.RegisterHandler(asynq.TypeEmailVerification, handlers.HandleEmailVerification)
 		asynqWorker.RegisterHandler(asynq.TypeImageResize, handlers.HandleImageResize)
 		asynqWorker.RegisterHandler(asynq.TypePushNotification, handlers.HandlePushNotification)
 
-		// Register System Seed handler
+		// specialized handler for on-demand database seeding.
+		s := seeder.New(repositories, l, cfg)
 		asynqWorker.RegisterHandler(asynq.TypeSystemSeed, func(ctx context.Context, task *hibikenAsynq.Task) error {
 			var payload asynq.SeedPayload
 			if err := json.Unmarshal(task.Payload(), &payload); err != nil {
 				return fmt.Errorf("unmarshal seed payload: %w", err)
 			}
 
-			// Prepare custom counts map
 			customCounts := make(map[string]int)
 			if payload.UsersCount > 0 {
 				customCounts["users"] = payload.UsersCount
@@ -138,16 +137,15 @@ func Run(cfg *config.Config) {
 			if payload.Seed != 0 {
 				customCounts["seed"] = int(payload.Seed)
 			}
+			customCounts["clear_data"] = 0
 			if payload.ClearData {
 				customCounts["clear_data"] = 1
-			} else {
-				customCounts["clear_data"] = 0
 			}
 
 			return s.Seed(ctx, customCounts)
 		})
 
-		// Start worker in background
+		// Launch the worker engine in a managed goroutine.
 		go func() {
 			if err := asynqWorker.Start(); err != nil {
 				l.WithContext(ctx).Errorw("failed to start asynq worker", zap.Error(err))
@@ -156,21 +154,25 @@ func Run(cfg *config.Config) {
 		defer asynqWorker.Stop()
 	}
 
-	// 5. Initialize Router and Server
+	// 7. Initialize Web Router and Persistent Server
+	// Translates API requests into usecase calls while applying global middlewares.
 	handler := initRouter(cfg, useCases, l)
 	httpServer := httpserver.NewServer()
 
-	// Start server
+	// Launch the HTTP listener.
 	startServer(cfg.HTTP.Port, handler, httpServer, l)
 
-	// 6. Wait for Termination Signal
+	// 8. Lifecycle Management
+	// Blocks execution until an OS termination signal is received.
 	waitForSignal(l)
 	cancel()
 
-	// 7. Graceful Shutdown
+	// 9. Graceful Shutdown
+	// Closes network listeners and allows inflight requests to complete within the timeout.
 	shutdownServer(httpServer, l, cfg.HTTP.ShutdownTimeout)
 }
 
+// initRouter configures the Gin engine with environment-specific modes and routes.
 func initRouter(cfg *config.Config, useCases *usecase.UseCase, l logger.Log) *gin.Engine {
 	gin.ForceConsoleColor()
 
@@ -185,6 +187,7 @@ func initRouter(cfg *config.Config, useCases *usecase.UseCase, l logger.Log) *gi
 	return handler
 }
 
+// startServer converts the port string and launches the listener in a background goroutine.
 func startServer(portStr string, handler *gin.Engine, server *httpserver.Server, l logger.Log) {
 	port, err := strconv.Atoi(portStr)
 	if err != nil {
@@ -198,6 +201,7 @@ func startServer(portStr string, handler *gin.Engine, server *httpserver.Server,
 	}()
 }
 
+// waitForSignal halts the main thread until SIGINT or SIGTERM is intercepted from the OS.
 func waitForSignal(l logger.Log) {
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
@@ -206,6 +210,7 @@ func waitForSignal(l logger.Log) {
 	l.WithContext(context.Background()).Infow("app - Run - signal received", zap.String("signal", s.String()))
 }
 
+// shutdownServer attempts to close the HTTP server and its underlying connections.
 func shutdownServer(server *httpserver.Server, l logger.Log, timeout int64) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
 	defer cancel()

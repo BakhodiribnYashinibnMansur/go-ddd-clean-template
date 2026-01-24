@@ -48,12 +48,12 @@ func (r *Repo) Create(ctx context.Context, h *domain.EndpointHistory) error {
 		).
 		ToSql()
 	if err != nil {
-		return apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase, "failed to build insert SQL query")
+		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, "failed to build insert SQL query")
 	}
 
 	_, err = r.pool.Exec(ctx, sql, args...)
 	if err != nil {
-		return apperrors.HandlePgError(ctx, err, tableName, nil)
+		return apperrors.HandlePgError(err, tableName, nil)
 	}
 
 	return nil

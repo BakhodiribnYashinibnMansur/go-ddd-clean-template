@@ -9,7 +9,7 @@ const (
 	CtxDeviceID         string = "device_id"
 	CtxSessionID        string = "session_id"
 	CtxRefreshToken     string = "refresh_token"
-	CtxSession          string = "session_object"
+	CtxSession          string = "session_data"
 	CtxMockMode         string = "mock_mode"
 	CtxIsAdmin          string = "is_admin"
 	CtxApiKeyAuth       string = "api_key_authenticated"
@@ -35,4 +35,16 @@ const (
 	ClaimExpiresAt       string = "exp" // Expires At
 	ClaimIssuedAt        string = "iat" // Issued At
 	ClaimJWTID           string = "jti" // JWT ID
+)
+
+// Middleware constants
+const (
+	// Context keys
+	CtxKeyRequestID string = "request_id"
+
+	// HTTP status code thresholds
+	HTTPStatusSuccessThreshold = 400 // Status codes below this are considered successful
+
+	// Timeouts
+	AuditPersistTimeout = 5 // seconds for audit log persistence
 )

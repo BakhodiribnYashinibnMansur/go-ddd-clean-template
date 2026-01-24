@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/domain"
 	apperrors "gct/pkg/errors"
+
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
 )
@@ -17,12 +18,12 @@ func (r *Repo) GetPermissions(ctx context.Context, roleID uuid.UUID) ([]*domain.
 		Where(squirrel.Eq{"rp.role_id": roleID}).
 		ToSql()
 	if err != nil {
-		return nil, apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase, "failed to build select query")
+		return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, "failed to build select query")
 	}
 
 	rows, err := r.pool.Query(ctx, sql, args...)
 	if err != nil {
-		return nil, apperrors.HandlePgError(ctx, err, "permission", nil)
+		return nil, apperrors.HandlePgError(err, "permission", nil)
 	}
 	defer rows.Close()
 
@@ -30,9 +31,13 @@ func (r *Repo) GetPermissions(ctx context.Context, roleID uuid.UUID) ([]*domain.
 	for rows.Next() {
 		var p domain.Permission
 		if err := rows.Scan(&p.ID, &p.Name, &p.CreatedAt); err != nil {
-			return nil, apperrors.NewRepoError(ctx, apperrors.ErrRepoDatabase, "failed to scan row")
+			return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, "failed to scan row")
 		}
 		permissions = append(permissions, &p)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, apperrors.HandlePgError(err, "permission", nil)
 	}
 
 	return permissions, nil

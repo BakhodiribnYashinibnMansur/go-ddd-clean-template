@@ -170,7 +170,7 @@ func WithRetry(ctx context.Context, fn func() error) error {
 // RecoverFromPanic recovers from panic and converts it to an AppError
 func RecoverFromPanic(ctx context.Context) *AppError {
 	if r := recover(); r != nil {
-		return New(ctx, ErrInternal, "Panic recovered").
+		return New(ErrInternal, "Panic recovered").
 			WithDetails(fmt.Sprintf("%v", r)).
 			WithTag("panic")
 	}
@@ -181,7 +181,7 @@ func RecoverFromPanic(ctx context.Context) *AppError {
 func SafeExecute(ctx context.Context, fn func() error) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			err = New(ctx, ErrInternal, "Panic recovered").
+			err = New(ErrInternal, "Panic recovered").
 				WithDetails(fmt.Sprintf("%v", r)).
 				WithTag("panic")
 		}

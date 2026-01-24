@@ -13,7 +13,7 @@ func (uc *UseCase) Gets(ctx context.Context, in *domain.UsersFilter) ([]*domain.
 	users, total, err := uc.repo.Postgres.User.Client.Gets(ctx, in)
 	if err != nil {
 		uc.logger.WithContext(ctx).Errorw("user gets failed", "error", err)
-		return nil, 0, apperrors.MapRepoToServiceError(ctx, err).WithInput(in)
+		return nil, 0, apperrors.MapRepoToServiceError(err).WithInput(in)
 	}
 
 	uc.logger.WithContext(ctx).Infow("user gets success", "count", len(users), "total", total)
