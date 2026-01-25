@@ -5,7 +5,7 @@ import (
 
 	"gct/consts"
 	"gct/internal/controller/restapi/response"
-	"gct/internal/controller/restapi/util"
+	"gct/pkg/httpx"
 	"gct/internal/domain"
 	"github.com/gin-gonic/gin"
 )
@@ -21,24 +21,25 @@ import (
 // @Success     200 {object} response.SuccessResponse
 // @Failure     400 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
+// @Security    BearerAuth
 // @Router      /authz/permissions/{perm_id} [put]
 func (c *Controller) Update(ctx *gin.Context) {
-	id, err := util.GetUUIDParam(ctx, consts.ParamPermID)
+	id, err := httpx.GetUUIDParam(ctx, consts.ParamPermID)
 	if err != nil {
-		util.LogError(c.l, err, "http - v1 - authz - permission - update - uuid")
+		httpx.LogError(c.l, err, "http - v1 - authz - permission - update - uuid")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid permission id", nil, false)
 		return
 	}
 
 	var perm domain.Permission
 	if err := ctx.ShouldBindJSON(&perm); err != nil {
-		util.LogError(c.l, err, "http - v1 - authz - permission - update - bind")
+		httpx.LogError(c.l, err, "http - v1 - authz - permission - update - bind")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid request body", nil, false)
 		return
 	}
 	perm.ID = id
-	// Handle mock mode
-	if util.Mock(ctx, util.MockTypeUpdate, "Permission updated successfully") {
+// Handle mock mode
+	if httpx.Mock(ctx, httpx.MockTypeUpdate, "Permission updated successfully") {
 		return
 	}
 

@@ -5,8 +5,9 @@ import (
 
 	"gct/consts"
 	"gct/internal/controller/restapi/response"
-	"gct/internal/controller/restapi/util"
 	"gct/internal/domain"
+	"gct/pkg/httpx"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -21,24 +22,25 @@ import (
 // @Success     200 {object} response.SuccessResponse
 // @Failure     400 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
+// @Security    BearerAuth
 // @Router      /authz/roles/{role_id} [put]
 func (c *Controller) Update(ctx *gin.Context) {
-	id, err := util.GetUUIDParam(ctx, consts.ParamRoleID)
+	id, err := httpx.GetUUIDParam(ctx, consts.ParamRoleID)
 	if err != nil {
-		util.LogError(c.l, err, "http - v1 - authz - role - update - uuid")
+		httpx.LogError(c.l, err, "http - v1 - authz - role - update - uuid")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid role id", nil, false)
 		return
 	}
 
 	var role domain.Role
 	if err := ctx.ShouldBindJSON(&role); err != nil {
-		util.LogError(c.l, err, "http - v1 - authz - role - update - bind")
+		httpx.LogError(c.l, err, "http - v1 - authz - role - update - bind")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid request body", nil, false)
 		return
 	}
 	role.ID = id
 	// Handle mock mode
-	if util.Mock(ctx, util.MockTypeUpdate, "Role updated successfully") {
+	if httpx.Mock(ctx, httpx.MockTypeUpdate, "Role updated successfully") {
 		return
 	}
 

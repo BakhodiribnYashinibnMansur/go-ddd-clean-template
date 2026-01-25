@@ -51,13 +51,14 @@ type AuditLog struct {
 }
 
 type AuditLogFilter struct {
-	UserID       *uuid.UUID       `json:"user_id,omitempty"`
-	Action       *AuditActionType `json:"action,omitempty"`
-	ResourceType *string          `json:"resource_type,omitempty"`
-	ResourceID   *uuid.UUID       `json:"resource_id,omitempty"`
-	Success      *bool            `json:"success,omitempty"`
-	FromDate     *time.Time       `json:"from_date,omitempty"`
-	ToDate       *time.Time       `json:"to_date,omitempty"`
+	UserID       *uuid.UUID        `json:"user_id,omitempty"`
+	Action       *AuditActionType  `json:"action,omitempty"`
+	Actions      []AuditActionType `json:"actions,omitempty"`
+	ResourceType *string           `json:"resource_type,omitempty"`
+	ResourceID   *uuid.UUID        `json:"resource_id,omitempty"`
+	Success      *bool             `json:"success,omitempty"`
+	FromDate     *time.Time        `json:"from_date,omitempty"`
+	ToDate       *time.Time        `json:"to_date,omitempty"`
 }
 
 type AuditLogsFilter struct {

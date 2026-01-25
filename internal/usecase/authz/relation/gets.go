@@ -8,14 +8,14 @@ import (
 )
 
 func (u *UseCase) Gets(ctx context.Context, filter *domain.RelationsFilter) ([]*domain.Relation, int, error) {
-	u.logger.WithContext(ctx).Infow("relation gets started", "input", filter)
+	u.logger.Infow("relation gets started", "input", filter)
 
 	relations, count, err := u.repo.Postgres.Authz.Relation.Gets(ctx, filter)
 	if err != nil {
-		u.logger.WithContext(ctx).Errorw("relation gets failed", "error", err)
+		u.logger.Errorw("relation gets failed", "error", err)
 		return nil, 0, apperrors.MapRepoToServiceError(err).WithInput(filter)
 	}
 
-	u.logger.WithContext(ctx).Infow("relation gets success", "count", len(relations), "total", count)
+	u.logger.Infow("relation gets success", "count", len(relations), "total", count)
 	return relations, count, nil
 }

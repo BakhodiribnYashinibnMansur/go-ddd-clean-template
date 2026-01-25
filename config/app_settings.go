@@ -15,12 +15,14 @@ type (
 	HTTP struct {
 		Port            string `env:"HTTP_PORT,required"`
 		UsePreforkMode  bool   `env:"HTTP_USE_PREFORK_MODE" envDefault:"false"`
+		GinMode         string `env:"GIN_MODE" envDefault:"debug"`
 		ShutdownTimeout int64  `env:"HTTP_SHUTDOWN_TIMEOUT" envDefault:"5"` // Seconds
 	}
 
 	// Log -.
 	Log struct {
-		Level string `yaml:"level"`
+		Level   string `yaml:"level"`
+		ShowGin bool   `yaml:"show_gin" env:"LOG_SHOW_GIN" envDefault:"true"`
 	}
 
 	// APIKeys configuration -.

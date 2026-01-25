@@ -3,7 +3,9 @@ package log
 import (
 	"context"
 
+	"gct/consts"
 	"gct/internal/domain"
+	"gct/internal/repo/schema"
 	apperrors "gct/pkg/errors"
 )
 
@@ -11,21 +13,21 @@ func (r *Repo) Create(ctx context.Context, a *domain.AuditLog) error {
 	sql, args, err := r.builder.
 		Insert(tableName).
 		Columns(
-			"user_id",
-			"session_id",
-			"action",
-			"resource_type",
-			"resource_id",
-			"platform",
-			"ip_address",
-			"user_agent",
-			"permission",
-			"policy_id",
-			"decision",
-			"success",
-			"error_message",
-			"metadata",
-			"created_at",
+			schema.AuditLogUserID,
+			schema.AuditLogSessionID,
+			schema.AuditLogAction,
+			schema.AuditLogResourceType,
+			schema.AuditLogResourceID,
+			schema.AuditLogPlatform,
+			schema.AuditLogIPAddress,
+			schema.AuditLogUserAgent,
+			schema.AuditLogPermission,
+			schema.AuditLogPolicyID,
+			schema.AuditLogDecision,
+			schema.AuditLogSuccess,
+			schema.AuditLogErrorMessage,
+			schema.AuditLogMetadata,
+			schema.AuditLogCreatedAt,
 		).
 		Values(
 			a.UserID,
@@ -46,7 +48,7 @@ func (r *Repo) Create(ctx context.Context, a *domain.AuditLog) error {
 		).
 		ToSql()
 	if err != nil {
-		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, "failed to build insert SQL query")
+		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildInsert)
 	}
 
 	_, err = r.pool.Exec(ctx, sql, args...)

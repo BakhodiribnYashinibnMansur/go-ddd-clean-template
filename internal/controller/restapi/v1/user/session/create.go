@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"gct/internal/controller/restapi/response"
-	"gct/internal/controller/restapi/util"
+	"gct/pkg/httpx"
 	"gct/internal/domain"
 	"gct/internal/domain/mock"
 	"github.com/gin-gonic/gin"
@@ -17,24 +17,25 @@ import (
 // @Accept      json
 // @Produce     json
 // @Param       request body domain.Session true "Session creation query"
-// @Success     201 {object} response.SuccessResponse{data=domain.Session}
+// @Success     201 {object} response.SuccessResponse
 // @Failure     400 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
+// @Security    BearerAuth
 // @Router      /sessions [post]
 func (c *Controller) Create(ctx *gin.Context) {
 	var req domain.Session
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		util.LogError(c.l, err, "http - v1 - session - create - bind")
+		httpx.LogError(c.l, err, "http - v1 - session - create - bind")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid request body", nil, false)
 		return
 	}
 
-	// Handle mock mode
-	if util.Mock(ctx, util.MockTypeGet, func() any { return mock.Session() }) {
+// Handle mock mode
+	if httpx.Mock(ctx, httpx.MockTypeGet, func() any { return mock.Session() }) {
 		return
 	}
 
-	// Using pointer for session as requested
+// Using pointer for session as requested
 	createSession, err := c.s.User.Session.Create(ctx.Request.Context(), &req)
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusInternalServerError, err, nil, false)

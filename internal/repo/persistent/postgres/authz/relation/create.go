@@ -2,21 +2,24 @@ package relation
 
 import (
 	"context"
+	"fmt"
 	"time"
 
+	"gct/consts"
 	"gct/internal/domain"
+	"gct/internal/repo/schema"
 	apperrors "gct/pkg/errors"
 )
 
 func (r *Repo) Create(ctx context.Context, relation *domain.Relation) error {
 	sql, args, err := r.builder.
 		Insert(tableName).
-		Columns("type", "name", "created_at").
+		Columns(schema.RelationType, schema.RelationName, schema.RelationCreatedAt).
 		Values(relation.Type, relation.Name, time.Now()).
-		Suffix("RETURNING id, created_at").
+		Suffix(fmt.Sprintf("RETURNING %s, %s", schema.RelationID, schema.RelationCreatedAt)).
 		ToSql()
 	if err != nil {
-		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, "failed to build insert SQL query")
+		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildInsert)
 	}
 
 	err = r.pool.QueryRow(ctx, sql, args...).Scan(&relation.ID, &relation.CreatedAt)

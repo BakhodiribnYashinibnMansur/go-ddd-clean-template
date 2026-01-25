@@ -5,22 +5,23 @@ import (
 	"fmt"
 
 	"gct/internal/domain"
+	"gct/internal/repo/schema"
 	apperrors "gct/pkg/errors"
 
 	"github.com/Masterminds/squirrel"
 )
 
 func (r *Repo) Gets(ctx context.Context, filter *domain.RolesFilter) ([]*domain.Role, int, error) {
-	query := r.builder.Select("id", "name", "created_at").From(tableName)
+	query := r.builder.Select(schema.RoleID, schema.RoleName, schema.RoleCreatedAt).From(tableName)
 	countQuery := r.builder.Select("COUNT(*)").From(tableName)
 
 	if filter.ID != nil {
-		query = query.Where(squirrel.Eq{"id": *filter.ID})
-		countQuery = countQuery.Where(squirrel.Eq{"id": *filter.ID})
+		query = query.Where(squirrel.Eq{schema.RoleID: *filter.ID})
+		countQuery = countQuery.Where(squirrel.Eq{schema.RoleID: *filter.ID})
 	}
 	if filter.Name != nil {
-		query = query.Where(squirrel.Eq{"name": *filter.Name})
-		countQuery = countQuery.Where(squirrel.Eq{"name": *filter.Name})
+		query = query.Where(squirrel.Eq{schema.RoleName: *filter.Name})
+		countQuery = countQuery.Where(squirrel.Eq{schema.RoleName: *filter.Name})
 	}
 
 	if filter.Pagination != nil {

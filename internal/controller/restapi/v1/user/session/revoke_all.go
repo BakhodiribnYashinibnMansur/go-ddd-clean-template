@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"gct/internal/controller/restapi/response"
-	"gct/internal/controller/restapi/util"
+	"gct/pkg/httpx"
 	"gct/internal/domain"
 	"github.com/gin-gonic/gin"
 )
@@ -20,15 +20,16 @@ import (
 // @Failure     400 {object} response.ErrorResponse
 // @Failure     401 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
+// @Security    BearerAuth
 // @Router      /sessions/revoke-all [post]
 func (c *Controller) RevokeAll(ctx *gin.Context) {
-	userID, err := util.GetUserID(ctx)
+	userID, err := httpx.GetUserID(ctx)
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusUnauthorized, "unauthorized", nil, false)
 		return
 	}
 
-	sid, err := util.GetCtxSessionID(ctx)
+	sid, err := httpx.GetCtxSessionID(ctx)
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusUnauthorized, "session not found", nil, false)
 		return
@@ -36,20 +37,20 @@ func (c *Controller) RevokeAll(ctx *gin.Context) {
 
 	var req domain.RevokeSessionsIn
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		// We allow empty body for now if it's just a general revoke all
-		// But the user said Post needs a body.
-		util.LogError(c.l, err, "http - v1 - session - revokeall - bind")
+// We allow empty body for now if it's just a general revoke all
+// But the user said Post needs a body.
+		httpx.LogError(c.l, err, "http - v1 - session - revokeall - bind")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid request body", nil, false)
 		return
 	}
 	req.UserID = userID
 
-	// Handle mock mode
-	if util.Mock(ctx, util.MockTypeDelete, "Sessions revoked successfully") {
+// Handle mock mode
+	if httpx.Mock(ctx, httpx.MockTypeDelete, "Sessions revoked successfully") {
 		return
 	}
 
-	// Just revoke current session for now
+// Just revoke current session for now
 	filter := &domain.SessionFilter{ID: &sid}
 	err = c.s.User.Session.Revoke(ctx.Request.Context(), filter)
 	if err != nil {

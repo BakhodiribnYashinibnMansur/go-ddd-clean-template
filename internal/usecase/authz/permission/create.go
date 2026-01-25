@@ -8,14 +8,14 @@ import (
 )
 
 func (u *UseCase) Create(ctx context.Context, perm *domain.Permission) error {
-	u.logger.WithContext(ctx).Infow("permission create started", "input", perm)
+	u.logger.Infow("permission create started", "input", perm)
 
 	err := u.repo.Postgres.Authz.Permission.Create(ctx, perm)
 	if err != nil {
-		u.logger.WithContext(ctx).Errorw("permission create failed", "error", err)
+		u.logger.Errorw("permission create failed", "error", err)
 		return apperrors.MapRepoToServiceError(err).WithInput(perm)
 	}
 
-	u.logger.WithContext(ctx).Infow("permission create success")
+	u.logger.Infow("permission create success")
 	return nil
 }

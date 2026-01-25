@@ -1,16 +1,34 @@
 package middleware
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"gct/internal/domain"
 	"gct/internal/usecase"
+	"gct/internal/usecase/audit"
 	"gct/pkg/logger"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
+
+type MockSystemErrorUC struct {
+	mock.Mock
+}
+
+func (m *MockSystemErrorUC) Create(ctx context.Context, in *domain.SystemError) error {
+	args := m.Called(ctx, in)
+	return args.Error(0)
+}
+
+func (m *MockSystemErrorUC) Gets(ctx context.Context, in *domain.SystemErrorsFilter) ([]*domain.SystemError, int, error) {
+	args := m.Called(ctx, in)
+	return args.Get(0).([]*domain.SystemError), args.Int(1), args.Error(2)
+}
 
 func TestSystemErrorMiddleware_Recovery(t *testing.T) {
 	gin.SetMode(gin.TestMode)
@@ -50,11 +68,21 @@ func TestSystemErrorMiddleware_Recovery(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Setup logger
+			// Setup mock logger
 			mockLogger := logger.New("debug")
 
 			// Setup mock use case
-			uc := &usecase.UseCase{}
+			mockSysErrUC := new(MockSystemErrorUC)
+			// Only expect Create call if panic occurs
+			if tt.shouldPanic {
+				mockSysErrUC.On("Create", mock.Anything, mock.Anything).Return(nil)
+			}
+
+			uc := &usecase.UseCase{
+				Audit: &audit.UseCase{
+					SystemError: mockSysErrUC,
+				},
+			}
 
 			// Create middleware
 			sysErrM := NewSystemErrorMiddleware(uc, mockLogger)
@@ -118,13 +146,13 @@ func TestSystemErrorMiddleware_Persist5xx(t *testing.T) {
 			name:          "skip_400_error",
 			statusCode:    http.StatusBadRequest,
 			shouldPersist: false,
-			errorMessage:  "bad request",
+			errorMessage:  "",
 		},
 		{
 			name:          "skip_404_error",
 			statusCode:    http.StatusNotFound,
 			shouldPersist: false,
-			errorMessage:  "not found",
+			errorMessage:  "",
 		},
 		{
 			name:          "skip_200_success",
@@ -136,11 +164,20 @@ func TestSystemErrorMiddleware_Persist5xx(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Setup logger
+			// Setup mock logger
 			mockLogger := logger.New("debug")
 
 			// Setup mock use case
-			uc := &usecase.UseCase{}
+			mockSysErrUC := new(MockSystemErrorUC)
+			if tt.shouldPersist {
+				mockSysErrUC.On("Create", mock.Anything, mock.Anything).Return(nil)
+			}
+
+			uc := &usecase.UseCase{
+				Audit: &audit.UseCase{
+					SystemError: mockSysErrUC,
+				},
+			}
 
 			// Create middleware
 			sysErrM := NewSystemErrorMiddleware(uc, mockLogger)

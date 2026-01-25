@@ -9,8 +9,8 @@ import (
 // NewRouter registers the variety of feature flag demonstration endpoints.
 // It maps specific flag types and evaluation strategies (Boolean, Variance, Targeting) to handlers.
 func NewRouter(handler *gin.RouterGroup, l logger.Log) {
-	// Initialize the controller with the underlying Zap logger instance.
-	ffController := NewFeatureFlagController(l.GetZap())
+	// Initialize the controller with the underlying Log instance.
+	ffController := NewFeatureFlagController(l)
 
 	// Define the base group for feature flag experimentation.
 	ffGroup := handler.Group("/featureflag")

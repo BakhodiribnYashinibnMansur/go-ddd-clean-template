@@ -25,7 +25,7 @@ func Run(cfg *config.Config) {
     // Initialize Feature Flags
     ffClient, err := featureflag.New(ctx, cfg.FeatureFlag, redisClient, l)
     if err != nil {
-        l.WithContext(ctx).Fatalw("failed to init feature flags", zap.Error(err))
+        l.Fatalw("failed to init feature flags", zap.Error(err))
     }
     defer ffClient.Close(ctx)
     

@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"gct/pkg/logger"
+
 	"github.com/hibiken/asynq"
-	"go.uber.org/zap"
 )
 
 // Client wraps asynq.Client for task enqueueing.
@@ -25,6 +25,11 @@ func NewClient(redisAddr, redisPassword string, redisDB int, log logger.Log) *Cl
 		Password: redisPassword,
 		DB:       redisDB,
 	})
+
+	log.Info("✅ Asynq client initialized",
+		"redis_addr", redisAddr,
+		"redis_db", redisDB,
+	)
 
 	return &Client{
 		client: client,
@@ -46,9 +51,9 @@ func (c *Client) EnqueueTask(
 ) (*asynq.TaskInfo, error) {
 	payloadBytes, err := json.Marshal(payload)
 	if err != nil {
-		c.log.WithContext(ctx).Errorw("failed to marshal task payload",
-			zap.String("task_type", taskType),
-			zap.Error(err),
+		c.log.Errorc(ctx, "❌ Failed to marshal task payload",
+			"task_type", taskType,
+			"error", err,
 		)
 		return nil, fmt.Errorf("marshal payload: %w", err)
 	}
@@ -56,17 +61,17 @@ func (c *Client) EnqueueTask(
 	task := asynq.NewTask(taskType, payloadBytes, opts...)
 	info, err := c.client.EnqueueContext(ctx, task)
 	if err != nil {
-		c.log.WithContext(ctx).Errorw("failed to enqueue task",
-			zap.String("task_type", taskType),
-			zap.Error(err),
+		c.log.Errorc(ctx, "❌ Failed to enqueue task",
+			"task_type", taskType,
+			"error", err,
 		)
 		return nil, fmt.Errorf("enqueue task: %w", err)
 	}
 
-	c.log.WithContext(ctx).Infow("task enqueued successfully",
-		zap.String("task_type", taskType),
-		zap.String("task_id", info.ID),
-		zap.String("queue", info.Queue),
+	c.log.Infoc(ctx, "📤 Task enqueued successfully",
+		"task_type", taskType,
+		"task_id", info.ID,
+		"queue", info.Queue,
 	)
 
 	return info, nil

@@ -25,7 +25,7 @@ func New(token, chatID string, topics map[MessageType]string, opts ...Option) *C
 		token:  token,
 		chatID: chatID,
 		topics: topics,
-		client: &http.Client{Timeout: 10 * time.Second},
+		client: &http.Client{Timeout: DefaultTimeout},
 	}
 
 	for _, opt := range opts {

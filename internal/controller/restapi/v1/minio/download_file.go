@@ -5,14 +5,23 @@ import (
 	"os"
 
 	"gct/internal/controller/restapi/response"
-	"gct/internal/controller/restapi/util"
+	"gct/pkg/httpx"
+
 	"github.com/gin-gonic/gin"
 )
 
-// DownloadFile handles file download
+// DownloadFile godoc
+// @Summary     Download file
+// @Description Download a file by path
+// @Tags        files
+// @Produce     octet-stream
+// @Param       file-path query string true "File path"
+// @Success     200 {string} string "File content"
+// @Failure     400 {object} response.ErrorResponse
+// @Router      /files/download [get]
 func (h *Controller) DownloadFile(ctx *gin.Context) {
 	// Handle mock mode
-	if util.Mock(ctx, util.MockTypeGet, func() any { return string("file_content_mock") }) {
+	if httpx.Mock(ctx, httpx.MockTypeGet, func() any { return string("file_content_mock") }) {
 		return
 	}
 	pathStr := ctx.Query(filePath)

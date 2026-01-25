@@ -12,7 +12,7 @@ import (
 	"gct/internal/usecase/cache"
 	"gct/pkg/logger"
 	"github.com/go-redis/redismock/v9"
-	redisClient "github.com/redis/go-redis/v9"
+	redisclient "github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -83,7 +83,7 @@ func TestCache_GetPublicCache_Miss(t *testing.T) {
 	pagination := &domain.Pagination{Limit: 10, Offset: 0}
 	cacheKey := "users_en_0_10"
 
-	mock.ExpectGet(cacheKey).SetErr(redisClient.Nil)
+	mock.ExpectGet(cacheKey).SetErr(redisclient.Nil)
 
 	var out TestData
 	err := c.GetPublicCache(t.Context(), tableName, lang, pagination, &out)

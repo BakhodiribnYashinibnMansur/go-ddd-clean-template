@@ -5,6 +5,7 @@ import (
 
 	"gct/consts"
 	"gct/internal/domain"
+	"gct/internal/repo/schema"
 	apperrors "gct/pkg/errors"
 
 	"github.com/Masterminds/squirrel"
@@ -12,9 +13,24 @@ import (
 
 func (r *Repo) Gets(ctx context.Context, filter *domain.UsersFilter) ([]*domain.User, int, error) {
 	// Base query
-	baseQb := r.builder.Select("id, role_id, username, email, phone, password_hash, salt, attributes, active, is_approved, created_at, updated_at, deleted_at, last_seen").
+	baseQb := r.builder.Select(
+		schema.UsersID,
+		schema.UsersRoleID,
+		schema.UsersUsername,
+		schema.UsersEmail,
+		schema.UsersPhone,
+		schema.UsersPasswordHash,
+		schema.UsersSalt,
+		schema.UsersAttributes,
+		schema.UsersActive,
+		schema.UsersIsApproved,
+		schema.UsersCreatedAt,
+		schema.UsersUpdatedAt,
+		schema.UsersDeletedAt,
+		schema.UsersLastSeen,
+	).
 		From(tableName).
-		Where("deleted_at = 0")
+		Where(schema.UsersDeletedAt + " = 0")
 
 	// Apply dynamic filters
 	qb := r.applyFilters(baseQb, &filter.UserFilter)
@@ -22,20 +38,20 @@ func (r *Repo) Gets(ctx context.Context, filter *domain.UsersFilter) ([]*domain.
 	// Apply Sorting & Pagination
 	if filter.Pagination != nil {
 		if filter.Pagination.SortBy != "" {
-			order := "ASC"
-			if filter.Pagination.SortOrder == "DESC" {
-				order = "DESC"
+			order := consts.SQLOrderAsc
+			if filter.Pagination.SortOrder == consts.SQLOrderDesc {
+				order = consts.SQLOrderDesc
 			}
 			qb = qb.OrderBy(filter.Pagination.SortBy + " " + order)
 		} else {
-			qb = qb.OrderBy("created_at DESC")
+			qb = qb.OrderBy(schema.UsersCreatedAt + " DESC")
 		}
 		qb = qb.Limit(uint64(filter.Pagination.Limit)).Offset(uint64(filter.Pagination.Offset))
 	}
 
 	sql, args, err := qb.ToSql()
 	if err != nil {
-		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, "failed to build SQL query")
+		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
 	}
 
 	rows, err := r.pool.Query(ctx, sql, args...)
@@ -52,7 +68,7 @@ func (r *Repo) Gets(ctx context.Context, filter *domain.UsersFilter) ([]*domain.
 			&u.Attributes, &u.Active, &u.IsApproved,
 			&u.CreatedAt, &u.UpdatedAt, &u.DeletedAt, &u.LastSeen,
 		); err != nil {
-			return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, "failed to scan row")
+			return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToScanRow)
 		}
 		users = append(users, &u)
 	}
@@ -63,12 +79,12 @@ func (r *Repo) Gets(ctx context.Context, filter *domain.UsersFilter) ([]*domain.
 
 	// Count Query
 	// Start fresh from builder but reuse filter logic
-	countBaseQb := r.builder.Select("COUNT(*)").From(tableName).Where("deleted_at = 0")
+	countBaseQb := r.builder.Select("COUNT(*)").From(tableName).Where(schema.UsersDeletedAt + " = 0")
 	countQb := r.applyFilters(countBaseQb, &filter.UserFilter)
 
 	countSql, countArgs, err := countQb.ToSql()
 	if err != nil {
-		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, "failed to build count query")
+		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
 	}
 	var count int
 	if err := r.pool.QueryRow(ctx, countSql, countArgs...).Scan(&count); err != nil {
@@ -80,25 +96,25 @@ func (r *Repo) Gets(ctx context.Context, filter *domain.UsersFilter) ([]*domain.
 
 func (r *Repo) applyFilters(qb squirrel.SelectBuilder, filter *domain.UserFilter) squirrel.SelectBuilder {
 	if filter.ID != nil {
-		qb = qb.Where(squirrel.Eq{"id": *filter.ID})
+		qb = qb.Where(squirrel.Eq{schema.UsersID: *filter.ID})
 	}
 	if filter.RoleID != nil {
-		qb = qb.Where(squirrel.Eq{"role_id": *filter.RoleID})
+		qb = qb.Where(squirrel.Eq{schema.UsersRoleID: *filter.RoleID})
 	}
 	if filter.Username != nil {
-		qb = qb.Where(squirrel.Eq{"username": *filter.Username})
+		qb = qb.Where(squirrel.Eq{schema.UsersUsername: *filter.Username})
 	}
 	if filter.Phone != nil {
-		qb = qb.Where(squirrel.Eq{"phone": *filter.Phone})
+		qb = qb.Where(squirrel.Eq{schema.UsersPhone: *filter.Phone})
 	}
 	if filter.Email != nil {
-		qb = qb.Where(squirrel.Eq{"email": *filter.Email})
+		qb = qb.Where(squirrel.Eq{schema.UsersEmail: *filter.Email})
 	}
 	if filter.Active != nil {
-		qb = qb.Where(squirrel.Eq{"active": *filter.Active})
+		qb = qb.Where(squirrel.Eq{schema.UsersActive: *filter.Active})
 	}
 	if filter.IsApproved != nil {
-		qb = qb.Where(squirrel.Eq{"is_approved": *filter.IsApproved})
+		qb = qb.Where(squirrel.Eq{schema.UsersIsApproved: *filter.IsApproved})
 	}
 	return qb
 }

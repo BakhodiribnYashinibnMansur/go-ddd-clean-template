@@ -18,11 +18,9 @@ func GinMiddleware(handler *gin.Engine, cfg *config.Config, uc *usecase.UseCase,
 	// Initialize error-tracking middleware.
 	sysErrM := NewSystemErrorMiddleware(uc, l)
 
-	// 1. Traceability: Assign unique IDs to every request.
+	// 1. Traceability & Logging: Assign unique IDs and initialize context-aware logger.
 	// This helps in tracking a request across different services and logs.
-	if cfg.Middleware.RequestID {
-		handler.Use(RequestID())
-	}
+	handler.Use(Logger(l))
 
 	// 2. Security: Apply Helmet headers and Fetch-Metadata protections.
 	// These middlewares add security headers to prevent XSS, clickjacking, and other attacks.
@@ -40,11 +38,7 @@ func GinMiddleware(handler *gin.Engine, cfg *config.Config, uc *usecase.UseCase,
 		handler.Use(otelgin.Middleware(cfg.Tracing.ServiceName))
 	}
 
-	// 4. Logging & Resilience.
-	// Logger middleware logs details about each request (method, path, status, latency).
-	if cfg.Middleware.Logger {
-		handler.Use(Logger(l))
-	}
+	// 4. Resilience.
 	// Recovery middleware recovers from panics, preventing the server from crashing.
 	if cfg.Middleware.Recovery {
 		handler.Use(sysErrM.Recovery())

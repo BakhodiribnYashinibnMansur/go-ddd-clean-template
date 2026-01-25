@@ -8,14 +8,14 @@ import (
 )
 
 func (uc *UseCase) Gets(ctx context.Context, in *domain.UsersFilter) ([]*domain.User, int, error) {
-	uc.logger.WithContext(ctx).Infow("user gets started", "input", in)
+	uc.logger.Infoc(ctx, "user gets started", "input", in)
 
 	users, total, err := uc.repo.Postgres.User.Client.Gets(ctx, in)
 	if err != nil {
-		uc.logger.WithContext(ctx).Errorw("user gets failed", "error", err)
+		uc.logger.Errorc(ctx, "user gets failed", "error", err)
 		return nil, 0, apperrors.MapRepoToServiceError(err).WithInput(in)
 	}
 
-	uc.logger.WithContext(ctx).Infow("user gets success", "count", len(users), "total", total)
+	uc.logger.Infoc(ctx, "user gets success", "count", len(users), "total", total)
 	return users, total, nil
 }

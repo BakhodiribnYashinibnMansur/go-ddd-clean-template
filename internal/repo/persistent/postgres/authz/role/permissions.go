@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"gct/internal/repo/schema"
 	apperrors "gct/pkg/errors"
 
 	"github.com/Masterminds/squirrel"
@@ -12,8 +13,8 @@ import (
 
 func (r *Repo) AddPermission(ctx context.Context, roleID, permID uuid.UUID) error {
 	sql, args, err := r.builder.
-		Insert("role_permission").
-		Columns("role_id", "permission_id", "created_at").
+		Insert(schema.TableRolePermission).
+		Columns(schema.RolePermissionRoleID, schema.RolePermissionPermissionID, schema.RolePermissionCreatedAt).
 		Values(roleID, permID, time.Now()).
 		ToSql()
 	if err != nil {
@@ -22,7 +23,7 @@ func (r *Repo) AddPermission(ctx context.Context, roleID, permID uuid.UUID) erro
 
 	_, err = r.pool.Exec(ctx, sql, args...)
 	if err != nil {
-		return apperrors.HandlePgError(err, "role_permission", nil)
+		return apperrors.HandlePgError(err, schema.TableRolePermission, nil)
 	}
 
 	return nil
@@ -30,9 +31,9 @@ func (r *Repo) AddPermission(ctx context.Context, roleID, permID uuid.UUID) erro
 
 func (r *Repo) RemovePermission(ctx context.Context, roleID, permID uuid.UUID) error {
 	sql, args, err := r.builder.
-		Delete("role_permission").
-		Where(squirrel.Eq{"role_id": roleID}).
-		Where(squirrel.Eq{"permission_id": permID}).
+		Delete(schema.TableRolePermission).
+		Where(squirrel.Eq{schema.RolePermissionRoleID: roleID}).
+		Where(squirrel.Eq{schema.RolePermissionPermissionID: permID}).
 		ToSql()
 	if err != nil {
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, "failed to build delete query")
@@ -40,7 +41,7 @@ func (r *Repo) RemovePermission(ctx context.Context, roleID, permID uuid.UUID) e
 
 	tag, err := r.pool.Exec(ctx, sql, args...)
 	if err != nil {
-		return apperrors.HandlePgError(err, "role_permission", nil)
+		return apperrors.HandlePgError(err, schema.TableRolePermission, nil)
 	}
 
 	if tag.RowsAffected() == 0 {

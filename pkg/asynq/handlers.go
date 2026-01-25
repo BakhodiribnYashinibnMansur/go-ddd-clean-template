@@ -6,8 +6,8 @@ import (
 	"fmt"
 
 	"gct/pkg/logger"
+
 	"github.com/hibiken/asynq"
-	"go.uber.org/zap"
 )
 
 // EmailPayload represents email task payload.
@@ -59,20 +59,20 @@ func NewHandlers(log logger.Log) *Handlers {
 func (h *Handlers) HandleEmailWelcome(ctx context.Context, task *asynq.Task) error {
 	var payload EmailPayload
 	if err := json.Unmarshal(task.Payload(), &payload); err != nil {
-		h.log.WithContext(ctx).Errorw("failed to unmarshal email payload", zap.Error(err))
+		h.log.Errorc(ctx, "failed to unmarshal email payload", "error", err)
 		return fmt.Errorf("unmarshal payload: %w", err)
 	}
 
-	h.log.WithContext(ctx).Infow("processing welcome email",
-		zap.String("to", payload.To),
-		zap.String("subject", payload.Subject),
+	h.log.Infoc(ctx, "processing welcome email",
+		"to", payload.To,
+		"subject", payload.Subject,
 	)
 
 	// TODO: Implement actual email sending logic
 	// Example: emailService.Send(ctx, payload)
 
-	h.log.WithContext(ctx).Infow("welcome email sent successfully",
-		zap.String("to", payload.To),
+	h.log.Infoc(ctx, "welcome email sent successfully",
+		"to", payload.To,
 	)
 
 	return nil
@@ -82,18 +82,18 @@ func (h *Handlers) HandleEmailWelcome(ctx context.Context, task *asynq.Task) err
 func (h *Handlers) HandleEmailVerification(ctx context.Context, task *asynq.Task) error {
 	var payload EmailPayload
 	if err := json.Unmarshal(task.Payload(), &payload); err != nil {
-		h.log.WithContext(ctx).Errorw("failed to unmarshal email payload", zap.Error(err))
+		h.log.Errorc(ctx, "failed to unmarshal email payload", "error", err)
 		return fmt.Errorf("unmarshal payload: %w", err)
 	}
 
-	h.log.WithContext(ctx).Infow("processing verification email",
-		zap.String("to", payload.To),
+	h.log.Infoc(ctx, "processing verification email",
+		"to", payload.To,
 	)
 
 	// TODO: Implement actual email sending logic
 
-	h.log.WithContext(ctx).Infow("verification email sent successfully",
-		zap.String("to", payload.To),
+	h.log.Infoc(ctx, "verification email sent successfully",
+		"to", payload.To,
 	)
 
 	return nil
@@ -103,22 +103,22 @@ func (h *Handlers) HandleEmailVerification(ctx context.Context, task *asynq.Task
 func (h *Handlers) HandleImageResize(ctx context.Context, task *asynq.Task) error {
 	var payload ImagePayload
 	if err := json.Unmarshal(task.Payload(), &payload); err != nil {
-		h.log.WithContext(ctx).Errorw("failed to unmarshal image payload", zap.Error(err))
+		h.log.Errorc(ctx, "failed to unmarshal image payload", "error", err)
 		return fmt.Errorf("unmarshal payload: %w", err)
 	}
 
-	h.log.WithContext(ctx).Infow("processing image resize",
-		zap.String("source", payload.SourcePath),
-		zap.String("target", payload.TargetPath),
-		zap.Int("width", payload.Width),
-		zap.Int("height", payload.Height),
+	h.log.Infoc(ctx, "processing image resize",
+		"source", payload.SourcePath,
+		"target", payload.TargetPath,
+		"width", payload.Width,
+		"height", payload.Height,
 	)
 
 	// TODO: Implement actual image resizing logic
 	// Example: imageService.Resize(ctx, payload)
 
-	h.log.WithContext(ctx).Infow("image resized successfully",
-		zap.String("target", payload.TargetPath),
+	h.log.Infoc(ctx, "image resized successfully",
+		"target", payload.TargetPath,
 	)
 
 	return nil
@@ -128,20 +128,20 @@ func (h *Handlers) HandleImageResize(ctx context.Context, task *asynq.Task) erro
 func (h *Handlers) HandlePushNotification(ctx context.Context, task *asynq.Task) error {
 	var payload NotificationPayload
 	if err := json.Unmarshal(task.Payload(), &payload); err != nil {
-		h.log.WithContext(ctx).Errorw("failed to unmarshal notification payload", zap.Error(err))
+		h.log.Errorc(ctx, "failed to unmarshal notification payload", "error", err)
 		return fmt.Errorf("unmarshal payload: %w", err)
 	}
 
-	h.log.WithContext(ctx).Infow("processing push notification",
-		zap.String("user_id", payload.UserID),
-		zap.String("title", payload.Title),
+	h.log.Infoc(ctx, "processing push notification",
+		"user_id", payload.UserID,
+		"title", payload.Title,
 	)
 
 	// TODO: Implement actual push notification logic
 	// Example: notificationService.SendPush(ctx, payload)
 
-	h.log.WithContext(ctx).Infow("push notification sent successfully",
-		zap.String("user_id", payload.UserID),
+	h.log.Infoc(ctx, "push notification sent successfully",
+		"user_id", payload.UserID,
 	)
 
 	return nil
@@ -150,7 +150,7 @@ func (h *Handlers) HandlePushNotification(ctx context.Context, task *asynq.Task)
 // HandleSystemSeed processes system seeding task.
 // This is a placeholder, actual implementation will be provided via injection or closure in internal/app.
 func (h *Handlers) HandleSystemSeed(ctx context.Context, task *asynq.Task) error {
-	h.log.WithContext(ctx).Infow("processing system seed task")
+	h.log.Infoc(ctx, "processing system seed task")
 	// Actual implementation will be hooked up in internal/app
 	return nil
 }

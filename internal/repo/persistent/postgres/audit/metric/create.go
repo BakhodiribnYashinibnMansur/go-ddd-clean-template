@@ -3,7 +3,9 @@ package metric
 import (
 	"context"
 
+	"gct/consts"
 	"gct/internal/domain"
+	"gct/internal/repo/schema"
 	apperrors "gct/pkg/errors"
 )
 
@@ -11,11 +13,11 @@ func (r *Repo) Create(ctx context.Context, m *domain.FunctionMetric) error {
 	sql, args, err := r.builder.
 		Insert(tableName).
 		Columns(
-			"name",
-			"latency_ms",
-			"is_panic",
-			"panic_error",
-			"created_at",
+			schema.FunctionMetricName,
+			schema.FunctionMetricLatencyMs,
+			schema.FunctionMetricIsPanic,
+			schema.FunctionMetricPanicError,
+			schema.FunctionMetricCreatedAt,
 		).
 		Values(
 			m.Name,
@@ -26,7 +28,7 @@ func (r *Repo) Create(ctx context.Context, m *domain.FunctionMetric) error {
 		).
 		ToSql()
 	if err != nil {
-		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, "failed to build insert SQL query")
+		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildInsert)
 	}
 
 	_, err = r.pool.Exec(ctx, sql, args...)

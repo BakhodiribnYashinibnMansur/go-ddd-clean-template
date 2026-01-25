@@ -1,7 +1,7 @@
 package admin
 
 import (
-	"gct/internal/controller/restapi/util"
+	"gct/pkg/httpx"
 	"gct/internal/domain"
 	"github.com/gin-gonic/gin"
 )
@@ -13,13 +13,13 @@ func (h *Handler) SystemErrors(ctx *gin.Context) {
 	}
 
 	// Filters
-	if code := util.GetNullStringQuery(ctx, "code"); code != "" {
+	if code := httpx.GetNullStringQuery(ctx, "code"); code != "" {
 		filter.Code = &code
 	}
-	if severity := util.GetNullStringQuery(ctx, "severity"); severity != "" {
+	if severity := httpx.GetNullStringQuery(ctx, "severity"); severity != "" {
 		filter.Severity = &severity
 	}
-	if isResolvedStr := util.GetNullStringQuery(ctx, "is_resolved"); isResolvedStr != "" {
+	if isResolvedStr := httpx.GetNullStringQuery(ctx, "is_resolved"); isResolvedStr != "" {
 		resolved := isResolvedStr == "true"
 		filter.IsResolved = &resolved
 	}

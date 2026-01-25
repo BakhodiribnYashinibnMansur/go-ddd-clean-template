@@ -32,11 +32,11 @@ func New(repo *repo.Repo, logger logger.Log, cfg *config.Config) *Seeder {
 // Seed executes all seeding operations.
 func (s *Seeder) Seed(ctx context.Context, customCounts map[string]int) error {
 	if !s.cfg.Seeder.IsEnabled() && customCounts == nil {
-		s.logger.WithContext(ctx).Infow("Seeder is disabled, skipping...")
+		s.logger.Infoc(ctx, "Seeder is disabled, skipping...")
 		return nil
 	}
 
-	s.logger.WithContext(ctx).Infow("Starting data seeding...")
+	s.logger.Infoc(ctx, "Starting data seeding...")
 	startTime := time.Now()
 
 	// Set seed for reproducible data
@@ -50,10 +50,10 @@ func (s *Seeder) Seed(ctx context.Context, customCounts map[string]int) error {
 
 	if seed != 0 {
 		gofakeit.Seed(seed)
-		s.logger.WithContext(ctx).Infow("Using custom seed for reproducible data", zap.Int64("seed", seed))
+		s.logger.Infoc(ctx, "Using custom seed for reproducible data", zap.Int64("seed", seed))
 	} else {
 		gofakeit.Seed(0) // Random seed
-		s.logger.WithContext(ctx).Infow("Using random seed")
+		s.logger.Infoc(ctx, "Using random seed")
 	}
 
 	// Clear existing data if requested
@@ -99,7 +99,7 @@ func (s *Seeder) Seed(ctx context.Context, customCounts map[string]int) error {
 	}
 
 	duration := time.Since(startTime)
-	s.logger.WithContext(ctx).Infow("Data seeding completed successfully",
+	s.logger.Infoc(ctx, "Data seeding completed successfully",
 		zap.Duration("duration", duration),
 	)
 
@@ -108,7 +108,7 @@ func (s *Seeder) Seed(ctx context.Context, customCounts map[string]int) error {
 
 // clearData removes all existing data from tables.
 func (s *Seeder) clearData(ctx context.Context) error {
-	s.logger.WithContext(ctx).Warnw("Clearing existing data...")
+	s.logger.Warnc(ctx, "Clearing existing data...")
 
 	// Order matters: delete in reverse order of foreign key dependencies
 	tables := []string{
@@ -127,7 +127,7 @@ func (s *Seeder) clearData(ctx context.Context) error {
 		if _, err := s.repo.Persistent.Postgres.DB.Pool.Exec(ctx, query); err != nil {
 			return fmt.Errorf("failed to truncate table %s: %w", table, err)
 		}
-		s.logger.WithContext(ctx).Infow("Table truncated", zap.String("table", table))
+		s.logger.Infoc(ctx, "Table truncated", zap.String("table", table))
 	}
 
 	return nil

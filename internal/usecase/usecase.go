@@ -11,6 +11,7 @@ import (
 	"gct/internal/usecase/audit"
 	"gct/internal/usecase/authz"
 	"gct/internal/usecase/database"
+	errorcode "gct/internal/usecase/errorcode"
 	"gct/internal/usecase/minio"
 	"gct/internal/usecase/sitesetting"
 	"gct/internal/usecase/user"
@@ -28,6 +29,7 @@ type UseCase struct {
 	Authz       *authz.UseCase
 	Audit       *audit.UseCase
 	SiteSetting *sitesetting.UseCase
+	ErrorCode   *errorcode.UseCase
 	Database    *database.UseCase
 	AsynqClient *asynq.Client
 }
@@ -41,6 +43,7 @@ func NewUseCase(repos *repo.Repo, logger logger.Log, cfg *config.Config, asynqCl
 		Authz:       authz.New(repos, logger, cfg),
 		Audit:       audit.New(repos.Persistent, logger),
 		SiteSetting: sitesetting.New(repos.Persistent, logger),
+		ErrorCode:   errorcode.New(repos, logger),
 		Database:    database.New(repos.Persistent.Postgres, logger, cfg),
 		AsynqClient: asynqClient,
 	}

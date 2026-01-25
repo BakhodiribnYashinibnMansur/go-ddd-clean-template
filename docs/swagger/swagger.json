@@ -1,9 +1,18 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "Using a user management service as an example",
+        "description": "A modular and scalable Go REST API template implementing Clean Architecture.",
         "title": "Go Clean Template API",
-        "contact": {},
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "name": "API Support",
+            "url": "http://www.swagger.io/support",
+            "email": "support@swagger.io"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
         "version": "1.0"
     },
     "host": "localhost:8080",
@@ -11,7 +20,7 @@
     "paths": {
         "/api/v1/asynq/email/test": {
             "post": {
-                "description": "Enqueue a test email task",
+                "description": "Enqueue a test email task into the queue system",
                 "consumes": [
                     "application/json"
                 ],
@@ -24,7 +33,7 @@
                 "summary": "Send test email",
                 "parameters": [
                     {
-                        "description": "Email request",
+                        "description": "Email details: recipient, subject, and body",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -35,21 +44,21 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Returns task ID and queue name on success",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Malformed request body or invalid email format",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Failed to connect to the task queue",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
@@ -60,7 +69,7 @@
         },
         "/api/v1/asynq/notification/test": {
             "post": {
-                "description": "Enqueue a test notification task",
+                "description": "Enqueue a push notification task for a specific user",
                 "consumes": [
                     "application/json"
                 ],
@@ -73,7 +82,7 @@
                 "summary": "Send test notification",
                 "parameters": [
                     {
-                        "description": "Notification request",
+                        "description": "Notification details: userID, title, and message",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -109,7 +118,7 @@
         },
         "/api/v1/asynq/seed": {
             "post": {
-                "description": "Enqueue a database seeding task",
+                "description": "Enqueue a task to populate the database with mock data for testing",
                 "consumes": [
                     "application/json"
                 ],
@@ -122,7 +131,7 @@
                 "summary": "Seed database",
                 "parameters": [
                     {
-                        "description": "Seed request",
+                        "description": "Seeding parameters: counts for users, roles, etc.",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -158,7 +167,7 @@
         },
         "/api/v1/featureflag/boolean": {
             "get": {
-                "description": "Demonstrates how to use a boolean feature flag",
+                "description": "Demonstrates how to use a boolean feature flag to toggle UI elements",
                 "consumes": [
                     "application/json"
                 ],
@@ -182,7 +191,7 @@
         },
         "/api/v1/featureflag/int": {
             "get": {
-                "description": "Demonstrates how to use integer variation for rate limiting",
+                "description": "Demonstrates integer flags for dynamic numeric tuning (e.g. rate limits)",
                 "consumes": [
                     "application/json"
                 ],
@@ -206,7 +215,7 @@
         },
         "/api/v1/featureflag/json": {
             "get": {
-                "description": "Demonstrates how to use JSON variation for complex configuration",
+                "description": "Demonstrates JSON flags for shipping complex structured configurations",
                 "consumes": [
                     "application/json"
                 ],
@@ -230,7 +239,7 @@
         },
         "/api/v1/featureflag/rollout": {
             "get": {
-                "description": "Demonstrates how feature flags can be rolled out to a percentage of users",
+                "description": "Demonstrates gradual percentage-based rollouts to minimize risk",
                 "consumes": [
                     "application/json"
                 ],
@@ -254,7 +263,7 @@
         },
         "/api/v1/featureflag/string": {
             "get": {
-                "description": "Demonstrates how to use string variation for A/B testing",
+                "description": "Demonstrates string-based flags for multi-variant A/B testing",
                 "consumes": [
                     "application/json"
                 ],
@@ -278,7 +287,7 @@
         },
         "/api/v1/featureflag/targeting": {
             "get": {
-                "description": "Demonstrates how to use feature flags with user targeting",
+                "description": "Demonstrates segment-based flag targeting (e.g. per plan or email)",
                 "consumes": [
                     "application/json"
                 ],
@@ -292,19 +301,19 @@
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "User ID",
+                        "description": "Unique identity for targeting",
                         "name": "user_id",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "User Email",
+                        "description": "Email address for precise targeting",
                         "name": "email",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "User Plan (free/premium)",
+                        "description": "Segment identifier (free/premium)",
                         "name": "plan",
                         "in": "query"
                     }
@@ -315,6 +324,26 @@
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/audit/actions": {
+            "get": {
+                "description": "Retrieve critical business and admin action logs",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "audit"
+                ],
+                "summary": "Get business action audit logs",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.SuccessResponse"
                         }
                     }
                 }
@@ -409,6 +438,26 @@
                         "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/audit/logins": {
+            "get": {
+                "description": "Retrieve login-related audit logs (success, fail, reason)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "audit"
+                ],
+                "summary": "Get login audit logs",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.SuccessResponse"
                         }
                     }
                 }
@@ -509,6 +558,26 @@
                         "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/audit/sessions": {
+            "get": {
+                "description": "Retrieve session-related audit logs (create, revoke, refresh)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "audit"
+                ],
+                "summary": "Get session audit logs",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.SuccessResponse"
                         }
                     }
                 }
@@ -1588,6 +1657,189 @@
                 }
             }
         },
+        "/error-codes": {
+            "post": {
+                "description": "Create a new error code definition",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "error_code"
+                ],
+                "summary": "Create a new error code",
+                "parameters": [
+                    {
+                        "description": "Error code creation input",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/errorcode.CreateErrorCodeInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/gct_internal_controller_restapi_response.SuccessResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/domain.ErrorCode"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/error-codes/{code}": {
+            "get": {
+                "description": "Get an error code details by code string",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "error_code"
+                ],
+                "summary": "Get an error code",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Error Code string",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/gct_internal_controller_restapi_response.SuccessResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/domain.ErrorCode"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update an existing error code definition",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "error_code"
+                ],
+                "summary": "Update an error code",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Error Code string",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Error code update input",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/errorcode.UpdateErrorCodeInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/gct_internal_controller_restapi_response.SuccessResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/domain.ErrorCode"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/metrics/functions": {
             "get": {
                 "description": "Retrieve function execution metrics",
@@ -1762,6 +2014,41 @@
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sessions/current": {
+            "delete": {
+                "description": "Revoke the session that is currently being used",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sessions"
+                ],
+                "summary": "Revoke current session",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.SuccessResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
                         "schema": {
                             "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
                         }
@@ -2453,6 +2740,78 @@
                 }
             }
         },
+        "domain.ErrorCategory": {
+            "type": "string",
+            "enum": [
+                "DATA",
+                "AUTH",
+                "SYSTEM",
+                "VALIDATION",
+                "BUSINESS",
+                "UNKNOWN"
+            ],
+            "x-enum-varnames": [
+                "CategoryData",
+                "CategoryAuth",
+                "CategorySystem",
+                "CategoryValidation",
+                "CategoryBusiness",
+                "CategoryUnknown"
+            ]
+        },
+        "domain.ErrorCode": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "$ref": "#/definitions/domain.ErrorCategory"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "http_status": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "retry_after": {
+                    "type": "integer"
+                },
+                "retryable": {
+                    "type": "boolean"
+                },
+                "severity": {
+                    "$ref": "#/definitions/domain.ErrorSeverity"
+                },
+                "suggestion": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.ErrorSeverity": {
+            "type": "string",
+            "enum": [
+                "LOW",
+                "MEDIUM",
+                "HIGH",
+                "CRITICAL"
+            ],
+            "x-enum-varnames": [
+                "SeverityLow",
+                "SeverityMedium",
+                "SeverityHigh",
+                "SeverityCritical"
+            ]
+        },
         "domain.FunctionMetric": {
             "type": "object",
             "properties": {
@@ -2673,8 +3032,7 @@
                     "type": "string"
                 },
                 "phone": {
-                    "type": "string",
-                    "minLength": 9
+                    "type": "string"
                 },
                 "role_id": {
                     "type": "string"
@@ -2685,6 +3043,66 @@
                 "username": {
                     "type": "string",
                     "minLength": 3
+                }
+            }
+        },
+        "errorcode.CreateErrorCodeInput": {
+            "type": "object",
+            "required": [
+                "code",
+                "http_status",
+                "message"
+            ],
+            "properties": {
+                "category": {
+                    "$ref": "#/definitions/domain.ErrorCategory"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "http_status": {
+                    "type": "integer"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "retry_after": {
+                    "type": "integer"
+                },
+                "retryable": {
+                    "type": "boolean"
+                },
+                "severity": {
+                    "$ref": "#/definitions/domain.ErrorSeverity"
+                },
+                "suggestion": {
+                    "type": "string"
+                }
+            }
+        },
+        "errorcode.UpdateErrorCodeInput": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "$ref": "#/definitions/domain.ErrorCategory"
+                },
+                "http_status": {
+                    "type": "integer"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "retry_after": {
+                    "type": "integer"
+                },
+                "retryable": {
+                    "type": "boolean"
+                },
+                "severity": {
+                    "$ref": "#/definitions/domain.ErrorSeverity"
+                },
+                "suggestion": {
+                    "type": "string"
                 }
             }
         },

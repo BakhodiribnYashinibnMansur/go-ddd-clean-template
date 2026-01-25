@@ -4,15 +4,26 @@ import (
 	"net/http"
 
 	"gct/internal/controller/restapi/response"
-	"gct/internal/controller/restapi/util"
 	"gct/internal/domain/mock"
+	"gct/pkg/httpx"
+
 	"github.com/gin-gonic/gin"
 )
 
-// UploadVideo handles video upload
+// UploadVideo godoc
+// @Summary     Upload video
+// @Description Upload a video file
+// @Tags        files
+// @Accept      multipart/form-data
+// @Produce     json
+// @Param       file formData file true "Video file (mp4, avi, mov)"
+// @Success     200 {object} response.SuccessResponse
+// @Failure     400 {object} response.ErrorResponse
+// @Security    BearerAuth
+// @Router      /files/upload/video [post]
 func (h *Controller) UploadVideo(ctx *gin.Context) {
 	// Handle mock mode
-	if util.Mock(ctx, util.MockTypeGet, func() any { return mock.FileInfoVideo().FileName }) {
+	if httpx.Mock(ctx, httpx.MockTypeGet, func() any { return mock.FileInfoVideo().FileName }) {
 		return
 	}
 	file, err := ctx.FormFile("file")

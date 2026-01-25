@@ -5,7 +5,7 @@ import (
 
 	"gct/consts"
 	"gct/internal/controller/restapi/response"
-	"gct/internal/controller/restapi/util"
+	"gct/pkg/httpx"
 	"gct/internal/domain"
 	"github.com/gin-gonic/gin"
 )
@@ -20,17 +20,18 @@ import (
 // @Success     200 {object} response.SuccessResponse
 // @Failure     400 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
+// @Security    BearerAuth
 // @Router      /sessions/{id}/activity [put]
 func (c *Controller) UpdateActivity(ctx *gin.Context) {
-	id, err := util.GetUUIDParam(ctx, consts.ParamID)
+	id, err := httpx.GetUUIDParam(ctx, consts.ParamID)
 	if err != nil {
-		util.LogError(c.l, err, "http - v1 - session - updateActivity - id")
+		httpx.LogError(c.l, err, "http - v1 - session - updateActivity - id")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid session id", nil, false)
 		return
 	}
 
-	// Handle mock mode
-	if util.Mock(ctx, util.MockTypeUpdate, "Activity updated successfully") {
+// Handle mock mode
+	if httpx.Mock(ctx, httpx.MockTypeUpdate, "Activity updated successfully") {
 		return
 	}
 

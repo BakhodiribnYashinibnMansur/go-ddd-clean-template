@@ -29,7 +29,7 @@ func GenerateAccessToken(userID, sessionID, issuer, audience string, privateKey 
 	claims := AccessTokenClaims{
 		UserID:    userID,
 		SessionID: sessionID,
-		Type:      "access",
+		Type:      TokenTypeAccess,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    issuer,
 			Subject:   userID,
@@ -48,7 +48,7 @@ func GenerateAccessToken(userID, sessionID, issuer, audience string, privateKey 
 func ParseAccessToken(tokenString string, publicKey *rsa.PublicKey, issuer, audience string) (*AccessTokenClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &AccessTokenClaims{}, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
-			return nil, fmt.Errorf("%w: unexpected signing method: %v", ErrAccessTokenInvalid, token.Header["alg"])
+			return nil, fmt.Errorf("%w: unexpected signing method: %v", ErrAccessTokenInvalid, token.Header[HeaderAlg])
 		}
 		return publicKey, nil
 	})

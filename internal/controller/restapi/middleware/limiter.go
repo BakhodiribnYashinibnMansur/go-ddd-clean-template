@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"fmt"
-	"gct/internal/controller/restapi/util"
+	"gct/pkg/httpx"
 	"net/http"
 
 	"gct/config"
@@ -59,16 +59,16 @@ func RateLimiter(cfg config.Limiter, client *libredis.Client, l logger.Log) gin.
 	return mgin.NewMiddleware(instance, mgin.WithErrorHandler(func(c *gin.Context, err error) {
 		// Log internal failures in the limiter logic, but do not block user.
 		// (Note: The default behavior of some limiters is to block on error, here we explicitly handle errors)
-		l.WithContext(c.Request.Context()).Errorw("rate limiter error", zap.Error(err))
-		response.ControllerResponse(c, http.StatusInternalServerError, util.ErrRateLimitInternal, nil, false)
+		l.Errorw("rate limiter error", zap.Error(err))
+		response.ControllerResponse(c, http.StatusInternalServerError, httpx.ErrRateLimitInternal, nil, false)
 		c.Abort()
 	}), mgin.WithLimitReachedHandler(func(c *gin.Context) {
 		// Handle cases where the client exceeds their allowed quota.
-		l.WithContext(c.Request.Context()).Warnw("rate limit reached",
+		l.Warnw("rate limit reached",
 			zap.String("ip", c.ClientIP()),
 			zap.String("path", c.Request.URL.Path),
 		)
-		response.ControllerResponse(c, http.StatusTooManyRequests, util.ErrRateLimitExceeded, nil, false)
+		response.ControllerResponse(c, http.StatusTooManyRequests, httpx.ErrRateLimitExceeded, nil, false)
 		c.Abort()
 	}))
 }

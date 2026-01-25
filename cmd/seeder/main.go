@@ -51,7 +51,7 @@ func main() {
 	}
 	// ---------------------------------------------------------
 
-	l.WithContext(ctx).Infow("Enqueuing seed task...",
+	l.Infoc(ctx, "Enqueuing seed task...",
 		zap.Int("users", payload.UsersCount),
 		zap.Bool("clear_data", payload.ClearData),
 	)
@@ -60,10 +60,10 @@ func main() {
 	// The actual heavy lifting is performed by an Asynq worker process.
 	info, err := client.EnqueueSeed(ctx, payload)
 	if err != nil {
-		l.WithContext(ctx).Fatalw("failed to enqueue seed task", zap.Error(err))
+		l.Fatalc(ctx, "failed to enqueue seed task", zap.Error(err))
 	}
 
-	l.WithContext(ctx).Infow("Seeding task enqueued successfully",
+	l.Infoc(ctx, "Seeding task enqueued successfully",
 		zap.String("task_id", info.ID),
 		zap.String("queue", info.Queue),
 	)

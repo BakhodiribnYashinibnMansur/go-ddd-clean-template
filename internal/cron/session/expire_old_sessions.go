@@ -10,7 +10,7 @@ func (c *CronJobs) ExpireOldSessions(ctx context.Context) {
 	// Calculate the expiration timestamp (30 days ago)
 	expirationTime := time.Now().AddDate(0, 0, -SessionExpirationDays)
 
-	c.logger.WithContext(ctx).Infow("Starting session expiration process",
+	c.logger.Infoc(ctx, "Starting session expiration process",
 		"expiration_time", expirationTime,
 		"days", SessionExpirationDays,
 	)
@@ -28,7 +28,7 @@ func (c *CronJobs) ExpireOldSessions(ctx context.Context) {
 
 	result, err := c.pool.Exec(ctx, query, expirationTime)
 	if err != nil {
-		c.logger.WithContext(ctx).Errorw("Failed to expire old sessions",
+		c.logger.Errorc(ctx, "Failed to expire old sessions",
 			"error", err,
 			"expiration_time", expirationTime,
 		)
@@ -37,14 +37,14 @@ func (c *CronJobs) ExpireOldSessions(ctx context.Context) {
 
 	rowsAffected := result.RowsAffected()
 
-	c.logger.WithContext(ctx).Infow("Session expiration process completed",
+	c.logger.Infoc(ctx, "Session expiration process completed",
 		"expired_count", rowsAffected,
 		"duration", time.Since(expirationTime),
 	)
 
 	// Log warning if too many sessions were expired
 	if rowsAffected > 1000 {
-		c.logger.WithContext(ctx).Warnw("Large number of sessions expired",
+		c.logger.Warnc(ctx, "Large number of sessions expired",
 			"count", rowsAffected,
 		)
 	}

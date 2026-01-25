@@ -49,8 +49,16 @@ type LinterResponse struct {
 	ReportPaths    map[string]string `json:"reportPaths"`
 }
 
-// RunLinter triggers an asynchronous execution of golangci-lint on the project.
-// It generates reports in text, JSON, and HTML formats and returns summarized statistics.
+// RunLinter godoc
+// @Summary     Run linter
+// @Description Triggers asynchronous execution of golangci-lint
+// @Tags        admin
+// @Accept      json
+// @Produce     json
+// @Success     200 {object} response.SuccessResponse
+// @Failure     500 {object} response.ErrorResponse
+// @Security    BearerAuth
+// @Router      /admin/linter/run [post]
 func (c *Controller) RunLinter(ctx *gin.Context) {
 	// Identify project root to determine where to store reports
 	projectRoot, err := os.Getwd()

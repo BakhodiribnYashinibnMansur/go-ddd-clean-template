@@ -4,7 +4,9 @@ import (
 	"context"
 	"time"
 
+	"gct/consts"
 	"gct/internal/domain"
+	"gct/internal/repo/schema"
 	apperrors "gct/pkg/errors"
 
 	"github.com/google/uuid"
@@ -20,21 +22,21 @@ func (r *Repo) Create(ctx context.Context, s *domain.Session) error {
 
 	query := r.builder.Insert(tableName).
 		Columns(
-			"id",
-			"device_id",
-			"device_name",
-			"device_type",
-			"ip_address",
-			"user_agent",
-			"fcm_token",
-			"refresh_token_hash",
-			"data",
-			"user_id",
-			"revoked",
-			"expires_at",
-			"last_activity",
-			"created_at",
-			"updated_at",
+			schema.SessionID,
+			schema.SessionDeviceID,
+			schema.SessionDeviceName,
+			schema.SessionDeviceType,
+			schema.SessionIPAddress,
+			schema.SessionUserAgent,
+			schema.SessionFCMToken,
+			schema.SessionRefreshTokenHash,
+			schema.SessionData,
+			schema.SessionUserID,
+			schema.SessionRevoked,
+			schema.SessionExpiresAt,
+			schema.SessionLastActivity,
+			schema.SessionCreatedAt,
+			schema.SessionUpdatedAt,
 		).
 		Values(
 			s.ID,
@@ -57,7 +59,7 @@ func (r *Repo) Create(ctx context.Context, s *domain.Session) error {
 	sql, args, err := query.ToSql()
 	if err != nil {
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase,
-			"failed to build insert SQL query")
+			consts.ErrMsgFailedToBuildInsert)
 	}
 
 	_, err = r.pool.Exec(ctx, sql, args...)

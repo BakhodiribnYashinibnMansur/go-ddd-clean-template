@@ -8,6 +8,7 @@ import (
 
 	"gct/consts"
 	apperrors "gct/pkg/errors"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -230,6 +231,11 @@ func parseErrorToResponse(c *gin.Context, err error, fallbackCode int) (int, Err
 
 // MapToHTTPStatus maps error code to HTTP status code
 func MapToHTTPStatus(code string) int {
+	// 1. Check dynamic/custom loaded statuses first
+	if status := apperrors.GetHTTPStatus(code); status != 0 {
+		return status
+	}
+	// 2. Check hardcoded mappings
 	if status := mapRepoStatus(code); status != 0 {
 		return status
 	}

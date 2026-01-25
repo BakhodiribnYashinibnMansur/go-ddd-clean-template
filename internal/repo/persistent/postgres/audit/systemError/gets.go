@@ -1,10 +1,11 @@
-package systemError
+package systemerror
 
 import (
 	"context"
-	"fmt"
 
+	"gct/consts"
 	"gct/internal/domain"
+	"gct/internal/repo/schema"
 	apperrors "gct/pkg/errors"
 
 	"github.com/Masterminds/squirrel"
@@ -12,73 +13,73 @@ import (
 
 func (r *Repo) Gets(ctx context.Context, filter *domain.SystemErrorsFilter) ([]*domain.SystemError, int, error) {
 	query := r.builder.Select(
-		"id",
-		"code",
-		"message",
-		"stack_trace",
-		"metadata",
-		"severity",
-		"service_name",
-		"request_id",
-		"user_id",
-		"ip_address",
-		"path",
-		"method",
-		"is_resolved",
-		"resolved_at",
-		"resolved_by",
-		"created_at",
+		schema.SystemErrorID,
+		schema.SystemErrorCode,
+		schema.SystemErrorMessage,
+		schema.SystemErrorStackTrace,
+		schema.SystemErrorMetadata,
+		schema.SystemErrorSeverity,
+		schema.SystemErrorServiceName,
+		schema.SystemErrorRequestID,
+		schema.SystemErrorUserID,
+		schema.SystemErrorIPAddress,
+		schema.SystemErrorPath,
+		schema.SystemErrorMethod,
+		schema.SystemErrorIsResolved,
+		schema.SystemErrorResolvedAt,
+		schema.SystemErrorResolvedBy,
+		schema.SystemErrorCreatedAt,
 	).From(tableName)
 
 	if filter.Code != nil {
-		query = query.Where(squirrel.Eq{"code": filter.Code})
+		query = query.Where(squirrel.Eq{schema.SystemErrorCode: filter.Code})
 	}
 	if filter.Severity != nil {
-		query = query.Where(squirrel.Eq{"severity": filter.Severity})
+		query = query.Where(squirrel.Eq{schema.SystemErrorSeverity: filter.Severity})
 	}
 	if filter.IsResolved != nil {
-		query = query.Where(squirrel.Eq{"is_resolved": filter.IsResolved})
+		query = query.Where(squirrel.Eq{schema.SystemErrorIsResolved: filter.IsResolved})
 	}
 	if filter.RequestID != nil {
-		query = query.Where(squirrel.Eq{"request_id": filter.RequestID})
+		query = query.Where(squirrel.Eq{schema.SystemErrorRequestID: filter.RequestID})
 	}
 	if filter.UserID != nil {
-		query = query.Where(squirrel.Eq{"user_id": filter.UserID})
+		query = query.Where(squirrel.Eq{schema.SystemErrorUserID: filter.UserID})
 	}
 	if filter.FromDate != nil {
-		query = query.Where(squirrel.GtOrEq{"created_at": filter.FromDate})
+		query = query.Where(squirrel.GtOrEq{schema.SystemErrorCreatedAt: filter.FromDate})
 	}
 	if filter.ToDate != nil {
-		query = query.Where(squirrel.LtOrEq{"created_at": filter.ToDate})
+		query = query.Where(squirrel.LtOrEq{schema.SystemErrorCreatedAt: filter.ToDate})
 	}
 
 	// Count
 	countQuery := r.builder.Select("COUNT(*)").From(tableName)
 	if filter.Code != nil {
-		countQuery = countQuery.Where(squirrel.Eq{"code": filter.Code})
+		countQuery = countQuery.Where(squirrel.Eq{schema.SystemErrorCode: filter.Code})
 	}
 	if filter.Severity != nil {
-		countQuery = countQuery.Where(squirrel.Eq{"severity": filter.Severity})
+		countQuery = countQuery.Where(squirrel.Eq{schema.SystemErrorSeverity: filter.Severity})
 	}
 	if filter.IsResolved != nil {
-		countQuery = countQuery.Where(squirrel.Eq{"is_resolved": filter.IsResolved})
+		countQuery = countQuery.Where(squirrel.Eq{schema.SystemErrorIsResolved: filter.IsResolved})
 	}
 	if filter.RequestID != nil {
-		countQuery = countQuery.Where(squirrel.Eq{"request_id": filter.RequestID})
+		countQuery = countQuery.Where(squirrel.Eq{schema.SystemErrorRequestID: filter.RequestID})
 	}
 	if filter.UserID != nil {
-		countQuery = countQuery.Where(squirrel.Eq{"user_id": filter.UserID})
+		countQuery = countQuery.Where(squirrel.Eq{schema.SystemErrorUserID: filter.UserID})
 	}
 	if filter.FromDate != nil {
-		countQuery = countQuery.Where(squirrel.GtOrEq{"created_at": filter.FromDate})
+		countQuery = countQuery.Where(squirrel.GtOrEq{schema.SystemErrorCreatedAt: filter.FromDate})
 	}
 	if filter.ToDate != nil {
-		countQuery = countQuery.Where(squirrel.LtOrEq{"created_at": filter.ToDate})
+		countQuery = countQuery.Where(squirrel.LtOrEq{schema.SystemErrorCreatedAt: filter.ToDate})
 	}
 
 	sql, args, err := countQuery.ToSql()
 	if err != nil {
-		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, "failed to build count query")
+		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
 	}
 
 	var count int
@@ -98,11 +99,11 @@ func (r *Repo) Gets(ctx context.Context, filter *domain.SystemErrorsFilter) ([]*
 	}
 
 	// Order by
-	query = query.OrderBy("created_at DESC")
+	query = query.OrderBy(schema.SystemErrorCreatedAt + " DESC")
 
 	sql, args, err = query.ToSql()
 	if err != nil {
-		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, "failed to build select query")
+		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
 	}
 
 	rows, err := r.pool.Query(ctx, sql, args...)
@@ -133,7 +134,7 @@ func (r *Repo) Gets(ctx context.Context, filter *domain.SystemErrorsFilter) ([]*
 			&e.CreatedAt,
 		)
 		if err != nil {
-			return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, fmt.Sprintf("failed to scan row: %s", err))
+			return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToScanRow)
 		}
 		errors = append(errors, &e)
 	}

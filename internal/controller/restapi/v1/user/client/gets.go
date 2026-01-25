@@ -5,9 +5,10 @@ import (
 
 	"gct/consts"
 	"gct/internal/controller/restapi/response"
-	"gct/internal/controller/restapi/util"
 	"gct/internal/domain"
 	"gct/internal/domain/mock"
+	"gct/pkg/httpx"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -20,13 +21,14 @@ import (
 // @Param       limit query int false "Limit"
 // @Param       offset query int false "Offset"
 // @Param       phone query string false "Phone"
-// @Success     200 {object} response.SuccessResponse{data=[]domain.User}
+// @Success     200 {object} response.SuccessResponse
 // @Failure     400 {object} response.ErrorResponse
+// @Security    BearerAuth
 // @Router      /users [get]
 func (c *Controller) Users(ctx *gin.Context) {
-	pagination, err := util.GetPagination(ctx)
+	pagination, err := httpx.GetPagination(ctx)
 	if err != nil {
-		util.LogError(c.l, err, "http - v1 - client - users - pagination")
+		httpx.LogError(c.l, err, "http - v1 - client - users - pagination")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid pagination", nil, false)
 		return
 	}
@@ -34,7 +36,7 @@ func (c *Controller) Users(ctx *gin.Context) {
 	filter := domain.UsersFilter{
 		UserFilter: domain.UserFilter{
 			Phone: func() *string {
-				p := util.GetNullStringQuery(ctx, consts.QueryPhone)
+				p := httpx.GetNullStringQuery(ctx, consts.QueryPhone)
 				if p == "" {
 					return nil
 				}
@@ -45,7 +47,7 @@ func (c *Controller) Users(ctx *gin.Context) {
 	}
 
 	// Handle mock mode
-	if util.Mock(ctx, util.MockTypeGets, func(count int) any { return mock.Users(count) }) {
+	if httpx.Mock(ctx, httpx.MockTypeGets, func(count int) any { return mock.Users(count) }) {
 		return
 	}
 

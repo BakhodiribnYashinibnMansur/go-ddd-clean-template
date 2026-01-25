@@ -22,12 +22,12 @@ func TestCronJobs_SyncSessionActivityToPostgres(t *testing.T) {
 	require.NoError(t, err)
 	defer mockPool.Close()
 
-	redisClient, redisMock := redismock.NewClientMock()
+	redisclient, redisMock := redismock.NewClientMock()
 	log := logger.New("debug")
 
 	c := &CronJobs{
 		pool:   mockPool,
-		redis:  redisClient,
+		redis:  redisclient,
 		logger: log,
 	}
 
@@ -64,12 +64,12 @@ func TestCronJobs_SyncSessionActivityToPostgres_NoData(t *testing.T) {
 	require.NoError(t, err)
 	defer mockPool.Close()
 
-	redisClient, redisMock := redismock.NewClientMock()
+	redisclient, redisMock := redismock.NewClientMock()
 	log := logger.New("debug")
 
 	c := &CronJobs{
 		pool:   mockPool,
-		redis:  redisClient,
+		redis:  redisclient,
 		logger: log,
 	}
 
@@ -89,12 +89,12 @@ func TestCronJobs_SyncSessionActivityToPostgres_RedisError(t *testing.T) {
 	require.NoError(t, err)
 	defer mockPool.Close()
 
-	redisClient, redisMock := redismock.NewClientMock()
+	redisclient, redisMock := redismock.NewClientMock()
 	log := logger.New("debug")
 
 	c := &CronJobs{
 		pool:   mockPool,
-		redis:  redisClient,
+		redis:  redisclient,
 		logger: log,
 	}
 

@@ -5,7 +5,7 @@ import (
 
 	"gct/consts"
 	"gct/internal/controller/restapi/response"
-	"gct/internal/controller/restapi/util"
+	"gct/pkg/httpx"
 	"gct/pkg/logger"
 
 	"github.com/gin-gonic/gin"
@@ -22,8 +22,8 @@ func Middleware(l logger.Log, cookieName string) gin.HandlerFunc {
 			// 1. Retrieve the CSRF token from the browser cookie.
 			cookieToken, err := c.Cookie(cookieName)
 			if err != nil {
-				l.Warnw("CSRF Middleware - Missing cookie token", "ip", util.GetIPAddress(c), "path", c.Request.URL.Path)
-				response.ControllerResponse(c, http.StatusForbidden, util.ErrCSRFMissing, nil, false)
+				l.Warnw("CSRF Middleware - Missing cookie token", "ip", httpx.GetIPAddress(c), "path", c.Request.URL.Path)
+				response.ControllerResponse(c, http.StatusForbidden, httpx.ErrCSRFMissing, nil, false)
 				c.Abort()
 				return
 			}
@@ -34,11 +34,11 @@ func Middleware(l logger.Log, cookieName string) gin.HandlerFunc {
 			// 3. Validation: Both tokens must exist and strictly match.
 			if headerToken == "" || headerToken != cookieToken {
 				l.Warnw("CSRF Middleware - Invalid or mismatched token",
-					"ip", util.GetIPAddress(c),
+					"ip", httpx.GetIPAddress(c),
 					"path", c.Request.URL.Path,
 					"headerEmpty", headerToken == "",
 					"mismatch", headerToken != cookieToken)
-				response.ControllerResponse(c, http.StatusForbidden, util.ErrCSRFInvalid, nil, false)
+				response.ControllerResponse(c, http.StatusForbidden, httpx.ErrCSRFInvalid, nil, false)
 				c.Abort()
 				return
 			}
@@ -55,7 +55,7 @@ func HybridMiddleware(l logger.Log, cookieName string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 1. Check for Bearer token authorization (JWT flow).
 		// Presence implies a non-browser client where CSRF is not a vector.
-		auth := util.GetAuthorization(c)
+		auth := httpx.GetAuthorization(c)
 		if auth != "" {
 			c.Next()
 			return

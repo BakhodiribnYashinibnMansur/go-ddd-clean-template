@@ -1,7 +1,7 @@
 package admin
 
 import (
-	"gct/internal/controller/restapi/util"
+	"gct/pkg/httpx"
 	"gct/internal/domain"
 	"github.com/gin-gonic/gin"
 )
@@ -12,10 +12,10 @@ func (h *Handler) FunctionMetrics(ctx *gin.Context) {
 		Pagination: pagination,
 	}
 
-	if name := util.GetNullStringQuery(ctx, "name"); name != "" {
+	if name := httpx.GetNullStringQuery(ctx, "name"); name != "" {
 		filter.Name = &name
 	}
-	if isPanicStr := util.GetNullStringQuery(ctx, "is_panic"); isPanicStr != "" {
+	if isPanicStr := httpx.GetNullStringQuery(ctx, "is_panic"); isPanicStr != "" {
 		p := isPanicStr == "true"
 		filter.IsPanic = &p
 	}

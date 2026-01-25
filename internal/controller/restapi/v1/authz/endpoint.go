@@ -1,7 +1,10 @@
 package authz
 
 import (
+	"gct/internal/controller/restapi/v1/authz/auth"
 	"gct/internal/controller/restapi/v1/authz/permission"
+	"gct/internal/controller/restapi/v1/authz/policy"
+	"gct/internal/controller/restapi/v1/authz/relation"
 	"gct/internal/controller/restapi/v1/authz/role"
 	"gct/internal/controller/restapi/v1/authz/scope"
 
@@ -11,7 +14,10 @@ import (
 // AuthzRoute defines a protected route group for Authorization management.
 // It applies Authentication, Authorization (RBAC/ABAC), and CSRF protection middlewares
 // to all routes within the Role, Permission, and Scope domains.
-func AuthzRoute(api *gin.RouterGroup, controller *Controller, authFn, authzFn, csrfFn gin.HandlerFunc) {
+func AuthzRoute(api *gin.RouterGroup, controller *Controller, authFn, refreshFn, authzFn, csrfFn gin.HandlerFunc) {
+	// Register authentication-related routes under /auth.
+	auth.Route(api.Group("/auth"), controller.AuthI, authFn, refreshFn, csrfFn)
+
 	authz := api.Group("/authz")
 
 	// Apply comprehensive security middleware stack.
@@ -23,4 +29,6 @@ func AuthzRoute(api *gin.RouterGroup, controller *Controller, authFn, authzFn, c
 	role.Route(authz, controller.RoleI)
 	permission.Route(authz, controller.PermissionI)
 	scope.Route(authz, controller.ScopeI)
+	policy.Route(authz, controller.PolicyI)
+	relation.Route(authz, controller.RelationI)
 }

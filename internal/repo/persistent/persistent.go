@@ -7,8 +7,8 @@ import (
 	"gct/internal/repo/persistent/redis"
 	dbPostgres "gct/pkg/db/postgres"
 	"gct/pkg/logger"
-	minioClient "github.com/minio/minio-go/v7"
-	redisClient "github.com/redis/go-redis/v9"
+	minioclient "github.com/minio/minio-go/v7"
+	redisclient "github.com/redis/go-redis/v9"
 )
 
 type Repo struct {
@@ -17,7 +17,7 @@ type Repo struct {
 	Redis    *redis.Repo
 }
 
-func New(pg *dbPostgres.Postgres, mClient *minioClient.Client, rClient *redisClient.Client, mConfig *config.MinioStore, logger logger.Log) *Repo {
+func New(pg *dbPostgres.Postgres, mClient *minioclient.Client, rClient *redisclient.Client, mConfig *config.MinioStore, logger logger.Log) *Repo {
 	pgRepo, err := postgres.New(pg, logger)
 	if err != nil {
 		panic("failed to initialize postgres repo: " + err.Error())

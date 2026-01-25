@@ -5,7 +5,7 @@ import (
 
 	"gct/consts"
 	"gct/internal/controller/restapi/response"
-	"gct/internal/controller/restapi/util"
+	"gct/pkg/httpx"
 	"github.com/gin-gonic/gin"
 )
 
@@ -19,17 +19,18 @@ import (
 // @Success     200 {object} response.SuccessResponse
 // @Failure     400 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
+// @Security    BearerAuth
 // @Router      /authz/roles/{role_id} [delete]
 func (c *Controller) Delete(ctx *gin.Context) {
-	id, err := util.GetUUIDParam(ctx, consts.ParamRoleID)
+	id, err := httpx.GetUUIDParam(ctx, consts.ParamRoleID)
 	if err != nil {
-		util.LogError(c.l, err, "http - v1 - authz - role - delete - uuid")
+		httpx.LogError(c.l, err, "http - v1 - authz - role - delete - uuid")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid role id", nil, false)
 		return
 	}
 
-	// Handle mock mode
-	if util.Mock(ctx, util.MockTypeDelete, "Role deleted successfully") {
+// Handle mock mode
+	if httpx.Mock(ctx, httpx.MockTypeDelete, "Role deleted successfully") {
 		return
 	}
 

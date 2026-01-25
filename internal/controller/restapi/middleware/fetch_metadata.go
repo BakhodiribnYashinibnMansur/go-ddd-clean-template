@@ -6,7 +6,7 @@ import (
 	"gct/config"
 	"gct/consts"
 	"gct/internal/controller/restapi/response"
-	"gct/internal/controller/restapi/util"
+	"gct/pkg/httpx"
 
 	"github.com/gin-gonic/gin"
 )
@@ -31,7 +31,7 @@ func FetchMetadata(cfg *config.Config) gin.HandlerFunc {
 		// Here, we block requests missing the header to prevent ambiguity.
 		site := c.GetHeader(consts.HeaderSecFetchSite)
 		if site == "" {
-			response.ControllerResponse(c, http.StatusForbidden, util.ErrFetchMetadataSuspicious, nil, false)
+			response.ControllerResponse(c, http.StatusForbidden, httpx.ErrFetchMetadataSuspicious, nil, false)
 			c.Abort()
 			return
 		}
@@ -62,7 +62,7 @@ func FetchMetadata(cfg *config.Config) gin.HandlerFunc {
 		// - <img src="api.example.com/delete_account"> (CSRF via GET)
 		// - <script src="api.example.com/sensitive_data.json"> (XSSI)
 		// - POST submissions from malicious forms.
-		response.ControllerResponse(c, http.StatusForbidden, util.ErrFetchMetadataBlocked, nil, false)
+		response.ControllerResponse(c, http.StatusForbidden, httpx.ErrFetchMetadataBlocked, nil, false)
 		c.Abort()
 	}
 }

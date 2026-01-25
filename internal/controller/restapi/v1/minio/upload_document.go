@@ -4,15 +4,26 @@ import (
 	"net/http"
 
 	"gct/internal/controller/restapi/response"
-	"gct/internal/controller/restapi/util"
 	"gct/internal/domain/mock"
+	"gct/pkg/httpx"
+
 	"github.com/gin-gonic/gin"
 )
 
-// UploadDoc handles document upload
+// UploadDoc godoc
+// @Summary     Upload document
+// @Description Upload a document file
+// @Tags        files
+// @Accept      multipart/form-data
+// @Produce     json
+// @Param       file formData file true "Document file (pdf, doc, docx)"
+// @Success     200 {object} response.SuccessResponse
+// @Failure     400 {object} response.ErrorResponse
+// @Security    BearerAuth
+// @Router      /files/upload/doc [post]
 func (h *Controller) UploadDoc(ctx *gin.Context) {
 	// Handle mock mode
-	if util.Mock(ctx, util.MockTypeGet, func() any { return mock.FileInfoDocument().FileName }) {
+	if httpx.Mock(ctx, httpx.MockTypeGet, func() any { return mock.FileInfoDocument().FileName }) {
 		return
 	}
 	file, err := ctx.FormFile("file")

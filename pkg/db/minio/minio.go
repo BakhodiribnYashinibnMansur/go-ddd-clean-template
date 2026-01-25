@@ -70,14 +70,14 @@ func New(endpoint string, opts ...Option) (*minio.Client, error) {
 		opt(options)
 	}
 
-	minioClient, err := minio.New(endpoint, options.minioOpts)
+	minioclient, err := minio.New(endpoint, options.minioOpts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize minio client: %w", err)
 	}
 
 	if options.makeBucket && options.bucket != "" {
 		ctx := context.Background()
-		exists, err := minioClient.BucketExists(ctx, options.bucket)
+		exists, err := minioclient.BucketExists(ctx, options.bucket)
 		if err != nil {
 			return nil, fmt.Errorf("failed to check bucket existence: %w", err)
 		}
@@ -87,12 +87,12 @@ func New(endpoint string, opts ...Option) (*minio.Client, error) {
 			if region == "" {
 				region = options.minioOpts.Region
 			}
-			err = minioClient.MakeBucket(ctx, options.bucket, minio.MakeBucketOptions{Region: region})
+			err = minioclient.MakeBucket(ctx, options.bucket, minio.MakeBucketOptions{Region: region})
 			if err != nil {
 				return nil, fmt.Errorf("failed to create bucket: %w", err)
 			}
 		}
 	}
 
-	return minioClient, nil
+	return minioclient, nil
 }

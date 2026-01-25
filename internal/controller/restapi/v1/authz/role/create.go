@@ -4,8 +4,9 @@ import (
 	"net/http"
 
 	"gct/internal/controller/restapi/response"
-	"gct/internal/controller/restapi/util"
 	"gct/internal/domain"
+	"gct/pkg/httpx"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -19,17 +20,18 @@ import (
 // @Success     201 {object} response.SuccessResponse
 // @Failure     400 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
+// @Security    BearerAuth
 // @Router      /authz/roles [post]
 func (c *Controller) Create(ctx *gin.Context) {
 	var role domain.Role
 	if err := ctx.ShouldBindJSON(&role); err != nil {
-		util.LogError(c.l, err, "http - v1 - authz - role - create - bind")
+		httpx.LogError(c.l, err, "http - v1 - authz - role - create - bind")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid request body", nil, false)
 		return
 	}
 
 	// Handle mock mode
-	if util.Mock(ctx, util.MockTypeCreate, "Role created successfully") {
+	if httpx.Mock(ctx, httpx.MockTypeCreate, "Role created successfully") {
 		return
 	}
 

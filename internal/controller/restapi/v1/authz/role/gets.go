@@ -5,9 +5,10 @@ import (
 
 	"gct/consts"
 	"gct/internal/controller/restapi/response"
-	"gct/internal/controller/restapi/util"
 	"gct/internal/domain"
 	"gct/internal/domain/mock"
+	"gct/pkg/httpx"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -20,18 +21,19 @@ import (
 // @Param       limit query int false "Limit"
 // @Param       offset query int false "Offset"
 // @Param       name query string false "Filter by name"
-// @Success     200 {object} response.SuccessResponse{data=[]domain.Role}
+// @Success     200 {object} response.SuccessResponse
 // @Failure     500 {object} response.ErrorResponse
+// @Security    BearerAuth
 // @Router      /authz/roles [get]
 func (c *Controller) Gets(ctx *gin.Context) {
-	pagination, err := util.GetPagination(ctx)
+	pagination, err := httpx.GetPagination(ctx)
 	if err != nil {
-		util.LogError(c.l, err, "http - v1 - authz - role - gets - pagination")
+		httpx.LogError(c.l, err, "http - v1 - authz - role - gets - pagination")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid pagination", nil, false)
 		return
 	}
 
-	roleName := util.GetNullStringQuery(ctx, consts.QueryName)
+	roleName := httpx.GetNullStringQuery(ctx, consts.QueryName)
 	filter := domain.RolesFilter{
 		Pagination: &pagination,
 	}
@@ -40,7 +42,7 @@ func (c *Controller) Gets(ctx *gin.Context) {
 	}
 
 	// Handle mock mode
-	if util.Mock(ctx, util.MockTypeGets, func(count int) any { return mock.Roles(count) }) {
+	if httpx.Mock(ctx, httpx.MockTypeGets, func(count int) any { return mock.Roles(count) }) {
 		return
 	}
 

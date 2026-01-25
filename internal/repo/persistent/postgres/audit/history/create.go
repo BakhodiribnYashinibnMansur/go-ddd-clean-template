@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"gct/internal/domain"
+	"gct/internal/repo/schema"
 	apperrors "gct/pkg/errors"
 )
 
@@ -11,22 +12,22 @@ func (r *Repo) Create(ctx context.Context, h *domain.EndpointHistory) error {
 	sql, args, err := r.builder.
 		Insert(tableName).
 		Columns(
-			"user_id",
-			"session_id",
-			"method",
-			"path",
-			"status_code",
-			"duration_ms",
-			"platform",
-			"ip_address",
-			"user_agent",
-			"permission",
-			"decision",
-			"request_id",
-			"rate_limited",
-			"response_size",
-			"error_message",
-			"created_at",
+			schema.EndpointHistoryUserID,
+			schema.EndpointHistorySessionID,
+			schema.EndpointHistoryMethod,
+			schema.EndpointHistoryPath,
+			schema.EndpointHistoryStatusCode,
+			schema.EndpointHistoryDurationMs,
+			schema.EndpointHistoryPlatform,
+			schema.EndpointHistoryIPAddress,
+			schema.EndpointHistoryUserAgent,
+			schema.EndpointHistoryPermission,
+			schema.EndpointHistoryDecision,
+			schema.EndpointHistoryRequestID,
+			schema.EndpointHistoryRateLimited,
+			schema.EndpointHistoryResponseSize,
+			schema.EndpointHistoryErrorMessage,
+			schema.EndpointHistoryCreatedAt,
 		).
 		Values(
 			h.UserID,

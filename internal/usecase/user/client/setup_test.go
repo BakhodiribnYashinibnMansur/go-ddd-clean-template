@@ -14,7 +14,7 @@ import (
 	"gct/internal/repo/persistent"
 	"gct/internal/repo/persistent/postgres"
 	"gct/internal/repo/persistent/postgres/user"
-	clientUC "gct/internal/usecase/user/client"
+	clientuc "gct/internal/usecase/user/client"
 	"gct/pkg/logger"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
@@ -102,7 +102,7 @@ func (m *MockSessionRepo) GetByUser(ctx context.Context, userID int64) ([]*domai
 }
 
 // Setup
-func setup(t *testing.T) (clientUC.UseCaseI, *MockClientRepo, *MockSessionRepo) {
+func setup(t *testing.T) (clientuc.UseCaseI, *MockClientRepo, *MockSessionRepo) {
 	clientRepo := new(MockClientRepo)
 	sessionRepo := new(MockSessionRepo)
 
@@ -138,7 +138,7 @@ func setup(t *testing.T) (clientUC.UseCaseI, *MockClientRepo, *MockSessionRepo) 
 	cfg.JWT.PrivateKey = string(privPem)
 
 	// Re-create UC so it parses the key
-	uc := clientUC.New(r, log, cfg)
+	uc := clientuc.New(r, log, cfg)
 
 	return uc, clientRepo, sessionRepo
 }

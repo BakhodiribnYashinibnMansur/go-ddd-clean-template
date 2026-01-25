@@ -16,7 +16,7 @@ import (
 )
 
 func (u *UseCase) Check(ctx context.Context, userID uuid.UUID, session *domain.Session, path, method string, env map[string]any) (bool, error) {
-	u.logger.WithContext(ctx).Infow("access check started", "user_id", userID, "path", path, "method", method)
+	u.logger.Infow("access check started", "user_id", userID, "path", path, "method", method)
 
 	// 1. Get User
 	user, err := u.repo.Postgres.User.Client.Get(ctx, &domain.UserFilter{ID: &userID})
@@ -25,12 +25,12 @@ func (u *UseCase) Check(ctx context.Context, userID uuid.UUID, session *domain.S
 			return false, err
 		}
 		appErr := apperrors.MapRepoToServiceError(err, apperrors.ErrUserNotFound).WithInput(userID)
-		u.logger.WithContext(ctx).Errorw("access check failed: get user", "error", appErr)
+		u.logger.Errorw("access check failed: get user", "error", appErr)
 		return false, appErr
 	}
 	if user.RoleID == nil {
 		err := apperrors.New(apperrors.ErrServiceRoleNotFound, "user has no role").WithInput(userID)
-		u.logger.WithContext(ctx).Warnw("access check denied: user has no role", "user_id", userID)
+		u.logger.Warnw("access check denied: user has no role", "user_id", userID)
 		return false, err
 	}
 
@@ -38,13 +38,13 @@ func (u *UseCase) Check(ctx context.Context, userID uuid.UUID, session *domain.S
 	role, err := u.repo.Postgres.Authz.Role.Get(ctx, &domain.RoleFilter{ID: user.RoleID})
 	if err != nil {
 		appErr := apperrors.MapRepoToServiceError(err, apperrors.ErrServiceRoleNotFound).WithInput(user.RoleID)
-		u.logger.WithContext(ctx).Errorw("access check failed: get role", "error", appErr)
+		u.logger.Errorw("access check failed: get role", "error", appErr)
 		return false, appErr
 	}
 
 	// Allow Admin everywhere
 	if strings.Contains(strings.ToLower(role.Name), consts.RoleAdmin) {
-		u.logger.WithContext(ctx).Infow("access check allowed: admin role", "role", role.Name)
+		u.logger.Infow("access check allowed: admin role", "role", role.Name)
 		u.logAudit(ctx, userID, session, path, method, true, "admin allowed", nil)
 		return true, nil
 	}
@@ -52,7 +52,7 @@ func (u *UseCase) Check(ctx context.Context, userID uuid.UUID, session *domain.S
 	// 2. Get Policies for Role (ABAC)
 	policies, err := u.repo.Postgres.Authz.Policy.GetByRole(ctx, *user.RoleID)
 	if err != nil {
-		u.logger.WithContext(ctx).Errorw("access check failed: get policies", "error", err)
+		u.logger.Errorw("access check failed: get policies", "error", err)
 		// Fallback to strict deny if policy fetch fails? Or continue to pure RBAC?
 		// Let's assume strict fail-safe
 		return false, nil
@@ -66,7 +66,7 @@ func (u *UseCase) Check(ctx context.Context, userID uuid.UUID, session *domain.S
 
 		// Condition met, apply effect
 		if policy.Effect == domain.PolicyEffectDeny {
-			u.logger.WithContext(ctx).Infow("access check denied: policy deny", "policy_id", policy.ID)
+			u.logger.Infow("access check denied: policy deny", "policy_id", policy.ID)
 			u.logAudit(ctx, userID, session, path, method, false, "policy deny", &policy.ID)
 			return false, nil
 		}
@@ -74,7 +74,7 @@ func (u *UseCase) Check(ctx context.Context, userID uuid.UUID, session *domain.S
 			// Explicit allow from policy?
 			// Usually in hybrid systems, Policy Allow grants access, OR generic RBAC grants access.
 			// But Policy Deny overrides everything.
-			u.logger.WithContext(ctx).Infow("access check allowed: policy allow", "policy_id", policy.ID)
+			u.logger.Infow("access check allowed: policy allow", "policy_id", policy.ID)
 			u.logAudit(ctx, userID, session, path, method, true, "policy allow", &policy.ID)
 			return true, nil
 		}
@@ -83,7 +83,7 @@ func (u *UseCase) Check(ctx context.Context, userID uuid.UUID, session *domain.S
 	// 3. Get Permissions for Role (RBAC)
 	perms, err := u.repo.Postgres.Authz.Role.GetPermissions(ctx, *user.RoleID)
 	if err != nil {
-		u.logger.WithContext(ctx).Errorw("access check failed: get permissions", "error", err)
+		u.logger.Errorw("access check failed: get permissions", "error", err)
 		// Don't return error to user, just deny access (fail safe)
 		return false, nil
 	}
@@ -92,7 +92,7 @@ func (u *UseCase) Check(ctx context.Context, userID uuid.UUID, session *domain.S
 	for _, perm := range perms {
 		scopes, err := u.repo.Postgres.Authz.Permission.GetScopes(ctx, perm.ID)
 		if err != nil {
-			u.logger.WithContext(ctx).Errorw("access check failed: get scopes", "error", err, "perm_id", perm.ID)
+			u.logger.Errorw("access check failed: get scopes", "error", err, "perm_id", perm.ID)
 			continue
 		}
 
@@ -105,7 +105,7 @@ func (u *UseCase) Check(ctx context.Context, userID uuid.UUID, session *domain.S
 			// Check Path (Exact match or Prefix match if needed)
 			// For simplicity: Exact match or simple wildcard
 			if scope.Path == path || scope.Path == "*" {
-				u.logger.WithContext(ctx).Infow("access check allowed: permission granted", "perm", perm.Name, "scope", scope.Path)
+				u.logger.Infow("access check allowed: permission granted", "perm", perm.Name, "scope", scope.Path)
 				u.logAudit(ctx, userID, session, path, method, true, "permission granted: "+perm.Name, nil)
 				return true, nil
 			}
@@ -114,7 +114,7 @@ func (u *UseCase) Check(ctx context.Context, userID uuid.UUID, session *domain.S
 			if strings.HasSuffix(scope.Path, "*") {
 				prefix := strings.TrimSuffix(scope.Path, "*")
 				if strings.HasPrefix(path, prefix) {
-					u.logger.WithContext(ctx).Infow("access check allowed: permission granted (wildcard)", "perm", perm.Name, "scope", scope.Path)
+					u.logger.Infow("access check allowed: permission granted (wildcard)", "perm", perm.Name, "scope", scope.Path)
 					u.logAudit(ctx, userID, session, path, method, true, "permission granted: "+perm.Name, nil)
 					return true, nil
 				}
@@ -122,30 +122,30 @@ func (u *UseCase) Check(ctx context.Context, userID uuid.UUID, session *domain.S
 		}
 	}
 
-	u.logger.WithContext(ctx).Infow("access check denied: insufficient permissions/policies", "role", role.Name)
+	u.logger.Infow("access check denied: insufficient permissions/policies", "role", role.Name)
 	u.logAudit(ctx, userID, session, path, method, false, "insufficient permissions", nil)
 	return false, nil
 }
 
 func (u *UseCase) CheckBatch(ctx context.Context, userID uuid.UUID, session *domain.Session, targets map[string]string, method string, env map[string]any) (map[string]bool, error) {
-	u.logger.WithContext(ctx).Infow("access check batch started", "user_id", userID, "count", len(targets))
+	u.logger.Infow("access check batch started", "user_id", userID, "count", len(targets))
 	results := make(map[string]bool)
 
 	// 1. Get User
 	user, err := u.repo.Postgres.User.Client.Get(ctx, &domain.UserFilter{ID: &userID})
 	if err != nil {
-		u.logger.WithContext(ctx).Errorw("access check batch failed: get user", "error", err)
+		u.logger.Errorw("access check batch failed: get user", "error", err)
 		return nil, err
 	}
 	if user.RoleID == nil {
-		u.logger.WithContext(ctx).Warnw("access check batch denied: user has no role", "user_id", userID)
+		u.logger.Warnw("access check batch denied: user has no role", "user_id", userID)
 		return nil, nil // Return nil or empty results (all false)
 	}
 
 	// 2. Mock RBAC: Check Role Name
 	role, err := u.repo.Postgres.Authz.Role.Get(ctx, &domain.RoleFilter{ID: user.RoleID})
 	if err != nil {
-		u.logger.WithContext(ctx).Errorw("access check batch failed: get role", "error", err)
+		u.logger.Errorw("access check batch failed: get role", "error", err)
 		return nil, err
 	}
 
@@ -154,21 +154,21 @@ func (u *UseCase) CheckBatch(ctx context.Context, userID uuid.UUID, session *dom
 		for k := range targets {
 			results[k] = true
 		}
-		u.logger.WithContext(ctx).Infow("access check batch allowed: admin role", "role", role.Name)
+		u.logger.Infow("access check batch allowed: admin role", "role", role.Name)
 		return results, nil
 	}
 
 	// 3. Get Policies
 	policies, err := u.repo.Postgres.Authz.Policy.GetByRole(ctx, *user.RoleID)
 	if err != nil {
-		u.logger.WithContext(ctx).Errorw("access check batch failed: get policies", "error", err)
+		u.logger.Errorw("access check batch failed: get policies", "error", err)
 		return nil, err
 	}
 
 	// 4. Get Permissions & Scopes (Optimization: Fetch all ONCE)
 	perms, err := u.repo.Postgres.Authz.Role.GetPermissions(ctx, *user.RoleID)
 	if err != nil {
-		u.logger.WithContext(ctx).Errorw("access check batch failed: get permissions", "error", err)
+		u.logger.Errorw("access check batch failed: get permissions", "error", err)
 		return nil, err
 	}
 
@@ -231,7 +231,7 @@ func (u *UseCase) CheckBatch(ctx context.Context, userID uuid.UUID, session *dom
 		results[key] = allowed
 	}
 
-	u.logger.WithContext(ctx).Infow("access check batch completed")
+	u.logger.Infow("access check batch completed")
 	return results, nil
 }
 

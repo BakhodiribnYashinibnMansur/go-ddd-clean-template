@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"gct/consts"
-	"gct/internal/controller/restapi/util"
 	"gct/internal/domain"
 	"gct/internal/usecase"
+	"gct/pkg/httpx"
 	"gct/pkg/logger"
 
 	"github.com/gin-gonic/gin"
@@ -40,7 +40,7 @@ func (m *AuditMiddleware) EndpointHistory() gin.HandlerFunc {
 
 		// Parse the Request ID for cross-service tracing if provided in headers.
 		// This ID helps correlate logs across multiple services in a distributed system.
-		reqIDStr := util.GetCtxRequestID(c)
+		reqIDStr := httpx.GetCtxRequestID(c)
 		var reqID *uuid.UUID
 		if reqIDStr != "" {
 			uid, err := uuid.Parse(reqIDStr)
@@ -55,8 +55,8 @@ func (m *AuditMiddleware) EndpointHistory() gin.HandlerFunc {
 
 		// After the request is processed, collect execution metrics.
 		duration := time.Since(start)
-		ip := util.GetIPAddress(c)
-		ua := util.GetUserAgent(c)
+		ip := httpx.GetIPAddress(c)
+		ua := httpx.GetUserAgent(c)
 		respSize := c.Writer.Size()
 
 		// Capture any errors that occurred during request processing.
@@ -85,7 +85,7 @@ func (m *AuditMiddleware) EndpointHistory() gin.HandlerFunc {
 
 		// Link the identity and session if authentication was successful.
 		// This allows tracking which user made which request.
-		if session, err := util.GetCtxSession(c); err == nil {
+		if session, err := httpx.GetCtxSession(c); err == nil {
 			history.SessionID = &session.ID
 			history.UserID = &session.UserID
 		}
@@ -98,7 +98,7 @@ func (m *AuditMiddleware) EndpointHistory() gin.HandlerFunc {
 
 			err := m.uc.Audit.History.Create(ctx, h)
 			if err != nil {
-				m.logger.WithContext(ctx).Errorw("failed to save endpoint history", zap.Error(err))
+				m.logger.Errorw("failed to save endpoint history", zap.Error(err))
 			}
 		}(history)
 	}
@@ -125,8 +125,8 @@ func (m *AuditMiddleware) ChangeAudit() gin.HandlerFunc {
 		c.Next()
 
 		// Capture environmental and outcome data after the operation completes.
-		ip := util.GetIPAddress(c)
-		ua := util.GetUserAgent(c)
+		ip := httpx.GetIPAddress(c)
+		ua := httpx.GetUserAgent(c)
 
 		// Build the audit log entry with operation metadata.
 		auditLog := &domain.AuditLog{
@@ -146,7 +146,7 @@ func (m *AuditMiddleware) ChangeAudit() gin.HandlerFunc {
 
 		// Identity linkage for accountability.
 		// This ensures we know who performed the action.
-		if session, err := util.GetCtxSession(c); err == nil {
+		if session, err := httpx.GetCtxSession(c); err == nil {
 			auditLog.SessionID = &session.ID
 			auditLog.UserID = &session.UserID
 		}
@@ -167,7 +167,7 @@ func (m *AuditMiddleware) ChangeAudit() gin.HandlerFunc {
 
 			err := m.uc.Audit.Log.Create(ctx, al)
 			if err != nil {
-				m.logger.WithContext(ctx).Errorw("failed to save change audit log", zap.Error(err))
+				m.logger.Errorw("failed to save change audit log", zap.Error(err))
 			}
 		}(auditLog)
 	}

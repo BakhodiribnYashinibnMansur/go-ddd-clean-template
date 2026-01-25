@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"gct/internal/controller/restapi/response"
-	"gct/internal/controller/restapi/util"
+	"gct/pkg/httpx"
 	"gct/internal/domain"
 	"github.com/gin-gonic/gin"
 )
@@ -19,17 +19,18 @@ import (
 // @Success     201 {object} response.SuccessResponse
 // @Failure     400 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
+// @Security    BearerAuth
 // @Router      /authz/permissions [post]
 func (c *Controller) Create(ctx *gin.Context) {
 	var perm domain.Permission
 	if err := ctx.ShouldBindJSON(&perm); err != nil {
-		util.LogError(c.l, err, "http - v1 - authz - permission - create - bind")
+		httpx.LogError(c.l, err, "http - v1 - authz - permission - create - bind")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid request body", nil, false)
 		return
 	}
 
-	// Handle mock mode
-	if util.Mock(ctx, util.MockTypeCreate, "Permission created successfully") {
+// Handle mock mode
+	if httpx.Mock(ctx, httpx.MockTypeCreate, "Permission created successfully") {
 		return
 	}
 

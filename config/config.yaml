@@ -13,10 +13,10 @@ metrics:
   enabled: true
 
 swagger:
-  enabled: false
+  enabled: true
 
 proto:
-  enabled: false
+  enabled: true
 
 admin:
   enabled: true
@@ -88,3 +88,18 @@ middleware:
   audit_change: true
   metrics: true
   health_check: true
+
+security:
+  fetch_metadata_enabled: true
+  csp:
+    enabled: true
+    directives:
+      - "default-src 'self'"
+      - "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://unpkg.com https://cdn.jsdelivr.net"
+      - "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://unpkg.com https://cdn.jsdelivr.net https://boxicons.com"
+      - "font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com https://unpkg.com https://boxicons.com data:"
+      - "img-src 'self' data: https:"
+      - "connect-src 'self'"
+      - "frame-ancestors 'none'"
+      - "base-uri 'self'"
+      - "form-action 'self'"

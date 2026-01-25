@@ -6,8 +6,8 @@ import (
 
 	"gct/consts"
 	"gct/internal/controller/restapi/response"
-	"gct/internal/controller/restapi/util"
 	"gct/pkg/csrf"
+	"gct/pkg/httpx"
 	"gct/pkg/logger"
 
 	"github.com/gin-gonic/gin"
@@ -46,12 +46,12 @@ func (m *CSRFMiddleware) Protect() gin.HandlerFunc {
 		}
 
 		// Prerequisite: A valid session ID is required to bind the CSRF token.
-		sessionID, err := util.GetCtxSessionID(c)
+		sessionID, err := httpx.GetCtxSessionID(c)
 		if err != nil {
-			m.logger.WithContext(c.Request.Context()).Warnw("CSRF Middleware - No session ID in context",
-				"ip", util.GetIPAddress(c),
+			m.logger.Warnw("CSRF Middleware - No session ID in context",
+				"ip", httpx.GetIPAddress(c),
 				"path", c.Request.URL.Path)
-			response.ControllerResponse(c, http.StatusUnauthorized, util.ErrSessionIDNotFound, nil, false)
+			response.ControllerResponse(c, http.StatusUnauthorized, httpx.ErrSessionIDNotFound, nil, false)
 			c.Abort()
 			return
 		}
@@ -59,11 +59,11 @@ func (m *CSRFMiddleware) Protect() gin.HandlerFunc {
 		// 1. Extract Token from Cookie.
 		cookieToken, err := c.Cookie(m.cookieName)
 		if err != nil || cookieToken == "" {
-			m.logger.WithContext(c.Request.Context()).Warnw("CSRF Middleware - Missing cookie token",
-				"ip", util.GetIPAddress(c),
+			m.logger.Warnw("CSRF Middleware - Missing cookie token",
+				"ip", httpx.GetIPAddress(c),
 				"path", c.Request.URL.Path,
 				"session_id", sessionID)
-			response.ControllerResponse(c, http.StatusForbidden, util.ErrCSRFMissing, nil, false)
+			response.ControllerResponse(c, http.StatusForbidden, httpx.ErrCSRFMissing, nil, false)
 			c.Abort()
 			return
 		}
@@ -71,22 +71,22 @@ func (m *CSRFMiddleware) Protect() gin.HandlerFunc {
 		// 2. Extract Token from Header.
 		headerToken := c.GetHeader(m.headerName)
 		if headerToken == "" {
-			m.logger.WithContext(c.Request.Context()).Warnw("CSRF Middleware - Missing header token",
-				"ip", util.GetIPAddress(c),
+			m.logger.Warnw("CSRF Middleware - Missing header token",
+				"ip", httpx.GetIPAddress(c),
 				"path", c.Request.URL.Path,
 				"session_id", sessionID)
-			response.ControllerResponse(c, http.StatusForbidden, util.ErrCSRFMissing, nil, false)
+			response.ControllerResponse(c, http.StatusForbidden, httpx.ErrCSRFMissing, nil, false)
 			c.Abort()
 			return
 		}
 
 		// 3. Double-Submit Check: Tokens must match.
 		if cookieToken != headerToken {
-			m.logger.WithContext(c.Request.Context()).Warnw("CSRF Middleware - Token mismatch",
-				"ip", util.GetIPAddress(c),
+			m.logger.Warnw("CSRF Middleware - Token mismatch",
+				"ip", httpx.GetIPAddress(c),
 				"path", c.Request.URL.Path,
 				"session_id", sessionID)
-			response.ControllerResponse(c, http.StatusForbidden, util.ErrCSRFInvalid, nil, false)
+			response.ControllerResponse(c, http.StatusForbidden, httpx.ErrCSRFInvalid, nil, false)
 			c.Abort()
 			return
 		}
@@ -94,12 +94,12 @@ func (m *CSRFMiddleware) Protect() gin.HandlerFunc {
 		// 4. Retrieve Reference Token (Hash) from Storage.
 		storedHash, expiresAt, err := m.store.Get(c.Request.Context(), sessionID.String())
 		if err != nil {
-			m.logger.WithContext(c.Request.Context()).Warnw("CSRF Middleware - Token not found in store",
-				"ip", util.GetIPAddress(c),
+			m.logger.Warnw("CSRF Middleware - Token not found in store",
+				"ip", httpx.GetIPAddress(c),
 				"path", c.Request.URL.Path,
 				"session_id", sessionID,
 				"error", err)
-			response.ControllerResponse(c, http.StatusForbidden, util.ErrCSRFInvalid, nil, false)
+			response.ControllerResponse(c, http.StatusForbidden, httpx.ErrCSRFInvalid, nil, false)
 			c.Abort()
 			return
 		}
@@ -107,12 +107,12 @@ func (m *CSRFMiddleware) Protect() gin.HandlerFunc {
 		// 5. Cryptographic Validation.
 		// Verifies the HMAC signature and expiration time.
 		if err := m.generator.ValidateToken(cookieToken, storedHash, sessionID.String(), expiresAt); err != nil {
-			m.logger.WithContext(c.Request.Context()).Warnw("CSRF Middleware - Token validation failed",
-				"ip", util.GetIPAddress(c),
+			m.logger.Warnw("CSRF Middleware - Token validation failed",
+				"ip", httpx.GetIPAddress(c),
 				"path", c.Request.URL.Path,
 				"session_id", sessionID,
 				"error", err)
-			response.ControllerResponse(c, http.StatusForbidden, util.ErrCSRFInvalid, nil, false)
+			response.ControllerResponse(c, http.StatusForbidden, httpx.ErrCSRFInvalid, nil, false)
 			c.Abort()
 			return
 		}
@@ -127,7 +127,7 @@ func (m *CSRFMiddleware) HybridProtect() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Native Client Detection: Presence of Authorization Bearer header.
 		// These clients typically store tokens securely and aren't subject to browser cookie vulnerabilities.
-		auth := util.GetAuthorization(c)
+		auth := httpx.GetAuthorization(c)
 		if auth != "" && strings.HasPrefix(auth, consts.AuthBearer) {
 			c.Next()
 			return

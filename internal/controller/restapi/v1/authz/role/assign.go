@@ -5,7 +5,7 @@ import (
 
 	"gct/consts"
 	"gct/internal/controller/restapi/response"
-	"gct/internal/controller/restapi/util"
+	"gct/pkg/httpx"
 	"github.com/gin-gonic/gin"
 )
 
@@ -20,24 +20,25 @@ import (
 // @Success     200 {object} response.SuccessResponse
 // @Failure     400 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
+// @Security    BearerAuth
 // @Router      /authz/users/{user_id}/roles/{role_id} [post]
 func (c *Controller) Assign(ctx *gin.Context) {
-	userID, err := util.GetUUIDParam(ctx, consts.ParamUserID)
+	userID, err := httpx.GetUUIDParam(ctx, consts.ParamUserID)
 	if err != nil {
-		util.LogError(c.l, err, "http - v1 - authz - role - assign - user uuid")
+		httpx.LogError(c.l, err, "http - v1 - authz - role - assign - user uuid")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid user id", nil, false)
 		return
 	}
 
-	roleID, err := util.GetUUIDParam(ctx, consts.ParamRoleID)
+	roleID, err := httpx.GetUUIDParam(ctx, consts.ParamRoleID)
 	if err != nil {
-		util.LogError(c.l, err, "http - v1 - authz - role - assign - role uuid")
+		httpx.LogError(c.l, err, "http - v1 - authz - role - assign - role uuid")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid role id", nil, false)
 		return
 	}
 
-	// Handle mock mode
-	if util.Mock(ctx, util.MockTypeCreate, "Role assigned successfully") {
+// Handle mock mode
+	if httpx.Mock(ctx, httpx.MockTypeCreate, "Role assigned successfully") {
 		return
 	}
 

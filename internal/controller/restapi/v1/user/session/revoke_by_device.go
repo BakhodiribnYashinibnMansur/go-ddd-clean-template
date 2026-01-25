@@ -5,7 +5,7 @@ import (
 
 	"gct/consts"
 	"gct/internal/controller/restapi/response"
-	"gct/internal/controller/restapi/util"
+	"gct/pkg/httpx"
 	"github.com/gin-gonic/gin"
 )
 
@@ -20,10 +20,11 @@ import (
 // @Failure     400 {object} response.ErrorResponse
 // @Failure     401 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
+// @Security    BearerAuth
 // @Router      /sessions/device/{device_id} [delete]
 func (c *Controller) RevokeByDevice(ctx *gin.Context) {
-	// Handle mock mode
-	if util.Mock(ctx, util.MockTypeDelete, "Device sessions revoked successfully") {
+// Handle mock mode
+	if httpx.Mock(ctx, httpx.MockTypeDelete, "Device sessions revoked successfully") {
 		return
 	}
 	_, exists := ctx.Get(consts.CtxUserID)
@@ -38,7 +39,7 @@ func (c *Controller) RevokeByDevice(ctx *gin.Context) {
 		return
 	}
 
-	// Placeholder implementation
+// Placeholder implementation
 	c.l.Infow("Device sessions revoke requested", "device_id", deviceID)
 	response.ControllerResponse(ctx, http.StatusOK, "Device sessions revoked successfully", nil, true)
 }

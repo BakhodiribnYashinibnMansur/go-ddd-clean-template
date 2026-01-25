@@ -5,9 +5,10 @@ import (
 
 	"gct/consts"
 	"gct/internal/controller/restapi/response"
-	"gct/internal/controller/restapi/util"
 	"gct/internal/domain"
 	"gct/internal/domain/mock"
+	"gct/pkg/httpx"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -18,17 +19,21 @@ import (
 // @Param       offset query int false "Offset"
 // @Param       path query string false "Path"
 // @Param       method query string false "Method"
+// @Success     200 {object} response.SuccessResponse
+// @Failure     400 {object} response.ErrorResponse
+// @Failure     500 {object} response.ErrorResponse
+// @Security    BearerAuth
 // @Router      /authz/scopes [get]
 func (c *Controller) Gets(ctx *gin.Context) {
-	pagination, err := util.GetPagination(ctx)
+	pagination, err := httpx.GetPagination(ctx)
 	if err != nil {
-		util.LogError(c.l, err, "http - v1 - authz - scope - gets - pagination")
+		httpx.LogError(c.l, err, "http - v1 - authz - scope - gets - pagination")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid pagination", nil, false)
 		return
 	}
 
-	path := util.GetNullStringQuery(ctx, consts.QueryPath)
-	method := util.GetNullStringQuery(ctx, consts.QueryMethod)
+	path := httpx.GetNullStringQuery(ctx, consts.QueryPath)
+	method := httpx.GetNullStringQuery(ctx, consts.QueryMethod)
 
 	filter := domain.ScopesFilter{
 		Pagination: &pagination,
@@ -41,7 +46,7 @@ func (c *Controller) Gets(ctx *gin.Context) {
 	}
 
 	// Handle mock mode
-	if util.Mock(ctx, util.MockTypeGets, func(count int) any { return mock.Scopes(count) }) {
+	if httpx.Mock(ctx, httpx.MockTypeGets, func(count int) any { return mock.Scopes(count) }) {
 		return
 	}
 

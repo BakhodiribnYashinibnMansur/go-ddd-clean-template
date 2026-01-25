@@ -8,7 +8,7 @@ import (
 	"gct/internal/repo/persistent"
 	"gct/internal/repo/persistent/postgres"
 	"gct/internal/repo/persistent/postgres/user"
-	sessionUC "gct/internal/usecase/user/session"
+	sessionuc "gct/internal/usecase/user/session"
 	"gct/pkg/logger"
 	"github.com/stretchr/testify/mock"
 )
@@ -61,7 +61,7 @@ func (m *MockSessionRepo) GetByUser(ctx context.Context, userID int64) ([]*domai
 	return args.Get(0).([]*domain.Session), args.Error(1)
 }
 
-func setup(_ *testing.T) (sessionUC.UseCaseI, *MockSessionRepo) {
+func setup(_ *testing.T) (sessionuc.UseCaseI, *MockSessionRepo) {
 	sessionRepo := new(MockSessionRepo)
 
 	r := &persistent.Repo{
@@ -74,7 +74,7 @@ func setup(_ *testing.T) (sessionUC.UseCaseI, *MockSessionRepo) {
 
 	log := logger.New("debug")
 
-	uc := sessionUC.New(r, log)
+	uc := sessionuc.New(r, log)
 
 	return uc, sessionRepo
 }

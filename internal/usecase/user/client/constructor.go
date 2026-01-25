@@ -18,16 +18,17 @@ type UseCase struct {
 }
 
 // New -.
-func New(r *persistent.Repo, logger logger.Log, cfg *config.Config) UseCaseI {
-	pk, err := jwt.ParseRSAPrivateKey(cfg.JWT.PrivateKey)
+func New(r *persistent.Repo, l logger.Log, cfg *config.Config) UseCaseI {
+	// Parse private key for JWT signing
+	privKey, err := jwt.ParseRSAPrivateKey(cfg.JWT.PrivateKey)
 	if err != nil {
-		// Log error at constructor level but don't return it
-		// The use case can still function without private key for some operations
+		l.Fatalw("failed to parse RSA private key", "error", err)
 	}
+
 	return &UseCase{
 		repo:       r,
-		logger:     logger,
+		logger:     l,
 		cfg:        cfg,
-		privateKey: pk,
+		privateKey: privKey,
 	}
 }

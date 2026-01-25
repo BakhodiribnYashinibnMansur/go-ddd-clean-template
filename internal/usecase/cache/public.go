@@ -8,8 +8,7 @@ import (
 	"time"
 
 	"gct/internal/domain"
-	pkgCache "gct/pkg/cache"
-	"go.uber.org/zap"
+	pkgcache "gct/pkg/cache"
 )
 
 // CreatePublicCache stores data in Redis cache with pagination info
@@ -42,7 +41,7 @@ func (c *Cache) GetPublicCache(
 	out any,
 ) error {
 	if out == nil {
-		return pkgCache.ErrNilOutput
+		return pkgcache.ErrNilOutput
 	}
 
 	cacheKey := createCacheKey(key, lang, pagination)
@@ -63,7 +62,7 @@ func (c *Cache) GetPublicCache(
 func (c *Cache) DeletePublicCache(ctx context.Context, key string, lang string, pagination *domain.Pagination) error {
 	cacheKey := createCacheKey(key, lang, pagination)
 	if err := c.redis.Primitive.Byte.Delete(ctx, cacheKey); err != nil {
-		c.logger.WithContext(ctx).Errorw("failed to delete public cache", zap.Error(err))
+		c.logger.Errorc(ctx, "failed to delete public cache", "error", err)
 		return fmt.Errorf("redis delete: %w", err)
 	}
 	return nil
@@ -75,14 +74,14 @@ func (c *Cache) DeletePublicCache(ctx context.Context, key string, lang string, 
 func (c *Cache) DeletePublicCaches(ctx context.Context, key string) error {
 	keys, err := c.redis.Primitive.String.Scan(ctx, key+"*")
 	if err != nil {
-		c.logger.WithContext(ctx).Errorw("failed to scan public cache keys", zap.Error(err))
+		c.logger.Errorc(ctx, "failed to scan public cache keys", "error", err)
 		return fmt.Errorf("redis scan: %w", err)
 	}
 
 	var firstErr error
 	for _, key := range keys {
 		if err := c.redis.Primitive.Byte.Delete(ctx, key); err != nil {
-			c.logger.WithContext(ctx).Errorw("failed to delete public cache item", "key", key, zap.Error(err))
+			c.logger.Errorc(ctx, "failed to delete public cache item", "key", key, "error", err)
 			if firstErr == nil {
 				firstErr = err
 			}

@@ -1,4 +1,4 @@
-package systemError
+package systemerror
 
 import (
 	"context"

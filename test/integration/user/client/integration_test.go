@@ -9,12 +9,14 @@ import (
 	"time"
 
 	"gct/consts"
+	authController "gct/internal/controller/restapi/v1/authz/auth"
 	clientController "gct/internal/controller/restapi/v1/user/client"
 	"gct/internal/domain"
 	"gct/internal/repo"
 	"gct/internal/usecase"
 	"gct/pkg/logger"
 	"gct/test/integration/common/setup"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -26,8 +28,9 @@ func TestUserAPI_Integration_Direct(t *testing.T) {
 	repositories := repo.New(setup.TestPG, setup.TestMinio, setup.TestRedis, &setup.TestCfg.Minio, l)
 	useCases := usecase.NewUseCase(repositories, l, setup.TestCfg, nil)
 
-	// Instantiate Controller directly
+	// Instantiate Controllers directly
 	controller := clientController.New(useCases, setup.TestCfg, l)
+	authCtl := authController.New(useCases, setup.TestCfg, l)
 	ctx := t.Context()
 
 	// Pre-seed a user for some tests
@@ -85,7 +88,7 @@ func TestUserAPI_Integration_Direct(t *testing.T) {
 		// SIGN UP SCENARIOS
 		{
 			name:        "SIGNUP SUCCESS: Normal registration",
-			handlerFunc: controller.SignUp,
+			handlerFunc: authCtl.SignUp,
 			method:      http.MethodPost,
 			body: map[string]string{
 				"username": "user1",
@@ -111,7 +114,7 @@ func TestUserAPI_Integration_Direct(t *testing.T) {
 		},
 		{
 			name:        "SIGNUP CONFLICT: Duplicate phone",
-			handlerFunc: controller.SignUp,
+			handlerFunc: authCtl.SignUp,
 			method:      http.MethodPost,
 			body: map[string]string{
 				"username": "user2",
@@ -122,7 +125,7 @@ func TestUserAPI_Integration_Direct(t *testing.T) {
 		},
 		{
 			name:        "SIGNUP SUCCESS: Unicode username",
-			handlerFunc: controller.SignUp,
+			handlerFunc: authCtl.SignUp,
 			method:      http.MethodPost,
 			body: map[string]string{
 				"username": unicodeUsername,
@@ -143,7 +146,7 @@ func TestUserAPI_Integration_Direct(t *testing.T) {
 		// SIGN IN SCENARIOS
 		{
 			name:        "SIGNIN SUCCESS: Valid credentials",
-			handlerFunc: controller.SignIn,
+			handlerFunc: authCtl.SignIn,
 			method:      http.MethodPost,
 			body: map[string]string{
 				"phone":    seededPhone,
@@ -162,7 +165,7 @@ func TestUserAPI_Integration_Direct(t *testing.T) {
 		},
 		{
 			name:        "SIGNIN FAIL: Wrong password",
-			handlerFunc: controller.SignIn,
+			handlerFunc: authCtl.SignIn,
 			method:      http.MethodPost,
 			body: map[string]string{
 				"phone":    seededPhone,

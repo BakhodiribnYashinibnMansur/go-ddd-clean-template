@@ -8,9 +8,8 @@ import (
 	"time"
 
 	"gct/internal/repo/persistent/redis"
-	pkgCache "gct/pkg/cache"
+	pkgcache "gct/pkg/cache"
 	"gct/pkg/logger"
-	"go.uber.org/zap"
 )
 
 // JitterRedisCache, o'zgaruvchan (jitter) muddatli Redis keshi.
@@ -32,14 +31,14 @@ func NewJitter(redis *redis.Repo, logger logger.Log) *Jitter {
 func (c *Jitter) Set(ctx context.Context, key string, value any, duration time.Duration, jitterPercent float64) error {
 	bytes, err := json.Marshal(value)
 	if err != nil {
-		c.logger.WithContext(ctx).Errorw("failed to marshal data for jitter cache", zap.Error(err))
+		c.logger.Errorc(ctx, "failed to marshal data for jitter cache", "error", err)
 		return fmt.Errorf("marshal data: %w", err)
 	}
 
 	ttl := applyJitter(duration, jitterPercent)
 
 	if err := c.redis.Primitive.Byte.Set(ctx, key, bytes, ttl); err != nil {
-		c.logger.WithContext(ctx).Errorw("failed to set jitter cache", zap.String("key", key), zap.Error(err))
+		c.logger.Errorc(ctx, "failed to set jitter cache", "key", key, "error", err)
 		return fmt.Errorf("redis set: %w", err)
 	}
 	return nil
@@ -48,7 +47,7 @@ func (c *Jitter) Set(ctx context.Context, key string, value any, duration time.D
 // Get keshdan ma'lumot o'qiydi.
 func (c *Jitter) Get(ctx context.Context, key string, out any) error {
 	if out == nil {
-		return pkgCache.ErrNilOutput
+		return pkgcache.ErrNilOutput
 	}
 
 	bytes, err := c.redis.Primitive.Byte.Get(ctx, key)
@@ -57,7 +56,7 @@ func (c *Jitter) Get(ctx context.Context, key string, out any) error {
 	}
 
 	if err := json.Unmarshal(bytes, out); err != nil {
-		c.logger.WithContext(ctx).Errorw("failed to unmarshal data from jitter cache", zap.String("key", key), zap.Error(err))
+		c.logger.Errorc(ctx, "failed to unmarshal data from jitter cache", "key", key, "error", err)
 		return fmt.Errorf("unmarshal data: %w", err)
 	}
 
@@ -67,7 +66,7 @@ func (c *Jitter) Get(ctx context.Context, key string, out any) error {
 // Delete keshdan ma'lumot o'chiradi.
 func (c *Jitter) Delete(ctx context.Context, key string) error {
 	if err := c.redis.Primitive.Byte.Delete(ctx, key); err != nil {
-		c.logger.WithContext(ctx).Errorw("failed to delete jitter cache", zap.String("key", key), zap.Error(err))
+		c.logger.Errorc(ctx, "failed to delete jitter cache", "key", key, "error", err)
 		return fmt.Errorf("redis delete: %w", err)
 	}
 	return nil

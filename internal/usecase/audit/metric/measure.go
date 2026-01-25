@@ -29,7 +29,7 @@ func (uc *UseCase) MeasureSafe(ctx context.Context, name string) func() {
 			panicErr = &errMsg
 
 			// Log panic
-			uc.logger.WithContext(ctx).Errorw("panic recovered in function", "func", name, "error", r, "latency_ms", latency.Milliseconds())
+			uc.logger.Errorw("panic recovered in function", "func", name, "error", r, "latency_ms", latency.Milliseconds())
 
 			// Re-panic after saving? Usually yes for "Safe" wrappers unless we want to suppress it.
 			// The user's snippet does panic(r).
@@ -51,9 +51,9 @@ func (uc *UseCase) MeasureSafe(ctx context.Context, name string) func() {
 
 		err := uc.Create(saveCtx, metric)
 		if err != nil {
-			uc.logger.WithContext(saveCtx).Errorw("failed to save function metric", "func", name, zap.Error(err))
+			uc.logger.Errorw("failed to save function metric", "func", name, zap.Error(err))
 		} else {
-			uc.logger.WithContext(saveCtx).Infow("function execution tracked", "func", name, "latency_ms", latency.Milliseconds())
+			uc.logger.Infow("function execution tracked", "func", name, "latency_ms", latency.Milliseconds())
 		}
 	}
 }

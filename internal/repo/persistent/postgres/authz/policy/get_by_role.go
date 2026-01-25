@@ -3,7 +3,10 @@ package policy
 import (
 	"context"
 
+	"fmt"
+
 	"gct/internal/domain"
+	"gct/internal/repo/schema"
 	apperrors "gct/pkg/errors"
 
 	"github.com/Masterminds/squirrel"
@@ -17,12 +20,24 @@ func (r *Repo) GetByRole(ctx context.Context, roleID uuid.UUID) ([]*domain.Polic
 	// So we need to fetch policies where permission is assigned to the role.
 
 	sql, args, err := r.builder.
-		Select("p.id", "p.permission_id", "p.effect", "p.priority", "p.active", "p.conditions", "p.created_at").
-		From("policy p").
-		Join("role_permission rp ON p.permission_id = rp.permission_id").
-		Where(squirrel.Eq{"rp.role_id": roleID}).
-		Where(squirrel.Eq{"p.active": true}).
-		OrderBy("p.priority DESC"). // Higher priority first
+		Select(
+			"p."+schema.PolicyID,
+			"p."+schema.PolicyPermissionID,
+			"p."+schema.PolicyEffect,
+			"p."+schema.PolicyPriority,
+			"p."+schema.PolicyActive,
+			"p."+schema.PolicyConditions,
+			"p."+schema.PolicyCreatedAt,
+		).
+		From(schema.TablePolicy + " p").
+		Join(fmt.Sprintf("%s rp ON p.%s = rp.%s",
+			schema.TableRolePermission,
+			schema.PolicyPermissionID,
+			schema.RolePermissionPermissionID,
+		)).
+		Where(squirrel.Eq{"rp." + schema.RolePermissionRoleID: roleID}).
+		Where(squirrel.Eq{"p." + schema.PolicyActive: true}).
+		OrderBy("p." + schema.PolicyPriority + " DESC"). // Higher priority first
 		ToSql()
 	if err != nil {
 		return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, "failed to build select query")
@@ -30,7 +45,7 @@ func (r *Repo) GetByRole(ctx context.Context, roleID uuid.UUID) ([]*domain.Polic
 
 	rows, err := r.pool.Query(ctx, sql, args...)
 	if err != nil {
-		return nil, apperrors.HandlePgError(err, tableName, nil)
+		return nil, apperrors.HandlePgError(err, schema.TablePolicy, nil)
 	}
 	defer rows.Close()
 
@@ -44,7 +59,7 @@ func (r *Repo) GetByRole(ctx context.Context, roleID uuid.UUID) ([]*domain.Polic
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, apperrors.HandlePgError(err, tableName, nil)
+		return nil, apperrors.HandlePgError(err, schema.TablePolicy, nil)
 	}
 
 	return policies, nil

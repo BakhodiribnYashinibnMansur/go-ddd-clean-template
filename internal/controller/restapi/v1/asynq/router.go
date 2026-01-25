@@ -1,4 +1,4 @@
-package asynqController
+package asynqcontroller
 
 import (
 	"gct/pkg/asynq"

@@ -9,7 +9,7 @@ import (
 )
 
 func (uc *UseCase) SignUp(ctx context.Context, in *domain.SignUpIn) (*domain.SignInOut, error) {
-	uc.logger.WithContext(ctx).Infow("user sign up started", "input", in)
+	uc.logger.Infoc(ctx, "user sign up started", "input", in)
 
 	// Validate input
 	if err := validator.ValidateStruct(in); err != nil {
@@ -28,7 +28,7 @@ func (uc *UseCase) SignUp(ctx context.Context, in *domain.SignUpIn) (*domain.Sig
 	}
 
 	if err := user.SetPassword(in.Password); err != nil {
-		uc.logger.WithContext(ctx).Errorw("user sign up failed: set password", "error", err)
+		uc.logger.Errorc(ctx, "user sign up failed: set password", "error", err)
 		return nil, apperrors.MapRepoToServiceError(err).WithInput(in)
 	}
 
@@ -37,7 +37,7 @@ func (uc *UseCase) SignUp(ctx context.Context, in *domain.SignUpIn) (*domain.Sig
 		return nil, err
 	}
 
-	uc.logger.WithContext(ctx).Infow("user sign up success, performing automatic sign in")
+	uc.logger.Infoc(ctx, "user sign up success, performing automatic sign in")
 
 	signInInput := &domain.SignInIn{
 		Login:    in.Phone,

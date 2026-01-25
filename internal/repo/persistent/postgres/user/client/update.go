@@ -4,29 +4,31 @@ import (
 	"context"
 	"time"
 
+	"gct/consts"
 	"gct/internal/domain"
+	"gct/internal/repo/schema"
 	apperrors "gct/pkg/errors"
 )
 
 func (r *Repo) Update(ctx context.Context, u *domain.User) error {
 	sql, args, err := r.builder.
 		Update(tableName).
-		Set("role_id", u.RoleID).
-		Set("username", u.Username).
-		Set("email", u.Email).
-		Set("phone", u.Phone).
-		Set("password_hash", u.PasswordHash).
-		Set("salt", u.Salt).
-		Set("attributes", u.Attributes).
-		Set("active", u.Active).
-		Set("is_approved", u.IsApproved).
-		Set("updated_at", time.Now()).
-		Set("last_seen", u.LastSeen).
-		Where("id = ? AND deleted_at = 0", u.ID).
+		Set(schema.UsersRoleID, u.RoleID).
+		Set(schema.UsersUsername, u.Username).
+		Set(schema.UsersEmail, u.Email).
+		Set(schema.UsersPhone, u.Phone).
+		Set(schema.UsersPasswordHash, u.PasswordHash).
+		Set(schema.UsersSalt, u.Salt).
+		Set(schema.UsersAttributes, u.Attributes).
+		Set(schema.UsersActive, u.Active).
+		Set(schema.UsersIsApproved, u.IsApproved).
+		Set(schema.UsersUpdatedAt, time.Now()).
+		Set(schema.UsersLastSeen, u.LastSeen).
+		Where(schema.UsersID+" = ? AND "+schema.UsersDeletedAt+" = 0", u.ID).
 		ToSql()
 	if err != nil {
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase,
-			"failed to build update SQL query")
+			consts.ErrMsgFailedToBuildUpdate)
 	}
 
 	_, err = r.pool.Exec(ctx, sql, args...)

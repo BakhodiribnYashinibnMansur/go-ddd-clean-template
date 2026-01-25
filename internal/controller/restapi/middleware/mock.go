@@ -3,7 +3,7 @@ package middleware
 import (
 	"gct/config"
 	"gct/consts"
-	"gct/internal/controller/restapi/util"
+	"gct/pkg/httpx"
 
 	"github.com/gin-gonic/gin"
 )
@@ -21,17 +21,17 @@ func MockMiddleware(cfg *config.Config) gin.HandlerFunc {
 
 		// 1. Latency Simulation: "mock_delay"
 		// Useful for testing loading spinners and timeout handling in clients.
-		util.HandleMockDelay(c)
+		httpx.HandleMockDelay(c)
 
 		// 2. Error Injection: "mock_error"
 		// Forces the endpoint to return a specific error code.
-		if util.HandleMockError(c) {
+		if httpx.HandleMockError(c) {
 			return
 		}
 
 		// 3. Empty Response: "mock_empty"
 		// Returns a 200 OK with null/empty body.
-		if util.HandleMockEmpty(c) {
+		if httpx.HandleMockEmpty(c) {
 			return
 		}
 

@@ -1,4 +1,4 @@
-package systemError
+package systemerror
 
 import (
 	"gct/internal/repo/persistent"

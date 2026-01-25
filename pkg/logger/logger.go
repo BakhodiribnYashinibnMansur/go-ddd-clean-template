@@ -4,247 +4,119 @@ import (
 	"context"
 	"os"
 	"strings"
-	"sync"
+	"time"
 
-	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
-type ctxKey string
-
-const (
-	// KeyRequestID is the context key for Request ID.
-	KeyRequestID ctxKey = "request_id"
-)
-
-var (
-	instance *Logger
-	once     sync.Once
-)
-
-// Interface -.
-type Log interface {
-	Debug(args ...any)
-	Info(args ...any)
-	Warn(args ...any)
-	Error(args ...any)
-	Fatal(args ...any)
-	Panic(args ...any)
-
-	Debugf(template string, args ...any)
-	Infof(template string, args ...any)
-	Warnf(template string, args ...any)
-	Errorf(template string, args ...any)
-	Fatalf(template string, args ...any)
-	Panicf(template string, args ...any)
-
-	Debugw(msg string, keysAndValues ...any)
-	Infow(msg string, keysAndValues ...any)
-	Warnw(msg string, keysAndValues ...any)
-	Errorw(msg string, keysAndValues ...any)
-	Fatalw(msg string, keysAndValues ...any)
-	Panicw(msg string, keysAndValues ...any)
-
-	WithField(key string, value any) *Logger
-	WithFields(fields map[string]any) *Logger
-	WithContext(ctx context.Context) Log
-	GetZap() *zap.Logger
-	Sync()
+type logger struct {
+	zap    *zap.SugaredLogger
+	ctxZap *zap.SugaredLogger
 }
 
-// Logger wraps zap.SugaredLogger for structured logging.
-type Logger struct {
-	Entity *zap.SugaredLogger
+var globalLog = New(LevelInfo)
+
+// customColorLevelEncoder encodes log levels with custom colors and backgrounds:
+// ERROR: bright red background with white bold text
+// WARN: bright yellow background with black bold text
+// INFO: bright blue background with white bold text
+// DEBUG: bright green background with white bold text
+func customColorLevelEncoder(l zapcore.Level, enc zapcore.PrimitiveArrayEncoder) {
+	var coloredLevel string
+	switch l {
+	case zapcore.DebugLevel:
+		// DEBUG: Matrix-style dim green
+		coloredLevel = BgGray + ColorBlack + Bold + "[*] " + LevelDebugDisplay + ColorReset
+	case zapcore.InfoLevel:
+		// INFO: Classic hacker green
+		coloredLevel = BgGreen + ColorBlack + Bold + "[+] " + LevelInfoDisplay + ColorReset
+	case zapcore.WarnLevel:
+		// WARN: Amber alert
+		coloredLevel = BgYellow + ColorBlack + Bold + "[!] " + LevelWarnDisplay + ColorReset
+	case zapcore.ErrorLevel:
+		// ERROR: Critical failure
+		coloredLevel = BgRed + ColorBrightWhite + Bold + " [X] " + LevelErrorDisplay + " " + ColorReset
+	case zapcore.PanicLevel:
+		coloredLevel = BgBrightRed + ColorBlack + Bold + " [!] CRITICAL_PANIC " + ColorReset
+	case zapcore.FatalLevel:
+		coloredLevel = BgRed + ColorBlack + Bold + " [💀] TERMINAL_FATAL " + ColorReset
+	default:
+		coloredLevel = l.CapitalString()
+	}
+	enc.AppendString(coloredLevel)
 }
 
-// GetLogger returns the singleton logger instance.
-func GetLogger() Log {
-	once.Do(func() {
-		instance = New(os.Getenv("LOG_LEVEL"))
-	})
-	return instance
+// customTimeEncoder wraps time encoding with terminal-green dim style
+func customTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
+	enc.AppendString(ColorGreen + Dim + "[" + t.Format(TimeFormat) + "]" + ColorReset)
 }
 
-// New creates a new Logger with specific level.
-func New(level string) *Logger {
+// customCallerEncoder encodes caller with hacker-cyan and italics
+func customCallerEncoder(caller zapcore.EntryCaller, enc zapcore.PrimitiveArrayEncoder) {
+	enc.AppendString(ColorBrightCyan + Dim + Italic + "# " + caller.TrimmedPath() + ColorReset)
+}
+
+// customDurationEncoder wraps duration encoding with blue color
+func customDurationEncoder(d time.Duration, enc zapcore.PrimitiveArrayEncoder) {
+	enc.AppendString(ColorCyan + d.String() + ColorReset)
+}
+
+// New creates a new logger instance.
+func New(level string) Log {
 	var logLevel zapcore.Level
 
 	switch strings.ToLower(level) {
-	case "debug":
+	case LevelDebug:
 		logLevel = zapcore.DebugLevel
-	case "info":
+	case LevelInfo:
 		logLevel = zapcore.InfoLevel
-	case "warn":
+	case LevelWarn:
 		logLevel = zapcore.WarnLevel
-	case "error":
+	case LevelError:
 		logLevel = zapcore.ErrorLevel
 	default:
 		logLevel = zapcore.InfoLevel
 	}
 
 	encoderConfig := zapcore.EncoderConfig{
-		TimeKey:        "timestamp",
-		LevelKey:       "level",
-		NameKey:        "logger",
-		CallerKey:      "caller",
-		MessageKey:     "message",
-		LineEnding:     zapcore.DefaultLineEnding,
-		EncodeLevel:    zapcore.CapitalColorLevelEncoder,
-		EncodeTime:     zapcore.ISO8601TimeEncoder,
-		EncodeDuration: zapcore.StringDurationEncoder,
-		EncodeCaller:   zapcore.ShortCallerEncoder,
+		TimeKey:          KeyTimestamp,
+		LevelKey:         KeyLevel,
+		NameKey:          KeyLogger,
+		CallerKey:        KeyCaller,
+		MessageKey:       KeyMessage,
+		LineEnding:       zapcore.DefaultLineEnding,
+		EncodeLevel:      customColorLevelEncoder,
+		EncodeTime:       customTimeEncoder,
+		EncodeDuration:   customDurationEncoder,
+		EncodeCaller:     customCallerEncoder,
+		ConsoleSeparator: ConsoleSeparator,
+		// Colorize field keys
+		EncodeName: func(loggerName string, enc zapcore.PrimitiveArrayEncoder) {
+			enc.AppendString(ColorGray + loggerName + ColorReset)
+		},
 	}
 
-	consoleEncoder := zapcore.NewConsoleEncoder(encoderConfig)
+	encoder := zapcore.NewConsoleEncoder(encoderConfig)
 
 	core := zapcore.NewCore(
-		consoleEncoder,
+		encoder,
 		zapcore.Lock(os.Stdout),
 		logLevel,
 	)
 
-	baseLogger := zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1), zap.AddStacktrace(zapcore.ErrorLevel))
+	zapLogger := zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1))
 
-	return &Logger{
-		Entity: baseLogger.Sugar(),
+	return &logger{
+		zap:    zapLogger.Sugar(),
+		ctxZap: zapLogger.WithOptions(zap.AddCallerSkip(1)).Sugar(),
 	}
 }
 
-// WithContext returns a logger with context fields (Request ID, Trace ID, Span ID).
-func (log *Logger) WithContext(ctx context.Context) Log {
-	var args []interface{}
-	if ctx == nil {
-		return log
+func (l *logger) withCtx(ctx context.Context) map[string]any {
+	fields := extractFields(ctx)
+	if len(fields) == 0 {
+		return nil
 	}
-
-	if id, ok := ctx.Value(KeyRequestID).(string); ok {
-		args = append(args, zap.String("request_id", id))
-	}
-
-	span := trace.SpanFromContext(ctx)
-	if span.SpanContext().IsValid() {
-		args = append(args, zap.String("trace_id", span.SpanContext().TraceID().String()))
-		args = append(args, zap.String("span_id", span.SpanContext().SpanID().String()))
-	}
-
-	if len(args) > 0 {
-		return &Logger{Entity: log.Entity.With(args...)}
-	}
-
-	return log
-}
-
-// WithField creates a logger with an additional field.
-func (log *Logger) WithField(key string, value any) *Logger {
-	return &Logger{log.Entity.With(key, value)}
-}
-
-// WithFields creates a logger with multiple additional fields.
-func (log *Logger) WithFields(fields map[string]any) *Logger {
-	args := make([]any, 0, len(fields)*2)
-	for k, v := range fields {
-		args = append(args, k, v)
-	}
-	return &Logger{Entity: log.Entity.With(args...)}
-}
-
-// Sync flushes any buffered log entries.
-func (log *Logger) Sync() {
-	_ = log.Entity.Sync()
-}
-
-// Info logs an info level message.
-func (log *Logger) Info(args ...any) {
-	log.Entity.Info(args...)
-}
-
-// Debug logs a debug level message.
-func (log *Logger) Debug(args ...any) {
-	log.Entity.Debug(args...)
-}
-
-// Warn logs a warning level message.
-func (log *Logger) Warn(args ...any) {
-	log.Entity.Warn(args...)
-}
-
-// Error logs an error level message.
-func (log *Logger) Error(args ...any) {
-	log.Entity.Error(args...)
-}
-
-// Fatal logs a fatal level message and exits.
-func (log *Logger) Fatal(args ...any) {
-	log.Entity.Fatal(args...)
-}
-
-// Panic logs a panic level message and panics.
-func (log *Logger) Panic(args ...any) {
-	log.Entity.Panic(args...)
-}
-
-// Infof logs a formatted info level message.
-func (log *Logger) Infof(template string, args ...any) {
-	log.Entity.Infof(template, args...)
-}
-
-// Debugf logs a formatted debug level message.
-func (log *Logger) Debugf(template string, args ...any) {
-	log.Entity.Debugf(template, args...)
-}
-
-// Warnf logs a formatted warning level message.
-func (log *Logger) Warnf(template string, args ...any) {
-	log.Entity.Warnf(template, args...)
-}
-
-// Errorf logs a formatted error level message.
-func (log *Logger) Errorf(template string, args ...any) {
-	log.Entity.Errorf(template, args...)
-}
-
-// Fatalf logs a formatted fatal level message and exits.
-func (log *Logger) Fatalf(template string, args ...any) {
-	log.Entity.Fatalf(template, args...)
-}
-
-// Panicf logs a formatted panic level message and panics.
-func (log *Logger) Panicf(template string, args ...any) {
-	log.Entity.Panicf(template, args...)
-}
-
-// Infow logs a message with structured key-value pairs at info level.
-func (log *Logger) Infow(msg string, keysAndValues ...any) {
-	log.Entity.Infow(msg, keysAndValues...)
-}
-
-// Debugw logs a message with structured key-value pairs at debug level.
-func (log *Logger) Debugw(msg string, keysAndValues ...any) {
-	log.Entity.Debugw(msg, keysAndValues...)
-}
-
-// Warnw logs a message with structured key-value pairs at warning level.
-func (log *Logger) Warnw(msg string, keysAndValues ...any) {
-	log.Entity.Warnw(msg, keysAndValues...)
-}
-
-// Errorw logs a message with structured key-value pairs at error level.
-func (log *Logger) Errorw(msg string, keysAndValues ...any) {
-	log.Entity.Errorw(msg, keysAndValues...)
-}
-
-// Fatalw logs a message with structured key-value pairs at fatal level and exits.
-func (log *Logger) Fatalw(msg string, keysAndValues ...any) {
-	log.Entity.Fatalw(msg, keysAndValues...)
-}
-
-// Panicw logs a message with structured key-value pairs at panic level and panics.
-func (log *Logger) Panicw(msg string, keysAndValues ...any) {
-	log.Entity.Panicw(msg, keysAndValues...)
-}
-
-// GetZap returns the underlying zap logger.
-func (log *Logger) GetZap() *zap.Logger {
-	return log.Entity.Desugar()
+	return fields
 }

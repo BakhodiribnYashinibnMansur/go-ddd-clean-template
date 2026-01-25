@@ -8,11 +8,11 @@ import (
 
 	"gct/config"
 	"gct/pkg/logger"
+
 	"github.com/redis/go-redis/v9"
 	ffclient "github.com/thomaspoignant/go-feature-flag"
 	"github.com/thomaspoignant/go-feature-flag/retriever"
 	"github.com/thomaspoignant/go-feature-flag/retriever/fileretriever"
-	"go.uber.org/zap"
 )
 
 // Client wraps the GoFeatureFlag client.
@@ -21,9 +21,9 @@ type Client struct {
 }
 
 // New creates a new feature flag client.
-func New(ctx context.Context, cfg config.FeatureFlag, redisClient *redis.Client, l logger.Log) (*Client, error) {
+func New(ctx context.Context, cfg config.FeatureFlag, redisclient *redis.Client, l logger.Log) (*Client, error) {
 	if !cfg.Enabled {
-		l.WithContext(ctx).Infow("feature flags disabled")
+		l.Infow("feature flags disabled")
 		return &Client{logger: l}, nil
 	}
 
@@ -35,16 +35,14 @@ func New(ctx context.Context, cfg config.FeatureFlag, redisClient *redis.Client,
 			Path: cfg.ConfigPath,
 		}
 		retrievers = append(retrievers, fileRetriever)
-		l.WithContext(ctx).Infow("feature flag file retriever configured",
-			zap.String("path", cfg.ConfigPath))
+		l.Infow("feature flag file retriever configured", "path", cfg.ConfigPath)
 	}
 
 	// Redis retriever (if enabled)
-	if cfg.UseRedis && redisClient != nil {
-		redisRetriever := NewRedisRetriever(redisClient, cfg.RedisKey)
+	if cfg.UseRedis && redisclient != nil {
+		redisRetriever := NewRedisRetriever(redisclient, cfg.RedisKey)
 		retrievers = append(retrievers, redisRetriever)
-		l.WithContext(ctx).Infow("feature flag redis retriever configured",
-			zap.String("key", cfg.RedisKey))
+		l.Infow("feature flag redis retriever configured", "key", cfg.RedisKey)
 	}
 
 	if len(retrievers) == 0 {
@@ -61,8 +59,7 @@ func New(ctx context.Context, cfg config.FeatureFlag, redisClient *redis.Client,
 		return nil, fmt.Errorf("failed to initialize feature flag client: %w", err)
 	}
 
-	l.WithContext(ctx).Infow("feature flag client initialized successfully",
-		zap.Int("polling_interval", cfg.PollingInterval))
+	l.Infow("feature flag client initialized successfully", "polling_interval", cfg.PollingInterval)
 
 	return &Client{
 		logger: l,
@@ -72,24 +69,24 @@ func New(ctx context.Context, cfg config.FeatureFlag, redisClient *redis.Client,
 // Close closes the feature flag client.
 func (c *Client) Close(ctx context.Context) {
 	ffclient.Close()
-	c.logger.WithContext(ctx).Infow("feature flag client closed")
+	c.logger.Infow("feature flag client closed")
 }
 
 // IsEnabled checks if a feature flag is enabled for a given user.
 func (c *Client) IsEnabled(ctx context.Context, flagKey string, user User, defaultValue bool) bool {
 	result, err := ffclient.BoolVariation(flagKey, user.ToEvaluationContext(), defaultValue)
 	if err != nil {
-		c.logger.WithContext(ctx).Errorw("failed to evaluate feature flag",
-			zap.String("flag", flagKey),
-			zap.Error(err),
-			zap.Bool("default", defaultValue))
+		c.logger.Errorw("failed to evaluate feature flag",
+			"flag", flagKey,
+			"error", err,
+			"default", defaultValue)
 		return defaultValue
 	}
 
-	c.logger.WithContext(ctx).Debugw("feature flag evaluated",
-		zap.String("flag", flagKey),
-		zap.Bool("result", result),
-		zap.String("user_id", user.Key))
+	c.logger.Debugw("feature flag evaluated",
+		"flag", flagKey,
+		"result", result,
+		"user_id", user.Key)
 
 	return result
 }
@@ -98,17 +95,17 @@ func (c *Client) IsEnabled(ctx context.Context, flagKey string, user User, defau
 func (c *Client) GetStringVariation(ctx context.Context, flagKey string, user User, defaultValue string) string {
 	result, err := ffclient.StringVariation(flagKey, user.ToEvaluationContext(), defaultValue)
 	if err != nil {
-		c.logger.WithContext(ctx).Errorw("failed to evaluate feature flag",
-			zap.String("flag", flagKey),
-			zap.Error(err),
-			zap.String("default", defaultValue))
+		c.logger.Errorw("failed to evaluate feature flag",
+			"flag", flagKey,
+			"error", err,
+			"default", defaultValue)
 		return defaultValue
 	}
 
-	c.logger.WithContext(ctx).Debugw("feature flag evaluated",
-		zap.String("flag", flagKey),
-		zap.String("result", result),
-		zap.String("user_id", user.Key))
+	c.logger.Debugw("feature flag evaluated",
+		"flag", flagKey,
+		"result", result,
+		"user_id", user.Key)
 
 	return result
 }
@@ -117,17 +114,17 @@ func (c *Client) GetStringVariation(ctx context.Context, flagKey string, user Us
 func (c *Client) GetIntVariation(ctx context.Context, flagKey string, user User, defaultValue int) int {
 	result, err := ffclient.IntVariation(flagKey, user.ToEvaluationContext(), defaultValue)
 	if err != nil {
-		c.logger.WithContext(ctx).Errorw("failed to evaluate feature flag",
-			zap.String("flag", flagKey),
-			zap.Error(err),
-			zap.Int("default", defaultValue))
+		c.logger.Errorw("failed to evaluate feature flag",
+			"flag", flagKey,
+			"error", err,
+			"default", defaultValue)
 		return defaultValue
 	}
 
-	c.logger.WithContext(ctx).Debugw("feature flag evaluated",
-		zap.String("flag", flagKey),
-		zap.Int("result", result),
-		zap.String("user_id", user.Key))
+	c.logger.Debugw("feature flag evaluated",
+		"flag", flagKey,
+		"result", result,
+		"user_id", user.Key)
 
 	return result
 }
@@ -136,17 +133,17 @@ func (c *Client) GetIntVariation(ctx context.Context, flagKey string, user User,
 func (c *Client) GetFloatVariation(ctx context.Context, flagKey string, user User, defaultValue float64) float64 {
 	result, err := ffclient.Float64Variation(flagKey, user.ToEvaluationContext(), defaultValue)
 	if err != nil {
-		c.logger.WithContext(ctx).Errorw("failed to evaluate feature flag",
-			zap.String("flag", flagKey),
-			zap.Error(err),
-			zap.Float64("default", defaultValue))
+		c.logger.Errorw("failed to evaluate feature flag",
+			"flag", flagKey,
+			"error", err,
+			"default", defaultValue)
 		return defaultValue
 	}
 
-	c.logger.WithContext(ctx).Debugw("feature flag evaluated",
-		zap.String("flag", flagKey),
-		zap.Float64("result", result),
-		zap.String("user_id", user.Key))
+	c.logger.Debugw("feature flag evaluated",
+		"flag", flagKey,
+		"result", result,
+		"user_id", user.Key)
 
 	return result
 }
@@ -155,15 +152,15 @@ func (c *Client) GetFloatVariation(ctx context.Context, flagKey string, user Use
 func (c *Client) GetJSONVariation(ctx context.Context, flagKey string, user User, defaultValue map[string]interface{}) map[string]interface{} {
 	result, err := ffclient.JSONVariation(flagKey, user.ToEvaluationContext(), defaultValue)
 	if err != nil {
-		c.logger.WithContext(ctx).Errorw("failed to evaluate feature flag",
-			zap.String("flag", flagKey),
-			zap.Error(err))
+		c.logger.Errorw("failed to evaluate feature flag",
+			"flag", flagKey,
+			"error", err)
 		return defaultValue
 	}
 
-	c.logger.WithContext(ctx).Debugw("feature flag evaluated",
-		zap.String("flag", flagKey),
-		zap.String("user_id", user.Key))
+	c.logger.Debugw("feature flag evaluated",
+		"flag", flagKey,
+		"user_id", user.Key)
 
 	return result
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"gct/internal/domain"
+	"gct/internal/repo/schema"
 	apperrors "gct/pkg/errors"
 
 	"github.com/Masterminds/squirrel"
@@ -12,8 +13,8 @@ import (
 func (r *Repo) Update(ctx context.Context, role *domain.Role) error {
 	sql, args, err := r.builder.
 		Update(tableName).
-		Set("name", role.Name).
-		Where(squirrel.Eq{"id": role.ID}).
+		Set(schema.RoleName, role.Name).
+		Where(squirrel.Eq{schema.RoleID: role.ID}).
 		ToSql()
 	if err != nil {
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, "failed to build update query")

@@ -3,7 +3,7 @@ package admin
 import (
 	"strconv"
 
-	"gct/internal/controller/restapi/util"
+	"gct/pkg/httpx"
 	"gct/internal/domain"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -15,18 +15,18 @@ func (h *Handler) EndpointHistory(ctx *gin.Context) {
 		Pagination: pagination,
 	}
 
-	if userID := util.GetNullStringQuery(ctx, "user_id"); userID != "" {
+	if userID := httpx.GetNullStringQuery(ctx, "user_id"); userID != "" {
 		if uid, err := uuid.Parse(userID); err == nil {
 			filter.UserID = &uid
 		}
 	}
-	if method := util.GetNullStringQuery(ctx, "method"); method != "" {
+	if method := httpx.GetNullStringQuery(ctx, "method"); method != "" {
 		filter.Method = &method
 	}
-	if path := util.GetNullStringQuery(ctx, "path"); path != "" {
+	if path := httpx.GetNullStringQuery(ctx, "path"); path != "" {
 		filter.Path = &path
 	}
-	if statusStr := util.GetNullStringQuery(ctx, "status_code"); statusStr != "" {
+	if statusStr := httpx.GetNullStringQuery(ctx, "status_code"); statusStr != "" {
 		if status, err := strconv.Atoi(statusStr); err == nil {
 			filter.StatusCode = &status
 		}

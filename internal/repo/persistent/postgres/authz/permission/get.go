@@ -4,19 +4,25 @@ import (
 	"context"
 
 	"gct/internal/domain"
+	"gct/internal/repo/schema"
 	apperrors "gct/pkg/errors"
 
 	"github.com/Masterminds/squirrel"
 )
 
 func (r *Repo) Get(ctx context.Context, filter *domain.PermissionFilter) (*domain.Permission, error) {
-	query := r.builder.Select("id", "parent_id", "name", "created_at").From(tableName)
+	query := r.builder.Select(
+		schema.PermissionID,
+		schema.PermissionParentID,
+		schema.PermissionName,
+		schema.PermissionCreatedAt,
+	).From(tableName)
 
 	if filter.ID != nil {
-		query = query.Where(squirrel.Eq{"id": *filter.ID})
+		query = query.Where(squirrel.Eq{schema.PermissionID: *filter.ID})
 	}
 	if filter.Name != nil {
-		query = query.Where(squirrel.Eq{"name": *filter.Name})
+		query = query.Where(squirrel.Eq{schema.PermissionName: *filter.Name})
 	}
 
 	sql, args, err := query.ToSql()

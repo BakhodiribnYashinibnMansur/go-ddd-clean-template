@@ -4,6 +4,7 @@ import (
 	"gct/config"
 	"gct/internal/usecase"
 	"gct/pkg/logger"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -15,6 +16,9 @@ type Controller struct {
 
 type ControllerI interface {
 	Gets(c *gin.Context)
+	Logins(c *gin.Context)
+	Sessions(c *gin.Context)
+	Actions(c *gin.Context)
 }
 
 func New(u *usecase.UseCase, cfg *config.Config, l logger.Log) ControllerI {

@@ -19,12 +19,12 @@ func TestCronJobs_ExpireOldSessions(t *testing.T) {
 	require.NoError(t, err)
 	defer mockPool.Close()
 
-	redisClient, _ := redismock.NewClientMock()
+	redisclient, _ := redismock.NewClientMock()
 	log := logger.New("debug")
 
 	c := &CronJobs{
 		pool:   mockPool,
-		redis:  redisClient,
+		redis:  redisclient,
 		logger: log,
 	}
 
@@ -45,12 +45,12 @@ func TestCronJobs_ExpireOldSessions_Error(t *testing.T) {
 	require.NoError(t, err)
 	defer mockPool.Close()
 
-	redisClient, _ := redismock.NewClientMock()
+	redisclient, _ := redismock.NewClientMock()
 	log := logger.New("debug")
 
 	c := &CronJobs{
 		pool:   mockPool,
-		redis:  redisClient,
+		redis:  redisclient,
 		logger: log,
 	}
 

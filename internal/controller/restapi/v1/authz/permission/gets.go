@@ -5,7 +5,7 @@ import (
 
 	"gct/consts"
 	"gct/internal/controller/restapi/response"
-	"gct/internal/controller/restapi/util"
+	"gct/pkg/httpx"
 	"gct/internal/domain"
 	"gct/internal/domain/mock"
 	"github.com/gin-gonic/gin"
@@ -20,18 +20,19 @@ import (
 // @Param       limit query int false "Limit"
 // @Param       offset query int false "Offset"
 // @Param       name query string false "Filter by name"
-// @Success     200 {object} response.SuccessResponse{data=[]domain.Permission}
+// @Success     200 {object} response.SuccessResponse
 // @Failure     500 {object} response.ErrorResponse
+// @Security    BearerAuth
 // @Router      /authz/permissions [get]
 func (c *Controller) Gets(ctx *gin.Context) {
-	pagination, err := util.GetPagination(ctx)
+	pagination, err := httpx.GetPagination(ctx)
 	if err != nil {
-		util.LogError(c.l, err, "http - v1 - authz - permission - gets - pagination")
+		httpx.LogError(c.l, err, "http - v1 - authz - permission - gets - pagination")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid pagination", nil, false)
 		return
 	}
 
-	permName := util.GetNullStringQuery(ctx, consts.QueryName)
+	permName := httpx.GetNullStringQuery(ctx, consts.QueryName)
 	filter := domain.PermissionsFilter{
 		Pagination: &pagination,
 	}
@@ -39,8 +40,8 @@ func (c *Controller) Gets(ctx *gin.Context) {
 		filter.Name = &permName
 	}
 
-	// Handle mock mode
-	if util.Mock(ctx, util.MockTypeGets, func(count int) any { return mock.Permissions(count) }) {
+// Handle mock mode
+	if httpx.Mock(ctx, httpx.MockTypeGets, func(count int) any { return mock.Permissions(count) }) {
 		return
 	}
 

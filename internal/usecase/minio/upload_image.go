@@ -6,6 +6,7 @@ import (
 	"io"
 
 	apperrors "gct/pkg/errors"
+
 	"github.com/disintegration/imaging"
 	"go.opentelemetry.io/otel"
 )
@@ -29,15 +30,15 @@ func (m *UseCase) UploadImage(ctx context.Context, imageFile io.Reader, imageSiz
 	}
 
 	// Upload as JPEG
-	// m.logger.WithContext(ctx).Infow("upload image started", "size", imageSize, "contentType", contentType)
+	// m.logger.Infow("upload image started", "size", imageSize, "contentType", contentType)
 
 	filename, err := m.repo.Persistent.MinIO.UploadImage(ctx, &buf, int64(buf.Len()), "image/jpeg")
 	if err != nil {
-		// m.logger.WithContext(ctx).Errorw("upload image failed", "error", err)
+		// m.logger.Errorw("upload image failed", "error", err)
 		return "", apperrors.MapRepoToServiceError(err).
 			WithInput(map[string]any{"size": imageSize, "contentType": contentType})
 	}
 
-	// m.logger.WithContext(ctx).Infow("upload image success", "filename", filename)
+	// m.logger.Infow("upload image success", "filename", filename)
 	return filename, nil
 }

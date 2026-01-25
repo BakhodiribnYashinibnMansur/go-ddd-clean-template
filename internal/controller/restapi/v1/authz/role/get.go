@@ -5,7 +5,7 @@ import (
 
 	"gct/consts"
 	"gct/internal/controller/restapi/response"
-	"gct/internal/controller/restapi/util"
+	"gct/pkg/httpx"
 	"gct/internal/domain"
 	"gct/internal/domain/mock"
 	"github.com/gin-gonic/gin"
@@ -21,17 +21,18 @@ import (
 // @Success     200 {object} response.SuccessResponse
 // @Failure     400 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
+// @Security    BearerAuth
 // @Router      /authz/roles/{role_id} [get]
 func (c *Controller) Get(ctx *gin.Context) {
-	id, err := util.GetUUIDParam(ctx, consts.ParamRoleID)
+	id, err := httpx.GetUUIDParam(ctx, consts.ParamRoleID)
 	if err != nil {
-		util.LogError(c.l, err, "http - v1 - authz - role - get - uuid")
+		httpx.LogError(c.l, err, "http - v1 - authz - role - get - uuid")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid role id", nil, false)
 		return
 	}
 
-	// Handle mock mode
-	if util.Mock(ctx, util.MockTypeGet, func() any { return mock.RoleWithID(id) }) {
+// Handle mock mode
+	if httpx.Mock(ctx, httpx.MockTypeGet, func() any { return mock.RoleWithID(id) }) {
 		return
 	}
 

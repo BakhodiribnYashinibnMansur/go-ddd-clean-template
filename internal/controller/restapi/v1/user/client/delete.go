@@ -5,7 +5,7 @@ import (
 
 	"gct/consts"
 	"gct/internal/controller/restapi/response"
-	"gct/internal/controller/restapi/util"
+	"gct/pkg/httpx"
 	"gct/internal/domain"
 	"github.com/gin-gonic/gin"
 )
@@ -21,17 +21,18 @@ import (
 // @Failure     400 {object} response.ErrorResponse
 // @Failure     404 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
+// @Security    BearerAuth
 // @Router      /users/{user_id} [delete]
 func (c *Controller) Delete(ctx *gin.Context) {
-	id, err := util.GetUUIDParam(ctx, consts.ParamUserID)
+	id, err := httpx.GetUUIDParam(ctx, consts.ParamUserID)
 	if err != nil {
-		util.LogError(c.l, err, "http - v1 - client - delete - id")
+		httpx.LogError(c.l, err, "http - v1 - client - delete - id")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid user id", nil, false)
 		return
 	}
 
-	// Handle mock mode
-	if util.Mock(ctx, util.MockTypeDelete, "User deleted successfully") {
+// Handle mock mode
+	if httpx.Mock(ctx, httpx.MockTypeDelete, "User deleted successfully") {
 		return
 	}
 

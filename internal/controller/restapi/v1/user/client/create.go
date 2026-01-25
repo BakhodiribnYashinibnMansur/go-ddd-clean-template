@@ -4,8 +4,9 @@ import (
 	"net/http"
 
 	"gct/internal/controller/restapi/response"
-	"gct/internal/controller/restapi/util"
 	"gct/internal/domain"
+	"gct/pkg/httpx"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -19,22 +20,19 @@ import (
 // @Success     201 {object} response.SuccessResponse
 // @Failure     400 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
+// @Security    BearerAuth
 // @Router      /users [post]
+// @Auth
 func (c *Controller) Create(ctx *gin.Context) {
 	var user domain.User
 	if err := ctx.ShouldBindJSON(&user); err != nil {
-		util.LogError(c.l, err, "http - v1 - client - create - bind")
+		httpx.LogError(c.l, err, "http - v1 - client - create - bind")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid request body", nil, false)
 		return
 	}
 
-	// Initialize attributes if nil
-	if user.Attributes == nil {
-		user.Attributes = make(map[string]any)
-	}
-
-	// Handle mock mode
-	if util.Mock(ctx, util.MockTypeCreate, "User created successfully") {
+// Handle mock mode
+	if httpx.Mock(ctx, httpx.MockTypeCreate, "User created successfully") {
 		return
 	}
 

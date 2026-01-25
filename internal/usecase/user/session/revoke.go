@@ -9,14 +9,14 @@ import (
 
 // Revoke revokes a session.
 func (uc *UseCase) Revoke(ctx context.Context, in *domain.SessionFilter) error {
-	uc.logger.WithContext(ctx).Infow("session revoke started", "input", in)
+	uc.logger.Infoc(ctx, "session revoke started", "input", in)
 
-	repo := uc.repo.Postgres.User.SessionRepo
-	err := repo.Revoke(ctx, in)
+	err := uc.repo.Postgres.User.SessionRepo.Revoke(ctx, in)
 	if err != nil {
-		uc.logger.WithContext(ctx).Errorw("session revoke failed", "error", err)
+		uc.logger.Errorc(ctx, "session revoke failed", "error", err)
 		return apperrors.MapRepoToServiceError(err).WithInput(in)
 	}
-	uc.logger.WithContext(ctx).Infow("session revoke success")
+
+	uc.logger.Infoc(ctx, "session revoke success")
 	return nil
 }

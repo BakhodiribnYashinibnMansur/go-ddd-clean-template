@@ -30,12 +30,12 @@ func IsValidPhone(phone string) bool {
 
 // SanitizePhone removes all non-numeric characters from the phone string, preserving leading + if present
 func SanitizePhone(phone string) string {
-	if phone == "" {
-		return ""
+	if phone == EmptyString {
+		return EmptyString
 	}
 
 	sb := strings.Builder{}
-	if strings.HasPrefix(phone, "+") {
+	if strings.HasPrefix(phone, PhonePrefix) {
 		sb.WriteRune('+')
 	}
 

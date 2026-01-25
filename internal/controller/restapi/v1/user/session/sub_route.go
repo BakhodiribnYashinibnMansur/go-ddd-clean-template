@@ -7,20 +7,32 @@ import (
 )
 
 // Route registers administrative and user-facing endpoints for session auditing and revocation.
-// All session-related endpoints require a valid access token and CSRF protection.
+// It follows a dual pattern:
+// 1. Resource Ownership: /users/{user_id}/sessions for collection management.
+// 2. Direct Access: /sessions/{session_id} for individual session operations.
 func Route(api *gin.RouterGroup, c ControllerI, authMiddleware gin.HandlerFunc, csrfMiddleware gin.HandlerFunc) {
-	session := api.Group("/sessions")
-
-	// Apply global security filters for session management.
-	session.Use(authMiddleware)
-	session.Use(csrfMiddleware)
+	// Pattern 1: User-Owned Sessions (Collection management)
+	userSessions := api.Group("/users/:" + consts.ParamUserID + "/sessions")
+	userSessions.Use(authMiddleware)
+	userSessions.Use(csrfMiddleware)
 	{
-		session.POST("/", c.Create)                                      // Manually issue a new session token.
-		session.GET("/", c.Sessions)                                     // List all active sessions for the authenticated user.
-		session.GET("/:"+consts.ParamID, c.Session)                      // Retrieve detailed metadata for a specific session ID.
-		session.PATCH("/:"+consts.ParamID+"/activity", c.UpdateActivity) // Mark a session as active (refresh last_seen).
-		session.DELETE("/:"+consts.ParamID, c.Delete)                    // Explicitly invalidate a single session.
-		session.POST("/revoke-all", c.RevokeAll)                         // Revoke all sessions except the current one.
-		session.DELETE("/device/:device_id", c.RevokeByDevice)           // Targeted logout for a specific device.
+		userSessions.GET("/", c.Sessions)     // List all active sessions for the specified user.
+		userSessions.POST("/", c.Create)      // Manually issue a new session token for the specified user.
+		userSessions.DELETE("/", c.RevokeAll) // Force logout from all devices for this user.
+	}
+
+	// Pattern 2: Global/Direct Session Management
+	sessions := api.Group("/sessions")
+	sessions.Use(authMiddleware)
+	sessions.Use(csrfMiddleware)
+	{
+		// Current session management
+		sessions.DELETE("/current", c.RevokeCurrent) // Revoke current session.
+
+		// Individual resource operations
+		sessions.GET("/:"+consts.ParamID, c.Session)                      // Retrieve detailed metadata for a specific session.
+		sessions.DELETE("/:"+consts.ParamID, c.Delete)                    // Explicitly invalidate a single session by ID.
+		sessions.PATCH("/:"+consts.ParamID+"/activity", c.UpdateActivity) // Mark a session as active (refresh last_seen).
+		sessions.DELETE("/device/:device_id", c.RevokeByDevice)           // Targeted logout for a specific device.
 	}
 }

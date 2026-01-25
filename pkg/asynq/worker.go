@@ -6,8 +6,8 @@ import (
 
 	"gct/config"
 	"gct/pkg/logger"
+
 	"github.com/hibiken/asynq"
-	"go.uber.org/zap"
 )
 
 // Worker wraps asynq.Server for task processing.
@@ -29,10 +29,11 @@ func NewWorker(cfg config.AsynqConfig, log logger.Log) *Worker {
 			Concurrency: cfg.Concurrency,
 			Queues:      cfg.GetDefaultQueues(),
 			ErrorHandler: asynq.ErrorHandlerFunc(func(ctx context.Context, task *asynq.Task, err error) {
-				log.WithContext(ctx).Errorw("task processing failed",
-					zap.String("task_type", task.Type()),
-					zap.String("task_id", task.ResultWriter().TaskID()),
-					zap.Error(err),
+				log.Errorc(ctx, "❌ Asynq task processing failed",
+					"task_type", task.Type(),
+					"task_id", task.ResultWriter().TaskID(),
+					"error", err,
+					"payload_size", len(task.Payload()),
 				)
 			}),
 			Logger: NewAsynqLogger(log),
@@ -80,17 +81,24 @@ func (l *AsynqLogger) Debug(args ...interface{}) {
 }
 
 func (l *AsynqLogger) Info(args ...interface{}) {
-	// Suppress info logs from asynq
+	// Show info logs with emoji for better visibility
+	msg := fmt.Sprint(args...)
+	if len(msg) > 0 {
+		l.log.Info("ℹ️  Asynq: " + msg)
+	}
 }
 
 func (l *AsynqLogger) Warn(args ...interface{}) {
-	l.log.Warn(fmt.Sprint(args...))
+	msg := fmt.Sprint(args...)
+	l.log.Warn("⚠️  Asynq warning: " + msg)
 }
 
 func (l *AsynqLogger) Error(args ...interface{}) {
-	l.log.Error(fmt.Sprint(args...))
+	msg := fmt.Sprint(args...)
+	l.log.Error("❌ Asynq error: " + msg)
 }
 
 func (l *AsynqLogger) Fatal(args ...interface{}) {
-	l.log.Fatal(fmt.Sprint(args...))
+	msg := fmt.Sprint(args...)
+	l.log.Fatal("💀 Asynq fatal: " + msg)
 }

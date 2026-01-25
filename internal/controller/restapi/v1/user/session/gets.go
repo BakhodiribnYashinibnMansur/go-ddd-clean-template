@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"gct/internal/controller/restapi/response"
-	"gct/internal/controller/restapi/util"
+	"gct/pkg/httpx"
 	"gct/internal/domain"
 	"gct/internal/domain/mock"
 	"github.com/gin-gonic/gin"
@@ -21,15 +21,16 @@ import (
 // @Success     200 {object} response.SuccessResponse
 // @Failure     401 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
+// @Security    BearerAuth
 // @Router      /sessions [get]
 func (c *Controller) Sessions(ctx *gin.Context) {
-	userID, err := util.GetUserID(ctx)
+	userID, err := httpx.GetUserID(ctx)
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusUnauthorized, "unauthorized", nil, false)
 		return
 	}
 
-	pagination, err := util.GetPagination(ctx)
+	pagination, err := httpx.GetPagination(ctx)
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusBadRequest, err, nil, false)
 		return
@@ -42,8 +43,8 @@ func (c *Controller) Sessions(ctx *gin.Context) {
 		Pagination: &pagination,
 	}
 
-	// Handle mock mode
-	if util.Mock(ctx, util.MockTypeGets, func(count int) any { return mock.Sessions(count) }) {
+// Handle mock mode
+	if httpx.Mock(ctx, httpx.MockTypeGets, func(count int) any { return mock.Sessions(count) }) {
 		return
 	}
 

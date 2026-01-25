@@ -10,20 +10,20 @@ import (
 
 // ParseRSAPrivateKey parses an RSA private key from a PEM string.
 func ParseRSAPrivateKey(keyStr string) (*rsa.PrivateKey, error) {
-	keyStr = strings.ReplaceAll(keyStr, "\\n", "\n")
+	keyStr = strings.ReplaceAll(keyStr, PEMNewlineEscaped, PEMNewline)
 	key, err := jwtgo.ParseRSAPrivateKeyFromPEM([]byte(keyStr))
 	if err != nil {
-		return nil, fmt.Errorf("jwt - ParseRSAPrivateKey - ParseRSAPrivateKeyFromPEM: %w", err)
+		return nil, fmt.Errorf(ErrMsgParsePrivateKey, err)
 	}
 	return key, nil
 }
 
 // ParseRSAPublicKey parses an RSA public key from a PEM string.
 func ParseRSAPublicKey(keyStr string) (*rsa.PublicKey, error) {
-	keyStr = strings.ReplaceAll(keyStr, "\\n", "\n")
+	keyStr = strings.ReplaceAll(keyStr, PEMNewlineEscaped, PEMNewline)
 	key, err := jwtgo.ParseRSAPublicKeyFromPEM([]byte(keyStr))
 	if err != nil {
-		return nil, fmt.Errorf("jwt - ParseRSAPublicKey - ParseRSAPublicKeyFromPEM: %w", err)
+		return nil, fmt.Errorf(ErrMsgParsePublicKey, err)
 	}
 	return key, nil
 }

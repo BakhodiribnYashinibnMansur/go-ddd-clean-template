@@ -12,11 +12,11 @@ import (
 )
 
 func (uc *UseCase) Update(ctx context.Context, u *domain.User) error {
-	uc.logger.Infow("user update started", "input", u)
+	uc.logger.Infoc(ctx, "user update started", "input", u)
 
 	existing, err := uc.repo.Postgres.User.Client.Get(ctx, &domain.UserFilter{ID: &u.ID})
 	if err != nil {
-		uc.logger.Errorw("user update failed: get existing", "error", err)
+		uc.logger.Errorc(ctx, "user update failed: get existing", "error", err)
 		return apperrors.MapRepoToServiceError(err).WithInput(u)
 	}
 
@@ -40,23 +40,23 @@ func (uc *UseCase) Update(ctx context.Context, u *domain.User) error {
 	}
 	if u.Password != "" {
 		if err := existing.SetPassword(u.Password); err != nil {
-			uc.logger.Errorw("user update failed: set password", "error", err)
+			uc.logger.Errorc(ctx, "user update failed: set password", "error", err)
 			return apperrors.MapRepoToServiceError(err).WithInput(u)
 		}
 	}
 
 	err = uc.repo.Postgres.User.Client.Update(ctx, existing)
 	if err != nil {
-		uc.logger.Errorw("user update failed", "error", err)
+		uc.logger.Errorc(ctx, "user update failed", "error", err)
 		return apperrors.MapRepoToServiceError(err).WithInput(u)
 	}
 
-	uc.logger.Infow("user update success")
+	uc.logger.Infoc(ctx, "user update success")
 	return nil
 }
 
 func (uc *UseCase) SetStatus(ctx context.Context, id uuid.UUID, active bool) error {
-	uc.logger.Infow("user set status started", "id", id, "active", active)
+	uc.logger.Infoc(ctx, "user set status started", "id", id, "active", active)
 
 	existing, err := uc.repo.Postgres.User.Client.Get(ctx, &domain.UserFilter{ID: &id})
 	if err != nil {
@@ -68,10 +68,10 @@ func (uc *UseCase) SetStatus(ctx context.Context, id uuid.UUID, active bool) err
 
 	err = uc.repo.Postgres.User.Client.Update(ctx, existing)
 	if err != nil {
-		uc.logger.Errorw("user set status failed", "error", err)
+		uc.logger.Errorc(ctx, "user set status failed", "error", err)
 		return apperrors.MapRepoToServiceError(err)
 	}
 
-	uc.logger.Infow("user set status success")
+	uc.logger.Infoc(ctx, "user set status success")
 	return nil
 }

@@ -6,18 +6,18 @@ import (
 	"net/http"
 
 	"gct/pkg/featureflag"
+	"gct/pkg/logger"
 
 	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
 )
 
 // FeatureFlagController serves as a playground and reference implementation for the feature flag system.
 type FeatureFlagController struct {
-	logger *zap.Logger
+	logger logger.Log
 }
 
 // NewFeatureFlagController instantiates the controller with a structured logger.
-func NewFeatureFlagController(logger *zap.Logger) *FeatureFlagController {
+func NewFeatureFlagController(logger logger.Log) *FeatureFlagController {
 	return &FeatureFlagController{
 		logger: logger,
 	}
@@ -30,7 +30,8 @@ func NewFeatureFlagController(logger *zap.Logger) *FeatureFlagController {
 // @Tags feature-flags
 // @Accept json
 // @Produce json
-// @Success 200 {object} map[string]interface{}
+// @Failure 500 {object} response.SuccessResponse
+// @Security BearerAuth
 // @Router /api/v1/featureflag/boolean [get]
 func (ctrl *FeatureFlagController) ExampleBooleanFlag(c *gin.Context) {
 	ctx := c.Request.Context()
@@ -57,7 +58,8 @@ func (ctrl *FeatureFlagController) ExampleBooleanFlag(c *gin.Context) {
 // @Tags feature-flags
 // @Accept json
 // @Produce json
-// @Success 200 {object} map[string]interface{}
+// @Failure 500 {object} response.SuccessResponse
+// @Security BearerAuth
 // @Router /api/v1/featureflag/string [get]
 func (ctrl *FeatureFlagController) ExampleStringVariation(c *gin.Context) {
 	ctx := c.Request.Context()
@@ -79,7 +81,8 @@ func (ctrl *FeatureFlagController) ExampleStringVariation(c *gin.Context) {
 // @Tags feature-flags
 // @Accept json
 // @Produce json
-// @Success 200 {object} map[string]interface{}
+// @Failure 500 {object} response.SuccessResponse
+// @Security BearerAuth
 // @Router /api/v1/featureflag/int [get]
 func (ctrl *FeatureFlagController) ExampleIntVariation(c *gin.Context) {
 	ctx := c.Request.Context()
@@ -102,7 +105,8 @@ func (ctrl *FeatureFlagController) ExampleIntVariation(c *gin.Context) {
 // @Tags feature-flags
 // @Accept json
 // @Produce json
-// @Success 200 {object} map[string]interface{}
+// @Failure 500 {object} response.SuccessResponse
+// @Security BearerAuth
 // @Router /api/v1/featureflag/json [get]
 func (ctrl *FeatureFlagController) ExampleJSONVariation(c *gin.Context) {
 	ctx := c.Request.Context()
@@ -132,7 +136,8 @@ func (ctrl *FeatureFlagController) ExampleJSONVariation(c *gin.Context) {
 // @Param user_id query string false "Unique identity for targeting"
 // @Param email query string false "Email address for precise targeting"
 // @Param plan query string false "Segment identifier (free/premium)"
-// @Success 200 {object} map[string]interface{}
+// @Failure 500 {object} response.SuccessResponse
+// @Security BearerAuth
 // @Router /api/v1/featureflag/targeting [get]
 func (ctrl *FeatureFlagController) ExampleUserTargeting(c *gin.Context) {
 	ctx := c.Request.Context()
@@ -179,7 +184,8 @@ func (ctrl *FeatureFlagController) ExampleUserTargeting(c *gin.Context) {
 // @Tags feature-flags
 // @Accept json
 // @Produce json
-// @Success 200 {object} map[string]interface{}
+// @Failure 500 {object} response.SuccessResponse
+// @Security BearerAuth
 // @Router /api/v1/featureflag/rollout [get]
 func (ctrl *FeatureFlagController) ExamplePercentageRollout(c *gin.Context) {
 	ctx := c.Request.Context()

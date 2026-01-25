@@ -1,0 +1,186 @@
+package auth
+
+import (
+	"net/http"
+	"strings"
+
+	"gct/consts"
+	"gct/internal/controller/restapi/cookie"
+	"gct/internal/controller/restapi/response"
+	"gct/internal/domain"
+	"gct/pkg/httpx"
+	"gct/pkg/jwt"
+
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+)
+
+// AuthClientAccess ensures the request has a valid access token.
+// Injects session and user identity into the request context.
+//
+// This is the primary authentication middleware for API endpoints.
+// It validates the JWT access token and populates the Gin context with session data.
+func (m *AuthMiddleware) AuthClientAccess(ctx *gin.Context) {
+	session, err := m.validateAccessToken(ctx)
+	if err != nil {
+		response.ControllerResponse(ctx, http.StatusUnauthorized, err.Error(), nil, false)
+		ctx.Abort()
+		return
+	}
+
+	// Inject identity into context for handlers
+	ctx.Set(consts.CtxSessionID, session.ID)
+	ctx.Set(consts.CtxSession, session)
+	ctx.Set(consts.CtxUserID, session.UserID.String())
+
+	ctx.Next()
+}
+
+// AuthClientRefresh manages the verification of refresh tokens.
+// Used primarily at the token regeneration endpoint.
+//
+// This middleware validates refresh tokens and ensures the associated session
+// is still active and not revoked. It uses cryptographic hash verification
+// to prevent token forgery.
+func (m *AuthMiddleware) AuthClientRefresh(ctx *gin.Context) {
+	token := cookie.GetCookie(ctx, consts.COOKIE_REFRESH_TOKEN)
+	if token == "" {
+		authHeader := httpx.GetAuthorization(ctx)
+		token = httpx.ExtractBearerToken(authHeader)
+	}
+
+	if token == "" {
+		response.ControllerResponse(ctx, http.StatusUnauthorized, httpx.ErrUnAuth, nil, false)
+		ctx.Abort()
+		return
+	}
+
+	// Parse the refresh token format
+	rt, err := jwt.ParseRefreshToken(token)
+	if err != nil {
+		m.l.Errorw("AuthMiddleware - AuthClientRefresh - invalid refresh token format", "error", err)
+		response.ControllerResponse(ctx, http.StatusUnauthorized, httpx.ErrInvalidRefreshFormat, nil, false)
+		ctx.Abort()
+		return
+	}
+
+	// Verify session existence
+	sessionID, err := uuid.Parse(rt.SessionID)
+	if err != nil {
+		m.l.Errorw("AuthMiddleware - AuthClientRefresh - invalid session id in token", "session_id", rt.SessionID)
+		response.ControllerResponse(ctx, http.StatusUnauthorized, httpx.ErrInvalidSession, nil, false)
+		ctx.Abort()
+		return
+	}
+
+	session, err := (*m.sessionuc).Get(ctx, &domain.SessionFilter{ID: &sessionID})
+	if err != nil {
+		m.l.Errorw("AuthMiddleware - AuthClientRefresh - session not found", "error", err)
+		response.ControllerResponse(ctx, http.StatusUnauthorized, httpx.ErrInvalidRefreshSession, nil, false)
+		ctx.Abort()
+		return
+	}
+
+	// Cryptographically verify token vs hash in DB
+	if !rt.Verify(session.RefreshTokenHash) {
+		m.l.Errorw("AuthMiddleware - AuthClientRefresh - invalid refresh token hash", "session_id", sessionID)
+		response.ControllerResponse(ctx, http.StatusUnauthorized, httpx.ErrInvalidRefreshToken, nil, false)
+		ctx.Abort()
+		return
+	}
+
+	// Security check for revocation/expiry
+	if session.Revoked || session.IsExpired() {
+		m.l.Errorw("AuthMiddleware - AuthClientRefresh - session revoked or expired", "session_id", sessionID)
+		response.ControllerResponse(ctx, http.StatusUnauthorized, httpx.ErrRevokedToken, nil, false)
+		ctx.Abort()
+		return
+	}
+
+	// Inject refresh context
+	ctx.Set(consts.CtxSessionID, rt.SessionID)
+	ctx.Set(consts.CtxRefreshToken, token)
+	ctx.Set(consts.CtxSession, session)
+	ctx.Set(consts.CtxUserID, session.UserID.String())
+
+	ctx.Next()
+}
+
+// AuthAdmin enforces that the authenticated user has an administrative role.
+//
+// This middleware first validates the access token, then checks if the user
+// has an admin role. It's a simplified role-based access control (RBAC) check
+// specifically for admin-only endpoints.
+func (m *AuthMiddleware) AuthAdmin(ctx *gin.Context) {
+	session, err := m.validateAccessToken(ctx)
+	if err != nil {
+		response.ControllerResponse(ctx, http.StatusUnauthorized, err.Error(), nil, false)
+		ctx.Abort()
+		return
+	}
+
+	// Verify administrative status
+	user, err := (*m.userUC).Get(ctx, &domain.UserFilter{ID: &session.UserID})
+	if err != nil {
+		m.l.Errorw("AuthMiddleware - AuthAdmin - User Get", "error", err)
+		response.ControllerResponse(ctx, http.StatusUnauthorized, httpx.ErrUserNotFound, nil, false)
+		ctx.Abort()
+		return
+	}
+
+	if user.RoleID == nil {
+		m.l.Warnw("AuthMiddleware - AuthAdmin - User has no role", "user_id", user.ID)
+		response.ControllerResponse(ctx, http.StatusForbidden, httpx.ErrAccessDenied, nil, false)
+		ctx.Abort()
+		return
+	}
+
+	role, err := m.authzUC.Role.Get(ctx, &domain.RoleFilter{ID: user.RoleID})
+	if err != nil {
+		m.l.Errorw("AuthMiddleware - AuthAdmin - Role Get", "error", err)
+		response.ControllerResponse(ctx, http.StatusForbidden, httpx.ErrAccessDenied, nil, false)
+		ctx.Abort()
+		return
+	}
+
+	// Simple case-insensitive match for admin role
+	if !strings.Contains(strings.ToLower(role.Name), consts.RoleAdmin) {
+		m.l.Warnw("AuthMiddleware - AuthAdmin - User is not admin", "user_id", user.ID, "role", role.Name)
+		response.ControllerResponse(ctx, http.StatusForbidden, httpx.ErrAccessDenied, nil, false)
+		ctx.Abort()
+		return
+	}
+
+	ctx.Set(consts.CtxSessionID, session.ID)
+	ctx.Set(consts.CtxSession, session)
+	ctx.Set(consts.CtxUserID, session.UserID.String())
+	ctx.Set(consts.CtxIsAdmin, true)
+	ctx.Set(consts.CtxUser, user)
+
+	ctx.Next()
+}
+
+// AuthApiKey verifies request authenticity using a static API key.
+// Primarily used for server-to-server communication or simple protected resources.
+//
+// This is a simpler authentication method compared to JWT, suitable for
+// internal services or webhook endpoints where OAuth/JWT is overkill.
+func (m *AuthMiddleware) AuthApiKey(ctx *gin.Context) {
+	apiKey := httpx.GetAPIKey(ctx)
+	if apiKey == "" {
+		m.l.Warnw("AuthMiddleware - AuthApiKey - API key missing", "ip", httpx.GetIPAddress(ctx))
+		response.ControllerResponse(ctx, http.StatusUnauthorized, httpx.ErrApiKeyMissing, nil, false)
+		ctx.Abort()
+		return
+	}
+
+	if apiKey != m.cfg.APIKeys.XApiKey {
+		m.l.Warnw("AuthMiddleware - AuthApiKey - Invalid API key", "ip", httpx.GetIPAddress(ctx))
+		response.ControllerResponse(ctx, http.StatusUnauthorized, httpx.ErrInvalidApiKey, nil, false)
+		ctx.Abort()
+		return
+	}
+
+	ctx.Set(consts.CtxApiKeyAuth, true)
+	ctx.Next()
+}

@@ -117,6 +117,59 @@ definitions:
       user_id:
         type: string
     type: object
+  domain.ErrorCategory:
+    enum:
+    - DATA
+    - AUTH
+    - SYSTEM
+    - VALIDATION
+    - BUSINESS
+    - UNKNOWN
+    type: string
+    x-enum-varnames:
+    - CategoryData
+    - CategoryAuth
+    - CategorySystem
+    - CategoryValidation
+    - CategoryBusiness
+    - CategoryUnknown
+  domain.ErrorCode:
+    properties:
+      category:
+        $ref: '#/definitions/domain.ErrorCategory'
+      code:
+        type: string
+      created_at:
+        type: string
+      http_status:
+        type: integer
+      id:
+        type: string
+      message:
+        type: string
+      retry_after:
+        type: integer
+      retryable:
+        type: boolean
+      severity:
+        $ref: '#/definitions/domain.ErrorSeverity'
+      suggestion:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  domain.ErrorSeverity:
+    enum:
+    - LOW
+    - MEDIUM
+    - HIGH
+    - CRITICAL
+    type: string
+    x-enum-varnames:
+    - SeverityLow
+    - SeverityMedium
+    - SeverityHigh
+    - SeverityCritical
   domain.FunctionMetric:
     properties:
       created_at:
@@ -263,7 +316,6 @@ definitions:
         description: Transient field for input
         type: string
       phone:
-        minLength: 9
         type: string
       role_id:
         type: string
@@ -274,6 +326,46 @@ definitions:
         type: string
     required:
     - phone
+    type: object
+  errorcode.CreateErrorCodeInput:
+    properties:
+      category:
+        $ref: '#/definitions/domain.ErrorCategory'
+      code:
+        type: string
+      http_status:
+        type: integer
+      message:
+        type: string
+      retry_after:
+        type: integer
+      retryable:
+        type: boolean
+      severity:
+        $ref: '#/definitions/domain.ErrorSeverity'
+      suggestion:
+        type: string
+    required:
+    - code
+    - http_status
+    - message
+    type: object
+  errorcode.UpdateErrorCodeInput:
+    properties:
+      category:
+        $ref: '#/definitions/domain.ErrorCategory'
+      http_status:
+        type: integer
+      message:
+        type: string
+      retry_after:
+        type: integer
+      retryable:
+        type: boolean
+      severity:
+        $ref: '#/definitions/domain.ErrorSeverity'
+      suggestion:
+        type: string
     type: object
   gct_internal_controller_restapi_response.ErrorDetail:
     properties:
@@ -404,8 +496,15 @@ definitions:
     type: object
 host: localhost:8080
 info:
-  contact: {}
-  description: Using a user management service as an example
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: A modular and scalable Go REST API template implementing Clean Architecture.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
   title: Go Clean Template API
   version: "1.0"
 paths:
@@ -413,9 +512,9 @@ paths:
     post:
       consumes:
       - application/json
-      description: Enqueue a test email task
+      description: Enqueue a test email task into the queue system
       parameters:
-      - description: Email request
+      - description: 'Email details: recipient, subject, and body'
         in: body
         name: request
         required: true
@@ -425,17 +524,17 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Returns task ID and queue name on success
           schema:
             additionalProperties: true
             type: object
         "400":
-          description: Bad Request
+          description: Malformed request body or invalid email format
           schema:
             additionalProperties: true
             type: object
         "500":
-          description: Internal Server Error
+          description: Failed to connect to the task queue
           schema:
             additionalProperties: true
             type: object
@@ -446,9 +545,9 @@ paths:
     post:
       consumes:
       - application/json
-      description: Enqueue a test notification task
+      description: Enqueue a push notification task for a specific user
       parameters:
-      - description: Notification request
+      - description: 'Notification details: userID, title, and message'
         in: body
         name: request
         required: true
@@ -479,9 +578,9 @@ paths:
     post:
       consumes:
       - application/json
-      description: Enqueue a database seeding task
+      description: Enqueue a task to populate the database with mock data for testing
       parameters:
-      - description: Seed request
+      - description: 'Seeding parameters: counts for users, roles, etc.'
         in: body
         name: request
         required: true
@@ -512,7 +611,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: Demonstrates how to use a boolean feature flag
+      description: Demonstrates how to use a boolean feature flag to toggle UI elements
       produces:
       - application/json
       responses:
@@ -528,7 +627,8 @@ paths:
     get:
       consumes:
       - application/json
-      description: Demonstrates how to use integer variation for rate limiting
+      description: Demonstrates integer flags for dynamic numeric tuning (e.g. rate
+        limits)
       produces:
       - application/json
       responses:
@@ -544,7 +644,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: Demonstrates how to use JSON variation for complex configuration
+      description: Demonstrates JSON flags for shipping complex structured configurations
       produces:
       - application/json
       responses:
@@ -560,8 +660,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: Demonstrates how feature flags can be rolled out to a percentage
-        of users
+      description: Demonstrates gradual percentage-based rollouts to minimize risk
       produces:
       - application/json
       responses:
@@ -577,7 +676,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: Demonstrates how to use string variation for A/B testing
+      description: Demonstrates string-based flags for multi-variant A/B testing
       produces:
       - application/json
       responses:
@@ -593,17 +692,17 @@ paths:
     get:
       consumes:
       - application/json
-      description: Demonstrates how to use feature flags with user targeting
+      description: Demonstrates segment-based flag targeting (e.g. per plan or email)
       parameters:
-      - description: User ID
+      - description: Unique identity for targeting
         in: query
         name: user_id
         type: string
-      - description: User Email
+      - description: Email address for precise targeting
         in: query
         name: email
         type: string
-      - description: User Plan (free/premium)
+      - description: Segment identifier (free/premium)
         in: query
         name: plan
         type: string
@@ -618,6 +717,19 @@ paths:
       summary: Example User Targeting
       tags:
       - feature-flags
+  /audit/actions:
+    get:
+      description: Retrieve critical business and admin action logs
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.SuccessResponse'
+      summary: Get business action audit logs
+      tags:
+      - audit
   /audit/history:
     get:
       consumes:
@@ -675,6 +787,19 @@ paths:
           schema:
             $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
       summary: Get endpoint histories
+      tags:
+      - audit
+  /audit/logins:
+    get:
+      description: Retrieve login-related audit logs (success, fail, reason)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.SuccessResponse'
+      summary: Get login audit logs
       tags:
       - audit
   /audit/logs:
@@ -738,6 +863,19 @@ paths:
           schema:
             $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
       summary: Get audit logs
+      tags:
+      - audit
+  /audit/sessions:
+    get:
+      description: Retrieve session-related audit logs (create, revoke, refresh)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.SuccessResponse'
+      summary: Get session audit logs
       tags:
       - audit
   /auth/refresh:
@@ -1446,6 +1584,118 @@ paths:
       summary: Get CSRF token
       tags:
       - auth
+  /error-codes:
+    post:
+      consumes:
+      - application/json
+      description: Create a new error code definition
+      parameters:
+      - description: Error code creation input
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/errorcode.CreateErrorCodeInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/gct_internal_controller_restapi_response.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/domain.ErrorCode'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+      summary: Create a new error code
+      tags:
+      - error_code
+  /error-codes/{code}:
+    get:
+      consumes:
+      - application/json
+      description: Get an error code details by code string
+      parameters:
+      - description: Error Code string
+        in: path
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/gct_internal_controller_restapi_response.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/domain.ErrorCode'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+      summary: Get an error code
+      tags:
+      - error_code
+    put:
+      consumes:
+      - application/json
+      description: Update an existing error code definition
+      parameters:
+      - description: Error Code string
+        in: path
+        name: code
+        required: true
+        type: string
+      - description: Error code update input
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/errorcode.UpdateErrorCodeInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/gct_internal_controller_restapi_response.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/domain.ErrorCode'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+      summary: Update an error code
+      tags:
+      - error_code
   /metrics/functions:
     get:
       consumes:
@@ -1652,6 +1902,29 @@ paths:
           schema:
             $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
       summary: Update session activity
+      tags:
+      - sessions
+  /sessions/current:
+    delete:
+      consumes:
+      - application/json
+      description: Revoke the session that is currently being used
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.SuccessResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+      summary: Revoke current session
       tags:
       - sessions
   /sessions/device/{device_id}:

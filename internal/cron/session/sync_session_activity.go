@@ -9,7 +9,6 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/redis/go-redis/v9"
-	"go.uber.org/zap"
 )
 
 var errNoSessionsToUpdate = errors.New("no sessions to update")
@@ -22,7 +21,7 @@ func (c *CronJobs) SyncSessionActivityToPostgres(ctx context.Context) {
 	}
 
 	if err := c.syncToPostgres(ctx, sessions); err != nil {
-		c.logger.WithContext(ctx).Errorw("Failed to sync session activity to Postgres", zap.Error(err))
+		c.logger.Errorc(ctx, "Failed to sync session activity to Postgres", "error", err)
 	}
 }
 
@@ -34,12 +33,12 @@ func (c *CronJobs) collectSessionActivities(ctx context.Context) ([]Activity, er
 		keys = append(keys, iter.Val())
 	}
 	if err := iter.Err(); err != nil {
-		c.logger.WithContext(ctx).Errorw("Failed to scan Redis keys", "error", err, "pattern", pattern)
+		c.logger.Errorc(ctx, "Failed to scan Redis keys", "error", err, "pattern", pattern)
 		return nil, fmt.Errorf("redis scan error: %w", err)
 	}
 
 	if len(keys) == 0 {
-		c.logger.WithContext(ctx).Debugw("No session activity keys found in Redis")
+		c.logger.Debugc(ctx, "No session activity keys found in Redis")
 		return nil, nil
 	}
 
@@ -48,7 +47,7 @@ func (c *CronJobs) collectSessionActivities(ctx context.Context) ([]Activity, er
 		activity, err := c.getSingleSessionActivity(ctx, key)
 		if err != nil {
 			if !errors.Is(err, redis.Nil) {
-				c.logger.WithContext(ctx).Errorw("Failed to get session activity", "error", err, "key", key)
+				c.logger.Errorc(ctx, "Failed to get session activity", "error", err, "key", key)
 			}
 			continue
 		}
@@ -91,7 +90,7 @@ func (c *CronJobs) syncToPostgres(ctx context.Context, sessions []Activity) erro
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
-	c.logger.WithContext(ctx).Infow("Session activity synced to PostgreSQL", zap.Int("count", len(sessions)))
+	c.logger.Infoc(ctx, "Session activity synced to PostgreSQL", "count", len(sessions))
 	return nil
 }
 
@@ -109,7 +108,7 @@ func (c *CronJobs) batchUpdateSessionActivity(ctx context.Context, tx pgx.Tx, se
 		) ON COMMIT DROP
 	`)
 	if err != nil {
-		c.logger.WithContext(ctx).Errorw("Failed to create temp table", zap.Error(err))
+		c.logger.Errorc(ctx, "Failed to create temp table", "error", err)
 		return fmt.Errorf("failed to create temp table: %w", err)
 	}
 
@@ -127,7 +126,7 @@ func (c *CronJobs) batchUpdateSessionActivity(ctx context.Context, tx pgx.Tx, se
 		pgx.CopyFromRows(rows),
 	)
 	if err != nil {
-		c.logger.WithContext(ctx).Errorw("Failed to copy data to temp table", zap.Error(err))
+		c.logger.Errorc(ctx, "Failed to copy data to temp table", "error", err)
 		return fmt.Errorf("failed to copy data to temp table: %w", err)
 	}
 
@@ -141,13 +140,13 @@ func (c *CronJobs) batchUpdateSessionActivity(ctx context.Context, tx pgx.Tx, se
 		WHERE s.id = t.session_id::UUID
 	`)
 	if err != nil {
-		c.logger.WithContext(ctx).Errorw("Failed to update sessions from temp table", zap.Error(err))
+		c.logger.Errorc(ctx, "Failed to update sessions from temp table", "error", err)
 		return fmt.Errorf("failed to update sessions from temp table: %w", err)
 	}
 
 	rowsAffected := result.RowsAffected()
-	c.logger.WithContext(ctx).Debugw("Updated sessions from Redis",
-		zap.Int64("rows_affected", rowsAffected),
+	c.logger.Debugc(ctx, "Updated sessions from Redis",
+		"rows_affected", rowsAffected,
 	)
 
 	return nil

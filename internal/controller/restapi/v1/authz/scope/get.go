@@ -5,7 +5,7 @@ import (
 
 	"gct/consts"
 	"gct/internal/controller/restapi/response"
-	"gct/internal/controller/restapi/util"
+	"gct/pkg/httpx"
 	"gct/internal/domain"
 	"gct/internal/domain/mock"
 	"github.com/gin-gonic/gin"
@@ -16,23 +16,24 @@ import (
 // @Tags        authz-scopes
 // @Param       path query string true "Path"
 // @Param       method query string true "Method"
+// @Security    BearerAuth
 // @Router      /authz/scope [get]
 func (c *Controller) Get(ctx *gin.Context) {
-	path, err := util.GetStringQuery(ctx, consts.QueryPath)
+	path, err := httpx.GetStringQuery(ctx, consts.QueryPath)
 	if err != nil {
-		util.LogError(c.l, err, "http - v1 - authz - scope - get - path")
+		httpx.LogError(c.l, err, "http - v1 - authz - scope - get - path")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "path required", nil, false)
 		return
 	}
-	method, err := util.GetStringQuery(ctx, consts.QueryMethod)
+	method, err := httpx.GetStringQuery(ctx, consts.QueryMethod)
 	if err != nil {
-		util.LogError(c.l, err, "http - v1 - authz - scope - get - method")
+		httpx.LogError(c.l, err, "http - v1 - authz - scope - get - method")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "method required", nil, false)
 		return
 	}
 
-	// Handle mock mode
-	if util.Mock(ctx, util.MockTypeGet, func() any { return mock.Scope() }) {
+// Handle mock mode
+	if httpx.Mock(ctx, httpx.MockTypeGet, func() any { return mock.Scope() }) {
 		return
 	}
 

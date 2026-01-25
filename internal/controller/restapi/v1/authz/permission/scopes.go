@@ -5,7 +5,7 @@ import (
 
 	"gct/consts"
 	"gct/internal/controller/restapi/response"
-	"gct/internal/controller/restapi/util"
+	"gct/pkg/httpx"
 	"github.com/gin-gonic/gin"
 )
 
@@ -25,24 +25,25 @@ type ScopeRequest struct {
 // @Success     200 {object} response.SuccessResponse
 // @Failure     400 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
+// @Security    BearerAuth
 // @Router      /authz/permissions/{perm_id}/scopes [post]
 func (c *Controller) AssignScope(ctx *gin.Context) {
-	id, err := util.GetUUIDParam(ctx, consts.ParamPermID)
+	id, err := httpx.GetUUIDParam(ctx, consts.ParamPermID)
 	if err != nil {
-		util.LogError(c.l, err, "http - v1 - authz - permission - assign_scope - uuid")
+		httpx.LogError(c.l, err, "http - v1 - authz - permission - assign_scope - uuid")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid permission id", nil, false)
 		return
 	}
 
 	var req ScopeRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		util.LogError(c.l, err, "http - v1 - authz - permission - assign_scope - bind")
+		httpx.LogError(c.l, err, "http - v1 - authz - permission - assign_scope - bind")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid request body", nil, false)
 		return
 	}
 
-	// Handle mock mode
-	if util.Mock(ctx, util.MockTypeUpdate, "Scope assigned successfully") {
+// Handle mock mode
+	if httpx.Mock(ctx, httpx.MockTypeUpdate, "Scope assigned successfully") {
 		return
 	}
 
@@ -66,24 +67,25 @@ func (c *Controller) AssignScope(ctx *gin.Context) {
 // @Success     200 {object} response.SuccessResponse
 // @Failure     400 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
+// @Security    BearerAuth
 // @Router      /authz/permissions/{perm_id}/scopes [delete]
 func (c *Controller) RemoveScope(ctx *gin.Context) {
-	id, err := util.GetUUIDParam(ctx, consts.ParamPermID)
+	id, err := httpx.GetUUIDParam(ctx, consts.ParamPermID)
 	if err != nil {
-		util.LogError(c.l, err, "http - v1 - authz - permission - remove_scope - uuid")
+		httpx.LogError(c.l, err, "http - v1 - authz - permission - remove_scope - uuid")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid permission id", nil, false)
 		return
 	}
 
 	var req ScopeRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		util.LogError(c.l, err, "http - v1 - authz - permission - remove_scope - bind")
+		httpx.LogError(c.l, err, "http - v1 - authz - permission - remove_scope - bind")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid request body", nil, false)
 		return
 	}
 
-	// Handle mock mode
-	if util.Mock(ctx, util.MockTypeDelete, "Scope removed successfully") {
+// Handle mock mode
+	if httpx.Mock(ctx, httpx.MockTypeDelete, "Scope removed successfully") {
 		return
 	}
 

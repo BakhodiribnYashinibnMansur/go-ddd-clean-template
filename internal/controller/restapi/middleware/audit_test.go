@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -9,6 +10,7 @@ import (
 	"gct/consts"
 	"gct/internal/domain"
 	"gct/internal/usecase"
+	"gct/internal/usecase/audit"
 	"gct/pkg/logger"
 
 	"github.com/gin-gonic/gin"
@@ -17,19 +19,33 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-// MockAuditUseCase is a mock for audit use case
-type MockAuditUseCase struct {
+// MockEndpointHistoryUC is a mock for endpoint history use case
+type MockEndpointHistoryUC struct {
 	mock.Mock
 }
 
-func (m *MockAuditUseCase) CreateHistory(h *domain.EndpointHistory) error {
-	args := m.Called(h)
+func (m *MockEndpointHistoryUC) Create(ctx context.Context, h *domain.EndpointHistory) error {
+	args := m.Called(ctx, h)
 	return args.Error(0)
 }
 
-func (m *MockAuditUseCase) CreateLog(al *domain.AuditLog) error {
-	args := m.Called(al)
+func (m *MockEndpointHistoryUC) Gets(ctx context.Context, in *domain.EndpointHistoriesFilter) ([]*domain.EndpointHistory, int, error) {
+	args := m.Called(ctx, in)
+	return args.Get(0).([]*domain.EndpointHistory), args.Int(1), args.Error(2)
+}
+
+type MockAuditLogUC struct {
+	mock.Mock
+}
+
+func (m *MockAuditLogUC) Create(ctx context.Context, al *domain.AuditLog) error {
+	args := m.Called(ctx, al)
 	return args.Error(0)
+}
+
+func (m *MockAuditLogUC) Gets(ctx context.Context, filter *domain.AuditLogsFilter) ([]*domain.AuditLog, int, error) {
+	args := m.Called(ctx, filter)
+	return args.Get(0).([]*domain.AuditLog), args.Int(1), args.Error(2)
 }
 
 func TestAuditMiddleware_EndpointHistory(t *testing.T) {
@@ -90,8 +106,18 @@ func TestAuditMiddleware_EndpointHistory(t *testing.T) {
 			// Setup logger
 			mockLogger := logger.New("debug")
 
-			// Setup mock use case (simplified - in real scenario use proper mocks)
-			uc := &usecase.UseCase{}
+			// Setup mock use case
+			mockHistoryUC := new(MockEndpointHistoryUC)
+			if tt.shouldRecord {
+				mockHistoryUC.On("Create", mock.Anything, mock.Anything).Return(nil)
+			}
+
+			// Initialize UseCase struct
+			uc := &usecase.UseCase{
+				Audit: &audit.UseCase{
+					History: mockHistoryUC,
+				},
+			}
 
 			// Create middleware
 			auditM := NewAuditMiddleware(uc, mockLogger)
@@ -228,7 +254,17 @@ func TestAuditMiddleware_ChangeAudit(t *testing.T) {
 			mockLogger := logger.New("debug")
 
 			// Setup mock use case
-			uc := &usecase.UseCase{}
+			mockLogUC := new(MockAuditLogUC)
+			if tt.shouldAudit {
+				mockLogUC.On("Create", mock.Anything, mock.Anything).Return(nil)
+			}
+
+			// Initialize UseCase struct
+			uc := &usecase.UseCase{
+				Audit: &audit.UseCase{
+					Log: mockLogUC,
+				},
+			}
 
 			// Create middleware
 			auditM := NewAuditMiddleware(uc, mockLogger)

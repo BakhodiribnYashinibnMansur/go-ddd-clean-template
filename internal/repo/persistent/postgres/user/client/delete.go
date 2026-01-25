@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"gct/consts"
+	"gct/internal/repo/schema"
 	apperrors "gct/pkg/errors"
 
 	"github.com/google/uuid"
@@ -12,13 +14,13 @@ import (
 func (r *Repo) Delete(ctx context.Context, id uuid.UUID) error {
 	sql, args, err := r.builder.
 		Update(tableName).
-		Set("deleted_at", time.Now().Unix()).
-		Set("updated_at", time.Now()).
-		Where("id = ? AND deleted_at = 0", id).
+		Set(schema.UsersDeletedAt, time.Now().Unix()).
+		Set(schema.UsersUpdatedAt, time.Now()).
+		Where(schema.UsersID+" = ? AND "+schema.UsersDeletedAt+" = 0", id).
 		ToSql()
 	if err != nil {
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase,
-			"failed to build delete SQL query")
+			consts.ErrMsgFailedToBuildDelete)
 	}
 
 	_, err = r.pool.Exec(ctx, sql, args...)

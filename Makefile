@@ -36,7 +36,7 @@ compose-down: ### Down docker compose
 .PHONY: compose-down
 
 swag: ### generate swagger documentation
-	cd cmd/app && $(shell go env GOPATH)/bin/swag init -g main.go -o ../../docs/swagger --parseDependency --parseInternal -d .,../../internal/controller
+	swag init --parseDependency --parseInternal -g cmd/app/main.go -o docs/swagger
 .PHONY: swag
 
 protogen: ### generate all proto files
@@ -74,7 +74,7 @@ format: ### Run code formatter
 .PHONY: format
 
 run: ### run application with all code generation
-	@make swag > /dev/null 2>&1
+	swag > /dev/null 2>&1
 	CGO_ENABLED=0 go run ./cmd/app
 .PHONY: run
 

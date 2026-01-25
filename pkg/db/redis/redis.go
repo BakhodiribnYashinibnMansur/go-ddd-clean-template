@@ -8,9 +8,9 @@ import (
 
 	"gct/config"
 	"gct/pkg/logger"
+
 	"github.com/redis/go-redis/extra/redisotel/v9"
 	"github.com/redis/go-redis/v9"
-	"go.uber.org/zap"
 )
 
 const (
@@ -61,7 +61,7 @@ func New(ctx context.Context, env string, cfg config.Redis, l logger.Log, opts .
 
 	// Enable tracing
 	if err := redisotel.InstrumentTracing(client); err != nil {
-		l.WithContext(ctx).Errorw("failed to instrument redis with otel", zap.Error(err))
+		l.Errorc(ctx, "failed to instrument redis with otel", "error", err)
 		// We don't return error here to avoid breaking app if tracing fails
 	}
 
@@ -75,7 +75,14 @@ func New(ctx context.Context, env string, cfg config.Redis, l logger.Log, opts .
 		Client: client,
 	}
 
-	l.WithContext(ctx).Infow("Redis connected successfully")
+	clientOpts := client.Options()
+	l.Infoc(ctx, "✅ Redis connected successfully",
+		"address", clientOpts.Addr,
+		"username", clientOpts.Username,
+		"db", clientOpts.DB,
+		"pool_size", clientOpts.PoolSize,
+		"min_idle_conns", clientOpts.MinIdleConns,
+	)
 
 	return r, nil
 }
@@ -100,7 +107,16 @@ func verifyConnection(ctx context.Context, client *redis.Client, l logger.Log) e
 	defer cancel()
 
 	if err := client.Ping(pingCtx).Err(); err != nil {
-		l.WithContext(ctx).Errorw("failed to ping Redis server", zap.Error(err))
+		opts := client.Options()
+		l.Errorc(ctx, "❌ Redis connection failed",
+			"error", err,
+			"address", opts.Addr,
+			"username", opts.Username,
+			"db", opts.DB,
+			"dial_timeout", opts.DialTimeout,
+			"read_timeout", opts.ReadTimeout,
+			"write_timeout", opts.WriteTimeout,
+		)
 		return fmt.Errorf("verify redis connection: %w", err)
 	}
 

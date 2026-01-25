@@ -15,6 +15,7 @@ type ControllerI interface {
 	Sessions(ctx *gin.Context)       // List all active sessions for the current user.
 	UpdateActivity(ctx *gin.Context) // Heartbeat to extend session validity.
 	Delete(ctx *gin.Context)         // Invalidate a specific session by ID.
+	RevokeCurrent(ctx *gin.Context)  // Force logout current device session.
 	RevokeAll(ctx *gin.Context)      // Force logout from all devices.
 	RevokeByDevice(ctx *gin.Context) // Invalidate sessions tied to a particular device fingerprint.
 }

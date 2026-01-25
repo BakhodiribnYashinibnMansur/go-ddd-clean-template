@@ -6,9 +6,10 @@ import (
 
 	"gct/consts"
 	"gct/internal/controller/restapi/response"
-	"gct/internal/controller/restapi/util"
 	"gct/internal/domain"
 	"gct/internal/domain/mock"
+	"gct/pkg/httpx"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -28,13 +29,14 @@ import (
 // @Param       success query bool false "Success"
 // @Param       from_date query string false "From Date (RFC3339)"
 // @Param       to_date query string false "To Date (RFC3339)"
-// @Success     200 {object} response.SuccessResponse{data=[]domain.AuditLog}
+// @Success     200 {object} response.SuccessResponse
 // @Failure     400 {object} response.ErrorResponse
+// @Security    BearerAuth
 // @Router      /audit/logs [get]
 func (c *Controller) Gets(ctx *gin.Context) {
-	pagination, err := util.GetPagination(ctx)
+	pagination, err := httpx.GetPagination(ctx)
 	if err != nil {
-		util.LogError(c.l, err, "http - v1 - audit - log - gets - pagination")
+		httpx.LogError(c.l, err, "http - v1 - audit - log - gets - pagination")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid pagination", nil, false)
 		return
 	}
@@ -43,7 +45,7 @@ func (c *Controller) Gets(ctx *gin.Context) {
 		Pagination: &pagination,
 		AuditLogFilter: domain.AuditLogFilter{
 			ResourceType: func() *string {
-				s := util.GetNullStringQuery(ctx, consts.QueryResourceType)
+				s := httpx.GetNullStringQuery(ctx, consts.QueryResourceType)
 				if s == "" {
 					return nil
 				}
@@ -52,7 +54,7 @@ func (c *Controller) Gets(ctx *gin.Context) {
 		},
 	}
 
-	userIDStr := util.GetNullStringQuery(ctx, consts.QueryUserID)
+	userIDStr := httpx.GetNullStringQuery(ctx, consts.QueryUserID)
 	if userIDStr != "" {
 		uid, err := uuid.Parse(userIDStr)
 		if err == nil {
@@ -60,13 +62,13 @@ func (c *Controller) Gets(ctx *gin.Context) {
 		}
 	}
 
-	actionStr := util.GetNullStringQuery(ctx, consts.QueryAction)
+	actionStr := httpx.GetNullStringQuery(ctx, consts.QueryAction)
 	if actionStr != "" {
 		act := domain.AuditActionType(actionStr)
 		filter.Action = &act
 	}
 
-	reqIDStr := util.GetNullStringQuery(ctx, consts.QueryResourceID)
+	reqIDStr := httpx.GetNullStringQuery(ctx, consts.QueryResourceID)
 	if reqIDStr != "" {
 		rid, err := uuid.Parse(reqIDStr)
 		if err == nil {
@@ -74,16 +76,17 @@ func (c *Controller) Gets(ctx *gin.Context) {
 		}
 	}
 
-	successStr := util.GetNullStringQuery(ctx, consts.QuerySuccess)
-	if successStr == "true" {
+	successStr := httpx.GetNullStringQuery(ctx, consts.QuerySuccess)
+	switch successStr {
+	case "true":
 		t := true
 		filter.Success = &t
-	} else if successStr == "false" {
+	case "false":
 		f := false
 		filter.Success = &f
 	}
 
-	fromDateStr := util.GetNullStringQuery(ctx, consts.QueryFromDate)
+	fromDateStr := httpx.GetNullStringQuery(ctx, consts.QueryFromDate)
 	if fromDateStr != "" {
 		t, err := time.Parse(time.RFC3339, fromDateStr)
 		if err == nil {
@@ -91,7 +94,7 @@ func (c *Controller) Gets(ctx *gin.Context) {
 		}
 	}
 
-	toDateStr := util.GetNullStringQuery(ctx, consts.QueryToDate)
+	toDateStr := httpx.GetNullStringQuery(ctx, consts.QueryToDate)
 	if toDateStr != "" {
 		t, err := time.Parse(time.RFC3339, toDateStr)
 		if err == nil {
@@ -100,7 +103,7 @@ func (c *Controller) Gets(ctx *gin.Context) {
 	}
 
 	// Handle mock mode
-	if util.Mock(ctx, util.MockTypeGets, func(count int) any { return mock.AuditLogs(count) }) {
+	if httpx.Mock(ctx, httpx.MockTypeGets, func(count int) any { return mock.AuditLogs(count) }) {
 		return
 	}
 

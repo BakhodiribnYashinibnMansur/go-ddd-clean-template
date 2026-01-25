@@ -5,7 +5,7 @@ import (
 	"runtime/debug"
 
 	"gct/internal/controller/restapi/response"
-	"gct/internal/controller/restapi/util"
+	"gct/pkg/httpx"
 	"gct/pkg/logger"
 
 	"github.com/gin-gonic/gin"
@@ -20,13 +20,13 @@ func Recovery(l logger.Log) gin.HandlerFunc {
 	return gin.CustomRecovery(func(c *gin.Context, recovered any) {
 		// Log the critical failure with structured context.
 		// Including the stack trace is vital for post-mortem analysis.
-		l.WithContext(c.Request.Context()).Errorw("panic recovered",
+		l.Errorw("panic recovered",
 			"error", recovered,
 			"stack", string(debug.Stack()),
 		)
 
 		// Return a generic error to the client to avoid leaking sensitive internal state.
-		response.ControllerResponse(c, http.StatusInternalServerError, util.ErrPanicRecovered, nil, false)
+		response.ControllerResponse(c, http.StatusInternalServerError, httpx.ErrPanicRecovered, nil, false)
 		c.Abort()
 	})
 }

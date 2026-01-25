@@ -10,7 +10,7 @@ import (
 	"gct/config"
 	"gct/consts"
 	"gct/internal/controller/restapi/cookie"
-	"gct/internal/controller/restapi/middleware"
+	auth "gct/internal/controller/restapi/middleware/auth"
 	"gct/internal/domain"
 	"gct/internal/usecase"
 	apperrors "gct/pkg/errors"
@@ -39,7 +39,7 @@ func strPtr(s string) *string {
 	return &s
 }
 
-func (h *Handler) Register(r *gin.RouterGroup, authmw *middleware.AuthMiddleware) {
+func (h *Handler) Register(r *gin.RouterGroup, authmw *auth.AuthMiddleware) {
 	g := r.Group("/admin")
 	g.GET("", h.AdminRoot)
 	g.GET("/login", h.Login)

@@ -8,6 +8,7 @@ import (
 
 	"gct/config"
 	"gct/pkg/logger"
+
 	"github.com/Masterminds/squirrel"
 	"github.com/exaring/otelpgx"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -37,7 +38,16 @@ func New(ctx context.Context, env string, cfg config.Postgres, l logger.Log, opt
 
 	poolConfig.MaxConns = int32(cfg.PoolMax)
 	poolConfig.ConnConfig.Tracer = otelpgx.NewTracer()
-	l.Infof("Postgres Config: Host=%s Port=%d User=%s DB=%s PoolMax=%d", cfg.Host, cfg.Port, cfg.User, cfg.Name, cfg.PoolMax)
+
+	l.Infoc(ctx, "🔌 Connecting to PostgreSQL...",
+		"host", cfg.Host,
+		"port", cfg.Port,
+		"user", cfg.User,
+		"database", cfg.Name,
+		"pool_max", cfg.PoolMax,
+		"ssl_mode", cfg.SSLMode,
+	)
+
 	for _, opt := range opts {
 		opt(poolConfig)
 	}
@@ -47,20 +57,40 @@ func New(ctx context.Context, env string, cfg config.Postgres, l logger.Log, opt
 		if err == nil {
 			break
 		}
-		l.Infof("Postgres is trying to connect, attempts left: %d", defaultConnAttempts-i-1)
-		time.Sleep(defaultConnTimeout)
+		attemptsLeft := defaultConnAttempts - i - 1
+		if attemptsLeft > 0 {
+			l.Warnc(ctx, "⚠️  PostgreSQL connection attempt failed, retrying...",
+				"attempts_left", attemptsLeft,
+				"error", err,
+			)
+			time.Sleep(defaultConnTimeout)
+		}
 	}
 
 	if err != nil {
+		l.Errorc(ctx, "❌ PostgreSQL connection failed after all attempts",
+			"error", err,
+			"host", cfg.Host,
+			"port", cfg.Port,
+			"database", cfg.Name,
+			"max_attempts", defaultConnAttempts,
+		)
 		return nil, fmt.Errorf("postgres - New - pgxpool.NewWithConfig: %w", err)
 	}
+
+	l.Infoc(ctx, "✅ PostgreSQL connected successfully",
+		"host", cfg.Host,
+		"port", cfg.Port,
+		"database", cfg.Name,
+		"pool_max", cfg.PoolMax,
+		"pool_stats", fmt.Sprintf("total=%d idle=%d", pg.Pool.Stat().TotalConns(), pg.Pool.Stat().IdleConns()),
+	)
 
 	return pg, nil
 }
 
 // Close - closes the Postgres connection.
 func (p *Postgres) Close() {
-	fmt.Println("DEBUG: Postgres Close called")
 	if p.Pool != nil {
 		p.Pool.Close()
 	}

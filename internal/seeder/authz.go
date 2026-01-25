@@ -12,7 +12,7 @@ import (
 )
 
 func (s *Seeder) seedPermissions(ctx context.Context, count int) error {
-	s.logger.WithContext(ctx).Infow("Seeding permissions...", zap.Int("count", count))
+	s.logger.Infoc(ctx, "Seeding permissions...", zap.Int("count", count))
 
 	// Some predefined permissions for realism
 	predefined := []string{
@@ -29,7 +29,7 @@ func (s *Seeder) seedPermissions(ctx context.Context, count int) error {
 			CreatedAt: time.Now(),
 		}
 		if err := s.repo.Persistent.Postgres.Authz.Permission.Create(ctx, p); err != nil {
-			s.logger.WithContext(ctx).Warnw("Failed to create predefined permission", zap.Error(err), zap.String("name", name))
+			s.logger.Warnc(ctx, "Failed to create predefined permission", zap.Error(err), zap.String("name", name))
 		}
 	}
 
@@ -42,7 +42,7 @@ func (s *Seeder) seedPermissions(ctx context.Context, count int) error {
 			CreatedAt: time.Now(),
 		}
 		if err := s.repo.Persistent.Postgres.Authz.Permission.Create(ctx, p); err != nil {
-			s.logger.WithContext(ctx).Warnw("Failed to create random permission", zap.Error(err), zap.String("name", name))
+			s.logger.Warnc(ctx, "Failed to create random permission", zap.Error(err), zap.String("name", name))
 		}
 	}
 
@@ -50,7 +50,7 @@ func (s *Seeder) seedPermissions(ctx context.Context, count int) error {
 }
 
 func (s *Seeder) seedRoles(ctx context.Context, count int) error {
-	s.logger.WithContext(ctx).Infow("Seeding roles...", zap.Int("count", count))
+	s.logger.Infoc(ctx, "Seeding roles...", zap.Int("count", count))
 
 	predefined := []string{"Admin", "Manager", "User", "Auditor", "Support"}
 	for _, name := range predefined {
@@ -60,7 +60,7 @@ func (s *Seeder) seedRoles(ctx context.Context, count int) error {
 			CreatedAt: time.Now(),
 		}
 		if err := s.repo.Persistent.Postgres.Authz.Role.Create(ctx, r); err != nil {
-			s.logger.WithContext(ctx).Warnw("Failed to create predefined role", zap.Error(err), zap.String("name", name))
+			s.logger.Warnc(ctx, "Failed to create predefined role", zap.Error(err), zap.String("name", name))
 		}
 	}
 
@@ -72,7 +72,7 @@ func (s *Seeder) seedRoles(ctx context.Context, count int) error {
 			CreatedAt: time.Now(),
 		}
 		if err := s.repo.Persistent.Postgres.Authz.Role.Create(ctx, r); err != nil {
-			s.logger.WithContext(ctx).Warnw("Failed to create random role", zap.Error(err), zap.String("name", name))
+			s.logger.Warnc(ctx, "Failed to create random role", zap.Error(err), zap.String("name", name))
 		}
 	}
 
@@ -80,7 +80,7 @@ func (s *Seeder) seedRoles(ctx context.Context, count int) error {
 }
 
 func (s *Seeder) seedRolePermissions(ctx context.Context) error {
-	s.logger.WithContext(ctx).Infow("Seeding role-permission mappings...")
+	s.logger.Infoc(ctx, "Seeding role-permission mappings...")
 
 	roles, _, err := s.repo.Persistent.Postgres.Authz.Role.Gets(ctx, &domain.RolesFilter{})
 	if err != nil {
@@ -106,7 +106,7 @@ func (s *Seeder) seedRolePermissions(ctx context.Context) error {
 		for i := 0; i < numPerms; i++ {
 			perm := perms[gofakeit.Number(0, len(perms)-1)]
 			if err := s.repo.Persistent.Postgres.Authz.Role.AddPermission(ctx, role.ID, perm.ID); err != nil {
-				s.logger.WithContext(ctx).Warnw("Failed to link role and permission",
+				s.logger.Warnc(ctx, "Failed to link role and permission",
 					zap.Error(err),
 					zap.String("role", role.Name),
 					zap.String("permission", perm.Name),
@@ -119,7 +119,7 @@ func (s *Seeder) seedRolePermissions(ctx context.Context) error {
 }
 
 func (s *Seeder) seedPolicies(ctx context.Context, count int) error {
-	s.logger.WithContext(ctx).Infow("Seeding policies...", zap.Int("count", count))
+	s.logger.Infoc(ctx, "Seeding policies...", zap.Int("count", count))
 
 	perms, _, err := s.repo.Persistent.Postgres.Authz.Permission.Gets(ctx, &domain.PermissionsFilter{})
 	if err != nil {
@@ -145,7 +145,7 @@ func (s *Seeder) seedPolicies(ctx context.Context, count int) error {
 			CreatedAt: time.Now(),
 		}
 		if err := s.repo.Persistent.Postgres.Authz.Policy.Create(ctx, p); err != nil {
-			s.logger.WithContext(ctx).Warnw("Failed to create policy", zap.Error(err))
+			s.logger.Warnc(ctx, "Failed to create policy", zap.Error(err))
 		}
 	}
 

@@ -7,12 +7,12 @@ import (
 	"gct/config"
 	"gct/internal/repo"
 	"gct/internal/repo/persistent"
-	minioRepo "gct/internal/repo/persistent/minio"
+	miniorepo "gct/internal/repo/persistent/minio"
 	"gct/internal/usecase/minio"
 	"gct/pkg/logger"
 	"github.com/johannesboyne/gofakes3"
 	"github.com/johannesboyne/gofakes3/backend/s3mem"
-	minioClient "github.com/minio/minio-go/v7"
+	minioclient "github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
@@ -35,7 +35,7 @@ func setup(t *testing.T) *minio.UseCase {
 	endpoint := ts.URL[len("http://"):]
 
 	// Create MinIO client
-	client, err := minioClient.New(endpoint, &minioClient.Options{
+	client, err := minioclient.New(endpoint, &minioclient.Options{
 		Creds:  credentials.NewStaticV4(cfg.AccessKey, cfg.SecretKey, ""),
 		Secure: cfg.UseSSL,
 	})
@@ -44,13 +44,13 @@ func setup(t *testing.T) *minio.UseCase {
 	}
 
 	// Create bucket
-	err = client.MakeBucket(t.Context(), cfg.Bucket, minioClient.MakeBucketOptions{})
+	err = client.MakeBucket(t.Context(), cfg.Bucket, minioclient.MakeBucketOptions{})
 	if err != nil {
 		t.Fatalf("failed to create bucket: %v", err)
 	}
 
 	// Construct Repos
-	mRepo := minioRepo.New(client, &cfg)
+	mRepo := miniorepo.New(client, &cfg)
 
 	// Create persistent Repo manually to avoid needing Postgres/Redis connections
 	pRepo := &persistent.Repo{

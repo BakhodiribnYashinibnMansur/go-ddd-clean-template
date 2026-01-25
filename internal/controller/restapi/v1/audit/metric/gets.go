@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"gct/internal/controller/restapi/response"
-	"gct/internal/controller/restapi/util"
+	"gct/pkg/httpx"
 	"gct/internal/domain"
 	"gct/internal/domain/mock"
 	"github.com/gin-gonic/gin"
@@ -23,13 +23,13 @@ import (
 // @Param       is_panic query bool false "Is Panic"
 // @Param       from_date query string false "From Date (RFC3339)"
 // @Param       to_date query string false "To Date (RFC3339)"
-// @Success     200 {object} response.SuccessResponse{data=[]domain.FunctionMetric}
+// @Success     200 {object} response.SuccessResponse
 // @Failure     400 {object} response.ErrorResponse
 // @Router      /metrics/functions [get]
 func (c *Controller) Gets(ctx *gin.Context) {
-	pagination, err := util.GetPagination(ctx)
+	pagination, err := httpx.GetPagination(ctx)
 	if err != nil {
-		util.LogError(c.l, err, "http - v1 - metric - gets - pagination")
+		httpx.LogError(c.l, err, "http - v1 - metric - gets - pagination")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid pagination", nil, false)
 		return
 	}
@@ -37,7 +37,7 @@ func (c *Controller) Gets(ctx *gin.Context) {
 	filter := domain.FunctionMetricsFilter{
 		Pagination: &pagination,
 		Name: func() *string {
-			s := util.GetNullStringQuery(ctx, "name")
+			s := httpx.GetNullStringQuery(ctx, "name")
 			if s == "" {
 				return nil
 			}
@@ -45,7 +45,7 @@ func (c *Controller) Gets(ctx *gin.Context) {
 		}(),
 	}
 
-	isPanicStr := util.GetNullStringQuery(ctx, "is_panic")
+	isPanicStr := httpx.GetNullStringQuery(ctx, "is_panic")
 	if isPanicStr == "true" {
 		t := true
 		filter.IsPanic = &t
@@ -54,7 +54,7 @@ func (c *Controller) Gets(ctx *gin.Context) {
 		filter.IsPanic = &f
 	}
 
-	fromDateStr := util.GetNullStringQuery(ctx, "from_date")
+	fromDateStr := httpx.GetNullStringQuery(ctx, "from_date")
 	if fromDateStr != "" {
 		t, err := time.Parse(time.RFC3339, fromDateStr)
 		if err == nil {
@@ -62,7 +62,7 @@ func (c *Controller) Gets(ctx *gin.Context) {
 		}
 	}
 
-	toDateStr := util.GetNullStringQuery(ctx, "to_date")
+	toDateStr := httpx.GetNullStringQuery(ctx, "to_date")
 	if toDateStr != "" {
 		t, err := time.Parse(time.RFC3339, toDateStr)
 		if err == nil {
@@ -71,7 +71,7 @@ func (c *Controller) Gets(ctx *gin.Context) {
 	}
 
 	// Handle mock mode
-	if util.Mock(ctx, util.MockTypeGets, func(count int) any { return mock.FunctionMetrics(count) }) {
+	if httpx.Mock(ctx, httpx.MockTypeGets, func(count int) any { return mock.FunctionMetrics(count) }) {
 		return
 	}
 

@@ -5,7 +5,7 @@ import (
 
 	"gct/consts"
 	"gct/internal/controller/restapi/response"
-	"gct/internal/controller/restapi/util"
+	"gct/pkg/httpx"
 	"github.com/gin-gonic/gin"
 )
 
@@ -19,17 +19,18 @@ import (
 // @Success     200 {object} response.SuccessResponse
 // @Failure     400 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
+// @Security    BearerAuth
 // @Router      /authz/permissions/{perm_id} [delete]
 func (c *Controller) Delete(ctx *gin.Context) {
-	id, err := util.GetUUIDParam(ctx, consts.ParamPermID)
+	id, err := httpx.GetUUIDParam(ctx, consts.ParamPermID)
 	if err != nil {
-		util.LogError(c.l, err, "http - v1 - authz - permission - delete - uuid")
+		httpx.LogError(c.l, err, "http - v1 - authz - permission - delete - uuid")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid permission id", nil, false)
 		return
 	}
 
-	// Handle mock mode
-	if util.Mock(ctx, util.MockTypeDelete, "Permission deleted successfully") {
+// Handle mock mode
+	if httpx.Mock(ctx, httpx.MockTypeDelete, "Permission deleted successfully") {
 		return
 	}
 

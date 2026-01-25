@@ -36,6 +36,9 @@ func (r *Repo) Gets(ctx context.Context, filter *domain.AuditLogsFilter) ([]*dom
 	if filter.Action != nil {
 		query = query.Where(squirrel.Eq{"action": filter.Action})
 	}
+	if len(filter.Actions) > 0 {
+		query = query.Where(squirrel.Eq{"action": filter.Actions})
+	}
 	if filter.ResourceType != nil {
 		query = query.Where(squirrel.Eq{"resource_type": filter.ResourceType})
 	}
@@ -60,6 +63,9 @@ func (r *Repo) Gets(ctx context.Context, filter *domain.AuditLogsFilter) ([]*dom
 	}
 	if filter.Action != nil {
 		countQuery = countQuery.Where(squirrel.Eq{"action": filter.Action})
+	}
+	if len(filter.Actions) > 0 {
+		countQuery = countQuery.Where(squirrel.Eq{"action": filter.Actions})
 	}
 	if filter.ResourceType != nil {
 		countQuery = countQuery.Where(squirrel.Eq{"resource_type": filter.ResourceType})

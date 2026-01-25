@@ -5,7 +5,7 @@ import (
 
 	"gct/consts"
 	"gct/internal/controller/restapi/response"
-	"gct/internal/controller/restapi/util"
+	"gct/pkg/httpx"
 	"github.com/gin-gonic/gin"
 )
 
@@ -20,24 +20,25 @@ import (
 // @Success     200 {object} response.SuccessResponse
 // @Failure     400 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
+// @Security    BearerAuth
 // @Router      /authz/roles/{role_id}/permissions/{perm_id} [post]
 func (c *Controller) AddPermission(ctx *gin.Context) {
-	roleID, err := util.GetUUIDParam(ctx, consts.ParamRoleID)
+	roleID, err := httpx.GetUUIDParam(ctx, consts.ParamRoleID)
 	if err != nil {
-		util.LogError(c.l, err, "http - v1 - authz - role - add_permission - role uuid")
+		httpx.LogError(c.l, err, "http - v1 - authz - role - add_permission - role uuid")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid role id", nil, false)
 		return
 	}
 
-	permID, err := util.GetUUIDParam(ctx, consts.ParamPermID)
+	permID, err := httpx.GetUUIDParam(ctx, consts.ParamPermID)
 	if err != nil {
-		util.LogError(c.l, err, "http - v1 - authz - role - add_permission - perm uuid")
+		httpx.LogError(c.l, err, "http - v1 - authz - role - add_permission - perm uuid")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid permission id", nil, false)
 		return
 	}
 
-	// Handle mock mode
-	if util.Mock(ctx, util.MockTypeUpdate, "Permission added to role successfully") {
+// Handle mock mode
+	if httpx.Mock(ctx, httpx.MockTypeUpdate, "Permission added to role successfully") {
 		return
 	}
 
@@ -61,24 +62,25 @@ func (c *Controller) AddPermission(ctx *gin.Context) {
 // @Success     200 {object} response.SuccessResponse
 // @Failure     400 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
+// @Security    BearerAuth
 // @Router      /authz/roles/{role_id}/permissions/{perm_id} [delete]
 func (c *Controller) RemovePermission(ctx *gin.Context) {
-	roleID, err := util.GetUUIDParam(ctx, consts.ParamRoleID)
+	roleID, err := httpx.GetUUIDParam(ctx, consts.ParamRoleID)
 	if err != nil {
-		util.LogError(c.l, err, "http - v1 - authz - role - remove_permission - role uuid")
+		httpx.LogError(c.l, err, "http - v1 - authz - role - remove_permission - role uuid")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid role id", nil, false)
 		return
 	}
 
-	permID, err := util.GetUUIDParam(ctx, consts.ParamPermID)
+	permID, err := httpx.GetUUIDParam(ctx, consts.ParamPermID)
 	if err != nil {
-		util.LogError(c.l, err, "http - v1 - authz - role - remove_permission - perm uuid")
+		httpx.LogError(c.l, err, "http - v1 - authz - role - remove_permission - perm uuid")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid permission id", nil, false)
 		return
 	}
 
-	// Handle mock mode
-	if util.Mock(ctx, util.MockTypeDelete, "Permission removed from role successfully") {
+// Handle mock mode
+	if httpx.Mock(ctx, httpx.MockTypeDelete, "Permission removed from role successfully") {
 		return
 	}
 

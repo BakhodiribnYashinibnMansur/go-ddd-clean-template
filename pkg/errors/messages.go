@@ -262,6 +262,39 @@ func GetUserMessage(code, lang string) string {
 	return getUserMessageFallback(lang)
 }
 
+// customHTTPStatuses stores dynamically loaded HTTP statuses
+var customHTTPStatuses = make(map[string]int)
+
+// SetHTTPStatus updates the HTTP status for an error code
+func SetHTTPStatus(code string, status int) {
+	customHTTPStatuses[code] = status
+}
+
+// GetHTTPStatus returns the HTTP status for an error code, or 0 if not found
+func GetHTTPStatus(code string) int {
+	if status, ok := customHTTPStatuses[code]; ok {
+		return status
+	}
+	return 0
+}
+
+// ErrorDetailConfig represents configuration for an error code
+type ErrorDetailConfig struct {
+	Message    UserMessage
+	HTTPStatus int
+}
+
+// ConfigureError updates both message and status for an error code
+func ConfigureError(code string, config ErrorDetailConfig) {
+	if config.HTTPStatus != 0 {
+		SetHTTPStatus(code, config.HTTPStatus)
+	}
+	// Only update message if it's not empty
+	if config.Message.En != "" || config.Message.Uz != "" || config.Message.Ru != "" {
+		UpdateUserMessage(code, config.Message)
+	}
+}
+
 // getUserMessageFallback returns generic error message
 func getUserMessageFallback(lang string) string {
 	switch lang {

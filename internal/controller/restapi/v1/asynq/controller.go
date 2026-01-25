@@ -1,6 +1,6 @@
-// Package asynqController provides HTTP endpoints to trigger background tasks
+// Package asynqcontroller provides HTTP endpoints to trigger background tasks
 // using the Asynq task queue system.
-package asynqController
+package asynqcontroller
 
 import (
 	"net/http"
@@ -32,9 +32,10 @@ func NewController(asynqClient *asynq.Client, log logger.Log) *Controller {
 // @Accept json
 // @Produce json
 // @Param request body EmailRequest true "Email details: recipient, subject, and body"
-// @Success 200 {object} map[string]interface{} "Returns task ID and queue name on success"
-// @Failure 400 {object} map[string]interface{} "Malformed request body or invalid email format"
-// @Failure 500 {object} map[string]interface{} "Failed to connect to the task queue"
+// @Success 200 {object} response.SuccessResponse "Returns task ID and queue name on success"
+// @Failure 400 {object} response.ErrorResponse "Malformed request body or invalid email format"
+// @Failure 500 {object} response.ErrorResponse "Failed to connect to the task queue"
+// @Security BearerAuth
 // @Router /api/v1/asynq/email/test [post]
 func (ctrl *Controller) SendTestEmail(c *gin.Context) {
 	var req EmailRequest
@@ -71,9 +72,10 @@ func (ctrl *Controller) SendTestEmail(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param request body NotificationRequest true "Notification details: userID, title, and message"
-// @Success 200 {object} map[string]interface{}
-// @Failure 400 {object} map[string]interface{}
-// @Failure 500 {object} map[string]interface{}
+// @Success 200 {object} response.SuccessResponse
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
 // @Router /api/v1/asynq/notification/test [post]
 func (ctrl *Controller) SendTestNotification(c *gin.Context) {
 	var req NotificationRequest
@@ -110,9 +112,10 @@ func (ctrl *Controller) SendTestNotification(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param request body SeedRequest true "Seeding parameters: counts for users, roles, etc."
-// @Success 200 {object} map[string]interface{}
-// @Failure 400 {object} map[string]interface{}
-// @Failure 500 {object} map[string]interface{}
+// @Success 200 {object} response.SuccessResponse
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
 // @Router /api/v1/asynq/seed [post]
 func (ctrl *Controller) SeedDatabase(c *gin.Context) {
 	var req SeedRequest

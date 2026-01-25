@@ -5,9 +5,10 @@ import (
 
 	"gct/consts"
 	"gct/internal/controller/restapi/response"
-	"gct/internal/controller/restapi/util"
 	"gct/internal/domain"
 	"gct/internal/domain/mock"
+	"gct/pkg/httpx"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -18,21 +19,22 @@ import (
 // @Accept      json
 // @Produce     json
 // @Param       user_id  path string true "User ID"
-// @Success     200 {object} response.SuccessResponse{data=domain.User}
+// @Success     200 {object} response.SuccessResponse
 // @Failure     400 {object} response.ErrorResponse
 // @Failure     404 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
+// @Security    BearerAuth
 // @Router      /users/{user_id} [get]
 func (c *Controller) User(ctx *gin.Context) {
-	id, err := util.GetUUIDParam(ctx, consts.ParamUserID)
+	id, err := httpx.GetUUIDParam(ctx, consts.ParamUserID)
 	if err != nil {
-		util.LogError(c.l, err, "http - v1 - client - get - id")
+		httpx.LogError(c.l, err, "http - v1 - client - get - id")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid user id", nil, false)
 		return
 	}
 
 	// Handle mock mode
-	if util.Mock(ctx, util.MockTypeGet, func() any { return mock.User() }) {
+	if httpx.Mock(ctx, httpx.MockTypeGet, func() any { return mock.User() }) {
 		return
 	}
 

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"gct/internal/domain"
+	"gct/internal/repo/schema"
 	apperrors "gct/pkg/errors"
 
 	"github.com/Masterminds/squirrel"
@@ -12,63 +13,63 @@ import (
 
 func (r *Repo) Gets(ctx context.Context, filter *domain.EndpointHistoriesFilter) ([]*domain.EndpointHistory, int, error) {
 	query := r.builder.Select(
-		"id",
-		"user_id",
-		"session_id",
-		"method",
-		"path",
-		"status_code",
-		"duration_ms",
-		"platform",
-		"ip_address",
-		"user_agent",
-		"permission",
-		"decision",
-		"request_id",
-		"rate_limited",
-		"response_size",
-		"error_message",
-		"created_at",
+		schema.EndpointHistoryID,
+		schema.EndpointHistoryUserID,
+		schema.EndpointHistorySessionID,
+		schema.EndpointHistoryMethod,
+		schema.EndpointHistoryPath,
+		schema.EndpointHistoryStatusCode,
+		schema.EndpointHistoryDurationMs,
+		schema.EndpointHistoryPlatform,
+		schema.EndpointHistoryIPAddress,
+		schema.EndpointHistoryUserAgent,
+		schema.EndpointHistoryPermission,
+		schema.EndpointHistoryDecision,
+		schema.EndpointHistoryRequestID,
+		schema.EndpointHistoryRateLimited,
+		schema.EndpointHistoryResponseSize,
+		schema.EndpointHistoryErrorMessage,
+		schema.EndpointHistoryCreatedAt,
 	).From(tableName)
 
 	if filter.UserID != nil {
-		query = query.Where(squirrel.Eq{"user_id": filter.UserID})
+		query = query.Where(squirrel.Eq{schema.EndpointHistoryUserID: filter.UserID})
 	}
 	if filter.Method != nil {
-		query = query.Where(squirrel.Eq{"method": filter.Method})
+		query = query.Where(squirrel.Eq{schema.EndpointHistoryMethod: filter.Method})
 	}
 	if filter.Path != nil {
-		query = query.Where(squirrel.Eq{"path": filter.Path})
+		query = query.Where(squirrel.Eq{schema.EndpointHistoryPath: filter.Path})
 	}
 	if filter.StatusCode != nil {
-		query = query.Where(squirrel.Eq{"status_code": filter.StatusCode})
+		query = query.Where(squirrel.Eq{schema.EndpointHistoryStatusCode: filter.StatusCode})
 	}
 	if filter.FromDate != nil {
-		query = query.Where(squirrel.GtOrEq{"created_at": filter.FromDate})
+		query = query.Where(squirrel.GtOrEq{schema.EndpointHistoryCreatedAt: filter.FromDate})
 	}
 	if filter.ToDate != nil {
-		query = query.Where(squirrel.LtOrEq{"created_at": filter.ToDate})
+		query = query.Where(squirrel.LtOrEq{schema.EndpointHistoryCreatedAt: filter.ToDate})
 	}
 
 	// Count total
 	countQuery := r.builder.Select("COUNT(*)").From(tableName)
 	if filter.UserID != nil {
-		countQuery = countQuery.Where(squirrel.Eq{"user_id": filter.UserID})
+		countQuery = countQuery.Where(squirrel.Eq{schema.EndpointHistoryUserID: filter.UserID})
 	}
 	if filter.Method != nil {
-		countQuery = countQuery.Where(squirrel.Eq{"method": filter.Method})
+		countQuery = countQuery.Where(squirrel.Eq{schema.EndpointHistoryMethod: filter.Method})
 	}
 	if filter.Path != nil {
-		countQuery = countQuery.Where(squirrel.Eq{"path": filter.Path})
+		countQuery = countQuery.Where(squirrel.Eq{schema.EndpointHistoryPath: filter.Path})
 	}
 	if filter.StatusCode != nil {
-		countQuery = countQuery.Where(squirrel.Eq{"status_code": filter.StatusCode})
+		countQuery = countQuery.Where(squirrel.Eq{schema.EndpointHistoryStatusCode: filter.StatusCode})
 	}
 	if filter.FromDate != nil {
-		countQuery = countQuery.Where(squirrel.GtOrEq{"created_at": filter.FromDate})
+		countQuery = countQuery.Where(squirrel.GtOrEq{schema.EndpointHistoryCreatedAt: filter.FromDate})
 	}
 	if filter.ToDate != nil {
-		countQuery = countQuery.Where(squirrel.LtOrEq{"created_at": filter.ToDate})
+		countQuery = countQuery.Where(squirrel.LtOrEq{schema.EndpointHistoryCreatedAt: filter.ToDate})
 	}
 
 	sql, args, err := countQuery.ToSql()
@@ -93,7 +94,7 @@ func (r *Repo) Gets(ctx context.Context, filter *domain.EndpointHistoriesFilter)
 	}
 
 	// Order by created_at desc
-	query = query.OrderBy("created_at DESC")
+	query = query.OrderBy(schema.EndpointHistoryCreatedAt + " DESC")
 
 	sql, args, err = query.ToSql()
 	if err != nil {

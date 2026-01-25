@@ -12,7 +12,7 @@ import (
 )
 
 func (s *Seeder) seedUsers(ctx context.Context, count int) error {
-	s.logger.WithContext(ctx).Infow("Seeding users...", zap.Int("count", count))
+	s.logger.Infoc(ctx, "Seeding users...", zap.Int("count", count))
 
 	// Get all role IDs to assign them to users
 	roles, _, err := s.repo.Persistent.Postgres.Authz.Role.Gets(ctx, &domain.RolesFilter{})
@@ -54,7 +54,7 @@ func (s *Seeder) seedUsers(ctx context.Context, count int) error {
 		u.UpdatedAt = time.Now()
 
 		if err := s.repo.Persistent.Postgres.User.Client.Create(ctx, u); err != nil {
-			s.logger.WithContext(ctx).Warnw("Failed to create fake user", zap.Error(err), zap.String("username", username))
+			s.logger.Warnc(ctx, "Failed to create fake user", zap.Error(err), zap.String("username", username))
 			continue
 		}
 	}
@@ -63,6 +63,6 @@ func (s *Seeder) seedUsers(ctx context.Context, count int) error {
 }
 
 func (s *Seeder) seedUserRoles(ctx context.Context) error {
-	s.logger.WithContext(ctx).Infow("Seeding user roles association...")
+	s.logger.Infoc(ctx, "Seeding user roles association...")
 	return nil
 }

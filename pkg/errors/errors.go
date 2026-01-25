@@ -118,6 +118,12 @@ func captureStack() []uintptr {
 
 // getHTTPStatus returns HTTP status by error code
 func getHTTPStatus(code string) int {
+	// 1. Check dynamic configuration first (DB loaded)
+	if status := GetHTTPStatus(code); status != 0 {
+		return status
+	}
+
+	// 2. Fallback to hardcoded defaults
 	switch code {
 	// 400 errors
 	case ErrBadRequest, ErrInvalidInput, ErrValidation, ErrServiceInvalidInput, ErrServiceValidation, ErrHandlerBadRequest:

@@ -13,13 +13,19 @@ type Client struct {
 	resty *resty.Client
 }
 
+const (
+	DefaultRetryCount       = 3
+	DefaultRetryWaitTime    = 100 * time.Millisecond
+	DefaultRetryMaxWaitTime = 2 * time.Second
+)
+
 // New creates a new Client instance with default settings
 func New(timeout time.Duration) *Client {
 	c := resty.New()
 	c.SetTimeout(timeout)
-	c.SetRetryCount(3)
-	c.SetRetryWaitTime(100 * time.Millisecond)
-	c.SetRetryMaxWaitTime(2 * time.Second)
+	c.SetRetryCount(DefaultRetryCount)
+	c.SetRetryWaitTime(DefaultRetryWaitTime)
+	c.SetRetryMaxWaitTime(DefaultRetryMaxWaitTime)
 
 	return &Client{resty: c}
 }

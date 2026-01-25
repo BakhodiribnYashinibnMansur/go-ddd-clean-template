@@ -8,14 +8,14 @@ import (
 )
 
 func (u *UseCase) Gets(ctx context.Context, filter *domain.PermissionsFilter) ([]*domain.Permission, int, error) {
-	u.logger.WithContext(ctx).Infow("permission gets started", "input", filter)
+	u.logger.Infow("permission gets started", "input", filter)
 
 	perms, count, err := u.repo.Postgres.Authz.Permission.Gets(ctx, filter)
 	if err != nil {
-		u.logger.WithContext(ctx).Errorw("permission gets failed", "error", err)
+		u.logger.Errorw("permission gets failed", "error", err)
 		return nil, 0, apperrors.MapRepoToServiceError(err).WithInput(filter)
 	}
 
-	u.logger.WithContext(ctx).Infow("permission gets success", "count", len(perms), "total", count)
+	u.logger.Infow("permission gets success", "count", len(perms), "total", count)
 	return perms, count, nil
 }

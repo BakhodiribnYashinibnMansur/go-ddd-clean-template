@@ -21,3 +21,7 @@ const (
 const (
 	DurationAuditSave = 5 // seconds
 )
+
+const (
+	ServiceNameAPI = "api"
+)

@@ -9,6 +9,8 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+const DefaultScanCount = 100
+
 var ErrNoUnmarshaller = errors.New("no unmarshaller defined")
 
 // PrimitiveI defines basic CRUD operations for any primitive type T
@@ -98,7 +100,7 @@ func (p *Primitive[T]) Scan(ctx context.Context, pattern string) ([]string, erro
 		var scanKeys []string
 		var err error
 
-		scanKeys, cursor, err = p.db.Scan(ctx, cursor, pattern, 100).Result()
+		scanKeys, cursor, err = p.db.Scan(ctx, cursor, pattern, DefaultScanCount).Result()
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan primitive keys with pattern %s: %w", pattern, err)
 		}

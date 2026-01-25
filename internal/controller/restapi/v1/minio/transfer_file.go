@@ -4,14 +4,23 @@ import (
 	"net/http"
 
 	"gct/internal/controller/restapi/response"
-	"gct/internal/controller/restapi/util"
+	"gct/pkg/httpx"
+
 	"github.com/gin-gonic/gin"
 )
 
-// TransferFile handles file transfer
+// TransferFile godoc
+// @Summary     Transfer file
+// @Description Transfer media files
+// @Tags        files
+// @Accept      json
+// @Produce     json
+// @Success     501 {object} response.ErrorResponse
+// @Security    BearerAuth
+// @Router      /files/transfer [post]
 func (h *Controller) TransferFile(ctx *gin.Context) {
 	// Handle mock mode
-	if util.Mock(ctx, util.MockTypeGet, func() any { return string("file_transferred") }) {
+	if httpx.Mock(ctx, httpx.MockTypeGet, func() any { return string("file_transferred") }) {
 		return
 	}
 	response.ControllerResponse(ctx, http.StatusNotImplemented, "not implemented", nil, false)

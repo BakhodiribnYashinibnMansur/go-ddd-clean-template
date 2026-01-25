@@ -1,4 +1,4 @@
-package auditLog
+package auditlog
 
 import (
 	"gct/internal/repo/persistent"

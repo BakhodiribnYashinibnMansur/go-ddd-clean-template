@@ -3,6 +3,7 @@ package role
 import (
 	"context"
 
+	"gct/internal/repo/schema"
 	apperrors "gct/pkg/errors"
 
 	"github.com/Masterminds/squirrel"
@@ -12,7 +13,7 @@ import (
 func (r *Repo) Delete(ctx context.Context, id uuid.UUID) error {
 	sql, args, err := r.builder.
 		Delete(tableName).
-		Where(squirrel.Eq{"id": id}).
+		Where(squirrel.Eq{schema.RoleID: id}).
 		ToSql()
 	if err != nil {
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, "failed to build delete query")

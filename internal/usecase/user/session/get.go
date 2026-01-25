@@ -9,23 +9,23 @@ import (
 
 // Get gets a session by ID.
 func (uc *UseCase) Get(ctx context.Context, in *domain.SessionFilter) (*domain.Session, error) {
-	uc.logger.WithContext(ctx).Infow("session get started", "input", in)
+	uc.logger.Infoc(ctx, "session get started", "input", in)
 
 	repo := uc.repo.Postgres.User.SessionRepo
 	s, err := repo.Get(ctx, in)
 	if err != nil {
-		uc.logger.WithContext(ctx).Errorw("session get failed", "error", err)
+		uc.logger.Errorc(ctx, "session get failed", "error", err)
 		return nil, apperrors.MapRepoToServiceError(err).WithInput(in)
 	}
 
 	if s.IsExpired() {
-		uc.logger.WithContext(ctx).Warnw("session expired, deleting", "session_id", s.ID)
+		uc.logger.Warnc(ctx, "session expired, deleting", "session_id", s.ID)
 		_ = repo.Delete(ctx, in)
 		err := apperrors.NewServiceError(apperrors.ErrServiceInvalidInput, "session expired").WithInput(in)
-		uc.logger.WithContext(ctx).Errorw("session get failed: expired", "error", err)
+		uc.logger.Errorc(ctx, "session get failed: expired", "error", err)
 		return nil, err
 	}
 
-	uc.logger.WithContext(ctx).Infow("session get success", "session_id", s.ID)
+	uc.logger.Infoc(ctx, "session get success", "session_id", s.ID)
 	return s, nil
 }

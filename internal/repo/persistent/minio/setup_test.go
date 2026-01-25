@@ -9,7 +9,7 @@ import (
 	"gct/config"
 	"github.com/johannesboyne/gofakes3"
 	"github.com/johannesboyne/gofakes3/backend/s3mem"
-	minioClient "github.com/minio/minio-go/v7"
+	minioclient "github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
@@ -47,7 +47,7 @@ func TestMain(m *testing.M) {
 	endpoint := ts.URL[len("http://"):]
 
 	// Create MinIO client connected to fake S3
-	client, err := minioClient.New(endpoint, &minioClient.Options{
+	client, err := minioclient.New(endpoint, &minioclient.Options{
 		Creds:  credentials.NewStaticV4(cfg.AccessKey, cfg.SecretKey, ""),
 		Secure: cfg.UseSSL,
 	})
@@ -56,7 +56,7 @@ func TestMain(m *testing.M) {
 	}
 
 	// Create bucket
-	err = client.MakeBucket(testCtx, cfg.Bucket, minioClient.MakeBucketOptions{})
+	err = client.MakeBucket(testCtx, cfg.Bucket, minioclient.MakeBucketOptions{})
 	if err != nil {
 		panic(err)
 	}

@@ -5,7 +5,7 @@ import (
 
 	"gct/consts"
 	"gct/internal/controller/restapi/response"
-	"gct/internal/controller/restapi/util"
+	"gct/pkg/httpx"
 	"gct/internal/domain"
 	"gct/internal/domain/mock"
 	"github.com/gin-gonic/gin"
@@ -18,20 +18,21 @@ import (
 // @Accept      json
 // @Produce     json
 // @Param       id  path string true "Session UUID"
-// @Success     200 {object} response.SuccessResponse{data=domain.Session}
+// @Success     200 {object} response.SuccessResponse
 // @Failure     400 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
+// @Security    BearerAuth
 // @Router      /sessions/{id} [get]
 func (c *Controller) Session(ctx *gin.Context) {
-	id, err := util.GetUUIDParam(ctx, consts.ParamID)
+	id, err := httpx.GetUUIDParam(ctx, consts.ParamID)
 	if err != nil {
-		util.LogError(c.l, err, "http - v1 - session - get - id")
+		httpx.LogError(c.l, err, "http - v1 - session - get - id")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid session id", nil, false)
 		return
 	}
 
-	// Handle mock mode
-	if util.Mock(ctx, util.MockTypeGet, func() any { return mock.Session() }) {
+// Handle mock mode
+	if httpx.Mock(ctx, httpx.MockTypeGet, func() any { return mock.Session() }) {
 		return
 	}
 

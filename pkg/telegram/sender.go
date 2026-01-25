@@ -15,7 +15,7 @@ func (c *Client) SendMessage(msgType MessageType, text string) error {
 	if c.token == "" || c.chatID == "" {
 		return nil
 	}
-	url := fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage", c.token)
+	url := fmt.Sprintf(APIURLFormat, c.token)
 	body := map[string]any{
 		"chat_id": c.chatID,
 		"text":    text,
@@ -30,7 +30,7 @@ func (c *Client) SendMessage(msgType MessageType, text string) error {
 		return err
 	}
 
-	resp, err := c.client.Post(url, "application/json", bytes.NewBuffer(jsonBody))
+	resp, err := c.client.Post(url, ContentTypeJSON, bytes.NewBuffer(jsonBody))
 	if err != nil {
 		return err
 	}
@@ -43,9 +43,9 @@ func (c *Client) SendMessage(msgType MessageType, text string) error {
 }
 
 func (c *Client) SendError(err error) error {
-	return c.SendMessage(Error, fmt.Sprintf("🚨 Error: %v", err))
+	return c.SendMessage(Error, fmt.Sprintf("%s%v", PrefixError, err))
 }
 
 func (c *Client) SendInfo(msg string) error {
-	return c.SendMessage(Info, "ℹ️ Info: "+msg)
+	return c.SendMessage(Info, PrefixInfo+msg)
 }

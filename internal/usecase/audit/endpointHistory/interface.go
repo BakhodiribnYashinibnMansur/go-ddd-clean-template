@@ -1,4 +1,4 @@
-package endpointHistory
+package endpointhistory
 
 import (
 	"context"

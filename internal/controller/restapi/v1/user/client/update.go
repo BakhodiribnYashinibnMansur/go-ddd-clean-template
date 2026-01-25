@@ -5,7 +5,7 @@ import (
 
 	"gct/consts"
 	"gct/internal/controller/restapi/response"
-	"gct/internal/controller/restapi/util"
+	"gct/pkg/httpx"
 	"gct/internal/domain"
 	"github.com/gin-gonic/gin"
 )
@@ -22,25 +22,26 @@ import (
 // @Failure     400 {object} response.ErrorResponse
 // @Failure     404 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
+// @Security    BearerAuth
 // @Router      /users/{user_id} [patch]
 func (c *Controller) Update(ctx *gin.Context) {
-	id, err := util.GetUUIDParam(ctx, consts.ParamUserID)
+	id, err := httpx.GetUUIDParam(ctx, consts.ParamUserID)
 	if err != nil {
-		util.LogError(c.l, err, "http - v1 - client - update - id")
+		httpx.LogError(c.l, err, "http - v1 - client - update - id")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid user id", nil, false)
 		return
 	}
 
 	var user domain.User
 	if err := ctx.ShouldBindJSON(&user); err != nil {
-		util.LogError(c.l, err, "http - v1 - client - update - bind")
+		httpx.LogError(c.l, err, "http - v1 - client - update - bind")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid request body", nil, false)
 		return
 	}
 	user.ID = id
 
-	// Handle mock mode
-	if util.Mock(ctx, util.MockTypeUpdate, "User updated successfully") {
+// Handle mock mode
+	if httpx.Mock(ctx, httpx.MockTypeUpdate, "User updated successfully") {
 		return
 	}
 

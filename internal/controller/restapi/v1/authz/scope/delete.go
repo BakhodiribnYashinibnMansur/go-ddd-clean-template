@@ -5,7 +5,7 @@ import (
 
 	"gct/consts"
 	"gct/internal/controller/restapi/response"
-	"gct/internal/controller/restapi/util"
+	"gct/pkg/httpx"
 	"github.com/gin-gonic/gin"
 )
 
@@ -14,23 +14,24 @@ import (
 // @Tags        authz-scopes
 // @Param       path query string true "Path"
 // @Param       method query string true "Method"
+// @Security    BearerAuth
 // @Router      /authz/scopes [delete]
 func (c *Controller) Delete(ctx *gin.Context) {
-	path, err := util.GetStringQuery(ctx, consts.QueryPath)
+	path, err := httpx.GetStringQuery(ctx, consts.QueryPath)
 	if err != nil {
-		util.LogError(c.l, err, "http - v1 - authz - scope - delete - path")
+		httpx.LogError(c.l, err, "http - v1 - authz - scope - delete - path")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "path required", nil, false)
 		return
 	}
-	method, err := util.GetStringQuery(ctx, consts.QueryMethod)
+	method, err := httpx.GetStringQuery(ctx, consts.QueryMethod)
 	if err != nil {
-		util.LogError(c.l, err, "http - v1 - authz - scope - delete - method")
+		httpx.LogError(c.l, err, "http - v1 - authz - scope - delete - method")
 		response.ControllerResponse(ctx, http.StatusBadRequest, "method required", nil, false)
 		return
 	}
 
-	// Handle mock mode
-	if util.Mock(ctx, util.MockTypeDelete, "Scope deleted successfully") {
+// Handle mock mode
+	if httpx.Mock(ctx, httpx.MockTypeDelete, "Scope deleted successfully") {
 		return
 	}
 

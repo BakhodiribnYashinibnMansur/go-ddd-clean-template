@@ -42,3 +42,17 @@ type SystemErrorsFilter struct {
 	SystemErrorFilter
 	Pagination *Pagination `json:"pagination"`
 }
+
+type CreateSystemErrorInput struct {
+	Code        string
+	Message     string
+	StackTrace  *string
+	Metadata    map[string]interface{}
+	Severity    string // ERROR, FATAL, PANIC, WARN
+	ServiceName string
+	RequestID   *uuid.UUID
+	UserID      *uuid.UUID
+	IPAddress   *string
+	Path        *string
+	Method      *string
+}

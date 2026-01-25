@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"os/signal"
 	"strconv"
@@ -21,13 +22,13 @@ import (
 	"gct/internal/usecase/cache"
 	"gct/pkg/asynq"
 	"gct/pkg/db/postgres"
-	redisPkg "gct/pkg/db/redis"
+	redispkg "gct/pkg/db/redis"
 	"gct/pkg/logger"
 	httpserver "gct/pkg/server/http"
 	"gct/pkg/telemetry"
 
 	"github.com/gin-gonic/gin"
-	hibikenAsynq "github.com/hibiken/asynq"
+	hibikenasynq "github.com/hibiken/asynq"
 	"go.uber.org/zap"
 )
 
@@ -37,6 +38,9 @@ func Run(cfg *config.Config) {
 	// Initialize the centralized logger with the configured severity level.
 	l := logger.New(cfg.Log.Level)
 
+	// Log configuration for debugging purposes using zap.Any for clear structure.
+	l.Infoc(context.Background(), "🛠️  Application configuration loaded", zap.Any("config", cfg))
+
 	// Context for tracking the initialization phase.
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -44,11 +48,11 @@ func Run(cfg *config.Config) {
 	// Initialize OpenTelemetry Tracing to monitor application performance and trace requests.
 	shutdown, err := telemetry.InitTracer(ctx, cfg.Tracing)
 	if err != nil {
-		l.WithContext(ctx).Errorw("failed to init tracer", zap.Error(err))
+		l.Errorc(ctx, "⚠️  Failed to initialize tracer (non-critical)", "error", err)
 	}
 	defer func() {
 		if err := shutdown(context.Background()); err != nil {
-			l.WithContext(context.Background()).Errorw("failed to shutdown tracer", zap.Error(err))
+			l.Errorc(context.Background(), "⚠️  Failed to shutdown tracer", "error", err)
 		}
 	}()
 
@@ -56,35 +60,38 @@ func Run(cfg *config.Config) {
 	// Sets up the connection pool and applies any pre-run logic like migrations checks.
 	pg, err := postgres.New(ctx, cfg.App.Environment, cfg.Database.Postgres, l)
 	if err != nil {
-		l.WithContext(ctx).Fatalw("app - Run - postgres.New", zap.Error(err))
+		l.Fatalc(ctx, "❌ Failed to initialize PostgreSQL", "error", err)
 	}
 	defer pg.Close()
 
 	// 2. Initialize Redis
 	// Provides the primary storage for caching, rate limiting, and session management.
-	redisInstance, err := redisPkg.New(ctx, cfg.App.Environment, cfg.Database.Redis, l)
+	redisInstance, err := redispkg.New(ctx, cfg.App.Environment, cfg.Database.Redis, l)
 	if err != nil {
-		l.WithContext(ctx).Fatalw("app - Run - redis.New", zap.Error(err))
+		l.Fatalc(ctx, "❌ Failed to initialize Redis", "error", err)
 	}
 	defer redisInstance.Close()
 
-	redisClient := redisInstance.Client
+	redisclient := redisInstance.Client
 
-	// 3. Initialize Asynq Client
-	// Used by API handlers to push tasks into background queues.
-	asynqClient := asynq.NewClient(
-		cfg.Redis.Addr(),
-		cfg.Redis.Password,
-		cfg.Redis.DB,
-		l,
-	)
-	defer asynqClient.Close()
+	// // 3. Initialize Asynq Client
+	// // Used by API handlers to push tasks into background queues.
+	// asynqClient := asynq.NewClient(
+	// 	cfg.Redis.Addr(),
+	// 	cfg.Redis.Password,
+	// 	cfg.Redis.DB,
+	// 	l,
+	// )
+	// defer asynqClient.Close()
 
 	// 4. Initialize Data Access and Business Layers
 	// repositories layer handles raw data retrieval and persistence.
-	repositories := repo.New(pg, nil, redisClient, &cfg.Minio, l)
+	repositories := repo.New(pg, nil, redisclient, &cfg.Minio, l)
 	// useCases layer contains the core business rules and domain logic.
-	useCases := usecase.NewUseCase(repositories, l, cfg, asynqClient)
+	useCases := usecase.NewUseCase(repositories, l, cfg, nil)
+
+	// 4.1 Initialize Error Codes
+	initErrorCodes(ctx, useCases, l)
 
 	// 5. Initialize Reactive Components
 	// cacheService manages memory-efficient data invalidation across clusters.
@@ -115,7 +122,7 @@ func Run(cfg *config.Config) {
 
 		// specialized handler for on-demand database seeding.
 		s := seeder.New(repositories, l, cfg)
-		asynqWorker.RegisterHandler(asynq.TypeSystemSeed, func(ctx context.Context, task *hibikenAsynq.Task) error {
+		asynqWorker.RegisterHandler(asynq.TypeSystemSeed, func(ctx context.Context, task *hibikenasynq.Task) error {
 			var payload asynq.SeedPayload
 			if err := json.Unmarshal(task.Payload(), &payload); err != nil {
 				return fmt.Errorf("unmarshal seed payload: %w", err)
@@ -148,7 +155,11 @@ func Run(cfg *config.Config) {
 		// Launch the worker engine in a managed goroutine.
 		go func() {
 			if err := asynqWorker.Start(); err != nil {
-				l.WithContext(ctx).Errorw("failed to start asynq worker", zap.Error(err))
+				l.Errorc(ctx, "❌ Failed to start Asynq worker",
+					"error", err,
+					"redis_addr", cfg.Asynq.RedisAddr,
+					"concurrency", cfg.Asynq.Concurrency,
+				)
 			}
 		}()
 		defer asynqWorker.Stop()
@@ -174,12 +185,17 @@ func Run(cfg *config.Config) {
 
 // initRouter configures the Gin engine with environment-specific modes and routes.
 func initRouter(cfg *config.Config, useCases *usecase.UseCase, l logger.Log) *gin.Engine {
-	gin.ForceConsoleColor()
+	// 1. Separate Gin Mode
+	gin.SetMode(cfg.HTTP.GinMode)
 
-	if cfg.App.IsProd() {
-		gin.SetMode(gin.ReleaseMode)
+	// 2. Control Gin Logs (logga qo'shmaslik imkoniyati)
+	if cfg.Log.ShowGin {
+		gin.ForceConsoleColor()
+		gin.DefaultWriter = logger.NewColorfulWriter(os.Stdout)
+		gin.DefaultErrorWriter = logger.NewColorfulWriter(os.Stderr)
 	} else {
-		gin.SetMode(gin.DebugMode)
+		gin.DefaultWriter = io.Discard
+		gin.DefaultErrorWriter = io.Discard
 	}
 
 	handler := gin.New()
@@ -191,12 +207,15 @@ func initRouter(cfg *config.Config, useCases *usecase.UseCase, l logger.Log) *gi
 func startServer(portStr string, handler *gin.Engine, server *httpserver.Server, l logger.Log) {
 	port, err := strconv.Atoi(portStr)
 	if err != nil {
-		l.WithContext(context.Background()).Fatalw("app - Run - strconv.Atoi", zap.Error(err))
+		l.Fatalc(context.Background(), "❌ Invalid HTTP port", "error", err, "port", portStr)
 	}
+
+	l.Infoc(context.Background(), "🚀 Starting HTTP server...", "port", port)
+	logger.PrintGinBanner(port, gin.Mode())
 
 	go func() {
 		if err := server.Run(port, handler); err != nil {
-			l.WithContext(context.Background()).Errorw("app - Run - httpServer.Run", zap.Error(err))
+			l.Errorc(context.Background(), "❌ HTTP server error", "error", err, "port", port)
 		}
 	}()
 }
@@ -206,19 +225,23 @@ func waitForSignal(l logger.Log) {
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
 
+	l.Infoc(context.Background(), "✅ Application is running. Press Ctrl+C to stop.")
+
 	s := <-interrupt
-	l.WithContext(context.Background()).Infow("app - Run - signal received", zap.String("signal", s.String()))
+	l.Infoc(context.Background(), "🛑 Shutdown signal received", "signal", s.String())
 }
 
 // shutdownServer attempts to close the HTTP server and its underlying connections.
 func shutdownServer(server *httpserver.Server, l logger.Log, timeout int64) {
+	l.Infoc(context.Background(), "⏳ Shutting down HTTP server gracefully...", "timeout_seconds", timeout)
+
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
 	defer cancel()
 
 	err := server.Shutdown(ctx)
 	if err != nil {
-		l.WithContext(context.Background()).Errorw("app - Run - httpServer.Shutdown", zap.Error(err))
+		l.Errorc(context.Background(), "❌ HTTP server shutdown failed", "error", err)
 	} else {
-		l.WithContext(context.Background()).Infow("app - Run - httpServer.Shutdown - success")
+		l.Infoc(context.Background(), "✅ HTTP server shutdown successfully")
 	}
 }

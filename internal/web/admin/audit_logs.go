@@ -1,7 +1,7 @@
 package admin
 
 import (
-	"gct/internal/controller/restapi/util"
+	"gct/pkg/httpx"
 	"gct/internal/domain"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -13,19 +13,19 @@ func (h *Handler) AuditLogs(ctx *gin.Context) {
 		Pagination: pagination,
 	}
 
-	if userID := util.GetNullStringQuery(ctx, "user_id"); userID != "" {
+	if userID := httpx.GetNullStringQuery(ctx, "user_id"); userID != "" {
 		if uid, err := uuid.Parse(userID); err == nil {
 			filter.UserID = &uid
 		}
 	}
-	if action := util.GetNullStringQuery(ctx, "action"); action != "" {
+	if action := httpx.GetNullStringQuery(ctx, "action"); action != "" {
 		a := domain.AuditActionType(action)
 		filter.Action = &a
 	}
-	if resourceType := util.GetNullStringQuery(ctx, "resource_type"); resourceType != "" {
+	if resourceType := httpx.GetNullStringQuery(ctx, "resource_type"); resourceType != "" {
 		filter.ResourceType = &resourceType
 	}
-	if successStr := util.GetNullStringQuery(ctx, "success"); successStr != "" {
+	if successStr := httpx.GetNullStringQuery(ctx, "success"); successStr != "" {
 		s := successStr == "true"
 		filter.Success = &s
 	}

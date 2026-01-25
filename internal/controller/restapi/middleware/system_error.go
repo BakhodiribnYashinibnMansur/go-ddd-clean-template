@@ -9,9 +9,9 @@ import (
 
 	"gct/consts"
 	"gct/internal/controller/restapi/response"
-	"gct/internal/controller/restapi/util"
 	"gct/internal/domain"
 	"gct/internal/usecase"
+	"gct/pkg/httpx"
 	"gct/pkg/logger"
 
 	"github.com/gin-gonic/gin"
@@ -39,7 +39,7 @@ func (m *SystemErrorMiddleware) Recovery() gin.HandlerFunc {
 		start := time.Now()
 		stack := string(debug.Stack()) // Capture stack trace for debugging
 
-		m.logger.WithContext(c.Request.Context()).Errorw("panic recovered",
+		m.logger.Errorw("panic recovered",
 			"error", recovered,
 			"stack", stack,
 		)
@@ -48,7 +48,7 @@ func (m *SystemErrorMiddleware) Recovery() gin.HandlerFunc {
 		m.saveError(c, recovered, &stack, "PANIC", start)
 
 		// Return standardized error response.
-		response.ControllerResponse(c, http.StatusInternalServerError, util.ErrPanicRecovered, nil, false)
+		response.ControllerResponse(c, http.StatusInternalServerError, httpx.ErrPanicRecovered, nil, false)
 		c.Abort()
 	})
 }
@@ -80,7 +80,7 @@ func (m *SystemErrorMiddleware) saveError(c *gin.Context, errVal any, stack *str
 	// Extract request context for metadata
 	path := c.Request.URL.Path
 	method := c.Request.Method
-	ip := util.GetIPAddress(c)
+	ip := httpx.GetIPAddress(c)
 
 	// Build the error record
 	sysErr := &domain.SystemError{
@@ -95,12 +95,12 @@ func (m *SystemErrorMiddleware) saveError(c *gin.Context, errVal any, stack *str
 		CreatedAt:   time.Now(),
 		Metadata: map[string]any{
 			"duration_ms": time.Since(start).Milliseconds(),
-			"user_agent":  util.GetUserAgent(c),
+			"user_agent":  httpx.GetUserAgent(c),
 		},
 	}
 
 	// Link Request ID if available (from RequestID middleware)
-	reqIDStr := util.GetCtxRequestID(c)
+	reqIDStr := httpx.GetCtxRequestID(c)
 	if reqIDStr != "" {
 		if uid, err := uuid.Parse(reqIDStr); err == nil {
 			sysErr.RequestID = &uid
@@ -122,7 +122,7 @@ func (m *SystemErrorMiddleware) saveError(c *gin.Context, errVal any, stack *str
 		defer cancel()
 
 		if err := m.uc.Audit.SystemError.Create(ctx, val); err != nil {
-			m.logger.WithContext(ctx).Errorw("failed to persist system error", zap.Error(err), "original_error", val.Message)
+			m.logger.Errorw("failed to persist system error", zap.Error(err), "original_error", val.Message)
 		}
 	}(sysErr)
 }

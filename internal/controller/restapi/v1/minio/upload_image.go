@@ -4,15 +4,26 @@ import (
 	"net/http"
 
 	"gct/internal/controller/restapi/response"
-	"gct/internal/controller/restapi/util"
 	"gct/internal/domain/mock"
+	"gct/pkg/httpx"
+
 	"github.com/gin-gonic/gin"
 )
 
-// UploadImage handles single image upload
+// UploadImage godoc
+// @Summary     Upload single image
+// @Description Upload a single image file
+// @Tags        files
+// @Accept      multipart/form-data
+// @Produce     json
+// @Param       file formData file true "Image file (jpg, png, svg, heic)"
+// @Success     200 {object} response.SuccessResponse
+// @Failure     400 {object} response.ErrorResponse
+// @Security    BearerAuth
+// @Router      /files/upload/image [post]
 func (h *Controller) UploadImage(ctx *gin.Context) {
 	// Handle mock mode
-	if util.Mock(ctx, util.MockTypeGet, func() any { return mock.FileInfoImage().FileName }) {
+	if httpx.Mock(ctx, httpx.MockTypeGet, func() any { return mock.FileInfoImage().FileName }) {
 		return
 	}
 	file, err := ctx.FormFile(formFileName)
@@ -45,10 +56,20 @@ func (h *Controller) UploadImage(ctx *gin.Context) {
 	response.ControllerResponse(ctx, http.StatusOK, imageFileName, nil, true)
 }
 
-// UploadImages handles multiple image uploads
+// UploadImages godoc
+// @Summary     Upload multiple images
+// @Description Upload multiple image files
+// @Tags        files
+// @Accept      multipart/form-data
+// @Produce     json
+// @Param       files formData file true "Image files (jpg, png, svg, heic)"
+// @Success     200 {object} response.SuccessResponse
+// @Failure     400 {object} response.ErrorResponse
+// @Security    BearerAuth
+// @Router      /files/upload/images [post]
 func (h *Controller) UploadImages(ctx *gin.Context) {
 	// Handle mock mode
-	if util.Mock(ctx, util.MockTypeGets, func(count int) any {
+	if httpx.Mock(ctx, httpx.MockTypeGets, func(count int) any {
 		files := mock.FileInfos(count)
 		names := make([]string, len(files))
 		for i, f := range files {
@@ -78,7 +99,8 @@ func (h *Controller) UploadImages(ctx *gin.Context) {
 		}
 
 		imageFileName, err := h.useCase.Minio.UploadImage(ctx.Request.Context(), fileMultipart, file.Size, imageContentType)
-		fileMultipart.Close() // Close immediately
+		fileMultipart.Close() //     BearerAuth
+		// Close immediately
 
 		if err != nil {
 			response.ControllerResponse(ctx, http.StatusBadRequest, err, nil, false)

@@ -1,7 +1,7 @@
 package history
 
 import (
-	"gct/consts"
+	"gct/internal/repo/schema"
 	"gct/pkg/db/postgres"
 	"gct/pkg/logger"
 
@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	tableName = consts.TableEndpointHistory
+	tableName = schema.TableEndpointHistory
 )
 
 type Repo struct {
