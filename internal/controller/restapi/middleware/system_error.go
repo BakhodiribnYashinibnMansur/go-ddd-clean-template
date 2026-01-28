@@ -121,7 +121,7 @@ func (m *SystemErrorMiddleware) saveError(c *gin.Context, errVal any, stack *str
 		ctx, cancel := context.WithTimeout(context.Background(), consts.DurationAuditSave*time.Second)
 		defer cancel()
 
-		if err := m.uc.Audit.SystemError.Create(ctx, val); err != nil {
+		if err := m.uc.Audit.SystemError().Create(ctx, val); err != nil {
 			m.logger.Errorw("failed to persist system error", zap.Error(err), "original_error", val.Message)
 		}
 	}(sysErr)

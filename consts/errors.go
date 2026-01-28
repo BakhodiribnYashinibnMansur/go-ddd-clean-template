@@ -67,6 +67,7 @@ const (
 	ErrCodeResourceLocked   = "RESOURCE_LOCKED"
 	ErrCodeDuplicateEntry   = "DUPLICATE_ENTRY"
 	ErrCodeInvalidState     = "INVALID_STATE"
+	ErrCodeMethodNotAllowed = "METHOD_NOT_ALLOWED"
 
 	// System Errors
 	ErrCodeInternalError       = "INTERNAL_ERROR"

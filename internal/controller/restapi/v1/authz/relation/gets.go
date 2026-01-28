@@ -23,6 +23,9 @@ import (
 // @Param       type query string false "Type"
 // @Param       name query string false "Name"
 // @Success     200 {object} response.SuccessResponse
+// @Failure     400 {object} response.ErrorResponse
+// @Failure     401 {object} response.ErrorResponse
+// @Failure     403 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
 // @Security    BearerAuth
 // @Router      /authz/relations [get]
@@ -59,7 +62,7 @@ func (c *Controller) Gets(ctx *gin.Context) {
 		return
 	}
 
-	relations, count, err := c.u.Authz.Relation.Gets(ctx.Request.Context(), &filter)
+	relations, count, err := c.u.Authz.Relation().Gets(ctx.Request.Context(), &filter)
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusInternalServerError, err, nil, false)
 		return

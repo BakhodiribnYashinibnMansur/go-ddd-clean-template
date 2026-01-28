@@ -2,6 +2,7 @@ package config
 
 // RedisStore - Redis configuration structure.
 type RedisStore struct {
+	Enabled  bool   `yaml:"enabled" env:"ENABLED" envDefault:"false"`
 	Host     string `env:"HOST"     envDefault:"localhost"`
 	Port     string `env:"PORT"     envDefault:"6379"`
 	Password string `env:"PASSWORD"`

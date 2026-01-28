@@ -30,6 +30,8 @@ import (
 // @Param       from_date query string false "From Date (RFC3339)"
 // @Param       to_date query string false "To Date (RFC3339)"
 // @Success     200 {object} response.SuccessResponse
+// @Failure     401 {object} response.ErrorResponse
+// @Failure     403 {object} response.ErrorResponse
 // @Failure     400 {object} response.ErrorResponse
 // @Security    BearerAuth
 // @Router      /audit/logs [get]
@@ -107,7 +109,7 @@ func (c *Controller) Gets(ctx *gin.Context) {
 		return
 	}
 
-	logs, total, err := c.u.Audit.Log.Gets(ctx.Request.Context(), &filter)
+	logs, total, err := c.u.Audit.Log().Gets(ctx.Request.Context(), &filter)
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusInternalServerError, err, nil, false)
 		return

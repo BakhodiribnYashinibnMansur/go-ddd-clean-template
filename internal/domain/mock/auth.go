@@ -10,8 +10,8 @@ import (
 // SignInIn generates a fake domain.SignInIn
 func SignInIn() *domain.SignInIn {
 	in := &domain.SignInIn{
-		Login:    Phone(),
-		Password: gofakeit.Password(true, true, true, true, false, 12),
+		Login:    Ptr(Phone()),
+		Password: Ptr(gofakeit.Password(true, true, true, true, false, 12)),
 	}
 	in.Session.DeviceID = UUID()
 	in.Session.IP = gofakeit.IPv4Address()
@@ -22,7 +22,7 @@ func SignInIn() *domain.SignInIn {
 // SignInInWithPhone generates a fake domain.SignInIn with specific phone
 func SignInInWithPhone(phone string) *domain.SignInIn {
 	signIn := SignInIn()
-	signIn.Login = phone
+	signIn.Login = Ptr(phone)
 	return signIn
 }
 
@@ -37,10 +37,10 @@ func SignInOut() *domain.SignInOut {
 // SignUpIn generates a fake domain.SignUpIn
 func SignUpIn() *domain.SignUpIn {
 	in := &domain.SignUpIn{
-		Phone:    Phone(),
-		Password: gofakeit.Password(true, true, true, true, false, 12),
-		Username: gofakeit.Name(),
-		Email:    gofakeit.Email(),
+		Phone:    Ptr(Phone()),
+		Password: Ptr(gofakeit.Password(true, true, true, true, false, 12)),
+		Username: Ptr(gofakeit.Name()),
+		Email:    Ptr(gofakeit.Email()),
 	}
 	in.Session.DeviceID = UUID()
 	in.Session.IP = gofakeit.IPv4Address()
@@ -51,7 +51,7 @@ func SignUpIn() *domain.SignUpIn {
 // SignUpInWithEmail generates a fake domain.SignUpIn with specific email
 func SignUpInWithEmail(email string) *domain.SignUpIn {
 	signUp := SignUpIn()
-	signUp.Email = email
+	signUp.Email = Ptr(email)
 	return signUp
 }
 

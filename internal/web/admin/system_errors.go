@@ -24,7 +24,7 @@ func (h *Handler) SystemErrors(ctx *gin.Context) {
 		filter.IsResolved = &resolved
 	}
 
-	errors, count, err := h.uc.Audit.SystemError.Gets(ctx.Request.Context(), filter)
+	errors, count, err := h.uc.Audit.SystemError().Gets(ctx.Request.Context(), filter)
 	if err != nil {
 		h.l.Errorw("failed to fetch system errors", "error", err)
 	}

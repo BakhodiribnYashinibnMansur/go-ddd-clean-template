@@ -23,6 +23,9 @@ import (
 // @Param       phone query string false "Phone"
 // @Success     200 {object} response.SuccessResponse
 // @Failure     400 {object} response.ErrorResponse
+// @Failure     401 {object} response.ErrorResponse
+// @Failure     403 {object} response.ErrorResponse
+// @Failure     500 {object} response.ErrorResponse
 // @Security    BearerAuth
 // @Router      /users [get]
 func (c *Controller) Users(ctx *gin.Context) {
@@ -51,7 +54,7 @@ func (c *Controller) Users(ctx *gin.Context) {
 		return
 	}
 
-	users, total, err := c.u.User.Client.Gets(ctx.Request.Context(), &filter)
+	users, total, err := c.u.User.Client().Gets(ctx.Request.Context(), &filter)
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusInternalServerError, err, nil, false)
 		return

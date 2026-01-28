@@ -22,6 +22,9 @@ import (
 // @Param       offset query int false "Offset"
 // @Param       name query string false "Filter by name"
 // @Success     200 {object} response.SuccessResponse
+// @Failure     400 {object} response.ErrorResponse
+// @Failure     401 {object} response.ErrorResponse
+// @Failure     403 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
 // @Security    BearerAuth
 // @Router      /authz/roles [get]
@@ -46,7 +49,7 @@ func (c *Controller) Gets(ctx *gin.Context) {
 		return
 	}
 
-	roles, count, err := c.u.Authz.Role.Gets(ctx.Request.Context(), &filter)
+	roles, count, err := c.u.Authz.Role().Gets(ctx.Request.Context(), &filter)
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusInternalServerError, err, nil, false)
 		return

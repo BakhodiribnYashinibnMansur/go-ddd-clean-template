@@ -41,7 +41,7 @@ func (m *AuthMiddleware) Authz(ctx *gin.Context) {
 	}
 
 	// Fetch user details
-	user, err := (*m.userUC).Get(ctx, &domain.UserFilter{ID: &session.UserID})
+	user, err := m.userUC.Get(ctx, &domain.UserFilter{ID: &session.UserID})
 	if err != nil {
 		m.l.Errorw("AuthMiddleware - Authz - Get User", "error", err)
 		response.ControllerResponse(ctx, http.StatusUnauthorized, httpx.ErrUserNotFound, nil, false)
@@ -57,7 +57,7 @@ func (m *AuthMiddleware) Authz(ctx *gin.Context) {
 	}
 
 	// Fetch role details
-	role, err := m.authzUC.Role.Get(ctx, &domain.RoleFilter{ID: user.RoleID})
+	role, err := m.authzUC.Role().Get(ctx, &domain.RoleFilter{ID: user.RoleID})
 	if err != nil {
 		m.l.Errorw("AuthMiddleware - Authz - Role Get", "error", err)
 		response.ControllerResponse(ctx, http.StatusForbidden, httpx.ErrAccessDenied, nil, false)
@@ -96,7 +96,7 @@ func (m *AuthMiddleware) Authz(ctx *gin.Context) {
 
 	// Query Authorization Engine
 	// This is where the actual permission check happens against stored policies
-	allowed, err := m.authzUC.Access.Check(ctx.Request.Context(), session.UserID, session, path, method, env)
+	allowed, err := m.authzUC.Access().Check(ctx.Request.Context(), session.UserID, session, path, method, env)
 	if err != nil {
 		m.l.Errorw("AuthMiddleware - Authz - Check", "error", err)
 		response.ControllerResponse(ctx, http.StatusInternalServerError, httpx.ErrInternalError, nil, false)

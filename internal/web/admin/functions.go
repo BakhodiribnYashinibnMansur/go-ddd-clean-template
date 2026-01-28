@@ -20,7 +20,7 @@ func (h *Handler) FunctionMetrics(ctx *gin.Context) {
 		filter.IsPanic = &p
 	}
 
-	metrics, count, err := h.uc.Audit.Metric.Gets(ctx.Request.Context(), filter)
+	metrics, count, err := h.uc.Audit.Metric().Gets(ctx.Request.Context(), filter)
 	if err != nil {
 		h.l.Errorw("failed to fetch function metrics", "error", err)
 	}

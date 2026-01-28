@@ -18,6 +18,8 @@ import (
 // @Produce     json
 // @Param       file formData file true "Image file (jpg, png, svg, heic)"
 // @Success     200 {object} response.SuccessResponse
+// @Failure     401 {object} response.ErrorResponse
+// @Failure     403 {object} response.ErrorResponse
 // @Failure     400 {object} response.ErrorResponse
 // @Security    BearerAuth
 // @Router      /files/upload/image [post]
@@ -64,6 +66,8 @@ func (h *Controller) UploadImage(ctx *gin.Context) {
 // @Produce     json
 // @Param       files formData file true "Image files (jpg, png, svg, heic)"
 // @Success     200 {object} response.SuccessResponse
+// @Failure     401 {object} response.ErrorResponse
+// @Failure     403 {object} response.ErrorResponse
 // @Failure     400 {object} response.ErrorResponse
 // @Security    BearerAuth
 // @Router      /files/upload/images [post]

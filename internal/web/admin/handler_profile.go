@@ -45,7 +45,7 @@ func (h *Handler) ProfilePost(ctx *gin.Context) {
 	}
 
 	// 4. Call Usecase (User.Client.Update)
-	err := h.uc.User.Client.Update(ctx.Request.Context(), update)
+	err := h.uc.User.Client().Update(ctx.Request.Context(), update)
 	if err != nil {
 		h.l.Errorw("ProfilePost - Update error", "error", err)
 		ctx.Redirect(http.StatusFound, fmt.Sprintf("/admin/profile?error=Update+failed:+%v", err))

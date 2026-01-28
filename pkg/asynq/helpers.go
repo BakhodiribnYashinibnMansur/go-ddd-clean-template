@@ -119,3 +119,16 @@ func (c *Client) EnqueueSeed(ctx context.Context, payload SeedPayload, opts ...T
 
 	return c.EnqueueTask(ctx, TypeSystemSeed, payload, options...)
 }
+
+// EnqueueAudit enqueues an audit log task.
+func (c *Client) EnqueueAudit(ctx context.Context, payload AuditPayload, opts ...TaskOptions) (*asynq.TaskInfo, error) {
+	var options []asynq.Option
+	if len(opts) > 0 {
+		options = opts[0].BuildOptions()
+	} else {
+		// Default to low queue for audit logging
+		options = []asynq.Option{asynq.Queue(QueueLow)}
+	}
+
+	return c.EnqueueTask(ctx, TypeAuditLog, payload, options...)
+}

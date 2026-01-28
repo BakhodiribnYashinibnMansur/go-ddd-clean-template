@@ -16,7 +16,7 @@ import (
 // to all routes within the Role, Permission, and Scope domains.
 func AuthzRoute(api *gin.RouterGroup, controller *Controller, authFn, refreshFn, authzFn, csrfFn gin.HandlerFunc) {
 	// Register authentication-related routes under /auth.
-	auth.Route(api.Group("/auth"), controller.AuthI, authFn, refreshFn, csrfFn)
+	auth.Route(api, controller.AuthI, authFn, refreshFn, csrfFn)
 
 	authz := api.Group("/authz")
 

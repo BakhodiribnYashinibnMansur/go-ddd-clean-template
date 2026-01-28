@@ -10,6 +10,6 @@ type UseCase struct {
 	logger logger.Log
 }
 
-func New(repo *repo.Repo, logger logger.Log) *UseCase {
+func New(repo *repo.Repo, logger logger.Log) Interface {
 	return &UseCase{repo: repo, logger: logger}
 }

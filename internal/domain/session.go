@@ -37,25 +37,25 @@ func (s SessionDeviceType) IsValid() bool {
 
 // Session represents a user session.
 type Session struct {
-	ID               uuid.UUID          `db:"id"                 json:"id"`
-	UserID           uuid.UUID          `db:"user_id"            json:"user_id"`
-	DeviceID         uuid.UUID          `db:"device_id"          json:"device_id"`
-	DeviceName       *string            `db:"device_name"        json:"device_name,omitempty"`
-	DeviceType       *SessionDeviceType `db:"device_type"        json:"device_type,omitempty"`
-	IPAddress        *string            `db:"ip_address"         json:"ip_address,omitempty"`
-	UserAgent        *string            `db:"user_agent"         json:"user_agent,omitempty"`
-	OS               *string            `db:"os"                 json:"os,omitempty"`
-	OSVersion        *string            `db:"os_version"         json:"os_version,omitempty"`
-	Browser          *string            `db:"browser"            json:"browser,omitempty"`
-	BrowserVersion   *string            `db:"browser_version"    json:"browser_version,omitempty"`
-	FCMToken         *string            `db:"fcm_token"          json:"fcm_token,omitempty"`
+	ID               uuid.UUID          `db:"id"                 json:"id"                        example:"770e8400-e29b-41d4-a716-446655440000"`
+	UserID           uuid.UUID          `db:"user_id"            json:"user_id"                   example:"550e8400-e29b-41d4-a716-446655440000"`
+	DeviceID         uuid.UUID          `db:"device_id"          json:"device_id"                 example:"880e8400-e29b-41d4-a716-446655440000"`
+	DeviceName       *string            `db:"device_name"        json:"device_name,omitempty"     example:"iPhone 14 Pro"`
+	DeviceType       *SessionDeviceType `db:"device_type"        json:"device_type,omitempty"     example:"MOBILE"  enums:"DESKTOP,MOBILE,TABLET,BOT,TV"`
+	IPAddress        *string            `db:"ip_address"         json:"ip_address,omitempty"      example:"192.168.1.1"`
+	UserAgent        *string            `db:"user_agent"         json:"user_agent,omitempty"      example:"Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X)"`
+	OS               *string            `db:"os"                 json:"os,omitempty"              example:"iOS"`
+	OSVersion        *string            `db:"os_version"         json:"os_version,omitempty"      example:"16.0"`
+	Browser          *string            `db:"browser"            json:"browser,omitempty"         example:"Safari"`
+	BrowserVersion   *string            `db:"browser_version"    json:"browser_version,omitempty" example:"16.0"`
+	FCMToken         *string            `db:"fcm_token"          json:"fcm_token,omitempty"       example:"fcm_token_example_123"`
 	Data             RawMessage         `db:"data"               json:"data,omitempty"`
-	RefreshTokenHash string             `db:"refresh_token_hash" json:"refresh_token_hash"`
-	ExpiresAt        time.Time          `db:"expires_at"         json:"expires_at"`
-	LastActivity     time.Time          `db:"last_activity"      json:"last_activity"`
-	Revoked          bool               `db:"revoked"            json:"revoked"`
-	CreatedAt        time.Time          `db:"created_at"         json:"created_at"`
-	UpdatedAt        time.Time          `db:"updated_at"         json:"updated_at"`
+	RefreshTokenHash string             `db:"refresh_token_hash" json:"refresh_token_hash"        example:"$2a$10$N9qo8uLOickgx2ZMRZoMye"`
+	ExpiresAt        time.Time          `db:"expires_at"         json:"expires_at"                example:"2024-02-01T00:00:00Z"  format:"date-time"`
+	LastActivity     time.Time          `db:"last_activity"      json:"last_activity"             example:"2024-01-25T10:30:00Z"  format:"date-time"`
+	Revoked          bool               `db:"revoked"            json:"revoked"                   example:"false"`
+	CreatedAt        time.Time          `db:"created_at"         json:"created_at"                example:"2024-01-01T00:00:00Z"  format:"date-time"`
+	UpdatedAt        time.Time          `db:"updated_at"         json:"updated_at"                example:"2024-01-25T10:30:00Z"  format:"date-time"`
 }
 
 // Session represents a user session.
@@ -97,7 +97,7 @@ func (f SessionsFilter) IsPaginationNull() bool {
 }
 
 func (f SessionsFilter) IsValidLimit() bool {
-	return !f.IsPaginationNull() && f.Pagination.Limit > 0
+	return !f.IsPaginationNull() && f.Pagination.Limit > 0 && f.Pagination.Limit <= 1000
 }
 
 func (f SessionsFilter) IsValidOffset() bool {

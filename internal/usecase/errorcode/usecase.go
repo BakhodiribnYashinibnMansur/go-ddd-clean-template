@@ -11,7 +11,7 @@ type UseCase struct {
 	logger logger.Log
 }
 
-func New(r *repo.Repo, l logger.Log) *UseCase {
+func New(r *repo.Repo, l logger.Log) UseCaseI {
 	return &UseCase{
 		repo:   r.Persistent.Postgres.ErrorCode,
 		logger: l,

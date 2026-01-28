@@ -1,6 +1,9 @@
 package config
 
-import "reflect"
+import (
+	"reflect"
+	"strings"
+)
 
 // cleanConfigStrings recursively walks through the config and removes quotes from string fields
 func cleanConfigStrings(v reflect.Value) {
@@ -28,7 +31,7 @@ func cleanConfigStrings(v reflect.Value) {
 // removeStringSign removes quotes from a string
 func removeStringSign(str string) string {
 	if len(str) >= 2 && (str[0] == '"' || str[0] == '\'') && (str[len(str)-1] == '"' || str[len(str)-1] == '\'') {
-		return str[1 : len(str)-1]
+		str = str[1 : len(str)-1]
 	}
-	return str
+	return strings.ReplaceAll(str, "\\n", "\n")
 }

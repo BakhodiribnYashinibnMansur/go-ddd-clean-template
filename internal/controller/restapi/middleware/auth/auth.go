@@ -17,9 +17,9 @@ import (
 // AuthMiddleware manages identity verification and permission enforcement.
 // It integrates with user, session, and authorization use cases.
 type AuthMiddleware struct {
-	userUC    *client.UseCaseI
-	sessionuc *session.UseCaseI
-	authzUC   *authz.UseCase
+	userUC    client.UseCaseI
+	sessionuc session.UseCaseI
+	authzUC   authz.UseCaseI
 	cfg       *config.Config
 	l         logger.Log
 	pubKey    *rsa.PublicKey
@@ -34,8 +34,8 @@ func NewAuthMiddleware(u *usecase.UseCase, cfg *config.Config, l logger.Log) *Au
 	}
 
 	return &AuthMiddleware{
-		userUC:    &u.User.Client,
-		sessionuc: &u.User.Session,
+		userUC:    u.User.Client(),
+		sessionuc: u.User.Session(),
 		authzUC:   u.Authz,
 		cfg:       cfg,
 		l:         l,

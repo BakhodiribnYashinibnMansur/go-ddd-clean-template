@@ -45,7 +45,7 @@ func (m *AuthMiddleware) validateAccessToken(ctx *gin.Context) (*domain.Session,
 		return nil, httpx.ErrInvalidSession
 	}
 
-	session, err := (*m.sessionuc).Get(ctx, &domain.SessionFilter{ID: &sessionID})
+	session, err := m.sessionuc.Get(ctx, &domain.SessionFilter{ID: &sessionID})
 	if err != nil || session.Revoked || session.IsExpired() {
 		m.l.Errorw("AuthMiddleware - validateAccessToken - Get", "error", err)
 		return nil, httpx.ErrRevokedToken

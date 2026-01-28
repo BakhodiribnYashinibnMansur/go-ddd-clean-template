@@ -74,21 +74,21 @@ func Run(cfg *config.Config) {
 
 	redisclient := redisInstance.Client
 
-	// // 3. Initialize Asynq Client
-	// // Used by API handlers to push tasks into background queues.
-	// asynqClient := asynq.NewClient(
-	// 	cfg.Redis.Addr(),
-	// 	cfg.Redis.Password,
-	// 	cfg.Redis.DB,
-	// 	l,
-	// )
-	// defer asynqClient.Close()
+	// 3. Initialize Asynq Client
+	// Used by API handlers to push tasks into background queues.
+	asynqClient := asynq.NewClient(
+		cfg.Redis.Addr(),
+		cfg.Redis.Password,
+		cfg.Redis.DB,
+		l,
+	)
+	defer asynqClient.Close()
 
 	// 4. Initialize Data Access and Business Layers
 	// repositories layer handles raw data retrieval and persistence.
 	repositories := repo.New(pg, nil, redisclient, &cfg.Minio, l)
 	// useCases layer contains the core business rules and domain logic.
-	useCases := usecase.NewUseCase(repositories, l, cfg, nil)
+	useCases := usecase.NewUseCase(repositories, l, cfg, asynqClient)
 
 	// 4.1 Initialize Error Codes
 	initErrorCodes(ctx, useCases, l)
@@ -114,11 +114,12 @@ func Run(cfg *config.Config) {
 		asynqWorker = asynq.NewWorker(cfg.Asynq, l)
 
 		// Setup task handlers (Email, Notifications, Image processing).
-		handlers := asynq.NewHandlers(l)
+		handlers := asynq.NewHandlers(l, useCases.Audit)
 		asynqWorker.RegisterHandler(asynq.TypeEmailWelcome, handlers.HandleEmailWelcome)
 		asynqWorker.RegisterHandler(asynq.TypeEmailVerification, handlers.HandleEmailVerification)
 		asynqWorker.RegisterHandler(asynq.TypeImageResize, handlers.HandleImageResize)
 		asynqWorker.RegisterHandler(asynq.TypePushNotification, handlers.HandlePushNotification)
+		asynqWorker.RegisterHandler(asynq.TypeAuditLog, handlers.HandleAuditLog)
 
 		// specialized handler for on-demand database seeding.
 		s := seeder.New(repositories, l, cfg)

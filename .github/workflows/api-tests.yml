@@ -1,0 +1,110 @@
+name: API Regression Tests
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+jobs:
+  schemathesis:
+    name: Schemathesis Fuzzing & Stateful Tests
+    runs-on: ubuntu-latest
+
+    services:
+      db:
+        image: postgres:18.1-alpine
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: myAwEsOm3pa55@w0rd
+          POSTGRES_DB: db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      
+      redis:
+        image: redis:7.4-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Checkout base branch (for diff)
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.base_ref }}
+          path: base
+
+      - name: Check for Breaking Changes
+        if: github.event_name == 'pull_request'
+        uses: tufin/oasdiff-action@v2
+        with:
+          base: 'base/docs/swagger/swagger.yaml'
+          revision: 'docs/swagger/swagger.yaml'
+          breaking-only: true
+          fail-on-diff: true
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Build and Start API
+        run: |
+          # Build with migrate tag to ensure auto-migration on start
+          go build -tags migrate -o app cmd/app/main.go
+          ./app & 
+          # Wait for API to be ready
+          for i in {1..30}; do
+            curl -s http://localhost:8080/health && break
+            echo "Waiting for API..."
+            sleep 2
+          Done
+        env:
+          PG_URL: "postgres://user:myAwEsOm3pa55@w0rd@localhost:5432/db"
+          REDIS_URL: "redis://localhost:6379"
+          LOG_LEVEL: "info"
+          SWAGGER_ENABLED: "true"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install schemathesis hypothesis pytest requests
+
+      - name: Run Schemathesis Fuzzing
+        run: |
+          schemathesis run http://localhost:8080/docs/swagger/swagger.yaml \
+            --checks all \
+            --skip-deprecated-operations \
+            --wait-for-schema 10 \
+            --hypothesis-deadline null \
+            --exitfirst
+
+      - name: Run Stateful Auth Flow
+        run: |
+          pytest test/schemathesis/test_flows.py
+        env:
+          API_URL: "http://localhost:8080/api/v1"
+          TEST_LOGIN: "admin"
+          TEST_PASSWORD: "adminPassword123"
+
+      - name: Stop API
+        if: always()
+        run: pkill app || true

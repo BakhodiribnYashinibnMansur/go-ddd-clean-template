@@ -18,13 +18,14 @@ import (
 // ============================================================================
 
 type ErrorDetail struct {
-	Code       string `example:"RESOURCE_NOT_FOUND"                                          json:"code"`
-	Message    string `example:"The requested resource was not found."                       json:"message"`
-	Details    string `example:"The user with the ID '12345' does not exist in our records." json:"details,omitempty"`
-	Timestamp  string `example:"2023-12-08T12:30:45Z"                                        json:"timestamp"`
-	Path       string `example:"/api/v1/users/12345"                                         json:"path"`
-	Method     string `example:"GET"                                                         json:"method"`
-	Suggestion string `example:"Please check our documentation."                             json:"suggestion,omitempty"`
+	Code        string `example:"RESOURCE_NOT_FOUND"                                          json:"code"`
+	NumericCode string `example:"1012"                                                        json:"numeric_code"`
+	Message     string `example:"The requested resource was not found."                       json:"message"`
+	Details     string `example:"The user with the ID '12345' does not exist in our records." json:"details,omitempty"`
+	Timestamp   string `example:"2023-12-08T12:30:45Z"                                        json:"timestamp"`
+	Path        string `example:"/api/v1/users/12345"                                         json:"path"`
+	Method      string `example:"GET"                                                         json:"method"`
+	Suggestion  string `example:"Please check our documentation."                             json:"suggestion,omitempty"`
 
 	// Enhanced fields
 	Severity   string `example:"MEDIUM"                                                      json:"severity,omitempty"`
@@ -120,14 +121,16 @@ func RespondWithError(c *gin.Context, err error, fallbackCode int) {
 // parseErrorToResponse converts error to ErrorResponse structure
 func parseErrorToResponse(c *gin.Context, err error, fallbackCode int) (int, ErrorResponse) {
 	var (
-		statusCode = 500
-		errorCode  = apperrors.ErrInternal
-		message    = "An unexpected error occurred."
-		details    = ""
-		severity   = ""
-		category   = ""
-		retryable  = false
-		retryAfter = 0
+		statusCode  = 500
+		errorCode   = apperrors.ErrInternal
+		numericCode = apperrors.CodeInternal
+		message     = "An unexpected error occurred."
+		details     = ""
+		severity    = ""
+		category    = ""
+		retryable   = false
+		retryAfter  = 0
+		suggestion  = ""
 		// fields     map[string]any // unused
 	)
 
@@ -151,6 +154,12 @@ func parseErrorToResponse(c *gin.Context, err error, fallbackCode int) (int, Err
 			errorCode = appErr.Code
 		}
 
+		numericCode = appErr.Code
+		if numericCode == "" || numericCode == errorCode {
+			// If numericCode is empty or same as errorCode, try to resolve it
+			numericCode = apperrors.GetNumericCode(errorCode)
+		}
+
 		// Get user-friendly message in requested language
 		message = apperrors.GetUserMessage(errorCode, lang)
 		if message == "" {
@@ -158,6 +167,7 @@ func parseErrorToResponse(c *gin.Context, err error, fallbackCode int) (int, Err
 		}
 
 		details = appErr.Details
+		suggestion = appErr.Suggestion
 
 		// Get metadata
 		meta := appErr.GetMetadata()
@@ -183,6 +193,8 @@ func parseErrorToResponse(c *gin.Context, err error, fallbackCode int) (int, Err
 		if fallbackCode != 0 {
 			statusCode = fallbackCode
 		}
+		// Try to resolve numeric code for ErrInternal
+		numericCode = apperrors.GetNumericCode(errorCode)
 	}
 
 	// Request ID
@@ -192,14 +204,17 @@ func parseErrorToResponse(c *gin.Context, err error, fallbackCode int) (int, Err
 	}
 
 	// Dynamic Suggestion based on Status Code
-	suggestion, exists := statusSuggestions[statusCode]
-	if !exists {
-		if statusCode >= 500 {
-			suggestion = statusSuggestions[500]
-		} else if statusCode >= 400 {
-			suggestion = "Please check your request and try again."
-		} else {
-			suggestion = "Operation completed with status: " + strconv.Itoa(statusCode)
+	if suggestion == "" {
+		var exists bool
+		suggestion, exists = statusSuggestions[statusCode]
+		if !exists {
+			if statusCode >= 500 {
+				suggestion = statusSuggestions[500]
+			} else if statusCode >= 400 {
+				suggestion = "Please check your request and try again."
+			} else {
+				suggestion = "Operation completed with status: " + strconv.Itoa(statusCode)
+			}
 		}
 	}
 
@@ -212,17 +227,18 @@ func parseErrorToResponse(c *gin.Context, err error, fallbackCode int) (int, Err
 		Status:     consts.ResponseStatusError,
 		StatusCode: statusCode,
 		Error: ErrorDetail{
-			Code:       errorCode,
-			Message:    message,
-			Details:    details,
-			Timestamp:  time.Now().UTC().Format(time.RFC3339),
-			Path:       c.Request.URL.Path,
-			Method:     c.Request.Method,
-			Suggestion: suggestion,
-			Severity:   severity,
-			Category:   category,
-			Retryable:  retryable,
-			RetryAfter: retryAfter,
+			Code:        errorCode,
+			NumericCode: numericCode,
+			Message:     message,
+			Details:     details,
+			Timestamp:   time.Now().UTC().Format(time.RFC3339),
+			Path:        c.Request.URL.Path,
+			Method:      c.Request.Method,
+			Suggestion:  suggestion,
+			Severity:    severity,
+			Category:    category,
+			Retryable:   retryable,
+			RetryAfter:  retryAfter,
 		},
 		RequestId:        reqID,
 		DocumentationUrl: docURL,

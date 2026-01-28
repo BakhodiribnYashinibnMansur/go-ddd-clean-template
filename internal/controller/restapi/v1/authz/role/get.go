@@ -19,6 +19,8 @@ import (
 // @Produce     json
 // @Param       role_id path string true "Role ID"
 // @Success     200 {object} response.SuccessResponse
+// @Failure     401 {object} response.ErrorResponse
+// @Failure     403 {object} response.ErrorResponse
 // @Failure     400 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
 // @Security    BearerAuth
@@ -36,7 +38,7 @@ func (c *Controller) Get(ctx *gin.Context) {
 		return
 	}
 
-	role, err := c.u.Authz.Role.Get(ctx.Request.Context(), &domain.RoleFilter{ID: &id})
+	role, err := c.u.Authz.Role().Get(ctx.Request.Context(), &domain.RoleFilter{ID: &id})
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusInternalServerError, err, nil, false)
 		return

@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"gct/internal/domain"
+
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/google/uuid"
 )
@@ -107,4 +108,9 @@ func Int64() int64 {
 // Bool generates a fake boolean
 func Bool() bool {
 	return gofakeit.Bool()
+}
+
+// Ptr returns a pointer to the given value
+func Ptr[T any](v T) *T {
+	return &v
 }

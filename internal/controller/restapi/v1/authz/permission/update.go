@@ -19,6 +19,8 @@ import (
 // @Param       perm_id path string true "Permission ID"
 // @Param       request body domain.Permission true "Permission update body"
 // @Success     200 {object} response.SuccessResponse
+// @Failure     401 {object} response.ErrorResponse
+// @Failure     403 {object} response.ErrorResponse
 // @Failure     400 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
 // @Security    BearerAuth
@@ -34,7 +36,7 @@ func (c *Controller) Update(ctx *gin.Context) {
 	var perm domain.Permission
 	if err := ctx.ShouldBindJSON(&perm); err != nil {
 		httpx.LogError(c.l, err, "http - v1 - authz - permission - update - bind")
-		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid request body", nil, false)
+		response.RespondWithError(ctx, err, http.StatusBadRequest)
 		return
 	}
 	perm.ID = id
@@ -43,7 +45,7 @@ func (c *Controller) Update(ctx *gin.Context) {
 		return
 	}
 
-	err = c.u.Authz.Permission.Update(ctx.Request.Context(), &perm)
+	err = c.u.Authz.Permission().Update(ctx.Request.Context(), &perm)
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusInternalServerError, err, nil, false)
 		return

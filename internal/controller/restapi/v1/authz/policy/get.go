@@ -20,6 +20,8 @@ import (
 // @Produce     json
 // @Param       policy_id path string true "Policy ID"
 // @Success     200 {object} response.SuccessResponse
+// @Failure     401 {object} response.ErrorResponse
+// @Failure     403 {object} response.ErrorResponse
 // @Failure     400 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
 // @Security    BearerAuth
@@ -37,7 +39,7 @@ func (c *Controller) Get(ctx *gin.Context) {
 		return
 	}
 
-	policy, err := c.u.Authz.Policy.Get(ctx.Request.Context(), &domain.PolicyFilter{ID: &id})
+	policy, err := c.u.Authz.Policy().Get(ctx.Request.Context(), &domain.PolicyFilter{ID: &id})
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusInternalServerError, err, nil, false)
 		return

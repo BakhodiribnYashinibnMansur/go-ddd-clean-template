@@ -19,3 +19,7 @@ type PageData struct {
 	Filter     ErrorFilter
 	Categories []CategoryData
 }
+
+// SystemErrorsResponse is a wrapper for system errors list
+// swagger:model SystemErrorsResponse
+type SystemErrorsResponse []apperrors.ErrorDefinition

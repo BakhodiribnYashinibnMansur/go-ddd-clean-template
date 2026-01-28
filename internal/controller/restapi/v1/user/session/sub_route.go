@@ -16,9 +16,9 @@ func Route(api *gin.RouterGroup, c ControllerI, authMiddleware gin.HandlerFunc, 
 	userSessions.Use(authMiddleware)
 	userSessions.Use(csrfMiddleware)
 	{
-		userSessions.GET("/", c.Sessions)     // List all active sessions for the specified user.
-		userSessions.POST("/", c.Create)      // Manually issue a new session token for the specified user.
-		userSessions.DELETE("/", c.RevokeAll) // Force logout from all devices for this user.
+		userSessions.GET("", c.Sessions)     // List all active sessions for the specified user.
+		userSessions.POST("", c.Create)      // Manually issue a new session token for the specified user.
+		userSessions.DELETE("", c.RevokeAll) // Force logout from all devices for this user.
 	}
 
 	// Pattern 2: Global/Direct Session Management
@@ -26,13 +26,18 @@ func Route(api *gin.RouterGroup, c ControllerI, authMiddleware gin.HandlerFunc, 
 	sessions.Use(authMiddleware)
 	sessions.Use(csrfMiddleware)
 	{
+		// Current user's sessions
+		sessions.GET("", c.Sessions)
+		sessions.POST("", c.Create)
+		sessions.POST("/revoke-all", c.RevokeAll)
+
 		// Current session management
 		sessions.DELETE("/current", c.RevokeCurrent) // Revoke current session.
 
 		// Individual resource operations
-		sessions.GET("/:"+consts.ParamID, c.Session)                      // Retrieve detailed metadata for a specific session.
-		sessions.DELETE("/:"+consts.ParamID, c.Delete)                    // Explicitly invalidate a single session by ID.
-		sessions.PATCH("/:"+consts.ParamID+"/activity", c.UpdateActivity) // Mark a session as active (refresh last_seen).
-		sessions.DELETE("/device/:device_id", c.RevokeByDevice)           // Targeted logout for a specific device.
+		sessions.GET("/:"+consts.ParamID, c.Session)                    // Retrieve detailed metadata for a specific session.
+		sessions.DELETE("/:"+consts.ParamID, c.Delete)                  // Explicitly invalidate a single session by ID.
+		sessions.PUT("/:"+consts.ParamID+"/activity", c.UpdateActivity) // Mark a session as active (refresh last_seen).
+		sessions.DELETE("/device/:device_id", c.RevokeByDevice)         // Targeted logout for a specific device.
 	}
 }

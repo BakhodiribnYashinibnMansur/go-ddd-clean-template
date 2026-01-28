@@ -19,6 +19,8 @@ import (
 // @Produce     json
 // @Param       perm_id path string true "Permission ID"
 // @Success     200 {object} response.SuccessResponse
+// @Failure     401 {object} response.ErrorResponse
+// @Failure     403 {object} response.ErrorResponse
 // @Failure     400 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
 // @Security    BearerAuth
@@ -36,7 +38,7 @@ func (c *Controller) Get(ctx *gin.Context) {
 		return
 	}
 
-	perm, err := c.u.Authz.Permission.Get(ctx.Request.Context(), &domain.PermissionFilter{ID: &id})
+	perm, err := c.u.Authz.Permission().Get(ctx.Request.Context(), &domain.PermissionFilter{ID: &id})
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusInternalServerError, err, nil, false)
 		return

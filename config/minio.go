@@ -2,6 +2,7 @@ package config
 
 // MinioStore configuration for MinIO object storage
 type MinioStore struct {
+	Enabled   bool   `yaml:"enabled" env:"ENABLED" envDefault:"false"`
 	Endpoint  string `env:"ENDPOINT"   json:"endpoint"`
 	AccessKey string `env:"ACCESS_KEY" json:"access_key"`
 	SecretKey string `env:"SECRET_KEY" json:"secret_key"`

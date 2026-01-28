@@ -18,6 +18,8 @@ import (
 // @Param       role_id path string true "Role ID"
 // @Param       perm_id path string true "Permission ID"
 // @Success     200 {object} response.SuccessResponse
+// @Failure     401 {object} response.ErrorResponse
+// @Failure     403 {object} response.ErrorResponse
 // @Failure     400 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
 // @Security    BearerAuth
@@ -42,7 +44,7 @@ func (c *Controller) AddPermission(ctx *gin.Context) {
 		return
 	}
 
-	err = c.u.Authz.Role.AddPermission(ctx.Request.Context(), roleID, permID)
+	err = c.u.Authz.Role().AddPermission(ctx.Request.Context(), roleID, permID)
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusInternalServerError, err, nil, false)
 		return
@@ -60,6 +62,8 @@ func (c *Controller) AddPermission(ctx *gin.Context) {
 // @Param       role_id path string true "Role ID"
 // @Param       perm_id path string true "Permission ID"
 // @Success     200 {object} response.SuccessResponse
+// @Failure     401 {object} response.ErrorResponse
+// @Failure     403 {object} response.ErrorResponse
 // @Failure     400 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
 // @Security    BearerAuth
@@ -84,7 +88,7 @@ func (c *Controller) RemovePermission(ctx *gin.Context) {
 		return
 	}
 
-	err = c.u.Authz.Role.RemovePermission(ctx.Request.Context(), roleID, permID)
+	err = c.u.Authz.Role().RemovePermission(ctx.Request.Context(), roleID, permID)
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusInternalServerError, err, nil, false)
 		return

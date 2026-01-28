@@ -20,6 +20,8 @@ import (
 // @Param       path query string false "Path"
 // @Param       method query string false "Method"
 // @Success     200 {object} response.SuccessResponse
+// @Failure     401 {object} response.ErrorResponse
+// @Failure     403 {object} response.ErrorResponse
 // @Failure     400 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
 // @Security    BearerAuth
@@ -50,7 +52,7 @@ func (c *Controller) Gets(ctx *gin.Context) {
 		return
 	}
 
-	scopes, count, err := c.u.Authz.Scope.Gets(ctx.Request.Context(), &filter)
+	scopes, count, err := c.u.Authz.Scope().Gets(ctx.Request.Context(), &filter)
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusInternalServerError, err, nil, false)
 		return

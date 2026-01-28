@@ -2,6 +2,8 @@ package config
 
 // AsynqConfig - Asynq task queue configuration.
 type AsynqConfig struct {
+	Enabled bool `yaml:"enabled" env:"ENABLED" envDefault:"true"` // Enable/disable Asynq.
+
 	// Redis configuration for Asynq (uses same Redis instance)
 	RedisAddr     string `env:"ADDR"`
 	RedisPassword string `env:"PASSWORD"`

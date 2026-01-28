@@ -20,6 +20,8 @@ import (
 // @Param       policy_id path string true "Policy ID"
 // @Param       request body domain.Policy true "Policy update body"
 // @Success     200 {object} response.SuccessResponse
+// @Failure     401 {object} response.ErrorResponse
+// @Failure     403 {object} response.ErrorResponse
 // @Failure     400 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
 // @Security    BearerAuth
@@ -35,7 +37,7 @@ func (c *Controller) Update(ctx *gin.Context) {
 	var policy domain.Policy
 	if err := ctx.ShouldBindJSON(&policy); err != nil {
 		httpx.LogError(c.l, err, "http - v1 - authz - policy - update - bind")
-		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid request body", nil, false)
+		response.RespondWithError(ctx, err, http.StatusBadRequest)
 		return
 	}
 	policy.ID = id
@@ -45,7 +47,7 @@ func (c *Controller) Update(ctx *gin.Context) {
 		return
 	}
 
-	err = c.u.Authz.Policy.Update(ctx.Request.Context(), &policy)
+	err = c.u.Authz.Policy().Update(ctx.Request.Context(), &policy)
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusInternalServerError, err, nil, false)
 		return

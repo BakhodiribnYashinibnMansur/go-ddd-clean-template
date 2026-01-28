@@ -18,6 +18,8 @@ import (
 // @Produce     json
 // @Param       user_id path string true "User ID"
 // @Success     200 {object} response.SuccessResponse
+// @Failure     401 {object} response.ErrorResponse
+// @Failure     403 {object} response.ErrorResponse
 // @Failure     400 {object} response.ErrorResponse
 // @Failure     404 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
@@ -36,7 +38,7 @@ func (c *Controller) Delete(ctx *gin.Context) {
 		return
 	}
 
-	err = c.u.User.Client.Delete(ctx.Request.Context(), &domain.UserFilter{ID: &id})
+	err = c.u.User.Client().Delete(ctx.Request.Context(), &domain.UserFilter{ID: &id})
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusInternalServerError, err, nil, false)
 		return

@@ -8,7 +8,6 @@ import (
 
 	"gct/internal/domain"
 	"gct/internal/usecase"
-	"gct/internal/usecase/audit"
 	"gct/pkg/logger"
 
 	"github.com/gin-gonic/gin"
@@ -79,8 +78,8 @@ func TestSystemErrorMiddleware_Recovery(t *testing.T) {
 			}
 
 			uc := &usecase.UseCase{
-				Audit: &audit.UseCase{
-					SystemError: mockSysErrUC,
+				Audit: &TestAuditUseCase{
+					SystemErrorUC: mockSysErrUC,
 				},
 			}
 
@@ -174,8 +173,8 @@ func TestSystemErrorMiddleware_Persist5xx(t *testing.T) {
 			}
 
 			uc := &usecase.UseCase{
-				Audit: &audit.UseCase{
-					SystemError: mockSysErrUC,
+				Audit: &TestAuditUseCase{
+					SystemErrorUC: mockSysErrUC,
 				},
 			}
 

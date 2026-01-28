@@ -28,8 +28,8 @@ func TestUseCase_SignIn_TableDriven(t *testing.T) {
 		{
 			name: "success_basic_signin",
 			input: &domain.SignInIn{
-				Login:    "123456789",
-				Password: "password",
+				Login:    stringPtr("123456789"),
+				Password: stringPtr("password"),
 			},
 			mockUser: func() *domain.User {
 				hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("password"), bcrypt.DefaultCost)
@@ -51,8 +51,8 @@ func TestUseCase_SignIn_TableDriven(t *testing.T) {
 			name: "success_with_device_id",
 			input: func() *domain.SignInIn {
 				in := &domain.SignInIn{
-					Login:    "123456789",
-					Password: "password",
+					Login:    stringPtr("123456789"),
+					Password: stringPtr("password"),
 				}
 				in.Session.DeviceID = uuid.MustParse("00000000-0000-0000-0000-000000000123")
 				return in
@@ -77,8 +77,8 @@ func TestUseCase_SignIn_TableDriven(t *testing.T) {
 			name: "success_with_user_agent",
 			input: func() *domain.SignInIn {
 				in := &domain.SignInIn{
-					Login:    "123456789",
-					Password: "password",
+					Login:    stringPtr("123456789"),
+					Password: stringPtr("password"),
 				}
 				in.Session.UserAgent = "Mozilla/5.0"
 				return in
@@ -103,8 +103,8 @@ func TestUseCase_SignIn_TableDriven(t *testing.T) {
 			name: "success_with_ip",
 			input: func() *domain.SignInIn {
 				in := &domain.SignInIn{
-					Login:    "123456789",
-					Password: "password",
+					Login:    stringPtr("123456789"),
+					Password: stringPtr("password"),
 				}
 				in.Session.IP = "192.168.1.1"
 				return in
@@ -128,8 +128,8 @@ func TestUseCase_SignIn_TableDriven(t *testing.T) {
 		{
 			name: "error_user_not_found",
 			input: &domain.SignInIn{
-				Login:    "123456789",
-				Password: "password",
+				Login:    stringPtr("123456789"),
+				Password: stringPtr("password"),
 			},
 			mockUser:    nil,
 			repoError:   errors.New("user not found"),
@@ -138,8 +138,8 @@ func TestUseCase_SignIn_TableDriven(t *testing.T) {
 		{
 			name: "error_invalid_password",
 			input: &domain.SignInIn{
-				Login:    "123456789",
-				Password: "wrongpassword",
+				Login:    stringPtr("123456789"),
+				Password: stringPtr("wrongpassword"),
 			},
 			mockUser: func() *domain.User {
 				hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("password"), bcrypt.DefaultCost)
@@ -155,8 +155,8 @@ func TestUseCase_SignIn_TableDriven(t *testing.T) {
 		{
 			name: "error_empty_phone",
 			input: &domain.SignInIn{
-				Login:    "",
-				Password: "password",
+				Login:    stringPtr(""),
+				Password: stringPtr("password"),
 			},
 			mockUser:     nil,
 			repoError:    errors.New("user not found"),
@@ -166,8 +166,8 @@ func TestUseCase_SignIn_TableDriven(t *testing.T) {
 		{
 			name: "error_empty_password",
 			input: &domain.SignInIn{
-				Login:    "123456789",
-				Password: "",
+				Login:    stringPtr("123456789"),
+				Password: stringPtr(""),
 			},
 			mockUser: func() *domain.User {
 				hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("password"), bcrypt.DefaultCost)
@@ -184,8 +184,8 @@ func TestUseCase_SignIn_TableDriven(t *testing.T) {
 		{
 			name: "error_session_creation_failed",
 			input: &domain.SignInIn{
-				Login:    "123456789",
-				Password: "password",
+				Login:    stringPtr("123456789"),
+				Password: stringPtr("password"),
 			},
 			mockUser: func() *domain.User {
 				hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("password"), bcrypt.DefaultCost)
@@ -203,8 +203,8 @@ func TestUseCase_SignIn_TableDriven(t *testing.T) {
 			name: "success_all_metadata",
 			input: func() *domain.SignInIn {
 				in := &domain.SignInIn{
-					Login:    "123456789",
-					Password: "password",
+					Login:    stringPtr("123456789"),
+					Password: stringPtr("password"),
 				}
 				in.Session.DeviceID = uuid.MustParse("00000000-0000-0000-0000-000000000123")
 				in.Session.UserAgent = "Mozilla/5.0"
@@ -243,7 +243,7 @@ func TestUseCase_SignIn_TableDriven(t *testing.T) {
 			}
 
 			// Mock session repository if user exists and password is correct
-			if tt.mockUser != nil && tt.repoError == nil && tt.input.Password != "wrongpassword" && tt.input.Password != "" {
+			if tt.mockUser != nil && tt.repoError == nil && tt.input.Password != nil && *tt.input.Password != "wrongpassword" && *tt.input.Password != "" {
 				if tt.sessionError != nil {
 					sessionRepo.On("Create", mock.Anything, mock.AnythingOfType("*domain.Session")).Return(tt.sessionError)
 				} else {

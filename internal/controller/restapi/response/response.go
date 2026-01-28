@@ -16,11 +16,11 @@ import (
 // Parameters like Status and StatusCode provide explicit context, while Data and Meta
 // store the primary payload and supporting information (like pagination).
 type SuccessResponse struct {
-	Status     string `example:"success"                          json:"status"` // "success" or "error"
-	StatusCode int    `example:"200"                              json:"statusCode"`
-	Message    string `example:"Operation completed successfully" json:"message"`
-	Data       any    `json:"data,omitempty"`
-	Meta       any    `json:"meta,omitempty"`
+	Status     string      `example:"success"                          json:"status"` // "success" or "error"
+	StatusCode int         `example:"200"                              json:"statusCode"`
+	Message    string      `example:"Operation completed successfully" json:"message"`
+	Data       interface{} `json:"data,omitempty"`
+	Meta       interface{} `json:"meta,omitempty"`
 }
 
 // Meta encapsulates pagination and other relevant environmental metadata.

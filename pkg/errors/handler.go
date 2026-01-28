@@ -22,6 +22,9 @@ const (
 	ErrHandlerNotFound  = "HANDLER_NOT_FOUND"
 	CodeHandlerNotFound = "4004"
 
+	ErrHandlerMethodNotAllowed  = "HANDLER_METHOD_NOT_ALLOWED"
+	CodeHandlerMethodNotAllowed = "4005"
+
 	ErrHandlerConflict  = "HANDLER_CONFLICT"
 	CodeHandlerConflict = "4009"
 
@@ -37,14 +40,15 @@ const (
 
 // Handler error messages
 var handlerMessages = map[string]string{
-	ErrHandlerBadRequest:      "Bad request",
-	ErrHandlerUnauthorized:    "Unauthorized access",
-	ErrHandlerForbidden:       "Forbidden access",
-	ErrHandlerNotFound:        "Resource not found",
-	ErrHandlerConflict:        "Resource conflict",
-	ErrHandlerTooManyRequests: "Too many requests",
-	ErrHandlerInternal:        "Internal server error",
-	ErrHandlerUnknown:         "Unknown error",
+	ErrHandlerBadRequest:       "Bad request",
+	ErrHandlerUnauthorized:     "Unauthorized access",
+	ErrHandlerForbidden:        "Forbidden access",
+	ErrHandlerNotFound:         "Resource not found",
+	ErrHandlerMethodNotAllowed: "Method not allowed",
+	ErrHandlerConflict:         "Resource conflict",
+	ErrHandlerTooManyRequests:  "Too many requests",
+	ErrHandlerInternal:         "Internal server error",
+	ErrHandlerUnknown:          "Unknown error",
 }
 
 // NewHandlerError creates a new handler error
@@ -114,6 +118,10 @@ func MapToHTTPStatus(code string) int {
 	// 404 errors
 	case ErrHandlerNotFound, ErrServiceNotFound, ErrRepoNotFound:
 		return 404
+
+	// 405 errors
+	case ErrHandlerMethodNotAllowed:
+		return 405
 
 	// 409 errors
 	case ErrHandlerConflict, ErrServiceConflict, ErrServiceAlreadyExists, ErrRepoAlreadyExists:

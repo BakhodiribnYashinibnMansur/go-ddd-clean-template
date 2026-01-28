@@ -18,6 +18,8 @@ import (
 // @Produce     json
 // @Param       file formData file true "Video file (mp4, avi, mov)"
 // @Success     200 {object} response.SuccessResponse
+// @Failure     401 {object} response.ErrorResponse
+// @Failure     403 {object} response.ErrorResponse
 // @Failure     400 {object} response.ErrorResponse
 // @Security    BearerAuth
 // @Router      /files/upload/video [post]

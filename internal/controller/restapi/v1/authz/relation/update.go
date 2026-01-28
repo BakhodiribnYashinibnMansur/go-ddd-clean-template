@@ -20,6 +20,8 @@ import (
 // @Param       relation_id path string true "Relation ID"
 // @Param       request body domain.Relation true "Relation update body"
 // @Success     200 {object} response.SuccessResponse
+// @Failure     401 {object} response.ErrorResponse
+// @Failure     403 {object} response.ErrorResponse
 // @Failure     400 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
 // @Security    BearerAuth
@@ -35,7 +37,7 @@ func (c *Controller) Update(ctx *gin.Context) {
 	var relation domain.Relation
 	if err := ctx.ShouldBindJSON(&relation); err != nil {
 		httpx.LogError(c.l, err, "http - v1 - authz - relation - update - bind")
-		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid request body", nil, false)
+		response.RespondWithError(ctx, err, http.StatusBadRequest)
 		return
 	}
 	relation.ID = id
@@ -45,7 +47,7 @@ func (c *Controller) Update(ctx *gin.Context) {
 		return
 	}
 
-	err = c.u.Authz.Relation.Update(ctx.Request.Context(), &relation)
+	err = c.u.Authz.Relation().Update(ctx.Request.Context(), &relation)
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusInternalServerError, err, nil, false)
 		return

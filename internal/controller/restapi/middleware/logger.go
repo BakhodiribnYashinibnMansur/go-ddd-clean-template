@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"gct/consts"
+	"gct/pkg/contextx"
 	"gct/pkg/httpx"
 	"gct/pkg/logger"
 
@@ -58,12 +59,17 @@ func Logger(l logger.Log) gin.HandlerFunc {
 
 		// 1. Request ID Management
 		// Ensure every request has a unique identifier for distributed tracing.
-		requestID := c.GetHeader("X-Request-ID")
+		requestID := c.GetHeader(consts.HeaderXRequestID)
 		if requestID == "" {
 			requestID = uuid.New().String()
 		}
-		c.Header("X-Request-ID", requestID)
+		c.Header(consts.HeaderXRequestID, requestID)
 		c.Set(consts.CtxKeyRequestID, requestID)
+
+		// Propagate RequestID to the standard context for deeper layers (Service/Repo)
+		ctx := c.Request.Context()
+		ctx = contextx.WithRequestID(ctx, requestID)
+		c.Request = c.Request.WithContext(ctx)
 
 		path := c.Request.URL.Path
 		raw := c.Request.URL.RawQuery

@@ -1,5 +1,5 @@
 ifneq ($(wildcard .env),)
-include .env
+-include .env
 export
 else
 $(warning WARNING: .env file not found! Using .env.example)
@@ -74,8 +74,12 @@ format: ### Run code formatter
 .PHONY: format
 
 run: ### run application with all code generation
-	swag > /dev/null 2>&1
-	CGO_ENABLED=0 go run ./cmd/app
+	@mkdir -p .cache/go-build .cache/go-mod .tmp
+	@export GOCACHE=$(PWD)/.cache/go-build && \
+	 export GOMODCACHE=$(PWD)/.cache/go-mod && \
+	 export GOTMPDIR=$(PWD)/.tmp && \
+	 swag > /dev/null 2>&1 && \
+	 CGO_ENABLED=0 go run ./cmd/app
 .PHONY: run
 
 docker-rm-volume: ### remove docker volume
@@ -97,6 +101,14 @@ linter-dotenv: ### check by dotenv linter
 test: ### run test
 	go test -v -race -covermode atomic -coverprofile=coverage.txt ./internal/... ./pkg/...
 .PHONY: test
+
+test-fuzz: ### run fuzz tests
+	go test -fuzz=FuzzGetPasswordStrength -fuzztime=30s ./pkg/validation
+.PHONY: test-fuzz
+
+test-prop: ### run property-based tests
+	go test -v -run TestSanitizePhone_Property ./pkg/validation
+.PHONY: test-prop
 
 integration-test: ### run integration-test
 	go clean -testcache && go test -v ./integration-test/...
@@ -200,6 +212,10 @@ bin-deps: ### install development tools
 	go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
 .PHONY: bin-deps
 
+keygen: ### generate fresh RSA key pair for JWT
+	go run cmd/keygen/main.go
+.PHONY: keygen
+
 # ==============================================================================
 # SQLC Code Generation
 # ==============================================================================
@@ -225,4 +241,97 @@ pre-commit: swag protogen mock format linter-golangci test ### run pre-commit ch
 test-e2e: ### run e2e-test
 	go clean -testcache && go test -v -count=1 -p 1 ./test/e2e/flows/...
 .PHONY: test-e2e
+
+# ==============================================================================
+# Schemathesis API Testing
+# ==============================================================================
+
+API_URL ?= http://localhost:8080/api/v1
+SCHEMA_URL ?= $(API_URL)/swagger/doc.json
+SCHEMATHESIS_MAX_EXAMPLES ?= 50
+SCHEMATHESIS_WORKERS ?= 4
+VENV_DIR ?= .venv
+PYTHON_VENV ?= $(VENV_DIR)/bin/python
+SCHEMATHESIS_BIN ?= $(VENV_DIR)/bin/schemathesis
+
+test-schemathesis-install: ### install schemathesis in venv
+	@echo "📦 Creating virtual environment..."
+	@python3 -m venv $(VENV_DIR)
+	@echo "📦 Installing Schemathesis..."
+	@$(PYTHON_VENV) -m pip install --no-cache-dir --upgrade pip
+	@$(PYTHON_VENV) -m pip install --no-cache-dir schemathesis
+	@echo "✅ Schemathesis installed successfully in $(VENV_DIR)!"
+.PHONY: test-schemathesis-install
+
+test-schemathesis-project: ### run schemathesis test on project schema (quick)
+	@chmod +x test/schemathesis/run_tests_v2.sh
+	@./test/schemathesis/run_tests_v2.sh
+.PHONY: test-schemathesis-project
+
+test-schemathesis: ### run schemathesis tests against local API
+	@echo "🧪 Running Schemathesis tests..."
+	@echo "📋 API URL: $(API_URL)"
+	@echo "📋 Schema: docs/swagger/swagger.yaml"
+	@if [ ! -f "$(SCHEMATHESIS_BIN)" ]; then \
+		echo "❌ Schemathesis not found. Running install..."; \
+		make test-schemathesis-install; \
+	fi
+	$(SCHEMATHESIS_BIN) run docs/swagger/swagger.yaml \
+		--url="$(API_URL)" \
+		--checks=all \
+		--max-examples=$(SCHEMATHESIS_MAX_EXAMPLES) \
+		--workers=$(SCHEMATHESIS_WORKERS) \
+		--exclude-deprecated \
+		| tee docs/report/schemathesis/report.txt
+.PHONY: test-schemathesis
+
+test-schemathesis-stateful: ### run schemathesis stateful tests (realistic workflows)
+	@echo "🔄 Running Schemathesis stateful tests..."
+	@if [ ! -f "$(SCHEMATHESIS_BIN)" ]; then \
+		echo "❌ Schemathesis not found. Running install..."; \
+		make test-schemathesis-install; \
+	fi
+	$(SCHEMATHESIS_BIN) run docs/swagger/swagger.yaml \
+		--url="$(API_URL)" \
+		--checks=all \
+		--stateful=links \
+		--max-examples=20 \
+		--workers=2
+.PHONY: test-schemathesis-stateful
+
+test-schemathesis-quick: ### run quick schemathesis test (10 examples)
+	@echo "⚡ Running quick Schemathesis test..."
+	@if [ ! -f "$(SCHEMATHESIS_BIN)" ]; then \
+		echo "❌ Schemathesis not found. Running install..."; \
+		make test-schemathesis-install; \
+	fi
+	$(SCHEMATHESIS_BIN) run docs/swagger/swagger.yaml \
+		--url="$(API_URL)" \
+		--checks=all \
+		--max-examples=10 \
+		--exitfirst
+.PHONY: test-schemathesis-quick
+
+test-schemathesis-full: test-schemathesis test-schemathesis-stateful ### run all schemathesis tests
+	@echo "✅ All Schemathesis tests completed!"
+.PHONY: test-schemathesis-full
+
+test-schemathesis-ci: ### run schemathesis tests for CI/CD
+	@echo "🤖 Running Schemathesis tests for CI/CD..."
+	@if [ ! -f "$(SCHEMATHESIS_BIN)" ]; then \
+		echo "❌ Schemathesis not found. Running install..."; \
+		make test-schemathesis-install; \
+	fi
+	$(SCHEMATHESIS_BIN) run "$(SCHEMA_URL)" \
+		--url="$(API_URL)" \
+		--checks=all \
+		--max-examples=30 \
+		--workers=4 \
+		--exitfirst=false \
+		--junit-xml=test-results/schemathesis.xml
+.PHONY: test-schemathesis-ci
+
+test-api-all: test test-e2e test-schemathesis ### run all API tests (unit, e2e, schemathesis)
+	@echo "✅ All API tests completed!"
+.PHONY: test-api-all
 

@@ -23,6 +23,9 @@ import (
 // @Param       permission_id query string false "Permission ID"
 // @Param       active query bool false "Active status"
 // @Success     200 {object} response.SuccessResponse
+// @Failure     400 {object} response.ErrorResponse
+// @Failure     401 {object} response.ErrorResponse
+// @Failure     403 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
 // @Security    BearerAuth
 // @Router      /authz/policies [get]
@@ -67,7 +70,7 @@ func (c *Controller) Gets(ctx *gin.Context) {
 		return
 	}
 
-	policies, count, err := c.u.Authz.Policy.Gets(ctx.Request.Context(), &filter)
+	policies, count, err := c.u.Authz.Policy().Gets(ctx.Request.Context(), &filter)
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusInternalServerError, err, nil, false)
 		return

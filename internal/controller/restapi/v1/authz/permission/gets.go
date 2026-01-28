@@ -5,9 +5,10 @@ import (
 
 	"gct/consts"
 	"gct/internal/controller/restapi/response"
-	"gct/pkg/httpx"
 	"gct/internal/domain"
 	"gct/internal/domain/mock"
+	"gct/pkg/httpx"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -21,6 +22,9 @@ import (
 // @Param       offset query int false "Offset"
 // @Param       name query string false "Filter by name"
 // @Success     200 {object} response.SuccessResponse
+// @Failure     400 {object} response.ErrorResponse
+// @Failure     401 {object} response.ErrorResponse
+// @Failure     403 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
 // @Security    BearerAuth
 // @Router      /authz/permissions [get]
@@ -40,12 +44,12 @@ func (c *Controller) Gets(ctx *gin.Context) {
 		filter.Name = &permName
 	}
 
-// Handle mock mode
+	// Handle mock mode
 	if httpx.Mock(ctx, httpx.MockTypeGets, func(count int) any { return mock.Permissions(count) }) {
 		return
 	}
 
-	perms, count, err := c.u.Authz.Permission.Gets(ctx.Request.Context(), &filter)
+	perms, count, err := c.u.Authz.Permission().Gets(ctx.Request.Context(), &filter)
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusInternalServerError, err, nil, false)
 		return

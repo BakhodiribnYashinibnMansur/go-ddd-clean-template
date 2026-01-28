@@ -30,13 +30,14 @@ type Database struct {
 
 // BaseDB identifies common connectivity fields used across most relational and NoSQL databases.
 type BaseDB struct {
-	Host     string `env:"HOST,required"`                 // IP address or hostname of the server.
-	Port     int    `env:"PORT,required"`                 // Communication port for the protocol.
-	Name     string `env:"NAME,required"`                 // Target database/schema name.
-	User     string `env:"USER,required"`                 // Authentication username.
-	Password string `env:"PASSWORD,required"`             // Authentication password.
-	SSLMode  string `env:"SSL_MODE" envDefault:"disable"` // encryption settings.
-	PoolMax  int    `env:"POOL_MAX" envDefault:"10"`      // Maximum concurrent connections in the pool.
+	Enabled  bool   `yaml:"enabled" env:"ENABLED" envDefault:"false"` // Toggle to enable/disable this database connection.
+	Host     string `env:"HOST,required"`                             // IP address or hostname of the server.
+	Port     int    `env:"PORT,required"`                             // Communication port for the protocol.
+	Name     string `env:"NAME,required"`                             // Target database/schema name.
+	User     string `env:"USER,required"`                             // Authentication username.
+	Password string `env:"PASSWORD,required"`                         // Authentication password.
+	SSLMode  string `env:"SSL_MODE" envDefault:"disable"`             // encryption settings.
+	PoolMax  int    `env:"POOL_MAX" envDefault:"10"`                  // Maximum concurrent connections in the pool.
 }
 
 // Specialized driver configurations inheriting common connection logic.
@@ -51,7 +52,8 @@ type (
 
 	// SqlLite uses local file-based storage instead of network connections.
 	SqlLite struct {
-		File string `env:"FILE,required"`
+		Enabled bool   `yaml:"enabled" env:"ENABLED" envDefault:"false"`
+		File    string `env:"FILE,required"`
 	}
 )
 

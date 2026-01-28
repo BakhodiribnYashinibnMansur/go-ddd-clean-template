@@ -4,9 +4,9 @@ import "github.com/google/uuid"
 
 // SignInIn represents the input for sign in operation
 type SignInIn struct {
-	Login    string    `json:"login"`
-	Password string    `json:"password"   validate:"required"`
-	Session  SessionIn `json:"session" validate:"required"`
+	Login    *string    `json:"login,omitempty"    validate:"required,min=1"    example:"user1"`
+	Password *string    `json:"password,omitempty" validate:"required,min=1"    example:"pass123"`
+	Session  *SessionIn `json:"session"           validate:"required" binding:"required"`
 }
 
 // SignInOut represents the output for sign in operation
@@ -19,11 +19,11 @@ type SignInOut struct {
 
 // SignUpIn represents the input for sign up operation
 type SignUpIn struct {
-	Phone    string    `json:"phone"      validate:"required,phone"`
-	Password string    `json:"password"   validate:"required,strong_password"`
-	Username string    `json:"username"`
-	Email    string    `json:"email"      validate:"omitempty,email"`
-	Session  SessionIn `json:"session"    validate:"required"`
+	Phone    *string    `json:"phone,omitempty"    validate:"required,phone"        example:"+998901234567"`
+	Password *string    `json:"password,omitempty" validate:"required,strong_password" example:"SecureP@ss123"`
+	Username *string    `json:"username,omitempty" validate:"omitempty,min=3"     example:"john_doe"`
+	Email    *string    `json:"email,omitempty"    validate:"omitempty,email"     example:"john@example.com"`
+	Session  *SessionIn `json:"session"           validate:"required" binding:"required"`
 }
 
 // SignOutIn represents the input for sign out operation

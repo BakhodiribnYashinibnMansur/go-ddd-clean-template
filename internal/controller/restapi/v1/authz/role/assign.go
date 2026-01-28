@@ -18,6 +18,8 @@ import (
 // @Param       user_id path string true "User ID"
 // @Param       role_id path string true "Role ID"
 // @Success     200 {object} response.SuccessResponse
+// @Failure     401 {object} response.ErrorResponse
+// @Failure     403 {object} response.ErrorResponse
 // @Failure     400 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
 // @Security    BearerAuth
@@ -42,7 +44,7 @@ func (c *Controller) Assign(ctx *gin.Context) {
 		return
 	}
 
-	err = c.u.Authz.Role.Assign(ctx.Request.Context(), userID, roleID)
+	err = c.u.Authz.Role().Assign(ctx.Request.Context(), userID, roleID)
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusInternalServerError, err, nil, false)
 		return

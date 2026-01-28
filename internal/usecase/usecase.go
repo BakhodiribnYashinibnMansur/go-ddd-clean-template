@@ -24,13 +24,13 @@ import (
 // UseCase -.
 type UseCase struct {
 	Repo        *repo.Repo
-	User        *user.UseCase
-	Minio       *minio.UseCase
-	Authz       *authz.UseCase
-	Audit       *audit.UseCase
-	SiteSetting *sitesetting.UseCase
-	ErrorCode   *errorcode.UseCase
-	Database    *database.UseCase
+	User        user.UseCaseI
+	Minio       minio.Interface
+	Authz       authz.UseCaseI
+	Audit       audit.UseCaseI
+	SiteSetting sitesetting.UseCaseI
+	ErrorCode   errorcode.UseCaseI
+	Database    database.UseCaseI
 	AsynqClient *asynq.Client
 }
 
@@ -77,10 +77,19 @@ func (u *UseCase) LogAction(ctx context.Context, action domain.AuditActionType, 
 		CreatedAt:    time.Now(),
 	}
 
-	// Async save
+	// Reliable Audit Logging using Asynq
+	if u.AsynqClient != nil {
+		_, err := u.AsynqClient.EnqueueAudit(ctx, asynq.AuditPayload{Log: al})
+		if err != nil {
+			u.Audit.Log().Create(ctx, al) // Fallback to direct call if enqueue fails
+		}
+		return
+	}
+
+	// Fallback to async direct call if AsynqClient is nil
 	go func() {
 		bgCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
-		_ = u.Audit.Log.Create(bgCtx, al)
+		_ = u.Audit.Log().Create(bgCtx, al)
 	}()
 }

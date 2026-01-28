@@ -5,11 +5,11 @@ import (
 )
 
 func Route(api *gin.RouterGroup, c ControllerI) {
+	api.GET("/scope", c.Get)
 	scopes := api.Group("/scopes")
 	{
 		scopes.POST("", c.Create)
 		scopes.GET("", c.Gets)
 		scopes.DELETE("", c.Delete)
-		scopes.GET("/detail", c.Get)
 	}
 }

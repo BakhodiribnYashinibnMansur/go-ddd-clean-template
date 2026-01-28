@@ -16,13 +16,29 @@ import (
 	"go.uber.org/zap"
 )
 
+type UseCaseI interface {
+	GetActiveSessions(ctx context.Context) ([]*domain.DBSession, error)
+	GetSlowQueries(ctx context.Context, limit int) ([]*domain.SlowQuery, error)
+	GetTableSizes(ctx context.Context) ([]*domain.TableSize, error)
+	GetCacheStats(ctx context.Context) ([]*domain.CacheStats, error)
+	GetVacuumStats(ctx context.Context) ([]*domain.VacuumStats, error)
+	GetDBMetrics(ctx context.Context) (*domain.DBMetrics, error)
+	ExecuteQuery(ctx context.Context, sqlInput string) ([]domain.QueryResult, error)
+	ValidateTableName(ctx context.Context, tableName string) error
+	GetTableSchema(ctx context.Context, tableName string) (*domain.TableSchema, error)
+	GetTableData(ctx context.Context, tableName string, limit, offset int) (*domain.TableData, error)
+	InsertRecord(ctx context.Context, tableName string, data map[string]interface{}) error
+	UpdateRecord(ctx context.Context, tableName string, pkColumn string, pkValue interface{}, data map[string]interface{}) error
+	DeleteRecord(ctx context.Context, tableName string, pkColumn string, pkValue interface{}) error
+}
+
 type UseCase struct {
 	repo   *postgres.Repo
 	logger logger.Log
 	cfg    *config.Config
 }
 
-func New(repo *postgres.Repo, logger logger.Log, cfg *config.Config) *UseCase {
+func New(repo *postgres.Repo, logger logger.Log, cfg *config.Config) UseCaseI {
 	return &UseCase{
 		repo:   repo,
 		logger: logger,

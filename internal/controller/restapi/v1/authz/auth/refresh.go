@@ -20,24 +20,26 @@ import (
 // @Success     200 {object} response.SuccessResponse
 // @Failure     400 {object} response.ErrorResponse
 // @Failure     401 {object} response.ErrorResponse
+// @Failure     403 {object} response.ErrorResponse
 // @Security    BearerAuth
 // @Router      /auth/refresh [post]
 func (c *Controller) RefreshToken(ctx *gin.Context) {
 	var req domain.RefreshIn
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		httpx.LogError(c.l, err, "http - v1 - auth - refresh - bind")
-		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid request body", nil, false)
+		response.RespondWithError(ctx, err, http.StatusBadRequest)
 		return
 	}
 
-// Rotate session
-	out, err := c.u.User.Client.RotateSession(ctx.Request.Context(), &req)
+	// Rotate session
+	out, err := c.u.User.Client().RotateSession(ctx.Request.Context(), &req)
 	if err != nil {
-		response.RespondWithError(ctx, err, http.StatusUnauthorized)
+		// Security: Always return 401 for refresh failures
+		response.ControllerResponse(ctx, http.StatusUnauthorized, "invalid session", nil, false)
 		return
 	}
 
-// Set new Cookies
+	// Set new Cookies
 	c.setAuthCookies(ctx, out)
 
 	response.ControllerResponse(ctx, http.StatusOK, out, nil, true)

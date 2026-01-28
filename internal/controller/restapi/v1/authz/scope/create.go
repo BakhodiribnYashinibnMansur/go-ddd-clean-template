@@ -4,8 +4,9 @@ import (
 	"net/http"
 
 	"gct/internal/controller/restapi/response"
-	"gct/pkg/httpx"
 	"gct/internal/domain"
+	"gct/pkg/httpx"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -15,22 +16,27 @@ import (
 // @Accept      json
 // @Produce     json
 // @Param       request body domain.Scope true "Scope creation body"
+// @Success     201 {object} response.SuccessResponse
+// @Failure     401 {object} response.ErrorResponse
+// @Failure     403 {object} response.ErrorResponse
+// @Failure     400 {object} response.ErrorResponse
+// @Failure     500 {object} response.ErrorResponse
 // @Security    BearerAuth
 // @Router      /authz/scopes [post]
 func (c *Controller) Create(ctx *gin.Context) {
 	var scope domain.Scope
 	if err := ctx.ShouldBindJSON(&scope); err != nil {
 		httpx.LogError(c.l, err, "http - v1 - authz - scope - create - bind")
-		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid request body", nil, false)
+		response.RespondWithError(ctx, err, http.StatusBadRequest)
 		return
 	}
 
-// Handle mock mode
+	// Handle mock mode
 	if httpx.Mock(ctx, httpx.MockTypeCreate, "Scope created successfully") {
 		return
 	}
 
-	err := c.u.Authz.Scope.Create(ctx.Request.Context(), &scope)
+	err := c.u.Authz.Scope().Create(ctx.Request.Context(), &scope)
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusInternalServerError, err, nil, false)
 		return

@@ -553,8 +553,8 @@ func TestGetNumericCode(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := getNumericCode(tt.code); got != tt.want {
-				t.Errorf("getNumericCode() = %v, want %v", got, tt.want)
+			if got := GetNumericCode(tt.code); got != tt.want {
+				t.Errorf("GetNumericCode() = %v, want %v", got, tt.want)
 			}
 		})
 	}

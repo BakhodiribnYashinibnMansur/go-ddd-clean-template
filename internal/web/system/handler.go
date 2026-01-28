@@ -8,19 +8,10 @@ import (
 
 	"gct/internal/controller/restapi/response"
 	apperrors "gct/pkg/errors"
+
 	"github.com/gin-gonic/gin"
 )
 
-// GetErrors godoc
-// @Summary     Get system errors
-// @Description Returns a list of system errors. If Accept header includes text/html, returns a styled HTML page. Otherwise returns JSON.
-// @Tags        system
-// @Produce     json,html
-// @Param       type     query    string  false  "Error Layer (Repository, Service, Handler)"
-// @Param       category query    string  false  "Error Category (Data, Validation, Security, System, Business)"
-// @Param       code     query    string  false  "Error Code (partial match)"
-// @Success     200 {object} response.SuccessResponse{data=[]errors.ErrorDefinition}
-// @Router      /system/errors [get]
 func (c *Controller) GetErrors(ctx *gin.Context) {
 	var filter ErrorFilter
 	_ = ctx.ShouldBindQuery(&filter)

@@ -7,10 +7,12 @@ import (
 	"gct/internal/controller/restapi/middleware"
 	"gct/internal/controller/restapi/middleware/auth"
 	"gct/internal/controller/restapi/v1/admin"
-	asynqcontroller "gct/internal/controller/restapi/v1/asynq"
 	"gct/internal/controller/restapi/v1/audit"
 	"gct/internal/controller/restapi/v1/authz"
+	errcode "gct/internal/controller/restapi/v1/errorcode"
+	"gct/internal/controller/restapi/v1/featureflag"
 	"gct/internal/controller/restapi/v1/minio"
+	"gct/internal/controller/restapi/v1/test"
 	"gct/internal/controller/restapi/v1/user"
 	"gct/internal/usecase"
 	webadmin "gct/internal/web/admin"
@@ -83,13 +85,19 @@ func NewRouter(handler *gin.Engine, cfg *config.Config, uc *usecase.UseCase, l l
 		user.UserRoute(h, c.User, am.AuthClientAccess, csrfM)
 		minio.MinioRoute(h, c.Minio, am.AuthClientAccess, csrfM)
 		authz.AuthzRoute(h, c.Authz, am.AuthClientAccess, am.AuthClientRefresh, am.Authz, csrfM)
-		audit.AuditRoute(h, c.Audit)
+		audit.AuditRoute(h, c.Audit, am.AuthClientAccess)
+		errcode.Route(h, c.ErrorCode, am.AuthClientAccess, csrfM)
 
-		// Background task management (Dev/Test only).
-		asynqcontroller.NewRouter(h, uc.AsynqClient, l)
+		// Feature Flag demonstration endpoints.
+		featureflag.NewRouter(h, am.AuthClientAccess, l)
 
 		// Administrative system actions (e.g. Linter runner).
-		admin.New(l).Register(h)
+		admin.New(l).Register(h, am.AuthAdmin)
+
+		// Test-only endpoints (Environment restricted)
+		if cfg.App.Environment != "production" {
+			test.TestRoute(h, c.Test)
+		}
 
 		// Serve dynamic linter reports.
 		handler.Static(lintPath, "./docs/report/linter")

@@ -18,6 +18,8 @@ import (
 // @Produce     json
 // @Param       request body domain.Relation true "Relation creation body"
 // @Success     201 {object} response.SuccessResponse
+// @Failure     401 {object} response.ErrorResponse
+// @Failure     403 {object} response.ErrorResponse
 // @Failure     400 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
 // @Security    BearerAuth
@@ -26,7 +28,7 @@ func (c *Controller) Create(ctx *gin.Context) {
 	var relation domain.Relation
 	if err := ctx.ShouldBindJSON(&relation); err != nil {
 		httpx.LogError(c.l, err, "http - v1 - authz - relation - create - bind")
-		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid request body", nil, false)
+		response.RespondWithError(ctx, err, http.StatusBadRequest)
 		return
 	}
 
@@ -35,7 +37,7 @@ func (c *Controller) Create(ctx *gin.Context) {
 		return
 	}
 
-	err := c.u.Authz.Relation.Create(ctx.Request.Context(), &relation)
+	err := c.u.Authz.Relation().Create(ctx.Request.Context(), &relation)
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusInternalServerError, err, nil, false)
 		return

@@ -22,6 +22,7 @@ import (
 // @Success     200 {object} response.SuccessResponse
 // @Failure     400 {object} response.ErrorResponse
 // @Failure     401 {object} response.ErrorResponse
+// @Failure     403 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
 // @Security    BearerAuth
 // @Router      /auth/sign-out [post]
@@ -35,7 +36,7 @@ func (c *Controller) SignOut(ctx *gin.Context) {
 	var req domain.SignOutIn
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		httpx.LogError(c.l, err, "http - v1 - auth - signout - bind")
-		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid request body", nil, false)
+		response.RespondWithError(ctx, err, http.StatusBadRequest)
 		return
 	}
 	req.UserID = userId
@@ -45,7 +46,7 @@ func (c *Controller) SignOut(ctx *gin.Context) {
 		return
 	}
 
-	err = c.u.User.Client.SignOut(ctx.Request.Context(), &req)
+	err = c.u.User.Client().SignOut(ctx.Request.Context(), &req)
 	if err != nil {
 		response.RespondWithError(ctx, err, http.StatusInternalServerError)
 		return

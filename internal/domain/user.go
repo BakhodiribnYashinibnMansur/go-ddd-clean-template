@@ -29,22 +29,22 @@ func NewUser() *User {
 
 // User represents a system user with RBAC and attributes for ABAC.
 type User struct {
-	ID           uuid.UUID      `db:"id"            json:"id"`
-	RoleID       *uuid.UUID     `db:"role_id"       json:"role_id,omitempty"`
-	Username     *string        `db:"username"      json:"username,omitempty" validate:"omitempty,min=3"`
-	Email        *string        `db:"email"         json:"email,omitempty" validate:"omitempty,email"`
-	Phone        *string        `db:"phone"         json:"phone,omitempty" validate:"required,phone"`
+	ID           uuid.UUID      `db:"id"            json:"id"                                 example:"550e8400-e29b-41d4-a716-446655440000"`
+	RoleID       *uuid.UUID     `db:"role_id"       json:"role_id,omitempty"                  example:"660e8400-e29b-41d4-a716-446655440001"`
+	Username     *string        `db:"username"      json:"username,omitempty"                 validate:"omitempty,min=3"    example:"john_doe"     minLength:"3"  maxLength:"50" extensions:"x-nullable"`
+	Email        *string        `db:"email"         json:"email,omitempty"                    validate:"omitempty,email"    example:"john@example.com"   format:"email" extensions:"x-nullable"`
+	Phone        *string        `db:"phone"         json:"phone,omitempty"                    validate:"required,phone"     example:"+998901234567" minLength:"1"`
 	PasswordHash string         `db:"password_hash" json:"-"`
 	Salt         *string        `db:"salt"          json:"-"`
 	Attributes   map[string]any `db:"attributes"    json:"attributes"` // JSONB for ABAC (region, branch, dept)
-	Active       bool           `db:"active"        json:"active"`
-	IsApproved   bool           `db:"is_approved"   json:"is_approved"`
-	LastSeen     *time.Time     `db:"last_seen"     json:"last_seen,omitempty"`
-	DeletedAt    int64          `db:"deleted_at"    json:"deleted_at"`
-	CreatedAt    time.Time      `db:"created_at"    json:"created_at"`
-	UpdatedAt    time.Time      `db:"updated_at"    json:"updated_at"`
+	Active       bool           `db:"active"        json:"active"                             example:"true"`
+	IsApproved   bool           `db:"is_approved"   json:"is_approved"                        example:"true"`
+	LastSeen     *time.Time     `db:"last_seen"     json:"last_seen,omitempty"                example:"2024-01-25T10:30:00Z"  format:"date-time"`
+	DeletedAt    int64          `db:"deleted_at"    json:"deleted_at"                         example:"0"`
+	CreatedAt    time.Time      `db:"created_at"    json:"created_at"                         example:"2024-01-01T00:00:00Z"  format:"date-time"`
+	UpdatedAt    time.Time      `db:"updated_at"    json:"updated_at"                         example:"2024-01-25T10:30:00Z"  format:"date-time"`
 
-	Password string `db:"-" json:"password,omitempty"` // Transient field for input
+	Password string `db:"-" json:"password,omitempty" validate:"omitempty,min=8" example:"SecureP@ss123" minLength:"8"` // Transient field for input
 }
 
 // UserFilter represents a filter for user queries.
@@ -76,7 +76,7 @@ func (f UsersFilter) IsPaginationNull() bool {
 }
 
 func (f UsersFilter) IsValidLimit() bool {
-	return !f.IsPaginationNull() && f.Pagination.Limit > 0
+	return !f.IsPaginationNull() && f.Pagination.Limit > 0 && f.Pagination.Limit <= 1000
 }
 
 func (f UsersFilter) IsValidOffset() bool {

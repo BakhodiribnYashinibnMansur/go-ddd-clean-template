@@ -289,8 +289,8 @@ func getSystemUserMessage(code string) string {
 	}
 }
 
-// getNumericCode returns numeric code by error type
-func getNumericCode(code string) string {
+// GetNumericCode returns numeric code by error type
+func GetNumericCode(code string) string {
 	if c := getRepoNumericCode(code); c != "" {
 		return c
 	}

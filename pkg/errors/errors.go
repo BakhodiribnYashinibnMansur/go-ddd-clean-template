@@ -14,6 +14,9 @@ type AppError struct {
 	HTTPStatus int            // HTTP status code
 	UserMsg    string         // User-facing message
 	Details    string         // Detailed explanation
+	Severity   ErrorSeverity  // Error severity
+	Category   ErrorCategory  // Error category
+	Suggestion string         // Help suggestion
 	Fields     map[string]any // Additional data
 	Err        error          // Wrapped error
 	Stack      []uintptr      // Stack trace
@@ -61,14 +64,22 @@ func (e *AppError) WithDetails(details string) *AppError {
 	return e
 }
 
+// WithSuggestion adds a suggestion
+func (e *AppError) WithSuggestion(suggestion string) *AppError {
+	e.Suggestion = suggestion
+	return e
+}
+
 // New creates new error
 func New(code, message string) *AppError {
 	return &AppError{
 		Type:       code,
-		Code:       getNumericCode(code),
+		Code:       GetNumericCode(code),
 		Message:    message,
 		HTTPStatus: getHTTPStatus(code),
 		UserMsg:    getUserMessage(code),
+		Severity:   GetSeverity(code),
+		Category:   GetCategory(code),
 		Stack:      captureStack(),
 	}
 }
@@ -81,10 +92,12 @@ func Wrap(err error, code, message string) *AppError {
 
 	return &AppError{
 		Type:       code,
-		Code:       getNumericCode(code),
+		Code:       GetNumericCode(code),
 		Message:    message,
 		HTTPStatus: getHTTPStatus(code),
 		UserMsg:    getUserMessage(code),
+		Severity:   GetSeverity(code),
+		Category:   GetCategory(code),
 		Err:        err,
 		Stack:      captureStack(),
 	}

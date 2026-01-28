@@ -1,50 +1,63 @@
-# IDE
-.idea
-.vscode
-
-# Config
-.env
-
-# Binaries for programs and plugins
+# Binaries and Build Artifacts
+bin/
+app
 *.exe
 *.exe~
 *.dll
 *.so
 *.dylib
-bin/
-
-# Test binary, built with `go test -c`
 *.test
-
-# Output of the go coverage tool, specifically when used with LiteIDE
 *.out
-
-# Dependency directories (remove the comment below to include it)
-vendor/
-
 coverage.txt
 
-# macos
-.DS_Store
+# Dependencies
+vendor/
 
-# Generated protobuf files
-v1/genproto/
-
-
-# Test output files
-test_*.log
-test_*.txt
-test/report/*.log
-test/report/*.txt
-
+# Environment and Secrets
+.env
+.env.*
+!.env.example
 *.pem
-*.txt
 
-# Logs and Reports
+# IDEs and Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+app
+*.pem
+private_test.pem
+public_test.pem
+
+# Tooling and Caches
+.agent/
+.cache/
+.go/
+.go-cache/
+.gopath/
+.tmp/
+tmp/
+.air/
+**/genproto/
+
+# Python and Testing (Schemathesis)
+.venv/
+venv/
+ENV/
+.hypothesis/
+test_output.log
+test_write.txt
 logs/
 log/
-docs/report/
-tmp/
+docs/report/linter
+docs/report/schemathesis
+test/report/
+node_modules/
+.npm-cache/
+SCHEMATHESIS_QUICKSTART.md
+SCHEMATHESIS_SUMMARY.md
 
-# Binary
-app
+# Generic ignores (be careful with these)
+*.log
+# *.txt  # Removed to avoid ignoring documentation. Added specific test files instead.

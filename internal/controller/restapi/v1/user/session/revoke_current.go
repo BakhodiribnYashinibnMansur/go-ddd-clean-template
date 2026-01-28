@@ -17,7 +17,9 @@ import (
 // @Accept      json
 // @Produce     json
 // @Success     200 {object} response.SuccessResponse
+// @Failure     400 {object} response.ErrorResponse
 // @Failure     401 {object} response.ErrorResponse
+// @Failure     403 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
 // @Security    BearerAuth
 // @Router      /sessions/current [delete]
@@ -28,12 +30,12 @@ func (c *Controller) RevokeCurrent(ctx *gin.Context) {
 		return
 	}
 
-// Handle mock mode
+	// Handle mock mode
 	if httpx.Mock(ctx, httpx.MockTypeDelete, "Current session revoked successfully") {
 		return
 	}
 
-	err = c.s.User.Session.Delete(ctx.Request.Context(), &domain.SessionFilter{ID: &sid})
+	err = c.s.User.Session().Delete(ctx.Request.Context(), &domain.SessionFilter{ID: &sid})
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusInternalServerError, err, nil, false)
 		return

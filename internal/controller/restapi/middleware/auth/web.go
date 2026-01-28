@@ -36,18 +36,18 @@ func (m *AuthMiddleware) AuthWeb(ctx *gin.Context) {
 
 				if pErr == nil {
 					sID, _ := uuid.Parse(rt.SessionID)
-					sess, sErr := (*m.sessionuc).Get(ctx, &domain.SessionFilter{ID: &sID})
+					sess, sErr := m.sessionuc.Get(ctx, &domain.SessionFilter{ID: &sID})
 
 					if sErr == nil && !sess.Revoked && !sess.IsExpired() && rt.Verify(sess.RefreshTokenHash) {
 						// Perform silent Token Rotation
-						res, rErr := (*m.userUC).RotateSession(ctx.Request.Context(), &domain.RefreshIn{SessionID: sID})
+						res, rErr := m.userUC.RotateSession(ctx.Request.Context(), &domain.RefreshIn{SessionID: sID})
 						if rErr == nil {
 							isSecure := ctx.Request.TLS != nil || ctx.Request.Header.Get("X-Forwarded-Proto") == "https"
 
 							ctx.SetCookie(consts.COOKIE_ACCESS_TOKEN, res.AccessToken, int(m.cfg.JWT.AccessTTL.Seconds()), "/", "", isSecure, true)
 							ctx.SetCookie(consts.COOKIE_REFRESH_TOKEN, res.RefreshToken, int(m.cfg.JWT.RefreshTTL.Seconds()), "/", "", isSecure, true)
 
-							freshSess, fErr := (*m.sessionuc).Get(ctx, &domain.SessionFilter{ID: &sID})
+							freshSess, fErr := m.sessionuc.Get(ctx, &domain.SessionFilter{ID: &sID})
 							if fErr != nil {
 								m.l.Errorw("AuthWeb - Failed to fetch fresh session", "error", fErr)
 								ctx.Redirect(http.StatusFound, "/admin/login")
@@ -59,7 +59,7 @@ func (m *AuthMiddleware) AuthWeb(ctx *gin.Context) {
 							ctx.Set(consts.CtxSession, freshSess)
 							ctx.Set(consts.CtxUserID, freshSess.UserID.String())
 
-							u, uErr := (*m.userUC).Get(ctx, &domain.UserFilter{ID: &freshSess.UserID})
+							u, uErr := m.userUC.Get(ctx, &domain.UserFilter{ID: &freshSess.UserID})
 							if uErr == nil {
 								ctx.Set(consts.CtxUser, u)
 							}
@@ -84,12 +84,12 @@ func (m *AuthMiddleware) AuthWeb(ctx *gin.Context) {
 	ctx.Set(consts.CtxSession, session)
 	ctx.Set(consts.CtxUserID, session.UserID.String())
 
-	user, uErr := (*m.userUC).Get(ctx, &domain.UserFilter{ID: &session.UserID})
+	user, uErr := m.userUC.Get(ctx, &domain.UserFilter{ID: &session.UserID})
 	if uErr == nil {
 		ctx.Set(consts.CtxUser, user)
 
 		if user.RoleID != nil {
-			role, rErr := m.authzUC.Role.Get(ctx, &domain.RoleFilter{ID: user.RoleID})
+			role, rErr := m.authzUC.Role().Get(ctx, &domain.RoleFilter{ID: user.RoleID})
 			if rErr == nil {
 				ctx.Set(consts.CtxRoleTitle, role.Name)
 			} else {

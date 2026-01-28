@@ -13,21 +13,22 @@ import (
 
 // SignIn godoc
 // @Summary     Sign In
-// @Description Authenticate user and return tokens
+// @Description Authenticate user with credentials and return access/refresh tokens
 // @Tags        auth
 // @Accept      json
 // @Produce     json
-// @Param       request body domain.User true "Credentials"
+// @Param       request body domain.SignInIn true "User credentials (phone/email/username and password)"
 // @Success     200 {object} response.SuccessResponse
-// @Failure     400 {object} response.ErrorResponse
-// @Failure     401 {object} response.ErrorResponse
-// @Failure     500 {object} response.ErrorResponse
+// @Failure     400 {object} response.ErrorResponse "Invalid request"
+// @Failure     401 {object} response.ErrorResponse "Unauthorized"
+// @Failure     404 {object} response.ErrorResponse "User not found"
+// @Failure     500 {object} response.ErrorResponse "Internal error"
 // @Router      /auth/sign-in [post]
 func (c *Controller) SignIn(ctx *gin.Context) {
 	var in domain.SignInIn
 	if err := ctx.ShouldBindJSON(&in); err != nil {
 		httpx.LogError(c.l, err, "http - v1 - auth - signin - bind")
-		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid request body", nil, false)
+		response.RespondWithError(ctx, err, http.StatusBadRequest)
 		return
 	}
 
@@ -37,11 +38,13 @@ func (c *Controller) SignIn(ctx *gin.Context) {
 	}
 
 	// Populate session info from request context
-	c.populateSessionInfo(ctx, &in.Session)
+	c.populateSessionInfo(ctx, in.Session)
 
-	out, err := c.u.User.Client.SignIn(ctx.Request.Context(), &in)
+	out, err := c.u.User.Client().SignIn(ctx.Request.Context(), &in)
 	if err != nil {
-		response.RespondWithError(ctx, err, http.StatusUnauthorized)
+		// Security: Always return 401 for sign-in failures to prevent enumeration
+		// regardless of whether the user exists (404) or password was wrong (401).
+		response.ControllerResponse(ctx, http.StatusUnauthorized, "invalid credentials", nil, false)
 		return
 	}
 

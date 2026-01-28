@@ -6,6 +6,7 @@ import (
 	"gct/consts"
 	"gct/internal/controller/restapi/response"
 	"gct/pkg/httpx"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -14,6 +15,10 @@ import (
 // @Tags        authz-scopes
 // @Param       path query string true "Path"
 // @Param       method query string true "Method"
+// @Accept      json
+// @Produce     json
+// @Success     200 {object} response.SuccessResponse
+// @Failure     401,403,400,500 {object} response.ErrorResponse
 // @Security    BearerAuth
 // @Router      /authz/scopes [delete]
 func (c *Controller) Delete(ctx *gin.Context) {
@@ -30,12 +35,12 @@ func (c *Controller) Delete(ctx *gin.Context) {
 		return
 	}
 
-// Handle mock mode
+	// Handle mock mode
 	if httpx.Mock(ctx, httpx.MockTypeDelete, "Scope deleted successfully") {
 		return
 	}
 
-	err = c.u.Authz.Scope.Delete(ctx.Request.Context(), path, method)
+	err = c.u.Authz.Scope().Delete(ctx.Request.Context(), path, method)
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusInternalServerError, err, nil, false)
 		return

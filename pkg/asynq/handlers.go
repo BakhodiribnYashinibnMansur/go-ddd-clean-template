@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"gct/internal/domain"
+	"gct/internal/usecase/audit"
 	"gct/pkg/logger"
 
 	"github.com/hibiken/asynq"
@@ -45,14 +47,20 @@ type SeedPayload struct {
 	ClearData        bool  `json:"clear_data"`
 }
 
+// AuditPayload represents audit log task payload.
+type AuditPayload struct {
+	Log *domain.AuditLog `json:"log"`
+}
+
 // Handlers contains all task handlers.
 type Handlers struct {
-	log logger.Log
+	log   logger.Log
+	audit audit.UseCaseI
 }
 
 // NewHandlers creates a new handlers instance.
-func NewHandlers(log logger.Log) *Handlers {
-	return &Handlers{log: log}
+func NewHandlers(log logger.Log, audit audit.UseCaseI) *Handlers {
+	return &Handlers{log: log, audit: audit}
 }
 
 // HandleEmailWelcome processes welcome email task.
@@ -147,10 +155,18 @@ func (h *Handlers) HandlePushNotification(ctx context.Context, task *asynq.Task)
 	return nil
 }
 
-// HandleSystemSeed processes system seeding task.
-// This is a placeholder, actual implementation will be provided via injection or closure in internal/app.
-func (h *Handlers) HandleSystemSeed(ctx context.Context, task *asynq.Task) error {
-	h.log.Infoc(ctx, "processing system seed task")
-	// Actual implementation will be hooked up in internal/app
+// HandleAuditLog processes audit log task.
+func (h *Handlers) HandleAuditLog(ctx context.Context, task *asynq.Task) error {
+	var payload AuditPayload
+	if err := json.Unmarshal(task.Payload(), &payload); err != nil {
+		h.log.Errorc(ctx, "failed to unmarshal audit payload", "error", err)
+		return fmt.Errorf("unmarshal payload: %w", err)
+	}
+
+	if err := h.audit.Log().Create(ctx, payload.Log); err != nil {
+		h.log.Errorc(ctx, "failed to save audit log via task", "error", err)
+		return err
+	}
+
 	return nil
 }

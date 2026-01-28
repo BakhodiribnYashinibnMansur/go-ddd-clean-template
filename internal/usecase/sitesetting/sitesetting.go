@@ -8,12 +8,20 @@ import (
 	"gct/pkg/logger"
 )
 
+type UseCaseI interface {
+	Get(ctx context.Context, filter *domain.SiteSettingFilter) (*domain.SiteSetting, error)
+	Gets(ctx context.Context, filter *domain.SiteSettingsFilter) ([]*domain.SiteSetting, int, error)
+	Update(ctx context.Context, setting *domain.SiteSetting) error
+	UpdateByKey(ctx context.Context, key, value string) error
+	GetByKey(ctx context.Context, key string) (*domain.SiteSetting, error)
+}
+
 type UseCase struct {
 	repo   *persistent.Repo
 	logger logger.Log
 }
 
-func New(repo *persistent.Repo, logger logger.Log) *UseCase {
+func New(repo *persistent.Repo, logger logger.Log) UseCaseI {
 	return &UseCase{
 		repo:   repo,
 		logger: logger,

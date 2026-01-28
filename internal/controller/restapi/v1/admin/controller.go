@@ -33,9 +33,12 @@ func New(l logger.Log) *Controller {
 }
 
 // Register adds admin-specific routes to the provided router group.
-func (c *Controller) Register(r *gin.RouterGroup) {
-	g := r.Group("/admin")
-	g.POST("/linter/run", c.RunLinter)
+func (c *Controller) Register(r *gin.RouterGroup, authMiddleware gin.HandlerFunc) {
+	g := r.Group("admin")
+	g.Use(authMiddleware)
+	{
+		g.POST("/linter/run", c.RunLinter)
+	}
 }
 
 // LinterResponse defines the structure of the linter execution results,
@@ -56,6 +59,9 @@ type LinterResponse struct {
 // @Accept      json
 // @Produce     json
 // @Success     200 {object} response.SuccessResponse
+// @Failure     400 {object} response.ErrorResponse
+// @Failure     401 {object} response.ErrorResponse
+// @Failure     403 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
 // @Security    BearerAuth
 // @Router      /admin/linter/run [post]

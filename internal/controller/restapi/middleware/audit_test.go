@@ -10,7 +10,10 @@ import (
 	"gct/consts"
 	"gct/internal/domain"
 	"gct/internal/usecase"
-	"gct/internal/usecase/audit"
+	"gct/internal/usecase/audit/auditlog"
+	"gct/internal/usecase/audit/endpointhistory"
+	"gct/internal/usecase/audit/metric"
+	"gct/internal/usecase/audit/systemerror"
 	"gct/pkg/logger"
 
 	"github.com/gin-gonic/gin"
@@ -46,6 +49,26 @@ func (m *MockAuditLogUC) Create(ctx context.Context, al *domain.AuditLog) error 
 func (m *MockAuditLogUC) Gets(ctx context.Context, filter *domain.AuditLogsFilter) ([]*domain.AuditLog, int, error) {
 	args := m.Called(ctx, filter)
 	return args.Get(0).([]*domain.AuditLog), args.Int(1), args.Error(2)
+}
+
+type TestAuditUseCase struct {
+	LogUC         *MockAuditLogUC
+	HistoryUC     *MockEndpointHistoryUC
+	MetricUC      *mock.Mock
+	SystemErrorUC *MockSystemErrorUC
+}
+
+func (t *TestAuditUseCase) Log() auditlog.UseCaseI {
+	return t.LogUC
+}
+func (t *TestAuditUseCase) History() endpointhistory.UseCaseI {
+	return t.HistoryUC
+}
+func (t *TestAuditUseCase) Metric() metric.UseCaseI {
+	return nil // Not used in these tests
+}
+func (t *TestAuditUseCase) SystemError() systemerror.UseCaseI {
+	return t.SystemErrorUC
 }
 
 func TestAuditMiddleware_EndpointHistory(t *testing.T) {
@@ -113,10 +136,13 @@ func TestAuditMiddleware_EndpointHistory(t *testing.T) {
 			}
 
 			// Initialize UseCase struct
+			auc := &TestAuditUseCase{}
+			if tt.shouldRecord {
+				auc.HistoryUC = mockHistoryUC
+			}
+
 			uc := &usecase.UseCase{
-				Audit: &audit.UseCase{
-					History: mockHistoryUC,
-				},
+				Audit: auc,
 			}
 
 			// Create middleware
@@ -260,10 +286,13 @@ func TestAuditMiddleware_ChangeAudit(t *testing.T) {
 			}
 
 			// Initialize UseCase struct
+			auc := &TestAuditUseCase{}
+			if tt.shouldAudit {
+				auc.LogUC = mockLogUC
+			}
+
 			uc := &usecase.UseCase{
-				Audit: &audit.UseCase{
-					Log: mockLogUC,
-				},
+				Audit: auc,
 			}
 
 			// Create middleware

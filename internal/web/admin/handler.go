@@ -119,12 +119,12 @@ func (h *Handler) UsersOverview(ctx *gin.Context) {
 	ctxReq := ctx.Request.Context()
 	limit := &domain.Pagination{Limit: 1}
 
-	_, usersCount, _ := h.uc.User.Client.Gets(ctxReq, &domain.UsersFilter{Pagination: limit})
-	_, sessionsCount, _ := h.uc.User.Session.Gets(ctxReq, &domain.SessionsFilter{Pagination: limit})
+	_, usersCount, _ := h.uc.User.Client().Gets(ctxReq, &domain.UsersFilter{Pagination: limit})
+	_, sessionsCount, _ := h.uc.User.Session().Gets(ctxReq, &domain.SessionsFilter{Pagination: limit})
 
 	// Pending approvals
 	notApproved := false
-	_, pendingCount, _ := h.uc.User.Client.Gets(ctxReq, &domain.UsersFilter{
+	_, pendingCount, _ := h.uc.User.Client().Gets(ctxReq, &domain.UsersFilter{
 		Pagination: limit,
 		UserFilter: domain.UserFilter{IsApproved: &notApproved},
 	})
@@ -142,10 +142,10 @@ func (h *Handler) AccessControlOverview(ctx *gin.Context) {
 	ctxReq := ctx.Request.Context()
 	limit := &domain.Pagination{Limit: 1}
 
-	_, rolesCount, _ := h.uc.Authz.Role.Gets(ctxReq, &domain.RolesFilter{Pagination: limit})
-	_, permsCount, _ := h.uc.Authz.Permission.Gets(ctxReq, &domain.PermissionsFilter{Pagination: limit})
-	_, scopesCount, _ := h.uc.Authz.Scope.Gets(ctxReq, &domain.ScopesFilter{Pagination: limit})
-	_, policiesCount, _ := h.uc.Authz.Policy.Gets(ctxReq, &domain.PoliciesFilter{Pagination: limit})
+	_, rolesCount, _ := h.uc.Authz.Role().Gets(ctxReq, &domain.RolesFilter{Pagination: limit})
+	_, permsCount, _ := h.uc.Authz.Permission().Gets(ctxReq, &domain.PermissionsFilter{Pagination: limit})
+	_, scopesCount, _ := h.uc.Authz.Scope().Gets(ctxReq, &domain.ScopesFilter{Pagination: limit})
+	_, policiesCount, _ := h.uc.Authz.Policy().Gets(ctxReq, &domain.PoliciesFilter{Pagination: limit})
 
 	data := map[string]any{
 		"RolesCount":    rolesCount,
@@ -171,7 +171,7 @@ func (h *Handler) MonitoringOverview(ctx *gin.Context) {
 	ctxReq := ctx.Request.Context()
 	limit := &domain.Pagination{Limit: 1}
 
-	_, auditCount, _ := h.uc.Audit.Log.Gets(ctxReq, &domain.AuditLogsFilter{Pagination: limit})
+	_, auditCount, _ := h.uc.Audit.Log().Gets(ctxReq, &domain.AuditLogsFilter{Pagination: limit})
 
 	data := map[string]any{
 		"AuditCount": auditCount,
@@ -210,7 +210,7 @@ func (h *Handler) Login(ctx *gin.Context) {
 	}
 
 	// Check if any users exist
-	users, _, err := h.uc.User.Client.Gets(ctx.Request.Context(), &domain.UsersFilter{
+	users, _, err := h.uc.User.Client().Gets(ctx.Request.Context(), &domain.UsersFilter{
 		Pagination: &domain.Pagination{Limit: 1, Offset: 0},
 	})
 	if err == nil && len(users) == 0 {
@@ -245,12 +245,12 @@ func (h *Handler) LoginPost(ctx *gin.Context) {
 
 	// SignIn Usecase now supports Email
 	signInInput := &domain.SignInIn{
-		Login:    email,
-		Password: password,
+		Login:    strPtr(email),
+		Password: strPtr(password),
 	}
 	signInInput.Session.IP = ip
 	signInInput.Session.UserAgent = ua
-	res, err := h.uc.User.Client.SignIn(ctx.Request.Context(), signInInput)
+	res, err := h.uc.User.Client().SignIn(ctx.Request.Context(), signInInput)
 	if err != nil {
 		h.l.Warnw("login failed", "email", email, "error", err)
 		ctx.Redirect(http.StatusFound, "/admin/login?error=Invalid+credentials+or+inactive+account")
@@ -387,13 +387,13 @@ func (h *Handler) Dashboard(ctx *gin.Context) {
 	limit := &domain.Pagination{Limit: 1}
 
 	// Fetch counts
-	_, usersCount, _ := h.uc.User.Client.Gets(ctxReq, &domain.UsersFilter{Pagination: limit})
-	_, sessionsCount, _ := h.uc.User.Session.Gets(ctxReq, &domain.SessionsFilter{Pagination: limit})
-	_, rolesCount, _ := h.uc.Authz.Role.Gets(ctxReq, &domain.RolesFilter{Pagination: limit})
-	_, permsCount, _ := h.uc.Authz.Permission.Gets(ctxReq, &domain.PermissionsFilter{Pagination: limit})
-	_, scopesCount, _ := h.uc.Authz.Scope.Gets(ctxReq, &domain.ScopesFilter{Pagination: limit})
-	_, policiesCount, _ := h.uc.Authz.Policy.Gets(ctxReq, &domain.PoliciesFilter{Pagination: limit})
-	_, auditCount, _ := h.uc.Audit.Log.Gets(ctxReq, &domain.AuditLogsFilter{Pagination: limit})
+	_, usersCount, _ := h.uc.User.Client().Gets(ctxReq, &domain.UsersFilter{Pagination: limit})
+	_, sessionsCount, _ := h.uc.User.Session().Gets(ctxReq, &domain.SessionsFilter{Pagination: limit})
+	_, rolesCount, _ := h.uc.Authz.Role().Gets(ctxReq, &domain.RolesFilter{Pagination: limit})
+	_, permsCount, _ := h.uc.Authz.Permission().Gets(ctxReq, &domain.PermissionsFilter{Pagination: limit})
+	_, scopesCount, _ := h.uc.Authz.Scope().Gets(ctxReq, &domain.ScopesFilter{Pagination: limit})
+	_, policiesCount, _ := h.uc.Authz.Policy().Gets(ctxReq, &domain.PoliciesFilter{Pagination: limit})
+	_, auditCount, _ := h.uc.Audit.Log().Gets(ctxReq, &domain.AuditLogsFilter{Pagination: limit})
 
 	data := map[string]any{
 		"CurrentDate":   time.Now().Format("Monday, January 2, 2006"),
@@ -414,17 +414,17 @@ func (h *Handler) DashboardStats(ctx *gin.Context) {
 
 	// Fetch counts in parallel logic could be used, but sequential is fine for now on small scale.
 	// 1. Users
-	_, usersCount, _ := h.uc.User.Client.Gets(ctxReq, &domain.UsersFilter{Pagination: limit})
+	_, usersCount, _ := h.uc.User.Client().Gets(ctxReq, &domain.UsersFilter{Pagination: limit})
 	// 2. Sessions
-	_, sessionsCount, _ := h.uc.User.Session.Gets(ctxReq, &domain.SessionsFilter{Pagination: limit})
+	_, sessionsCount, _ := h.uc.User.Session().Gets(ctxReq, &domain.SessionsFilter{Pagination: limit})
 	// 3. Roles
-	_, rolesCount, _ := h.uc.Authz.Role.Gets(ctxReq, &domain.RolesFilter{Pagination: limit})
+	_, rolesCount, _ := h.uc.Authz.Role().Gets(ctxReq, &domain.RolesFilter{Pagination: limit})
 	// 4. Permissions
-	_, permsCount, _ := h.uc.Authz.Permission.Gets(ctxReq, &domain.PermissionsFilter{Pagination: limit})
+	_, permsCount, _ := h.uc.Authz.Permission().Gets(ctxReq, &domain.PermissionsFilter{Pagination: limit})
 	// 5. Scopes
-	_, scopesCount, _ := h.uc.Authz.Scope.Gets(ctxReq, &domain.ScopesFilter{Pagination: limit})
+	_, scopesCount, _ := h.uc.Authz.Scope().Gets(ctxReq, &domain.ScopesFilter{Pagination: limit})
 	// 6. Policies
-	_, policiesCount, _ := h.uc.Authz.Policy.Gets(ctxReq, &domain.PoliciesFilter{Pagination: limit})
+	_, policiesCount, _ := h.uc.Authz.Policy().Gets(ctxReq, &domain.PoliciesFilter{Pagination: limit})
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"users_count":    usersCount,
@@ -453,7 +453,7 @@ func (h *Handler) Users(ctx *gin.Context) {
 		filter.Active = &b
 	}
 
-	users, count, err := h.uc.User.Client.Gets(ctx.Request.Context(), filter)
+	users, count, err := h.uc.User.Client().Gets(ctx.Request.Context(), filter)
 	if err != nil {
 		h.l.Errorw("failed to fetch users", "error", err)
 	}
@@ -488,7 +488,7 @@ func (h *Handler) Sessions(ctx *gin.Context) {
 		filter.Revoked = &b
 	}
 
-	sessions, count, err := h.uc.User.Session.Gets(ctx.Request.Context(), filter)
+	sessions, count, err := h.uc.User.Session().Gets(ctx.Request.Context(), filter)
 	if err != nil {
 		h.l.Errorw("failed to fetch sessions", "error", err)
 	}
@@ -518,7 +518,7 @@ func (h *Handler) SessionDetail(ctx *gin.Context) {
 		Pagination:    limit,
 	}
 
-	sessions, count, err := h.uc.User.Session.Gets(ctx.Request.Context(), filter)
+	sessions, count, err := h.uc.User.Session().Gets(ctx.Request.Context(), filter)
 	if err != nil || count == 0 {
 		h.l.Errorw("failed to fetch session", "error", err)
 		ctx.Redirect(http.StatusFound, "/admin/sessions")
@@ -544,7 +544,7 @@ func (h *Handler) RevokeSession(ctx *gin.Context) {
 		Revoked: &revoke,
 	}
 
-	err = h.uc.User.Session.Revoke(ctx.Request.Context(), filter)
+	err = h.uc.User.Session().Revoke(ctx.Request.Context(), filter)
 	if err != nil {
 		h.l.Errorw("failed to revoke session", "error", err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to revoke session"})
@@ -564,7 +564,7 @@ func (h *Handler) Roles(ctx *gin.Context) {
 		filter.Name = &name
 	}
 
-	roles, count, err := h.uc.Authz.Role.Gets(ctx.Request.Context(), filter)
+	roles, count, err := h.uc.Authz.Role().Gets(ctx.Request.Context(), filter)
 	if err != nil {
 		h.l.Errorw("failed to fetch roles", "error", err)
 	}
@@ -588,7 +588,7 @@ func (h *Handler) Permissions(ctx *gin.Context) {
 		filter.Name = &name
 	}
 
-	perms, count, err := h.uc.Authz.Permission.Gets(ctx.Request.Context(), filter)
+	perms, count, err := h.uc.Authz.Permission().Gets(ctx.Request.Context(), filter)
 	if err != nil {
 		h.l.Errorw("failed to fetch permissions", "error", err)
 	}
@@ -615,7 +615,7 @@ func (h *Handler) Scopes(ctx *gin.Context) {
 		filter.Method = &method
 	}
 
-	scopes, count, err := h.uc.Authz.Scope.Gets(ctx.Request.Context(), filter)
+	scopes, count, err := h.uc.Authz.Scope().Gets(ctx.Request.Context(), filter)
 	if err != nil {
 		h.l.Errorw("failed to fetch scopes", "error", err)
 	}
@@ -640,7 +640,7 @@ func (h *Handler) Policies(ctx *gin.Context) {
 		filter.Active = &b
 	}
 
-	policies, count, err := h.uc.Authz.Policy.Gets(ctx.Request.Context(), filter)
+	policies, count, err := h.uc.Authz.Policy().Gets(ctx.Request.Context(), filter)
 	if err != nil {
 		h.l.Errorw("failed to fetch policies", "error", err)
 	}
@@ -719,7 +719,7 @@ func (h *Handler) UpdateSetting(ctx *gin.Context) {
 
 func (h *Handler) Setup(ctx *gin.Context) {
 	// Check if users already exist to prevent accessing setup again
-	_, count, err := h.uc.User.Client.Gets(ctx.Request.Context(), &domain.UsersFilter{
+	_, count, err := h.uc.User.Client().Gets(ctx.Request.Context(), &domain.UsersFilter{
 		Pagination: &domain.Pagination{Limit: 1},
 	})
 	if err == nil && count > 0 {
@@ -773,7 +773,7 @@ func (h *Handler) SetupPost(ctx *gin.Context) {
 		return
 	}
 
-	err = h.uc.User.Client.Create(ctx.Request.Context(), u)
+	err = h.uc.User.Client().Create(ctx.Request.Context(), u)
 	if err != nil {
 		h.l.Errorw("setup failed: create user", "error", err)
 		ctx.Redirect(http.StatusFound, "/admin/setup?error=Failed+to+create+user:+"+err.Error())
@@ -821,7 +821,7 @@ func (h *Handler) RegisterPost(ctx *gin.Context) {
 	}
 
 	// Check if this is the first user in the system
-	existingUsers, _, err := h.uc.User.Client.Gets(ctx.Request.Context(), &domain.UsersFilter{
+	existingUsers, _, err := h.uc.User.Client().Gets(ctx.Request.Context(), &domain.UsersFilter{
 		Pagination: &domain.Pagination{Limit: 1, Offset: 0},
 	})
 
@@ -842,7 +842,7 @@ func (h *Handler) RegisterPost(ctx *gin.Context) {
 	u.IsApproved = false // Auto-approve all users
 	u.Active = true
 
-	err = h.uc.User.Client.Create(ctx.Request.Context(), u)
+	err = h.uc.User.Client().Create(ctx.Request.Context(), u)
 	if err != nil {
 		h.l.Errorw("registration failed", "error", err)
 		ctx.Redirect(http.StatusFound, "/admin/register?error=Registration+Failed:+"+err.Error())
@@ -867,7 +867,7 @@ func (h *Handler) Approvals(ctx *gin.Context) {
 		UserFilter: domain.UserFilter{IsApproved: &approved},
 	}
 
-	users, count, err := h.uc.User.Client.Gets(ctx.Request.Context(), filter)
+	users, count, err := h.uc.User.Client().Gets(ctx.Request.Context(), filter)
 	if err != nil {
 		h.l.Errorw("failed to fetch pending users", "error", err)
 	}
@@ -889,7 +889,7 @@ func (h *Handler) ApproveUser(ctx *gin.Context) {
 		return
 	}
 
-	err := h.uc.User.Client.ActivateUser(ctx.Request.Context(), id)
+	err := h.uc.User.Client().ActivateUser(ctx.Request.Context(), id)
 	if err != nil {
 		h.l.Errorw("approval failed", "id", id, "error", err)
 		ctx.Redirect(http.StatusFound, "/admin/approvals?error=Approval+Failed")
@@ -931,7 +931,7 @@ func (h *Handler) CreateUserPost(ctx *gin.Context) {
 		return
 	}
 
-	err := h.uc.User.Client.Create(ctx.Request.Context(), u)
+	err := h.uc.User.Client().Create(ctx.Request.Context(), u)
 	if err != nil {
 		h.l.Errorw("admin user create failed", "error", err)
 		ctx.Redirect(http.StatusFound, "/admin/users/create?error=Creation+Failed:+"+err.Error())
@@ -966,7 +966,7 @@ func (h *Handler) UserAction(ctx *gin.Context) {
 		return
 	}
 
-	err = h.uc.User.Client.SetStatus(ctx.Request.Context(), id, active)
+	err = h.uc.User.Client().SetStatus(ctx.Request.Context(), id, active)
 	if err != nil {
 		h.l.Errorw("user action failed", "id", id, "action", action, "error", err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
@@ -997,7 +997,7 @@ func (h *Handler) UserDetail(ctx *gin.Context) {
 
 	if user == nil {
 		var err error
-		user, err = h.uc.User.Client.Get(ctx.Request.Context(), &domain.UserFilter{ID: &uid})
+		user, err = h.uc.User.Client().Get(ctx.Request.Context(), &domain.UserFilter{ID: &uid})
 		if err != nil {
 			h.l.Errorw("UserDetail - failed to fetch user", "error", err)
 			if apperrors.Is(err, apperrors.ErrServiceNotFound) {
@@ -1013,7 +1013,7 @@ func (h *Handler) UserDetail(ctx *gin.Context) {
 	}
 
 	// 2. Get Sessions
-	sessions, _, err := h.uc.User.Session.Gets(ctx.Request.Context(), &domain.SessionsFilter{
+	sessions, _, err := h.uc.User.Session().Gets(ctx.Request.Context(), &domain.SessionsFilter{
 		SessionFilter: domain.SessionFilter{UserID: &uid},
 		Pagination:    &domain.Pagination{Limit: 20, Offset: 0},
 	})
@@ -1024,7 +1024,7 @@ func (h *Handler) UserDetail(ctx *gin.Context) {
 	// 3. Get Role
 	var role *domain.Role
 	if user.RoleID != nil {
-		r, err := h.uc.Authz.Role.Get(ctx.Request.Context(), &domain.RoleFilter{ID: user.RoleID})
+		r, err := h.uc.Authz.Role().Get(ctx.Request.Context(), &domain.RoleFilter{ID: user.RoleID})
 		if err == nil {
 			role = r
 		}
@@ -1046,7 +1046,7 @@ func (h *Handler) EditUser(ctx *gin.Context) {
 		return
 	}
 
-	user, err := h.uc.User.Client.Get(ctx.Request.Context(), &domain.UserFilter{ID: &uid})
+	user, err := h.uc.User.Client().Get(ctx.Request.Context(), &domain.UserFilter{ID: &uid})
 	if err != nil {
 		h.l.Errorw("EditUser - failed to fetch user", "error", err)
 		ctx.Redirect(http.StatusFound, "/admin/users")
@@ -1069,7 +1069,7 @@ func (h *Handler) UpdateUserPost(ctx *gin.Context) {
 	}
 
 	// Fetch existing user
-	user, err := h.uc.User.Client.Get(ctx.Request.Context(), &domain.UserFilter{ID: &uid})
+	user, err := h.uc.User.Client().Get(ctx.Request.Context(), &domain.UserFilter{ID: &uid})
 	if err != nil {
 		ctx.Redirect(http.StatusFound, "/admin/users")
 		return
@@ -1081,7 +1081,7 @@ func (h *Handler) UpdateUserPost(ctx *gin.Context) {
 	user.Email = &email
 	user.Phone = &phone
 
-	err = h.uc.User.Client.Update(ctx.Request.Context(), user)
+	err = h.uc.User.Client().Update(ctx.Request.Context(), user)
 	if err != nil {
 		h.l.Errorw("UpdateUserPost - failed", "error", err)
 		ctx.Redirect(http.StatusFound, "/admin/users/"+idStr+"/edit?error=Update+Failed")
@@ -1110,15 +1110,15 @@ func (h *Handler) BulkUsersAction(ctx *gin.Context) {
 
 		switch req.Action {
 		case "delete":
-			if err := h.uc.User.Client.Delete(ctxCtx, &domain.UserFilter{ID: &uid}); err != nil {
+			if err := h.uc.User.Client().Delete(ctxCtx, &domain.UserFilter{ID: &uid}); err != nil {
 				h.l.Warnw("failed to delete user in bulk", "user_id", uid, "error", err)
 			}
 		case "activate":
-			if err := h.uc.User.Client.SetStatus(ctxCtx, uid, true); err != nil {
+			if err := h.uc.User.Client().SetStatus(ctxCtx, uid, true); err != nil {
 				h.l.Warnw("failed to activate user in bulk", "user_id", uid, "error", err)
 			}
 		case "deactivate":
-			if err := h.uc.User.Client.SetStatus(ctxCtx, uid, false); err != nil {
+			if err := h.uc.User.Client().SetStatus(ctxCtx, uid, false); err != nil {
 				h.l.Warnw("failed to deactivate user in bulk", "user_id", uid, "error", err)
 			}
 		}

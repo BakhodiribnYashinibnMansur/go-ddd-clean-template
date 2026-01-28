@@ -18,6 +18,8 @@ import (
 // @Produce     json
 // @Param       request body domain.Session true "Session creation query"
 // @Success     201 {object} response.SuccessResponse
+// @Failure     401 {object} response.ErrorResponse
+// @Failure     403 {object} response.ErrorResponse
 // @Failure     400 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
 // @Security    BearerAuth
@@ -26,7 +28,7 @@ func (c *Controller) Create(ctx *gin.Context) {
 	var req domain.Session
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		httpx.LogError(c.l, err, "http - v1 - session - create - bind")
-		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid request body", nil, false)
+		response.RespondWithError(ctx, err, http.StatusBadRequest)
 		return
 	}
 
@@ -36,7 +38,7 @@ func (c *Controller) Create(ctx *gin.Context) {
 	}
 
 // Using pointer for session as requested
-	createSession, err := c.s.User.Session.Create(ctx.Request.Context(), &req)
+	createSession, err := c.s.User.Session().Create(ctx.Request.Context(), &req)
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusInternalServerError, err, nil, false)
 		return

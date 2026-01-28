@@ -32,7 +32,7 @@ func (h *Handler) EndpointHistory(ctx *gin.Context) {
 		}
 	}
 
-	history, count, err := h.uc.Audit.History.Gets(ctx.Request.Context(), filter)
+	history, count, err := h.uc.Audit.History().Gets(ctx.Request.Context(), filter)
 	if err != nil {
 		h.l.Errorw("failed to fetch endpoint history", "error", err)
 	}

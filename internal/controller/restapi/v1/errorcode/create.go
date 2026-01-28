@@ -17,6 +17,8 @@ import (
 // @Produce     json
 // @Param       request body repo.CreateErrorCodeInput true "Error code creation input"
 // @Success     201 {object} response.SuccessResponse
+// @Failure     401 {object} response.ErrorResponse
+// @Failure     403 {object} response.ErrorResponse
 // @Failure     400 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
 // @Security    BearerAuth
@@ -25,7 +27,7 @@ func (c *Controller) Create(ctx *gin.Context) {
 	var input repo.CreateErrorCodeInput
 	if err := ctx.ShouldBindJSON(&input); err != nil {
 		c.logger.Error("fast http - v1 - errorcode - create - bind", "error", err)
-		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid request body", nil, false)
+		response.RespondWithError(ctx, err, http.StatusBadRequest)
 		return
 	}
 

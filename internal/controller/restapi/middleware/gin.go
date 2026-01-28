@@ -4,8 +4,10 @@ import (
 	"gct/config"
 	"gct/internal/usecase"
 	"gct/pkg/logger"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 )
 
@@ -53,20 +55,44 @@ func GinMiddleware(handler *gin.Engine, cfg *config.Config, uc *usecase.UseCase,
 	// It relies on the CORS configuration provided in the config.yaml.
 	handler.Use(CORSMiddleware(cfg.CORS))
 
-	// 6. Maintenance.
+	// 6. Binding Error Handler.
+	// BindingErrorMiddleware intercepts Gin binding errors and converts them to JSON.
+	// This runs early to catch validation errors before they reach Gin's default handler.
+	// Works automatically for all endpoints using ShouldBind/ShouldBindJSON.
+	handler.Use(BindingErrorMiddleware())
+
+	// 6.1 Strict JSON & Body Limit
+	// Enforce strict JSON decoding (no unknown fields) and limit body size to 2MB to prevent DOS.
+	binding.EnableDecoderDisallowUnknownFields = true
+	handler.Use(func(c *gin.Context) {
+		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 2*1024*1024) // 2MB limit
+		c.Next()
+	})
+
+	// 7. Method Not Allowed Handler.
+	// Handle unsupported HTTP methods with proper 405 response.
+	// This runs BEFORE authentication to return 405 instead of 401 for unsupported methods.
+	handler.NoMethod(MethodNotAllowedHandler())
+
+	// 8. Maintenance.
 	// MockMiddleware allows mocking responses for testing purposes.
 	if cfg.Middleware.Mock {
 		handler.Use(MockMiddleware(cfg))
 	}
 
-	// 7. Traffic Control.
+	// 8. Idempotency.
+	// Handle idempotent requests using Idempotency-Key header.
+	// This prevents duplicate side-effects for retried requests.
+	handler.Use(Idempotency(uc.Repo.Persistent.Redis.Client, l))
+
+	// 9. Traffic Control.
 	// RateLimiter limits the number of requests a client can make within a time window.
 	// It uses Redis to store rate limit counters.
 	if cfg.Middleware.RateLimiter {
 		handler.Use(RateLimiter(cfg.Limiter, uc.Repo.Persistent.Redis.Client, l))
 	}
 
-	// 8. Audit & History.
+	// 10. Audit & History.
 	auditM := NewAuditMiddleware(uc, l)
 	// EndpointHistory records basic info about every request endpoint hit.
 	if cfg.Middleware.AuditHistory {

@@ -32,6 +32,9 @@ const (
 
 	// System tasks
 	TypeSystemSeed = "system:seed"
+
+	// Audit tasks
+	TypeAuditLog = "audit:log"
 )
 
 // Queue name constants.

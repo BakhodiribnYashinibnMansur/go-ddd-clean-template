@@ -5,18 +5,18 @@ import "strings"
 type (
 	// App -.
 	App struct {
-		Name        string `yaml:"name"`
-		Version     string `yaml:"version"`
-		Environment string `env:"APP_ENV"              envDefault:"development"`
-		CSRFSecret  string `env:"CSRF_SECRET,required"` // Dedicated secret for CSRF token generation
+		Name        string `yaml:"name"               validate:"required"`
+		Version     string `yaml:"version"            validate:"required"`
+		Environment string `env:"APP_ENV"              envDefault:"development" validate:"oneof=development production test dev prod testing"`
+		CSRFSecret  string `env:"CSRF_SECRET,required" validate:"required,min=32"` // Dedicated secret for CSRF token generation
 	}
 
 	// HTTP -.
 	HTTP struct {
-		Port            string `env:"HTTP_PORT,required"`
+		Port            string `env:"HTTP_PORT,required" validate:"required,numeric,min=1,max=65535"`
 		UsePreforkMode  bool   `env:"HTTP_USE_PREFORK_MODE" envDefault:"false"`
-		GinMode         string `env:"GIN_MODE" envDefault:"debug"`
-		ShutdownTimeout int64  `env:"HTTP_SHUTDOWN_TIMEOUT" envDefault:"5"` // Seconds
+		GinMode         string `env:"GIN_MODE" envDefault:"debug" validate:"oneof=debug release test"`
+		ShutdownTimeout int64  `env:"HTTP_SHUTDOWN_TIMEOUT" envDefault:"5" validate:"min=1,max=60"` // Seconds
 	}
 
 	// Log -.
@@ -27,7 +27,7 @@ type (
 
 	// APIKeys configuration -.
 	APIKeys struct {
-		XApiKey string `env:"X_API_KEY,required"`
+		XApiKey string `env:"X_API_KEY,required" validate:"required,min=16"`
 	}
 
 	// Metrics -.

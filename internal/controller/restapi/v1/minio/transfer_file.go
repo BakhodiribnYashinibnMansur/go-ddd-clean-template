@@ -16,6 +16,9 @@ import (
 // @Accept      json
 // @Produce     json
 // @Success     501 {object} response.ErrorResponse
+// @Failure     400 {object} response.ErrorResponse
+// @Failure     401 {object} response.ErrorResponse
+// @Failure     403 {object} response.ErrorResponse
 // @Security    BearerAuth
 // @Router      /files/transfer [post]
 func (h *Controller) TransferFile(ctx *gin.Context) {

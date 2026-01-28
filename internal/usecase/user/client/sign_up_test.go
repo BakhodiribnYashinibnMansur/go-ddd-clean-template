@@ -25,9 +25,9 @@ func TestUseCase_SignUp_TableDriven(t *testing.T) {
 		{
 			name: "success_basic_signup",
 			input: &domain.SignUpIn{
-				Username: "testuser",
-				Phone:    "123456789",
-				Password: "Password123!",
+				Username: stringPtr("testuser"),
+				Phone:    stringPtr("123456789"),
+				Password: stringPtr("Password123!"),
 			},
 			repoError:   nil,
 			expectError: false,
@@ -44,9 +44,9 @@ func TestUseCase_SignUp_TableDriven(t *testing.T) {
 		{
 			name: "success_empty_username",
 			input: &domain.SignUpIn{
-				Username: "",
-				Phone:    "123456789",
-				Password: "Password123!",
+				Username: stringPtr(""),
+				Phone:    stringPtr("123456789"),
+				Password: stringPtr("Password123!"),
 			},
 			repoError:   nil,
 			expectError: false,
@@ -59,9 +59,9 @@ func TestUseCase_SignUp_TableDriven(t *testing.T) {
 		{
 			name: "error_empty_phone",
 			input: &domain.SignUpIn{
-				Username: "testuser",
-				Phone:    "",
-				Password: "Password123!",
+				Username: stringPtr("testuser"),
+				Phone:    stringPtr(""),
+				Password: stringPtr("Password123!"),
 			},
 			repoError:   nil,
 			expectError: true,
@@ -69,9 +69,9 @@ func TestUseCase_SignUp_TableDriven(t *testing.T) {
 		{
 			name: "error_empty_password",
 			input: &domain.SignUpIn{
-				Username: "testuser",
-				Phone:    "123456789",
-				Password: "",
+				Username: stringPtr("testuser"),
+				Phone:    stringPtr("123456789"),
+				Password: stringPtr(""),
 			},
 			repoError:   nil,
 			expectError: true,
@@ -79,9 +79,9 @@ func TestUseCase_SignUp_TableDriven(t *testing.T) {
 		{
 			name: "error_weak_password",
 			input: &domain.SignUpIn{
-				Username: "testuser",
-				Phone:    "123456789",
-				Password: "123",
+				Username: stringPtr("testuser"),
+				Phone:    stringPtr("123456789"),
+				Password: stringPtr("123"),
 			},
 			repoError:   nil,
 			expectError: true,
@@ -89,9 +89,9 @@ func TestUseCase_SignUp_TableDriven(t *testing.T) {
 		{
 			name: "error_repository_failure",
 			input: &domain.SignUpIn{
-				Username: "testuser",
-				Phone:    "123456789",
-				Password: "Password123!",
+				Username: stringPtr("testuser"),
+				Phone:    stringPtr("123456789"),
+				Password: stringPtr("Password123!"),
 			},
 			repoError:   errors.New("database error"),
 			expectError: true,
@@ -99,9 +99,9 @@ func TestUseCase_SignUp_TableDriven(t *testing.T) {
 		{
 			name: "success_long_username",
 			input: &domain.SignUpIn{
-				Username: "verylongusernamethatmightstillwork",
-				Phone:    "123456789",
-				Password: "Password123!",
+				Username: stringPtr("verylongusernamethatmightstillwork"),
+				Phone:    stringPtr("123456789"),
+				Password: stringPtr("Password123!"),
 			},
 			repoError:   nil,
 			expectError: false,
@@ -114,9 +114,9 @@ func TestUseCase_SignUp_TableDriven(t *testing.T) {
 		{
 			name: "success_special_chars_password",
 			input: &domain.SignUpIn{
-				Username: "testuser",
-				Phone:    "123456789",
-				Password: "P@ssw0rd!1",
+				Username: stringPtr("testuser"),
+				Phone:    stringPtr("123456789"),
+				Password: stringPtr("P@ssw0rd!1"),
 			},
 			repoError:   nil,
 			expectError: false,
@@ -132,9 +132,9 @@ func TestUseCase_SignUp_TableDriven(t *testing.T) {
 		{
 			name: "success_numeric_phone",
 			input: &domain.SignUpIn{
-				Username: "testuser",
-				Phone:    "9876543210",
-				Password: "Password123!",
+				Username: stringPtr("testuser"),
+				Phone:    stringPtr("9876543210"),
+				Password: stringPtr("Password123!"),
 			},
 			repoError:   nil,
 			expectError: false,
@@ -169,11 +169,11 @@ func TestUseCase_SignUp_TableDriven(t *testing.T) {
 
 				if tt.repoError == nil {
 					// SignUp calls SignIn which calls GetByPhone and Session Create
-					hash, _ := bcrypt.GenerateFromPassword([]byte(tt.input.Password), bcrypt.DefaultCost)
-					clientRepo.On("GetByPhone", mock.Anything, tt.input.Phone).
+					hash, _ := bcrypt.GenerateFromPassword([]byte(*tt.input.Password), bcrypt.DefaultCost)
+					clientRepo.On("GetByPhone", mock.Anything, *tt.input.Phone).
 						Return(&domain.User{
 							ID:           uuid.New(),
-							Phone:        &tt.input.Phone,
+							Phone:        tt.input.Phone,
 							PasswordHash: string(hash),
 							IsApproved:   true,
 						}, nil).Once()

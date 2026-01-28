@@ -30,7 +30,7 @@ func (h *Handler) AuditLogs(ctx *gin.Context) {
 		filter.Success = &s
 	}
 
-	logs, count, err := h.uc.Audit.Log.Gets(ctx.Request.Context(), filter)
+	logs, count, err := h.uc.Audit.Log().Gets(ctx.Request.Context(), filter)
 	if err != nil {
 		h.l.Errorw("failed to fetch audit logs", "error", err)
 	}

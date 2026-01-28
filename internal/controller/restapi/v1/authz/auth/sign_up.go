@@ -17,10 +17,11 @@ import (
 // @Tags        auth
 // @Accept      json
 // @Produce     json
-// @Param       request body domain.User true "User info"
-// @Success     200 {object} response.SuccessResponse
-// @Failure     400 {object} response.ErrorResponse
-// @Failure     500 {object} response.ErrorResponse
+// @Param       request body domain.SignUpIn true "User info"
+// @Success     201 {object} response.SuccessResponse
+// @Failure     400 {object} response.ErrorResponse "Validation error"
+// @Failure     409 {object} response.ErrorResponse "Conflict"
+// @Failure     500 {object} response.ErrorResponse "Internal error"
 // @Router      /auth/sign-up [post]
 func (c *Controller) SignUp(ctx *gin.Context) {
 	var in domain.SignUpIn
@@ -36,9 +37,9 @@ func (c *Controller) SignUp(ctx *gin.Context) {
 	}
 
 	// Populate session info from request context
-	c.populateSessionInfo(ctx, &in.Session)
+	c.populateSessionInfo(ctx, in.Session)
 
-	out, err := c.u.User.Client.SignUp(ctx.Request.Context(), &in)
+	out, err := c.u.User.Client().SignUp(ctx.Request.Context(), &in)
 	if err != nil {
 		response.RespondWithError(ctx, err, http.StatusInternalServerError)
 		return

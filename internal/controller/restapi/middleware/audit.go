@@ -96,7 +96,7 @@ func (m *AuditMiddleware) EndpointHistory() gin.HandlerFunc {
 			ctx, cancel := context.WithTimeout(context.Background(), consts.AuditPersistTimeout*time.Second)
 			defer cancel()
 
-			err := m.uc.Audit.History.Create(ctx, h)
+			err := m.uc.Audit.History().Create(ctx, h)
 			if err != nil {
 				m.logger.Errorw("failed to save endpoint history", zap.Error(err))
 			}
@@ -165,7 +165,7 @@ func (m *AuditMiddleware) ChangeAudit() gin.HandlerFunc {
 			ctx, cancel := context.WithTimeout(context.Background(), consts.AuditPersistTimeout*time.Second)
 			defer cancel()
 
-			err := m.uc.Audit.Log.Create(ctx, al)
+			err := m.uc.Audit.Log().Create(ctx, al)
 			if err != nil {
 				m.logger.Errorw("failed to save change audit log", zap.Error(err))
 			}

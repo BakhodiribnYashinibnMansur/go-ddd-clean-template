@@ -5,6 +5,8 @@ import (
 	"gct/config"
 	"gct/internal/controller/restapi/v1/audit/history"
 	"gct/internal/controller/restapi/v1/audit/log"
+	"gct/internal/controller/restapi/v1/audit/metric"
+
 	"gct/internal/usecase"
 	"gct/pkg/logger"
 )
@@ -14,6 +16,7 @@ import (
 type Controller struct {
 	Log     log.ControllerI     // Handles permanent records of business actions.
 	History history.ControllerI // Handles transient records of API endpoint access.
+	Metric  metric.ControllerI  // Handles function execution metrics.
 }
 
 // New initializes a composite Audit controller by instantiating its dependent sub-controllers.
@@ -21,5 +24,6 @@ func New(u *usecase.UseCase, cfg *config.Config, l logger.Log) *Controller {
 	return &Controller{
 		Log:     log.New(u, cfg, l),
 		History: history.New(u, cfg, l),
+		Metric:  metric.New(u, cfg, l),
 	}
 }

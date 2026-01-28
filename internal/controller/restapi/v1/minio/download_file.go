@@ -14,8 +14,8 @@ import (
 // @Summary     Download file
 // @Description Download a file by path
 // @Tags        files
-// @Produce     octet-stream
-// @Param       file-path query string true "File path"
+// @Produce     octet-stream,json
+// @Param       file-path query string true "File path" minLength(1)
 // @Success     200 {string} string "File content"
 // @Failure     400 {object} response.ErrorResponse
 // @Router      /files/download [get]

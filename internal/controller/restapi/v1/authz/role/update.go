@@ -20,6 +20,8 @@ import (
 // @Param       role_id path string true "Role ID"
 // @Param       request body domain.Role true "Role update body"
 // @Success     200 {object} response.SuccessResponse
+// @Failure     401 {object} response.ErrorResponse
+// @Failure     403 {object} response.ErrorResponse
 // @Failure     400 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
 // @Security    BearerAuth
@@ -35,7 +37,7 @@ func (c *Controller) Update(ctx *gin.Context) {
 	var role domain.Role
 	if err := ctx.ShouldBindJSON(&role); err != nil {
 		httpx.LogError(c.l, err, "http - v1 - authz - role - update - bind")
-		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid request body", nil, false)
+		response.RespondWithError(ctx, err, http.StatusBadRequest)
 		return
 	}
 	role.ID = id
@@ -44,7 +46,7 @@ func (c *Controller) Update(ctx *gin.Context) {
 		return
 	}
 
-	err = c.u.Authz.Role.Update(ctx.Request.Context(), &role)
+	err = c.u.Authz.Role().Update(ctx.Request.Context(), &role)
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusInternalServerError, err, nil, false)
 		return

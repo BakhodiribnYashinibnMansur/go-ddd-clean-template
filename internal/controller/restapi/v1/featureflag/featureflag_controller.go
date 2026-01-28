@@ -5,6 +5,7 @@ package featureflag
 import (
 	"net/http"
 
+	_ "gct/internal/controller/restapi/response"
 	"gct/pkg/featureflag"
 	"gct/pkg/logger"
 
@@ -30,9 +31,12 @@ func NewFeatureFlagController(logger logger.Log) *FeatureFlagController {
 // @Tags feature-flags
 // @Accept json
 // @Produce json
-// @Failure 500 {object} response.SuccessResponse
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
 // @Security BearerAuth
-// @Router /api/v1/featureflag/boolean [get]
+// @Router /featureflag/boolean [get]
 func (ctrl *FeatureFlagController) ExampleBooleanFlag(c *gin.Context) {
 	ctx := c.Request.Context()
 
@@ -58,9 +62,12 @@ func (ctrl *FeatureFlagController) ExampleBooleanFlag(c *gin.Context) {
 // @Tags feature-flags
 // @Accept json
 // @Produce json
-// @Failure 500 {object} response.SuccessResponse
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
 // @Security BearerAuth
-// @Router /api/v1/featureflag/string [get]
+// @Router /featureflag/string [get]
 func (ctrl *FeatureFlagController) ExampleStringVariation(c *gin.Context) {
 	ctx := c.Request.Context()
 
@@ -81,9 +88,12 @@ func (ctrl *FeatureFlagController) ExampleStringVariation(c *gin.Context) {
 // @Tags feature-flags
 // @Accept json
 // @Produce json
-// @Failure 500 {object} response.SuccessResponse
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
 // @Security BearerAuth
-// @Router /api/v1/featureflag/int [get]
+// @Router /featureflag/int [get]
 func (ctrl *FeatureFlagController) ExampleIntVariation(c *gin.Context) {
 	ctx := c.Request.Context()
 
@@ -105,9 +115,12 @@ func (ctrl *FeatureFlagController) ExampleIntVariation(c *gin.Context) {
 // @Tags feature-flags
 // @Accept json
 // @Produce json
-// @Failure 500 {object} response.SuccessResponse
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
 // @Security BearerAuth
-// @Router /api/v1/featureflag/json [get]
+// @Router /featureflag/json [get]
 func (ctrl *FeatureFlagController) ExampleJSONVariation(c *gin.Context) {
 	ctx := c.Request.Context()
 
@@ -136,9 +149,12 @@ func (ctrl *FeatureFlagController) ExampleJSONVariation(c *gin.Context) {
 // @Param user_id query string false "Unique identity for targeting"
 // @Param email query string false "Email address for precise targeting"
 // @Param plan query string false "Segment identifier (free/premium)"
-// @Failure 500 {object} response.SuccessResponse
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
 // @Security BearerAuth
-// @Router /api/v1/featureflag/targeting [get]
+// @Router /featureflag/targeting [get]
 func (ctrl *FeatureFlagController) ExampleUserTargeting(c *gin.Context) {
 	ctx := c.Request.Context()
 
@@ -184,9 +200,12 @@ func (ctrl *FeatureFlagController) ExampleUserTargeting(c *gin.Context) {
 // @Tags feature-flags
 // @Accept json
 // @Produce json
-// @Failure 500 {object} response.SuccessResponse
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
 // @Security BearerAuth
-// @Router /api/v1/featureflag/rollout [get]
+// @Router /featureflag/rollout [get]
 func (ctrl *FeatureFlagController) ExamplePercentageRollout(c *gin.Context) {
 	ctx := c.Request.Context()
 

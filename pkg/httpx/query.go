@@ -288,9 +288,21 @@ func GetPagination(ctx *gin.Context) (domain.Pagination, error) {
 	if err != nil {
 		return domain.Pagination{}, err
 	}
-	if limit == 0 {
-		limit = 20
+
+	// Default limit
+	if limit <= 0 {
+		limit = 10
 	}
+
+	// Hard limit to prevent deep pagination abuse or large memory usage
+	if limit > 1000 {
+		return domain.Pagination{}, fmt.Errorf("%w: limit cannot exceed 1000", ErrParamIsInvalid)
+	}
+
+	if offset < 0 {
+		return domain.Pagination{}, fmt.Errorf("%w: offset cannot be negative", ErrParamIsInvalid)
+	}
+
 	return domain.Pagination{Limit: limit, Offset: offset}, nil
 }
 

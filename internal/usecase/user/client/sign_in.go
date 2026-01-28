@@ -15,7 +15,18 @@ import (
 )
 
 func (uc *UseCase) SignIn(ctx context.Context, in *domain.SignInIn) (*domain.SignInOut, error) {
-	uc.logger.Infoc(ctx, "user sign in started", "login", in.Login)
+	// Internal helper to get string from pointer
+	strVal := func(s *string) string {
+		if s == nil {
+			return ""
+		}
+		return *s
+	}
+
+	login := strVal(in.Login)
+	password := strVal(in.Password)
+
+	uc.logger.Infoc(ctx, "user sign in started", "login", login)
 
 	// Validate input
 	if err := validator.ValidateStruct(in); err != nil {
@@ -25,13 +36,13 @@ func (uc *UseCase) SignIn(ctx context.Context, in *domain.SignInIn) (*domain.Sig
 	var user *domain.User
 	var err error
 
-	if in.Login != "" {
+	if login != "" {
 		// Simple heuristic: if it contains '@', it's an email, otherwise phone
 		// This can be improved with proper validation if needed
-		if strings.Contains(in.Login, "@") {
-			user, err = uc.repo.Postgres.User.Client.Get(ctx, &domain.UserFilter{Email: &in.Login})
+		if strings.Contains(login, "@") {
+			user, err = uc.repo.Postgres.User.Client.Get(ctx, &domain.UserFilter{Email: &login})
 		} else {
-			user, err = uc.repo.Postgres.User.Client.GetByPhone(ctx, in.Login)
+			user, err = uc.repo.Postgres.User.Client.GetByPhone(ctx, login)
 		}
 	} else {
 		return nil, domain.ErrInvalidPassword
@@ -39,10 +50,11 @@ func (uc *UseCase) SignIn(ctx context.Context, in *domain.SignInIn) (*domain.Sig
 
 	if err != nil {
 		uc.logger.Errorc(ctx, "user sign in failed: get user", "error", err)
-		return nil, apperrors.MapRepoToServiceError(err).WithInput(in)
+		// Return generic error to avoid user enumeration and match documented responses (401/400)
+		return nil, domain.ErrInvalidPassword
 	}
 
-	if !user.ComparePassword(in.Password) {
+	if !user.ComparePassword(password) {
 		err := domain.ErrInvalidPassword
 		uc.logger.Errorc(ctx, "user sign in failed: invalid password", "error", err)
 		return nil, apperrors.MapRepoToServiceError(err).WithInput(in)

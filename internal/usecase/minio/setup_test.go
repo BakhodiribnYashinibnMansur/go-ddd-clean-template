@@ -10,13 +10,14 @@ import (
 	miniorepo "gct/internal/repo/persistent/minio"
 	"gct/internal/usecase/minio"
 	"gct/pkg/logger"
+
 	"github.com/johannesboyne/gofakes3"
 	"github.com/johannesboyne/gofakes3/backend/s3mem"
 	minioclient "github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
-func setup(t *testing.T) *minio.UseCase {
+func setup(t *testing.T) minio.Interface {
 	// Setup fake S3
 	backend := s3mem.New()
 	faker := gofakes3.New(backend)

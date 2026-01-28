@@ -39,7 +39,7 @@ func New(u *usecase.UseCase, cfg *config.Config, l logger.Log) ControllerI {
 	// Pre-parse the private key for signing tokens once during startup.
 	pk, err := jwt.ParseRSAPrivateKey(cfg.JWT.PrivateKey)
 	if err != nil {
-		l.Fatal("AuthController - New - parsedPrivateKey error", err)
+		l.Warn("AuthController - New - parsedPrivateKey error or missing. JWT signing will be disabled.", err)
 	}
 
 	// Initialize the CSRF protection engine with the configured global secret.

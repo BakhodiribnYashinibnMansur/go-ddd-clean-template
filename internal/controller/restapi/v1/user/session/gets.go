@@ -4,9 +4,10 @@ import (
 	"net/http"
 
 	"gct/internal/controller/restapi/response"
-	"gct/pkg/httpx"
 	"gct/internal/domain"
 	"gct/internal/domain/mock"
+	"gct/pkg/httpx"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -19,7 +20,9 @@ import (
 // @Param       offset  query int false "Offset"
 // @Param       limit   query int false "Limit"
 // @Success     200 {object} response.SuccessResponse
+// @Failure     400 {object} response.ErrorResponse
 // @Failure     401 {object} response.ErrorResponse
+// @Failure     403 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
 // @Security    BearerAuth
 // @Router      /sessions [get]
@@ -43,12 +46,12 @@ func (c *Controller) Sessions(ctx *gin.Context) {
 		Pagination: &pagination,
 	}
 
-// Handle mock mode
+	// Handle mock mode
 	if httpx.Mock(ctx, httpx.MockTypeGets, func(count int) any { return mock.Sessions(count) }) {
 		return
 	}
 
-	sessions, total, err := c.s.User.Session.Gets(ctx.Request.Context(), filter)
+	sessions, total, err := c.s.User.Session().Gets(ctx.Request.Context(), filter)
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusInternalServerError, err, nil, false)
 		return

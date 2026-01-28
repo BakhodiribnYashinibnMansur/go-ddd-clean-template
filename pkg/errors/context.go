@@ -261,6 +261,14 @@ func (e *AppError) WithTag(tag string) *AppError {
 func (e *AppError) GetMetadata() ErrorMetadata {
 	meta := GetErrorMetadata(e.Type)
 
+	// Use native fields if set
+	if e.Severity != "" {
+		meta.Severity = e.Severity
+	}
+	if e.Category != "" {
+		meta.Category = e.Category
+	}
+
 	// Override with custom data from Fields if present
 	if e.Fields != nil {
 		if tags, ok := e.Fields["tags"].([]string); ok {

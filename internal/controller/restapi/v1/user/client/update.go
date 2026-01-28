@@ -5,8 +5,9 @@ import (
 
 	"gct/consts"
 	"gct/internal/controller/restapi/response"
-	"gct/pkg/httpx"
 	"gct/internal/domain"
+	"gct/pkg/httpx"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -20,6 +21,8 @@ import (
 // @Param       request body domain.User true "User update query"
 // @Success     200 {object} response.SuccessResponse
 // @Failure     400 {object} response.ErrorResponse
+// @Failure     401 {object} response.ErrorResponse
+// @Failure     403 {object} response.ErrorResponse
 // @Failure     404 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
 // @Security    BearerAuth
@@ -35,17 +38,17 @@ func (c *Controller) Update(ctx *gin.Context) {
 	var user domain.User
 	if err := ctx.ShouldBindJSON(&user); err != nil {
 		httpx.LogError(c.l, err, "http - v1 - client - update - bind")
-		response.ControllerResponse(ctx, http.StatusBadRequest, "invalid request body", nil, false)
+		response.RespondWithError(ctx, err, http.StatusBadRequest)
 		return
 	}
 	user.ID = id
 
-// Handle mock mode
+	// Handle mock mode
 	if httpx.Mock(ctx, httpx.MockTypeUpdate, "User updated successfully") {
 		return
 	}
 
-	err = c.u.User.Client.Update(ctx.Request.Context(), &user)
+	err = c.u.User.Client().Update(ctx.Request.Context(), &user)
 	if err != nil {
 		response.RespondWithError(ctx, err, http.StatusInternalServerError)
 		return

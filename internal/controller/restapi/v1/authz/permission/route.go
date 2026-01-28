@@ -2,6 +2,7 @@ package permission
 
 import (
 	"gct/consts"
+
 	"github.com/gin-gonic/gin"
 )
 

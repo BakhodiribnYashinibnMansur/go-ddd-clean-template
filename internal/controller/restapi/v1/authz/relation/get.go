@@ -20,6 +20,8 @@ import (
 // @Produce     json
 // @Param       relation_id path string true "Relation ID"
 // @Success     200 {object} response.SuccessResponse
+// @Failure     401 {object} response.ErrorResponse
+// @Failure     403 {object} response.ErrorResponse
 // @Failure     400 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
 // @Security    BearerAuth
@@ -37,7 +39,7 @@ func (c *Controller) Get(ctx *gin.Context) {
 		return
 	}
 
-	relation, err := c.u.Authz.Relation.Get(ctx.Request.Context(), &domain.RelationFilter{ID: &id})
+	relation, err := c.u.Authz.Relation().Get(ctx.Request.Context(), &domain.RelationFilter{ID: &id})
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusInternalServerError, err, nil, false)
 		return

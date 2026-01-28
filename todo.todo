@@ -8,3 +8,6 @@ rbac, users, system logs, endpoint logs
 
 admen panelda uida socket bilan audit va endpointlar loglarini olib turish. 
 server monitoring qo'shish kerak. menuga. va dashboard. 
+
+error_code sihlamangan. 
+test tools qo'shish kerak. 

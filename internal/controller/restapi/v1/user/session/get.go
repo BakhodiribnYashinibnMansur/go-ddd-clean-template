@@ -19,6 +19,8 @@ import (
 // @Produce     json
 // @Param       id  path string true "Session UUID"
 // @Success     200 {object} response.SuccessResponse
+// @Failure     401 {object} response.ErrorResponse
+// @Failure     403 {object} response.ErrorResponse
 // @Failure     400 {object} response.ErrorResponse
 // @Failure     500 {object} response.ErrorResponse
 // @Security    BearerAuth
@@ -37,7 +39,7 @@ func (c *Controller) Session(ctx *gin.Context) {
 	}
 
 	filter := &domain.SessionFilter{ID: &id}
-	session, err := c.s.User.Session.Get(ctx.Request.Context(), filter)
+	session, err := c.s.User.Session().Get(ctx.Request.Context(), filter)
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusInternalServerError, err, nil, false)
 		return

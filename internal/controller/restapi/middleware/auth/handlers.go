@@ -73,7 +73,7 @@ func (m *AuthMiddleware) AuthClientRefresh(ctx *gin.Context) {
 		return
 	}
 
-	session, err := (*m.sessionuc).Get(ctx, &domain.SessionFilter{ID: &sessionID})
+	session, err := m.sessionuc.Get(ctx, &domain.SessionFilter{ID: &sessionID})
 	if err != nil {
 		m.l.Errorw("AuthMiddleware - AuthClientRefresh - session not found", "error", err)
 		response.ControllerResponse(ctx, http.StatusUnauthorized, httpx.ErrInvalidRefreshSession, nil, false)
@@ -120,7 +120,7 @@ func (m *AuthMiddleware) AuthAdmin(ctx *gin.Context) {
 	}
 
 	// Verify administrative status
-	user, err := (*m.userUC).Get(ctx, &domain.UserFilter{ID: &session.UserID})
+	user, err := m.userUC.Get(ctx, &domain.UserFilter{ID: &session.UserID})
 	if err != nil {
 		m.l.Errorw("AuthMiddleware - AuthAdmin - User Get", "error", err)
 		response.ControllerResponse(ctx, http.StatusUnauthorized, httpx.ErrUserNotFound, nil, false)
@@ -135,7 +135,7 @@ func (m *AuthMiddleware) AuthAdmin(ctx *gin.Context) {
 		return
 	}
 
-	role, err := m.authzUC.Role.Get(ctx, &domain.RoleFilter{ID: user.RoleID})
+	role, err := m.authzUC.Role().Get(ctx, &domain.RoleFilter{ID: user.RoleID})
 	if err != nil {
 		m.l.Errorw("AuthMiddleware - AuthAdmin - Role Get", "error", err)
 		response.ControllerResponse(ctx, http.StatusForbidden, httpx.ErrAccessDenied, nil, false)
