@@ -57,11 +57,9 @@ func RateLimiter(cfg config.Limiter, client *libredis.Client, l logger.Log) gin.
 
 	// Construct the Gin-specific middleware adapter.
 	return mgin.NewMiddleware(instance, mgin.WithErrorHandler(func(c *gin.Context, err error) {
-		// Log internal failures in the limiter logic, but do not block user.
-		// (Note: The default behavior of some limiters is to block on error, here we explicitly handle errors)
-		l.Errorw("rate limiter error", zap.Error(err))
-		response.ControllerResponse(c, http.StatusInternalServerError, httpx.ErrRateLimitInternal, nil, false)
-		c.Abort()
+		// Log internal failures in the limiter logic, but do not block user (Fail Open).
+		l.Warnw("rate limiter error - failing open", zap.String("error", err.Error()))
+		c.Next()
 	}), mgin.WithLimitReachedHandler(func(c *gin.Context) {
 		// Handle cases where the client exceeds their allowed quota.
 		l.Warnw("rate limit reached",

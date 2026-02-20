@@ -37,6 +37,7 @@ public_test.pem
 .go-cache/
 .gopath/
 .tmp/
+.cache/
 tmp/
 .air/
 **/genproto/

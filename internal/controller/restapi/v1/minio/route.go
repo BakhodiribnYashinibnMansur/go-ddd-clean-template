@@ -7,10 +7,11 @@ import (
 
 // MinioRoute registers routes for file uploads, downloads, and transfers.
 // Authentication and CSRF protection are applied to mutation endpoints (upload and transfer).
-func MinioRoute(h *gin.RouterGroup, minio *Controller, authMiddleware gin.HandlerFunc, csrfMiddleware gin.HandlerFunc) {
+func MinioRoute(h *gin.RouterGroup, minio *Controller, authMiddleware gin.HandlerFunc, authzMiddleware gin.HandlerFunc, csrfMiddleware gin.HandlerFunc) {
 	// UPLOAD Group: Restricted to authenticated users with CSRF tokens.
 	upload := h.Group("files/upload")
 	upload.Use(authMiddleware)
+	upload.Use(authzMiddleware)
 	upload.Use(csrfMiddleware)
 	{
 		upload.POST("/images", minio.UploadImages) // Batch upload for image files.
@@ -21,6 +22,7 @@ func MinioRoute(h *gin.RouterGroup, minio *Controller, authMiddleware gin.Handle
 
 	// DOWNLOAD Group: Public access for file retrieval.
 	download := h.Group("files/download")
+	download.Use(authzMiddleware)
 	{
 		download.GET("", minio.DownloadFile)
 	}
@@ -28,6 +30,7 @@ func MinioRoute(h *gin.RouterGroup, minio *Controller, authMiddleware gin.Handle
 	// TRANSFER Group: Restricted endpoints for moving/managing files within buckets.
 	transfer := h.Group("files/transfer")
 	transfer.Use(authMiddleware)
+	transfer.Use(authzMiddleware)
 	transfer.Use(csrfMiddleware)
 	{
 		transfer.POST("", minio.TransferFile)

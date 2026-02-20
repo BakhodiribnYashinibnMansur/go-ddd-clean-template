@@ -5,7 +5,6 @@ import (
 
 	"gct/consts"
 	"gct/internal/domain"
-	"gct/internal/repo/schema"
 	apperrors "gct/pkg/errors"
 
 	"github.com/Masterminds/squirrel"
@@ -14,23 +13,23 @@ import (
 func (r *Repo) Gets(ctx context.Context, filter *domain.UsersFilter) ([]*domain.User, int, error) {
 	// Base query
 	baseQb := r.builder.Select(
-		schema.UsersID,
-		schema.UsersRoleID,
-		schema.UsersUsername,
-		schema.UsersEmail,
-		schema.UsersPhone,
-		schema.UsersPasswordHash,
-		schema.UsersSalt,
-		schema.UsersAttributes,
-		schema.UsersActive,
-		schema.UsersIsApproved,
-		schema.UsersCreatedAt,
-		schema.UsersUpdatedAt,
-		schema.UsersDeletedAt,
-		schema.UsersLastSeen,
+		"id",
+		"role_id",
+		"username",
+		"email",
+		"phone",
+		"password_hash",
+		"salt",
+		"attributes",
+		"active",
+		"is_approved",
+		"created_at",
+		"updated_at",
+		"deleted_at",
+		"last_seen",
 	).
 		From(tableName).
-		Where(schema.UsersDeletedAt + " = 0")
+		Where("deleted_at" + " = 0")
 
 	// Apply dynamic filters
 	qb := r.applyFilters(baseQb, &filter.UserFilter)
@@ -44,7 +43,7 @@ func (r *Repo) Gets(ctx context.Context, filter *domain.UsersFilter) ([]*domain.
 			}
 			qb = qb.OrderBy(filter.Pagination.SortBy + " " + order)
 		} else {
-			qb = qb.OrderBy(schema.UsersCreatedAt + " DESC")
+			qb = qb.OrderBy("created_at" + " DESC")
 		}
 		qb = qb.Limit(uint64(filter.Pagination.Limit)).Offset(uint64(filter.Pagination.Offset))
 	}
@@ -73,13 +72,45 @@ func (r *Repo) Gets(ctx context.Context, filter *domain.UsersFilter) ([]*domain.
 		users = append(users, &u)
 	}
 
+	// Fetch attributes for all users (batch)
+	// This block is no longer needed as attributes are fetched directly in the main query
+	// if len(users) > 0 {
+	// 	userIDs := make([]any, len(users))
+	// 	userMap := make(map[string]*domain.User)
+	// 	for i, u := range users {
+	// 		userIDs[i] = u.ID
+	// 		userMap[u.ID.String()] = u
+	// 		u.Attributes = make(map[string]any)
+	// 	}
+
+	// 	attrSql, attrArgs, err := r.builder.Select("user_id", "key", "value").
+	// 		From("user_attributes").
+	// 		Where(squirrel.Eq{"user_id": userIDs}).
+	// 		ToSql()
+
+	// 	if err == nil {
+	// 		rows, err := r.pool.Query(ctx, attrSql, attrArgs...)
+	// 		if err == nil {
+	// 			defer rows.Close()
+	// 			for rows.Next() {
+	// 				var uid, key, value string
+	// 				if err := rows.Scan(&uid, &key, &value); err == nil {
+	// 					if u, ok := userMap[uid]; ok {
+	// 						u.Attributes[key] = value
+	// 					}
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+	// }
+
 	if err := rows.Err(); err != nil {
 		return nil, 0, apperrors.HandlePgError(err, tableName, nil)
 	}
 
 	// Count Query
 	// Start fresh from builder but reuse filter logic
-	countBaseQb := r.builder.Select("COUNT(*)").From(tableName).Where(schema.UsersDeletedAt + " = 0")
+	countBaseQb := r.builder.Select("COUNT(*)").From(tableName).Where("deleted_at" + " = 0")
 	countQb := r.applyFilters(countBaseQb, &filter.UserFilter)
 
 	countSql, countArgs, err := countQb.ToSql()
@@ -96,25 +127,25 @@ func (r *Repo) Gets(ctx context.Context, filter *domain.UsersFilter) ([]*domain.
 
 func (r *Repo) applyFilters(qb squirrel.SelectBuilder, filter *domain.UserFilter) squirrel.SelectBuilder {
 	if filter.ID != nil {
-		qb = qb.Where(squirrel.Eq{schema.UsersID: *filter.ID})
+		qb = qb.Where(squirrel.Eq{"id": *filter.ID})
 	}
 	if filter.RoleID != nil {
-		qb = qb.Where(squirrel.Eq{schema.UsersRoleID: *filter.RoleID})
+		qb = qb.Where(squirrel.Eq{"role_id": *filter.RoleID})
 	}
 	if filter.Username != nil {
-		qb = qb.Where(squirrel.Eq{schema.UsersUsername: *filter.Username})
+		qb = qb.Where(squirrel.Eq{"username": *filter.Username})
 	}
 	if filter.Phone != nil {
-		qb = qb.Where(squirrel.Eq{schema.UsersPhone: *filter.Phone})
+		qb = qb.Where(squirrel.Eq{"phone": *filter.Phone})
 	}
 	if filter.Email != nil {
-		qb = qb.Where(squirrel.Eq{schema.UsersEmail: *filter.Email})
+		qb = qb.Where(squirrel.Eq{"email": *filter.Email})
 	}
 	if filter.Active != nil {
-		qb = qb.Where(squirrel.Eq{schema.UsersActive: *filter.Active})
+		qb = qb.Where(squirrel.Eq{"active": *filter.Active})
 	}
 	if filter.IsApproved != nil {
-		qb = qb.Where(squirrel.Eq{schema.UsersIsApproved: *filter.IsApproved})
+		qb = qb.Where(squirrel.Eq{"is_approved": *filter.IsApproved})
 	}
 	return qb
 }

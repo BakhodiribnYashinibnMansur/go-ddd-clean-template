@@ -7,7 +7,6 @@ import (
 	"runtime/debug"
 
 	"gct/consts"
-	"gct/internal/repo/schema"
 	"gct/pkg/errorx"
 )
 
@@ -60,19 +59,19 @@ func (r *Repo) CreateSystemError(ctx context.Context, input CreateSystemErrorInp
 	}
 
 	query, args, err := r.db.Builder.
-		Insert(schema.TableSystemError).
+		Insert("system_errors").
 		Columns(
-			schema.SystemErrorCode,
-			schema.SystemErrorMessage,
-			schema.SystemErrorStackTrace,
-			schema.SystemErrorMetadata,
-			schema.SystemErrorSeverity,
-			schema.SystemErrorServiceName,
-			schema.SystemErrorRequestID,
-			schema.SystemErrorUserID,
-			schema.SystemErrorIPAddress,
-			schema.SystemErrorPath,
-			schema.SystemErrorMethod,
+			"code",
+			"message",
+			"stack_trace",
+			"metadata",
+			"severity",
+			"service_name",
+			"request_id",
+			"user_id",
+			"ip_address",
+			"path",
+			"method",
 		).
 		Values(
 			input.Code,
@@ -88,22 +87,22 @@ func (r *Repo) CreateSystemError(ctx context.Context, input CreateSystemErrorInp
 			input.Method,
 		).
 		Suffix("RETURNING " +
-			schema.SystemErrorID + ", " +
-			schema.SystemErrorCode + ", " +
-			schema.SystemErrorMessage + ", " +
-			schema.SystemErrorStackTrace + ", " +
-			schema.SystemErrorMetadata + ", " +
-			schema.SystemErrorSeverity + ", " +
-			schema.SystemErrorServiceName + ", " +
-			schema.SystemErrorRequestID + ", " +
-			schema.SystemErrorUserID + ", " +
-			schema.SystemErrorIPAddress + ", " +
-			schema.SystemErrorPath + ", " +
-			schema.SystemErrorMethod + ", " +
-			schema.SystemErrorIsResolved + ", " +
-			schema.SystemErrorResolvedAt + ", " +
-			schema.SystemErrorResolvedBy + ", " +
-			schema.SystemErrorCreatedAt).
+			"id" + ", " +
+			"code" + ", " +
+			"message" + ", " +
+			"stack_trace" + ", " +
+			"metadata" + ", " +
+			"severity" + ", " +
+			"service_name" + ", " +
+			"request_id" + ", " +
+			"user_id" + ", " +
+			"ip_address" + ", " +
+			"path" + ", " +
+			"method" + ", " +
+			"is_resolved" + ", " +
+			"resolved_at" + ", " +
+			"resolved_by" + ", " +
+			"created_at").
 		ToSql()
 
 	if err != nil {

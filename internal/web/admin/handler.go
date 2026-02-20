@@ -82,9 +82,11 @@ func (h *Handler) Register(r *gin.RouterGroup, authmw *auth.AuthMiddleware) {
 	protected.GET("/linter", h.Linter)
 	protected.POST("/linter/run", h.RunLinter)
 	// Asynq Monitor
-	mon := h.NewAsynqMonitor()
-	protected.Any("/asynq/*filepath", gin.WrapH(mon))
-	protected.GET("/asynq", gin.WrapH(mon))
+	if h.cfg.Asynq.Enabled {
+		mon := h.NewAsynqMonitor()
+		protected.Any("/asynq/*filepath", gin.WrapH(mon))
+		protected.GET("/asynq", gin.WrapH(mon))
+	}
 
 	protected.GET("/settings", h.Settings)
 	protected.POST("/settings/:id", h.UpdateSetting)
@@ -184,6 +186,7 @@ func (h *Handler) MonitoringOverview(ctx *gin.Context) {
 func (h *Handler) ToolsOverview(ctx *gin.Context) {
 	data := map[string]any{
 		"LinterStatus": "Active",
+		"AsynqEnabled": h.cfg.Asynq.Enabled,
 	}
 	h.servePage(ctx, "section_tools.html", "Tools & Settings", "tools_overview", data)
 }
@@ -247,9 +250,11 @@ func (h *Handler) LoginPost(ctx *gin.Context) {
 	signInInput := &domain.SignInIn{
 		Login:    strPtr(email),
 		Password: strPtr(password),
+		Session: &domain.SessionIn{
+			IP:        ip,
+			UserAgent: ua,
+		},
 	}
-	signInInput.Session.IP = ip
-	signInInput.Session.UserAgent = ua
 	res, err := h.uc.User.Client().SignIn(ctx.Request.Context(), signInInput)
 	if err != nil {
 		h.l.Warnw("login failed", "email", email, "error", err)
@@ -285,6 +290,7 @@ type PageData struct {
 	User           *domain.User
 	Can            map[string]bool
 	TracingEnabled bool
+	AsynqEnabled   bool
 	JaegerURL      string
 	RoleName       string
 	Data           any
@@ -312,6 +318,7 @@ func (h *Handler) servePage(ctx *gin.Context, tmplName, title, activeMenu string
 		ActiveMenu:     activeMenu,
 		User:           user,
 		TracingEnabled: h.cfg.Tracing.Enabled,
+		AsynqEnabled:   h.cfg.Asynq.Enabled,
 		JaegerURL:      h.cfg.Tracing.Jaeger.URL,
 		RoleName:       roleName,
 		Data:           data,
@@ -538,10 +545,8 @@ func (h *Handler) RevokeSession(ctx *gin.Context) {
 		return
 	}
 
-	revoke := true
 	filter := &domain.SessionFilter{
-		ID:      &id,
-		Revoked: &revoke,
+		ID: &id,
 	}
 
 	err = h.uc.User.Session().Revoke(ctx.Request.Context(), filter)
@@ -839,7 +844,7 @@ func (h *Handler) RegisterPost(ctx *gin.Context) {
 		u.RoleID = &adminRole.ID
 	}
 
-	u.IsApproved = false // Auto-approve all users
+	u.IsApproved = isFirstUser // First user auto-approved, others require admin approval
 	u.Active = true
 
 	err = h.uc.User.Client().Create(ctx.Request.Context(), u)
@@ -942,7 +947,18 @@ func (h *Handler) CreateUserPost(ctx *gin.Context) {
 }
 
 func (h *Handler) Profile(ctx *gin.Context) {
-	h.servePage(ctx, "profile.html", "Profile", "profile", nil)
+	var user *domain.User
+	if u, exists := ctx.Get(consts.CtxUser); exists {
+		if usr, ok := u.(*domain.User); ok {
+			user = usr
+		}
+	}
+
+	h.servePage(ctx, "profile.html", "Profile", "profile", map[string]any{
+		"User":     user,
+		"RoleName": ctx.GetString(consts.CtxRoleTitle),
+		"Query":    ctx.Request.URL.Query(),
+	})
 }
 
 func (h *Handler) UserAction(ctx *gin.Context) {

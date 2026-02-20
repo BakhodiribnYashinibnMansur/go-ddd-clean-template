@@ -6,7 +6,6 @@ import (
 
 	"gct/consts"
 	"gct/internal/domain"
-	"gct/internal/repo/schema"
 	apperrors "gct/pkg/errors"
 
 	"github.com/Masterminds/squirrel"
@@ -17,13 +16,13 @@ func (r *Repo) Update(ctx context.Context, setting *domain.SiteSetting) error {
 
 	sql, args, err := r.builder.
 		Update(tableName).
-		Set(schema.SiteSettingValue, setting.Value).
-		Set(schema.SiteSettingValueType, setting.ValueType).
-		Set(schema.SiteSettingCategory, setting.Category).
-		Set(schema.SiteSettingDescription, setting.Description).
-		Set(schema.SiteSettingIsPublic, setting.IsPublic).
-		Set(schema.SiteSettingUpdatedAt, setting.UpdatedAt).
-		Where(squirrel.Eq{schema.SiteSettingID: setting.ID}).
+		Set("value", setting.Value).
+		Set("value_type", setting.ValueType).
+		Set("category", setting.Category).
+		Set("description", setting.Description).
+		Set("is_public", setting.IsPublic).
+		Set("updated_at", setting.UpdatedAt).
+		Where(squirrel.Eq{"id": setting.ID}).
 		ToSql()
 	if err != nil {
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildUpdate)

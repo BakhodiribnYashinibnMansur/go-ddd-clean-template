@@ -33,9 +33,20 @@ func (uc *UseCase) SignUp(ctx context.Context, in *domain.SignUpIn) (*domain.Sig
 		username = &usernameStr
 	}
 
+	// Assign default "user" role
+	defaultRoleName := "user"
+	defaultRole, err := uc.repo.Postgres.Authz.Role.Get(ctx, &domain.RoleFilter{Name: &defaultRoleName})
+	if err != nil {
+		uc.logger.Errorc(ctx, "user sign up failed: get default role", "error", err)
+		return nil, apperrors.MapRepoToServiceError(err).WithInput(in)
+	}
+
 	user := &domain.User{
 		Username:   username,
 		Phone:      &phone,
+		RoleID:     &defaultRole.ID,
+		Active:     true,
+		IsApproved: true,
 		Attributes: make(map[string]any),
 	}
 
@@ -44,7 +55,7 @@ func (uc *UseCase) SignUp(ctx context.Context, in *domain.SignUpIn) (*domain.Sig
 		return nil, apperrors.MapRepoToServiceError(err).WithInput(in)
 	}
 
-	err := uc.Create(ctx, user)
+	err = uc.Create(ctx, user)
 	if err != nil {
 		return nil, err
 	}
@@ -54,10 +65,12 @@ func (uc *UseCase) SignUp(ctx context.Context, in *domain.SignUpIn) (*domain.Sig
 	signInInput := &domain.SignInIn{
 		Login:    &phone,
 		Password: &password,
+		Session: &domain.SessionIn{
+			DeviceID:  in.Session.DeviceID,
+			IP:        in.Session.IP,
+			UserAgent: in.Session.UserAgent,
+		},
 	}
-	signInInput.Session.DeviceID = in.Session.DeviceID
-	signInInput.Session.IP = in.Session.IP
-	signInInput.Session.UserAgent = in.Session.UserAgent
 
 	return uc.SignIn(ctx, signInInput)
 }

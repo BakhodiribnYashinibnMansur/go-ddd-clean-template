@@ -4,9 +4,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Route(api *gin.RouterGroup, c *Controller, authMiddleware gin.HandlerFunc, csrfMiddleware gin.HandlerFunc) {
+func Route(api *gin.RouterGroup, c *Controller, authMiddleware, authzMiddleware, csrfMiddleware gin.HandlerFunc) {
 	group := api.Group("/error-codes")
 	group.Use(authMiddleware)
+	group.Use(authzMiddleware)
 	group.Use(csrfMiddleware)
 	{
 		group.POST("", c.Create)

@@ -7,11 +7,12 @@ import (
 )
 
 // Route registers all user-facing profiling and account management endpoints.
-func Route(api *gin.RouterGroup, c ControllerI, authMiddleware, csrfMiddleware gin.HandlerFunc) {
+func Route(api *gin.RouterGroup, c ControllerI, authMiddleware, authzMiddleware, csrfMiddleware gin.HandlerFunc) {
 	users := api.Group("users")
 	{
-		// PROTECTED Domain: requires a valid access token and CSRF verification.
+		// PROTECTED Domain: requires a valid access token, fine-grained authz, and CSRF verification.
 		users.Use(authMiddleware)
+		users.Use(authzMiddleware)
 		users.Use(csrfMiddleware)
 		{
 			// Account Management

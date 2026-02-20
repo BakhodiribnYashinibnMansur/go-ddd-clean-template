@@ -2,26 +2,26 @@
 <aside class="sidebar-floating-container" id="sidebarContainer">
     <div class="sidebar" id="sidebar">
 
-        <!-- Brand/Logo Header -->
+        <!-- Brand -->
         <div class="sidebar-brand-header">
             <i class="material-symbols-outlined brand-icon">shield</i>
-            <span class="brand-text">AdminPanel</span>
+            <span class="brand-text">Admin</span>
         </div>
 
         <!-- Navigation -->
         <nav class="sidebar-nav-tree">
 
             <!-- Dashboard -->
-            <a href="/admin/dashboard" class="tree-item {{ if eq .ActiveMenu " dashboard" }}active{{ end }}"
+            <a href="/admin/dashboard" class="tree-item {{ if eq .ActiveMenu "dashboard" }}active{{ end }}"
                 title="Dashboard">
-                <i class="material-symbols-outlined tree-icon">dashboard</i>
+                <i class="material-symbols-outlined tree-icon">space_dashboard</i>
                 <span class="tree-text">Dashboard</span>
             </a>
 
-            <!-- USERS Section -->
+            <!-- USERS -->
             <div class="tree-group">
                 <div class="tree-parent" title="User Management">
-                    <a href="/admin/section/users" class="flex-center text-inherit no-underline"
+                    <a href="/admin/section/users"
                         style="flex: 1; color: inherit; text-decoration: none; display: flex; align-items: center;">
                         <i class="material-symbols-outlined tree-icon">group</i>
                         <span class="tree-text">USERS</span>
@@ -31,52 +31,54 @@
                 </div>
                 <div class="tree-children" id="users-tree">
                     <div>
-                        <a href="/admin/users" class="tree-child {{ if eq .ActiveMenu " users" }}active{{ end }}">
+                        <a href="/admin/users" class="tree-child {{ if eq .ActiveMenu "users" }}active{{ end }}">
                             <i class="material-symbols-outlined child-icon">person</i>
                             <span class="child-text">Users</span>
                         </a>
-                        <a href="/admin/approvals" class="tree-child {{ if eq .ActiveMenu " approvals" }}active{{ end
-                            }}">
+                        <a href="/admin/approvals"
+                            class="tree-child {{ if eq .ActiveMenu "approvals" }}active{{ end }}">
                             <i class="material-symbols-outlined child-icon">verified_user</i>
                             <span class="child-text">Approvals</span>
                         </a>
-                        <a href="/admin/sessions" class="tree-child {{ if eq .ActiveMenu " sessions" }}active{{ end }}">
-                            <i class="material-symbols-outlined child-icon">device_hub</i>
+                        <a href="/admin/sessions"
+                            class="tree-child {{ if eq .ActiveMenu "sessions" }}active{{ end }}">
+                            <i class="material-symbols-outlined child-icon">devices</i>
                             <span class="child-text">Sessions</span>
                         </a>
                     </div>
                 </div>
             </div>
 
-            <!-- ACCESS CONTROL Section -->
+            <!-- ACCESS CONTROL -->
             <div class="tree-group">
                 <div class="tree-parent" title="Access Control">
-                    <a href="/admin/section/access" class="flex-center text-inherit no-underline"
+                    <a href="/admin/section/access"
                         style="flex: 1; color: inherit; text-decoration: none; display: flex; align-items: center;">
                         <i class="material-symbols-outlined tree-icon">admin_panel_settings</i>
-                        <span class="tree-text">ACCESS CONTROL</span>
+                        <span class="tree-text">ACCESS</span>
                     </a>
                     <i class="material-symbols-outlined tree-chevron" id="access-chevron"
                         onclick="toggleTree('access')">expand_more</i>
                 </div>
                 <div class="tree-children" id="access-tree">
                     <div>
-                        <a href="/admin/rbac/roles" class="tree-child {{ if eq .ActiveMenu " roles" }}active{{ end }}">
+                        <a href="/admin/rbac/roles"
+                            class="tree-child {{ if eq .ActiveMenu "roles" }}active{{ end }}">
                             <i class="material-symbols-outlined child-icon">badge</i>
                             <span class="child-text">Roles</span>
                         </a>
-                        <a href="/admin/rbac/permissions" class="tree-child {{ if eq .ActiveMenu " permissions"
-                            }}active{{ end }}">
+                        <a href="/admin/rbac/permissions"
+                            class="tree-child {{ if eq .ActiveMenu "permissions" }}active{{ end }}">
                             <i class="material-symbols-outlined child-icon">key</i>
                             <span class="child-text">Permissions</span>
                         </a>
-                        <a href="/admin/rbac/scopes" class="tree-child {{ if eq .ActiveMenu " scopes" }}active{{ end
-                            }}">
+                        <a href="/admin/rbac/scopes"
+                            class="tree-child {{ if eq .ActiveMenu "scopes" }}active{{ end }}">
                             <i class="material-symbols-outlined child-icon">category</i>
                             <span class="child-text">Scopes</span>
                         </a>
-                        <a href="/admin/abac/policies" class="tree-child {{ if eq .ActiveMenu " policies" }}active{{ end
-                            }}">
+                        <a href="/admin/abac/policies"
+                            class="tree-child {{ if eq .ActiveMenu "policies" }}active{{ end }}">
                             <i class="material-symbols-outlined child-icon">policy</i>
                             <span class="child-text">Policies</span>
                         </a>
@@ -84,10 +86,10 @@
                 </div>
             </div>
 
-            <!-- DATABASE Section -->
+            <!-- DATABASE -->
             <div class="tree-group">
-                <div class="tree-parent" title="Database Management">
-                    <a href="/admin/section/database" class="flex-center text-inherit no-underline"
+                <div class="tree-parent" title="Database">
+                    <a href="/admin/section/database"
                         style="flex: 1; color: inherit; text-decoration: none; display: flex; align-items: center;">
                         <i class="material-symbols-outlined tree-icon">storage</i>
                         <span class="tree-text">DATABASE</span>
@@ -98,30 +100,30 @@
                 <div class="tree-children" id="database-tree">
                     <div>
                         <a href="/admin/database/monitoring"
-                            class="tree-child {{ if eq .ActiveMenu `database_monitoring` }}active{{ end }}">
+                            class="tree-child {{ if eq .ActiveMenu "database_monitoring" }}active{{ end }}">
                             <i class="material-symbols-outlined child-icon">monitor_heart</i>
                             <span class="child-text">Monitoring</span>
                         </a>
                         <a href="/admin/database/tables"
-                            class="tree-child {{ if eq .ActiveMenu `database_tables` }}active{{ end }}">
+                            class="tree-child {{ if eq .ActiveMenu "database_tables" }}active{{ end }}">
                             <i class="material-symbols-outlined child-icon">table_chart</i>
                             <span class="child-text">Tables</span>
                         </a>
                         <a href="/admin/database/sql-editor"
-                            class="tree-child {{ if eq .ActiveMenu `sql_editor` }}active{{ end }}">
-                            <i class="material-symbols-outlined child-icon">code</i>
+                            class="tree-child {{ if eq .ActiveMenu "sql_editor" }}active{{ end }}">
+                            <i class="material-symbols-outlined child-icon">terminal</i>
                             <span class="child-text">SQL Editor</span>
                         </a>
                     </div>
                 </div>
             </div>
 
-            <!-- MONITORING Section -->
+            <!-- MONITORING -->
             <div class="tree-group">
-                <div class="tree-parent" title="System Monitoring">
-                    <a href="/admin/section/monitoring" class="flex-center text-inherit no-underline"
+                <div class="tree-parent" title="Monitoring">
+                    <a href="/admin/section/monitoring"
                         style="flex: 1; color: inherit; text-decoration: none; display: flex; align-items: center;">
-                        <i class="material-symbols-outlined tree-icon">bar_chart</i>
+                        <i class="material-symbols-outlined tree-icon">monitoring</i>
                         <span class="tree-text">MONITORING</span>
                     </a>
                     <i class="material-symbols-outlined tree-chevron" id="monitoring-chevron"
@@ -129,18 +131,18 @@
                 </div>
                 <div class="tree-children" id="monitoring-tree">
                     <div>
-                        <a href="/admin/audit/logs" class="tree-child {{ if eq .ActiveMenu " audit_logs" }}active{{ end
-                            }}">
+                        <a href="/admin/audit/logs"
+                            class="tree-child {{ if eq .ActiveMenu "audit_logs" }}active{{ end }}">
                             <i class="material-symbols-outlined child-icon">history</i>
                             <span class="child-text">Audit Logs</span>
                         </a>
-                        <a href="/admin/system-errors" class="tree-child {{ if eq .ActiveMenu " system_errors"
-                            }}active{{ end }}">
+                        <a href="/admin/system-errors"
+                            class="tree-child {{ if eq .ActiveMenu "system_errors" }}active{{ end }}">
                             <i class="material-symbols-outlined child-icon">error</i>
                             <span class="child-text">System Errors</span>
                         </a>
-                        <a href="/admin/functions" class="tree-child {{ if eq .ActiveMenu " functions" }}active{{ end
-                            }}">
+                        <a href="/admin/functions"
+                            class="tree-child {{ if eq .ActiveMenu "functions" }}active{{ end }}">
                             <i class="material-symbols-outlined child-icon">functions</i>
                             <span class="child-text">Functions</span>
                         </a>
@@ -148,12 +150,12 @@
                 </div>
             </div>
 
-            <!-- TOOLS Section -->
+            <!-- TOOLS -->
             <div class="tree-group">
                 <div class="tree-parent" title="Tools">
-                    <a href="/admin/section/tools" class="flex-center text-inherit no-underline"
+                    <a href="/admin/section/tools"
                         style="flex: 1; color: inherit; text-decoration: none; display: flex; align-items: center;">
-                        <i class="material-symbols-outlined tree-icon">construction</i>
+                        <i class="material-symbols-outlined tree-icon">build</i>
                         <span class="tree-text">TOOLS</span>
                     </a>
                     <i class="material-symbols-outlined tree-chevron" id="tools-chevron"
@@ -161,37 +163,44 @@
                 </div>
                 <div class="tree-children" id="tools-tree">
                     <div>
-                        <a href="/admin/linter" class="tree-child {{ if eq .ActiveMenu " linter" }}active{{ end }}">
+                        <a href="/admin/linter"
+                            class="tree-child {{ if eq .ActiveMenu "linter" }}active{{ end }}">
                             <i class="material-symbols-outlined child-icon">check_circle</i>
                             <span class="child-text">Linter</span>
                         </a>
-                        <a href="/admin/settings" class="tree-child {{ if eq .ActiveMenu " settings" }}active{{ end }}">
+                        <a href="/admin/settings"
+                            class="tree-child {{ if eq .ActiveMenu "settings" }}active{{ end }}">
                             <i class="material-symbols-outlined child-icon">settings</i>
                             <span class="child-text">Settings</span>
                         </a>
-                        <a href="/admin/asynq" class="tree-child {{ if eq .ActiveMenu " asynq" }}active{{ end }}">
+                        {{ if .AsynqEnabled }}
+                        <a href="/admin/asynq"
+                            class="tree-child {{ if eq .ActiveMenu "asynq" }}active{{ end }}">
                             <i class="material-symbols-outlined child-icon">schedule</i>
                             <span class="child-text">Task Queue</span>
                         </a>
+                        {{ end }}
                     </div>
                 </div>
             </div>
 
         </nav>
 
-        <!-- User Profile (Bottom) -->
+        <!-- User Footer -->
         <div class="sidebar-user-footer">
-            <div class="user-avatar-ring">
-                <div class="user-avatar-img">
-                    B
+            <a href="/admin/profile" style="display: flex; align-items: center; gap: 11px; text-decoration: none; color: inherit; flex: 1; min-width: 0;">
+                <div class="user-avatar-ring">
+                    <div class="user-avatar-img">
+                        {{ if .User }}{{ printf "%.1s" (currUserEmail) }}{{ else }}A{{ end }}
+                    </div>
                 </div>
-            </div>
-            <div class="user-info-compact">
-                <span class="user-name-footer">{{ if .User }}{{ .User.Email }}{{ else }}Admin{{ end }}</span>
-            </div>
+                <div class="user-info-compact">
+                    <span class="user-name-footer">{{ currUserEmail }}</span>
+                </div>
+            </a>
         </div>
 
-        <!-- Collapse Toggle - Right Side -->
+        <!-- Collapse Toggle -->
         <div class="sidebar-collapse-toggle" onclick="toggleSidebarCollapse()" title="Toggle Sidebar">
             <i class="material-symbols-outlined" id="collapseIcon">keyboard_double_arrow_left</i>
         </div>
@@ -199,7 +208,6 @@
 </aside>
 
 <script>
-    // --- Sidebar Collapse Logic ---
     function toggleSidebarCollapse() {
         const container = document.getElementById('sidebarContainer');
         const icon = document.getElementById('collapseIcon');
@@ -210,12 +218,11 @@
 
         const isCollapsed = container.classList.contains('collapsed');
         localStorage.setItem('sidebarCollapsed', isCollapsed);
-
         icon.textContent = isCollapsed ? 'keyboard_double_arrow_right' : 'keyboard_double_arrow_left';
     }
 
-    // Restore State
     document.addEventListener('DOMContentLoaded', () => {
+        // Restore collapsed state
         const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
         if (isCollapsed) {
             document.getElementById('sidebarContainer').classList.add('collapsed');
@@ -223,26 +230,34 @@
             if (layout) layout.classList.add('collapsed');
             document.getElementById('collapseIcon').textContent = 'keyboard_double_arrow_right';
         }
+
+        // Auto-expand active section
+        const currentPath = window.location.pathname;
+        const navLinks = document.querySelectorAll('.tree-item, .tree-child');
+        const cleanPath = currentPath.split('?')[0].split('#')[0];
+
+        navLinks.forEach(link => {
+            const href = link.getAttribute('href');
+            if (!href || href === '#') return;
+
+            const isMatch = cleanPath === href ||
+                (cleanPath.startsWith(href + '/') && href !== '/admin');
+
+            if (isMatch) {
+                link.classList.add('active');
+                const parentGroup = link.closest('.tree-group');
+                if (parentGroup) {
+                    parentGroup.classList.add('active-group');
+                    parentGroup.classList.add('open-group');
+                    const childrenContainer = parentGroup.querySelector('.tree-children');
+                    if (childrenContainer) childrenContainer.classList.add('open');
+                    const chevron = parentGroup.querySelector('.tree-chevron');
+                    if (chevron) chevron.textContent = 'expand_less';
+                }
+            }
+        });
     });
 
-    // --- User Menu Logic ---
-    function toggleUserActions() {
-        const container = document.getElementById('sidebarContainer');
-        // Don't open menu if sidebar is collapsed
-        if (container.classList.contains('collapsed')) {
-            return;
-        }
-        document.getElementById('userActionsMenu').classList.toggle('active');
-    }
-
-    document.addEventListener('click', (e) => {
-        if (e.target.closest('.menu-icon-footer')) return;
-        if (!e.target.closest('.sidebar-user-footer')) {
-            document.getElementById('userActionsMenu').classList.remove('active');
-        }
-    });
-
-    // --- Tree Expansion Logic ---
     function toggleTree(id) {
         const tree = document.getElementById(id + '-tree');
         const chevron = document.getElementById(id + '-chevron');
@@ -258,47 +273,5 @@
             chevron.textContent = 'expand_less';
         }
     }
-
-    // Auto-highlight and expand based on current URL
-    document.addEventListener('DOMContentLoaded', () => {
-        const currentPath = window.location.pathname;
-        const navLinks = document.querySelectorAll('.tree-item, .tree-child');
-
-        // Helper to strip query params/hashes if needed, though location.pathname is usually clean
-        const cleanPath = currentPath.split('?')[0].split('#')[0];
-
-        navLinks.forEach(link => {
-            const href = link.getAttribute('href');
-            if (!href || href === '#') return;
-
-            // Logic: 
-            // 1. Exact match
-            // 2. Path starts with href (for sub-resources like /admin/users/123), 
-            //    but exclude broad paths like /admin or /admin/dashboard from matching everything.
-            const isMatch = cleanPath === href ||
-                (cleanPath.startsWith(href + '/') && href !== '/admin');
-
-            if (isMatch) {
-                // Remove active from others if needed, but usually just adding is enough if page reloaded
-                link.classList.add('active');
-
-                // Expand parent group if it's a sub-menu item
-                const parentGroup = link.closest('.tree-group');
-                if (parentGroup) {
-                    // Mark group as containing active item
-                    parentGroup.classList.add('active-group');
-
-                    // Open the group
-                    parentGroup.classList.add('open-group');
-
-                    const childrenContainer = parentGroup.querySelector('.tree-children');
-                    if (childrenContainer) childrenContainer.classList.add('open');
-
-                    const chevron = parentGroup.querySelector('.tree-chevron');
-                    if (chevron) chevron.textContent = 'expand_less';
-                }
-            }
-        });
-    });
 </script>
 {{ end }}

@@ -12,10 +12,10 @@ import (
 
 func (r *Repo) GetScopes(ctx context.Context, permID uuid.UUID) ([]*domain.Scope, error) {
 	sql, args, err := r.builder.
-		Select("s.path", "s.method", "s.created_at").
-		From("scope s").
-		Join("permission_scope ps ON s.path = ps.scope_path AND s.method = ps.scope_method").
-		Where(squirrel.Eq{"ps.permission_id": permID}).
+		Select("s."+"path", "s."+"method", "s."+"created_at").
+		From("scope"+" s").
+		Join("permission_scope"+" ps ON s."+"path"+" = ps."+"path"+" AND s."+"method"+" = ps."+"method").
+		Where(squirrel.Eq{"ps." + "permission_id": permID}).
 		ToSql()
 	if err != nil {
 		return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, "failed to build select query")

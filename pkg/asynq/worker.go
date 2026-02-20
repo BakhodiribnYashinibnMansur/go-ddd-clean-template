@@ -76,11 +76,11 @@ func NewAsynqLogger(log logger.Log) *AsynqLogger {
 	return &AsynqLogger{log: log}
 }
 
-func (l *AsynqLogger) Debug(args ...interface{}) {
+func (l *AsynqLogger) Debug(args ...any) {
 	l.log.Debug(fmt.Sprint(args...))
 }
 
-func (l *AsynqLogger) Info(args ...interface{}) {
+func (l *AsynqLogger) Info(args ...any) {
 	// Show info logs with emoji for better visibility
 	msg := fmt.Sprint(args...)
 	if len(msg) > 0 {
@@ -88,17 +88,17 @@ func (l *AsynqLogger) Info(args ...interface{}) {
 	}
 }
 
-func (l *AsynqLogger) Warn(args ...interface{}) {
+func (l *AsynqLogger) Warn(args ...any) {
 	msg := fmt.Sprint(args...)
 	l.log.Warn("⚠️  Asynq warning: " + msg)
 }
 
-func (l *AsynqLogger) Error(args ...interface{}) {
+func (l *AsynqLogger) Error(args ...any) {
 	msg := fmt.Sprint(args...)
 	l.log.Error("❌ Asynq error: " + msg)
 }
 
-func (l *AsynqLogger) Fatal(args ...interface{}) {
+func (l *AsynqLogger) Fatal(args ...any) {
 	msg := fmt.Sprint(args...)
 	l.log.Fatal("💀 Asynq fatal: " + msg)
 }

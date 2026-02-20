@@ -56,14 +56,14 @@ func TestListSessions(t *testing.T) {
 				phone = phone[:13]
 			}
 
-			resp := uClient.SignUp(t, username, phone, "password123")
+			resp := uClient.SignUp(t, username, phone, "P@ssw0rd!")
 			require.Equal(t, http.StatusCreated, resp.StatusCode, "SignUp failed")
 			resp.Body.Close()
 
 			var token string
 			// Create sessions
 			for i := range tt.numSessions {
-				resp := uClient.SignIn(t, phone, "password123")
+				resp := uClient.SignIn(t, phone, "P@ssw0rd!")
 				require.Equal(t, http.StatusOK, resp.StatusCode, "SignIn failed")
 
 				if i == 0 { // Use first session token
@@ -149,12 +149,12 @@ func TestDeleteSession(t *testing.T) {
 				phone = phone[:13]
 			}
 
-			resp := uClient.SignUp(t, "user_"+phone, phone, "password123")
+			resp := uClient.SignUp(t, "user_"+phone, phone, "P@ssw0rd!")
 			require.Equal(t, http.StatusCreated, resp.StatusCode, "SignUp failed")
 			resp.Body.Close()
 
 			// Session 1 (to have a token)
-			resp1 := uClient.SignIn(t, phone, "password123")
+			resp1 := uClient.SignIn(t, phone, "P@ssw0rd!")
 			require.Equal(t, http.StatusOK, resp1.StatusCode, "SignIn 1 failed")
 			var result1 struct {
 				Data struct {
@@ -166,7 +166,7 @@ func TestDeleteSession(t *testing.T) {
 			token := result1.Data.AccessToken
 
 			// Session 2 (to delete)
-			resp2 := uClient.SignIn(t, phone, "password123")
+			resp2 := uClient.SignIn(t, phone, "P@ssw0rd!")
 			require.Equal(t, http.StatusOK, resp2.StatusCode, "SignIn 2 failed")
 			var result2 struct {
 				Data struct {
@@ -235,12 +235,12 @@ func TestRevokeAllSessions(t *testing.T) {
 				phone = phone[:13]
 			}
 
-			resp := uClient.SignUp(t, "user_"+phone, phone, "password123")
+			resp := uClient.SignUp(t, "user_"+phone, phone, "P@ssw0rd!")
 			require.Equal(t, http.StatusCreated, resp.StatusCode, "SignUp failed")
 			resp.Body.Close()
 
 			// Session 1
-			resp1 := uClient.SignIn(t, phone, "password123")
+			resp1 := uClient.SignIn(t, phone, "P@ssw0rd!")
 			require.Equal(t, http.StatusOK, resp1.StatusCode, "SignIn 1 failed")
 			var result1 struct {
 				Data struct {

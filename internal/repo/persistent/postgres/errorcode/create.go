@@ -3,7 +3,6 @@ package errorcode
 import (
 	"context"
 	"gct/internal/domain"
-	"gct/internal/repo/schema"
 )
 
 // CreateErrorCodeInput represents input for creating an error code
@@ -21,16 +20,16 @@ type CreateErrorCodeInput struct {
 // Create inserts a new error code into the database
 func (r *Repo) Create(ctx context.Context, input CreateErrorCodeInput) (*domain.ErrorCode, error) {
 	query, args, err := r.db.Builder.
-		Insert(schema.TableErrorCode).
+		Insert("error_code").
 		Columns(
-			schema.ErrorCodeCode,
-			schema.ErrorCodeMessage,
-			schema.ErrorCodeHTTPStatus,
-			schema.ErrorCodeCategory,
-			schema.ErrorCodeSeverity,
-			schema.ErrorCodeRetryable,
-			schema.ErrorCodeRetryAfter,
-			schema.ErrorCodeSuggestion,
+			"code",
+			"message",
+			"http_status",
+			"category",
+			"severity",
+			"retryable",
+			"retry_after",
+			"suggestion",
 		).
 		Values(
 			input.Code,
@@ -43,17 +42,17 @@ func (r *Repo) Create(ctx context.Context, input CreateErrorCodeInput) (*domain.
 			input.Suggestion,
 		).
 		Suffix("RETURNING " +
-			schema.ErrorCodeID + ", " +
-			schema.ErrorCodeCode + ", " +
-			schema.ErrorCodeMessage + ", " +
-			schema.ErrorCodeHTTPStatus + ", " +
-			schema.ErrorCodeCategory + ", " +
-			schema.ErrorCodeSeverity + ", " +
-			schema.ErrorCodeRetryable + ", " +
-			schema.ErrorCodeRetryAfter + ", " +
-			schema.ErrorCodeSuggestion + ", " +
-			schema.ErrorCodeCreatedAt + ", " +
-			schema.ErrorCodeUpdatedAt).
+			"id" + ", " +
+			"code" + ", " +
+			"message" + ", " +
+			"http_status" + ", " +
+			"category" + ", " +
+			"severity" + ", " +
+			"retryable" + ", " +
+			"retry_after" + ", " +
+			"suggestion" + ", " +
+			"created_at" + ", " +
+			"updated_at").
 		ToSql()
 
 	if err != nil {

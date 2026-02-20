@@ -4,27 +4,26 @@ import (
 	"context"
 
 	"gct/internal/domain"
-	"gct/internal/repo/schema"
 )
 
 // List returns all error codes
 func (r *Repo) List(ctx context.Context) ([]*domain.ErrorCode, error) {
 	query, args, err := r.db.Builder.
 		Select(
-			schema.ErrorCodeID,
-			schema.ErrorCodeCode,
-			schema.ErrorCodeMessage,
-			schema.ErrorCodeHTTPStatus,
-			schema.ErrorCodeCategory,
-			schema.ErrorCodeSeverity,
-			schema.ErrorCodeRetryable,
-			schema.ErrorCodeRetryAfter,
-			schema.ErrorCodeSuggestion,
-			schema.ErrorCodeCreatedAt,
-			schema.ErrorCodeUpdatedAt,
+			"id",
+			"code",
+			"message",
+			"http_status",
+			"category",
+			"severity",
+			"retryable",
+			"retry_after",
+			"suggestion",
+			"created_at",
+			"updated_at",
 		).
-		From(schema.TableErrorCode).
-		OrderBy(schema.ErrorCodeCode + " ASC").
+		From("error_code").
+		OrderBy("code" + " ASC").
 		ToSql()
 
 	if err != nil {

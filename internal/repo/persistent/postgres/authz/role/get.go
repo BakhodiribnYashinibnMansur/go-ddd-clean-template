@@ -4,20 +4,19 @@ import (
 	"context"
 
 	"gct/internal/domain"
-	"gct/internal/repo/schema"
 	apperrors "gct/pkg/errors"
 
 	"github.com/Masterminds/squirrel"
 )
 
 func (r *Repo) Get(ctx context.Context, filter *domain.RoleFilter) (*domain.Role, error) {
-	query := r.builder.Select(schema.RoleID, schema.RoleName, schema.RoleCreatedAt).From(tableName)
+	query := r.builder.Select("id", "name", "created_at").From(tableName)
 
 	if filter.ID != nil {
-		query = query.Where(squirrel.Eq{schema.RoleID: *filter.ID})
+		query = query.Where(squirrel.Eq{"id": *filter.ID})
 	}
 	if filter.Name != nil {
-		query = query.Where(squirrel.Eq{schema.RoleName: *filter.Name})
+		query = query.Where(squirrel.Eq{"name": *filter.Name})
 	}
 
 	sql, args, err := query.ToSql()

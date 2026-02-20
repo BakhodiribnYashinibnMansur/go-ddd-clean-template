@@ -114,7 +114,7 @@ func (b *Bitmap) BitOpNot(ctx context.Context, destKey, key string) (int64, erro
 }
 
 // BitField performs bitwise operations on specific fields
-func (b *Bitmap) BitField(ctx context.Context, key string, args ...interface{}) ([]int64, error) {
+func (b *Bitmap) BitField(ctx context.Context, key string, args ...any) ([]int64, error) {
 	result, err := b.client.BitField(ctx, key, args...).Result()
 	if err != nil {
 		return nil, fmt.Errorf("failed to perform bit field operations on key %s: %w", key, err)

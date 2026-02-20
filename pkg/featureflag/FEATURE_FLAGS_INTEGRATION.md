@@ -123,7 +123,7 @@ func (h *Handler) GetHomepage(c *gin.Context) {
 func (h *Handler) ProcessRequest(c *gin.Context) {
     ctx := c.Request.Context()
     
-    defaultConfig := map[string]interface{}{
+    defaultConfig := map[string]any{
         "maxItems":    10,
         "enableCache": true,
         "timeout":     30,

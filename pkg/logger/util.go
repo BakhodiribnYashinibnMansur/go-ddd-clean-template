@@ -9,7 +9,7 @@ import (
 )
 
 // WithFields enriches context with field values.
-func WithFields(ctx context.Context, fields map[string]interface{}) context.Context {
+func WithFields(ctx context.Context, fields map[string]any) context.Context {
 	for k, v := range fields {
 		switch k {
 		case contextx.FieldRequestID:

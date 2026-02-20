@@ -6,7 +6,6 @@ import (
 
 	"gct/consts"
 	"gct/internal/domain"
-	"gct/internal/repo/schema"
 	apperrors "gct/pkg/errors"
 
 	"github.com/Masterminds/squirrel"
@@ -16,20 +15,20 @@ func (r *Repo) Update(ctx context.Context, s *domain.Session) error {
 	qb := r.builder.Update(tableName)
 
 	if s.FCMToken != nil {
-		qb = qb.Set(schema.SessionFCMToken, s.FCMToken)
+		qb = qb.Set("fcm_token", s.FCMToken)
 	}
 	if s.RefreshTokenHash != "" {
-		qb = qb.Set(schema.SessionRefreshTokenHash, s.RefreshTokenHash)
+		qb = qb.Set("refresh_token_hash", s.RefreshTokenHash)
 	}
-	if s.Data != nil {
-		qb = qb.Set(schema.SessionData, s.Data)
-	}
+	// if s.Data != nil {
+	// 	qb = qb.Set("data", s.Data)
+	// }
 
 	sql, args, err := qb.
-		Set(schema.SessionRevoked, s.Revoked).
-		Set(schema.SessionLastActivity, s.LastActivity).
-		Set(schema.SessionUpdatedAt, time.Now()).
-		Where(squirrel.Eq{schema.SessionID: s.ID}).
+		Set("revoked", s.Revoked).
+		Set("last_activity", s.LastActivity).
+		Set("updated_at", time.Now()).
+		Where(squirrel.Eq{"id": s.ID}).
 		ToSql()
 	if err != nil {
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase,
@@ -51,17 +50,17 @@ func (r *Repo) Revoke(ctx context.Context, filter *domain.SessionFilter) error {
 	}
 
 	query := r.builder.Update(tableName).
-		Set(schema.SessionRevoked, true).
-		Set(schema.SessionUpdatedAt, time.Now())
+		Set("revoked", true).
+		Set("updated_at", time.Now())
 
 	if !filter.IsIDNull() {
-		query = query.Where(squirrel.Eq{schema.SessionID: *filter.ID})
+		query = query.Where(squirrel.Eq{"id": *filter.ID})
 	}
 	if !filter.IsUserIDNull() {
-		query = query.Where(squirrel.Eq{schema.SessionUserID: *filter.UserID})
+		query = query.Where(squirrel.Eq{"user_id": *filter.UserID})
 	}
 	if !filter.IsRevokedNull() {
-		query = query.Where(squirrel.Eq{schema.SessionRevoked: *filter.Revoked})
+		query = query.Where(squirrel.Eq{"revoked": *filter.Revoked})
 	}
 
 	sql, args, err := query.ToSql()

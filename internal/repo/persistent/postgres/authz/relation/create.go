@@ -7,16 +7,15 @@ import (
 
 	"gct/consts"
 	"gct/internal/domain"
-	"gct/internal/repo/schema"
 	apperrors "gct/pkg/errors"
 )
 
 func (r *Repo) Create(ctx context.Context, relation *domain.Relation) error {
 	sql, args, err := r.builder.
 		Insert(tableName).
-		Columns(schema.RelationType, schema.RelationName, schema.RelationCreatedAt).
+		Columns("type", "name", "created_at").
 		Values(relation.Type, relation.Name, time.Now()).
-		Suffix(fmt.Sprintf("RETURNING %s, %s", schema.RelationID, schema.RelationCreatedAt)).
+		Suffix(fmt.Sprintf("RETURNING %s, %s", "id", "created_at")).
 		ToSql()
 	if err != nil {
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildInsert)

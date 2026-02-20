@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"gct/internal/domain"
-	"gct/internal/repo/schema"
 	apperrors "gct/pkg/errors"
 
 	"github.com/Masterminds/squirrel"
@@ -16,17 +15,17 @@ import (
 func (r *Repo) GetPermissions(ctx context.Context, roleID uuid.UUID) ([]*domain.Permission, error) {
 	sql, args, err := r.builder.
 		Select(
-			"p."+schema.PermissionID,
-			"p."+schema.PermissionName,
-			"p."+schema.PermissionCreatedAt,
+			"p."+"id",
+			"p."+"name",
+			"p."+"created_at",
 		).
-		From(schema.TablePermission + " p").
+		From("permission" + " p").
 		Join(fmt.Sprintf("%s rp ON p.%s = rp.%s",
-			schema.TableRolePermission,
-			schema.PermissionID,
-			schema.RolePermissionPermissionID,
+			"role_permission",
+			"id",
+			"permission_id",
 		)).
-		Where(squirrel.Eq{"rp." + schema.RolePermissionRoleID: roleID}).
+		Where(squirrel.Eq{"rp." + "role_id": roleID}).
 		ToSql()
 	if err != nil {
 		return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, "failed to build select query")
@@ -34,7 +33,7 @@ func (r *Repo) GetPermissions(ctx context.Context, roleID uuid.UUID) ([]*domain.
 
 	rows, err := r.pool.Query(ctx, sql, args...)
 	if err != nil {
-		return nil, apperrors.HandlePgError(err, schema.TablePermission, nil)
+		return nil, apperrors.HandlePgError(err, "permission", nil)
 	}
 	defer rows.Close()
 
@@ -48,7 +47,7 @@ func (r *Repo) GetPermissions(ctx context.Context, roleID uuid.UUID) ([]*domain.
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, apperrors.HandlePgError(err, schema.TablePermission, nil)
+		return nil, apperrors.HandlePgError(err, "permission", nil)
 	}
 
 	return permissions, nil

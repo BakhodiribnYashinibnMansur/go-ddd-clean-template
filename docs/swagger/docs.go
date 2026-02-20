@@ -50,6 +50,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/gct_internal_controller_restapi_response.SuccessResponse"
                         }
                     },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
@@ -64,6 +70,78 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/test/reset": {
+            "post": {
+                "description": "Truncates all tables and re-seeds with base data. Only available in dev/test.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Test"
+                ],
+                "summary": "Reset database",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.SuccessResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/test/seed": {
+            "post": {
+                "description": "Seeds database with specified counts. Only available in dev/test.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Test"
+                ],
+                "summary": "Seed database with custom counts",
+                "parameters": [
+                    {
+                        "description": "Seed counts (users, roles, permissions, policies)",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.SuccessResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
                         "schema": {
                             "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
                         }
@@ -87,6 +165,30 @@ const docTemplate = `{
                 ],
                 "summary": "Get business action audit logs",
                 "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -208,6 +310,30 @@ const docTemplate = `{
                 ],
                 "summary": "Get login audit logs",
                 "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -335,6 +461,30 @@ const docTemplate = `{
                 ],
                 "summary": "Get session audit logs",
                 "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -444,6 +594,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
                         }
                     },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal error",
                         "schema": {
@@ -548,7 +704,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Invalid request",
+                        "description": "Validation error",
                         "schema": {
                             "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
                         }
@@ -611,6 +767,12 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/gct_internal_controller_restapi_response.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
                         }
                     },
                     "401": {
@@ -1072,6 +1234,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/gct_internal_controller_restapi_response.SuccessResponse"
                         }
                     },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
@@ -1391,6 +1559,12 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/gct_internal_controller_restapi_response.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
                         }
                     },
                     "401": {
@@ -1840,6 +2014,12 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/gct_internal_controller_restapi_response.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
                         }
                     },
                     "401": {
@@ -2628,6 +2808,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/gct_internal_controller_restapi_response.SuccessResponse"
                         }
                     },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
@@ -2871,6 +3057,12 @@ const docTemplate = `{
                             "additionalProperties": true
                         }
                     },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
@@ -2910,6 +3102,12 @@ const docTemplate = `{
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
                         }
                     },
                     "401": {
@@ -2953,6 +3151,12 @@ const docTemplate = `{
                             "additionalProperties": true
                         }
                     },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
@@ -2994,6 +3198,12 @@ const docTemplate = `{
                             "additionalProperties": true
                         }
                     },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
@@ -3033,6 +3243,12 @@ const docTemplate = `{
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
                         }
                     },
                     "401": {
@@ -3094,6 +3310,12 @@ const docTemplate = `{
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
                         }
                     },
                     "401": {
@@ -3167,6 +3389,12 @@ const docTemplate = `{
                 ],
                 "summary": "Transfer file",
                 "responses": {
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
@@ -3410,6 +3638,11 @@ const docTemplate = `{
         },
         "/metrics/functions": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Retrieve function execution metrics",
                 "consumes": [
                     "application/json"
@@ -3471,6 +3704,24 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
                         }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
                     }
                 }
             }
@@ -3512,6 +3763,12 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/gct_internal_controller_restapi_response.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
                         }
                     },
                     "401": {
@@ -3619,6 +3876,12 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/gct_internal_controller_restapi_response.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
                         }
                     },
                     "401": {
@@ -4571,12 +4834,6 @@ const docTemplate = `{
                     "format": "date-time",
                     "example": "2024-01-01T00:00:00Z"
                 },
-                "data": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
                 "device_id": {
                     "type": "string",
                     "example": "880e8400-e29b-41d4-a716-446655440000"
@@ -4774,7 +5031,7 @@ const docTemplate = `{
                     "example": true
                 },
                 "attributes": {
-                    "description": "JSONB for ABAC (region, branch, dept)",
+                    "description": "JSONB used to be here, now EAV table",
                     "type": "object",
                     "additionalProperties": {}
                 },
@@ -4816,6 +5073,12 @@ const docTemplate = `{
                     "type": "string",
                     "minLength": 1,
                     "example": "+998901234567"
+                },
+                "relations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/gct_internal_domain.Relation"
+                    }
                 },
                 "role_id": {
                     "type": "string",

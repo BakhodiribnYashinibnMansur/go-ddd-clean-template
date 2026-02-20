@@ -3,7 +3,6 @@ package systemerror
 import (
 	"context"
 
-	"gct/internal/repo/schema"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -13,25 +12,25 @@ import (
 func (r *Repo) GetByID(ctx context.Context, id uuid.UUID) (*SystemError, error) {
 	query, args, err := r.db.Builder.
 		Select(
-			schema.SystemErrorID,
-			schema.SystemErrorCode,
-			schema.SystemErrorMessage,
-			schema.SystemErrorStackTrace,
-			schema.SystemErrorMetadata,
-			schema.SystemErrorSeverity,
-			schema.SystemErrorServiceName,
-			schema.SystemErrorRequestID,
-			schema.SystemErrorUserID,
-			schema.SystemErrorIPAddress,
-			schema.SystemErrorPath,
-			schema.SystemErrorMethod,
-			schema.SystemErrorIsResolved,
-			schema.SystemErrorResolvedAt,
-			schema.SystemErrorResolvedBy,
-			schema.SystemErrorCreatedAt,
+			"id",
+			"code",
+			"message",
+			"stack_trace",
+			"metadata",
+			"severity",
+			"service_name",
+			"request_id",
+			"user_id",
+			"ip_address",
+			"path",
+			"method",
+			"is_resolved",
+			"resolved_at",
+			"resolved_by",
+			"created_at",
 		).
-		From(schema.TableSystemError).
-		Where(squirrel.Eq{schema.SystemErrorID: id}).
+		From("system_errors").
+		Where(squirrel.Eq{"id": id}).
 		ToSql()
 
 	if err != nil {

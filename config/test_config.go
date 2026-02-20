@@ -112,7 +112,7 @@ fwIDAQAB
 -----END PUBLIC KEY-----`,
 			},
 			APIKeys: APIKeys{
-				XApiKey: "test_api_key_12345",
+				SignExpireTime: 10,
 			},
 			Metrics: Metrics{Enabled: true},
 			Swagger: Swagger{Enabled: true},

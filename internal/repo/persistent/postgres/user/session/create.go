@@ -6,7 +6,6 @@ import (
 
 	"gct/consts"
 	"gct/internal/domain"
-	"gct/internal/repo/schema"
 	apperrors "gct/pkg/errors"
 
 	"github.com/google/uuid"
@@ -22,21 +21,21 @@ func (r *Repo) Create(ctx context.Context, s *domain.Session) error {
 
 	query := r.builder.Insert(tableName).
 		Columns(
-			schema.SessionID,
-			schema.SessionDeviceID,
-			schema.SessionDeviceName,
-			schema.SessionDeviceType,
-			schema.SessionIPAddress,
-			schema.SessionUserAgent,
-			schema.SessionFCMToken,
-			schema.SessionRefreshTokenHash,
-			schema.SessionData,
-			schema.SessionUserID,
-			schema.SessionRevoked,
-			schema.SessionExpiresAt,
-			schema.SessionLastActivity,
-			schema.SessionCreatedAt,
-			schema.SessionUpdatedAt,
+			"id",
+			"device_id",
+			"device_name",
+			"device_type",
+			"ip_address",
+			"user_agent",
+			"fcm_token",
+			"refresh_token_hash",
+			// "data",
+			"user_id",
+			"revoked",
+			"expires_at",
+			"last_activity",
+			"created_at",
+			"updated_at",
 		).
 		Values(
 			s.ID,
@@ -47,7 +46,7 @@ func (r *Repo) Create(ctx context.Context, s *domain.Session) error {
 			s.UserAgent,
 			s.FCMToken,
 			s.RefreshTokenHash,
-			s.Data,
+			// s.Data,
 			s.UserID,
 			s.Revoked,
 			s.ExpiresAt,

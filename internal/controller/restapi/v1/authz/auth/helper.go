@@ -11,6 +11,9 @@ import (
 
 // populateSessionInfo extracts metadata from the request context to fill session details.
 func (c *Controller) populateSessionInfo(ctx *gin.Context, s *domain.SessionIn) {
+	if s == nil {
+		return
+	}
 	s.DeviceID = httpx.GetDeviceIDUUID(ctx)
 	s.UserAgent = httpx.GetUserAgent(ctx)
 	s.IP = httpx.GetIPAddress(ctx)

@@ -10,6 +10,12 @@ import (
 )
 
 func (r *Repo) Update(ctx context.Context, p *domain.Policy) error {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, "failed to begin transaction")
+	}
+	defer tx.Rollback(ctx)
+
 	sql, args, err := r.builder.
 		Update(tableName).
 		Set("permission_id", p.PermissionID).
@@ -23,13 +29,17 @@ func (r *Repo) Update(ctx context.Context, p *domain.Policy) error {
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, "failed to build update query")
 	}
 
-	tag, err := r.pool.Exec(ctx, sql, args...)
+	tag, err := tx.Exec(ctx, sql, args...)
 	if err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 
 	if tag.RowsAffected() == 0 {
 		return apperrors.NewRepoError(apperrors.ErrRepoNotFound, "policy not found")
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, "failed to commit transaction")
 	}
 
 	return nil

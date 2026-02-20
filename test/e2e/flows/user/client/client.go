@@ -22,12 +22,13 @@ func New(endpoint string) *Client {
 // SignUp creates a new user account
 func (c *Client) SignUp(t *testing.T, username, phone, password string) *http.Response {
 	t.Helper()
-	body, _ := json.Marshal(map[string]string{
+	body, _ := json.Marshal(map[string]any{
 		"username": username,
 		"phone":    phone,
 		"password": password,
+		"session":  map[string]any{},
 	})
-	req, err := http.NewRequest(http.MethodPost, c.endpoint+"/api/v1/users/sign-up", bytes.NewBuffer(body))
+	req, err := http.NewRequest(http.MethodPost, c.endpoint+"/api/v1/auth/sign-up", bytes.NewBuffer(body))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,11 +44,12 @@ func (c *Client) SignUp(t *testing.T, username, phone, password string) *http.Re
 // SignIn authenticates a user and returns tokens
 func (c *Client) SignIn(t *testing.T, phone, password string) *http.Response {
 	t.Helper()
-	body, _ := json.Marshal(map[string]string{
-		"phone":    phone,
+	body, _ := json.Marshal(map[string]any{
+		"login":    phone,
 		"password": password,
+		"session":  map[string]any{},
 	})
-	req, err := http.NewRequest(http.MethodPost, c.endpoint+"/api/v1/users/sign-in", bytes.NewBuffer(body))
+	req, err := http.NewRequest(http.MethodPost, c.endpoint+"/api/v1/auth/sign-in", bytes.NewBuffer(body))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -61,13 +63,17 @@ func (c *Client) SignIn(t *testing.T, phone, password string) *http.Response {
 }
 
 // SignOut revokes the current session
-func (c *Client) SignOut(t *testing.T, token string) *http.Response {
+func (c *Client) SignOut(t *testing.T, token, sessionID string) *http.Response {
 	t.Helper()
-	req, err := http.NewRequest(http.MethodPost, c.endpoint+"/api/v1/users/sign-out", nil)
+	body, _ := json.Marshal(map[string]string{
+		"session_id": sessionID,
+	})
+	req, err := http.NewRequest(http.MethodPost, c.endpoint+"/api/v1/auth/sign-out", bytes.NewBuffer(body))
 	if err != nil {
 		t.Fatal(err)
 	}
 	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := c.client.Do(req)
 	if err != nil {

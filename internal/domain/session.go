@@ -49,7 +49,6 @@ type Session struct {
 	Browser          *string            `db:"browser"            json:"browser,omitempty"         example:"Safari"`
 	BrowserVersion   *string            `db:"browser_version"    json:"browser_version,omitempty" example:"16.0"`
 	FCMToken         *string            `db:"fcm_token"          json:"fcm_token,omitempty"       example:"fcm_token_example_123"`
-	Data             RawMessage         `db:"data"               json:"data,omitempty"`
 	RefreshTokenHash string             `db:"refresh_token_hash" json:"refresh_token_hash"        example:"$2a$10$N9qo8uLOickgx2ZMRZoMye"`
 	ExpiresAt        time.Time          `db:"expires_at"         json:"expires_at"                example:"2024-02-01T00:00:00Z"  format:"date-time"`
 	LastActivity     time.Time          `db:"last_activity"      json:"last_activity"             example:"2024-01-25T10:30:00Z"  format:"date-time"`
@@ -114,12 +113,13 @@ func (s *Session) GetIPAddress() *string             { return s.IPAddress }
 func (s *Session) GetUserAgent() *string             { return s.UserAgent }
 func (s *Session) GetFCMToken() *string              { return s.FCMToken }
 func (s *Session) GetRefreshTokenHash() string       { return s.RefreshTokenHash }
-func (s *Session) GetData() RawMessage               { return s.Data }
-func (s *Session) GetExpiresAt() time.Time           { return s.ExpiresAt }
-func (s *Session) GetLastActivity() time.Time        { return s.LastActivity }
-func (s *Session) GetRevoked() bool                  { return s.Revoked }
-func (s *Session) GetCreatedAt() time.Time           { return s.CreatedAt }
-func (s *Session) GetUpdatedAt() time.Time           { return s.UpdatedAt }
+
+// func (s *Session) GetData() RawMessage               { return s.Data }
+func (s *Session) GetExpiresAt() time.Time    { return s.ExpiresAt }
+func (s *Session) GetLastActivity() time.Time { return s.LastActivity }
+func (s *Session) GetRevoked() bool           { return s.Revoked }
+func (s *Session) GetCreatedAt() time.Time    { return s.CreatedAt }
+func (s *Session) GetUpdatedAt() time.Time    { return s.UpdatedAt }
 
 // Setters for Session
 func (s *Session) SetDeviceName(deviceName *string) {
@@ -139,10 +139,10 @@ func (s *Session) SetRefreshTokenHash(refreshTokenHash string) {
 	s.UpdatedAt = time.Now()
 }
 
-func (s *Session) SetData(data RawMessage) {
-	s.Data = data
-	s.UpdatedAt = time.Now()
-}
+// func (s *Session) SetData(data RawMessage) {
+// 	s.Data = data
+// 	s.UpdatedAt = time.Now()
+// }
 
 func (s *Session) SetExpiresAt(expiresAt time.Time) {
 	s.ExpiresAt = expiresAt
@@ -194,31 +194,6 @@ type SessionContext struct {
 	TwoFAPassed bool       `json:"2fa_passed,omitempty"`
 }
 
-// GetContext unmarshals session.Data into SessionContext
-func (s *Session) GetContext() (*SessionContext, error) {
-	if len(s.Data) == 0 {
-		return &SessionContext{}, nil
-	}
-
-	var ctx SessionContext
-	if err := json.Unmarshal(s.Data, &ctx); err != nil {
-		return nil, err
-	}
-	return &ctx, nil
-}
-
-// SetContext marshals SessionContext into session.Data
-func (s *Session) SetContext(ctx *SessionContext) error {
-	if ctx == nil {
-		s.Data = nil
-		return nil
-	}
-
-	data, err := json.Marshal(ctx)
-	if err != nil {
-		return err
-	}
-	s.Data = data
-	s.UpdatedAt = time.Now()
-	return nil
-}
+// GetContext and SetContext removed as Data field is removed
+// func (s *Session) GetContext() (*SessionContext, error) { ... }
+// func (s *Session) SetContext(ctx *SessionContext) error { ... }

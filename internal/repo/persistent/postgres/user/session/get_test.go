@@ -7,6 +7,7 @@ import (
 
 	"gct/internal/domain"
 	"gct/pkg/logger"
+
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -42,10 +43,10 @@ func TestRepo_Get(t *testing.T) {
 			setupMock: func(mock pgxmock.PgxPoolIface) {
 				rows := pgxmock.NewRows([]string{
 					"id", "device_id", "device_name", "device_type", "ip_address", "user_agent",
-					"fcm_token", "refresh_token_hash", "data", "user_id", "revoked", "expires_at", "last_activity", "created_at", "updated_at",
+					"fcm_token", "refresh_token_hash", "user_id", "revoked", "expires_at", "last_activity", "created_at", "updated_at",
 				}).AddRow(
 					sID, deviceID, nil, nil, nil, nil,
-					nil, "refresh_hash", []byte("{}"), uuid.New(), false, now, now, now, now,
+					nil, "refresh_hash", uuid.New(), false, now, now, now, now,
 				)
 				mock.ExpectQuery("SELECT (.+) FROM session").
 					WithArgs(pgxmock.AnyArg()).
@@ -60,13 +61,13 @@ func TestRepo_Get(t *testing.T) {
 				UserAgent:        &userAgent,
 				FCMToken:         &fcmToken,
 				RefreshTokenHash: "refresh_hash",
-				Data:             []byte("{}"),
-				UserID:           uuid.New(),
-				Revoked:          false,
-				ExpiresAt:        now,
-				LastActivity:     now,
-				CreatedAt:        now,
-				UpdatedAt:        now,
+				// Data:             []byte("{}"),
+				UserID:       uuid.New(),
+				Revoked:      false,
+				ExpiresAt:    now,
+				LastActivity: now,
+				CreatedAt:    now,
+				UpdatedAt:    now,
 			},
 			expectedError: false,
 		},
@@ -104,10 +105,10 @@ func TestRepo_Get(t *testing.T) {
 			setupMock: func(mock pgxmock.PgxPoolIface) {
 				rows := pgxmock.NewRows([]string{
 					"id", "device_id", "device_name", "device_type", "ip_address", "user_agent",
-					"fcm_token", "refresh_token_hash", "data", "user_id", "revoked", "expires_at", "last_activity", "created_at", "updated_at",
+					"fcm_token", "refresh_token_hash", "user_id", "revoked", "expires_at", "last_activity", "created_at", "updated_at",
 				}).AddRow(
 					sID, deviceID, nil, nil, nil, nil,
-					nil, "refresh_hash", []byte("{}"), uuid.New(), false, now, now, now, now,
+					nil, "refresh_hash", uuid.New(), false, now, now, now, now,
 				)
 				mock.ExpectQuery("SELECT (.+) FROM session").
 					WithArgs(pgxmock.AnyArg()).
@@ -136,10 +137,10 @@ func TestRepo_Get(t *testing.T) {
 			setupMock: func(mock pgxmock.PgxPoolIface) {
 				rows := pgxmock.NewRows([]string{
 					"id", "device_id", "device_name", "device_type", "ip_address", "user_agent",
-					"fcm_token", "refresh_token_hash", "data", "user_id", "revoked", "expires_at", "last_activity", "created_at", "updated_at",
+					"fcm_token", "refresh_token_hash", "user_id", "revoked", "expires_at", "last_activity", "created_at", "updated_at",
 				}).AddRow(
 					sID, deviceID, nil, nil, nil, nil,
-					nil, "refresh_hash", []byte("{}"), uuid.New(), false, now, now, now, now,
+					nil, "refresh_hash", uuid.New(), false, now, now, now, now,
 				)
 				mock.ExpectQuery("SELECT (.+) FROM session").
 					WithArgs(pgxmock.AnyArg()).
@@ -168,10 +169,10 @@ func TestRepo_Get(t *testing.T) {
 			setupMock: func(mock pgxmock.PgxPoolIface) {
 				rows := pgxmock.NewRows([]string{
 					"id", "device_id", "device_name", "device_type", "ip_address", "user_agent",
-					"fcm_token", "refresh_token_hash", "data", "user_id", "revoked", "expires_at", "last_activity", "created_at", "updated_at",
+					"fcm_token", "refresh_token_hash", "user_id", "revoked", "expires_at", "last_activity", "created_at", "updated_at",
 				}).AddRow(
 					sID, deviceID, nil, nil, nil, nil,
-					nil, "refresh_hash", []byte("{}"), uuid.New(), false, now, now, now, now,
+					nil, "refresh_hash", uuid.New(), false, now, now, now, now,
 				)
 				mock.ExpectQuery("SELECT (.+) FROM session").
 					WithArgs(pgxmock.AnyArg()).
@@ -213,10 +214,10 @@ func TestRepo_Get(t *testing.T) {
 			setupMock: func(mock pgxmock.PgxPoolIface) {
 				rows := pgxmock.NewRows([]string{
 					"id", "device_id", "device_name", "device_type", "ip_address", "user_agent",
-					"fcm_token", "refresh_token_hash", "data", "user_id", "revoked", "expires_at", "last_activity", "created_at", "updated_at",
+					"fcm_token", "refresh_token_hash", "user_id", "revoked", "expires_at", "last_activity", "created_at", "updated_at",
 				}).AddRow(
 					sID, deviceID, deviceName, deviceType, ipAddress, userAgent,
-					fcmToken, "refresh_hash", []byte("{}"), uuid.New(), false, now, now, now, now,
+					fcmToken, "refresh_hash", uuid.New(), false, now, now, now, now,
 				)
 				mock.ExpectQuery("SELECT (.+) FROM session").
 					WithArgs(true).
@@ -243,10 +244,10 @@ func TestRepo_Get(t *testing.T) {
 			setupMock: func(mock pgxmock.PgxPoolIface) {
 				rows := pgxmock.NewRows([]string{
 					"id", "device_id", "device_name", "device_type", "ip_address", "user_agent",
-					"fcm_token", "refresh_token_hash", "data", "user_id", "revoked", "expires_at", "last_activity", "created_at", "updated_at",
+					"fcm_token", "refresh_token_hash", "user_id", "revoked", "expires_at", "last_activity", "created_at", "updated_at",
 				}).AddRow(
 					sID, deviceID, nil, nil, nil, nil,
-					nil, "refresh_hash", []byte("{}"), uuid.New(), false, now, now, now, now,
+					nil, "refresh_hash", uuid.New(), false, now, now, now, now,
 				)
 				mock.ExpectQuery("SELECT (.+) FROM session").
 					WillReturnRows(rows)

@@ -5,7 +5,6 @@ import (
 
 	"gct/consts"
 	"gct/internal/domain"
-	"gct/internal/repo/schema"
 	apperrors "gct/pkg/errors"
 
 	"github.com/Masterminds/squirrel"
@@ -13,38 +12,38 @@ import (
 
 func (r *Repo) Gets(ctx context.Context, filter *domain.SiteSettingsFilter) ([]*domain.SiteSetting, int, error) {
 	query := r.builder.Select(
-		schema.SiteSettingID,
-		schema.SiteSettingKey,
-		schema.SiteSettingValue,
-		schema.SiteSettingValueType,
-		schema.SiteSettingCategory,
-		schema.SiteSettingDescription,
-		schema.SiteSettingIsPublic,
-		schema.SiteSettingCreatedAt,
-		schema.SiteSettingUpdatedAt,
+		"id",
+		"key",
+		"value",
+		"value_type",
+		"category",
+		"description",
+		"is_public",
+		"created_at",
+		"updated_at",
 	).From(tableName)
 
 	// Build WHERE conditions
 	if filter.Key != nil {
-		query = query.Where(squirrel.Eq{schema.SiteSettingKey: filter.Key})
+		query = query.Where(squirrel.Eq{"key": filter.Key})
 	}
 	if filter.Category != nil {
-		query = query.Where(squirrel.Eq{schema.SiteSettingCategory: filter.Category})
+		query = query.Where(squirrel.Eq{"category": filter.Category})
 	}
 	if filter.IsPublic != nil {
-		query = query.Where(squirrel.Eq{schema.SiteSettingIsPublic: filter.IsPublic})
+		query = query.Where(squirrel.Eq{"is_public": filter.IsPublic})
 	}
 
 	// Count query
 	countQuery := r.builder.Select("COUNT(*)").From(tableName)
 	if filter.Key != nil {
-		countQuery = countQuery.Where(squirrel.Eq{schema.SiteSettingKey: filter.Key})
+		countQuery = countQuery.Where(squirrel.Eq{"key": filter.Key})
 	}
 	if filter.Category != nil {
-		countQuery = countQuery.Where(squirrel.Eq{schema.SiteSettingCategory: filter.Category})
+		countQuery = countQuery.Where(squirrel.Eq{"category": filter.Category})
 	}
 	if filter.IsPublic != nil {
-		countQuery = countQuery.Where(squirrel.Eq{schema.SiteSettingIsPublic: filter.IsPublic})
+		countQuery = countQuery.Where(squirrel.Eq{"is_public": filter.IsPublic})
 	}
 
 	sql, args, err := countQuery.ToSql()
@@ -69,7 +68,7 @@ func (r *Repo) Gets(ctx context.Context, filter *domain.SiteSettingsFilter) ([]*
 	}
 
 	// Order by category, then key
-	query = query.OrderBy(schema.SiteSettingCategory+" "+consts.SQLOrderAsc, schema.SiteSettingKey+" "+consts.SQLOrderAsc)
+	query = query.OrderBy("category"+" "+consts.SQLOrderAsc, "key"+" "+consts.SQLOrderAsc)
 
 	sql, args, err = query.ToSql()
 	if err != nil {

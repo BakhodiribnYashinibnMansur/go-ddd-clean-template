@@ -22,32 +22,32 @@ var (
 // Config represents the root configuration tree for the entire application.
 // It is composed of specialized sub-structures, each mapped to specific logical components.
 type Config struct {
-	App          App          // Global application metadata (env, name, version).
-	HTTP         HTTP         // Web server settings (port, timeouts).
-	Log          Log          // Logging preferences (level, format).
-	Database     Database     // Persistent storage connection details (Postgres).
-	Connectivity Connectivity // Remote service health check parameters.
-	JWT          JWT          `yaml:"jwt" envPrefix:"JWT_"` // Authentication token parameters (secrets, TTL).
-	Firebase     Firebase     `envPrefix:"FIREBASE_"`       // Firebase Admin SDK integration.
-	APIKeys      APIKeys      // Registered keys for service-to-service auth.
-	Metrics      Metrics      // Observability and monitoring exports.
-	Swagger      Swagger      // API documentation visibility and metadata.
-	Proto        Proto        // Protocol Buffer and gRPC generated settings.
-	Admin        Admin        // Reserved administrative account credentials.
-	Cookie       Cookie       // HTTP cookie attributes (SameSite, Secure).
-	CORS         CORS         `yaml:"cors"`                       // Cross-Origin Resource Sharing settings.
-	Minio        MinioStore   `envPrefix:"MINIO_"`                // S3-compatible storage configuration.
-	Redis        RedisStore   `envPrefix:"REDIS_"`                // Distributed caching and locking.
-	Telegram     Telegram     `envPrefix:"TELEGRAM_"`             // Bot integration for notifications.
-	Tracing      Tracing      `envPrefix:"TRACING_"`              // Distributed tracing export settings.
-	Limiter      Limiter      `envPrefix:"LIMITER_"`              // Global and per-IP rate limit rules.
-	Security     Security     `envPrefix:"SECURITY_"`             // Cross-cutting safety flags.
-	FeatureFlag  FeatureFlag  `envPrefix:"FEATURE_FLAG_"`         // dynamic toggle controls.
-	Asynq        AsynqConfig  `yaml:"asynq" envPrefix:"ASYNQ_"`   // background task queue settings.
-	Seeder       Seeder       `yaml:"seeder" envPrefix:"SEEDER_"` // Mock data generation parameters.
-	Middleware   Middleware   `yaml:"middleware"`                 // Middleware toggle flags.
-	Broker       Broker       `yaml:"broker" envPrefix:"BROKER_"` // Message broker configurations.
-	Sqlc         Sqlc         `yaml:"sqlc" envPrefix:"SQLC_"`     // SQL code generation settings.
+	App          App          `yaml:"app"`                                    // Global application metadata (env, name, version).
+	HTTP         HTTP         `yaml:"http"`                                   // Web server settings (port, timeouts).
+	Log          Log          `yaml:"log"`                                    // Logging preferences (level, format).
+	Database     Database     `yaml:"database"`                               // Persistent storage connection details (Postgres).
+	Connectivity Connectivity `yaml:"connectivity"`                           // Remote service health check parameters.
+	JWT          JWT          `yaml:"jwt" envPrefix:"JWT_"`                   // Authentication token parameters (secrets, TTL).
+	Firebase     Firebase     `yaml:"firebase" envPrefix:"FIREBASE_"`         // Firebase Admin SDK integration.
+	APIKeys      APIKeys      `yaml:"api_keys"`                               // Registered keys for service-to-service auth.
+	Metrics      Metrics      `yaml:"metrics"`                                // Observability and monitoring exports.
+	Swagger      Swagger      `yaml:"swagger"`                                // API documentation visibility and metadata.
+	Proto        Proto        `yaml:"proto"`                                  // Protocol Buffer and gRPC generated settings.
+	Admin        Admin        `yaml:"admin"`                                  // Reserved administrative account credentials.
+	Cookie       Cookie       `yaml:"cookie"`                                 // HTTP cookie attributes (SameSite, Secure).
+	CORS         CORS         `yaml:"cors"`                                   // Cross-Origin Resource Sharing settings.
+	Minio        MinioStore   `yaml:"minio" envPrefix:"MINIO_"`               // S3-compatible storage configuration.
+	Redis        RedisStore   `yaml:"redis" envPrefix:"REDIS_"`               // Distributed caching and locking.
+	Telegram     Telegram     `yaml:"telegram" envPrefix:"TELEGRAM_"`         // Bot integration for notifications.
+	Tracing      Tracing      `yaml:"tracing" envPrefix:"TRACING_"`           // Distributed tracing export settings.
+	Limiter      Limiter      `yaml:"limiter" envPrefix:"LIMITER_"`           // Global and per-IP rate limit rules.
+	Security     Security     `yaml:"security" envPrefix:"SECURITY_"`         // Cross-cutting safety flags.
+	FeatureFlag  FeatureFlag  `yaml:"feature_flag" envPrefix:"FEATURE_FLAG_"` // dynamic toggle controls.
+	Asynq        AsynqConfig  `yaml:"asynq"`                                  // background task queue settings.
+	Seeder       Seeder       `yaml:"seeder" envPrefix:"SEEDER_"`             // Mock data generation parameters.
+	Middleware   Middleware   `yaml:"middleware"`                             // Middleware toggle flags.
+	Broker       Broker       `yaml:"broker" envPrefix:"BROKER_"`             // Message broker configurations.
+	Sqlc         Sqlc         `yaml:"sqlc" envPrefix:"SQLC_"`                 // SQL code generation settings.
 }
 
 // Telegram holds credentials for interacting with the Telegram Bot API.
@@ -74,7 +74,7 @@ func NewConfig() (*Config, error) {
 		// _ = gotenv.Load("../../.env")
 
 		// 2. Load YAML configuration first (baseline)
-		yamlFile, errYaml := os.ReadFile("config.yaml")
+		yamlFile, errYaml := os.ReadFile("config/config.yaml")
 		if errYaml == nil {
 			if errYaml := yaml.Unmarshal(yamlFile, cfg); errYaml != nil {
 				err = fmt.Errorf("yaml parse error: %w", errYaml)

@@ -27,7 +27,7 @@ func NewServiceErrorLogger(repo Repository, logger logger.Log, serviceName strin
 }
 
 // LogError logs a service error
-func (s *ServiceErrorLogger) LogError(ctx context.Context, code string, message string, err error, metadata map[string]interface{}) error {
+func (s *ServiceErrorLogger) LogError(ctx context.Context, code string, message string, err error, metadata map[string]any) error {
 	// Try to extract request ID and user ID from context
 	var requestID *uuid.UUID
 	var userID *uuid.UUID
@@ -61,7 +61,7 @@ func (s *ServiceErrorLogger) LogDatabaseError(ctx context.Context, err error, op
 	return s.LogError(ctx, consts.ErrCodeDatabaseError,
 		fmt.Sprintf("Database %s failed for %s", operation, entity),
 		err,
-		map[string]interface{}{
+		map[string]any{
 			"operation": operation,
 			"entity":    entity,
 		},
@@ -69,6 +69,6 @@ func (s *ServiceErrorLogger) LogDatabaseError(ctx context.Context, err error, op
 }
 
 // LogBusinessError logs a business logic error
-func (s *ServiceErrorLogger) LogBusinessError(ctx context.Context, code string, message string, err error, details map[string]interface{}) error {
+func (s *ServiceErrorLogger) LogBusinessError(ctx context.Context, code string, message string, err error, details map[string]any) error {
 	return s.LogError(ctx, code, message, err, details)
 }

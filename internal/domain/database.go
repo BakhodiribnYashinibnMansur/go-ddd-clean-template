@@ -85,7 +85,7 @@ type ColumnInfo struct {
 type TableData struct {
 	TableName string
 	Columns   []string
-	Rows      []map[string]interface{}
+	Rows      []map[string]any
 	Total     int64
 }
 
@@ -93,7 +93,7 @@ type TableData struct {
 type QueryResult struct {
 	SQL       string                   `json:"sql"`
 	Columns   []string                 `json:"columns,omitempty"`
-	Rows      []map[string]interface{} `json:"rows,omitempty"`
+	Rows      []map[string]any `json:"rows,omitempty"`
 	RowCount  int                      `json:"row_count"`
 	Duration  string                   `json:"duration"`
 	Error     string                   `json:"error,omitempty"`

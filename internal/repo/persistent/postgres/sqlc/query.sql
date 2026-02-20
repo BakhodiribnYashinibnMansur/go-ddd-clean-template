@@ -29,12 +29,11 @@ INSERT INTO users (
     phone,
     password_hash,
     salt,
-    attributes,
     active,
     created_at,
     updated_at
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
+    $1, $2, $3, $4, $5, $6, $7, $8, $9
 )
 RETURNING *;
 
@@ -47,9 +46,8 @@ SET
     phone = COALESCE($5, phone),
     password_hash = COALESCE($6, password_hash),
     salt = COALESCE($7, salt),
-    attributes = COALESCE($8, attributes),
-    active = COALESCE($9, active),
-    updated_at = $10
+    active = COALESCE($8, active),
+    updated_at = $9
 WHERE id = $1 AND deleted_at IS NULL;
 
 -- name: DeleteUser :exec
@@ -61,3 +59,17 @@ WHERE id = $1 AND deleted_at IS NULL;
 UPDATE users
 SET last_seen = $2
 WHERE id = $1;
+
+-- name: GetUserAttributes :many
+SELECT key, value FROM user_attributes
+WHERE user_id = $1;
+
+-- name: SetUserAttribute :exec
+INSERT INTO user_attributes (user_id, key, value)
+VALUES ($1, $2, $3)
+ON CONFLICT (user_id, key) DO UPDATE
+SET value = $3, updated_at = NOW();
+
+-- name: DeleteUserAttribute :exec
+DELETE FROM user_attributes
+WHERE user_id = $1 AND key = $2;

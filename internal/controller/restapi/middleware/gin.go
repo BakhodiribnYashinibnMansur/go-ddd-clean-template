@@ -83,12 +83,14 @@ func GinMiddleware(handler *gin.Engine, cfg *config.Config, uc *usecase.UseCase,
 	// 8. Idempotency.
 	// Handle idempotent requests using Idempotency-Key header.
 	// This prevents duplicate side-effects for retried requests.
-	handler.Use(Idempotency(uc.Repo.Persistent.Redis.Client, l))
+	if uc.Repo.Persistent.Redis.Client != nil {
+		handler.Use(Idempotency(uc.Repo.Persistent.Redis.Client, l))
+	}
 
 	// 9. Traffic Control.
 	// RateLimiter limits the number of requests a client can make within a time window.
 	// It uses Redis to store rate limit counters.
-	if cfg.Middleware.RateLimiter {
+	if cfg.Middleware.RateLimiter && uc.Repo.Persistent.Redis.Client != nil {
 		handler.Use(RateLimiter(cfg.Limiter, uc.Repo.Persistent.Redis.Client, l))
 	}
 
@@ -101,5 +103,10 @@ func GinMiddleware(handler *gin.Engine, cfg *config.Config, uc *usecase.UseCase,
 	// ChangeAudit records details about state-changing operations (POST, PUT, DELETE, etc.).
 	if cfg.Middleware.AuditChange {
 		handler.Use(auditM.ChangeAudit())
+	}
+
+	// 11. Signature Verification (Dynamic Keys from DB)
+	if cfg.Middleware.Signature {
+		handler.Use(SignatureMiddleware(cfg, uc))
 	}
 }

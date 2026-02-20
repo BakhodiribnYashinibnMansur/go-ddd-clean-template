@@ -2,24 +2,24 @@ package config
 
 // AsynqConfig - Asynq task queue configuration.
 type AsynqConfig struct {
-	Enabled bool `yaml:"enabled" env:"ENABLED" envDefault:"true"` // Enable/disable Asynq.
+	Enabled bool `yaml:"enabled"` // Enable/disable Asynq.
 
 	// Redis configuration for Asynq (uses same Redis instance)
-	RedisAddr     string `env:"ADDR"`
-	RedisPassword string `env:"PASSWORD"`
-	RedisDB       int    `env:"DB" envDefault:"0"`
+	RedisAddr     string `yaml:"redis_addr"`
+	RedisPassword string `yaml:"redis_password"`
+	RedisDB       int    `yaml:"redis_db"`
 
 	// Worker configuration
-	Concurrency int `env:"CONCURRENCY" envDefault:"10"` // Number of concurrent workers
+	Concurrency int `yaml:"concurrency"` // Number of concurrent workers
 
 	// Queue priorities (higher number = higher priority)
-	Queues map[string]int `env:"QUEUES"`
+	Queues map[string]int `yaml:"queues"`
 
 	// Retry configuration
-	MaxRetry int `env:"MAX_RETRY" envDefault:"3"`
+	MaxRetry int `yaml:"max_retry"`
 
 	// Enable/Disable worker
-	WorkerEnabled bool `env:"WORKER_ENABLED" envDefault:"true"`
+	WorkerEnabled bool `yaml:"worker_enabled"`
 }
 
 // GetDefaultQueues returns default queue priorities.

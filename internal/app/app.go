@@ -4,8 +4,6 @@ package app
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"io"
 	"os"
 	"os/signal"
@@ -17,7 +15,6 @@ import (
 	"gct/consts"
 	"gct/internal/controller/restapi"
 	"gct/internal/repo"
-	"gct/internal/seeder"
 	"gct/internal/usecase"
 	"gct/internal/usecase/cache"
 	"gct/pkg/asynq"
@@ -28,7 +25,7 @@ import (
 	"gct/pkg/telemetry"
 
 	"github.com/gin-gonic/gin"
-	hibikenasynq "github.com/hibiken/asynq"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 )
 
@@ -66,23 +63,32 @@ func Run(cfg *config.Config) {
 
 	// 2. Initialize Redis
 	// Provides the primary storage for caching, rate limiting, and session management.
-	redisInstance, err := redispkg.New(ctx, cfg.App.Environment, cfg.Database.Redis, l)
-	if err != nil {
-		l.Fatalc(ctx, "❌ Failed to initialize Redis", "error", err)
+	var redisclient *redis.Client
+	if cfg.Database.Redis.Enabled {
+		redisInstance, err := redispkg.New(ctx, cfg.App.Environment, cfg.Database.Redis, l)
+		if err != nil {
+			l.Fatalc(ctx, "❌ Failed to initialize Redis", "error", err)
+		}
+		defer redisInstance.Close()
+		redisclient = redisInstance.Client
+	} else {
+		l.Infoc(ctx, "⚠️ Redis is disabled in configuration")
 	}
-	defer redisInstance.Close()
-
-	redisclient := redisInstance.Client
 
 	// 3. Initialize Asynq Client
 	// Used by API handlers to push tasks into background queues.
-	asynqClient := asynq.NewClient(
-		cfg.Redis.Addr(),
-		cfg.Redis.Password,
-		cfg.Redis.DB,
-		l,
-	)
-	defer asynqClient.Close()
+	var asynqClient *asynq.Client
+	if cfg.Asynq.Enabled {
+		asynqClient = asynq.NewClient(
+			cfg.Redis.Addr(),
+			cfg.Redis.Password,
+			cfg.Redis.DB,
+			l,
+		)
+		defer asynqClient.Close()
+	} else {
+		l.Infoc(ctx, "⚠️ Asynq client is disabled in configuration")
+	}
 
 	// 4. Initialize Data Access and Business Layers
 	// repositories layer handles raw data retrieval and persistence.
@@ -97,73 +103,26 @@ func Run(cfg *config.Config) {
 	// cacheService manages memory-efficient data invalidation across clusters.
 	cacheService := cache.NewCache(repositories.Persistent.Redis, l)
 
-	// Start a background listener for database-driven cache invalidation events.
+	// 5.1 Initialize Integration Cache (In-memory)
+	if err := useCases.Integration.InitCache(ctx); err != nil {
+		l.Errorc(ctx, "⚠️ Failed to initialize integration cache", "error", err)
+	}
+
+	// Start background listeners for database-driven cache invalidation events.
 	go pg.Listen(ctx, consts.CacheInvalidationChannel, cacheService.DeletePublicCaches, l)
+	go pg.Listen(ctx, consts.CacheInvalidationChannel, useCases.Integration.InvalidateCache, l)
 
-	// 6. Initialize Background Workers
-	// Asynq workers process time-consuming tasks outside the HTTP request/response cycle.
 	var asynqWorker *asynq.Worker
-	if cfg.Asynq.WorkerEnabled {
-		// Cluster configuration for the worker.
-		if cfg.Asynq.RedisAddr == "" {
-			cfg.Asynq.RedisAddr = cfg.Redis.Addr()
-			cfg.Asynq.RedisPassword = cfg.Redis.Password
-			cfg.Asynq.RedisDB = cfg.Redis.DB
+	if cfg.Asynq.Enabled {
+		asynqWorker, err = initAsynqWorker(ctx, cfg, repositories, useCases, l)
+		if err != nil {
+			l.Errorc(ctx, "⚠️ Failed to initialize Asynq worker", "error", err)
 		}
-
-		asynqWorker = asynq.NewWorker(cfg.Asynq, l)
-
-		// Setup task handlers (Email, Notifications, Image processing).
-		handlers := asynq.NewHandlers(l, useCases.Audit)
-		asynqWorker.RegisterHandler(asynq.TypeEmailWelcome, handlers.HandleEmailWelcome)
-		asynqWorker.RegisterHandler(asynq.TypeEmailVerification, handlers.HandleEmailVerification)
-		asynqWorker.RegisterHandler(asynq.TypeImageResize, handlers.HandleImageResize)
-		asynqWorker.RegisterHandler(asynq.TypePushNotification, handlers.HandlePushNotification)
-		asynqWorker.RegisterHandler(asynq.TypeAuditLog, handlers.HandleAuditLog)
-
-		// specialized handler for on-demand database seeding.
-		s := seeder.New(repositories, l, cfg)
-		asynqWorker.RegisterHandler(asynq.TypeSystemSeed, func(ctx context.Context, task *hibikenasynq.Task) error {
-			var payload asynq.SeedPayload
-			if err := json.Unmarshal(task.Payload(), &payload); err != nil {
-				return fmt.Errorf("unmarshal seed payload: %w", err)
-			}
-
-			customCounts := make(map[string]int)
-			if payload.UsersCount > 0 {
-				customCounts["users"] = payload.UsersCount
-			}
-			if payload.RolesCount > 0 {
-				customCounts["roles"] = payload.RolesCount
-			}
-			if payload.PermissionsCount > 0 {
-				customCounts["permissions"] = payload.PermissionsCount
-			}
-			if payload.PoliciesCount > 0 {
-				customCounts["policies"] = payload.PoliciesCount
-			}
-			if payload.Seed != 0 {
-				customCounts["seed"] = int(payload.Seed)
-			}
-			customCounts["clear_data"] = 0
-			if payload.ClearData {
-				customCounts["clear_data"] = 1
-			}
-
-			return s.Seed(ctx, customCounts)
-		})
-
-		// Launch the worker engine in a managed goroutine.
-		go func() {
-			if err := asynqWorker.Start(); err != nil {
-				l.Errorc(ctx, "❌ Failed to start Asynq worker",
-					"error", err,
-					"redis_addr", cfg.Asynq.RedisAddr,
-					"concurrency", cfg.Asynq.Concurrency,
-				)
-			}
-		}()
-		defer asynqWorker.Stop()
+		if asynqWorker != nil {
+			defer asynqWorker.Stop()
+		}
+	} else {
+		l.Infoc(ctx, "⚠️ Asynq worker is disabled in configuration")
 	}
 
 	// 7. Initialize Web Router and Persistent Server

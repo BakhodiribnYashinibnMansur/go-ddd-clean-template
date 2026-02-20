@@ -37,28 +37,23 @@ func (c *Controller) RevokeAll(ctx *gin.Context) {
 	}
 
 	var req domain.RevokeSessionsIn
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-// We allow empty body for now if it's just a general revoke all
-// But the user said Post needs a body.
-		httpx.LogError(c.l, err, "http - v1 - session - revokeall - bind")
-		response.RespondWithError(ctx, err, http.StatusBadRequest)
-		return
-	}
+	// Body is optional — UserID comes from JWT context
+	_ = ctx.ShouldBindJSON(&req)
 	req.UserID = userID
 
-// Handle mock mode
+	// Handle mock mode
 	if httpx.Mock(ctx, httpx.MockTypeDelete, "Sessions revoked successfully") {
 		return
 	}
 
-// Just revoke current session for now
-	filter := &domain.SessionFilter{ID: &sid}
+	// Revoke all sessions for this user
+	filter := &domain.SessionFilter{UserID: &userID}
 	err = c.s.User.Session().Revoke(ctx.Request.Context(), filter)
 	if err != nil {
 		response.ControllerResponse(ctx, http.StatusInternalServerError, err, nil, false)
 		return
 	}
 
-	c.l.Infow("Session revoked for user", "user_id", userID)
-	response.ControllerResponse(ctx, http.StatusOK, "Session revoked successfully", nil, true)
+	c.l.Infow("All sessions revoked for user", "user_id", userID, "current_session_id", sid)
+	response.ControllerResponse(ctx, http.StatusOK, "All sessions revoked successfully", nil, true)
 }

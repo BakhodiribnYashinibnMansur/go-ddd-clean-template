@@ -21,7 +21,7 @@ const (
 	SessionDeviceTypeTV      SessionDeviceType = "TV"
 )
 
-func (e *SessionDeviceType) Scan(src interface{}) error {
+func (e *SessionDeviceType) Scan(src any) error {
 	switch s := src.(type) {
 	case []byte:
 		*e = SessionDeviceType(s)
@@ -39,7 +39,7 @@ type NullSessionDeviceType struct {
 }
 
 // Scan implements the Scanner interface.
-func (ns *NullSessionDeviceType) Scan(value interface{}) error {
+func (ns *NullSessionDeviceType) Scan(value any) error {
 	if value == nil {
 		ns.SessionDeviceType, ns.Valid = "", false
 		return nil

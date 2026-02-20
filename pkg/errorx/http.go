@@ -34,7 +34,7 @@ type HTTPErrorContext struct {
 }
 
 // LogHTTPError logs an HTTP error with full context
-func (h *HTTPErrorLogger) LogHTTPError(ctx context.Context, code string, message string, err error, httpCtx HTTPErrorContext, metadata map[string]interface{}) error {
+func (h *HTTPErrorLogger) LogHTTPError(ctx context.Context, code string, message string, err error, httpCtx HTTPErrorContext, metadata map[string]any) error {
 	return h.errorLogger.LogError(ctx, LogErrorInput{
 		Code:        code,
 		Message:     message,
@@ -52,7 +52,7 @@ func (h *HTTPErrorLogger) LogHTTPError(ctx context.Context, code string, message
 
 // LogAuthError logs an authentication error
 func (h *HTTPErrorLogger) LogAuthError(ctx context.Context, err error, httpCtx HTTPErrorContext, username string) error {
-	metadata := map[string]interface{}{
+	metadata := map[string]any{
 		"username": username,
 	}
 
@@ -60,8 +60,8 @@ func (h *HTTPErrorLogger) LogAuthError(ctx context.Context, err error, httpCtx H
 }
 
 // LogValidationError logs a validation error
-func (h *HTTPErrorLogger) LogValidationError(ctx context.Context, err error, httpCtx HTTPErrorContext, field string, value interface{}) error {
-	metadata := map[string]interface{}{
+func (h *HTTPErrorLogger) LogValidationError(ctx context.Context, err error, httpCtx HTTPErrorContext, field string, value any) error {
+	metadata := map[string]any{
 		"field": field,
 		"value": value,
 	}
@@ -71,7 +71,7 @@ func (h *HTTPErrorLogger) LogValidationError(ctx context.Context, err error, htt
 
 // LogDatabaseError logs a database error
 func (h *HTTPErrorLogger) LogDatabaseError(ctx context.Context, err error, httpCtx HTTPErrorContext, operation string, table string) error {
-	metadata := map[string]interface{}{
+	metadata := map[string]any{
 		"operation": operation,
 		"table":     table,
 	}
@@ -81,7 +81,7 @@ func (h *HTTPErrorLogger) LogDatabaseError(ctx context.Context, err error, httpC
 
 // LogExternalServiceError logs an external service error
 func (h *HTTPErrorLogger) LogExternalServiceError(ctx context.Context, err error, httpCtx HTTPErrorContext, service string, endpoint string) error {
-	metadata := map[string]interface{}{
+	metadata := map[string]any{
 		"service":  service,
 		"endpoint": endpoint,
 	}

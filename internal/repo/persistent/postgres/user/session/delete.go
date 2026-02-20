@@ -5,7 +5,6 @@ import (
 
 	"gct/consts"
 	"gct/internal/domain"
-	"gct/internal/repo/schema"
 	apperrors "gct/pkg/errors"
 
 	"github.com/Masterminds/squirrel"
@@ -20,13 +19,13 @@ func (r *Repo) Delete(ctx context.Context, filter *domain.SessionFilter) error {
 	query := r.builder.Delete(tableName)
 
 	if !filter.IsIDNull() {
-		query = query.Where(squirrel.Eq{schema.SessionID: *filter.ID})
+		query = query.Where(squirrel.Eq{"id": *filter.ID})
 	}
 	if !filter.IsUserIDNull() {
-		query = query.Where(squirrel.Eq{schema.SessionUserID: *filter.UserID})
+		query = query.Where(squirrel.Eq{"user_id": *filter.UserID})
 	}
 	if !filter.IsRevokedNull() {
-		query = query.Where(squirrel.Eq{schema.SessionRevoked: *filter.Revoked})
+		query = query.Where(squirrel.Eq{"revoked": *filter.Revoked})
 	}
 
 	sql, args, err := query.ToSql()

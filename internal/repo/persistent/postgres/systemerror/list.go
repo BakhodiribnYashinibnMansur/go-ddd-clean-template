@@ -3,7 +3,6 @@ package systemerror
 import (
 	"context"
 
-	"gct/internal/repo/schema"
 
 	"github.com/Masterminds/squirrel"
 )
@@ -12,38 +11,38 @@ import (
 func (r *Repo) List(ctx context.Context, filter ListFilter) ([]*SystemError, error) {
 	builder := r.db.Builder.
 		Select(
-			schema.SystemErrorID,
-			schema.SystemErrorCode,
-			schema.SystemErrorMessage,
-			schema.SystemErrorStackTrace,
-			schema.SystemErrorMetadata,
-			schema.SystemErrorSeverity,
-			schema.SystemErrorServiceName,
-			schema.SystemErrorRequestID,
-			schema.SystemErrorUserID,
-			schema.SystemErrorIPAddress,
-			schema.SystemErrorPath,
-			schema.SystemErrorMethod,
-			schema.SystemErrorIsResolved,
-			schema.SystemErrorResolvedAt,
-			schema.SystemErrorResolvedBy,
-			schema.SystemErrorCreatedAt,
+			"id",
+			"code",
+			"message",
+			"stack_trace",
+			"metadata",
+			"severity",
+			"service_name",
+			"request_id",
+			"user_id",
+			"ip_address",
+			"path",
+			"method",
+			"is_resolved",
+			"resolved_at",
+			"resolved_by",
+			"created_at",
 		).
-		From(schema.TableSystemError)
+		From("system_errors")
 
 	if filter.Code != nil {
-		builder = builder.Where(squirrel.Eq{schema.SystemErrorCode: *filter.Code})
+		builder = builder.Where(squirrel.Eq{"code": *filter.Code})
 	}
 
 	if filter.Severity != nil {
-		builder = builder.Where(squirrel.Eq{schema.SystemErrorSeverity: *filter.Severity})
+		builder = builder.Where(squirrel.Eq{"severity": *filter.Severity})
 	}
 
 	if filter.IsResolved != nil {
-		builder = builder.Where(squirrel.Eq{schema.SystemErrorIsResolved: *filter.IsResolved})
+		builder = builder.Where(squirrel.Eq{"is_resolved": *filter.IsResolved})
 	}
 
-	builder = builder.OrderBy(schema.SystemErrorCreatedAt + " DESC")
+	builder = builder.OrderBy("created_at" + " DESC")
 
 	if filter.Pagination != nil {
 		if filter.Pagination.Limit > 0 {

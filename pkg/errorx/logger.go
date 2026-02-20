@@ -39,7 +39,7 @@ type LogErrorInput struct {
 	IPAddress   *string
 	Path        *string
 	Method      *string
-	Metadata    map[string]interface{}
+	Metadata    map[string]any
 }
 
 // LogError logs an error to the repository

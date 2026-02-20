@@ -35,6 +35,11 @@ const (
 	ClaimExpiresAt       string = "exp" // Expires At
 	ClaimIssuedAt        string = "iat" // Issued At
 	ClaimJWTID           string = "jti" // JWT ID
+
+	// Integration Context Keys
+	CtxIntegrationID   string = "integration_id"
+	CtxAPIKeyID        string = "api_key_id"
+	CtxIntegrationName string = "integration_name"
 )
 
 // Middleware constants

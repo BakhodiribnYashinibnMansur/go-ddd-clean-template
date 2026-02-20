@@ -3,7 +3,6 @@ package scope
 import (
 	"context"
 
-	"gct/internal/repo/schema"
 	"gct/pkg/db/postgres"
 	"gct/pkg/logger"
 
@@ -12,7 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
-const tableName = schema.TableScope
+const tableName = "scope"
 
 type Pool interface {
 	Exec(ctx context.Context, sql string, arguments ...any) (pgconn.CommandTag, error)

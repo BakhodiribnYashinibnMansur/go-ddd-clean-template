@@ -5,7 +5,6 @@ import (
 
 	"gct/consts"
 	"gct/internal/domain"
-	"gct/internal/repo/schema"
 	apperrors "gct/pkg/errors"
 
 	"github.com/Masterminds/squirrel"
@@ -13,28 +12,28 @@ import (
 
 func (r *Repo) Get(ctx context.Context, filter *domain.SiteSettingFilter) (*domain.SiteSetting, error) {
 	query := r.builder.Select(
-		schema.SiteSettingID,
-		schema.SiteSettingKey,
-		schema.SiteSettingValue,
-		schema.SiteSettingValueType,
-		schema.SiteSettingCategory,
-		schema.SiteSettingDescription,
-		schema.SiteSettingIsPublic,
-		schema.SiteSettingCreatedAt,
-		schema.SiteSettingUpdatedAt,
+		"id",
+		"key",
+		"value",
+		"value_type",
+		"category",
+		"description",
+		"is_public",
+		"created_at",
+		"updated_at",
 	).From(tableName)
 
 	if filter.ID != nil {
-		query = query.Where(squirrel.Eq{schema.SiteSettingID: filter.ID})
+		query = query.Where(squirrel.Eq{"id": filter.ID})
 	}
 	if filter.Key != nil {
-		query = query.Where(squirrel.Eq{schema.SiteSettingKey: filter.Key})
+		query = query.Where(squirrel.Eq{"key": filter.Key})
 	}
 	if filter.Category != nil {
-		query = query.Where(squirrel.Eq{schema.SiteSettingCategory: filter.Category})
+		query = query.Where(squirrel.Eq{"category": filter.Category})
 	}
 	if filter.IsPublic != nil {
-		query = query.Where(squirrel.Eq{schema.SiteSettingIsPublic: filter.IsPublic})
+		query = query.Where(squirrel.Eq{"is_public": filter.IsPublic})
 	}
 
 	query = query.Limit(1)

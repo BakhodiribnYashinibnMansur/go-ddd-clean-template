@@ -21,10 +21,10 @@
                 </tr>
             </thead>
             <tbody>
-                {{ range $index, $user := .Data.Users }}
+                {{ range $index, $user := .Users }}
                 <tr>
                     <td style="text-align: center; font-weight: 600; color: var(--text-secondary);">
-                        {{ add $.Data.Pagination.Offset $index 1 }}
+                        {{ add $.Pagination.Offset $index 1 }}
                     </td>
                     <td>
                         <div class="user-info">
@@ -59,7 +59,7 @@
     </div>
 
     <!-- Pagination -->
-    {{ template "pagination" .Data.Pagination }}
+    {{ template "pagination" .Pagination }}
 </div>
 
 <style>

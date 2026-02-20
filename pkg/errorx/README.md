@@ -62,7 +62,7 @@ err = errorLogger.LogError(ctx, errorx.LogErrorInput{
     IPAddress:   &ipAddr,
     Path:        &path,
     Method:      &method,
-    Metadata: map[string]interface{}{
+    Metadata: map[string]any{
         "attempt": 3,
         "reason":  "invalid_password",
     },

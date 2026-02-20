@@ -6,9 +6,11 @@ import (
 	"gct/internal/repo/persistent/postgres/audit"
 	"gct/internal/repo/persistent/postgres/authz"
 	errorcode "gct/internal/repo/persistent/postgres/errorcode"
+	"gct/internal/repo/persistent/postgres/integration"
 	sitesetting "gct/internal/repo/persistent/postgres/sitesetting"
 	systemerror "gct/internal/repo/persistent/postgres/systemerror"
 	"gct/internal/repo/persistent/postgres/user"
+	integrationUC "gct/internal/usecase/integration"
 	"gct/pkg/db/postgres"
 	"gct/pkg/logger"
 
@@ -22,6 +24,7 @@ type Repo struct {
 	SiteSetting *sitesetting.Repo
 	SystemError *systemerror.Repo
 	ErrorCode   *errorcode.Repo
+	Integration integrationUC.Repository
 	DB          *postgres.Postgres
 }
 
@@ -34,6 +37,7 @@ func New(pg *postgres.Postgres, logger logger.Log) (*Repo, error) {
 		SiteSetting: sitesetting.New(pg.Pool),
 		SystemError: systemerror.New(pg, logger),
 		ErrorCode:   errorcode.New(pg, logger),
+		Integration: integration.New(pg, logger),
 		DB:          pg,
 	}, nil
 }

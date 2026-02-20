@@ -36,7 +36,7 @@ type User struct {
 	Phone        *string        `db:"phone"         json:"phone,omitempty"                    validate:"required,phone"     example:"+998901234567" minLength:"1"`
 	PasswordHash string         `db:"password_hash" json:"-"`
 	Salt         *string        `db:"salt"          json:"-"`
-	Attributes   map[string]any `db:"attributes"    json:"attributes"` // JSONB for ABAC (region, branch, dept)
+	Attributes   map[string]any `json:"attributes"` // JSONB used to be here, now EAV table
 	Active       bool           `db:"active"        json:"active"                             example:"true"`
 	IsApproved   bool           `db:"is_approved"   json:"is_approved"                        example:"true"`
 	LastSeen     *time.Time     `db:"last_seen"     json:"last_seen,omitempty"                example:"2024-01-25T10:30:00Z"  format:"date-time"`
@@ -44,7 +44,8 @@ type User struct {
 	CreatedAt    time.Time      `db:"created_at"    json:"created_at"                         example:"2024-01-01T00:00:00Z"  format:"date-time"`
 	UpdatedAt    time.Time      `db:"updated_at"    json:"updated_at"                         example:"2024-01-25T10:30:00Z"  format:"date-time"`
 
-	Password string `db:"-" json:"password,omitempty" validate:"omitempty,min=8" example:"SecureP@ss123" minLength:"8"` // Transient field for input
+	Password  string     `db:"-" json:"password,omitempty" validate:"omitempty,min=8" example:"SecureP@ss123" minLength:"8"` // Transient field for input
+	Relations []Relation `json:"relations,omitempty"`
 }
 
 // UserFilter represents a filter for user queries.

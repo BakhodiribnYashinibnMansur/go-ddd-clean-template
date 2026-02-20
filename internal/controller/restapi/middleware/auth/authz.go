@@ -79,6 +79,13 @@ func (m *AuthMiddleware) Authz(ctx *gin.Context) {
 	}
 	method := ctx.Request.Method
 
+	relationIDs := make([]string, len(user.Relations))
+	relationNames := make([]string, len(user.Relations))
+	for i, rel := range user.Relations {
+		relationIDs[i] = rel.ID.String()
+		relationNames[i] = rel.Name
+	}
+
 	// Prepare dynamic environment for policy evaluation
 	// This allows policies to make decisions based on runtime context
 	env := map[string]any{
@@ -87,6 +94,14 @@ func (m *AuthMiddleware) Authz(ctx *gin.Context) {
 		consts.PolicyKeyTime:      time.Now(),
 		consts.PolicyKeyUserID:    user.ID,
 		consts.PolicyKeyRoleID:    *user.RoleID,
+		"user": map[string]any{
+			"id":             user.ID,
+			"role_id":        *user.RoleID,
+			"relations":      user.Relations,
+			"relation_ids":   relationIDs,
+			"relation_names": relationNames,
+			"attributes":     user.Attributes,
+		},
 	}
 
 	// Include URL parameters in the environment for path-based policies

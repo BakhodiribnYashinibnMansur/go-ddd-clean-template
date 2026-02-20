@@ -25,13 +25,14 @@ func TestUser_ComprehensiveFlow(t *testing.T) {
 		Password string
 		Username string
 
-		Token  string
-		UserID string
+		Token     string
+		UserID    string
+		SessionID string
 	}
 
 	ctx := &TestContext{
 		Phone:    "998901234567",
-		Password: "password123",
+		Password: "P@ssw0rd!",
 		Username: "testuser",
 	}
 
@@ -64,8 +65,10 @@ func TestUser_ComprehensiveFlow(t *testing.T) {
 				data := body["data"].(map[string]any)
 				ctx.Token = data["access_token"].(string)
 				ctx.UserID = data["user_id"].(string)
+				ctx.SessionID = data["session_id"].(string)
 				assert.NotEmpty(t, ctx.Token)
 				assert.NotEmpty(t, ctx.UserID)
+				assert.NotEmpty(t, ctx.SessionID)
 			},
 		},
 
@@ -109,7 +112,7 @@ func TestUser_ComprehensiveFlow(t *testing.T) {
 			name: "Step 5: Sign Out",
 			run: func(t *testing.T, ctx *TestContext) {
 				t.Helper()
-				resp := client.SignOut(t, ctx.Token)
+				resp := client.SignOut(t, ctx.Token, ctx.SessionID)
 				defer resp.Body.Close()
 				require.Equal(t, http.StatusOK, resp.StatusCode)
 			},

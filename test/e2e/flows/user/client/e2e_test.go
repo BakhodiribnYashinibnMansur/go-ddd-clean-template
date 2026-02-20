@@ -23,7 +23,7 @@ func TestSignUp(t *testing.T) {
 			name:           "valid signup",
 			username:       "valid_user",
 			phone:          "998901234500",
-			password:       "password123",
+			password:       "P@ssw0rd!",
 			expectedStatus: http.StatusCreated,
 			checkResponse:  true,
 		},
@@ -31,7 +31,7 @@ func TestSignUp(t *testing.T) {
 			name:           "duplicate phone",
 			username:       "duplicate_user",
 			phone:          "998901234500",
-			password:       "password123",
+			password:       "P@ssw0rd!",
 			expectedStatus: http.StatusConflict,
 			checkResponse:  false,
 		},
@@ -58,7 +58,7 @@ func TestSignUp(t *testing.T) {
 					Data   map[string]any `json:"data"`
 				}
 				json.Unmarshal(bodyBytes, &result)
-				require.Equal(t, "SUCCESS", result.Status)
+				require.Equal(t, "success", result.Status)
 				require.NotEmpty(t, result.Data["access_token"])
 			}
 		})
@@ -77,7 +77,7 @@ func TestSignIn(t *testing.T) {
 		{
 			name:           "valid signin",
 			phone:          "998901234510",
-			password:       "password123",
+			password:       "P@ssw0rd!",
 			expectedStatus: http.StatusOK,
 			checkDB:        true,
 		},
@@ -91,7 +91,7 @@ func TestSignIn(t *testing.T) {
 		{
 			name:           "user not found",
 			phone:          "998909999999",
-			password:       "password123",
+			password:       "P@ssw0rd!",
 			expectedStatus: http.StatusUnauthorized,
 			checkDB:        false,
 		},
@@ -104,7 +104,7 @@ func TestSignIn(t *testing.T) {
 	client := New(server.URL)
 
 	// Setup user
-	resp := client.SignUp(t, "signin_test_user", "998901234510", "password123")
+	resp := client.SignUp(t, "signin_test_user", "998901234510", "P@ssw0rd!")
 	resp.Body.Close()
 
 	for _, tt := range tests {
@@ -171,9 +171,9 @@ func TestGetUser(t *testing.T) {
 	client := New(server.URL)
 
 	// Setup user and get token
-	resp := client.SignUp(t, "get_test_user", "998901234520", "password123")
+	resp := client.SignUp(t, "get_test_user", "998901234520", "P@ssw0rd!")
 	resp.Body.Close()
-	signInResp := client.SignIn(t, "998901234520", "password123")
+	signInResp := client.SignIn(t, "998901234520", "P@ssw0rd!")
 	var signInResult struct {
 		Data struct {
 			AccessToken string `json:"access_token"`
@@ -236,9 +236,9 @@ func TestUpdateUser(t *testing.T) {
 	client := New(server.URL)
 
 	// Setup user
-	resp := client.SignUp(t, "update_test_user", "998901234530", "password123")
+	resp := client.SignUp(t, "update_test_user", "998901234530", "P@ssw0rd!")
 	resp.Body.Close()
-	signInResp := client.SignIn(t, "998901234530", "password123")
+	signInResp := client.SignIn(t, "998901234530", "P@ssw0rd!")
 	var signInResult struct {
 		Data struct {
 			AccessToken string `json:"access_token"`
@@ -303,9 +303,9 @@ func TestDeleteUser(t *testing.T) {
 			client := New(server.URL)
 
 			// Setup user
-			resp := client.SignUp(t, "delete_test_user", "998901234540", "password123")
+			resp := client.SignUp(t, "delete_test_user", "998901234540", "P@ssw0rd!")
 			resp.Body.Close()
-			signInResp := client.SignIn(t, "998901234540", "password123")
+			signInResp := client.SignIn(t, "998901234540", "P@ssw0rd!")
 			var signInResult struct {
 				Data struct {
 					AccessToken string `json:"access_token"`
@@ -366,13 +366,14 @@ func TestSignOut(t *testing.T) {
 	client := New(server.URL)
 
 	// Setup user
-	resp := client.SignUp(t, "signout_test_user", "998901234550", "password123")
+	resp := client.SignUp(t, "signout_test_user", "998901234550", "P@ssw0rd!")
 	resp.Body.Close()
-	signInResp := client.SignIn(t, "998901234550", "password123")
+	signInResp := client.SignIn(t, "998901234550", "P@ssw0rd!")
 	var signInResult struct {
 		Data struct {
 			AccessToken string `json:"access_token"`
 			UserID      string `json:"user_id"`
+			SessionID   string `json:"session_id"`
 		} `json:"data"`
 	}
 	json.NewDecoder(signInResp.Body).Decode(&signInResult)
@@ -386,7 +387,7 @@ func TestSignOut(t *testing.T) {
 			}
 
 			// ✅ Use client method
-			resp := client.SignOut(t, token)
+			resp := client.SignOut(t, token, signInResult.Data.SessionID)
 			defer resp.Body.Close()
 
 			require.Equal(t, tt.expectedStatus, resp.StatusCode)

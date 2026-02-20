@@ -1,13 +1,13 @@
 package session
 
 import (
-	"encoding/json"
 	"errors"
 	"testing"
 	"time"
 
 	"gct/internal/domain"
 	"gct/pkg/logger"
+
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
 	"github.com/pashagolub/pgxmock/v4"
@@ -26,19 +26,19 @@ func TestRepo_Create(t *testing.T) {
 	userAgent := "Mozilla/5.0"
 	fcmToken := "fcm_token_123"
 	userID := uuid.New()
-	data := map[string]any{"ip": "192.168.1.1"}
-	dataJSON, _ := json.Marshal(data)
+	// data := map[string]any{"ip": "192.168.1.1"}
+	// dataJSON, _ := json.Marshal(data)
 
 	sess := &domain.Session{
-		ID:           sessionID,
-		DeviceID:     deviceID,
-		DeviceName:   &deviceName,
-		DeviceType:   &deviceType,
-		IPAddress:    &ipAddress,
-		UserAgent:    &userAgent,
-		FCMToken:     &fcmToken,
-		UserID:       userID,
-		Data:         dataJSON,
+		ID:         sessionID,
+		DeviceID:   deviceID,
+		DeviceName: &deviceName,
+		DeviceType: &deviceType,
+		IPAddress:  &ipAddress,
+		UserAgent:  &userAgent,
+		FCMToken:   &fcmToken,
+		UserID:     userID,
+		// // Data:         dataJSON,
 		Revoked:      false,
 		ExpiresAt:    time.Now().Add(24 * time.Hour),
 		LastActivity: time.Now(),
@@ -80,10 +80,10 @@ func TestRepo_Create(t *testing.T) {
 		{
 			name: "success - auto-generate ID",
 			session: &domain.Session{
-				ID:           uuid.Nil, // Will be auto-generated
-				DeviceID:     deviceID,
-				UserID:       userID,
-				Data:         dataJSON,
+				ID:       uuid.Nil, // Will be auto-generated
+				DeviceID: deviceID,
+				UserID:   userID,
+				// // Data:         dataJSON,
 				ExpiresAt:    time.Now().Add(24 * time.Hour),
 				LastActivity: time.Now(),
 			},
@@ -142,15 +142,15 @@ func TestRepo_Create(t *testing.T) {
 		{
 			name: "nil optional fields",
 			session: &domain.Session{
-				ID:           sessionID,
-				DeviceID:     deviceID,
-				DeviceName:   nil,
-				DeviceType:   nil,
-				IPAddress:    nil,
-				UserAgent:    nil,
-				FCMToken:     nil,
-				UserID:       userID,
-				Data:         dataJSON,
+				ID:         sessionID,
+				DeviceID:   deviceID,
+				DeviceName: nil,
+				DeviceType: nil,
+				IPAddress:  nil,
+				UserAgent:  nil,
+				FCMToken:   nil,
+				UserID:     userID,
+				// Data:         dataJSON,
 				Revoked:      false,
 				ExpiresAt:    time.Now().Add(24 * time.Hour),
 				LastActivity: time.Now(),
@@ -181,15 +181,15 @@ func TestRepo_Create(t *testing.T) {
 		{
 			name: "empty device name",
 			session: &domain.Session{
-				ID:           sessionID,
-				DeviceID:     deviceID,
-				DeviceName:   func() *string { s := ""; return &s }(),
-				DeviceType:   &deviceType,
-				IPAddress:    &ipAddress,
-				UserAgent:    &userAgent,
-				FCMToken:     &fcmToken,
-				UserID:       userID,
-				Data:         dataJSON,
+				ID:         sessionID,
+				DeviceID:   deviceID,
+				DeviceName: func() *string { s := ""; return &s }(),
+				DeviceType: &deviceType,
+				IPAddress:  &ipAddress,
+				UserAgent:  &userAgent,
+				FCMToken:   &fcmToken,
+				UserID:     userID,
+				// Data:         dataJSON,
 				Revoked:      false,
 				ExpiresAt:    time.Now().Add(24 * time.Hour),
 				LastActivity: time.Now(),
@@ -220,15 +220,15 @@ func TestRepo_Create(t *testing.T) {
 		{
 			name: "zero user ID",
 			session: &domain.Session{
-				ID:           sessionID,
-				DeviceID:     deviceID,
-				DeviceName:   &deviceName,
-				DeviceType:   &deviceType,
-				IPAddress:    &ipAddress,
-				UserAgent:    &userAgent,
-				FCMToken:     &fcmToken,
-				UserID:       uuid.Nil,
-				Data:         dataJSON,
+				ID:         sessionID,
+				DeviceID:   deviceID,
+				DeviceName: &deviceName,
+				DeviceType: &deviceType,
+				IPAddress:  &ipAddress,
+				UserAgent:  &userAgent,
+				FCMToken:   &fcmToken,
+				UserID:     uuid.Nil,
+				// Data:         dataJSON,
 				Revoked:      false,
 				ExpiresAt:    time.Now().Add(24 * time.Hour),
 				LastActivity: time.Now(),
@@ -263,15 +263,15 @@ func TestRepo_Create(t *testing.T) {
 		{
 			name: "negative company ID",
 			session: &domain.Session{
-				ID:           sessionID,
-				DeviceID:     deviceID,
-				DeviceName:   &deviceName,
-				DeviceType:   &deviceType,
-				IPAddress:    &ipAddress,
-				UserAgent:    &userAgent,
-				FCMToken:     &fcmToken,
-				UserID:       uuid.Nil,
-				Data:         dataJSON,
+				ID:         sessionID,
+				DeviceID:   deviceID,
+				DeviceName: &deviceName,
+				DeviceType: &deviceType,
+				IPAddress:  &ipAddress,
+				UserAgent:  &userAgent,
+				FCMToken:   &fcmToken,
+				UserID:     uuid.Nil,
+				// Data:         dataJSON,
 				Revoked:      false,
 				ExpiresAt:    time.Now().Add(24 * time.Hour),
 				LastActivity: time.Now(),
@@ -306,15 +306,15 @@ func TestRepo_Create(t *testing.T) {
 		{
 			name: "expired session time",
 			session: &domain.Session{
-				ID:           sessionID,
-				DeviceID:     deviceID,
-				DeviceName:   &deviceName,
-				DeviceType:   &deviceType,
-				IPAddress:    &ipAddress,
-				UserAgent:    &userAgent,
-				FCMToken:     &fcmToken,
-				UserID:       userID,
-				Data:         dataJSON,
+				ID:         sessionID,
+				DeviceID:   deviceID,
+				DeviceName: &deviceName,
+				DeviceType: &deviceType,
+				IPAddress:  &ipAddress,
+				UserAgent:  &userAgent,
+				FCMToken:   &fcmToken,
+				UserID:     userID,
+				// // Data:         dataJSON,
 				Revoked:      false,
 				ExpiresAt:    time.Now().Add(-1 * time.Hour), // Already expired
 				LastActivity: time.Now(),
@@ -435,15 +435,15 @@ func TestRepo_Create(t *testing.T) {
 		{
 			name: "desktop device type",
 			session: &domain.Session{
-				ID:           sessionID,
-				DeviceID:     deviceID,
-				DeviceName:   &deviceName,
-				DeviceType:   func() *domain.SessionDeviceType { dt := domain.DeviceTypeDesktop; return &dt }(),
-				IPAddress:    &ipAddress,
-				UserAgent:    &userAgent,
-				FCMToken:     &fcmToken,
-				UserID:       userID,
-				Data:         dataJSON,
+				ID:         sessionID,
+				DeviceID:   deviceID,
+				DeviceName: &deviceName,
+				DeviceType: func() *domain.SessionDeviceType { dt := domain.DeviceTypeDesktop; return &dt }(),
+				IPAddress:  &ipAddress,
+				UserAgent:  &userAgent,
+				FCMToken:   &fcmToken,
+				UserID:     userID,
+				// Data:         dataJSON,
 				Revoked:      false,
 				ExpiresAt:    time.Now().Add(24 * time.Hour),
 				LastActivity: time.Now(),
@@ -474,15 +474,15 @@ func TestRepo_Create(t *testing.T) {
 		{
 			name: "revoked session creation",
 			session: &domain.Session{
-				ID:           sessionID,
-				DeviceID:     deviceID,
-				DeviceName:   &deviceName,
-				DeviceType:   &deviceType,
-				IPAddress:    &ipAddress,
-				UserAgent:    &userAgent,
-				FCMToken:     &fcmToken,
-				UserID:       userID,
-				Data:         dataJSON,
+				ID:         sessionID,
+				DeviceID:   deviceID,
+				DeviceName: &deviceName,
+				DeviceType: &deviceType,
+				IPAddress:  &ipAddress,
+				UserAgent:  &userAgent,
+				FCMToken:   &fcmToken,
+				UserID:     userID,
+				// // Data:         dataJSON,
 				Revoked:      true, // Created as revoked
 				ExpiresAt:    time.Now().Add(24 * time.Hour),
 				LastActivity: time.Now(),

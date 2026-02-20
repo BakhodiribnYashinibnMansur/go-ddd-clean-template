@@ -127,12 +127,6 @@ func (uc *UseCase) SignIn(ctx context.Context, in *domain.SignInIn) (*domain.Sig
 		ua.BrowserVersion = in.Session.BrowserVersion
 	}
 
-	// Create session context with essential data
-	sessionCtx := &domain.SessionContext{
-		RoleID:   user.RoleID,
-		Language: "uz", // default language, can be overridden by user preference
-	}
-
 	// Create Session
 	session := &domain.Session{
 		ID:               sessionID,
@@ -152,11 +146,7 @@ func (uc *UseCase) SignIn(ctx context.Context, in *domain.SignInIn) (*domain.Sig
 		LastActivity:     time.Now(),
 	}
 
-	// Set session context
-	if err := session.SetContext(sessionCtx); err != nil {
-		uc.logger.Errorc(ctx, "user sign in failed: set session context", "error", err)
-		return nil, apperrors.MapRepoToServiceError(err).WithInput(in)
-	}
+	// session context removed as per requirement
 
 	err = uc.repo.Postgres.User.SessionRepo.Create(ctx, session)
 	if err != nil {

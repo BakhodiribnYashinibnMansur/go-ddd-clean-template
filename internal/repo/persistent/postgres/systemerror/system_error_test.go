@@ -71,7 +71,7 @@ func TestSystemError_Create(t *testing.T) {
 			IPAddress:   &ipAddr,
 			Path:        &path,
 			Method:      &method,
-			Metadata: map[string]interface{}{
+			Metadata: map[string]any{
 				"attempt": 3,
 				"reason":  "invalid_password",
 			},
@@ -237,7 +237,7 @@ func Example() {
 		IPAddress:   &ipAddr,
 		Path:        &path,
 		Method:      &method,
-		Metadata: map[string]interface{}{
+		Metadata: map[string]any{
 			"table":     "users",
 			"operation": "SELECT",
 			"duration":  "1.5s",

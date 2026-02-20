@@ -74,12 +74,8 @@ format: ### Run code formatter
 .PHONY: format
 
 run: ### run application with all code generation
-	@mkdir -p .cache/go-build .cache/go-mod .tmp
-	@export GOCACHE=$(PWD)/.cache/go-build && \
-	 export GOMODCACHE=$(PWD)/.cache/go-mod && \
-	 export GOTMPDIR=$(PWD)/.tmp && \
-	 swag > /dev/null 2>&1 && \
-	 CGO_ENABLED=0 go run ./cmd/app
+	swag init --parseDependency --parseInternal -g cmd/app/main.go -o docs/swagger > /dev/null 2>&1 && \
+	CGO_ENABLED=0 go run ./cmd/app
 .PHONY: run
 
 docker-rm-volume: ### remove docker volume

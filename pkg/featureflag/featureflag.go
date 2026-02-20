@@ -149,7 +149,7 @@ func (c *Client) GetFloatVariation(ctx context.Context, flagKey string, user Use
 }
 
 // GetJSONVariation returns a JSON variation of a feature flag.
-func (c *Client) GetJSONVariation(ctx context.Context, flagKey string, user User, defaultValue map[string]interface{}) map[string]interface{} {
+func (c *Client) GetJSONVariation(ctx context.Context, flagKey string, user User, defaultValue map[string]any) map[string]any {
 	result, err := ffclient.JSONVariation(flagKey, user.ToEvaluationContext(), defaultValue)
 	if err != nil {
 		c.logger.Errorw("failed to evaluate feature flag",

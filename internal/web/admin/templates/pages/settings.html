@@ -8,8 +8,8 @@
 </div>
 
 <!-- Settings by Category -->
-{{ if .Data.SettingsByCategory }}
-{{ range $category, $settings := .Data.SettingsByCategory }}
+{{ if .SettingsByCategory }}
+{{ range $category, $settings := .SettingsByCategory }}
 <div class="card" style="margin-bottom: 24px;">
     <h3
         style="margin-bottom: 20px; color: var(--text-secondary); text-transform: uppercase; font-size: 12px; letter-spacing: 1px;">
@@ -44,9 +44,16 @@
                             <option value="false" {{ if eq .Value "false" }}selected{{ end }}>Disabled</option>
                         </select>
                         {{ else }}
-                        <input type="{{ if eq .ValueType " integer" }}number{{ else }}text{{ end }}"
-                            class="form-input setting-value" data-id="{{ .ID }}" data-original="{{ .Value }}"
-                            value="{{ .Value }}" />
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <input type="{{ if eq .ValueType " integer" }}number{{ else }}text{{ end }}"
+                                class="form-input setting-value" data-id="{{ .ID }}" data-original="{{ .Value }}"
+                                value="{{ .Value }}" style="flex: 1;" />
+                            <a href="{{ .Value }}" target="_blank" rel="noopener noreferrer"
+                                class="btn-open-url" data-id="{{ .ID }}" title="Open in browser"
+                                style="display: none; flex-shrink: 0;">
+                                <i class="material-symbols-outlined" style="font-size: 18px;">open_in_new</i>
+                            </a>
+                        </div>
                         {{ end }}
                     </td>
                     <td style="font-size: 13px; color: var(--text-secondary);">
@@ -82,19 +89,19 @@
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
         <div class="form-group">
             <label class="form-label">System Name</label>
-            <input type="text" class="form-input" value="{{ .Data.Config.App.Name }}" readonly>
+            <input type="text" class="form-input" value="{{ .Config.App.Name }}" readonly>
         </div>
         <div class="form-group">
             <label class="form-label">Version</label>
-            <input type="text" class="form-input" value="{{ .Data.Config.App.Version }}" readonly>
+            <input type="text" class="form-input" value="{{ .Config.App.Version }}" readonly>
         </div>
         <div class="form-group">
             <label class="form-label">Environment</label>
-            <input type="text" class="form-input" value="{{ .Data.Config.App.Environment }}" readonly>
+            <input type="text" class="form-input" value="{{ .Config.App.Environment }}" readonly>
         </div>
         <div class="form-group">
             <label class="form-label">HTTP Port</label>
-            <input type="text" class="form-input" value="{{ .Data.Config.HTTP.Port }}" readonly>
+            <input type="text" class="form-input" value="{{ .Config.HTTP.Port }}" readonly>
         </div>
     </div>
 </div>
@@ -105,6 +112,30 @@
     document.addEventListener('DOMContentLoaded', function () {
         const settingInputs = document.querySelectorAll('.setting-value');
         const saveButtons = document.querySelectorAll('.save-setting-btn');
+
+        function isURL(str) {
+            try {
+                const url = new URL(str);
+                return url.protocol === 'http:' || url.protocol === 'https:';
+            } catch {
+                return false;
+            }
+        }
+
+        function updateOpenBtn(input) {
+            const settingId = input.dataset.id;
+            const openBtn = document.querySelector(`.btn-open-url[data-id="${settingId}"]`);
+            if (!openBtn) return;
+            if (isURL(input.value)) {
+                openBtn.href = input.value;
+                openBtn.style.display = 'inline-flex';
+            } else {
+                openBtn.style.display = 'none';
+            }
+        }
+
+        // Initialize open buttons
+        settingInputs.forEach(input => updateOpenBtn(input));
 
         // Track changes
         settingInputs.forEach(input => {
@@ -119,6 +150,12 @@
                 } else {
                     saveBtn.style.display = 'none';
                 }
+
+                updateOpenBtn(this);
+            });
+
+            input.addEventListener('input', function () {
+                updateOpenBtn(this);
             });
         });
 
@@ -213,6 +250,24 @@
     .btn-sm {
         padding: 6px 12px;
         font-size: 12px;
+    }
+
+    .btn-open-url {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        border-radius: 6px;
+        background: var(--primary-color, #4f46e5);
+        color: white;
+        text-decoration: none;
+        transition: background 0.2s, transform 0.15s;
+    }
+
+    .btn-open-url:hover {
+        background: var(--primary-hover, #4338ca);
+        transform: scale(1.05);
     }
 </style>
 {{ end }}

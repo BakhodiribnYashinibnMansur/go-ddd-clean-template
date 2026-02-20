@@ -44,11 +44,11 @@ func GetSessionID(ctx context.Context) string {
 	return id
 }
 
-func WithUserID(ctx context.Context, id interface{}) context.Context {
+func WithUserID(ctx context.Context, id any) context.Context {
 	return context.WithValue(ctx, userIDKey, id)
 }
 
-func GetUserID(ctx context.Context) interface{} {
+func GetUserID(ctx context.Context) any {
 	return ctx.Value(userIDKey)
 }
 

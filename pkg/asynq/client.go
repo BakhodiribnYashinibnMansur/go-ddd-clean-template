@@ -46,7 +46,7 @@ func (c *Client) Close() error {
 func (c *Client) EnqueueTask(
 	ctx context.Context,
 	taskType string,
-	payload interface{},
+	payload any,
 	opts ...asynq.Option,
 ) (*asynq.TaskInfo, error) {
 	payloadBytes, err := json.Marshal(payload)
@@ -81,7 +81,7 @@ func (c *Client) EnqueueTask(
 func (c *Client) EnqueueTaskIn(
 	ctx context.Context,
 	taskType string,
-	payload interface{},
+	payload any,
 	delay time.Duration,
 	opts ...asynq.Option,
 ) (*asynq.TaskInfo, error) {
@@ -93,7 +93,7 @@ func (c *Client) EnqueueTaskIn(
 func (c *Client) EnqueueTaskAt(
 	ctx context.Context,
 	taskType string,
-	payload interface{},
+	payload any,
 	processAt time.Time,
 	opts ...asynq.Option,
 ) (*asynq.TaskInfo, error) {

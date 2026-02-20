@@ -10,13 +10,14 @@ import (
 // It maps specific flag types and evaluation strategies (Boolean, Variance, Targeting) to handlers.
 // NewRouter registers the variety of feature flag demonstration endpoints.
 // It maps specific flag types and evaluation strategies (Boolean, Variance, Targeting) to handlers.
-func NewRouter(handler *gin.RouterGroup, authMiddleware gin.HandlerFunc, l logger.Log) {
+func NewRouter(handler *gin.RouterGroup, authMiddleware, authzMiddleware gin.HandlerFunc, l logger.Log) {
 	// Initialize the controller with the underlying Log instance.
 	ffController := NewFeatureFlagController(l)
 
 	// Define the base group for feature flag experimentation.
 	ffGroup := handler.Group("/featureflag")
 	ffGroup.Use(authMiddleware)
+	ffGroup.Use(authzMiddleware)
 	{
 		ffGroup.GET("/boolean", ffController.ExampleBooleanFlag)       // Toggle logic test.
 		ffGroup.GET("/string", ffController.ExampleStringVariation)    // A/B theme/copy test.

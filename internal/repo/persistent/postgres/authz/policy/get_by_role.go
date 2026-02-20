@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"gct/internal/domain"
-	"gct/internal/repo/schema"
 	apperrors "gct/pkg/errors"
 
 	"github.com/Masterminds/squirrel"
@@ -21,23 +20,23 @@ func (r *Repo) GetByRole(ctx context.Context, roleID uuid.UUID) ([]*domain.Polic
 
 	sql, args, err := r.builder.
 		Select(
-			"p."+schema.PolicyID,
-			"p."+schema.PolicyPermissionID,
-			"p."+schema.PolicyEffect,
-			"p."+schema.PolicyPriority,
-			"p."+schema.PolicyActive,
-			"p."+schema.PolicyConditions,
-			"p."+schema.PolicyCreatedAt,
+			"p."+"id",
+			"p."+"permission_id",
+			"p."+"effect",
+			"p."+"priority",
+			"p."+"active",
+			"p."+"conditions",
+			"p."+"created_at",
 		).
-		From(schema.TablePolicy + " p").
+		From("policy" + " p").
 		Join(fmt.Sprintf("%s rp ON p.%s = rp.%s",
-			schema.TableRolePermission,
-			schema.PolicyPermissionID,
-			schema.RolePermissionPermissionID,
+			"role_permission",
+			"permission_id",
+			"permission_id",
 		)).
-		Where(squirrel.Eq{"rp." + schema.RolePermissionRoleID: roleID}).
-		Where(squirrel.Eq{"p." + schema.PolicyActive: true}).
-		OrderBy("p." + schema.PolicyPriority + " DESC"). // Higher priority first
+		Where(squirrel.Eq{"rp." + "role_id": roleID}).
+		Where(squirrel.Eq{"p." + "active": true}).
+		OrderBy("p." + "priority" + " DESC"). // Higher priority first
 		ToSql()
 	if err != nil {
 		return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, "failed to build select query")
@@ -45,7 +44,7 @@ func (r *Repo) GetByRole(ctx context.Context, roleID uuid.UUID) ([]*domain.Polic
 
 	rows, err := r.pool.Query(ctx, sql, args...)
 	if err != nil {
-		return nil, apperrors.HandlePgError(err, schema.TablePolicy, nil)
+		return nil, apperrors.HandlePgError(err, "policy", nil)
 	}
 	defer rows.Close()
 
@@ -59,7 +58,7 @@ func (r *Repo) GetByRole(ctx context.Context, roleID uuid.UUID) ([]*domain.Polic
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, apperrors.HandlePgError(err, schema.TablePolicy, nil)
+		return nil, apperrors.HandlePgError(err, "policy", nil)
 	}
 
 	return policies, nil

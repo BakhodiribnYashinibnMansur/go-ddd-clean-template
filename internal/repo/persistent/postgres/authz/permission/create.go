@@ -7,16 +7,15 @@ import (
 
 	"gct/consts"
 	"gct/internal/domain"
-	"gct/internal/repo/schema"
 	apperrors "gct/pkg/errors"
 )
 
 func (r *Repo) Create(ctx context.Context, p *domain.Permission) error {
 	sql, args, err := r.builder.
 		Insert(tableName).
-		Columns(schema.PermissionParentID, schema.PermissionName, schema.PermissionCreatedAt).
+		Columns("parent_id", "name", "created_at").
 		Values(p.ParentID, p.Name, time.Now()).
-		Suffix(fmt.Sprintf("RETURNING %s, %s", schema.PermissionID, schema.PermissionCreatedAt)).
+		Suffix(fmt.Sprintf("RETURNING %s, %s", "id", "created_at")).
 		ToSql()
 	if err != nil {
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildInsert)

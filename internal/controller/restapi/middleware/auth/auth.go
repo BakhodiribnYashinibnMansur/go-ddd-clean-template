@@ -8,6 +8,7 @@ import (
 	"gct/config"
 	"gct/internal/usecase"
 	"gct/internal/usecase/authz"
+	"gct/internal/usecase/integration"
 	"gct/internal/usecase/user/client"
 	"gct/internal/usecase/user/session"
 	"gct/pkg/jwt"
@@ -17,12 +18,13 @@ import (
 // AuthMiddleware manages identity verification and permission enforcement.
 // It integrates with user, session, and authorization use cases.
 type AuthMiddleware struct {
-	userUC    client.UseCaseI
-	sessionuc session.UseCaseI
-	authzUC   authz.UseCaseI
-	cfg       *config.Config
-	l         logger.Log
-	pubKey    *rsa.PublicKey
+	userUC        client.UseCaseI
+	sessionuc     session.UseCaseI
+	authzUC       authz.UseCaseI
+	integrationUC integration.UseCaseI
+	cfg           *config.Config
+	l             logger.Log
+	pubKey        *rsa.PublicKey
 }
 
 // NewAuthMiddleware initializes a new authentication middleware instance.
@@ -34,11 +36,12 @@ func NewAuthMiddleware(u *usecase.UseCase, cfg *config.Config, l logger.Log) *Au
 	}
 
 	return &AuthMiddleware{
-		userUC:    u.User.Client(),
-		sessionuc: u.User.Session(),
-		authzUC:   u.Authz,
-		cfg:       cfg,
-		l:         l,
-		pubKey:    pubKey,
+		userUC:        u.User.Client(),
+		sessionuc:     u.User.Session(),
+		authzUC:       u.Authz,
+		integrationUC: u.Integration,
+		cfg:           cfg,
+		l:             l,
+		pubKey:        pubKey,
 	}
 }

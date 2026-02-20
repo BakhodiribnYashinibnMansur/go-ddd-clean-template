@@ -3,7 +3,6 @@ package errorcode
 import (
 	"context"
 
-	"gct/internal/repo/schema"
 
 	"github.com/Masterminds/squirrel"
 )
@@ -11,8 +10,8 @@ import (
 // Delete removes an error code
 func (r *Repo) Delete(ctx context.Context, code string) error {
 	query, args, err := r.db.Builder.
-		Delete(schema.TableErrorCode).
-		Where(squirrel.Eq{schema.ErrorCodeCode: code}).
+		Delete("error_code").
+		Where(squirrel.Eq{"code": code}).
 		ToSql()
 
 	if err != nil {

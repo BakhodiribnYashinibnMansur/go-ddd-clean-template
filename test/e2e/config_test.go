@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"gct/config"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -54,7 +55,7 @@ func TestNewTestConfig(t *testing.T) {
 	assert.Equal(t, 720*time.Hour, cfg.JWT.RefreshTTL)
 
 	// Verify API keys
-	assert.Equal(t, "test_api_key_12345", cfg.APIKeys.XApiKey)
+	assert.Equal(t, int64(10), cfg.APIKeys.SignExpireTime)
 
 	// Verify metrics and docs
 	assert.True(t, cfg.Metrics.Enabled)

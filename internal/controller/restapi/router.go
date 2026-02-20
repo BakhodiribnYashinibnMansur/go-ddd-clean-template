@@ -11,6 +11,7 @@ import (
 	"gct/internal/controller/restapi/v1/authz"
 	errcode "gct/internal/controller/restapi/v1/errorcode"
 	"gct/internal/controller/restapi/v1/featureflag"
+	"gct/internal/controller/restapi/v1/integration"
 	"gct/internal/controller/restapi/v1/minio"
 	"gct/internal/controller/restapi/v1/test"
 	"gct/internal/controller/restapi/v1/user"
@@ -82,14 +83,15 @@ func NewRouter(handler *gin.Engine, cfg *config.Config, uc *usecase.UseCase, l l
 	h := handler.Group("/api/v1")
 	{
 		// Business domain routers delegation.
-		user.UserRoute(h, c.User, am.AuthClientAccess, csrfM)
-		minio.MinioRoute(h, c.Minio, am.AuthClientAccess, csrfM)
+		user.UserRoute(h, c.User, am.AuthClientAccess, am.Authz, csrfM)
+		minio.MinioRoute(h, c.Minio, am.AuthClientAccess, am.Authz, csrfM)
 		authz.AuthzRoute(h, c.Authz, am.AuthClientAccess, am.AuthClientRefresh, am.Authz, csrfM)
-		audit.AuditRoute(h, c.Audit, am.AuthClientAccess)
-		errcode.Route(h, c.ErrorCode, am.AuthClientAccess, csrfM)
+		audit.AuditRoute(h, c.Audit, am.AuthClientAccess, am.Authz)
+		errcode.Route(h, c.ErrorCode, am.AuthClientAccess, am.Authz, csrfM)
+		integration.IntegrationRoute(h, c.Integration, am.AuthClientAccess, am.Authz)
 
 		// Feature Flag demonstration endpoints.
-		featureflag.NewRouter(h, am.AuthClientAccess, l)
+		featureflag.NewRouter(h, am.AuthClientAccess, am.Authz, l)
 
 		// Administrative system actions (e.g. Linter runner).
 		admin.New(l).Register(h, am.AuthAdmin)

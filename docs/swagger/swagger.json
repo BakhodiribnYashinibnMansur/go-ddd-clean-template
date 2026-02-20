@@ -47,6 +47,12 @@
                             "$ref": "#/definitions/gct_internal_controller_restapi_response.SuccessResponse"
                         }
                     },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
@@ -61,6 +67,78 @@
                     },
                     "500": {
                         "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/test/reset": {
+            "post": {
+                "description": "Truncates all tables and re-seeds with base data. Only available in dev/test.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Test"
+                ],
+                "summary": "Reset database",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.SuccessResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/test/seed": {
+            "post": {
+                "description": "Seeds database with specified counts. Only available in dev/test.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Test"
+                ],
+                "summary": "Seed database with custom counts",
+                "parameters": [
+                    {
+                        "description": "Seed counts (users, roles, permissions, policies)",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.SuccessResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
                         "schema": {
                             "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
                         }
@@ -84,6 +162,30 @@
                 ],
                 "summary": "Get business action audit logs",
                 "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -205,6 +307,30 @@
                 ],
                 "summary": "Get login audit logs",
                 "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -332,6 +458,30 @@
                 ],
                 "summary": "Get session audit logs",
                 "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -441,6 +591,12 @@
                             "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
                         }
                     },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal error",
                         "schema": {
@@ -545,7 +701,7 @@
                         }
                     },
                     "400": {
-                        "description": "Invalid request",
+                        "description": "Validation error",
                         "schema": {
                             "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
                         }
@@ -608,6 +764,12 @@
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/gct_internal_controller_restapi_response.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
                         }
                     },
                     "401": {
@@ -1069,6 +1231,12 @@
                             "$ref": "#/definitions/gct_internal_controller_restapi_response.SuccessResponse"
                         }
                     },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
@@ -1388,6 +1556,12 @@
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/gct_internal_controller_restapi_response.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
                         }
                     },
                     "401": {
@@ -1837,6 +2011,12 @@
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/gct_internal_controller_restapi_response.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
                         }
                     },
                     "401": {
@@ -2625,6 +2805,12 @@
                             "$ref": "#/definitions/gct_internal_controller_restapi_response.SuccessResponse"
                         }
                     },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
@@ -2868,6 +3054,12 @@
                             "additionalProperties": true
                         }
                     },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
@@ -2907,6 +3099,12 @@
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
                         }
                     },
                     "401": {
@@ -2950,6 +3148,12 @@
                             "additionalProperties": true
                         }
                     },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
@@ -2991,6 +3195,12 @@
                             "additionalProperties": true
                         }
                     },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
@@ -3030,6 +3240,12 @@
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
                         }
                     },
                     "401": {
@@ -3091,6 +3307,12 @@
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
                         }
                     },
                     "401": {
@@ -3164,6 +3386,12 @@
                 ],
                 "summary": "Transfer file",
                 "responses": {
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
@@ -3407,6 +3635,11 @@
         },
         "/metrics/functions": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Retrieve function execution metrics",
                 "consumes": [
                     "application/json"
@@ -3468,6 +3701,24 @@
                         "schema": {
                             "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
                         }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
                     }
                 }
             }
@@ -3509,6 +3760,12 @@
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/gct_internal_controller_restapi_response.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
                         }
                     },
                     "401": {
@@ -3616,6 +3873,12 @@
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/gct_internal_controller_restapi_response.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
                         }
                     },
                     "401": {
@@ -4568,12 +4831,6 @@
                     "format": "date-time",
                     "example": "2024-01-01T00:00:00Z"
                 },
-                "data": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
                 "device_id": {
                     "type": "string",
                     "example": "880e8400-e29b-41d4-a716-446655440000"
@@ -4771,7 +5028,7 @@
                     "example": true
                 },
                 "attributes": {
-                    "description": "JSONB for ABAC (region, branch, dept)",
+                    "description": "JSONB used to be here, now EAV table",
                     "type": "object",
                     "additionalProperties": {}
                 },
@@ -4813,6 +5070,12 @@
                     "type": "string",
                     "minLength": 1,
                     "example": "+998901234567"
+                },
+                "relations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/gct_internal_domain.Relation"
+                    }
                 },
                 "role_id": {
                     "type": "string",

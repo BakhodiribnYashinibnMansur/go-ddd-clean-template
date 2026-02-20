@@ -16,10 +16,12 @@
             <i class="material-symbols-outlined" style="margin-right: 8px;">settings</i>
             Settings
         </a>
+        {{ if .AsynqEnabled }}
         <a href="/admin/asynq" class="btn btn-secondary" style="flex: 1; justify-content: center; height: 50px;">
             <i class="material-symbols-outlined" style="margin-right: 8px;">schedule</i>
             Task Queue
         </a>
+        {{ end }}
     </div>
 
     <!-- Status -->

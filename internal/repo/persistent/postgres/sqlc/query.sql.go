@@ -8,6 +8,8 @@ package sqlc
 import (
 	"context"
 	"database/sql"
+
+	"github.com/google/uuid"
 )
 
 const countUsers = `-- name: CountUsers :one
@@ -24,47 +26,60 @@ func (q *Queries) CountUsers(ctx context.Context) (int64, error) {
 
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (
+    role_id,
     username,
+    email,
     phone,
     password_hash,
     salt,
+    active,
     created_at,
     updated_at
 ) VALUES (
-    $1, $2, $3, $4, $5, $6
+    $1, $2, $3, $4, $5, $6, $7, $8, $9
 )
-RETURNING id, username, phone, password_hash, salt, created_at, updated_at, deleted_at, last_seen
+RETURNING id, role_id, username, email, phone, password_hash, salt, active, last_seen, deleted_at, created_at, updated_at, is_approved
 `
 
 type CreateUserParams struct {
+	RoleID       uuid.NullUUID  `db:"role_id" json:"role_id"`
 	Username     sql.NullString `db:"username" json:"username"`
-	Phone        string         `db:"phone" json:"phone"`
-	PasswordHash string         `db:"password_hash" json:"password_hash"`
+	Email        sql.NullString `db:"email" json:"email"`
+	Phone        sql.NullString `db:"phone" json:"phone"`
+	PasswordHash sql.NullString `db:"password_hash" json:"password_hash"`
 	Salt         sql.NullString `db:"salt" json:"salt"`
+	Active       sql.NullBool   `db:"active" json:"active"`
 	CreatedAt    sql.NullTime   `db:"created_at" json:"created_at"`
 	UpdatedAt    sql.NullTime   `db:"updated_at" json:"updated_at"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
 	row := q.db.QueryRowContext(ctx, createUser,
+		arg.RoleID,
 		arg.Username,
+		arg.Email,
 		arg.Phone,
 		arg.PasswordHash,
 		arg.Salt,
+		arg.Active,
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
 	var i User
 	err := row.Scan(
 		&i.ID,
+		&i.RoleID,
 		&i.Username,
+		&i.Email,
 		&i.Phone,
 		&i.PasswordHash,
 		&i.Salt,
+		&i.Active,
+		&i.LastSeen,
+		&i.DeletedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.DeletedAt,
-		&i.LastSeen,
+		&i.IsApproved,
 	)
 	return i, err
 }
@@ -76,7 +91,7 @@ WHERE id = $1 AND deleted_at IS NULL
 `
 
 type DeleteUserParams struct {
-	ID        int64         `db:"id" json:"id"`
+	ID        uuid.UUID     `db:"id" json:"id"`
 	DeletedAt sql.NullInt64 `db:"deleted_at" json:"deleted_at"`
 }
 
@@ -85,57 +100,113 @@ func (q *Queries) DeleteUser(ctx context.Context, arg DeleteUserParams) error {
 	return err
 }
 
+const deleteUserAttribute = `-- name: DeleteUserAttribute :exec
+DELETE FROM user_attributes
+WHERE user_id = $1 AND key = $2
+`
+
+type DeleteUserAttributeParams struct {
+	UserID uuid.UUID `db:"user_id" json:"user_id"`
+	Key    string    `db:"key" json:"key"`
+}
+
+func (q *Queries) DeleteUserAttribute(ctx context.Context, arg DeleteUserAttributeParams) error {
+	_, err := q.db.ExecContext(ctx, deleteUserAttribute, arg.UserID, arg.Key)
+	return err
+}
+
 const getUser = `-- name: GetUser :one
 
-SELECT id, username, phone, password_hash, salt, created_at, updated_at, deleted_at, last_seen FROM users
+SELECT id, role_id, username, email, phone, password_hash, salt, active, last_seen, deleted_at, created_at, updated_at, is_approved FROM users
 WHERE id = $1 AND deleted_at IS NULL
 LIMIT 1
 `
 
 // PostgreSQL schema for user management with sqlc
 // This file will be used by sqlc to generate type-safe Go code
-func (q *Queries) GetUser(ctx context.Context, id int64) (User, error) {
+func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (User, error) {
 	row := q.db.QueryRowContext(ctx, getUser, id)
 	var i User
 	err := row.Scan(
 		&i.ID,
+		&i.RoleID,
 		&i.Username,
+		&i.Email,
 		&i.Phone,
 		&i.PasswordHash,
 		&i.Salt,
+		&i.Active,
+		&i.LastSeen,
+		&i.DeletedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.DeletedAt,
-		&i.LastSeen,
+		&i.IsApproved,
 	)
 	return i, err
 }
 
+const getUserAttributes = `-- name: GetUserAttributes :many
+SELECT key, value FROM user_attributes
+WHERE user_id = $1
+`
+
+type GetUserAttributesRow struct {
+	Key   string         `db:"key" json:"key"`
+	Value sql.NullString `db:"value" json:"value"`
+}
+
+func (q *Queries) GetUserAttributes(ctx context.Context, userID uuid.UUID) ([]GetUserAttributesRow, error) {
+	rows, err := q.db.QueryContext(ctx, getUserAttributes, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetUserAttributesRow{}
+	for rows.Next() {
+		var i GetUserAttributesRow
+		if err := rows.Scan(&i.Key, &i.Value); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getUserByPhone = `-- name: GetUserByPhone :one
-SELECT id, username, phone, password_hash, salt, created_at, updated_at, deleted_at, last_seen FROM users
+SELECT id, role_id, username, email, phone, password_hash, salt, active, last_seen, deleted_at, created_at, updated_at, is_approved FROM users
 WHERE phone = $1 AND deleted_at IS NULL
 LIMIT 1
 `
 
-func (q *Queries) GetUserByPhone(ctx context.Context, phone string) (User, error) {
+func (q *Queries) GetUserByPhone(ctx context.Context, phone sql.NullString) (User, error) {
 	row := q.db.QueryRowContext(ctx, getUserByPhone, phone)
 	var i User
 	err := row.Scan(
 		&i.ID,
+		&i.RoleID,
 		&i.Username,
+		&i.Email,
 		&i.Phone,
 		&i.PasswordHash,
 		&i.Salt,
+		&i.Active,
+		&i.LastSeen,
+		&i.DeletedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.DeletedAt,
-		&i.LastSeen,
+		&i.IsApproved,
 	)
 	return i, err
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, username, phone, password_hash, salt, created_at, updated_at, deleted_at, last_seen FROM users
+SELECT id, role_id, username, email, phone, password_hash, salt, active, last_seen, deleted_at, created_at, updated_at, is_approved FROM users
 WHERE deleted_at IS NULL
 ORDER BY created_at DESC
 LIMIT $1 OFFSET $2
@@ -157,14 +228,18 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 		var i User
 		if err := rows.Scan(
 			&i.ID,
+			&i.RoleID,
 			&i.Username,
+			&i.Email,
 			&i.Phone,
 			&i.PasswordHash,
 			&i.Salt,
+			&i.Active,
+			&i.LastSeen,
+			&i.DeletedAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
-			&i.DeletedAt,
-			&i.LastSeen,
+			&i.IsApproved,
 		); err != nil {
 			return nil, err
 		}
@@ -179,6 +254,24 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 	return items, nil
 }
 
+const setUserAttribute = `-- name: SetUserAttribute :exec
+INSERT INTO user_attributes (user_id, key, value)
+VALUES ($1, $2, $3)
+ON CONFLICT (user_id, key) DO UPDATE
+SET value = $3, updated_at = NOW()
+`
+
+type SetUserAttributeParams struct {
+	UserID uuid.UUID      `db:"user_id" json:"user_id"`
+	Key    string         `db:"key" json:"key"`
+	Value  sql.NullString `db:"value" json:"value"`
+}
+
+func (q *Queries) SetUserAttribute(ctx context.Context, arg SetUserAttributeParams) error {
+	_, err := q.db.ExecContext(ctx, setUserAttribute, arg.UserID, arg.Key, arg.Value)
+	return err
+}
+
 const updateLastSeen = `-- name: UpdateLastSeen :exec
 UPDATE users
 SET last_seen = $2
@@ -186,7 +279,7 @@ WHERE id = $1
 `
 
 type UpdateLastSeenParams struct {
-	ID       int64        `db:"id" json:"id"`
+	ID       uuid.UUID    `db:"id" json:"id"`
 	LastSeen sql.NullTime `db:"last_seen" json:"last_seen"`
 }
 
@@ -198,30 +291,39 @@ func (q *Queries) UpdateLastSeen(ctx context.Context, arg UpdateLastSeenParams) 
 const updateUser = `-- name: UpdateUser :exec
 UPDATE users
 SET 
-    username = COALESCE($2, username),
-    phone = COALESCE($3, phone),
-    password_hash = COALESCE($4, password_hash),
-    salt = COALESCE($5, salt),
-    updated_at = $6
+    role_id = COALESCE($2, role_id),
+    username = COALESCE($3, username),
+    email = COALESCE($4, email),
+    phone = COALESCE($5, phone),
+    password_hash = COALESCE($6, password_hash),
+    salt = COALESCE($7, salt),
+    active = COALESCE($8, active),
+    updated_at = $9
 WHERE id = $1 AND deleted_at IS NULL
 `
 
 type UpdateUserParams struct {
-	ID           int64          `db:"id" json:"id"`
+	ID           uuid.UUID      `db:"id" json:"id"`
+	RoleID       uuid.NullUUID  `db:"role_id" json:"role_id"`
 	Username     sql.NullString `db:"username" json:"username"`
-	Phone        string         `db:"phone" json:"phone"`
-	PasswordHash string         `db:"password_hash" json:"password_hash"`
+	Email        sql.NullString `db:"email" json:"email"`
+	Phone        sql.NullString `db:"phone" json:"phone"`
+	PasswordHash sql.NullString `db:"password_hash" json:"password_hash"`
 	Salt         sql.NullString `db:"salt" json:"salt"`
+	Active       sql.NullBool   `db:"active" json:"active"`
 	UpdatedAt    sql.NullTime   `db:"updated_at" json:"updated_at"`
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
 	_, err := q.db.ExecContext(ctx, updateUser,
 		arg.ID,
+		arg.RoleID,
 		arg.Username,
+		arg.Email,
 		arg.Phone,
 		arg.PasswordHash,
 		arg.Salt,
+		arg.Active,
 		arg.UpdatedAt,
 	)
 	return err

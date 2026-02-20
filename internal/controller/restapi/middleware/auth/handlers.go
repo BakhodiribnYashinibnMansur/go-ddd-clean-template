@@ -174,13 +174,7 @@ func (m *AuthMiddleware) AuthApiKey(ctx *gin.Context) {
 		return
 	}
 
-	if apiKey != m.cfg.APIKeys.XApiKey {
-		m.l.Warnw("AuthMiddleware - AuthApiKey - Invalid API key", "ip", httpx.GetIPAddress(ctx))
-		response.ControllerResponse(ctx, http.StatusUnauthorized, httpx.ErrInvalidApiKey, nil, false)
-		ctx.Abort()
-		return
-	}
-
-	ctx.Set(consts.CtxApiKeyAuth, true)
-	ctx.Next()
+	// Deprecated: Internal API keys are now handled by SignatureMiddleware via DB.
+	response.ControllerResponse(ctx, http.StatusForbidden, httpx.ErrAccessDenied, nil, false)
+	ctx.Abort()
 }

@@ -5,7 +5,6 @@ import (
 
 	"gct/consts"
 	"gct/internal/domain"
-	"gct/internal/repo/schema"
 	apperrors "gct/pkg/errors"
 
 	"github.com/Masterminds/squirrel"
@@ -18,32 +17,32 @@ func (r *Repo) Get(ctx context.Context, filter *domain.SessionFilter) (*domain.S
 	}
 
 	query := r.builder.Select(
-		schema.SessionID,
-		schema.SessionDeviceID,
-		schema.SessionDeviceName,
-		schema.SessionDeviceType,
-		schema.SessionIPAddress+"::text",
-		schema.SessionUserAgent,
-		schema.SessionFCMToken,
-		schema.SessionRefreshTokenHash,
-		schema.SessionData,
-		schema.SessionUserID,
-		schema.SessionRevoked,
-		schema.SessionExpiresAt,
-		schema.SessionLastActivity,
-		schema.SessionCreatedAt,
-		schema.SessionUpdatedAt,
+		"id",
+		"device_id",
+		"device_name",
+		"device_type",
+		"ip_address"+"::text",
+		"user_agent",
+		"fcm_token",
+		"refresh_token_hash",
+		// "data",
+		"user_id",
+		"revoked",
+		"expires_at",
+		"last_activity",
+		"created_at",
+		"updated_at",
 	).
 		From(tableName)
 
 	if !filter.IsIDNull() {
-		query = query.Where(squirrel.Eq{schema.SessionID: *filter.ID})
+		query = query.Where(squirrel.Eq{"id": *filter.ID})
 	}
 	if !filter.IsUserIDNull() {
-		query = query.Where(squirrel.Eq{schema.SessionUserID: *filter.UserID})
+		query = query.Where(squirrel.Eq{"user_id": *filter.UserID})
 	}
 	if !filter.IsRevokedNull() {
-		query = query.Where(squirrel.Eq{schema.SessionRevoked: *filter.Revoked})
+		query = query.Where(squirrel.Eq{"revoked": *filter.Revoked})
 	}
 
 	sql, args, err := query.ToSql()
@@ -54,7 +53,9 @@ func (r *Repo) Get(ctx context.Context, filter *domain.SessionFilter) (*domain.S
 
 	var s domain.Session
 	err = r.pool.QueryRow(ctx, sql, args...).Scan(
-		&s.ID, &s.DeviceID, &s.DeviceName, &s.DeviceType, &s.IPAddress, &s.UserAgent, &s.FCMToken, &s.RefreshTokenHash, &s.Data, &s.UserID, &s.Revoked, &s.ExpiresAt, &s.LastActivity, &s.CreatedAt, &s.UpdatedAt,
+		&s.ID, &s.DeviceID, &s.DeviceName, &s.DeviceType, &s.IPAddress, &s.UserAgent, &s.FCMToken, &s.RefreshTokenHash,
+		// &s.Data,
+		&s.UserID, &s.Revoked, &s.ExpiresAt, &s.LastActivity, &s.CreatedAt, &s.UpdatedAt,
 	)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, map[string]any{

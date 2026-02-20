@@ -11,14 +11,14 @@ type User struct {
 	Email     string                 // User email
 	Name      string                 // User name
 	Country   string                 // User country
-	Custom    map[string]interface{} // Custom attributes
+	Custom    map[string]any // Custom attributes
 }
 
 // NewUser creates a new user for feature flag evaluation.
 func NewUser(key string) User {
 	return User{
 		Key:    key,
-		Custom: make(map[string]interface{}),
+		Custom: make(map[string]any),
 	}
 }
 
@@ -27,7 +27,7 @@ func NewAnonymousUser() User {
 	return User{
 		Key:       "anonymous",
 		Anonymous: true,
-		Custom:    make(map[string]interface{}),
+		Custom:    make(map[string]any),
 	}
 }
 
@@ -50,9 +50,9 @@ func (u User) WithCountry(country string) User {
 }
 
 // WithCustom adds a custom attribute.
-func (u User) WithCustom(key string, value interface{}) User {
+func (u User) WithCustom(key string, value any) User {
 	if u.Custom == nil {
-		u.Custom = make(map[string]interface{})
+		u.Custom = make(map[string]any)
 	}
 	u.Custom[key] = value
 	return u

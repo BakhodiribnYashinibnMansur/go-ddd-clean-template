@@ -24,4 +24,9 @@ const (
 	// TOKEN TYPE
 	TokenTypeAccess  string = "access"
 	TokenTypeRefresh string = "refresh"
+
+	// API KEY
+	DefaultAPIKeyPrefix string = "sk_live"
+	APIKeyCharset       string = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	APIKeyLength        int    = 32
 )

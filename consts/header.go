@@ -5,6 +5,8 @@ const (
 	HeaderXRequestID                    = "X-Request-ID"
 	HeaderXDeviceID                     = "X-Device-ID"
 	HeaderXAPIKey                       = "X-API-KEY"
+	HeaderXTimeUnix                     = "X-Time-Unix"
+	HeaderXSign                         = "X-Sign"
 	HeaderXForwardedProto               = "X-Forwarded-Proto"
 	HeaderOrigin                        = "Origin"
 	HeaderUserAgent                     = "User-Agent"
@@ -33,6 +35,7 @@ const (
 	HeaderAccessControlAllowMethods     = "Access-Control-Allow-Methods"
 	HeaderAccessControlMaxAge           = "Access-Control-Max-Age"
 	HeaderAccessControlExposeHeaders    = "Access-Control-Expose-Headers"
+	ParamAPIKey                         = "api_key"
 )
 
 const (

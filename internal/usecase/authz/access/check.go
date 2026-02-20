@@ -467,7 +467,7 @@ func checkCondition(actual any, op string, expected any) bool {
 
 func isInList(actual string, list any) bool {
 	// Retrieve list elements using reflection or type switch if needed,
-	// but for "any", JSON unmarshal gives []interface{}
+	// but for "any", JSON unmarshal gives []any
 	items, ok := list.([]any)
 	if !ok {
 		// Try string slice

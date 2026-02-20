@@ -2,6 +2,7 @@ package admin
 
 import (
 	"fmt"
+	"gct/consts"
 	"gct/internal/domain"
 	"net/http"
 
@@ -10,9 +11,18 @@ import (
 
 // ProfilePost handles users updating their own profile
 func (h *Handler) ProfilePost(ctx *gin.Context) {
-	// 1. Get current user from context/session
-	sessVal, _ := ctx.Get("session")
-	sess := sessVal.(*domain.Session) // safe assumption if middleware works
+	// 1. Get current session from context
+	sessVal, exists := ctx.Get(consts.CtxSession)
+	if !exists {
+		ctx.Redirect(http.StatusFound, "/admin/login")
+		return
+	}
+	sess, ok := sessVal.(*domain.Session)
+	if !ok || sess == nil {
+		h.l.Errorw("ProfilePost - invalid session in context")
+		ctx.Redirect(http.StatusFound, "/admin/login")
+		return
+	}
 
 	// 2. Bind Form Data
 	var form struct {
@@ -39,7 +49,6 @@ func (h *Handler) ProfilePost(ctx *gin.Context) {
 	if form.Phone != "" {
 		update.Phone = &form.Phone
 	}
-	// Password is treated specially in Update usecase logic (if != "", hashes and sets)
 	if form.Password != "" {
 		update.Password = form.Password
 	}

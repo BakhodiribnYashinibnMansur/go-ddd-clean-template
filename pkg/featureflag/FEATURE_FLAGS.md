@@ -142,7 +142,7 @@ func (h *Handler) ConfigHandler(c *gin.Context) {
     configData := featureflag.GetJSONVariation(ctx, "feature-config", defaultConfig)
     
     // Type assertion
-    config, ok := configData.(map[string]interface{})
+    config, ok := configData.(map[string]any)
     if ok {
         // Konfiguratsiyadan foydalanish
     }

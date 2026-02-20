@@ -5,7 +5,6 @@ import (
 
 	"gct/consts"
 	"gct/internal/domain"
-	"gct/internal/repo/schema"
 	apperrors "gct/pkg/errors"
 )
 
@@ -13,11 +12,11 @@ func (r *Repo) Create(ctx context.Context, m *domain.FunctionMetric) error {
 	sql, args, err := r.builder.
 		Insert(tableName).
 		Columns(
-			schema.FunctionMetricName,
-			schema.FunctionMetricLatencyMs,
-			schema.FunctionMetricIsPanic,
-			schema.FunctionMetricPanicError,
-			schema.FunctionMetricCreatedAt,
+			"name",
+			"latency_ms",
+			"is_panic",
+			"panic_error",
+			"created_at",
 		).
 		Values(
 			m.Name,

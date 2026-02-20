@@ -35,7 +35,7 @@ func TestSystemErrorMiddleware_Recovery(t *testing.T) {
 	tests := []struct {
 		name           string
 		shouldPanic    bool
-		panicValue     interface{}
+		panicValue     any
 		expectedStatus int
 		expectedBody   string
 	}{

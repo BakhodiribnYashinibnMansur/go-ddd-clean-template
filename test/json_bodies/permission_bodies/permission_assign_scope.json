@@ -1,0 +1,4 @@
+{
+    "path": "/api/v1/audit/history",
+    "method": "GET"
+}

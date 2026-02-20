@@ -46,7 +46,7 @@ func ExampleUsage() {
 			IPAddress:   &ipAddr,
 			Path:        &path,
 			Method:      &method,
-			Metadata: map[string]interface{}{
+			Metadata: map[string]any{
 				"attempt":  3,
 				"reason":   "invalid_password",
 				"username": "john_doe",
@@ -85,7 +85,7 @@ func ShowHandlerUsage() {
 					IPAddress:   &ipAddr,
 					Path:        stringPtr(r.URL.Path),
 					Method:      stringPtr(r.Method),
-					Metadata: map[string]interface{}{
+					Metadata: map[string]any{
 						"username": username,
 						"ip":       ipAddr,
 					},
@@ -116,7 +116,7 @@ func ShowUseCaseUsage() {
 					Err:         err,
 					Severity:    "ERROR",
 					ServiceName: "user-service",
-					Metadata: map[string]interface{}{
+					Metadata: map[string]any{
 						"username": input.Username,
 						"email":    input.Email,
 					},

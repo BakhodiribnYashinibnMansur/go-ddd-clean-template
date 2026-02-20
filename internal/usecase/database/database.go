@@ -27,9 +27,9 @@ type UseCaseI interface {
 	ValidateTableName(ctx context.Context, tableName string) error
 	GetTableSchema(ctx context.Context, tableName string) (*domain.TableSchema, error)
 	GetTableData(ctx context.Context, tableName string, limit, offset int) (*domain.TableData, error)
-	InsertRecord(ctx context.Context, tableName string, data map[string]interface{}) error
-	UpdateRecord(ctx context.Context, tableName string, pkColumn string, pkValue interface{}, data map[string]interface{}) error
-	DeleteRecord(ctx context.Context, tableName string, pkColumn string, pkValue interface{}) error
+	InsertRecord(ctx context.Context, tableName string, data map[string]any) error
+	UpdateRecord(ctx context.Context, tableName string, pkColumn string, pkValue any, data map[string]any) error
+	DeleteRecord(ctx context.Context, tableName string, pkColumn string, pkValue any) error
 }
 
 type UseCase struct {
@@ -350,7 +350,7 @@ func (uc *UseCase) ExecuteQuery(ctx context.Context, sqlInput string) ([]domain.
 		result.Columns = columns
 
 		// Scan results
-		var rowData []map[string]interface{}
+		var rowData []map[string]any
 		for rows.Next() {
 			values, err := rows.Values()
 			if err != nil {
@@ -358,7 +358,7 @@ func (uc *UseCase) ExecuteQuery(ctx context.Context, sqlInput string) ([]domain.
 				continue
 			}
 
-			row := make(map[string]interface{})
+			row := make(map[string]any)
 			for i, col := range columns {
 				// Handle byte arrays (UUID) conversion for display
 				if v, ok := values[i].([16]uint8); ok {
@@ -517,7 +517,7 @@ func (uc *UseCase) GetTableData(ctx context.Context, tableName string, limit, of
 			continue
 		}
 
-		row := make(map[string]interface{})
+		row := make(map[string]any)
 		for i, col := range data.Columns {
 			row[col] = values[i]
 		}
@@ -528,7 +528,7 @@ func (uc *UseCase) GetTableData(ctx context.Context, tableName string, limit, of
 }
 
 // InsertRecord inserts a new record
-func (uc *UseCase) InsertRecord(ctx context.Context, tableName string, data map[string]interface{}) error {
+func (uc *UseCase) InsertRecord(ctx context.Context, tableName string, data map[string]any) error {
 	if err := uc.ValidateTableName(ctx, tableName); err != nil {
 		return err
 	}
@@ -536,7 +536,7 @@ func (uc *UseCase) InsertRecord(ctx context.Context, tableName string, data map[
 	// Build INSERT query
 	var columns []string
 	var placeholders []string
-	var values []interface{}
+	var values []any
 	i := 1
 
 	for col, val := range data {
@@ -563,14 +563,14 @@ func (uc *UseCase) InsertRecord(ctx context.Context, tableName string, data map[
 }
 
 // UpdateRecord updates existing record
-func (uc *UseCase) UpdateRecord(ctx context.Context, tableName string, pkColumn string, pkValue interface{}, data map[string]interface{}) error {
+func (uc *UseCase) UpdateRecord(ctx context.Context, tableName string, pkColumn string, pkValue any, data map[string]any) error {
 	if err := uc.ValidateTableName(ctx, tableName); err != nil {
 		return err
 	}
 
 	// Build UPDATE query
 	var setParts []string
-	var values []interface{}
+	var values []any
 	i := 1
 
 	for col, val := range data {
@@ -629,7 +629,7 @@ func isAlpha(b byte) bool {
 }
 
 // DeleteRecord deletes a record
-func (uc *UseCase) DeleteRecord(ctx context.Context, tableName string, pkColumn string, pkValue interface{}) error {
+func (uc *UseCase) DeleteRecord(ctx context.Context, tableName string, pkColumn string, pkValue any) error {
 	if err := uc.ValidateTableName(ctx, tableName); err != nil {
 		return err
 	}

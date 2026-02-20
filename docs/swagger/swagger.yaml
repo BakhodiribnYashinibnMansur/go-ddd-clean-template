@@ -201,10 +201,6 @@ definitions:
         example: "2024-01-01T00:00:00Z"
         format: date-time
         type: string
-      data:
-        items:
-          type: integer
-        type: array
       device_id:
         example: 880e8400-e29b-41d4-a716-446655440000
         type: string
@@ -347,7 +343,7 @@ definitions:
         type: boolean
       attributes:
         additionalProperties: {}
-        description: JSONB for ABAC (region, branch, dept)
+        description: JSONB used to be here, now EAV table
         type: object
       created_at:
         example: "2024-01-01T00:00:00Z"
@@ -380,6 +376,10 @@ definitions:
         example: "+998901234567"
         minLength: 1
         type: string
+      relations:
+        items:
+          $ref: '#/definitions/gct_internal_domain.Relation'
+        type: array
       role_id:
         example: 660e8400-e29b-41d4-a716-446655440001
         type: string
@@ -472,6 +472,10 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/gct_internal_controller_restapi_response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
@@ -489,12 +493,76 @@ paths:
       summary: Run linter
       tags:
       - admin
+  /api/v1/test/reset:
+    post:
+      consumes:
+      - application/json
+      description: Truncates all tables and re-seeds with base data. Only available
+        in dev/test.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.SuccessResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+      summary: Reset database
+      tags:
+      - Test
+  /api/v1/test/seed:
+    post:
+      consumes:
+      - application/json
+      description: Seeds database with specified counts. Only available in dev/test.
+      parameters:
+      - description: Seed counts (users, roles, permissions, policies)
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties:
+            type: integer
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.SuccessResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+      summary: Seed database with custom counts
+      tags:
+      - Test
   /audit/actions:
     get:
       description: Retrieve critical business and admin action logs
       produces:
       - application/json
       responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
@@ -572,6 +640,22 @@ paths:
       produces:
       - application/json
       responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
@@ -653,6 +737,22 @@ paths:
       produces:
       - application/json
       responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
@@ -725,6 +825,10 @@ paths:
           description: Unauthorized
           schema:
             $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
         "500":
           description: Internal error
           schema:
@@ -792,7 +896,7 @@ paths:
           schema:
             $ref: '#/definitions/gct_internal_controller_restapi_response.SuccessResponse'
         "400":
-          description: Invalid request
+          description: Validation error
           schema:
             $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
         "409":
@@ -831,6 +935,10 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/gct_internal_controller_restapi_response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
@@ -1126,6 +1234,10 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/gct_internal_controller_restapi_response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
@@ -1332,6 +1444,10 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/gct_internal_controller_restapi_response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
@@ -1621,6 +1737,10 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/gct_internal_controller_restapi_response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
@@ -2127,6 +2247,10 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/gct_internal_controller_restapi_response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
@@ -2283,6 +2407,10 @@ paths:
           schema:
             additionalProperties: true
             type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
@@ -2310,6 +2438,10 @@ paths:
           schema:
             additionalProperties: true
             type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
@@ -2336,6 +2468,10 @@ paths:
           schema:
             additionalProperties: true
             type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
@@ -2362,6 +2498,10 @@ paths:
           schema:
             additionalProperties: true
             type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
@@ -2388,6 +2528,10 @@ paths:
           schema:
             additionalProperties: true
             type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
@@ -2427,6 +2571,10 @@ paths:
           schema:
             additionalProperties: true
             type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
@@ -2473,6 +2621,10 @@ paths:
       produces:
       - application/json
       responses:
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
@@ -2671,6 +2823,20 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+      security:
+      - BearerAuth: []
       summary: Get function metrics
       tags:
       - metrics
@@ -2695,6 +2861,10 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/gct_internal_controller_restapi_response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
@@ -2879,6 +3049,10 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/gct_internal_controller_restapi_response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:

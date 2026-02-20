@@ -1,31 +1,127 @@
 {{ define "sessions_scripts" }}
+<!-- Confirmation Modal -->
+<div id="confirmModal" style="display:none; position:fixed; inset:0; z-index:9999;">
+    <!-- Backdrop -->
+    <div id="modalBackdrop" style="position:absolute; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px);"></div>
+    <!-- Dialog -->
+    <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; padding:24px;">
+        <div id="modalContent" style="
+            background: var(--bg-elevated, #111730);
+            border: 1px solid var(--border-default, rgba(255,255,255,0.1));
+            border-radius: var(--radius-lg, 16px);
+            padding: 28px;
+            max-width: 420px;
+            width: 100%;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05);
+            transform: scale(0.95); opacity: 0;
+            transition: transform 200ms cubic-bezier(0.16,1,0.3,1), opacity 200ms ease;
+        ">
+            <!-- Icon -->
+            <div style="display:flex; align-items:center; justify-content:center; width:48px; height:48px; border-radius:12px; background:rgba(244,63,94,0.12); margin-bottom:20px;">
+                <i class="material-symbols-outlined" style="font-size:24px; color:var(--rose, #f43f5e);">warning</i>
+            </div>
+            <!-- Title -->
+            <h3 id="modalTitle" style="margin:0 0 8px; font-size:17px; font-weight:600; color:var(--text-primary, #f1f5f9);">Revoke Session</h3>
+            <!-- Message -->
+            <p id="modalMessage" style="margin:0 0 24px; font-size:14px; color:var(--text-secondary, #94a3b8); line-height:1.6;">
+                Are you sure you want to revoke this session? The user will be logged out immediately.
+            </p>
+            <!-- Actions -->
+            <div style="display:flex; gap:10px; justify-content:flex-end;">
+                <button id="modalCancel" style="
+                    padding: 9px 20px;
+                    border-radius: var(--radius-sm, 8px);
+                    border: 1px solid var(--border-default, rgba(255,255,255,0.1));
+                    background: transparent;
+                    color: var(--text-secondary, #94a3b8);
+                    font-size: 14px;
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: all 150ms;
+                ">Cancel</button>
+                <button id="modalConfirm" style="
+                    padding: 9px 20px;
+                    border-radius: var(--radius-sm, 8px);
+                    border: none;
+                    background: var(--rose, #f43f5e);
+                    color: white;
+                    font-size: 14px;
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: all 150ms;
+                    box-shadow: 0 0 16px rgba(244,63,94,0.25);
+                ">Revoke</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
-    // Copy to clipboard functionality with visual feedback
+    // Copy to clipboard with visual feedback
     function copyToClipboard(text, button) {
         navigator.clipboard.writeText(text).then(() => {
             const icon = button.querySelector('i');
             const originalIcon = icon.textContent;
-
-            // Change icon to checkmark
             icon.textContent = 'check';
-            icon.style.color = 'var(--success)';
-
-            // Reset after 2 seconds
+            icon.style.color = 'var(--emerald)';
             setTimeout(() => {
                 icon.textContent = originalIcon;
                 icon.style.color = '';
             }, 2000);
         }).catch(err => {
             console.error('Failed to copy:', err);
-            alert('Failed to copy to clipboard');
         });
     }
 
+    // Custom confirmation modal
+    let _modalResolve = null;
+
+    function showConfirmModal(title, message) {
+        return new Promise((resolve) => {
+            _modalResolve = resolve;
+            const modal = document.getElementById('confirmModal');
+            const content = document.getElementById('modalContent');
+            document.getElementById('modalTitle').textContent = title || 'Confirm';
+            document.getElementById('modalMessage').textContent = message || 'Are you sure?';
+
+            modal.style.display = 'block';
+            // Trigger animation
+            requestAnimationFrame(() => {
+                content.style.transform = 'scale(1)';
+                content.style.opacity = '1';
+            });
+        });
+    }
+
+    function closeModal(result) {
+        const modal = document.getElementById('confirmModal');
+        const content = document.getElementById('modalContent');
+        content.style.transform = 'scale(0.95)';
+        content.style.opacity = '0';
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 200);
+        if (_modalResolve) {
+            _modalResolve(result);
+            _modalResolve = null;
+        }
+    }
+
+    document.getElementById('modalCancel').addEventListener('click', () => closeModal(false));
+    document.getElementById('modalConfirm').addEventListener('click', () => closeModal(true));
+    document.getElementById('modalBackdrop').addEventListener('click', () => closeModal(false));
+
+    // Close on Escape
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && document.getElementById('confirmModal').style.display === 'block') {
+            closeModal(false);
+        }
+    });
+
+    // Revoke session handler
     document.addEventListener('DOMContentLoaded', () => {
-        const revokeBtns = document.querySelectorAll('.revoke-session-btn');
-        revokeBtns.forEach(btn => {
+        document.querySelectorAll('.revoke-session-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                // Prevent row click if we have that logic (good practice)
                 e.stopPropagation();
                 const id = btn.dataset.id;
                 revokeSession(id);
@@ -35,7 +131,12 @@
 
     async function revokeSession(sessionId) {
         if (!sessionId) return;
-        if (!confirm('Are you sure you want to revoke this session? The user will be logged out.')) return;
+
+        const confirmed = await showConfirmModal(
+            'Revoke Session',
+            'Are you sure you want to revoke this session? The user will be logged out immediately and will need to sign in again.'
+        );
+        if (!confirmed) return;
 
         try {
             const response = await fetch(`/admin/sessions/${sessionId}/revoke`, {
@@ -46,11 +147,12 @@
             if (response.ok) {
                 window.location.reload();
             } else {
-                alert('Failed to revoke session');
+                const data = await response.json().catch(() => null);
+                alert(data?.error || 'Failed to revoke session');
             }
         } catch (err) {
             console.error(err);
-            alert('An error occurred');
+            alert('An error occurred while revoking the session');
         }
     }
 </script>

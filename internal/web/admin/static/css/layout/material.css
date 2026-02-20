@@ -277,7 +277,8 @@ a {
 .table-container {
   border-radius: var(--md-sys-shape-corner-medium);
   border: 1px solid var(--md-sys-color-outline-variant);
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   background-color: var(--md-sys-color-surface);
 }
 

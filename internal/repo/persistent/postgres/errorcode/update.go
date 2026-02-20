@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"gct/internal/domain"
-	"gct/internal/repo/schema"
 
 	"github.com/Masterminds/squirrel"
 )
@@ -23,42 +22,42 @@ type UpdateErrorCodeInput struct {
 
 // Update updates an existing error code
 func (r *Repo) Update(ctx context.Context, code string, input UpdateErrorCodeInput) (*domain.ErrorCode, error) {
-	builder := r.db.Builder.Update(schema.TableErrorCode).
-		Set(schema.ErrorCodeUpdatedAt, time.Now()).
-		Where(squirrel.Eq{schema.ErrorCodeCode: code}).
+	builder := r.db.Builder.Update("error_code").
+		Set("updated_at", time.Now()).
+		Where(squirrel.Eq{"code": code}).
 		Suffix("RETURNING " +
-			schema.ErrorCodeID + ", " +
-			schema.ErrorCodeCode + ", " +
-			schema.ErrorCodeMessage + ", " +
-			schema.ErrorCodeHTTPStatus + ", " +
-			schema.ErrorCodeCategory + ", " +
-			schema.ErrorCodeSeverity + ", " +
-			schema.ErrorCodeRetryable + ", " +
-			schema.ErrorCodeRetryAfter + ", " +
-			schema.ErrorCodeSuggestion + ", " +
-			schema.ErrorCodeCreatedAt + ", " +
-			schema.ErrorCodeUpdatedAt)
+			"id" + ", " +
+			"code" + ", " +
+			"message" + ", " +
+			"http_status" + ", " +
+			"category" + ", " +
+			"severity" + ", " +
+			"retryable" + ", " +
+			"retry_after" + ", " +
+			"suggestion" + ", " +
+			"created_at" + ", " +
+			"updated_at")
 
 	if input.Message != nil {
-		builder = builder.Set(schema.ErrorCodeMessage, *input.Message)
+		builder = builder.Set("message", *input.Message)
 	}
 	if input.HTTPStatus != nil {
-		builder = builder.Set(schema.ErrorCodeHTTPStatus, *input.HTTPStatus)
+		builder = builder.Set("http_status", *input.HTTPStatus)
 	}
 	if input.Category != nil {
-		builder = builder.Set(schema.ErrorCodeCategory, *input.Category)
+		builder = builder.Set("category", *input.Category)
 	}
 	if input.Severity != nil {
-		builder = builder.Set(schema.ErrorCodeSeverity, *input.Severity)
+		builder = builder.Set("severity", *input.Severity)
 	}
 	if input.Retryable != nil {
-		builder = builder.Set(schema.ErrorCodeRetryable, *input.Retryable)
+		builder = builder.Set("retryable", *input.Retryable)
 	}
 	if input.RetryAfter != nil {
-		builder = builder.Set(schema.ErrorCodeRetryAfter, *input.RetryAfter)
+		builder = builder.Set("retry_after", *input.RetryAfter)
 	}
 	if input.Suggestion != nil {
-		builder = builder.Set(schema.ErrorCodeSuggestion, *input.Suggestion)
+		builder = builder.Set("suggestion", *input.Suggestion)
 	}
 
 	query, args, err := builder.ToSql()

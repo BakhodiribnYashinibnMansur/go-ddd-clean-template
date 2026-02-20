@@ -1,0 +1,9 @@
+{
+    "permission_id": "00000000-0000-0000-0000-000000000000",
+    "effect": "ALLOW",
+    "priority": 10,
+    "active": true,
+    "conditions": {
+        "user.relation_names_any": "Chilonzor"
+    }
+}

@@ -117,7 +117,7 @@ func (h *Handler) GetTableDataAPI(ctx *gin.Context) {
 func (h *Handler) CreateRecord(ctx *gin.Context) {
 	tableName := ctx.Param("name")
 
-	var data map[string]interface{}
+	var data map[string]any
 	if err := ctx.BindJSON(&data); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
@@ -139,7 +139,7 @@ func (h *Handler) UpdateRecord(ctx *gin.Context) {
 
 	var req struct {
 		PrimaryKey string                 `json:"primary_key"`
-		Data       map[string]interface{} `json:"data"`
+		Data       map[string]any `json:"data"`
 	}
 
 	if err := ctx.BindJSON(&req); err != nil {

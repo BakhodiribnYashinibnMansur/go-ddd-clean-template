@@ -10,10 +10,11 @@ import (
 // It follows a dual pattern:
 // 1. Resource Ownership: /users/{user_id}/sessions for collection management.
 // 2. Direct Access: /sessions/{session_id} for individual session operations.
-func Route(api *gin.RouterGroup, c ControllerI, authMiddleware gin.HandlerFunc, csrfMiddleware gin.HandlerFunc) {
+func Route(api *gin.RouterGroup, c ControllerI, authMiddleware, authzMiddleware, csrfMiddleware gin.HandlerFunc) {
 	// Pattern 1: User-Owned Sessions (Collection management)
 	userSessions := api.Group("/users/:" + consts.ParamUserID + "/sessions")
 	userSessions.Use(authMiddleware)
+	userSessions.Use(authzMiddleware)
 	userSessions.Use(csrfMiddleware)
 	{
 		userSessions.GET("", c.Sessions)     // List all active sessions for the specified user.
@@ -24,6 +25,7 @@ func Route(api *gin.RouterGroup, c ControllerI, authMiddleware gin.HandlerFunc, 
 	// Pattern 2: Global/Direct Session Management
 	sessions := api.Group("/sessions")
 	sessions.Use(authMiddleware)
+	sessions.Use(authzMiddleware)
 	sessions.Use(csrfMiddleware)
 	{
 		// Current user's sessions

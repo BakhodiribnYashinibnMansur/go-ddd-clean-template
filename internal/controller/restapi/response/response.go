@@ -19,8 +19,8 @@ type SuccessResponse struct {
 	Status     string      `example:"success"                          json:"status"` // "success" or "error"
 	StatusCode int         `example:"200"                              json:"statusCode"`
 	Message    string      `example:"Operation completed successfully" json:"message"`
-	Data       interface{} `json:"data,omitempty"`
-	Meta       interface{} `json:"meta,omitempty"`
+	Data       any `json:"data,omitempty"`
+	Meta       any `json:"meta,omitempty"`
 }
 
 // Meta encapsulates pagination and other relevant environmental metadata.

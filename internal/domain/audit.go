@@ -99,3 +99,28 @@ type EndpointHistoriesFilter struct {
 	EndpointHistoryFilter
 	Pagination *Pagination `json:"pagination"`
 }
+
+type LoginEntry struct {
+	UserID    string `json:"user_id"`
+	Status    string `json:"status"`
+	IP        string `json:"ip"`
+	Reason    string `json:"reason,omitempty"`
+	CreatedAt string `json:"created_at"`
+}
+
+type SessionEntry struct {
+	SessionID string `json:"session_id"`
+	UserID    string `json:"user_id"`
+	Event     string `json:"event"`
+	Source    string `json:"source"`
+	IP        string `json:"ip"`
+	CreatedAt string `json:"created_at"`
+}
+
+type ActionEntry struct {
+	ActorID   string `json:"actor_id"`
+	Action    string `json:"action"`
+	TargetID  string `json:"target_id"`
+	IP        string `json:"ip"`
+	CreatedAt string `json:"created_at"`
+}

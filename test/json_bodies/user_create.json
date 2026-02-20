@@ -1,0 +1,13 @@
+{
+    "phone": "+998909876543",
+    "username": "test_user_admin",
+    "email": "test_admin@example.com",
+    "password": "AnotherSecureP@ss123",
+    "role_id": "660e8400-e29b-41d4-a716-446655440001",
+    "active": true,
+    "is_approved": true,
+    "attributes": {
+        "department": "IT",
+        "position": "Developer"
+    }
+}

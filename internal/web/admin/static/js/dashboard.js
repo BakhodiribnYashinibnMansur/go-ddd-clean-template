@@ -1,131 +1,122 @@
 document.addEventListener('DOMContentLoaded', () => {
-    initSparklines();
     initMainAreaChart();
     fetchDashboardStats();
     animateGauges();
+    animateCounters();
 });
 
-// Sparkline Charts (Mini line charts)
-function initSparklines() {
-    const sparklines = document.querySelectorAll('.sparkline');
-    sparklines.forEach(canvas => {
-        const ctx = canvas.getContext('2d');
-        const values = canvas.dataset.values.split(',').map(Number);
-
-        const width = canvas.width = canvas.offsetWidth * 2;
-        const height = canvas.height = canvas.offsetHeight * 2;
-
-        const max = Math.max(...values);
-        const min = Math.min(...values);
-        const range = max - min || 1;
-
-        // Draw gradient fill
-        const gradient = ctx.createLinearGradient(0, 0, 0, height);
-        gradient.addColorStop(0, 'rgba(99, 102, 241, 0.4)');
-        gradient.addColorStop(1, 'rgba(99, 102, 241, 0)');
-
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-
-        const stepX = width / (values.length - 1);
-        values.forEach((value, index) => {
-            const x = index * stepX;
-            const y = height - ((value - min) / range) * height * 0.8 - height * 0.1;
-            if (index === 0) {
-                ctx.moveTo(x, y);
-            } else {
-                ctx.lineTo(x, y);
-            }
-        });
-
-        ctx.lineTo(width, height);
-        ctx.lineTo(0, height);
-        ctx.closePath();
-        ctx.fill();
-
-        // Draw line
-        ctx.strokeStyle = '#6366f1';
-        ctx.lineWidth = 3;
-        ctx.lineJoin = 'round';
-        ctx.lineCap = 'round';
-        ctx.beginPath();
-
-        values.forEach((value, index) => {
-            const x = index * stepX;
-            const y = height - ((value - min) / range) * height * 0.8 - height * 0.1;
-            if (index === 0) {
-                ctx.moveTo(x, y);
-            } else {
-                ctx.lineTo(x, y);
-            }
-        });
-
-        ctx.stroke();
-    });
-}
-
-// Main Area Chart
+// ─── Main Area Chart ─────────────────────────────────────────────────────────
 function initMainAreaChart() {
     const canvas = document.getElementById('mainAreaChart');
     if (!canvas) return;
 
-    new Chart(canvas.getContext('2d'), {
+    const ctx = canvas.getContext('2d');
+
+    // Gradient fills
+    const gradientPrimary = ctx.createLinearGradient(0, 0, 0, 260);
+    gradientPrimary.addColorStop(0, 'rgba(99, 102, 241, 0.25)');
+    gradientPrimary.addColorStop(0.5, 'rgba(99, 102, 241, 0.08)');
+    gradientPrimary.addColorStop(1, 'rgba(99, 102, 241, 0)');
+
+    const gradientSecondary = ctx.createLinearGradient(0, 0, 0, 260);
+    gradientSecondary.addColorStop(0, 'rgba(168, 85, 247, 0.2)');
+    gradientSecondary.addColorStop(0.5, 'rgba(168, 85, 247, 0.05)');
+    gradientSecondary.addColorStop(1, 'rgba(168, 85, 247, 0)');
+
+    new Chart(ctx, {
         type: 'line',
         data: {
-            labels: ['3298', '2674', '4363', '3956', '4375', '5312', '4865', '9287', '41578'],
-            datasets: [{
-                label: 'Traffic',
-                data: [3200, 2800, 4100, 3800, 4200, 5100, 4700, 5300, 4900],
-                borderColor: '#a855f7',
-                backgroundColor: function (context) {
-                    const ctx = context.chart.ctx;
-                    const gradient = ctx.createLinearGradient(0, 0, 0, 320);
-                    gradient.addColorStop(0, 'rgba(168, 85, 247, 0.4)');
-                    gradient.addColorStop(1, 'rgba(168, 85, 247, 0)');
-                    return gradient;
+            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            datasets: [
+                {
+                    label: 'Requests',
+                    data: [3200, 2800, 4100, 3800, 4200, 5100, 4700],
+                    borderColor: '#818cf8',
+                    backgroundColor: gradientPrimary,
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#818cf8',
+                    pointBorderColor: '#0c1021',
+                    pointBorderWidth: 2,
+                    pointRadius: 0,
+                    pointHoverRadius: 5,
+                    pointHoverBorderWidth: 2,
+                    pointHoverBorderColor: '#fff'
                 },
-                borderWidth: 3,
-                fill: true,
-                tension: 0.4,
-                pointBackgroundColor: '#a855f7',
-                pointBorderColor: '#fff',
-                pointBorderWidth: 2,
-                pointRadius: 4,
-                pointHoverRadius: 6
-            }]
+                {
+                    label: 'Errors',
+                    data: [120, 95, 180, 140, 160, 110, 90],
+                    borderColor: '#a855f7',
+                    backgroundColor: gradientSecondary,
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    pointHoverRadius: 5,
+                    pointBorderWidth: 2,
+                    pointBackgroundColor: '#a855f7',
+                    pointHoverBorderColor: '#fff'
+                }
+            ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
             plugins: {
-                legend: { display: false },
+                legend: {
+                    display: true,
+                    position: 'top',
+                    align: 'end',
+                    labels: {
+                        color: '#94a3b8',
+                        font: { size: 11, family: 'Inter' },
+                        boxWidth: 12,
+                        boxHeight: 2,
+                        padding: 16,
+                        usePointStyle: false
+                    }
+                },
                 tooltip: {
-                    backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                    borderColor: '#a855f7',
+                    backgroundColor: 'rgba(12, 16, 33, 0.95)',
+                    borderColor: 'rgba(99, 102, 241, 0.3)',
                     borderWidth: 1,
-                    titleColor: '#f8fafc',
+                    titleColor: '#f1f5f9',
                     bodyColor: '#94a3b8',
                     padding: 12,
-                    displayColors: false
+                    cornerRadius: 10,
+                    displayColors: true,
+                    boxPadding: 4,
+                    titleFont: { size: 12, weight: 600, family: 'Inter' },
+                    bodyFont: { size: 12, family: 'Inter' }
                 }
             },
             scales: {
                 y: {
-                    beginAtZero: false,
+                    beginAtZero: true,
                     grid: {
-                        color: 'rgba(255, 255, 255, 0.05)',
+                        color: 'rgba(255, 255, 255, 0.03)',
                         drawBorder: false
                     },
+                    border: { display: false },
                     ticks: {
-                        color: '#64748b',
-                        font: { size: 11 }
+                        color: '#475569',
+                        font: { size: 11, family: 'Inter' },
+                        padding: 8,
+                        maxTicksLimit: 5
                     }
                 },
                 x: {
                     grid: { display: false },
+                    border: { display: false },
                     ticks: {
-                        color: '#64748b',
-                        font: { size: 11 }
+                        color: '#475569',
+                        font: { size: 11, family: 'Inter' },
+                        padding: 8
                     }
                 }
             }
@@ -133,54 +124,75 @@ function initMainAreaChart() {
     });
 }
 
-// Animate Gauges on Load
+// ─── Animate Gauges ──────────────────────────────────────────────────────────
 function animateGauges() {
     const gauges = document.querySelectorAll('.gauge-progress');
     gauges.forEach(gauge => {
-        const dashOffset = gauge.style.strokeDashoffset;
+        const targetOffset = gauge.style.strokeDashoffset;
         gauge.style.strokeDashoffset = '440';
-        setTimeout(() => {
-            gauge.style.strokeDashoffset = dashOffset;
-        }, 100);
+        requestAnimationFrame(() => {
+            setTimeout(() => {
+                gauge.style.strokeDashoffset = targetOffset;
+            }, 200);
+        });
     });
 }
 
-// Fetch Dashboard Stats from API
+// ─── Counter Animation ───────────────────────────────────────────────────────
+function animateCounters() {
+    const counters = document.querySelectorAll('.stat-hero-value');
+    counters.forEach(el => {
+        const target = parseInt(el.textContent, 10);
+        if (isNaN(target) || target === 0) return;
+
+        const duration = 1200;
+        const start = performance.now();
+
+        function tick(now) {
+            const elapsed = now - start;
+            const progress = Math.min(elapsed / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+            el.textContent = Math.floor(eased * target).toLocaleString();
+            if (progress < 1) requestAnimationFrame(tick);
+        }
+
+        el.textContent = '0';
+        requestAnimationFrame(tick);
+    });
+}
+
+// ─── Fetch Dashboard Stats ───────────────────────────────────────────────────
 async function fetchDashboardStats() {
     try {
         const response = await fetch('/admin/api/stats');
-        if (!response.ok) throw new Error('Failed to fetch stats');
+        if (!response.ok) return;
 
         const data = await response.json();
-
-        updateStat('stat-users', data.users_count || 9467);
-        updateStat('stat-sessions', data.sessions_count || 3735);
-        updateStat('stat-roles', data.roles_count || 2853);
-
-    } catch (error) {
-        console.error('Error fetching dashboard stats:', error);
+        updateStat('stat-users', data.users_count || 0);
+        updateStat('stat-sessions', data.sessions_count || 0);
+        updateStat('stat-roles', data.roles_count || 0);
+    } catch (err) {
+        // Silently fail — stats are already rendered server-side
     }
 }
 
 function updateStat(id, value) {
-    const element = document.getElementById(id);
-    if (element) {
-        // Animate number counting up
-        const start = 0;
-        const duration = 1000;
-        const startTime = performance.now();
+    const el = document.getElementById(id);
+    if (!el) return;
 
-        function animate(currentTime) {
-            const elapsed = currentTime - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-            const current = Math.floor(progress * value);
-            element.textContent = current.toLocaleString();
+    const current = parseInt(el.textContent, 10) || 0;
+    if (current === value) return;
 
-            if (progress < 1) {
-                requestAnimationFrame(animate);
-            }
-        }
+    const duration = 800;
+    const start = performance.now();
 
-        requestAnimationFrame(animate);
+    function tick(now) {
+        const elapsed = now - start;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        el.textContent = Math.floor(current + (value - current) * eased).toLocaleString();
+        if (progress < 1) requestAnimationFrame(tick);
     }
+
+    requestAnimationFrame(tick);
 }

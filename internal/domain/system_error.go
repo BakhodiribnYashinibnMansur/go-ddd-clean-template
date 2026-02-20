@@ -47,7 +47,7 @@ type CreateSystemErrorInput struct {
 	Code        string
 	Message     string
 	StackTrace  *string
-	Metadata    map[string]interface{}
+	Metadata    map[string]any
 	Severity    string // ERROR, FATAL, PANIC, WARN
 	ServiceName string
 	RequestID   *uuid.UUID

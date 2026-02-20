@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"gct/internal/domain"
-	"gct/internal/repo/schema"
 
 	"github.com/Masterminds/squirrel"
 )
@@ -13,20 +12,20 @@ import (
 func (r *Repo) GetByCode(ctx context.Context, code string) (*domain.ErrorCode, error) {
 	query, args, err := r.db.Builder.
 		Select(
-			schema.ErrorCodeID,
-			schema.ErrorCodeCode,
-			schema.ErrorCodeMessage,
-			schema.ErrorCodeHTTPStatus,
-			schema.ErrorCodeCategory,
-			schema.ErrorCodeSeverity,
-			schema.ErrorCodeRetryable,
-			schema.ErrorCodeRetryAfter,
-			schema.ErrorCodeSuggestion,
-			schema.ErrorCodeCreatedAt,
-			schema.ErrorCodeUpdatedAt,
+			"id",
+			"code",
+			"message",
+			"http_status",
+			"category",
+			"severity",
+			"retryable",
+			"retry_after",
+			"suggestion",
+			"created_at",
+			"updated_at",
 		).
-		From(schema.TableErrorCode).
-		Where(squirrel.Eq{schema.ErrorCodeCode: code}).
+		From("error_code").
+		Where(squirrel.Eq{"code": code}).
 		ToSql()
 
 	if err != nil {

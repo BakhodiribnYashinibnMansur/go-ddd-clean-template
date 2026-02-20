@@ -104,7 +104,7 @@ func GetFloatVariation(ctx context.Context, flagKey string, defaultValue float64
 }
 
 // GetJSONVariation is a helper function to get a JSON variation from context.
-func GetJSONVariation(ctx context.Context, flagKey string, defaultValue map[string]interface{}) map[string]interface{} {
+func GetJSONVariation(ctx context.Context, flagKey string, defaultValue map[string]any) map[string]any {
 	client, ok := GetClient(ctx)
 	if !ok {
 		return defaultValue

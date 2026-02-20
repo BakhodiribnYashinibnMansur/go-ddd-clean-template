@@ -109,7 +109,7 @@ var templateFuncs = template.FuncMap{
 		}
 		return (offset / limit) + 1
 	},
-	"toJSON": func(v interface{}) template.JS {
+	"toJSON": func(v any) template.JS {
 		b, err := json.Marshal(v)
 		if err != nil {
 			return template.JS("{}")
@@ -151,10 +151,10 @@ var templateFuncs = template.FuncMap{
 	"le": func(a, b any) bool {
 		return toInt64(a) <= toInt64(b)
 	},
-	"eq": func(a, b any) bool {
+	"eqNum": func(a, b any) bool {
 		return toInt64(a) == toInt64(b)
 	},
-	"ne": func(a, b any) bool {
+	"neNum": func(a, b any) bool {
 		return toInt64(a) != toInt64(b)
 	},
 	"contains": func(s any, substr string) bool {

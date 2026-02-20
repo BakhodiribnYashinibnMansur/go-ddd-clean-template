@@ -136,7 +136,7 @@ func PrintGinBanner(port int, mode string) {
 %s│     %s[ ACCESS_GRANTED ]%s                                   │%s
 %s│     %sSYSTEM_READY: GIN_HTTP_SERVER_ON_LINE%s                │%s
 %s│                                                           │%s
-%s│     [ ADDRESS ]: %-6d                                   │%s
+%s│     [ ADDRESS ]: %shttp://localhost:%-6d%s                         │%s
 %s│     [ STATUS  ]: %s%-46s%s│%s
 %s│                                                           │%s
 %s└───────────────────────────────────────────────────────────┘%s
@@ -146,7 +146,7 @@ func PrintGinBanner(port int, mode string) {
 		ColorGreen, ColorBrightGreen+Bold, ColorReset+ColorGreen, ColorReset,
 		ColorGreen, ColorBrightGreen, ColorReset+ColorGreen, ColorReset,
 		ColorGreen, ColorReset,
-		ColorGreen, port, ColorReset,
+		ColorGreen, ColorBrightWhite+Bold, port, ColorReset+ColorGreen, ColorReset,
 		ColorGreen, ColorBrightCyan+Bold, mode, ColorReset+ColorGreen, ColorReset,
 		ColorGreen, ColorReset,
 		ColorGreen, ColorReset,

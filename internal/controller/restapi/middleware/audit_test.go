@@ -51,6 +51,21 @@ func (m *MockAuditLogUC) Gets(ctx context.Context, filter *domain.AuditLogsFilte
 	return args.Get(0).([]*domain.AuditLog), args.Int(1), args.Error(2)
 }
 
+func (m *MockAuditLogUC) GetLogins(ctx context.Context, in *domain.AuditLogsFilter) ([]domain.LoginEntry, int, error) {
+	args := m.Called(ctx, in)
+	return args.Get(0).([]domain.LoginEntry), args.Int(1), args.Error(2)
+}
+
+func (m *MockAuditLogUC) GetSessions(ctx context.Context, in *domain.AuditLogsFilter) ([]domain.SessionEntry, int, error) {
+	args := m.Called(ctx, in)
+	return args.Get(0).([]domain.SessionEntry), args.Int(1), args.Error(2)
+}
+
+func (m *MockAuditLogUC) GetActions(ctx context.Context, in *domain.AuditLogsFilter) ([]domain.ActionEntry, int, error) {
+	args := m.Called(ctx, in)
+	return args.Get(0).([]domain.ActionEntry), args.Int(1), args.Error(2)
+}
+
 type TestAuditUseCase struct {
 	LogUC         *MockAuditLogUC
 	HistoryUC     *MockEndpointHistoryUC
