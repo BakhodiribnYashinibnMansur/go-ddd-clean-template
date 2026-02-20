@@ -1,54 +1,159 @@
-{{ template "base" . }}
-
 {{ define "content" }}
-<div style="margin-bottom: 24px;">
-    <a href="/admin/rbac/roles" class="text-body"
-        style="display: inline-flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-        <i class="material-symbols-outlined" style="font-size: 18px;">arrow_back</i> Back to Roles
-    </a>
-    <h2>{{ if .Role.ID }}Edit Role{{ else }}Create New Role{{ end }}</h2>
-</div>
-
-<form id="roleForm" class="card">
-    <input type="hidden" name="id" value="{{ .Role.ID }}">
-
-    <div class="form-group">
-        <label class="form-label">Role Name</label>
-        <input type="text" name="name" class="form-input" value="{{ .Role.Name }}" required placeholder="e.g. Manager">
-    </div>
-
-    <div class="form-group">
-        <label class="form-label">Description</label>
-        <input type="text" name="description" class="form-input" value="{{ .Role.Description }}"
-            placeholder="Role responsibility description">
-    </div>
-
-    <div class="form-group">
-        <label class="form-label" style="margin-bottom: 12px;">Permissions</label>
-        <div
-            style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; max-height: 400px; overflow-y: auto; padding: 12px; border: 1px solid var(--md-sys-color-outline-variant); border-radius: 8px;">
-            {{ range .AllPermissions }}
-            <label
-                style="display: flex; align-items: center; gap: 12px; padding: 8px; border-radius: 4px; cursor: pointer; background: var(--md-sys-color-surface-variant);">
-                <input type="checkbox" name="permissions" value="{{ .ID }}" {{ if .Assigned }}checked{{ end }}
-                    style="width: 18px; height: 18px; accent-color: var(--md-sys-color-primary);">
-                <div>
-                    <div style="font-weight: 500; font-size: 14px;">{{ .Resource }}:{{ .Action }}</div>
-                    <div style="font-size: 12px; color: var(--md-sys-color-on-surface-variant);">{{ .Description }}
-                    </div>
-                </div>
-            </label>
-            {{ end }}
+<div class="page-content-wrapper">
+    <!-- Back + Header -->
+    <div style="margin-bottom: 32px;">
+        <a href="/admin/rbac/roles" style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-muted); text-decoration: none; margin-bottom: 12px;">
+            <i class="material-symbols-outlined" style="font-size: 18px;">arrow_back</i> Back to Roles
+        </a>
+        <div class="flex-between">
+            <div>
+                <h2 style="font-size: 26px; font-weight: 700; margin-bottom: 4px;">{{ .Role.Name }}</h2>
+                <span style="font-size: 12px; color: var(--text-muted);">{{ .Role.ID }}</span>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-primary" onclick="openEditModal()">
+                    <i class="material-symbols-outlined">edit</i> Rename
+                </button>
+                <button class="btn btn-secondary" style="color: var(--rose);" onclick="deleteRole()">
+                    <i class="material-symbols-outlined">delete</i> Delete
+                </button>
+            </div>
         </div>
     </div>
 
-    <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
-        <a href="/admin/rbac/roles" class="btn btn-secondary">Cancel</a>
-        <button type="submit" class="btn btn-primary">Save Role</button>
+    <!-- Stats -->
+    <div class="stat-hero-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 28px;">
+        <div class="stat-hero">
+            <div class="stat-hero-icon" style="background: rgba(99, 102, 241, 0.1); color: var(--accent-400);">
+                <i class="material-symbols-outlined">badge</i>
+            </div>
+            <div class="stat-hero-value">{{ .Role.Name }}</div>
+            <div class="stat-hero-label">Role Name</div>
+        </div>
+        <div class="stat-hero">
+            <div class="stat-hero-icon" style="background: rgba(16, 185, 129, 0.1); color: var(--emerald);">
+                <i class="material-symbols-outlined">key</i>
+            </div>
+            <div class="stat-hero-value">{{ len .RolePermissions }}</div>
+            <div class="stat-hero-label">Assigned Permissions</div>
+        </div>
+        <div class="stat-hero">
+            <div class="stat-hero-icon" style="background: rgba(14, 165, 233, 0.1); color: var(--sky);">
+                <i class="material-symbols-outlined">group</i>
+            </div>
+            <div class="stat-hero-value">{{ .UsersCount }}</div>
+            <div class="stat-hero-label">Users with Role</div>
+        </div>
     </div>
-</form>
+
+    <!-- Permissions Assignment -->
+    <div class="card" style="padding: 0; overflow: hidden;">
+        <div style="padding: 20px 24px; border-bottom: 1px solid var(--border);">
+            <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 2px;">Permissions</h3>
+            <p style="font-size: 12px; color: var(--text-muted);">Toggle permissions for this role. Changes are saved immediately.</p>
+        </div>
+        <div style="padding: 24px;">
+            {{ if .AllPermissions }}
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px;">
+                {{ range .AllPermissions }}
+                <label class="perm-toggle" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 8px; cursor: pointer; border: 1px solid var(--border); transition: all 0.15s ease;" data-pid="{{ .ID }}">
+                    <input type="checkbox" class="perm-check" data-pid="{{ .ID }}"
+                        {{ if index $.AssignedMap .ID }}checked{{ end }}
+                        onchange="togglePermission('{{ .ID }}', this.checked)"
+                        style="width: 18px; height: 18px; accent-color: var(--accent-400);">
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="font-weight: 500; font-size: 14px;">{{ .Name }}</div>
+                        <div style="font-size: 11px; color: var(--text-muted);">{{ shortUUID .ID }}</div>
+                    </div>
+                    <i class="material-symbols-outlined perm-status" style="font-size: 18px; color: {{ if index $.AssignedMap .ID }}var(--emerald){{ else }}var(--text-muted){{ end }};">
+                        {{ if index $.AssignedMap .ID }}check_circle{{ else }}radio_button_unchecked{{ end }}
+                    </i>
+                </label>
+                {{ end }}
+            </div>
+            {{ else }}
+            <p style="color: var(--text-muted); text-align: center; padding: 24px;">No permissions defined yet.</p>
+            {{ end }}
+        </div>
+    </div>
+</div>
+
+<!-- Edit Role Modal -->
+<div id="editModal" class="modal">
+    <div class="modal-content" style="max-width: 420px;">
+        <div class="modal-header">
+            <h3>Rename Role</h3>
+            <button class="btn-icon" onclick="closeModal('editModal')" style="background: none; border: none; cursor: pointer; color: var(--text-muted);">
+                <i class="material-symbols-outlined">close</i>
+            </button>
+        </div>
+        <div class="modal-body" style="padding: 24px;">
+            <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Role Name *</label>
+            <input type="text" id="editRoleName" class="form-input" value="{{ .Role.Name }}">
+        </div>
+        <div class="modal-footer" style="padding: 16px 24px; display: flex; justify-content: flex-end; gap: 12px;">
+            <button class="btn btn-secondary" onclick="closeModal('editModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="submitRename()">Save</button>
+        </div>
+    </div>
+</div>
 {{ end }}
 
 {{ define "scripts" }}
-<script src="/static/js/rbac.js"></script>
+<script>
+const roleId = '{{ .Data.Role.ID }}';
+
+function openEditModal() { openModal('editModal'); }
+
+async function submitRename() {
+    const name = document.getElementById('editRoleName').value;
+    if (!name) { alert('Name is required'); return; }
+
+    try {
+        const res = await fetch('/admin/rbac/roles/' + roleId, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ name }) });
+        const data = await res.json();
+        if (data.success) window.location.reload();
+        else alert(data.message);
+    } catch (e) { alert('Error: ' + e.message); }
+}
+
+async function deleteRole() {
+    if (!confirm('Delete this role? Users assigned to it will lose access.')) return;
+    try {
+        const res = await fetch('/admin/rbac/roles/' + roleId, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) window.location.href = '/admin/rbac/roles';
+        else alert(data.message);
+    } catch (e) { alert('Error: ' + e.message); }
+}
+
+async function togglePermission(permId, checked) {
+    const method = checked ? 'POST' : 'DELETE';
+    const url = '/admin/rbac/roles/' + roleId + '/permissions/' + permId;
+
+    try {
+        const res = await fetch(url, { method });
+        const data = await res.json();
+        if (data.success) {
+            // Update UI without reload
+            const label = document.querySelector('[data-pid="' + permId + '"].perm-toggle');
+            const icon = label.querySelector('.perm-status');
+            if (checked) {
+                icon.textContent = 'check_circle';
+                icon.style.color = 'var(--emerald)';
+            } else {
+                icon.textContent = 'radio_button_unchecked';
+                icon.style.color = 'var(--text-muted)';
+            }
+        } else {
+            alert(data.message);
+            // Revert checkbox
+            document.querySelector('.perm-check[data-pid="' + permId + '"]').checked = !checked;
+        }
+    } catch (e) {
+        alert('Error: ' + e.message);
+        document.querySelector('.perm-check[data-pid="' + permId + '"]').checked = !checked;
+    }
+}
+</script>
 {{ end }}

@@ -1,0 +1,310 @@
+{{ define "content" }}
+<div class="page-content-wrapper">
+    <!-- Back + Header -->
+    <div style="margin-bottom: 32px;">
+        <a href="/admin/integrations" style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-muted); text-decoration: none; margin-bottom: 12px;">
+            <i class="material-symbols-outlined" style="font-size: 18px;">arrow_back</i> Back to Integrations
+        </a>
+        <div class="flex-between">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(99, 102, 241, 0.1); display: flex; align-items: center; justify-content: center;">
+                    <i class="material-symbols-outlined" style="color: var(--accent-400); font-size: 26px;">integration_instructions</i>
+                </div>
+                <div>
+                    <h2 style="font-size: 26px; font-weight: 700; margin-bottom: 2px;">{{ .Integration.Name }}</h2>
+                    <span style="font-size: 12px; color: var(--text-muted);">{{ .Integration.ID }}</span>
+                </div>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn {{ if .Integration.IsActive }}btn-secondary{{ else }}btn-primary{{ end }}" onclick="toggleActive()">
+                    <i class="material-symbols-outlined">{{ if .Integration.IsActive }}toggle_off{{ else }}toggle_on{{ end }}</i>
+                    {{ if .Integration.IsActive }}Deactivate{{ else }}Activate{{ end }}
+                </button>
+                <button class="btn btn-primary" onclick="openEditModal()">
+                    <i class="material-symbols-outlined">edit</i> Edit
+                </button>
+                <button class="btn btn-secondary" style="color: var(--rose);" onclick="deleteIntegration()">
+                    <i class="material-symbols-outlined">delete</i> Delete
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Info Cards -->
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 28px;">
+        <div class="card" style="padding: 24px;">
+            <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 16px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Details</h3>
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="font-size: 13px; color: var(--text-muted);">Status</span>
+                    {{ if .Integration.IsActive }}
+                    <span class="badge badge-success">Active</span>
+                    {{ else }}
+                    <span class="badge badge-neutral">Inactive</span>
+                    {{ end }}
+                </div>
+                {{ if .Integration.Description }}
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="font-size: 13px; color: var(--text-muted);">Description</span>
+                    <span style="font-size: 13px; max-width: 300px; text-align: right;">{{ .Integration.Description }}</span>
+                </div>
+                {{ end }}
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="font-size: 13px; color: var(--text-muted);">Base URL</span>
+                    <code style="font-size: 13px; color: var(--accent-400);">{{ .Integration.BaseURL }}</code>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="font-size: 13px; color: var(--text-muted);">Created</span>
+                    <span style="font-size: 13px;">{{ .Integration.CreatedAt.Format "Jan 02, 2006 15:04" }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="font-size: 13px; color: var(--text-muted);">Updated</span>
+                    <span style="font-size: 13px;">{{ .Integration.UpdatedAt.Format "Jan 02, 2006 15:04" }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="padding: 24px;">
+            <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 16px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Config</h3>
+            {{ if .Integration.Config }}
+            <pre style="font-size: 12px; color: var(--text-secondary); background: var(--surface-elevated); padding: 12px; border-radius: 8px; overflow-x: auto; white-space: pre-wrap;">{{ prettyJSON .Integration.Config }}</pre>
+            {{ else }}
+            <p style="font-size: 13px; color: var(--text-muted);">No configuration set.</p>
+            {{ end }}
+        </div>
+    </div>
+
+    <!-- API Keys Section -->
+    <div class="card" style="padding: 0; overflow: hidden;">
+        <div style="padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);">
+            <div>
+                <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 2px;">API Keys</h3>
+                <p style="font-size: 12px; color: var(--text-muted);">{{ len .Integration.APIKeys }} key(s)</p>
+            </div>
+            <button class="btn btn-primary" onclick="openKeyModal()">
+                <i class="material-symbols-outlined">vpn_key</i> Generate Key
+            </button>
+        </div>
+        <div class="table-container" style="border: none; background: transparent;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Prefix</th>
+                        <th>Status</th>
+                        <th>Last Used</th>
+                        <th>Expires</th>
+                        <th>Created</th>
+                        <th style="text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{ range .Integration.APIKeys }}
+                    <tr>
+                        <td style="font-weight: 600;">{{ .Name }}</td>
+                        <td><code style="color: var(--accent-400); font-size: 13px;">{{ .KeyPrefix }}***</code></td>
+                        <td>
+                            {{ if .IsActive }}
+                            <span class="badge badge-success">Active</span>
+                            {{ else }}
+                            <span class="badge badge-danger">Revoked</span>
+                            {{ end }}
+                        </td>
+                        <td style="font-size: 13px; color: var(--text-muted);">{{ derefTime .LastUsedAt }}</td>
+                        <td style="font-size: 13px; color: var(--text-muted);">{{ derefTime .ExpiresAt }}</td>
+                        <td style="font-size: 13px; color: var(--text-muted);">{{ .CreatedAt.Format "Jan 02, 2006" }}</td>
+                        <td style="text-align: right;">
+                            {{ if .IsActive }}
+                            <button class="btn-icon" onclick="revokeKey('{{ .ID }}', '{{ .Name }}')" title="Revoke" style="background: none; border: none; cursor: pointer; color: var(--amber);">
+                                <i class="material-symbols-outlined" style="font-size: 20px;">block</i>
+                            </button>
+                            {{ end }}
+                            <button class="btn-icon" onclick="deleteKey('{{ .ID }}', '{{ .Name }}')" title="Delete" style="background: none; border: none; cursor: pointer; color: var(--rose);">
+                                <i class="material-symbols-outlined" style="font-size: 20px;">delete</i>
+                            </button>
+                        </td>
+                    </tr>
+                    {{ else }}
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 48px; color: var(--text-muted);">No API keys generated yet.</td>
+                    </tr>
+                    {{ end }}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Integration Modal -->
+<div id="editModal" class="modal">
+    <div class="modal-content" style="max-width: 560px;">
+        <div class="modal-header">
+            <h3>Edit Integration</h3>
+            <button class="btn-icon" onclick="closeModal('editModal')" style="background: none; border: none; cursor: pointer; color: var(--text-muted);">
+                <i class="material-symbols-outlined">close</i>
+            </button>
+        </div>
+        <div class="modal-body" style="padding: 24px; display: flex; flex-direction: column; gap: 16px;">
+            <div>
+                <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Name *</label>
+                <input type="text" id="editName" class="form-input" value="{{ .Integration.Name }}">
+            </div>
+            <div>
+                <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Description</label>
+                <textarea id="editDescription" class="form-input" rows="2">{{ .Integration.Description }}</textarea>
+            </div>
+            <div>
+                <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Base URL *</label>
+                <input type="url" id="editBaseURL" class="form-input" value="{{ .Integration.BaseURL }}">
+            </div>
+        </div>
+        <div class="modal-footer" style="padding: 16px 24px; display: flex; justify-content: flex-end; gap: 12px;">
+            <button class="btn btn-secondary" onclick="closeModal('editModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="submitEdit()">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- Generate API Key Modal -->
+<div id="keyModal" class="modal">
+    <div class="modal-content" style="max-width: 480px;">
+        <div class="modal-header">
+            <h3>Generate API Key</h3>
+            <button class="btn-icon" onclick="closeModal('keyModal')" style="background: none; border: none; cursor: pointer; color: var(--text-muted);">
+                <i class="material-symbols-outlined">close</i>
+            </button>
+        </div>
+        <div class="modal-body" style="padding: 24px; display: flex; flex-direction: column; gap: 16px;">
+            <div>
+                <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Key Name *</label>
+                <input type="text" id="keyName" class="form-input" placeholder="Production Key">
+            </div>
+        </div>
+        <div class="modal-footer" style="padding: 16px 24px; display: flex; justify-content: flex-end; gap: 12px;">
+            <button class="btn btn-secondary" onclick="closeModal('keyModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="generateKey()">Generate</button>
+        </div>
+    </div>
+</div>
+
+<!-- Raw Key Display Modal -->
+<div id="rawKeyModal" class="modal">
+    <div class="modal-content" style="max-width: 560px;">
+        <div class="modal-header">
+            <h3>API Key Generated</h3>
+            <button class="btn-icon" onclick="closeRawKeyModal()" style="background: none; border: none; cursor: pointer; color: var(--text-muted);">
+                <i class="material-symbols-outlined">close</i>
+            </button>
+        </div>
+        <div class="modal-body" style="padding: 24px;">
+            <div style="background: rgba(234, 179, 8, 0.1); border: 1px solid rgba(234, 179, 8, 0.3); border-radius: 8px; padding: 12px; margin-bottom: 16px;">
+                <p style="font-size: 13px; color: var(--amber); font-weight: 500;"><i class="material-symbols-outlined" style="font-size: 16px; vertical-align: middle;">warning</i> Copy this key now. You will not be able to see it again.</p>
+            </div>
+            <div style="position: relative;">
+                <input type="text" id="rawKeyValue" class="form-input" readonly style="font-family: monospace; font-size: 14px; padding-right: 48px;">
+                <button onclick="copyKey()" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--accent-400);">
+                    <i class="material-symbols-outlined" style="font-size: 20px;">content_copy</i>
+                </button>
+            </div>
+        </div>
+        <div class="modal-footer" style="padding: 16px 24px; display: flex; justify-content: flex-end;">
+            <button class="btn btn-primary" onclick="closeRawKeyModal()">Done</button>
+        </div>
+    </div>
+</div>
+{{ end }}
+
+{{ define "scripts" }}
+<script>
+const integrationId = '{{ .Data.Integration.ID }}';
+
+function openEditModal() { openModal('editModal'); }
+function openKeyModal() {
+    document.getElementById('keyName').value = '';
+    openModal('keyModal');
+}
+
+async function submitEdit() {
+    const body = {
+        name: document.getElementById('editName').value,
+        description: document.getElementById('editDescription').value,
+        base_url: document.getElementById('editBaseURL').value,
+    };
+    if (!body.name || !body.base_url) { alert('Name and Base URL are required'); return; }
+
+    try {
+        const res = await fetch('/admin/integrations/' + integrationId, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+        const data = await res.json();
+        if (data.success) window.location.reload();
+        else alert(data.message);
+    } catch (e) { alert('Error: ' + e.message); }
+}
+
+async function toggleActive() {
+    try {
+        const res = await fetch('/admin/integrations/' + integrationId + '/toggle', { method: 'POST', headers: {'Content-Type':'application/json'} });
+        const data = await res.json();
+        if (data.success) window.location.reload();
+        else alert(data.message);
+    } catch (e) { alert('Error: ' + e.message); }
+}
+
+async function deleteIntegration() {
+    if (!confirm('Delete this integration? This will also delete all API keys.')) return;
+    try {
+        const res = await fetch('/admin/integrations/' + integrationId, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) window.location.href = '/admin/integrations';
+        else alert(data.message);
+    } catch (e) { alert('Error: ' + e.message); }
+}
+
+async function generateKey() {
+    const name = document.getElementById('keyName').value;
+    if (!name) { alert('Key name is required'); return; }
+
+    try {
+        const res = await fetch('/admin/integrations/' + integrationId + '/keys', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ name }) });
+        const data = await res.json();
+        if (data.success) {
+            closeModal('keyModal');
+            document.getElementById('rawKeyValue').value = data.key;
+            openModal('rawKeyModal');
+        } else {
+            alert(data.message);
+        }
+    } catch (e) { alert('Error: ' + e.message); }
+}
+
+function closeRawKeyModal() {
+    closeModal('rawKeyModal');
+    window.location.reload();
+}
+
+function copyKey() {
+    const input = document.getElementById('rawKeyValue');
+    input.select();
+    navigator.clipboard.writeText(input.value);
+}
+
+async function revokeKey(kid, name) {
+    if (!confirm('Revoke API key "' + name + '"? It will no longer be usable.')) return;
+    try {
+        const res = await fetch('/admin/integrations/' + integrationId + '/keys/' + kid + '/revoke', { method: 'POST' });
+        const data = await res.json();
+        if (data.success) window.location.reload();
+        else alert(data.message);
+    } catch (e) { alert('Error: ' + e.message); }
+}
+
+async function deleteKey(kid, name) {
+    if (!confirm('Permanently delete API key "' + name + '"?')) return;
+    try {
+        const res = await fetch('/admin/integrations/' + integrationId + '/keys/' + kid, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) window.location.reload();
+        else alert(data.message);
+    } catch (e) { alert('Error: ' + e.message); }
+}
+</script>
+{{ end }}

@@ -15,6 +15,26 @@
         </div>
     </div>
 
+    <!-- Alerts -->
+    {{ if gt .PendingCount 0 }}
+    <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 10px; padding: 14px 20px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <i class="material-symbols-outlined" style="color: var(--amber); font-size: 20px;">pending_actions</i>
+            <span style="font-size: 13px; color: var(--amber);"><strong>{{ .PendingCount }}</strong> user(s) pending approval</span>
+        </div>
+        <a href="/admin/approvals" class="btn btn-secondary" style="font-size: 12px; padding: 6px 14px;">Review</a>
+    </div>
+    {{ end }}
+    {{ if gt .UnresolvedCount 0 }}
+    <div style="background: rgba(244, 63, 94, 0.1); border: 1px solid rgba(244, 63, 94, 0.25); border-radius: 10px; padding: 14px 20px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <i class="material-symbols-outlined" style="color: var(--rose); font-size: 20px;">error</i>
+            <span style="font-size: 13px; color: var(--rose);"><strong>{{ .UnresolvedCount }}</strong> unresolved system error(s)</span>
+        </div>
+        <a href="/admin/system-errors" class="btn btn-secondary" style="font-size: 12px; padding: 6px 14px;">View</a>
+    </div>
+    {{ end }}
+
     <!-- Hero Stats Row -->
     <div class="stat-hero-grid" style="grid-template-columns: repeat(7, 1fr); margin-bottom: 28px;">
         <div class="stat-hero" style="--stat-accent: var(--accent-500);">
@@ -165,54 +185,26 @@
                 </a>
             </div>
             <div style="display: flex; flex-direction: column; gap: 2px;">
+                {{ range .RecentLogs }}
                 <div class="metric-row">
                     <div style="display: flex; align-items: center; gap: 12px;">
-                        <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(16, 185, 129, 0.1); display: flex; align-items: center; justify-content: center;">
-                            <i class="material-symbols-outlined" style="font-size: 16px; color: var(--emerald);">person_add</i>
+                        <div style="width: 32px; height: 32px; border-radius: 8px; background: {{ auditActionColor .Action }}15; display: flex; align-items: center; justify-content: center;">
+                            <i class="material-symbols-outlined" style="font-size: 16px; color: {{ auditActionColor .Action }};">{{ auditActionIcon .Action }}</i>
                         </div>
                         <div>
-                            <div style="font-size: 13px; font-weight: 500;">New user registered</div>
-                            <div style="font-size: 11px; color: var(--text-dim);">User signed up via API</div>
+                            <div style="font-size: 13px; font-weight: 500;">{{ .Action }}</div>
+                            <div style="font-size: 11px; color: var(--text-dim);">
+                                {{ if .ResourceType }}{{ derefString .ResourceType }}{{ end }}
+                                {{ if .Success }}<span style="color: var(--emerald);">success</span>{{ else }}<span style="color: var(--rose);">failed</span>{{ end }}
+                                {{ if .IPAddress }} &middot; {{ derefString .IPAddress }}{{ end }}
+                            </div>
                         </div>
                     </div>
-                    <span style="font-size: 11px; color: var(--text-dim);">Just now</span>
+                    <span style="font-size: 11px; color: var(--text-dim);">{{ timeAgo .CreatedAt }}</span>
                 </div>
-                <div class="metric-row">
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(99, 102, 241, 0.1); display: flex; align-items: center; justify-content: center;">
-                            <i class="material-symbols-outlined" style="font-size: 16px; color: var(--accent-400);">login</i>
-                        </div>
-                        <div>
-                            <div style="font-size: 13px; font-weight: 500;">Admin login</div>
-                            <div style="font-size: 11px; color: var(--text-dim);">Successful authentication</div>
-                        </div>
-                    </div>
-                    <span style="font-size: 11px; color: var(--text-dim);">2m ago</span>
-                </div>
-                <div class="metric-row">
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(245, 158, 11, 0.1); display: flex; align-items: center; justify-content: center;">
-                            <i class="material-symbols-outlined" style="font-size: 16px; color: var(--amber);">shield</i>
-                        </div>
-                        <div>
-                            <div style="font-size: 13px; font-weight: 500;">Role updated</div>
-                            <div style="font-size: 11px; color: var(--text-dim);">Permissions modified</div>
-                        </div>
-                    </div>
-                    <span style="font-size: 11px; color: var(--text-dim);">15m ago</span>
-                </div>
-                <div class="metric-row">
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(14, 165, 233, 0.1); display: flex; align-items: center; justify-content: center;">
-                            <i class="material-symbols-outlined" style="font-size: 16px; color: var(--sky);">database</i>
-                        </div>
-                        <div>
-                            <div style="font-size: 13px; font-weight: 500;">Database backup</div>
-                            <div style="font-size: 11px; color: var(--text-dim);">Automated backup completed</div>
-                        </div>
-                    </div>
-                    <span style="font-size: 11px; color: var(--text-dim);">1h ago</span>
-                </div>
+                {{ else }}
+                <div style="text-align: center; padding: 24px; color: var(--text-muted); font-size: 13px;">No recent activity.</div>
+                {{ end }}
             </div>
         </div>
 

@@ -1,77 +1,210 @@
-{{ template "base" . }}
-
 {{ define "content" }}
-<div style="margin-bottom: 24px;">
-    <a href="/admin/abac/policies" class="text-body"
-        style="display: inline-flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-        <i class="material-symbols-outlined" style="font-size: 18px;">arrow_back</i> Back to Policies
-    </a>
-    <h2>{{ if .Policy.ID }}Edit Policy{{ else }}Create New Policy{{ end }}</h2>
-</div>
+<div class="page-content-wrapper">
+    <!-- Back + Header -->
+    <div style="margin-bottom: 32px;">
+        <a href="/admin/abac/policies" style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-muted); text-decoration: none; margin-bottom: 12px;">
+            <i class="material-symbols-outlined" style="font-size: 18px;">arrow_back</i> Back to Policies
+        </a>
+        <div class="flex-between">
+            <div>
+                <h2 style="font-size: 26px; font-weight: 700; margin-bottom: 4px;">{{ if .IsNew }}Create Policy{{ else }}Policy Detail{{ end }}</h2>
+                {{ if not .IsNew }}
+                <span style="font-size: 12px; color: var(--text-muted);">{{ .Policy.ID }}</span>
+                {{ end }}
+            </div>
+            {{ if not .IsNew }}
+            <div style="display: flex; gap: 10px;">
+                <button class="btn {{ if .Policy.Active }}btn-secondary{{ else }}btn-primary{{ end }}" onclick="toggleActive()">
+                    {{ if .Policy.Active }}
+                    <i class="material-symbols-outlined">toggle_off</i> Deactivate
+                    {{ else }}
+                    <i class="material-symbols-outlined">toggle_on</i> Activate
+                    {{ end }}
+                </button>
+                <button class="btn btn-secondary" style="color: var(--rose);" onclick="deletePolicy()">
+                    <i class="material-symbols-outlined">delete</i> Delete
+                </button>
+            </div>
+            {{ end }}
+        </div>
+    </div>
 
-<form id="policyForm" class="card">
-    <input type="hidden" name="id" value="{{ .Policy.ID }}">
-
+    <!-- Policy Form -->
     <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
-        <!-- Left Column: Details -->
+        <!-- Main -->
+        <div class="card" style="padding: 24px;">
+            <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 20px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Configuration</h3>
+
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+                <div>
+                    <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Permission *</label>
+                    <select id="polPermission" class="form-input">
+                        <option value="">Select a permission...</option>
+                        {{ range .AllPermissions }}
+                        <option value="{{ .ID }}" {{ if and (not $.IsNew) (eq (print .ID) (print $.Policy.PermissionID)) }}selected{{ end }}>{{ .Name }}</option>
+                        {{ end }}
+                    </select>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div>
+                        <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Effect *</label>
+                        <select id="polEffect" class="form-input">
+                            <option value="ALLOW" {{ if and (not .IsNew) (eq (print .Policy.Effect) "ALLOW") }}selected{{ end }}>ALLOW</option>
+                            <option value="DENY" {{ if and (not .IsNew) (eq (print .Policy.Effect) "DENY") }}selected{{ end }}>DENY</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Priority</label>
+                        <input type="number" id="polPriority" class="form-input" value="{{ if .IsNew }}0{{ else }}{{ .Policy.Priority }}{{ end }}" placeholder="0">
+                        <span style="font-size: 11px; color: var(--text-muted);">Higher = evaluated first</span>
+                    </div>
+                </div>
+
+                <div>
+                    <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Conditions (JSON)</label>
+                    <textarea id="polConditions" class="form-input" rows="8" style="font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px;" placeholder='{ "department": "engineering" }'>{{ if and (not .IsNew) .Policy.Conditions }}{{ prettyJSON .Policy.Conditions }}{{ end }}</textarea>
+                    <span style="font-size: 11px; color: var(--text-muted);">JSON object with condition key-value pairs</span>
+                </div>
+
+                {{ if not .IsNew }}
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" id="polActive" {{ if .Policy.Active }}checked{{ end }}>
+                    <label for="polActive" style="font-size: 13px;">Active</label>
+                </div>
+                {{ else }}
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" id="polActive" checked>
+                    <label for="polActive" style="font-size: 13px;">Active</label>
+                </div>
+                {{ end }}
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border);">
+                <a href="/admin/abac/policies" class="btn btn-secondary">Cancel</a>
+                <button class="btn btn-primary" onclick="submitPolicy()">
+                    {{ if .IsNew }}Create Policy{{ else }}Save Changes{{ end }}
+                </button>
+            </div>
+        </div>
+
+        <!-- Sidebar Info -->
         <div>
-            <div class="form-group">
-                <label class="form-label">Policy Name</label>
-                <input type="text" name="name" class="form-input" value="{{ .Policy.Name }}" required
-                    placeholder="e.g. Finance Dept Access">
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Action / Resource</label>
-                <input type="text" name="action" class="form-input" value="{{ .Policy.Action }}"
-                    placeholder="e.g. document:read">
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Conditions (JSON)</label>
-                <div style="font-size: 0.875rem; color: var(--md-sys-color-on-surface-variant); margin-bottom: 8px;">
-                    Define dynamic conditions (e.g., department == 'sales', time_of_day > 900)
-                </div>
-                <textarea name="conditions" id="conditionsJson" class="form-input"
-                    style="height: 200px; font-family: monospace;"
-                    placeholder='{ "department": "sales" }'>{{ .Policy.Conditions }}</textarea>
-            </div>
-        </div>
-
-        <!-- Right Column: Effect & Meta -->
-        <div
-            style="background: var(--md-sys-color-surface-variant); padding: 24px; border-radius: 12px; height: fit-content;">
-            <div class="form-group">
-                <label class="form-label">Effect</label>
+            {{ if not .IsNew }}
+            <div class="card" style="padding: 24px; margin-bottom: 20px;">
+                <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 16px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Info</h3>
                 <div style="display: flex; flex-direction: column; gap: 12px;">
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                        <input type="radio" name="effect" value="allow" {{ if eq .Policy.Effect "allow" }}checked{{ end
-                            }} style="width: 20px; height: 20px; accent-color: var(--md-sys-color-tertiary);">
-                        <span>Allow</span>
-                    </label>
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                        <input type="radio" name="effect" value="deny" {{ if eq .Policy.Effect "deny" }}checked{{ end }}
-                            style="width: 20px; height: 20px; accent-color: var(--md-sys-color-error);">
-                        <span>Deny</span>
-                    </label>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="font-size: 13px; color: var(--text-muted);">Status</span>
+                        {{ if .Policy.Active }}
+                        <span class="badge badge-success">Active</span>
+                        {{ else }}
+                        <span class="badge badge-neutral">Inactive</span>
+                        {{ end }}
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="font-size: 13px; color: var(--text-muted);">Effect</span>
+                        <span class="badge {{ if eq (print .Policy.Effect) "ALLOW" }}badge-success{{ else }}badge-danger{{ end }}">{{ .Policy.Effect }}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="font-size: 13px; color: var(--text-muted);">Permission</span>
+                        <span style="font-size: 13px; font-weight: 500;">{{ .PermissionName }}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="font-size: 13px; color: var(--text-muted);">Priority</span>
+                        <span style="font-size: 13px;">{{ .Policy.Priority }}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="font-size: 13px; color: var(--text-muted);">Created</span>
+                        <span style="font-size: 13px;">{{ .Policy.CreatedAt.Format "Jan 02, 2006" }}</span>
+                    </div>
                 </div>
             </div>
+            {{ end }}
 
-            <div class="form-group">
-                <label class="form-label">Priority</label>
-                <input type="number" name="priority" class="form-input" value="{{ .Policy.Priority }}" placeholder="0">
-                <small>Higher number = Higher priority</small>
+            <div class="card" style="padding: 24px; background: rgba(99, 102, 241, 0.05);">
+                <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 12px; color: var(--accent-400);">
+                    <i class="material-symbols-outlined" style="font-size: 18px; vertical-align: middle;">help</i> About ABAC Policies
+                </h3>
+                <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                    Policies control access based on attributes. Each policy maps to a <strong>permission</strong> and defines
+                    whether to <strong>ALLOW</strong> or <strong>DENY</strong> access.
+                    <strong>Conditions</strong> add attribute-based constraints (e.g., department, time, location).
+                    Higher <strong>priority</strong> policies are evaluated first.
+                </p>
             </div>
         </div>
     </div>
-
-    <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
-        <a href="/admin/abac/policies" class="btn btn-secondary">Cancel</a>
-        <button type="submit" class="btn btn-primary">Save Policy</button>
-    </div>
-</form>
+</div>
 {{ end }}
 
 {{ define "scripts" }}
-<script src="/static/js/abac.js"></script>
+<script>
+const isNew = {{ if .Data.IsNew }}true{{ else }}false{{ end }};
+const policyId = {{ if .Data.IsNew }}''{{ else }}'{{ .Data.Policy.ID }}'{{ end }};
+
+async function submitPolicy() {
+    const permissionId = document.getElementById('polPermission').value;
+    const effect = document.getElementById('polEffect').value;
+    const priority = parseInt(document.getElementById('polPriority').value) || 0;
+    const active = document.getElementById('polActive').checked;
+    const conditionsStr = document.getElementById('polConditions').value.trim();
+
+    if (!permissionId) { alert('Please select a permission'); return; }
+
+    let conditions = {};
+    if (conditionsStr) {
+        try {
+            conditions = JSON.parse(conditionsStr);
+        } catch (e) {
+            alert('Invalid JSON in conditions: ' + e.message);
+            return;
+        }
+    }
+
+    const body = {
+        permission_id: permissionId,
+        effect: effect,
+        priority: priority,
+        active: active,
+        conditions: conditions,
+    };
+
+    const url = isNew ? '/admin/abac/policies' : '/admin/abac/policies/' + policyId;
+    const method = isNew ? 'POST' : 'PUT';
+
+    try {
+        const res = await fetch(url, { method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+        const data = await res.json();
+        if (data.success) {
+            if (isNew && data.id) {
+                window.location.href = '/admin/abac/policies/' + data.id;
+            } else {
+                window.location.reload();
+            }
+        } else {
+            alert(data.message);
+        }
+    } catch (e) { alert('Error: ' + e.message); }
+}
+
+async function toggleActive() {
+    try {
+        const res = await fetch('/admin/abac/policies/' + policyId + '/toggle', { method: 'POST' });
+        const data = await res.json();
+        if (data.success) window.location.reload();
+        else alert(data.message);
+    } catch (e) { alert('Error: ' + e.message); }
+}
+
+async function deletePolicy() {
+    if (!confirm('Delete this policy?')) return;
+    try {
+        const res = await fetch('/admin/abac/policies/' + policyId, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) window.location.href = '/admin/abac/policies';
+        else alert(data.message);
+    } catch (e) { alert('Error: ' + e.message); }
+}
+</script>
 {{ end }}

@@ -1,0 +1,187 @@
+{{ define "content" }}
+<div class="page-content-wrapper">
+    <div class="flex-between" style="margin-bottom: 32px;">
+        <div>
+            <h2 style="font-size: 26px; font-weight: 700; margin-bottom: 4px;">Integrations</h2>
+            <p style="font-size: 13px; color: var(--text-muted);">Manage third-party integrations and API keys</p>
+        </div>
+        <button class="btn btn-primary" onclick="openCreateModal()">
+            <i class="material-symbols-outlined">add</i> Add Integration
+        </button>
+    </div>
+
+    <!-- Stats -->
+    <div class="stat-hero-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 28px;">
+        <div class="stat-hero">
+            <div class="stat-hero-icon" style="background: rgba(99, 102, 241, 0.1); color: var(--accent-400);">
+                <i class="material-symbols-outlined">integration_instructions</i>
+            </div>
+            <div class="stat-hero-value">{{ .TotalCount }}</div>
+            <div class="stat-hero-label">Total Integrations</div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card" style="margin-bottom: 24px; padding: 20px;">
+        <form method="GET" action="/admin/integrations" style="display: flex; gap: 16px; align-items: end;">
+            <div>
+                <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Search</label>
+                <input type="text" name="search" class="form-input" placeholder="Search by name..." value="{{ .FilterSearch }}" style="width: 240px;">
+            </div>
+            <div>
+                <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Status</label>
+                <select name="status" class="form-input" style="width: 160px;">
+                    <option value="">All</option>
+                    <option value="active" {{ if eq .FilterStatus "active" }}selected{{ end }}>Active</option>
+                    <option value="inactive" {{ if eq .FilterStatus "inactive" }}selected{{ end }}>Inactive</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary" style="height: 42px;">Filter</button>
+            <a href="/admin/integrations" class="btn btn-secondary" style="height: 42px;">Reset</a>
+        </form>
+    </div>
+
+    <!-- Integrations Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 20px;">
+        {{ range .Integrations }}
+        <div class="card" style="padding: 24px; position: relative;">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(99, 102, 241, 0.1); display: flex; align-items: center; justify-content: center;">
+                        <i class="material-symbols-outlined" style="color: var(--accent-400); font-size: 22px;">integration_instructions</i>
+                    </div>
+                    <div>
+                        <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 2px;">{{ .Name }}</h3>
+                        <span style="font-size: 12px; color: var(--text-muted);">{{ shortUUID .ID }}</span>
+                    </div>
+                </div>
+                {{ if .IsActive }}
+                <span class="badge badge-success">Active</span>
+                {{ else }}
+                <span class="badge badge-neutral">Inactive</span>
+                {{ end }}
+            </div>
+
+            {{ if .Description }}
+            <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.5;">{{ .Description }}</p>
+            {{ end }}
+
+            {{ if .BaseURL }}
+            <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px; display: flex; align-items: center; gap: 6px;">
+                <i class="material-symbols-outlined" style="font-size: 14px;">link</i>
+                <code style="color: var(--accent-400);">{{ .BaseURL }}</code>
+            </div>
+            {{ end }}
+
+            <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 12px; border-top: 1px solid var(--border);">
+                <span style="font-size: 12px; color: var(--text-muted);">{{ timeAgo .CreatedAt }}</span>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn-icon" onclick="toggleIntegration('{{ .ID }}', {{ .IsActive }})" title="{{ if .IsActive }}Deactivate{{ else }}Activate{{ end }}" style="background: none; border: none; cursor: pointer; color: {{ if .IsActive }}var(--emerald){{ else }}var(--text-muted){{ end }};">
+                        <i class="material-symbols-outlined" style="font-size: 20px;">{{ if .IsActive }}toggle_on{{ else }}toggle_off{{ end }}</i>
+                    </button>
+                    <a href="/admin/integrations/{{ .ID }}" class="btn-icon" title="View Details" style="background: none; border: none; cursor: pointer; color: var(--accent-400); text-decoration: none;">
+                        <i class="material-symbols-outlined" style="font-size: 20px;">open_in_new</i>
+                    </a>
+                    <button class="btn-icon" onclick="deleteIntegration('{{ .ID }}', '{{ .Name }}')" title="Delete" style="background: none; border: none; cursor: pointer; color: var(--rose);">
+                        <i class="material-symbols-outlined" style="font-size: 20px;">delete</i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        {{ else }}
+        <div class="card" style="padding: 48px; text-align: center; grid-column: 1 / -1;">
+            <i class="material-symbols-outlined" style="font-size: 48px; color: var(--text-muted); margin-bottom: 12px;">integration_instructions</i>
+            <p style="color: var(--text-muted);">No integrations found.</p>
+        </div>
+        {{ end }}
+    </div>
+</div>
+
+<!-- Create Modal -->
+<div id="createModal" class="modal">
+    <div class="modal-content" style="max-width: 560px;">
+        <div class="modal-header">
+            <h3>Add Integration</h3>
+            <button class="btn-icon" onclick="closeModal('createModal')" style="background: none; border: none; cursor: pointer; color: var(--text-muted);">
+                <i class="material-symbols-outlined">close</i>
+            </button>
+        </div>
+        <div class="modal-body" style="padding: 24px; display: flex; flex-direction: column; gap: 16px;">
+            <div>
+                <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Name *</label>
+                <input type="text" id="intName" class="form-input" placeholder="Stripe">
+            </div>
+            <div>
+                <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Description</label>
+                <textarea id="intDescription" class="form-input" rows="2" placeholder="Payment processing integration"></textarea>
+            </div>
+            <div>
+                <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Base URL *</label>
+                <input type="url" id="intBaseURL" class="form-input" placeholder="https://api.stripe.com">
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <input type="checkbox" id="intActive" checked>
+                <label for="intActive" style="font-size: 13px;">Active</label>
+            </div>
+        </div>
+        <div class="modal-footer" style="padding: 16px 24px; display: flex; justify-content: flex-end; gap: 12px;">
+            <button class="btn btn-secondary" onclick="closeModal('createModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="submitIntegration()">Create</button>
+        </div>
+    </div>
+</div>
+{{ end }}
+
+{{ define "scripts" }}
+<script>
+function openCreateModal() {
+    document.getElementById('intName').value = '';
+    document.getElementById('intDescription').value = '';
+    document.getElementById('intBaseURL').value = '';
+    document.getElementById('intActive').checked = true;
+    openModal('createModal');
+}
+
+async function submitIntegration() {
+    const name = document.getElementById('intName').value;
+    const base_url = document.getElementById('intBaseURL').value;
+    if (!name || !base_url) { alert('Name and Base URL are required'); return; }
+
+    const body = {
+        name: name,
+        description: document.getElementById('intDescription').value,
+        base_url: base_url,
+        is_active: document.getElementById('intActive').checked,
+    };
+
+    try {
+        const res = await fetch('/admin/integrations', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+        const data = await res.json();
+        if (data.success) {
+            window.location.href = '/admin/integrations/' + data.id;
+        } else {
+            alert(data.message);
+        }
+    } catch (e) { alert('Error: ' + e.message); }
+}
+
+async function toggleIntegration(id, currentActive) {
+    try {
+        const res = await fetch('/admin/integrations/' + id + '/toggle', { method: 'POST', headers: {'Content-Type':'application/json'} });
+        const data = await res.json();
+        if (data.success) window.location.reload();
+        else alert(data.message);
+    } catch (e) { alert('Error: ' + e.message); }
+}
+
+async function deleteIntegration(id, name) {
+    if (!confirm('Delete integration "' + name + '"? This will also delete all associated API keys.')) return;
+    try {
+        const res = await fetch('/admin/integrations/' + id, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) window.location.reload();
+        else alert(data.message);
+    } catch (e) { alert('Error: ' + e.message); }
+}
+</script>
+{{ end }}

@@ -104,6 +104,11 @@
                         <button class="btn-icon" onclick="viewErrorDetails('{{ .ID }}')" title="View Details">
                             <i class="material-symbols-outlined">visibility</i>
                         </button>
+                        {{ if not .IsResolved }}
+                        <button class="btn-icon" onclick="resolveError('{{ .ID }}')" title="Resolve" style="color: var(--emerald);">
+                            <i class="material-symbols-outlined">check_circle</i>
+                        </button>
+                        {{ end }}
                     </td>
                 </tr>
                 {{ else }}
@@ -189,6 +194,16 @@
         openModal('errorModal');
     }
 
+    async function resolveError(id) {
+        if (!confirm('Mark this error as resolved?')) return;
+        try {
+            const res = await fetch('/admin/system-errors/' + id + '/resolve', { method: 'POST' });
+            const data = await res.json();
+            if (data.success) window.location.reload();
+            else alert(data.message);
+        } catch (e) { alert('Error: ' + e.message); }
+    }
+
     function applyFilter(key, value) {
         const url = new URL(window.location.href);
         if (value) {
@@ -196,7 +211,7 @@
         } else {
             url.searchParams.delete(key);
         }
-        url.searchParams.set('page', '1'); // Reset to first page
+        url.searchParams.set('page', '1');
         window.location.href = url.toString();
     }
 </script>

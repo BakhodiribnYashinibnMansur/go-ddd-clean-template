@@ -82,6 +82,11 @@
                             <i class="material-symbols-outlined child-icon">policy</i>
                             <span class="child-text">Policies</span>
                         </a>
+                        <a href="/admin/relations"
+                            class="tree-child {{ if eq .ActiveMenu "relations" }}active{{ end }}">
+                            <i class="material-symbols-outlined child-icon">account_tree</i>
+                            <span class="child-text">Relations</span>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -136,6 +141,11 @@
                             <i class="material-symbols-outlined child-icon">history</i>
                             <span class="child-text">Audit Logs</span>
                         </a>
+                        <a href="/admin/audit/history"
+                            class="tree-child {{ if eq .ActiveMenu "endpoint_history" }}active{{ end }}">
+                            <i class="material-symbols-outlined child-icon">http</i>
+                            <span class="child-text">Endpoints</span>
+                        </a>
                         <a href="/admin/system-errors"
                             class="tree-child {{ if eq .ActiveMenu "system_errors" }}active{{ end }}">
                             <i class="material-symbols-outlined child-icon">error</i>
@@ -172,6 +182,16 @@
                             class="tree-child {{ if eq .ActiveMenu "settings" }}active{{ end }}">
                             <i class="material-symbols-outlined child-icon">settings</i>
                             <span class="child-text">Settings</span>
+                        </a>
+                        <a href="/admin/error-codes"
+                            class="tree-child {{ if eq .ActiveMenu "error_codes" }}active{{ end }}">
+                            <i class="material-symbols-outlined child-icon">error_outline</i>
+                            <span class="child-text">Error Codes</span>
+                        </a>
+                        <a href="/admin/integrations"
+                            class="tree-child {{ if eq .ActiveMenu "integrations" }}active{{ end }}">
+                            <i class="material-symbols-outlined child-icon">integration_instructions</i>
+                            <span class="child-text">Integrations</span>
                         </a>
                         {{ if .AsynqEnabled }}
                         <a href="/admin/asynq"

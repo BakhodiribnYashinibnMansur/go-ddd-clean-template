@@ -1,124 +1,110 @@
 {{ define "content" }}
-<div style="margin-bottom: var(--spacing-lg);">
-    <div class="flex-between" style="margin-bottom: var(--spacing-md);">
+<div class="page-content-wrapper">
+    <div class="flex-between" style="margin-bottom: 32px;">
         <div>
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                <a href="/admin/dashboard" class="btn btn-text btn-icon" style="padding: 0; width: 24px; height: 24px;">
-                    <i class="material-symbols-outlined" style="font-size: 20px;">arrow_back</i>
-                </a>
-                <h2 class="text-h2">Policies (ABAC)</h2>
-            </div>
-            <p class="text-body">Fine-grained access control policies.</p>
+            <h2 style="font-size: 26px; font-weight: 700; margin-bottom: 4px;">Policies (ABAC)</h2>
+            <p style="font-size: 13px; color: var(--text-muted);">Fine-grained attribute-based access control policies</p>
         </div>
-        <button class="btn btn-primary" onclick="location.href='/admin/abac/policies/new'">
+        <a href="/admin/abac/policies/new" class="btn btn-primary">
             <i class="material-symbols-outlined">add</i> Create Policy
-        </button>
+        </a>
     </div>
 
     <!-- Stats -->
-    <div class="dashboard-grid"
-        style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: var(--spacing-lg); margin-top: 0;">
-        <div class="card stat-card" style="padding: 16px;">
-            <div class="flex-between">
-                <span class="stat-label">Total Policies</span>
-                <i class="material-symbols-outlined" style="color: var(--primary-color);">policy</i>
+    <div class="stat-hero-grid" style="grid-template-columns: repeat(2, 1fr); margin-bottom: 28px;">
+        <div class="stat-hero">
+            <div class="stat-hero-icon" style="background: rgba(99, 102, 241, 0.1); color: var(--accent-400);">
+                <i class="material-symbols-outlined">policy</i>
             </div>
-            <div class="stat-value">{{ .Pagination.Total }}</div>
+            <div class="stat-hero-value">{{ .Pagination.Total }}</div>
+            <div class="stat-hero-label">Total Policies</div>
         </div>
     </div>
-</div>
 
-<!-- Filters -->
-<div class="card" style="margin-bottom: 32px;">
-    <form method="GET" action="/admin/abac/policies" class="filter-bar" style="margin-bottom: 0; align-items: end;">
-        <div>
-            <label class="text-body" style="font-size: 14px; margin-bottom: 8px; display: block;">Status</label>
-            <select name="active" class="search-input" style="width: 150px; appearance: none; cursor: pointer;">
-                <option value="">All</option>
-                <option value="true" {{ if .Filter.Active }}{{ if derefBool .Filter.Active }}selected{{ end }}{{ end }}>
-                    Active</option>
-                <option value="false" {{ if .Filter.Active }}{{ if not (derefBool .Filter.Active) }}selected{{ end }}{{
-                    end }}>Inactive</option>
-            </select>
-        </div>
-        <button type="submit" class="btn btn-primary" style="height: 42px;">Filter</button>
-        <a href="/admin/abac/policies" class="btn btn-secondary" style="height: 42px;">Reset</a>
-    </form>
-</div>
-
-<!-- Table -->
-<div class="card" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
-    <div class="table-container">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>
-                        <a href="?sort_by=id&sort_order={{ if eq .Pagination.SortOrder " ASC" }}DESC{{ else }}ASC{{ end
-                            }}" style="color: inherit; display: flex; align-items: center; gap: 4px;">
-                            ID {{ if eq .Pagination.SortBy "id" }}<i class="material-symbols-outlined"
-                                style="font-size: 16px;">{{ if eq .Pagination.SortOrder "ASC" }}arrow_upward{{ else
-                                }}arrow_downward{{ end }}</i>{{ end }}
-                        </a>
-                    </th>
-                    <th>Permission</th>
-                    <th>Effect</th>
-                    <th>Priority</th>
-                    <th>
-                        <a href="?sort_by=active&sort_order={{ if eq .Pagination.SortOrder " ASC" }}DESC{{ else }}ASC{{
-                            end }}" style="color: inherit; display: flex; align-items: center; gap: 4px;">
-                            Status {{ if eq .Pagination.SortBy "active" }}<i class="material-symbols-outlined"
-                                style="font-size: 16px;">{{ if eq .Pagination.SortOrder "ASC" }}arrow_upward{{ else
-                                }}arrow_downward{{ end }}</i>{{ end }}
-                        </a>
-                    </th>
-                    <th style="text-align: right;">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {{ range .Policies }}
-                <tr>
-                    <td>
-                        <span style="font-family: monospace; font-size: 11px; color: var(--md-sys-color-outline);">{{
-                            .ID }}</span>
-                    </td>
-                    <td>
-                        <span style="font-family: monospace; color: var(--md-sys-color-on-surface);">{{ .PermissionID
-                            }}</span>
-                    </td>
-                    <td>
-                        {{ if eq .Effect "ALLOW" }}
-                        <span class="badge badge-success">ALLOW</span>
-                        {{ else }}
-                        <span class="badge badge-danger">DENY</span>
-                        {{ end }}
-                    </td>
-                    <td style="font-family: monospace;">{{ .Priority }}</td>
-                    <td>
-                        {{ if .Active }}
-                        <span class="badge badge-success">Active</span>
-                        {{ else }}
-                        <span class="badge badge-neutral">Inactive</span>
-                        {{ end }}
-                    </td>
-                    <td style="text-align: right;">
-                        <a href="/admin/abac/policies/{{ .ID }}" class="btn btn-text btn-icon" title="Edit">
-                            <i class="material-symbols-outlined">edit</i>
-                        </a>
-                        <button class="btn btn-text btn-icon" style="color: var(--error-color);"
-                            onclick="deletePolicy('{{ .ID }}')">
-                            <i class="material-symbols-outlined">delete</i>
-                        </button>
-                    </td>
-                </tr>
-                {{ end }}
-            </tbody>
-        </table>
+    <!-- Filters -->
+    <div class="card" style="margin-bottom: 24px; padding: 20px;">
+        <form method="GET" action="/admin/abac/policies" style="display: flex; gap: 16px; align-items: end;">
+            <div>
+                <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Status</label>
+                <select name="active" class="form-input" style="width: 160px;">
+                    <option value="">All</option>
+                    <option value="true" {{ if .Filter.Active }}{{ if derefBool .Filter.Active }}selected{{ end }}{{ end }}>Active</option>
+                    <option value="false" {{ if .Filter.Active }}{{ if not (derefBool .Filter.Active) }}selected{{ end }}{{ end }}>Inactive</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary" style="height: 42px;">Filter</button>
+            <a href="/admin/abac/policies" class="btn btn-secondary" style="height: 42px;">Reset</a>
+        </form>
     </div>
 
-    <!-- Pagination Partial -->
+    <!-- Table -->
+    <div class="card" style="padding: 0; overflow: hidden;">
+        <div class="table-container" style="border: none; background: transparent;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Permission</th>
+                        <th>Effect</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                        <th style="text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{ range .Policies }}
+                    <tr>
+                        <td><code style="font-size: 12px; color: var(--text-muted);">{{ shortUUID .ID }}</code></td>
+                        <td><code style="font-size: 12px; color: var(--accent-400);">{{ shortUUID .PermissionID }}</code></td>
+                        <td>
+                            {{ if eq (print .Effect) "ALLOW" }}
+                            <span class="badge badge-success">ALLOW</span>
+                            {{ else }}
+                            <span class="badge badge-danger">DENY</span>
+                            {{ end }}
+                        </td>
+                        <td style="font-family: monospace; font-size: 13px;">{{ .Priority }}</td>
+                        <td>
+                            {{ if .Active }}
+                            <span class="badge badge-success">Active</span>
+                            {{ else }}
+                            <span class="badge badge-neutral">Inactive</span>
+                            {{ end }}
+                        </td>
+                        <td style="text-align: right;">
+                            <a href="/admin/abac/policies/{{ .ID }}" class="btn-icon" title="Edit" style="background: none; border: none; cursor: pointer; color: var(--accent-400); text-decoration: none;">
+                                <i class="material-symbols-outlined" style="font-size: 20px;">edit</i>
+                            </a>
+                            <button class="btn-icon" onclick="deletePolicy('{{ .ID }}')" title="Delete" style="background: none; border: none; cursor: pointer; color: var(--rose);">
+                                <i class="material-symbols-outlined" style="font-size: 20px;">delete</i>
+                            </button>
+                        </td>
+                    </tr>
+                    {{ else }}
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 48px; color: var(--text-muted);">No policies found.</td>
+                    </tr>
+                    {{ end }}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
     {{ template "pagination" . }}
 </div>
 {{ end }}
+
 {{ define "scripts" }}
-<script src="/static/js/abac.js"></script>
+<script>
+async function deletePolicy(id) {
+    if (!confirm('Delete this policy?')) return;
+    try {
+        const res = await fetch('/admin/abac/policies/' + id, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) window.location.reload();
+        else alert(data.message);
+    } catch (e) { alert('Error: ' + e.message); }
+}
+</script>
 {{ end }}

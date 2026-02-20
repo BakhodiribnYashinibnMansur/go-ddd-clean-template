@@ -1,114 +1,150 @@
 {{ define "content" }}
-<div style="margin-bottom: var(--spacing-lg);">
-    <div class="flex-between" style="margin-bottom: var(--spacing-md);">
+<div class="page-content-wrapper">
+    <div class="flex-between" style="margin-bottom: 32px;">
         <div>
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                <a href="/admin/dashboard" class="btn btn-text btn-icon" style="padding: 0; width: 24px; height: 24px;">
-                    <i class="material-symbols-outlined" style="font-size: 20px;">arrow_back</i>
-                </a>
-                <h2 class="text-h2">Scopes</h2>
-            </div>
-            <p class="text-body">Defined API Scopes and Resources.</p>
+            <h2 style="font-size: 26px; font-weight: 700; margin-bottom: 4px;">Scopes</h2>
+            <p style="font-size: 13px; color: var(--text-muted);">Defined API scopes and resources</p>
         </div>
-        <!-- Scopes creation might be automatic or manual. -->
+        <button class="btn btn-primary" onclick="openCreateModal()">
+            <i class="material-symbols-outlined">add</i> Add Scope
+        </button>
     </div>
 
     <!-- Stats -->
-    <div class="dashboard-grid"
-        style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: var(--spacing-lg); margin-top: 0;">
-        <div class="card stat-card" style="padding: 16px;">
-            <div class="flex-between">
-                <span class="stat-label">Total Scopes</span>
-                <i class="material-symbols-outlined" style="color: var(--primary-color);">api</i>
+    <div class="stat-hero-grid" style="grid-template-columns: repeat(2, 1fr); margin-bottom: 28px;">
+        <div class="stat-hero">
+            <div class="stat-hero-icon" style="background: rgba(99, 102, 241, 0.1); color: var(--accent-400);">
+                <i class="material-symbols-outlined">category</i>
             </div>
-            <div class="stat-value">{{ .Pagination.Total }}</div>
+            <div class="stat-hero-value">{{ .Pagination.Total }}</div>
+            <div class="stat-hero-label">Total Scopes</div>
         </div>
     </div>
-</div>
 
-<!-- Filters -->
-<div class="card" style="margin-bottom: 32px;">
-    <form method="GET" action="/admin/scopes" class="filter-bar" style="margin-bottom: 0; align-items: end;">
-        <div>
-            <label class="text-body" style="font-size: 14px; margin-bottom: 8px; display: block;">Search Path</label>
-            <div style="position: relative;">
-                <i class="material-symbols-outlined"
-                    style="position: absolute; left: 12px; top: 10px; font-size: 20px; color: var(--text-muted);">search</i>
-                <input type="text" name="path" class="search-input" style="padding-left: 40px;"
-                    placeholder="/api/v1/..." value="{{ if .Filter.Path }}{{ derefString .Filter.Path }}{{ end }}">
+    <!-- Filters -->
+    <div class="card" style="margin-bottom: 24px; padding: 20px;">
+        <form method="GET" action="/admin/rbac/scopes" style="display: flex; gap: 16px; align-items: end;">
+            <div>
+                <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Path</label>
+                <input type="text" name="path" class="form-input" placeholder="/api/v1/..." value="{{ if .Filter.Path }}{{ derefString .Filter.Path }}{{ end }}" style="width: 280px;">
             </div>
-        </div>
-        <div>
-            <label class="text-body" style="font-size: 14px; margin-bottom: 8px; display: block;">Method</label>
-            <select name="method" class="search-input" style="width: 150px; appearance: none; cursor: pointer;">
-                <option value="">All</option>
-                {{ $currentMethod := "" }}{{ if .Filter.Method }}{{ $currentMethod = derefString .Filter.Method }}{{ end
-                }}
-                <option value="GET" {{ if eq $currentMethod "GET" }}selected{{ end }}>GET</option>
-                <option value="POST" {{ if eq $currentMethod "POST" }}selected{{ end }}>POST</option>
-                <option value="PUT" {{ if eq $currentMethod "PUT" }}selected{{ end }}>PUT</option>
-                <option value="DELETE" {{ if eq $currentMethod "DELETE" }}selected{{ end }}>DELETE</option>
-                <option value="PATCH" {{ if eq $currentMethod "PATCH" }}selected{{ end }}>PATCH</option>
-            </select>
-        </div>
-        <button type="submit" class="btn btn-primary" style="height: 42px;">Filter</button>
-        <a href="/admin/scopes" class="btn btn-secondary" style="height: 42px;">Reset</a>
-    </form>
-</div>
-
-<!-- Table -->
-<div class="card" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
-    <div class="table-container">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>
-                        <a href="?sort_by=path&sort_order={{ if eq .Pagination.SortOrder " ASC" }}DESC{{ else }}ASC{{
-                            end }}" style="color: inherit; display: flex; align-items: center; gap: 4px;">
-                            Path {{ if eq .Pagination.SortBy "path" }}
-                            <i class="material-symbols-outlined" style="font-size: 16px;">
-                                {{ if eq .Pagination.SortOrder "ASC" }}arrow_upward{{ else }}arrow_downward{{ end }}
-                            </i>
-                            {{ end }}
-                        </a>
-                    </th>
-                    <th>
-                        <a href="?sort_by=method&sort_order={{ if eq .Pagination.SortOrder " ASC" }}DESC{{ else }}ASC{{
-                            end }}" style="color: inherit; display: flex; align-items: center; gap: 4px;">
-                            Method {{ if eq .Pagination.SortBy "method" }}
-                            <i class="material-symbols-outlined" style="font-size: 16px;">
-                                {{ if eq .Pagination.SortOrder "ASC" }}arrow_upward{{ else }}arrow_downward{{ end }}
-                            </i>
-                            {{ end }}
-                        </a>
-                    </th>
-                    <th>
-                        <a href="?sort_by=created_at&sort_order={{ if eq .Pagination.SortOrder " ASC" }}DESC{{ else
-                            }}ASC{{ end }}" style="color: inherit; display: flex; align-items: center; gap: 4px;">
-                            Created At {{ if eq .Pagination.SortBy "created_at" }}
-                            <i class="material-symbols-outlined" style="font-size: 16px;">
-                                {{ if eq .Pagination.SortOrder "ASC" }}arrow_upward{{ else }}arrow_downward{{ end }}
-                            </i>
-                            {{ end }}
-                        </a>
-                    </th>
-                </tr>
-            </thead>
-            <tbody>
-                {{ range .Scopes }}
-                <tr>
-                    <td style="font-weight: 500; font-family: monospace;">{{ .Path }}</td>
-                    <td>
-                        <span class="badge badge-neutral" style="text-transform: uppercase;">{{ .Method }}</span>
-                    </td>
-                    <td>{{ .CreatedAt.Format "Jan 02, 2006 15:04" }}</td>
-                </tr>
-                {{ end }}
-            </tbody>
-        </table>
+            <div>
+                <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Method</label>
+                <select name="method" class="form-input" style="width: 140px;">
+                    <option value="">All</option>
+                    {{ $currentMethod := "" }}{{ if .Filter.Method }}{{ $currentMethod = derefString .Filter.Method }}{{ end }}
+                    <option value="GET" {{ if eq $currentMethod "GET" }}selected{{ end }}>GET</option>
+                    <option value="POST" {{ if eq $currentMethod "POST" }}selected{{ end }}>POST</option>
+                    <option value="PUT" {{ if eq $currentMethod "PUT" }}selected{{ end }}>PUT</option>
+                    <option value="DELETE" {{ if eq $currentMethod "DELETE" }}selected{{ end }}>DELETE</option>
+                    <option value="PATCH" {{ if eq $currentMethod "PATCH" }}selected{{ end }}>PATCH</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary" style="height: 42px;">Filter</button>
+            <a href="/admin/rbac/scopes" class="btn btn-secondary" style="height: 42px;">Reset</a>
+        </form>
     </div>
 
-    <!-- Pagination Partial -->
+    <!-- Table -->
+    <div class="card" style="padding: 0; overflow: hidden;">
+        <div class="table-container" style="border: none; background: transparent;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Path</th>
+                        <th>Method</th>
+                        <th>Created</th>
+                        <th style="text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{ range .Scopes }}
+                    <tr>
+                        <td><code style="color: var(--accent-400); font-size: 13px;">{{ .Path }}</code></td>
+                        <td><span class="badge {{ methodColor .Method }}">{{ .Method }}</span></td>
+                        <td style="font-size: 13px; color: var(--text-muted);">{{ .CreatedAt.Format "Jan 02, 2006 15:04" }}</td>
+                        <td style="text-align: right;">
+                            <button class="btn-icon" onclick="deleteScope('{{ .Path }}', '{{ .Method }}')" title="Delete" style="background: none; border: none; cursor: pointer; color: var(--rose);">
+                                <i class="material-symbols-outlined" style="font-size: 20px;">delete</i>
+                            </button>
+                        </td>
+                    </tr>
+                    {{ else }}
+                    <tr>
+                        <td colspan="4" style="text-align: center; padding: 48px; color: var(--text-muted);">No scopes found.</td>
+                    </tr>
+                    {{ end }}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
     {{ template "pagination" . }}
 </div>
+
+<!-- Create Modal -->
+<div id="createModal" class="modal">
+    <div class="modal-content" style="max-width: 480px;">
+        <div class="modal-header">
+            <h3>Add Scope</h3>
+            <button class="btn-icon" onclick="closeModal('createModal')" style="background: none; border: none; cursor: pointer; color: var(--text-muted);">
+                <i class="material-symbols-outlined">close</i>
+            </button>
+        </div>
+        <div class="modal-body" style="padding: 24px; display: flex; flex-direction: column; gap: 16px;">
+            <div>
+                <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Path *</label>
+                <input type="text" id="scopePath" class="form-input" placeholder="/api/v1/users">
+            </div>
+            <div>
+                <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Method *</label>
+                <select id="scopeMethod" class="form-input">
+                    <option value="GET">GET</option>
+                    <option value="POST">POST</option>
+                    <option value="PUT">PUT</option>
+                    <option value="DELETE">DELETE</option>
+                    <option value="PATCH">PATCH</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-footer" style="padding: 16px 24px; display: flex; justify-content: flex-end; gap: 12px;">
+            <button class="btn btn-secondary" onclick="closeModal('createModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="createScope()">Create</button>
+        </div>
+    </div>
+</div>
+{{ end }}
+
+{{ define "scripts" }}
+<script>
+function openCreateModal() {
+    document.getElementById('scopePath').value = '';
+    document.getElementById('scopeMethod').value = 'GET';
+    openModal('createModal');
+}
+
+async function createScope() {
+    const path = document.getElementById('scopePath').value;
+    const method = document.getElementById('scopeMethod').value;
+    if (!path) { alert('Path is required'); return; }
+
+    try {
+        const res = await fetch('/admin/rbac/scopes', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ path, method }) });
+        const data = await res.json();
+        if (data.success) window.location.reload();
+        else alert(data.message);
+    } catch (e) { alert('Error: ' + e.message); }
+}
+
+async function deleteScope(path, method) {
+    if (!confirm('Delete scope "' + method + ' ' + path + '"?')) return;
+    try {
+        const res = await fetch('/admin/rbac/scopes', { method: 'DELETE', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ path, method }) });
+        const data = await res.json();
+        if (data.success) window.location.reload();
+        else alert(data.message);
+    } catch (e) { alert('Error: ' + e.message); }
+}
+</script>
 {{ end }}

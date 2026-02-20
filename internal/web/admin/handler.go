@@ -92,6 +92,56 @@ func (h *Handler) Register(r *gin.RouterGroup, authmw *auth.AuthMiddleware) {
 	protected.POST("/settings/:id", h.UpdateSetting)
 	protected.GET("/api/stats", h.DashboardStats)
 
+	// Error Codes
+	protected.GET("/error-codes", h.ErrorCodes)
+	protected.POST("/error-codes", h.CreateErrorCodePost)
+	protected.PUT("/error-codes/:code", h.UpdateErrorCodePost)
+	protected.DELETE("/error-codes/:code", h.DeleteErrorCodePost)
+
+	// Relations
+	protected.GET("/relations", h.Relations)
+	protected.POST("/relations", h.CreateRelationPost)
+	protected.PUT("/relations/:id", h.UpdateRelationPost)
+	protected.DELETE("/relations/:id", h.DeleteRelationPost)
+
+	// Integrations
+	protected.GET("/integrations", h.Integrations)
+	protected.GET("/integrations/:id", h.IntegrationDetail)
+	protected.POST("/integrations", h.CreateIntegrationPost)
+	protected.PUT("/integrations/:id", h.UpdateIntegrationPost)
+	protected.DELETE("/integrations/:id", h.DeleteIntegrationPost)
+	protected.POST("/integrations/:id/toggle", h.ToggleIntegrationPost)
+	protected.POST("/integrations/:id/keys", h.CreateAPIKeyPost)
+	protected.POST("/integrations/:id/keys/:kid/revoke", h.RevokeAPIKeyPost)
+	protected.DELETE("/integrations/:id/keys/:kid", h.DeleteAPIKeyPost)
+
+	// RBAC Role Detail + Permissions
+	protected.GET("/rbac/roles/:id", h.RoleDetail)
+	protected.POST("/rbac/roles", h.CreateRolePost)
+	protected.PUT("/rbac/roles/:id", h.UpdateRolePost)
+	protected.DELETE("/rbac/roles/:id", h.DeleteRolePost)
+	protected.POST("/rbac/roles/:id/permissions/:pid", h.RoleAddPermission)
+	protected.DELETE("/rbac/roles/:id/permissions/:pid", h.RoleRemovePermission)
+
+	// ABAC Policy Detail
+	protected.GET("/abac/policies/new", h.CreatePolicyPage)
+	protected.GET("/abac/policies/:id", h.PolicyDetail)
+	protected.POST("/abac/policies", h.CreatePolicyPost)
+	protected.PUT("/abac/policies/:id", h.UpdatePolicyPost)
+	protected.DELETE("/abac/policies/:id", h.DeletePolicyPost)
+	protected.POST("/abac/policies/:id/toggle", h.TogglePolicyActive)
+
+	// System Error Resolve
+	protected.POST("/system-errors/:id/resolve", h.ResolveSystemError)
+
+	// Permission CRUD
+	protected.POST("/rbac/permissions", h.CreatePermissionPost)
+	protected.DELETE("/rbac/permissions/:id", h.DeletePermissionPost)
+
+	// Scope CRUD
+	protected.POST("/rbac/scopes", h.CreateScopePost)
+	protected.DELETE("/rbac/scopes", h.DeleteScopePost)
+
 	// Database
 	protected.GET("/database/monitoring", h.DatabaseMonitoring)
 	protected.GET("/database/tables", h.DatabaseTables)
@@ -402,15 +452,37 @@ func (h *Handler) Dashboard(ctx *gin.Context) {
 	_, policiesCount, _ := h.uc.Authz.Policy().Gets(ctxReq, &domain.PoliciesFilter{Pagination: limit})
 	_, auditCount, _ := h.uc.Audit.Log().Gets(ctxReq, &domain.AuditLogsFilter{Pagination: limit})
 
+	// Recent audit logs for activity feed
+	recentLogs, _, _ := h.uc.Audit.Log().Gets(ctxReq, &domain.AuditLogsFilter{
+		Pagination: &domain.Pagination{Limit: 8, SortBy: "created_at", SortOrder: "DESC"},
+	})
+
+	// Pending approvals
+	notApproved := false
+	_, pendingCount, _ := h.uc.User.Client().Gets(ctxReq, &domain.UsersFilter{
+		Pagination: limit,
+		UserFilter: domain.UserFilter{IsApproved: &notApproved},
+	})
+
+	// Unresolved system errors
+	unresolvedFlag := false
+	_, unresolvedCount, _ := h.uc.Audit.SystemError().Gets(ctxReq, &domain.SystemErrorsFilter{
+		Pagination:        limit,
+		SystemErrorFilter: domain.SystemErrorFilter{IsResolved: &unresolvedFlag},
+	})
+
 	data := map[string]any{
-		"CurrentDate":   time.Now().Format("Monday, January 2, 2006"),
-		"UsersCount":    usersCount,
-		"SessionsCount": sessionsCount,
-		"RolesCount":    rolesCount,
-		"PermsCount":    permsCount,
-		"ScopesCount":   scopesCount,
-		"PoliciesCount": policiesCount,
-		"AuditCount":    auditCount,
+		"CurrentDate":     time.Now().Format("Monday, January 2, 2006"),
+		"UsersCount":      usersCount,
+		"SessionsCount":   sessionsCount,
+		"RolesCount":      rolesCount,
+		"PermsCount":      permsCount,
+		"ScopesCount":     scopesCount,
+		"PoliciesCount":   policiesCount,
+		"AuditCount":      auditCount,
+		"RecentLogs":      recentLogs,
+		"PendingCount":    pendingCount,
+		"UnresolvedCount": unresolvedCount,
 	}
 	h.servePage(ctx, "dashboard.html", "Dashboard", "dashboard", data)
 }
