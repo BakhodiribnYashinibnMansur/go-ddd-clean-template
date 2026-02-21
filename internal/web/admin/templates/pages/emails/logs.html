@@ -1,0 +1,83 @@
+{{ define "content" }}
+<div class="page-content-wrapper">
+    <div class="flex-between" style="margin-bottom: 32px;">
+        <div>
+            <a href="/admin/emails" style="font-size: 13px; color: var(--accent-400); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; margin-bottom: 8px;">
+                <i class="material-symbols-outlined" style="font-size: 16px;">arrow_back</i> Back to Templates
+            </a>
+            <h2 style="font-size: 26px; font-weight: 700; margin-bottom: 4px;">Email Logs</h2>
+            <p style="font-size: 13px; color: var(--text-muted);">Track email delivery status and history</p>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stat-hero-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 28px;">
+        <div class="stat-hero">
+            <div class="stat-hero-icon" style="background: rgba(99, 102, 241, 0.1); color: var(--accent-400);">
+                <i class="material-symbols-outlined">mail</i>
+            </div>
+            <div class="stat-hero-value">{{ .TotalCount }}</div>
+            <div class="stat-hero-label">Total Sent</div>
+        </div>
+        <div class="stat-hero">
+            <div class="stat-hero-icon" style="background: rgba(16, 185, 129, 0.1); color: var(--emerald);">
+                <i class="material-symbols-outlined">send</i>
+            </div>
+            <div class="stat-hero-value">{{ .SentToday }}</div>
+            <div class="stat-hero-label">Sent Today</div>
+        </div>
+        <div class="stat-hero">
+            <div class="stat-hero-icon" style="background: rgba(239, 68, 68, 0.1); color: var(--rose);">
+                <i class="material-symbols-outlined">error</i>
+            </div>
+            <div class="stat-hero-value">{{ .FailedCount }}</div>
+            <div class="stat-hero-label">Failed</div>
+        </div>
+        <div class="stat-hero">
+            <div class="stat-hero-icon" style="background: rgba(245, 158, 11, 0.1); color: var(--amber);">
+                <i class="material-symbols-outlined">trending_up</i>
+            </div>
+            <div class="stat-hero-value">{{ printf "%.1f" .BounceRate }}%</div>
+            <div class="stat-hero-label">Bounce Rate</div>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="card" style="padding: 0; overflow: hidden;">
+        <div class="table-container" style="border: none; background: transparent;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>To</th>
+                        <th>Subject</th>
+                        <th>Template</th>
+                        <th>Status</th>
+                        <th>Sent At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{ range .Logs }}
+                    <tr>
+                        <td style="font-size: 13px;">{{ .To }}</td>
+                        <td style="font-size: 13px; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ .Subject }}</td>
+                        <td><span class="badge badge-neutral">{{ .TemplateName }}</span></td>
+                        <td>
+                            <span class="badge {{ if eq .Status "DELIVERED" }}badge-success{{ else if eq .Status "FAILED" }}badge-danger{{ else if eq .Status "BOUNCED" }}badge-warning{{ else if eq .Status "SENDING" }}badge-info{{ else }}badge-neutral{{ end }}">{{ .Status }}</span>
+                        </td>
+                        <td style="font-size: 13px; color: var(--text-muted);">{{ timeAgo .CreatedAt }}</td>
+                    </tr>
+                    {{ else }}
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 48px; color: var(--text-muted);">
+                            <i class="material-symbols-outlined" style="font-size: 48px; display: block; margin-bottom: 8px;">inbox</i>
+                            No email logs yet.
+                        </td>
+                    </tr>
+                    {{ end }}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{{ end }}
+{{ define "scripts" }}{{ end }}

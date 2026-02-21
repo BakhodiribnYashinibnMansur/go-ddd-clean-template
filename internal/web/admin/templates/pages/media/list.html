@@ -1,0 +1,112 @@
+{{ define "content" }}
+<div class="page-content-wrapper">
+    <div class="flex-between" style="margin-bottom: 32px;">
+        <div>
+            <h2 style="font-size: 26px; font-weight: 700; margin-bottom: 4px;">Media Library</h2>
+            <p style="font-size: 13px; color: var(--text-muted);">Upload and manage files, images, and documents</p>
+        </div>
+        <button class="btn btn-primary" onclick="document.getElementById('fileUpload').click()">
+            <i class="material-symbols-outlined">upload</i> Upload File
+        </button>
+        <input type="file" id="fileUpload" style="display: none;" onchange="uploadFile(this)" multiple>
+    </div>
+
+    <!-- Stats -->
+    <div class="stat-hero-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 28px;">
+        <div class="stat-hero">
+            <div class="stat-hero-icon" style="background: rgba(99, 102, 241, 0.1); color: var(--accent-400);">
+                <i class="material-symbols-outlined">folder</i>
+            </div>
+            <div class="stat-hero-value">{{ .TotalCount }}</div>
+            <div class="stat-hero-label">Total Files</div>
+        </div>
+        <div class="stat-hero">
+            <div class="stat-hero-icon" style="background: rgba(16, 185, 129, 0.1); color: var(--emerald);">
+                <i class="material-symbols-outlined">storage</i>
+            </div>
+            <div class="stat-hero-value">{{ .TotalSize }}</div>
+            <div class="stat-hero-label">Total Size</div>
+        </div>
+        <div class="stat-hero">
+            <div class="stat-hero-icon" style="background: rgba(14, 165, 233, 0.1); color: var(--sky);">
+                <i class="material-symbols-outlined">image</i>
+            </div>
+            <div class="stat-hero-value">{{ .ImageCount }}</div>
+            <div class="stat-hero-label">Images</div>
+        </div>
+        <div class="stat-hero">
+            <div class="stat-hero-icon" style="background: rgba(245, 158, 11, 0.1); color: var(--amber);">
+                <i class="material-symbols-outlined">description</i>
+            </div>
+            <div class="stat-hero-value">{{ .DocCount }}</div>
+            <div class="stat-hero-label">Documents</div>
+        </div>
+    </div>
+
+    <!-- File Grid -->
+    <div class="card">
+        {{ if .Files }}
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px;">
+            {{ range .Files }}
+            <div style="border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--bg-secondary);">
+                <div style="height: 120px; display: flex; align-items: center; justify-content: center; background: var(--bg-primary); border-bottom: 1px solid var(--border);">
+                    {{ if .IsImage }}
+                    <img src="{{ .URL }}" alt="{{ .Name }}" style="max-width: 100%; max-height: 100%; object-fit: cover;">
+                    {{ else }}
+                    <i class="material-symbols-outlined" style="font-size: 48px; color: var(--text-muted);">{{ if .IsDocument }}description{{ else if .IsVideo }}videocam{{ else }}insert_drive_file{{ end }}</i>
+                    {{ end }}
+                </div>
+                <div style="padding: 12px;">
+                    <p style="font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ .Name }}">{{ .Name }}</p>
+                    <p style="font-size: 11px; color: var(--text-muted);">{{ .Size }} &middot; {{ .MimeType }}</p>
+                    <div style="display: flex; justify-content: flex-end; gap: 4px; margin-top: 8px;">
+                        <a href="{{ .URL }}" target="_blank" class="btn-icon" title="Download" style="background: none; border: none; cursor: pointer; color: var(--accent-400); text-decoration: none;">
+                            <i class="material-symbols-outlined" style="font-size: 18px;">download</i>
+                        </a>
+                        <button class="btn-icon" onclick="deleteMedia('{{ .ID }}', '{{ .Name }}')" title="Delete" style="background: none; border: none; cursor: pointer; color: var(--rose);">
+                            <i class="material-symbols-outlined" style="font-size: 18px;">delete</i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {{ end }}
+        </div>
+        {{ else }}
+        <div style="text-align: center; padding: 48px; color: var(--text-muted);">
+            <i class="material-symbols-outlined" style="font-size: 48px; display: block; margin-bottom: 8px;">cloud_upload</i>
+            No files uploaded yet. Click "Upload File" to get started.
+        </div>
+        {{ end }}
+    </div>
+</div>
+{{ end }}
+
+{{ define "scripts" }}
+<script>
+async function uploadFile(input) {
+    const files = input.files;
+    if (!files.length) return;
+    const formData = new FormData();
+    for (let i = 0; i < files.length; i++) {
+        formData.append('files', files[i]);
+    }
+    try {
+        const res = await fetch('/admin/media/upload', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (data.success) window.location.reload();
+        else alert(data.message);
+    } catch (e) { alert('Error: ' + e.message); }
+    input.value = '';
+}
+
+async function deleteMedia(id, name) {
+    if (!confirm('Delete "' + name + '"?')) return;
+    try {
+        const res = await fetch('/admin/media/' + id, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) window.location.reload();
+        else alert(data.message);
+    } catch (e) { alert('Error: ' + e.message); }
+}
+</script>
+{{ end }}

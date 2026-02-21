@@ -1,0 +1,66 @@
+{{ define "content" }}
+<div class="page-content-wrapper">
+    <div class="flex-between" style="margin-bottom: 32px;">
+        <div>
+            <a href="/admin/jobs" style="font-size: 13px; color: var(--accent-400); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; margin-bottom: 8px;">
+                <i class="material-symbols-outlined" style="font-size: 16px;">arrow_back</i> Back to Jobs
+            </a>
+            <h2 style="font-size: 26px; font-weight: 700; margin-bottom: 4px;">Job Execution History</h2>
+            <p style="font-size: 13px; color: var(--text-muted);">View past runs and execution details</p>
+        </div>
+    </div>
+
+    {{ if .Job }}
+    <div class="card" style="margin-bottom: 24px;">
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
+            <div><span style="font-size: 12px; color: var(--text-muted);">Name</span><p style="font-weight: 600;">{{ .Job.Name }}</p></div>
+            <div><span style="font-size: 12px; color: var(--text-muted);">Schedule</span><p><code style="color: var(--accent-400);">{{ .Job.CronExpression }}</code></p></div>
+            <div><span style="font-size: 12px; color: var(--text-muted);">Handler</span><p>{{ .Job.Handler }}</p></div>
+            <div><span style="font-size: 12px; color: var(--text-muted);">Status</span><p>{{ if .Job.IsActive }}<span class="badge badge-success">Active</span>{{ else }}<span class="badge badge-neutral">Inactive</span>{{ end }}</p></div>
+        </div>
+    </div>
+    {{ end }}
+
+    <!-- Executions Table -->
+    <div class="card" style="padding: 0; overflow: hidden;">
+        <div style="padding: 20px; border-bottom: 1px solid var(--border);">
+            <h3>Executions</h3>
+        </div>
+        <div class="table-container" style="border: none; background: transparent;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Started</th>
+                        <th>Duration</th>
+                        <th>Status</th>
+                        <th>Triggered By</th>
+                        <th>Retry</th>
+                        <th>Output</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{ range .Executions }}
+                    <tr>
+                        <td style="font-size: 13px;">{{ timeAgo .StartedAt }}</td>
+                        <td>
+                            <span style="font-size: 13px; {{ if gt .DurationMs 60000 }}color: var(--rose);{{ else if gt .DurationMs 10000 }}color: var(--amber);{{ else }}color: var(--emerald);{{ end }}">
+                                {{ formatDurationMs .DurationMs }}
+                            </span>
+                        </td>
+                        <td><span class="badge {{ if eq .Status "SUCCESS" }}badge-success{{ else if eq .Status "FAILED" }}badge-danger{{ else if eq .Status "RUNNING" }}badge-info{{ else if eq .Status "TIMEOUT" }}badge-warning{{ else }}badge-neutral{{ end }}">{{ .Status }}</span></td>
+                        <td><span class="badge {{ if eq .TriggeredBy "MANUAL" }}badge-info{{ else if eq .TriggeredBy "RETRY" }}badge-warning{{ else }}badge-neutral{{ end }}">{{ .TriggeredBy }}</span></td>
+                        <td>{{ .RetryAttempt }}</td>
+                        <td style="font-size: 12px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-muted);">{{ .Output }}</td>
+                    </tr>
+                    {{ else }}
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 48px; color: var(--text-muted);">No executions recorded.</td>
+                    </tr>
+                    {{ end }}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{{ end }}
+{{ define "scripts" }}{{ end }}

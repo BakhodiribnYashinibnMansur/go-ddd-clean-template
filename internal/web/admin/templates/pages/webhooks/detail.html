@@ -1,0 +1,63 @@
+{{ define "content" }}
+<div class="page-content-wrapper">
+    <div class="flex-between" style="margin-bottom: 32px;">
+        <div>
+            <a href="/admin/webhooks" style="font-size: 13px; color: var(--accent-400); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; margin-bottom: 8px;">
+                <i class="material-symbols-outlined" style="font-size: 16px;">arrow_back</i> Back to Webhooks
+            </a>
+            <h2 style="font-size: 26px; font-weight: 700; margin-bottom: 4px;">Webhook Detail</h2>
+            <p style="font-size: 13px; color: var(--text-muted);">View webhook configuration and delivery history</p>
+        </div>
+    </div>
+
+    {{ if .Webhook }}
+    <div class="card" style="margin-bottom: 24px;">
+        <h3 style="margin-bottom: 16px;">Configuration</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div><span style="font-size: 12px; color: var(--text-muted);">Name</span><p style="font-weight: 600;">{{ .Webhook.Name }}</p></div>
+            <div><span style="font-size: 12px; color: var(--text-muted);">URL</span><p><code style="color: var(--accent-400);">{{ .Webhook.URL }}</code></p></div>
+        </div>
+    </div>
+
+    <!-- Deliveries -->
+    <div class="card" style="padding: 0; overflow: hidden;">
+        <div style="padding: 20px; border-bottom: 1px solid var(--border);">
+            <h3>Recent Deliveries</h3>
+        </div>
+        <div class="table-container" style="border: none; background: transparent;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Event</th>
+                        <th>Status</th>
+                        <th>Response</th>
+                        <th>Duration</th>
+                        <th>Created</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{ range .Deliveries }}
+                    <tr>
+                        <td><span class="badge badge-neutral">{{ .Event }}</span></td>
+                        <td><span class="badge {{ if eq .Status "SUCCESS" }}badge-success{{ else if eq .Status "FAILED" }}badge-danger{{ else }}badge-info{{ end }}">{{ .Status }}</span></td>
+                        <td>{{ .ResponseStatus }}</td>
+                        <td>{{ .DurationMs }}ms</td>
+                        <td style="font-size: 13px; color: var(--text-muted);">{{ timeAgo .CreatedAt }}</td>
+                    </tr>
+                    {{ else }}
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 48px; color: var(--text-muted);">No deliveries yet.</td>
+                    </tr>
+                    {{ end }}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {{ else }}
+    <div class="card" style="padding: 48px; text-align: center;">
+        <p style="color: var(--text-muted);">Webhook not found.</p>
+    </div>
+    {{ end }}
+</div>
+{{ end }}
+{{ define "scripts" }}{{ end }}

@@ -551,16 +551,16 @@ var templateFuncs = template.FuncMap{
 		switch {
 		case strings.Contains(mode, "accessexclusive"):
 			return "badge-lock-accessexclusive"
-		case strings.Contains(mode, "exclusive"):
-			return "badge-lock-exclusive"
-		case strings.Contains(mode, "share"):
-			return "badge-lock-share"
+		case strings.Contains(mode, "accessshare"):
+			return "badge-lock-accessshare"
 		case strings.Contains(mode, "rowexclusive"):
 			return "badge-lock-rowexclusive"
 		case strings.Contains(mode, "rowshare"):
 			return "badge-lock-rowshare"
-		case strings.Contains(mode, "accessshare"):
-			return "badge-lock-accessshare"
+		case strings.Contains(mode, "exclusive"):
+			return "badge-lock-exclusive"
+		case strings.Contains(mode, "share"):
+			return "badge-lock-share"
 		default:
 			return "badge-neutral"
 		}

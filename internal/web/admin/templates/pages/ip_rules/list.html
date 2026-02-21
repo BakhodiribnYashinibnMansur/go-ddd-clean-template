@@ -1,0 +1,207 @@
+{{ define "content" }}
+<div class="page-content-wrapper">
+    <div class="flex-between" style="margin-bottom: 32px;">
+        <div>
+            <h2 style="font-size: 26px; font-weight: 700; margin-bottom: 4px;">IP Rules</h2>
+            <p style="font-size: 13px; color: var(--text-muted);">Manage IP whitelist/blacklist and auto-block rules</p>
+        </div>
+        <button class="btn btn-primary" onclick="openCreateModal()">
+            <i class="material-symbols-outlined">add</i> Add IP Rule
+        </button>
+    </div>
+
+    <!-- Stats -->
+    <div class="stat-hero-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 28px;">
+        <div class="stat-hero">
+            <div class="stat-hero-icon" style="background: rgba(99, 102, 241, 0.1); color: var(--accent-400);">
+                <i class="material-symbols-outlined">shield</i>
+            </div>
+            <div class="stat-hero-value">{{ .TotalCount }}</div>
+            <div class="stat-hero-label">Total Rules</div>
+        </div>
+        <div class="stat-hero">
+            <div class="stat-hero-icon" style="background: rgba(16, 185, 129, 0.1); color: var(--emerald);">
+                <i class="material-symbols-outlined">check_circle</i>
+            </div>
+            <div class="stat-hero-value">{{ .AllowCount }}</div>
+            <div class="stat-hero-label">Allow Rules</div>
+        </div>
+        <div class="stat-hero">
+            <div class="stat-hero-icon" style="background: rgba(239, 68, 68, 0.1); color: var(--rose);">
+                <i class="material-symbols-outlined">block</i>
+            </div>
+            <div class="stat-hero-value">{{ .DenyCount }}</div>
+            <div class="stat-hero-label">Deny Rules</div>
+        </div>
+        <div class="stat-hero">
+            <div class="stat-hero-icon" style="background: rgba(245, 158, 11, 0.1); color: var(--amber);">
+                <i class="material-symbols-outlined">smart_toy</i>
+            </div>
+            <div class="stat-hero-value">{{ .AutoBlocked }}</div>
+            <div class="stat-hero-label">Auto-Blocked</div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card" style="margin-bottom: 24px; padding: 20px;">
+        <form method="GET" action="/admin/ip-rules" style="display: flex; gap: 16px; align-items: end; flex-wrap: wrap;">
+            <div>
+                <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Search IP</label>
+                <input type="text" name="ip" class="form-input" placeholder="192.168.1.0/24" style="width: 200px;">
+            </div>
+            <div>
+                <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Type</label>
+                <select name="type" class="form-input" style="width: 120px;">
+                    <option value="">All</option>
+                    <option value="ALLOW">Allow</option>
+                    <option value="DENY">Deny</option>
+                </select>
+            </div>
+            <div>
+                <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Scope</label>
+                <select name="scope" class="form-input" style="width: 140px;">
+                    <option value="">All</option>
+                    {{ range .Scopes }}<option value="{{ . }}">{{ . }}</option>{{ end }}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary" style="height: 42px;">Filter</button>
+            <a href="/admin/ip-rules" class="btn btn-secondary" style="height: 42px;">Reset</a>
+        </form>
+    </div>
+
+    <!-- Table -->
+    <div class="card" style="padding: 0; overflow: hidden;">
+        <div class="table-container" style="border: none; background: transparent;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>IP / CIDR</th>
+                        <th>Type</th>
+                        <th>Scope</th>
+                        <th>Reason</th>
+                        <th>Expires</th>
+                        <th>Auto</th>
+                        <th>Hits</th>
+                        <th style="text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{ range .Rules }}
+                    <tr>
+                        <td><code style="font-size: 13px; color: var(--accent-400);">{{ .IPAddress }}{{ if .CIDRRange }} ({{ .CIDRRange }}){{ end }}</code></td>
+                        <td>
+                            <span class="badge {{ if eq .Type "ALLOW" }}badge-success{{ else }}badge-danger{{ end }}">{{ .Type }}</span>
+                        </td>
+                        <td><span class="badge badge-neutral">{{ .Scope }}</span></td>
+                        <td style="font-size: 13px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ .Reason }}">{{ .Reason }}</td>
+                        <td style="font-size: 13px; color: var(--text-muted);">{{ if .ExpiresAt }}{{ timeAgo .ExpiresAt }}{{ else }}Permanent{{ end }}</td>
+                        <td>{{ if .AutoBlocked }}<span class="badge badge-warning">Auto</span>{{ else }}<span style="color: var(--text-muted);">—</span>{{ end }}</td>
+                        <td>{{ .HitCount }}</td>
+                        <td style="text-align: right;">
+                            <button class="btn-icon" onclick="deleteIPRule('{{ .ID }}')" title="Delete" style="background: none; border: none; cursor: pointer; color: var(--rose);">
+                                <i class="material-symbols-outlined" style="font-size: 20px;">delete</i>
+                            </button>
+                        </td>
+                    </tr>
+                    {{ else }}
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 48px; color: var(--text-muted);">
+                            <i class="material-symbols-outlined" style="font-size: 48px; display: block; margin-bottom: 8px;">shield</i>
+                            No IP rules defined.
+                        </td>
+                    </tr>
+                    {{ end }}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Create Modal -->
+<div id="createModal" class="modal">
+    <div class="modal-content" style="max-width: 520px;">
+        <div class="modal-header">
+            <h3>Add IP Rule</h3>
+            <button class="btn-icon" onclick="closeModal('createModal')" style="background: none; border: none; cursor: pointer; color: var(--text-muted);">
+                <i class="material-symbols-outlined">close</i>
+            </button>
+        </div>
+        <div class="modal-body" style="padding: 24px; display: flex; flex-direction: column; gap: 16px;">
+            <div>
+                <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">IP Address *</label>
+                <input type="text" id="ipAddress" class="form-input" placeholder="192.168.1.100 or 10.0.0.0/8">
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div>
+                    <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Type *</label>
+                    <select id="ipType" class="form-input">
+                        <option value="DENY">DENY (Block)</option>
+                        <option value="ALLOW">ALLOW (Whitelist)</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Scope *</label>
+                    <select id="ipScope" class="form-input">
+                        {{ range .Scopes }}<option value="{{ . }}">{{ . }}</option>{{ end }}
+                    </select>
+                </div>
+            </div>
+            <div>
+                <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Reason</label>
+                <textarea id="ipReason" class="form-input" rows="2" placeholder="Why this rule exists"></textarea>
+            </div>
+            <div>
+                <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Expires</label>
+                <select id="ipExpiry" class="form-input">
+                    <option value="">Permanent</option>
+                    <option value="3600">1 Hour</option>
+                    <option value="86400">24 Hours</option>
+                    <option value="604800">7 Days</option>
+                    <option value="2592000">30 Days</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-footer" style="padding: 16px 24px; display: flex; justify-content: flex-end; gap: 12px;">
+            <button class="btn btn-secondary" onclick="closeModal('createModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="submitIPRule()">Create</button>
+        </div>
+    </div>
+</div>
+{{ end }}
+
+{{ define "scripts" }}
+<script>
+function openCreateModal() {
+    document.getElementById('ipAddress').value = '';
+    document.getElementById('ipReason').value = '';
+    openModal('createModal');
+}
+
+async function submitIPRule() {
+    const body = {
+        ip_address: document.getElementById('ipAddress').value,
+        type: document.getElementById('ipType').value,
+        scope: document.getElementById('ipScope').value,
+        reason: document.getElementById('ipReason').value,
+        expires_seconds: parseInt(document.getElementById('ipExpiry').value) || 0,
+    };
+    if (!body.ip_address) { alert('IP Address is required'); return; }
+    try {
+        const res = await fetch('/admin/ip-rules', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+        const data = await res.json();
+        if (data.success) window.location.reload();
+        else alert(data.message);
+    } catch (e) { alert('Error: ' + e.message); }
+}
+
+async function deleteIPRule(id) {
+    if (!confirm('Delete this IP rule?')) return;
+    try {
+        const res = await fetch('/admin/ip-rules/' + id, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) window.location.reload();
+        else alert(data.message);
+    } catch (e) { alert('Error: ' + e.message); }
+}
+</script>
+{{ end }}

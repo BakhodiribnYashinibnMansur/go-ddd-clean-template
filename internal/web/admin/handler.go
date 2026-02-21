@@ -158,12 +158,84 @@ func (h *Handler) Register(r *gin.RouterGroup, authmw *auth.AuthMiddleware) {
 	protected.POST("/profile", h.ProfilePost)
 	protected.POST("/users/:id/:action", h.UserAction)
 
+	// Notifications
+	protected.GET("/notifications", h.Notifications)
+	protected.POST("/notifications", h.CreateNotificationPost)
+	protected.PUT("/notifications/:id", h.UpdateNotificationPost)
+	protected.DELETE("/notifications/:id", h.DeleteNotificationPost)
+
+	// Webhooks
+	protected.GET("/webhooks", h.Webhooks)
+	protected.GET("/webhooks/:id", h.WebhookDetail)
+	protected.POST("/webhooks", h.CreateWebhookPost)
+	protected.PUT("/webhooks/:id", h.UpdateWebhookPost)
+	protected.DELETE("/webhooks/:id", h.DeleteWebhookPost)
+	protected.POST("/webhooks/:id/test", h.TestWebhookPost)
+
+	// Feature Flags
+	protected.GET("/feature-flags", h.FeatureFlags)
+	protected.POST("/feature-flags", h.CreateFeatureFlagPost)
+	protected.PUT("/feature-flags/:id", h.UpdateFeatureFlagPost)
+	protected.DELETE("/feature-flags/:id", h.DeleteFeatureFlagPost)
+	protected.POST("/feature-flags/:id/toggle", h.ToggleFeatureFlagPost)
+
+	// Scheduled Jobs
+	protected.GET("/jobs", h.ScheduledJobs)
+	protected.GET("/jobs/:id", h.JobDetail)
+	protected.POST("/jobs", h.CreateJobPost)
+	protected.PUT("/jobs/:id", h.UpdateJobPost)
+	protected.DELETE("/jobs/:id", h.DeleteJobPost)
+	protected.POST("/jobs/:id/trigger", h.TriggerJobPost)
+
+	// Rate Limiting
+	protected.GET("/rate-limits", h.RateLimits)
+	protected.POST("/rate-limits", h.CreateRateLimitPost)
+	protected.PUT("/rate-limits/:id", h.UpdateRateLimitPost)
+	protected.DELETE("/rate-limits/:id", h.DeleteRateLimitPost)
+	protected.POST("/rate-limits/:id/toggle", h.ToggleRateLimitPost)
+
+	// IP Rules
+	protected.GET("/ip-rules", h.IPRules)
+	protected.POST("/ip-rules", h.CreateIPRulePost)
+	protected.PUT("/ip-rules/:id", h.UpdateIPRulePost)
+	protected.DELETE("/ip-rules/:id", h.DeleteIPRulePost)
+
+	// Announcements
+	protected.GET("/announcements", h.Announcements)
+	protected.POST("/announcements", h.CreateAnnouncementPost)
+	protected.PUT("/announcements/:id", h.UpdateAnnouncementPost)
+	protected.DELETE("/announcements/:id", h.DeleteAnnouncementPost)
+	protected.POST("/announcements/:id/toggle", h.ToggleAnnouncementPost)
+
+	// Email Templates & Logs
+	protected.GET("/emails", h.EmailTemplates)
+	protected.GET("/emails/logs", h.EmailLogs)
+	protected.POST("/emails", h.CreateEmailTemplatePost)
+	protected.PUT("/emails/:id", h.UpdateEmailTemplatePost)
+	protected.DELETE("/emails/:id", h.DeleteEmailTemplatePost)
+	protected.POST("/emails/:id/test", h.SendTestEmailPost)
+
+	// Media Management
+	protected.GET("/media", h.Media)
+	protected.POST("/media/upload", h.UploadMediaPost)
+	protected.PUT("/media/:id", h.UpdateMediaPost)
+	protected.DELETE("/media/:id", h.DeleteMediaPost)
+
+	// Data Export/Import
+	protected.GET("/data-export", h.DataExport)
+	protected.POST("/data-export", h.CreateExportPost)
+	protected.DELETE("/data-export/:id", h.DeleteExportPost)
+
+	// API Analytics
+	protected.GET("/api-analytics", h.APIAnalytics)
+
 	// Section Overviews
 	protected.GET("/section/users", h.UsersOverview)
 	protected.GET("/section/access", h.AccessControlOverview)
 	protected.GET("/section/database", h.DatabaseOverview)
 	protected.GET("/section/monitoring", h.MonitoringOverview)
 	protected.GET("/section/tools", h.ToolsOverview)
+	protected.GET("/section/security", h.SecurityOverview)
 }
 
 // UsersOverview - Overview page for Users Section
@@ -230,6 +302,16 @@ func (h *Handler) MonitoringOverview(ctx *gin.Context) {
 		"ErrorCount": 0, // Placeholder
 	}
 	h.servePage(ctx, "section_monitoring.html", "System Monitoring", "monitoring_overview", data)
+}
+
+// SecurityOverview - Overview for Security
+func (h *Handler) SecurityOverview(ctx *gin.Context) {
+	data := map[string]any{
+		"RateLimitRules": 0,
+		"IPRulesCount":   0,
+		"BlockedIPs":     0,
+	}
+	h.servePage(ctx, "section_security.html", "Security", "security_overview", data)
 }
 
 // ToolsOverview - Overview for Tools

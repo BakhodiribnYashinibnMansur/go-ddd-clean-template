@@ -1,0 +1,157 @@
+{{ define "content" }}
+<div class="page-content-wrapper">
+    <div class="flex-between" style="margin-bottom: 32px;">
+        <div>
+            <h2 style="font-size: 26px; font-weight: 700; margin-bottom: 4px;">Data Export</h2>
+            <p style="font-size: 13px; color: var(--text-muted);">Export data from various resources in multiple formats</p>
+        </div>
+        <button class="btn btn-primary" onclick="openCreateModal()">
+            <i class="material-symbols-outlined">download</i> New Export
+        </button>
+    </div>
+
+    <!-- Stats -->
+    <div class="stat-hero-grid" style="grid-template-columns: repeat(2, 1fr); margin-bottom: 28px;">
+        <div class="stat-hero">
+            <div class="stat-hero-icon" style="background: rgba(99, 102, 241, 0.1); color: var(--accent-400);">
+                <i class="material-symbols-outlined">file_download</i>
+            </div>
+            <div class="stat-hero-value">{{ .ExportCount }}</div>
+            <div class="stat-hero-label">Exports</div>
+        </div>
+        <div class="stat-hero">
+            <div class="stat-hero-icon" style="background: rgba(16, 185, 129, 0.1); color: var(--emerald);">
+                <i class="material-symbols-outlined">file_upload</i>
+            </div>
+            <div class="stat-hero-value">{{ .ImportCount }}</div>
+            <div class="stat-hero-label">Imports</div>
+        </div>
+    </div>
+
+    <!-- Exports Table -->
+    <div class="card" style="margin-bottom: 24px;">
+        <h3 style="margin-bottom: 16px; font-size: 16px;">Recent Exports</h3>
+        <div class="table-container" style="border: none; background: transparent;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Resource</th>
+                        <th>Format</th>
+                        <th>Status</th>
+                        <th>Size</th>
+                        <th>Created</th>
+                        <th style="text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{ range .Exports }}
+                    <tr>
+                        <td style="font-weight: 600;">{{ .Resource }}</td>
+                        <td><span class="badge badge-neutral">{{ .Format }}</span></td>
+                        <td>
+                            <span class="badge {{ if eq .Status "COMPLETED" }}badge-success{{ else if eq .Status "PROCESSING" }}badge-info{{ else if eq .Status "FAILED" }}badge-danger{{ else }}badge-neutral{{ end }}">{{ .Status }}</span>
+                        </td>
+                        <td style="font-size: 13px; color: var(--text-muted);">{{ .FileSize }}</td>
+                        <td style="font-size: 13px; color: var(--text-muted);">{{ timeAgo .CreatedAt }}</td>
+                        <td style="text-align: right;">
+                            {{ if eq .Status "COMPLETED" }}
+                            <a href="{{ .DownloadURL }}" class="btn-icon" title="Download" style="background: none; border: none; cursor: pointer; color: var(--emerald); text-decoration: none;">
+                                <i class="material-symbols-outlined" style="font-size: 20px;">download</i>
+                            </a>
+                            {{ end }}
+                            <button class="btn-icon" onclick="deleteExport('{{ .ID }}')" title="Delete" style="background: none; border: none; cursor: pointer; color: var(--rose);">
+                                <i class="material-symbols-outlined" style="font-size: 20px;">delete</i>
+                            </button>
+                        </td>
+                    </tr>
+                    {{ else }}
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 48px; color: var(--text-muted);">
+                            <i class="material-symbols-outlined" style="font-size: 48px; display: block; margin-bottom: 8px;">file_download</i>
+                            No exports yet. Click "New Export" to export data.
+                        </td>
+                    </tr>
+                    {{ end }}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Create Export Modal -->
+<div id="exportModal" class="modal">
+    <div class="modal-content" style="max-width: 480px;">
+        <div class="modal-header">
+            <h3>Create Export</h3>
+            <button class="btn-icon" onclick="closeModal('exportModal')" style="background: none; border: none; cursor: pointer; color: var(--text-muted);">
+                <i class="material-symbols-outlined">close</i>
+            </button>
+        </div>
+        <div class="modal-body" style="padding: 24px; display: flex; flex-direction: column; gap: 16px;">
+            <div>
+                <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Resource *</label>
+                <select id="expResource" class="form-input">
+                    {{ range .Resources }}
+                    <option value="{{ . }}">{{ . }}</option>
+                    {{ end }}
+                </select>
+            </div>
+            <div>
+                <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Format *</label>
+                <select id="expFormat" class="form-input">
+                    {{ range .Formats }}
+                    <option value="{{ . }}">{{ . }}</option>
+                    {{ end }}
+                </select>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div>
+                    <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">From Date</label>
+                    <input type="date" id="expFrom" class="form-input">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">To Date</label>
+                    <input type="date" id="expTo" class="form-input">
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer" style="padding: 16px 24px; display: flex; justify-content: flex-end; gap: 12px;">
+            <button class="btn btn-secondary" onclick="closeModal('exportModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="submitExport()">Export</button>
+        </div>
+    </div>
+</div>
+{{ end }}
+
+{{ define "scripts" }}
+<script>
+function openCreateModal() {
+    openModal('exportModal');
+}
+
+async function submitExport() {
+    const body = {
+        resource: document.getElementById('expResource').value,
+        format: document.getElementById('expFormat').value,
+        from_date: document.getElementById('expFrom').value || null,
+        to_date: document.getElementById('expTo').value || null,
+    };
+    try {
+        const res = await fetch('/admin/data-export', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+        const data = await res.json();
+        if (data.success) window.location.reload();
+        else alert(data.message);
+    } catch (e) { alert('Error: ' + e.message); }
+}
+
+async function deleteExport(id) {
+    if (!confirm('Delete this export?')) return;
+    try {
+        const res = await fetch('/admin/data-export/' + id, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) window.location.reload();
+        else alert(data.message);
+    } catch (e) { alert('Error: ' + e.message); }
+}
+</script>
+{{ end }}

@@ -1,0 +1,201 @@
+{{ define "content" }}
+<div class="page-content-wrapper">
+    <div class="flex-between" style="margin-bottom: 32px;">
+        <div>
+            <h2 style="font-size: 26px; font-weight: 700; margin-bottom: 4px;">Rate Limits</h2>
+            <p style="font-size: 13px; color: var(--text-muted);">Configure rate limiting rules and monitor hits</p>
+        </div>
+        <button class="btn btn-primary" onclick="openCreateModal()">
+            <i class="material-symbols-outlined">add</i> Add Rule
+        </button>
+    </div>
+
+    <!-- Stats -->
+    <div class="stat-hero-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 28px;">
+        <div class="stat-hero">
+            <div class="stat-hero-icon" style="background: rgba(99, 102, 241, 0.1); color: var(--accent-400);">
+                <i class="material-symbols-outlined">speed</i>
+            </div>
+            <div class="stat-hero-value">{{ .TotalCount }}</div>
+            <div class="stat-hero-label">Total Rules</div>
+        </div>
+        <div class="stat-hero">
+            <div class="stat-hero-icon" style="background: rgba(16, 185, 129, 0.1); color: var(--emerald);">
+                <i class="material-symbols-outlined">check_circle</i>
+            </div>
+            <div class="stat-hero-value">{{ .ActiveCount }}</div>
+            <div class="stat-hero-label">Active</div>
+        </div>
+        <div class="stat-hero">
+            <div class="stat-hero-icon" style="background: rgba(239, 68, 68, 0.1); color: var(--rose);">
+                <i class="material-symbols-outlined">block</i>
+            </div>
+            <div class="stat-hero-value">{{ .BlockedCount }}</div>
+            <div class="stat-hero-label">Currently Blocked</div>
+        </div>
+        <div class="stat-hero">
+            <div class="stat-hero-icon" style="background: rgba(245, 158, 11, 0.1); color: var(--amber);">
+                <i class="material-symbols-outlined">trending_up</i>
+            </div>
+            <div class="stat-hero-value">{{ .HitsToday }}</div>
+            <div class="stat-hero-label">Hits Today</div>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="card" style="padding: 0; overflow: hidden;">
+        <div class="table-container" style="border: none; background: transparent;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Scope</th>
+                        <th>Target</th>
+                        <th>Limit</th>
+                        <th>Action</th>
+                        <th>Status</th>
+                        <th>Priority</th>
+                        <th style="text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{ range .Rules }}
+                    <tr>
+                        <td style="font-weight: 600;">{{ .Name }}</td>
+                        <td>
+                            <span class="badge {{ if eq .Scope "GLOBAL" }}badge-info{{ else if eq .Scope "ENDPOINT" }}badge-primary{{ else if eq .Scope "USER" }}badge-success{{ else if eq .Scope "IP" }}badge-warning{{ else }}badge-neutral{{ end }}">{{ .Scope }}</span>
+                        </td>
+                        <td><code style="font-size: 12px; color: var(--accent-400);">{{ .Target }}</code></td>
+                        <td style="font-size: 13px;">{{ .MaxRequests }} / {{ .WindowSeconds }}s</td>
+                        <td>
+                            <span class="badge {{ if eq .Action "REJECT" }}badge-danger{{ else if eq .Action "BLOCK" }}badge-danger{{ else if eq .Action "THROTTLE" }}badge-warning{{ else }}badge-neutral{{ end }}">{{ .Action }}</span>
+                        </td>
+                        <td>{{ if .IsActive }}<span class="badge badge-success">Active</span>{{ else }}<span class="badge badge-neutral">Inactive</span>{{ end }}</td>
+                        <td>{{ .Priority }}</td>
+                        <td style="text-align: right;">
+                            <button class="btn-icon" onclick="toggleRule('{{ .ID }}')" title="{{ if .IsActive }}Deactivate{{ else }}Activate{{ end }}" style="background: none; border: none; cursor: pointer; color: {{ if .IsActive }}var(--emerald){{ else }}var(--text-muted){{ end }};">
+                                <i class="material-symbols-outlined" style="font-size: 20px;">{{ if .IsActive }}toggle_on{{ else }}toggle_off{{ end }}</i>
+                            </button>
+                            <button class="btn-icon" onclick="deleteRule('{{ .ID }}', '{{ .Name }}')" title="Delete" style="background: none; border: none; cursor: pointer; color: var(--rose);">
+                                <i class="material-symbols-outlined" style="font-size: 20px;">delete</i>
+                            </button>
+                        </td>
+                    </tr>
+                    {{ else }}
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 48px; color: var(--text-muted);">
+                            <i class="material-symbols-outlined" style="font-size: 48px; display: block; margin-bottom: 8px;">speed</i>
+                            No rate limit rules defined.
+                        </td>
+                    </tr>
+                    {{ end }}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Create Modal -->
+<div id="createModal" class="modal">
+    <div class="modal-content" style="max-width: 560px;">
+        <div class="modal-header">
+            <h3>Add Rate Limit Rule</h3>
+            <button class="btn-icon" onclick="closeModal('createModal')" style="background: none; border: none; cursor: pointer; color: var(--text-muted);">
+                <i class="material-symbols-outlined">close</i>
+            </button>
+        </div>
+        <div class="modal-body" style="padding: 24px; display: flex; flex-direction: column; gap: 16px;">
+            <div>
+                <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Name *</label>
+                <input type="text" id="rlName" class="form-input" placeholder="API Global Limit">
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div>
+                    <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Scope *</label>
+                    <select id="rlScope" class="form-input">
+                        {{ range .Scopes }}<option value="{{ . }}">{{ . }}</option>{{ end }}
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Target *</label>
+                    <input type="text" id="rlTarget" class="form-input" placeholder="/api/v1/*">
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div>
+                    <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Max Requests *</label>
+                    <input type="number" id="rlMaxReq" class="form-input" value="100">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Window (seconds) *</label>
+                    <input type="number" id="rlWindow" class="form-input" value="60">
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div>
+                    <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Action *</label>
+                    <select id="rlAction" class="form-input">
+                        {{ range .Actions }}<option value="{{ . }}">{{ . }}</option>{{ end }}
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Priority</label>
+                    <input type="number" id="rlPriority" class="form-input" value="100">
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer" style="padding: 16px 24px; display: flex; justify-content: flex-end; gap: 12px;">
+            <button class="btn btn-secondary" onclick="closeModal('createModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="submitRule()">Create</button>
+        </div>
+    </div>
+</div>
+{{ end }}
+
+{{ define "scripts" }}
+<script>
+function openCreateModal() {
+    document.getElementById('rlName').value = '';
+    document.getElementById('rlTarget').value = '';
+    openModal('createModal');
+}
+
+async function submitRule() {
+    const body = {
+        name: document.getElementById('rlName').value,
+        scope: document.getElementById('rlScope').value,
+        target: document.getElementById('rlTarget').value,
+        max_requests: parseInt(document.getElementById('rlMaxReq').value),
+        window_seconds: parseInt(document.getElementById('rlWindow').value),
+        action: document.getElementById('rlAction').value,
+        priority: parseInt(document.getElementById('rlPriority').value) || 100,
+    };
+    if (!body.name || !body.target) { alert('Name and Target are required'); return; }
+    try {
+        const res = await fetch('/admin/rate-limits', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+        const data = await res.json();
+        if (data.success) window.location.reload();
+        else alert(data.message);
+    } catch (e) { alert('Error: ' + e.message); }
+}
+
+async function toggleRule(id) {
+    try {
+        const res = await fetch('/admin/rate-limits/' + id + '/toggle', { method: 'POST' });
+        const data = await res.json();
+        if (data.success) window.location.reload();
+        else alert(data.message);
+    } catch (e) { alert('Error: ' + e.message); }
+}
+
+async function deleteRule(id, name) {
+    if (!confirm('Delete rate limit rule "' + name + '"?')) return;
+    try {
+        const res = await fetch('/admin/rate-limits/' + id, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) window.location.reload();
+        else alert(data.message);
+    } catch (e) { alert('Error: ' + e.message); }
+}
+</script>
+{{ end }}

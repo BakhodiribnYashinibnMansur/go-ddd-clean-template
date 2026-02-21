@@ -123,6 +123,33 @@
                 </div>
             </div>
 
+            <!-- SECURITY -->
+            <div class="tree-group">
+                <div class="tree-parent" title="Security">
+                    <a href="/admin/section/security"
+                        style="flex: 1; color: inherit; text-decoration: none; display: flex; align-items: center;">
+                        <i class="material-symbols-outlined tree-icon">security</i>
+                        <span class="tree-text">SECURITY</span>
+                    </a>
+                    <i class="material-symbols-outlined tree-chevron" id="security-chevron"
+                        onclick="toggleTree('security')">expand_more</i>
+                </div>
+                <div class="tree-children" id="security-tree">
+                    <div>
+                        <a href="/admin/rate-limits"
+                            class="tree-child {{ if eq .ActiveMenu "rate_limits" }}active{{ end }}">
+                            <i class="material-symbols-outlined child-icon">speed</i>
+                            <span class="child-text">Rate Limits</span>
+                        </a>
+                        <a href="/admin/ip-rules"
+                            class="tree-child {{ if eq .ActiveMenu "ip_rules" }}active{{ end }}">
+                            <i class="material-symbols-outlined child-icon">shield</i>
+                            <span class="child-text">IP Rules</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
             <!-- MONITORING -->
             <div class="tree-group">
                 <div class="tree-parent" title="Monitoring">
@@ -155,6 +182,21 @@
                             class="tree-child {{ if eq .ActiveMenu "functions" }}active{{ end }}">
                             <i class="material-symbols-outlined child-icon">functions</i>
                             <span class="child-text">Functions</span>
+                        </a>
+                        <a href="/admin/notifications"
+                            class="tree-child {{ if eq .ActiveMenu "notifications" }}active{{ end }}">
+                            <i class="material-symbols-outlined child-icon">notifications</i>
+                            <span class="child-text">Notifications</span>
+                        </a>
+                        <a href="/admin/jobs"
+                            class="tree-child {{ if eq .ActiveMenu "jobs" }}active{{ end }}">
+                            <i class="material-symbols-outlined child-icon">schedule_send</i>
+                            <span class="child-text">Scheduled Jobs</span>
+                        </a>
+                        <a href="/admin/api-analytics"
+                            class="tree-child {{ if eq .ActiveMenu "api_analytics" }}active{{ end }}">
+                            <i class="material-symbols-outlined child-icon">analytics</i>
+                            <span class="child-text">API Analytics</span>
                         </a>
                     </div>
                 </div>
@@ -192,6 +234,36 @@
                             class="tree-child {{ if eq .ActiveMenu "integrations" }}active{{ end }}">
                             <i class="material-symbols-outlined child-icon">integration_instructions</i>
                             <span class="child-text">Integrations</span>
+                        </a>
+                        <a href="/admin/webhooks"
+                            class="tree-child {{ if eq .ActiveMenu "webhooks" }}active{{ end }}">
+                            <i class="material-symbols-outlined child-icon">webhook</i>
+                            <span class="child-text">Webhooks</span>
+                        </a>
+                        <a href="/admin/feature-flags"
+                            class="tree-child {{ if eq .ActiveMenu "feature_flags" }}active{{ end }}">
+                            <i class="material-symbols-outlined child-icon">flag</i>
+                            <span class="child-text">Feature Flags</span>
+                        </a>
+                        <a href="/admin/announcements"
+                            class="tree-child {{ if eq .ActiveMenu "announcements" }}active{{ end }}">
+                            <i class="material-symbols-outlined child-icon">campaign</i>
+                            <span class="child-text">Announcements</span>
+                        </a>
+                        <a href="/admin/emails"
+                            class="tree-child {{ if eq .ActiveMenu "emails" }}active{{ end }}">
+                            <i class="material-symbols-outlined child-icon">mail</i>
+                            <span class="child-text">Emails</span>
+                        </a>
+                        <a href="/admin/media"
+                            class="tree-child {{ if eq .ActiveMenu "media" }}active{{ end }}">
+                            <i class="material-symbols-outlined child-icon">perm_media</i>
+                            <span class="child-text">Media</span>
+                        </a>
+                        <a href="/admin/data-export"
+                            class="tree-child {{ if eq .ActiveMenu "data_export" }}active{{ end }}">
+                            <i class="material-symbols-outlined child-icon">download</i>
+                            <span class="child-text">Data Export</span>
                         </a>
                         {{ if .AsynqEnabled }}
                         <a href="/admin/asynq"

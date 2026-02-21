@@ -1,0 +1,213 @@
+{{ define "content" }}
+<div class="page-content-wrapper">
+    <div class="flex-between" style="margin-bottom: 32px;">
+        <div>
+            <h2 style="font-size: 26px; font-weight: 700; margin-bottom: 4px;">Notifications</h2>
+            <p style="font-size: 13px; color: var(--text-muted);">Manage notifications, templates, and delivery status</p>
+        </div>
+        <button class="btn btn-primary" onclick="openCreateModal()">
+            <i class="material-symbols-outlined">add</i> Send Notification
+        </button>
+    </div>
+
+    <!-- Stats -->
+    <div class="stat-hero-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 28px;">
+        <div class="stat-hero">
+            <div class="stat-hero-icon" style="background: rgba(99, 102, 241, 0.1); color: var(--accent-400);">
+                <i class="material-symbols-outlined">notifications</i>
+            </div>
+            <div class="stat-hero-value">{{ .TotalCount }}</div>
+            <div class="stat-hero-label">Total</div>
+        </div>
+        <div class="stat-hero">
+            <div class="stat-hero-icon" style="background: rgba(245, 158, 11, 0.1); color: var(--amber);">
+                <i class="material-symbols-outlined">mark_email_unread</i>
+            </div>
+            <div class="stat-hero-value">{{ .UnreadCount }}</div>
+            <div class="stat-hero-label">Unread</div>
+        </div>
+        <div class="stat-hero">
+            <div class="stat-hero-icon" style="background: rgba(16, 185, 129, 0.1); color: var(--emerald);">
+                <i class="material-symbols-outlined">send</i>
+            </div>
+            <div class="stat-hero-value">{{ .SentToday }}</div>
+            <div class="stat-hero-label">Sent Today</div>
+        </div>
+        <div class="stat-hero">
+            <div class="stat-hero-icon" style="background: rgba(239, 68, 68, 0.1); color: var(--rose);">
+                <i class="material-symbols-outlined">error</i>
+            </div>
+            <div class="stat-hero-value">{{ .FailedCount }}</div>
+            <div class="stat-hero-label">Failed</div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card" style="margin-bottom: 24px; padding: 20px;">
+        <form method="GET" action="/admin/notifications" style="display: flex; gap: 16px; align-items: end; flex-wrap: wrap;">
+            <div>
+                <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Type</label>
+                <select name="type" class="form-input" style="width: 160px;">
+                    <option value="">All Types</option>
+                    <option value="SYSTEM">System</option>
+                    <option value="SECURITY">Security</option>
+                    <option value="USER_ACTION">User Action</option>
+                    <option value="POLICY_ALERT">Policy Alert</option>
+                    <option value="SESSION_ALERT">Session Alert</option>
+                    <option value="ERROR_ALERT">Error Alert</option>
+                    <option value="ANNOUNCEMENT">Announcement</option>
+                </select>
+            </div>
+            <div>
+                <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Channel</label>
+                <select name="channel" class="form-input" style="width: 140px;">
+                    <option value="">All Channels</option>
+                    <option value="IN_APP">In-App</option>
+                    <option value="EMAIL">Email</option>
+                    <option value="PUSH">Push</option>
+                    <option value="SMS">SMS</option>
+                    <option value="WEBSOCKET">WebSocket</option>
+                </select>
+            </div>
+            <div>
+                <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Status</label>
+                <select name="status" class="form-input" style="width: 140px;">
+                    <option value="">All</option>
+                    <option value="PENDING">Pending</option>
+                    <option value="SENT">Sent</option>
+                    <option value="FAILED">Failed</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary" style="height: 42px;">Filter</button>
+            <a href="/admin/notifications" class="btn btn-secondary" style="height: 42px;">Reset</a>
+        </form>
+    </div>
+
+    <!-- Table -->
+    <div class="card" style="padding: 0; overflow: hidden;">
+        <div class="table-container" style="border: none; background: transparent;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Channel</th>
+                        <th>Title</th>
+                        <th>Status</th>
+                        <th>Read</th>
+                        <th>Created</th>
+                        <th style="text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{ range .Notifications }}
+                    <tr>
+                        <td><span class="badge badge-info">{{ .Type }}</span></td>
+                        <td><span class="badge badge-neutral">{{ .Channel }}</span></td>
+                        <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ .Title }}</td>
+                        <td>
+                            <span class="badge {{ if eq .SendStatus "SENT" }}badge-success{{ else if eq .SendStatus "FAILED" }}badge-danger{{ else if eq .SendStatus "SENDING" }}badge-info{{ else }}badge-neutral{{ end }}">{{ .SendStatus }}</span>
+                        </td>
+                        <td>{{ if .IsRead }}<span class="badge badge-success">Yes</span>{{ else }}<span style="color: var(--text-muted);">No</span>{{ end }}</td>
+                        <td style="font-size: 13px; color: var(--text-muted);">{{ timeAgo .CreatedAt }}</td>
+                        <td style="text-align: right;">
+                            <button class="btn-icon" onclick="deleteNotification('{{ .ID }}')" title="Delete" style="background: none; border: none; cursor: pointer; color: var(--rose);">
+                                <i class="material-symbols-outlined" style="font-size: 20px;">delete</i>
+                            </button>
+                        </td>
+                    </tr>
+                    {{ else }}
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 48px; color: var(--text-muted);">
+                            <i class="material-symbols-outlined" style="font-size: 48px; display: block; margin-bottom: 8px;">notifications_off</i>
+                            No notifications found.
+                        </td>
+                    </tr>
+                    {{ end }}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Create Modal -->
+<div id="createModal" class="modal">
+    <div class="modal-content" style="max-width: 560px;">
+        <div class="modal-header">
+            <h3>Send Notification</h3>
+            <button class="btn-icon" onclick="closeModal('createModal')" style="background: none; border: none; cursor: pointer; color: var(--text-muted);">
+                <i class="material-symbols-outlined">close</i>
+            </button>
+        </div>
+        <div class="modal-body" style="padding: 24px; display: flex; flex-direction: column; gap: 16px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div>
+                    <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Type *</label>
+                    <select id="notifType" class="form-input">
+                        <option value="SYSTEM">System</option>
+                        <option value="SECURITY">Security</option>
+                        <option value="ANNOUNCEMENT">Announcement</option>
+                        <option value="CUSTOM">Custom</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Channel *</label>
+                    <select id="notifChannel" class="form-input">
+                        <option value="IN_APP">In-App</option>
+                        <option value="EMAIL">Email</option>
+                        <option value="PUSH">Push</option>
+                        <option value="WEBSOCKET">WebSocket</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Title *</label>
+                <input type="text" id="notifTitle" class="form-input" placeholder="Notification title">
+            </div>
+            <div>
+                <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Body *</label>
+                <textarea id="notifBody" class="form-input" rows="3" placeholder="Notification message body"></textarea>
+            </div>
+        </div>
+        <div class="modal-footer" style="padding: 16px 24px; display: flex; justify-content: flex-end; gap: 12px;">
+            <button class="btn btn-secondary" onclick="closeModal('createModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="submitNotification()">Send</button>
+        </div>
+    </div>
+</div>
+{{ end }}
+
+{{ define "scripts" }}
+<script>
+function openCreateModal() {
+    document.getElementById('notifTitle').value = '';
+    document.getElementById('notifBody').value = '';
+    openModal('createModal');
+}
+
+async function submitNotification() {
+    const body = {
+        type: document.getElementById('notifType').value,
+        channel: document.getElementById('notifChannel').value,
+        title: document.getElementById('notifTitle').value,
+        body: document.getElementById('notifBody').value,
+    };
+    if (!body.title || !body.body) { alert('Title and Body are required'); return; }
+    try {
+        const res = await fetch('/admin/notifications', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+        const data = await res.json();
+        if (data.success) window.location.reload();
+        else alert(data.message);
+    } catch (e) { alert('Error: ' + e.message); }
+}
+
+async function deleteNotification(id) {
+    if (!confirm('Delete this notification?')) return;
+    try {
+        const res = await fetch('/admin/notifications/' + id, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) window.location.reload();
+        else alert(data.message);
+    } catch (e) { alert('Error: ' + e.message); }
+}
+</script>
+{{ end }}
