@@ -98,7 +98,7 @@
                 </tr>
                 {{ else }}
                 <tr>
-                    <td colspan="5" class="text-center py-4 text-muted">No metrics found</td>
+                    <td colspan="5">{{ template "empty_state" dict "Icon" "analytics" "Title" "No Metrics Found" "Message" "No function metrics have been recorded yet." }}</td>
                 </tr>
                 {{ end }}
             </tbody>

@@ -8,6 +8,15 @@
     </div>
 </div>
 
+<div class="card" style="margin-bottom: 24px; padding: 20px;">
+    <div style="display: flex; gap: 16px; align-items: end;">
+        <div style="flex: 1;">
+            <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Search</label>
+            <input type="text" id="searchInput" class="form-input" placeholder="Search by email..." oninput="filterTable()">
+        </div>
+    </div>
+</div>
+
 <div class="card">
     <div class="table-container">
         <table class="data-table">
@@ -24,7 +33,7 @@
                 {{ range $index, $user := .Users }}
                 <tr>
                     <td style="text-align: center; font-weight: 600; color: var(--text-secondary);">
-                        {{ add $.Pagination.Offset $index 1 }}
+                        {{ add (add $.Pagination.Offset $index) 1 }}
                     </td>
                     <td>
                         <div class="user-info">
@@ -51,7 +60,7 @@
                 </tr>
                 {{ else }}
                 <tr>
-                    <td colspan="5" class="text-center py-4 text-muted">No pending approvals found.</td>
+                    <td colspan="5">{{ template "empty_state" dict "Icon" "how_to_reg" "Title" "No Pending Approvals" "Message" "All user accounts have been reviewed." }}</td>
                 </tr>
                 {{ end }}
             </tbody>
@@ -61,6 +70,18 @@
     <!-- Pagination -->
     {{ template "pagination" .Pagination }}
 </div>
+
+<script>
+function filterTable() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const rows = document.querySelectorAll('.data-table tbody tr');
+    rows.forEach(row => {
+        if (row.querySelector('td[colspan]')) return;
+        const email = (row.cells[1]?.textContent || '').toLowerCase();
+        row.style.display = email.includes(search) ? '' : 'none';
+    });
+}
+</script>
 
 <style>
     .btn-success {

@@ -19,7 +19,7 @@ function initPolicyForm() {
         try {
             JSON.parse(jsonInput.value || '{}');
         } catch (err) {
-            alert('Invalid JSON format in Conditions field');
+            showToast('Invalid JSON format in Conditions field', 'warning');
             return;
         }
 
@@ -43,27 +43,33 @@ function initPolicyForm() {
                 window.location.href = '/admin/abac/policies';
             } else {
                 const err = await response.json();
-                alert('Error: ' + (err.message || 'Failed to save policy'));
+                showToast(err.message || 'Failed to save policy', 'error');
             }
         } catch (error) {
             console.error(error);
-            alert('Unexpected error occurred');
+            showToast('Unexpected error occurred', 'error');
         }
     });
 }
 
 window.deletePolicy = async (id) => {
-    if (!confirm('Delete this policy?')) return;
+    const confirmed = await showConfirm({
+        title: 'Delete Policy',
+        message: 'Are you sure you want to delete this policy?',
+        confirmText: 'Delete',
+        type: 'danger'
+    });
+    if (!confirmed) return;
 
     try {
         const response = await fetch(`/admin/abac/policies/${id}`, { method: 'DELETE' });
         if (response.ok) {
             window.location.reload();
         } else {
-            alert('Failed to delete policy');
+            showToast('Failed to delete policy', 'error');
         }
     } catch (e) {
         console.error(e);
-        alert('Error deleting policy');
+        showToast('Error deleting policy', 'error');
     }
 };

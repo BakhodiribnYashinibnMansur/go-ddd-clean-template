@@ -57,10 +57,9 @@
             <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px;">
                 {{ range .AllPermissions }}
                 <label class="perm-toggle" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 8px; cursor: pointer; border: 1px solid var(--border); transition: all 0.15s ease;" data-pid="{{ .ID }}">
-                    <input type="checkbox" class="perm-check" data-pid="{{ .ID }}"
+                    <input type="checkbox" class="form-checkbox perm-check" data-pid="{{ .ID }}"
                         {{ if index $.AssignedMap .ID }}checked{{ end }}
-                        onchange="togglePermission('{{ .ID }}', this.checked)"
-                        style="width: 18px; height: 18px; accent-color: var(--accent-400);">
+                        onchange="togglePermission('{{ .ID }}', this.checked)">
                     <div style="flex: 1; min-width: 0;">
                         <div style="font-weight: 500; font-size: 14px;">{{ .Name }}</div>
                         <div style="font-size: 11px; color: var(--text-muted);">{{ shortUUID .ID }}</div>
@@ -83,7 +82,7 @@
     <div class="modal-content" style="max-width: 420px;">
         <div class="modal-header">
             <h3>Rename Role</h3>
-            <button class="btn-icon" onclick="closeModal('editModal')" style="background: none; border: none; cursor: pointer; color: var(--text-muted);">
+            <button class="modal-close-btn" onclick="closeModal('editModal')">
                 <i class="material-symbols-outlined">close</i>
             </button>
         </div>
@@ -107,24 +106,25 @@ function openEditModal() { openModal('editModal'); }
 
 async function submitRename() {
     const name = document.getElementById('editRoleName').value;
-    if (!name) { alert('Name is required'); return; }
+    if (!name) { showToast('Name is required', 'warning'); return; }
 
     try {
         const res = await fetch('/admin/rbac/roles/' + roleId, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ name }) });
         const data = await res.json();
         if (data.success) window.location.reload();
-        else alert(data.message);
-    } catch (e) { alert('Error: ' + e.message); }
+        else showToast(data.message, 'error');
+    } catch (e) { showToast('Error: ' + e.message, 'error'); }
 }
 
 async function deleteRole() {
-    if (!confirm('Delete this role? Users assigned to it will lose access.')) return;
+    const confirmed = await showConfirm({ title: 'Delete Role', message: 'Delete this role? Users assigned to it will lose access.', confirmText: 'Delete', type: 'danger' });
+    if (!confirmed) return;
     try {
         const res = await fetch('/admin/rbac/roles/' + roleId, { method: 'DELETE' });
         const data = await res.json();
         if (data.success) window.location.href = '/admin/rbac/roles';
-        else alert(data.message);
-    } catch (e) { alert('Error: ' + e.message); }
+        else showToast(data.message, 'error');
+    } catch (e) { showToast('Error: ' + e.message, 'error'); }
 }
 
 async function togglePermission(permId, checked) {
@@ -146,12 +146,12 @@ async function togglePermission(permId, checked) {
                 icon.style.color = 'var(--text-muted)';
             }
         } else {
-            alert(data.message);
+            showToast(data.message, 'error');
             // Revert checkbox
             document.querySelector('.perm-check[data-pid="' + permId + '"]').checked = !checked;
         }
     } catch (e) {
-        alert('Error: ' + e.message);
+        showToast('Error: ' + e.message, 'error');
         document.querySelector('.perm-check[data-pid="' + permId + '"]').checked = !checked;
     }
 }

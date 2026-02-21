@@ -136,7 +136,7 @@
                 </tr>
                 {{ else }}
                 <tr>
-                    <td colspan="7" class="text-center py-4 text-muted">No history found</td>
+                    <td colspan="7">{{ template "empty_state" dict "Icon" "history" "Title" "No History Found" "Message" "No endpoint history matches your current filters." }}</td>
                 </tr>
                 {{ end }}
             </tbody>

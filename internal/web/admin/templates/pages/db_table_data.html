@@ -290,7 +290,7 @@
                     <thead style="position: sticky; top: 0; z-index: 10; background: var(--bg-card);">
                         <tr>
                             <th style="width: 40px; text-align: center; border-bottom: 1px solid var(--border-subtle); background: var(--bg-card);">
-                                <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                                <input type="checkbox" id="selectAll" class="form-checkbox" onchange="toggleSelectAll()">
                             </th>
                             <th style="width: 50px; border-bottom: 1px solid var(--border-subtle); background: var(--bg-card);">#</th>
                             {{ range .Schema.Columns }}
@@ -457,7 +457,7 @@
             // Checkbox
             const checkCell = document.createElement('td');
             checkCell.style.cssText = 'text-align:center;border-bottom:1px solid var(--border-subtle);';
-            checkCell.innerHTML = `<input type="checkbox" class="row-checkbox" value="${pkValue}" onchange="toggleRow('${pkValue}')">`;
+            checkCell.innerHTML = `<input type="checkbox" class="form-checkbox row-checkbox" value="${pkValue}" onchange="toggleRow('${pkValue}')">`;
             tr.appendChild(checkCell);
 
             // Row number
@@ -577,17 +577,18 @@
                 });
             }
             const result = await response.json();
-            if (result.success) { closeModal(); loadData(); } else { alert('Error: ' + result.error); }
-        } catch (err) { alert('Failed to save record'); }
+            if (result.success) { closeModal(); loadData(); } else { showToast('Error: ' + result.error, 'error'); }
+        } catch (err) { showToast('Failed to save record', 'error'); }
     }
 
     async function deleteRecord(id) {
-        if (!confirm('Delete this record?')) return;
+        const confirmed = await showConfirm({ title: 'Delete Record', message: 'Delete this record?', confirmText: 'Delete', type: 'danger' });
+        if (!confirmed) return;
         try {
             const response = await fetch(`/admin/database/api/table/${tableName}/record/${id}?pk_column=${schema.PrimaryKey}`, { method: 'DELETE' });
             const result = await response.json();
-            if (result.success) loadData(); else alert('Error: ' + result.error);
-        } catch (err) { alert('Failed to delete'); }
+            if (result.success) loadData(); else showToast('Error: ' + result.error, 'error');
+        } catch (err) { showToast('Failed to delete', 'error'); }
     }
 
     // DDL

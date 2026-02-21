@@ -65,6 +65,7 @@ func (h *Handler) Register(r *gin.RouterGroup, authmw *auth.AuthMiddleware) {
 	protected.GET("/users/:id", h.UserDetail)
 	protected.GET("/users/:id/edit", h.EditUser)
 	protected.POST("/users/:id/edit", h.UpdateUserPost)
+	protected.POST("/users/:id/role", h.ChangeUserRole)
 	protected.POST("/users/bulk-action", h.BulkUsersAction)
 	protected.GET("/approvals", h.Approvals)
 	protected.POST("/users/:id/approve", h.ApproveUser)
@@ -686,8 +687,21 @@ func (h *Handler) SessionDetail(ctx *gin.Context) {
 		return
 	}
 
+	session := sessions[0]
+
+	// Fetch the user associated with this session
+	var sessionUser *domain.User
+	users, _, err := h.uc.User.Client().Gets(ctx.Request.Context(), &domain.UsersFilter{
+		UserFilter: domain.UserFilter{ID: &session.UserID},
+		Pagination: &domain.Pagination{Limit: 1},
+	})
+	if err == nil && len(users) > 0 {
+		sessionUser = users[0]
+	}
+
 	h.servePage(ctx, "sessions/detail.html", "Session Details", "sessions", map[string]any{
-		"Session": sessions[0],
+		"Session":     session,
+		"SessionUser": sessionUser,
 	})
 }
 
@@ -1200,10 +1214,16 @@ func (h *Handler) UserDetail(ctx *gin.Context) {
 		}
 	}
 
+	// 4. Get all roles for role assignment dropdown
+	allRoles, _, _ := h.uc.Authz.Role().Gets(ctx.Request.Context(), &domain.RolesFilter{
+		Pagination: &domain.Pagination{Limit: 100, Offset: 0},
+	})
+
 	h.servePage(ctx, "users/detail.html", "User Details", "users", map[string]any{
 		"User":     user,
 		"Sessions": sessions,
 		"Role":     role,
+		"AllRoles": allRoles,
 	})
 }
 
@@ -1247,9 +1267,15 @@ func (h *Handler) UpdateUserPost(ctx *gin.Context) {
 
 	email := ctx.PostForm("email")
 	phone := ctx.PostForm("phone")
+	username := ctx.PostForm("username")
 
 	user.Email = &email
 	user.Phone = &phone
+	if username != "" {
+		user.Username = &username
+	} else {
+		user.Username = nil
+	}
 
 	err = h.uc.User.Client().Update(ctx.Request.Context(), user)
 	if err != nil {
@@ -1259,6 +1285,48 @@ func (h *Handler) UpdateUserPost(ctx *gin.Context) {
 	}
 
 	ctx.Redirect(http.StatusFound, "/admin/users/"+idStr+"?success=User+Updated")
+}
+
+func (h *Handler) ChangeUserRole(ctx *gin.Context) {
+	idStr := ctx.Param("id")
+	uid, err := uuid.Parse(idStr)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Invalid user ID"})
+		return
+	}
+
+	var req struct {
+		RoleID *string `json:"role_id"`
+	}
+	if err := ctx.BindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Invalid request"})
+		return
+	}
+
+	user, err := h.uc.User.Client().Get(ctx.Request.Context(), &domain.UserFilter{ID: &uid})
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"success": false, "message": "User not found"})
+		return
+	}
+
+	if req.RoleID != nil && *req.RoleID != "" {
+		roleUID, err := uuid.Parse(*req.RoleID)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Invalid role ID"})
+			return
+		}
+		user.RoleID = &roleUID
+	} else {
+		user.RoleID = nil
+	}
+
+	if err := h.uc.User.Client().Update(ctx.Request.Context(), user); err != nil {
+		h.l.Errorw("ChangeUserRole - failed", "error", err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": "Failed to update role"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"success": true})
 }
 
 func (h *Handler) BulkUsersAction(ctx *gin.Context) {

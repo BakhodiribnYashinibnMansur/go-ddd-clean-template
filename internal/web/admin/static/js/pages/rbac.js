@@ -37,28 +37,34 @@ function initRoleForm() {
                 window.location.href = '/admin/rbac/roles';
             } else {
                 const err = await response.json();
-                alert('Error: ' + (err.message || 'Failed to save role'));
+                showToast(err.message || 'Failed to save role', 'error');
             }
         } catch (error) {
             console.error(error);
-            alert('Unexpected error occurred');
+            showToast('Unexpected error occurred', 'error');
         }
     });
 }
 
 // Exposed to global scope for button onclick attributes
 window.deleteRole = async (id) => {
-    if (!confirm('Are you sure you want to delete this role? This might affect assigned users.')) return;
+    const confirmed = await showConfirm({
+        title: 'Delete Role',
+        message: 'Are you sure you want to delete this role? This might affect assigned users.',
+        confirmText: 'Delete',
+        type: 'danger'
+    });
+    if (!confirmed) return;
 
     try {
         const response = await fetch(`/admin/rbac/roles/${id}`, { method: 'DELETE' });
         if (response.ok) {
             window.location.reload();
         } else {
-            alert('Failed to delete role');
+            showToast('Failed to delete role', 'error');
         }
     } catch (e) {
         console.error(e);
-        alert('Error deleting role');
+        showToast('Error deleting role', 'error');
     }
 };

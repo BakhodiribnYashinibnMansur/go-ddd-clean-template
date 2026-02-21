@@ -42,6 +42,34 @@
         </div>
     </div>
 
+    <!-- Filters -->
+    <div class="card" style="margin-bottom: 24px; padding: 20px;">
+        <div style="display: flex; gap: 16px; align-items: end;">
+            <div style="flex: 1;">
+                <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Search</label>
+                <input type="text" id="searchInput" class="form-input" placeholder="Search by name or target..." oninput="filterTable()">
+            </div>
+            <div>
+                <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Scope</label>
+                <select id="scopeFilter" class="form-input" style="width: 160px;" onchange="filterTable()">
+                    <option value="">All Scopes</option>
+                    <option value="GLOBAL">GLOBAL</option>
+                    <option value="ENDPOINT">ENDPOINT</option>
+                    <option value="USER">USER</option>
+                    <option value="IP">IP</option>
+                </select>
+            </div>
+            <div>
+                <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Status</label>
+                <select id="statusFilter" class="form-input" style="width: 160px;" onchange="filterTable()">
+                    <option value="">All</option>
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
     <!-- Table -->
     <div class="card" style="padding: 0; overflow: hidden;">
         <div class="table-container" style="border: none; background: transparent;">
@@ -83,10 +111,7 @@
                     </tr>
                     {{ else }}
                     <tr>
-                        <td colspan="8" style="text-align: center; padding: 48px; color: var(--text-muted);">
-                            <i class="material-symbols-outlined" style="font-size: 48px; display: block; margin-bottom: 8px;">speed</i>
-                            No rate limit rules defined.
-                        </td>
+                        <td colspan="8">{{ template "empty_state" dict "Icon" "speed" "Title" "No Rate Limits" "Message" "No rate limit rules have been defined yet." }}</td>
                     </tr>
                     {{ end }}
                 </tbody>
@@ -100,7 +125,7 @@
     <div class="modal-content" style="max-width: 560px;">
         <div class="modal-header">
             <h3>Add Rate Limit Rule</h3>
-            <button class="btn-icon" onclick="closeModal('createModal')" style="background: none; border: none; cursor: pointer; color: var(--text-muted);">
+            <button class="modal-close-btn" onclick="closeModal('createModal')">
                 <i class="material-symbols-outlined">close</i>
             </button>
         </div>
@@ -154,6 +179,24 @@
 
 {{ define "scripts" }}
 <script>
+function filterTable() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const scope = document.getElementById('scopeFilter').value;
+    const status = document.getElementById('statusFilter').value;
+    const rows = document.querySelectorAll('.data-table tbody tr');
+    rows.forEach(row => {
+        if (row.querySelector('td[colspan]')) return;
+        const name = (row.cells[0]?.textContent || '').toLowerCase();
+        const target = (row.cells[2]?.textContent || '').toLowerCase();
+        const rowScope = (row.cells[1]?.textContent || '').trim();
+        const rowStatus = (row.cells[5]?.textContent || '').trim();
+        const matchSearch = name.includes(search) || target.includes(search);
+        const matchScope = !scope || rowScope === scope;
+        const matchStatus = !status || rowStatus === status;
+        row.style.display = (matchSearch && matchScope && matchStatus) ? '' : 'none';
+    });
+}
+
 function openCreateModal() {
     document.getElementById('rlName').value = '';
     document.getElementById('rlTarget').value = '';
@@ -170,13 +213,13 @@ async function submitRule() {
         action: document.getElementById('rlAction').value,
         priority: parseInt(document.getElementById('rlPriority').value) || 100,
     };
-    if (!body.name || !body.target) { alert('Name and Target are required'); return; }
+    if (!body.name || !body.target) { showToast('Name and Target are required', 'warning'); return; }
     try {
         const res = await fetch('/admin/rate-limits', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
         const data = await res.json();
         if (data.success) window.location.reload();
-        else alert(data.message);
-    } catch (e) { alert('Error: ' + e.message); }
+        else showToast(data.message || 'Failed', 'error');
+    } catch (e) { showToast('Error: ' + e.message, 'error'); }
 }
 
 async function toggleRule(id) {
@@ -184,18 +227,19 @@ async function toggleRule(id) {
         const res = await fetch('/admin/rate-limits/' + id + '/toggle', { method: 'POST' });
         const data = await res.json();
         if (data.success) window.location.reload();
-        else alert(data.message);
-    } catch (e) { alert('Error: ' + e.message); }
+        else showToast(data.message || 'Failed', 'error');
+    } catch (e) { showToast('Error: ' + e.message, 'error'); }
 }
 
 async function deleteRule(id, name) {
-    if (!confirm('Delete rate limit rule "' + name + '"?')) return;
+    const confirmed = await showConfirm({ title: 'Delete Rate Limit Rule', message: 'Delete rate limit rule "' + name + '"?', confirmText: 'Delete', type: 'danger' });
+    if (!confirmed) return;
     try {
         const res = await fetch('/admin/rate-limits/' + id, { method: 'DELETE' });
         const data = await res.json();
         if (data.success) window.location.reload();
-        else alert(data.message);
-    } catch (e) { alert('Error: ' + e.message); }
+        else showToast(data.message || 'Failed', 'error');
+    } catch (e) { showToast('Error: ' + e.message, 'error'); }
 }
 </script>
 {{ end }}

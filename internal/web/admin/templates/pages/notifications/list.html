@@ -117,10 +117,7 @@
                     </tr>
                     {{ else }}
                     <tr>
-                        <td colspan="7" style="text-align: center; padding: 48px; color: var(--text-muted);">
-                            <i class="material-symbols-outlined" style="font-size: 48px; display: block; margin-bottom: 8px;">notifications_off</i>
-                            No notifications found.
-                        </td>
+                        <td colspan="7">{{ template "empty_state" dict "Icon" "notifications_off" "Title" "No Notifications" "Message" "There are no notifications to display." }}</td>
                     </tr>
                     {{ end }}
                 </tbody>
@@ -134,7 +131,7 @@
     <div class="modal-content" style="max-width: 560px;">
         <div class="modal-header">
             <h3>Send Notification</h3>
-            <button class="btn-icon" onclick="closeModal('createModal')" style="background: none; border: none; cursor: pointer; color: var(--text-muted);">
+            <button class="modal-close-btn" onclick="closeModal('createModal')">
                 <i class="material-symbols-outlined">close</i>
             </button>
         </div>
@@ -191,23 +188,24 @@ async function submitNotification() {
         title: document.getElementById('notifTitle').value,
         body: document.getElementById('notifBody').value,
     };
-    if (!body.title || !body.body) { alert('Title and Body are required'); return; }
+    if (!body.title || !body.body) { showToast('Title and Body are required', 'warning'); return; }
     try {
         const res = await fetch('/admin/notifications', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
         const data = await res.json();
         if (data.success) window.location.reload();
-        else alert(data.message);
-    } catch (e) { alert('Error: ' + e.message); }
+        else showToast(data.message || 'Failed', 'error');
+    } catch (e) { showToast('Error: ' + e.message, 'error'); }
 }
 
 async function deleteNotification(id) {
-    if (!confirm('Delete this notification?')) return;
+    const confirmed = await showConfirm({ title: 'Delete Notification', message: 'Delete this notification?', confirmText: 'Delete', type: 'danger' });
+    if (!confirmed) return;
     try {
         const res = await fetch('/admin/notifications/' + id, { method: 'DELETE' });
         const data = await res.json();
         if (data.success) window.location.reload();
-        else alert(data.message);
-    } catch (e) { alert('Error: ' + e.message); }
+        else showToast(data.message || 'Failed', 'error');
+    } catch (e) { showToast('Error: ' + e.message, 'error'); }
 }
 </script>
 {{ end }}

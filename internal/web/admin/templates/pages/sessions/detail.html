@@ -86,19 +86,28 @@
             </div>
 
             <div style="display: flex; flex-direction: column; gap: 16px;">
-                <!-- User ID -->
+                <!-- User -->
                 <div>
                     <label style="display:block; font-size:11px; font-weight:500; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;">User</label>
                     <a href="/admin/users/{{ .Session.UserID }}" style="
-                        display: flex; align-items: center; gap: 8px;
+                        display: flex; align-items: center; gap: 10px;
                         padding: 10px 14px; border-radius: var(--radius-sm);
                         background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle);
-                        color: var(--accent-400); text-decoration: none; font-family: monospace; font-size: 13px;
+                        color: var(--accent-400); text-decoration: none;
                         transition: all 150ms;
                     " onmouseover="this.style.borderColor='var(--accent-500)'"
                        onmouseout="this.style.borderColor='var(--border-subtle)'">
-                        <i class="material-symbols-outlined" style="font-size: 16px;">person</i>
-                        {{ .Session.UserID }}
+                        <div class="user-avatar" style="width: 32px; height: 32px; font-size: 13px;">
+                            {{ if and .SessionUser .SessionUser.Email }}{{ printf "%.1s" (derefString .SessionUser.Email) }}{{ else }}?{{ end }}
+                        </div>
+                        <div>
+                            <div style="font-size: 14px; font-weight: 500;">
+                                {{ if and .SessionUser .SessionUser.Email }}{{ derefString .SessionUser.Email }}{{ else if and .SessionUser .SessionUser.Phone }}{{ derefString .SessionUser.Phone }}{{ else }}Unknown{{ end }}
+                            </div>
+                            <div style="font-family: monospace; font-size: 11px; color: var(--text-muted); margin-top: 2px;">
+                                {{ .Session.UserID }}
+                            </div>
+                        </div>
                     </a>
                 </div>
 

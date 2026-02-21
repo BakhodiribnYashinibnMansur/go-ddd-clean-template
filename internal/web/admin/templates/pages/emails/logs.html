@@ -42,6 +42,26 @@
         </div>
     </div>
 
+    <!-- Filters -->
+    <div class="card" style="margin-bottom: 24px; padding: 20px;">
+        <div style="display: flex; gap: 16px; align-items: end;">
+            <div style="flex: 1;">
+                <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Search</label>
+                <input type="text" id="searchInput" class="form-input" placeholder="Search by recipient or subject..." oninput="filterTable()">
+            </div>
+            <div>
+                <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Status</label>
+                <select id="statusFilter" class="form-input" style="width: 160px;" onchange="filterTable()">
+                    <option value="">All</option>
+                    <option value="DELIVERED">Delivered</option>
+                    <option value="FAILED">Failed</option>
+                    <option value="BOUNCED">Bounced</option>
+                    <option value="SENDING">Sending</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
     <!-- Table -->
     <div class="card" style="padding: 0; overflow: hidden;">
         <div class="table-container" style="border: none; background: transparent;">
@@ -68,10 +88,7 @@
                     </tr>
                     {{ else }}
                     <tr>
-                        <td colspan="5" style="text-align: center; padding: 48px; color: var(--text-muted);">
-                            <i class="material-symbols-outlined" style="font-size: 48px; display: block; margin-bottom: 8px;">inbox</i>
-                            No email logs yet.
-                        </td>
+                        <td colspan="5">{{ template "empty_state" dict "Icon" "inbox" "Title" "No Email Logs" "Message" "No email logs have been recorded yet." }}</td>
                     </tr>
                     {{ end }}
                 </tbody>
@@ -80,4 +97,21 @@
     </div>
 </div>
 {{ end }}
-{{ define "scripts" }}{{ end }}
+{{ define "scripts" }}
+<script>
+function filterTable() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const status = document.getElementById('statusFilter').value;
+    const rows = document.querySelectorAll('.data-table tbody tr');
+    rows.forEach(row => {
+        if (row.querySelector('td[colspan]')) return;
+        const to = (row.cells[0]?.textContent || '').toLowerCase();
+        const subject = (row.cells[1]?.textContent || '').toLowerCase();
+        const rowStatus = (row.cells[3]?.textContent || '').trim();
+        const matchSearch = to.includes(search) || subject.includes(search);
+        const matchStatus = !status || rowStatus === status;
+        row.style.display = (matchSearch && matchStatus) ? '' : 'none';
+    });
+}
+</script>
+{{ end }}

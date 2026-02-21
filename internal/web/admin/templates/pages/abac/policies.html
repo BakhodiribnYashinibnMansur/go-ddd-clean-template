@@ -43,7 +43,6 @@
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th>ID</th>
                         <th>Permission</th>
                         <th>Effect</th>
                         <th>Priority</th>
@@ -54,7 +53,6 @@
                 <tbody>
                     {{ range .Policies }}
                     <tr>
-                        <td><code style="font-size: 12px; color: var(--text-muted);">{{ shortUUID .ID }}</code></td>
                         <td><code style="font-size: 12px; color: var(--accent-400);">{{ shortUUID .PermissionID }}</code></td>
                         <td>
                             {{ if eq (print .Effect) "ALLOW" }}
@@ -82,7 +80,7 @@
                     </tr>
                     {{ else }}
                     <tr>
-                        <td colspan="6" style="text-align: center; padding: 48px; color: var(--text-muted);">No policies found.</td>
+                        <td colspan="5">{{ template "empty_state" dict "Icon" "policy" "Title" "No Policies Found" "Message" "Create a policy to define access rules." }}</td>
                     </tr>
                     {{ end }}
                 </tbody>
@@ -98,13 +96,14 @@
 {{ define "scripts" }}
 <script>
 async function deletePolicy(id) {
-    if (!confirm('Delete this policy?')) return;
+    const confirmed = await showConfirm({ title: 'Delete Policy', message: 'Delete this policy?', confirmText: 'Delete', type: 'danger' });
+    if (!confirmed) return;
     try {
         const res = await fetch('/admin/abac/policies/' + id, { method: 'DELETE' });
         const data = await res.json();
         if (data.success) window.location.reload();
-        else alert(data.message);
-    } catch (e) { alert('Error: ' + e.message); }
+        else showToast(data.message, 'error');
+    } catch (e) { showToast('Error: ' + e.message, 'error'); }
 }
 </script>
 {{ end }}

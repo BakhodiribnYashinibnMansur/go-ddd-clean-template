@@ -70,7 +70,7 @@
             </table>
         </div>
         {{ else }}
-        <p style="color: var(--text-muted); font-size: 13px; padding: 16px 0;">No {{ $type }} relations defined.</p>
+        {{ template "empty_state" dict "Icon" "account_tree" "Title" "No Relations" "Message" "No relations have been defined for this type." }}
         {{ end }}
     </div>
     {{ end }}
@@ -81,7 +81,7 @@
     <div class="modal-content" style="max-width: 480px;">
         <div class="modal-header">
             <h3 id="relModalTitle">Add Relation</h3>
-            <button class="btn-icon" onclick="closeModal('relationModal')" style="background: none; border: none; cursor: pointer; color: var(--text-muted);">
+            <button class="modal-close-btn" onclick="closeModal('relationModal')">
                 <i class="material-symbols-outlined">close</i>
             </button>
         </div>
@@ -133,7 +133,7 @@ async function submitRelation() {
     const name = document.getElementById('relName').value;
     const type = document.getElementById('relType').value;
 
-    if (!name) { alert('Name is required'); return; }
+    if (!name) { showToast('Name is required', 'warning'); return; }
 
     const url = editId ? '/admin/relations/' + editId : '/admin/relations';
     const method = editId ? 'PUT' : 'POST';
@@ -143,18 +143,19 @@ async function submitRelation() {
         const res = await fetch(url, { method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
         const data = await res.json();
         if (data.success) window.location.reload();
-        else alert(data.message);
-    } catch (e) { alert('Error: ' + e.message); }
+        else showToast(data.message, 'error');
+    } catch (e) { showToast('Error: ' + e.message, 'error'); }
 }
 
 async function deleteRelation(id, name) {
-    if (!confirm('Delete relation "' + name + '"?')) return;
+    const confirmed = await showConfirm({ title: 'Delete Relation', message: 'Delete relation "' + name + '"?', confirmText: 'Delete', type: 'danger' });
+    if (!confirmed) return;
     try {
         const res = await fetch('/admin/relations/' + id, { method: 'DELETE' });
         const data = await res.json();
         if (data.success) window.location.reload();
-        else alert(data.message);
-    } catch (e) { alert('Error: ' + e.message); }
+        else showToast(data.message, 'error');
+    } catch (e) { showToast('Error: ' + e.message, 'error'); }
 }
 </script>
 {{ end }}

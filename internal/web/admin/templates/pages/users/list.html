@@ -189,9 +189,7 @@
                     </tr>
                     {{ else }}
                     <tr>
-                        <td colspan="7" style="text-align: center; padding: 48px; color: var(--text-muted);">
-                            No users found.
-                        </td>
+                        <td colspan="7">{{ template "empty_state" dict "Icon" "group" "Title" "No Users Found" "Message" "No users match your current filters." }}</td>
                     </tr>
                     {{ end }}
                 </tbody>

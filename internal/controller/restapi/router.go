@@ -67,6 +67,14 @@ func NewRouter(handler *gin.Engine, cfg *config.Config, uc *usecase.UseCase, l l
 	// Static assets for the Web Administration panel.
 	handler.Static("/static", "./internal/web/admin/static")
 
+	// Silence browser auto-requests (no auth needed).
+	handler.GET("/robots.txt", func(c *gin.Context) {
+		c.String(200, "User-agent: *\nDisallow: /")
+	})
+	handler.GET("/favicon.ico", func(c *gin.Context) {
+		c.Status(204)
+	})
+
 	// Audit & History: Track API interactions asynchronously.
 	auditM := middleware.NewAuditMiddleware(uc, l)
 	if cfg.Middleware.AuditHistory {

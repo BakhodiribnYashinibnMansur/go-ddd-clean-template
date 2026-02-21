@@ -64,11 +64,14 @@ async function handleUserAction(userId, action) {
     if (!userId) return;
 
     const actionText = action === 'block' ? 'Block' : 'Unblock';
-    const confirmMessage = `Are you sure you want to ${actionText} user #${userId}?`;
+    const confirmed = await showConfirm({
+        title: actionText + ' User',
+        message: `Are you sure you want to ${actionText.toLowerCase()} this user?`,
+        confirmText: actionText,
+        type: action === 'block' ? 'danger' : 'info'
+    });
 
-    if (!confirm(confirmMessage)) {
-        return;
-    }
+    if (!confirmed) return;
 
     try {
         const response = await fetch(`/admin/users/${userId}/${action}`, {
@@ -82,11 +85,11 @@ async function handleUserAction(userId, action) {
             window.location.reload();
         } else {
             const data = await response.json();
-            alert(`Error: ${data.message || 'Action failed'}`);
+            showToast(data.message || 'Action failed', 'error');
         }
     } catch (error) {
         console.error('Error performing user action:', error);
-        alert('An unexpected error occurred.');
+        showToast('An unexpected error occurred.', 'error');
     }
 }
 
@@ -96,9 +99,14 @@ async function bulkAction(action) {
 
     const ids = Array.from(checked).map(cb => cb.value);
 
-    if (!confirm(`Are you sure you want to ${action} ${ids.length} users?`)) {
-        return;
-    }
+    const confirmed = await showConfirm({
+        title: 'Bulk ' + action,
+        message: `Are you sure you want to ${action} ${ids.length} users?`,
+        confirmText: action.charAt(0).toUpperCase() + action.slice(1),
+        type: 'danger'
+    });
+
+    if (!confirmed) return;
 
     try {
         const response = await fetch('/admin/users/bulk-action', {
@@ -112,11 +120,11 @@ async function bulkAction(action) {
         if (response.ok) {
             window.location.reload();
         } else {
-            alert('Bulk action failed');
+            showToast('Bulk action failed', 'error');
         }
     } catch (e) {
         console.error(e);
-        alert('Error performing bulk action');
+        showToast('Error performing bulk action', 'error');
     }
 }
 
@@ -124,7 +132,13 @@ async function bulkAction(action) {
 window.bulkAction = bulkAction;
 
 async function deleteUser(id) {
-    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) return;
+    const confirmed = await showConfirm({
+        title: 'Delete User',
+        message: 'Are you sure you want to delete this user? This action cannot be undone.',
+        confirmText: 'Delete',
+        type: 'danger'
+    });
+    if (!confirmed) return;
 
     try {
         const response = await fetch('/admin/users/bulk-action', {
@@ -136,13 +150,13 @@ async function deleteUser(id) {
         });
 
         if (response.ok) {
-            window.location.reload();
+            window.location.href = '/admin/users';
         } else {
-            alert('Delete failed');
+            showToast('Delete failed', 'error');
         }
     } catch (e) {
         console.error(e);
-        alert('Error performing delete');
+        showToast('Error performing delete', 'error');
     }
 }
 window.deleteUser = deleteUser;

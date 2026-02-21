@@ -28,6 +28,34 @@
         </div>
     </div>
 
+    <!-- Filters -->
+    <div class="card" style="margin-bottom: 24px; padding: 20px;">
+        <div style="display: flex; gap: 16px; align-items: end;">
+            <div style="flex: 1;">
+                <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Search</label>
+                <input type="text" id="searchInput" class="form-input" placeholder="Search by resource..." oninput="filterTable()">
+            </div>
+            <div>
+                <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Format</label>
+                <select id="formatFilter" class="form-input" style="width: 140px;" onchange="filterTable()">
+                    <option value="">All</option>
+                    <option value="JSON">JSON</option>
+                    <option value="CSV">CSV</option>
+                    <option value="XML">XML</option>
+                </select>
+            </div>
+            <div>
+                <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Status</label>
+                <select id="statusFilter" class="form-input" style="width: 160px;" onchange="filterTable()">
+                    <option value="">All</option>
+                    <option value="COMPLETED">Completed</option>
+                    <option value="PROCESSING">Processing</option>
+                    <option value="FAILED">Failed</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
     <!-- Exports Table -->
     <div class="card" style="margin-bottom: 24px;">
         <h3 style="margin-bottom: 16px; font-size: 16px;">Recent Exports</h3>
@@ -66,10 +94,7 @@
                     </tr>
                     {{ else }}
                     <tr>
-                        <td colspan="6" style="text-align: center; padding: 48px; color: var(--text-muted);">
-                            <i class="material-symbols-outlined" style="font-size: 48px; display: block; margin-bottom: 8px;">file_download</i>
-                            No exports yet. Click "New Export" to export data.
-                        </td>
+                        <td colspan="6">{{ template "empty_state" dict "Icon" "file_download" "Title" "No Exports" "Message" "No exports yet. Click \"New Export\" to export data." }}</td>
                     </tr>
                     {{ end }}
                 </tbody>
@@ -83,7 +108,7 @@
     <div class="modal-content" style="max-width: 480px;">
         <div class="modal-header">
             <h3>Create Export</h3>
-            <button class="btn-icon" onclick="closeModal('exportModal')" style="background: none; border: none; cursor: pointer; color: var(--text-muted);">
+            <button class="modal-close-btn" onclick="closeModal('exportModal')">
                 <i class="material-symbols-outlined">close</i>
             </button>
         </div>
@@ -125,6 +150,23 @@
 
 {{ define "scripts" }}
 <script>
+function filterTable() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const format = document.getElementById('formatFilter').value;
+    const status = document.getElementById('statusFilter').value;
+    const rows = document.querySelectorAll('.data-table tbody tr');
+    rows.forEach(row => {
+        if (row.querySelector('td[colspan]')) return;
+        const resource = (row.cells[0]?.textContent || '').toLowerCase();
+        const rowFormat = (row.cells[1]?.textContent || '').trim();
+        const rowStatus = (row.cells[2]?.textContent || '').trim();
+        const matchSearch = resource.includes(search);
+        const matchFormat = !format || rowFormat === format;
+        const matchStatus = !status || rowStatus === status;
+        row.style.display = (matchSearch && matchFormat && matchStatus) ? '' : 'none';
+    });
+}
+
 function openCreateModal() {
     openModal('exportModal');
 }
@@ -140,18 +182,19 @@ async function submitExport() {
         const res = await fetch('/admin/data-export', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
         const data = await res.json();
         if (data.success) window.location.reload();
-        else alert(data.message);
-    } catch (e) { alert('Error: ' + e.message); }
+        else showToast(data.message || 'Failed', 'error');
+    } catch (e) { showToast('Error: ' + e.message, 'error'); }
 }
 
 async function deleteExport(id) {
-    if (!confirm('Delete this export?')) return;
+    const confirmed = await showConfirm({ title: 'Delete Export', message: 'Delete this export?', confirmText: 'Delete', type: 'danger' });
+    if (!confirmed) return;
     try {
         const res = await fetch('/admin/data-export/' + id, { method: 'DELETE' });
         const data = await res.json();
         if (data.success) window.location.reload();
-        else alert(data.message);
-    } catch (e) { alert('Error: ' + e.message); }
+        else showToast(data.message || 'Failed', 'error');
+    } catch (e) { showToast('Error: ' + e.message, 'error'); }
 }
 </script>
 {{ end }}

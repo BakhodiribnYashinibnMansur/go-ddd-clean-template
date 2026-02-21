@@ -113,7 +113,7 @@
                 </tr>
                 {{ else }}
                 <tr>
-                    <td colspan="7" class="text-center py-4 text-muted">No errors found matching criteria</td>
+                    <td colspan="7">{{ template "empty_state" dict "Icon" "bug_report" "Title" "No Errors Found" "Message" "No errors match your current criteria." }}</td>
                 </tr>
                 {{ end }}
             </tbody>
@@ -195,13 +195,14 @@
     }
 
     async function resolveError(id) {
-        if (!confirm('Mark this error as resolved?')) return;
+        const confirmed = await showConfirm({ title: 'Resolve Error', message: 'Mark this error as resolved?', confirmText: 'Resolve', type: 'danger' });
+        if (!confirmed) return;
         try {
             const res = await fetch('/admin/system-errors/' + id + '/resolve', { method: 'POST' });
             const data = await res.json();
             if (data.success) window.location.reload();
-            else alert(data.message);
-        } catch (e) { alert('Error: ' + e.message); }
+            else showToast(data.message || 'Failed', 'error');
+        } catch (e) { showToast('Error: ' + e.message, 'error'); }
     }
 
     function applyFilter(key, value) {

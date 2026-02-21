@@ -43,6 +43,25 @@
         </div>
     </div>
 
+    <!-- Filters -->
+    <div class="card" style="margin-bottom: 24px; padding: 20px;">
+        <div style="display: flex; gap: 16px; align-items: end;">
+            <div style="flex: 1;">
+                <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Search</label>
+                <input type="text" id="searchInput" class="form-input" placeholder="Search by filename..." oninput="filterMedia()">
+            </div>
+            <div>
+                <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Type</label>
+                <select id="typeFilter" class="form-input" style="width: 160px;" onchange="filterMedia()">
+                    <option value="">All Types</option>
+                    <option value="image">Images</option>
+                    <option value="document">Documents</option>
+                    <option value="video">Videos</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
     <!-- File Grid -->
     <div class="card">
         {{ if .Files }}
@@ -72,10 +91,7 @@
             {{ end }}
         </div>
         {{ else }}
-        <div style="text-align: center; padding: 48px; color: var(--text-muted);">
-            <i class="material-symbols-outlined" style="font-size: 48px; display: block; margin-bottom: 8px;">cloud_upload</i>
-            No files uploaded yet. Click "Upload File" to get started.
-        </div>
+        {{ template "empty_state" dict "Icon" "cloud_upload" "Title" "No Files" "Message" "No files uploaded yet. Click \"Upload File\" to get started." }}
         {{ end }}
     </div>
 </div>
@@ -83,6 +99,22 @@
 
 {{ define "scripts" }}
 <script>
+function filterMedia() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const type = document.getElementById('typeFilter').value;
+    const cards = document.querySelectorAll('.card:last-of-type > div > div[style*="border"]');
+    cards.forEach(card => {
+        const name = (card.querySelector('p[style*="font-weight"]')?.textContent || '').toLowerCase();
+        const mime = (card.querySelector('p[style*="font-size: 11px"]')?.textContent || '').toLowerCase();
+        const matchSearch = name.includes(search);
+        let matchType = true;
+        if (type === 'image') matchType = mime.includes('image');
+        else if (type === 'document') matchType = mime.includes('pdf') || mime.includes('doc') || mime.includes('text');
+        else if (type === 'video') matchType = mime.includes('video');
+        card.style.display = (matchSearch && matchType) ? '' : 'none';
+    });
+}
+
 async function uploadFile(input) {
     const files = input.files;
     if (!files.length) return;
@@ -94,19 +126,20 @@ async function uploadFile(input) {
         const res = await fetch('/admin/media/upload', { method: 'POST', body: formData });
         const data = await res.json();
         if (data.success) window.location.reload();
-        else alert(data.message);
-    } catch (e) { alert('Error: ' + e.message); }
+        else showToast(data.message, 'error');
+    } catch (e) { showToast('Error: ' + e.message, 'error'); }
     input.value = '';
 }
 
 async function deleteMedia(id, name) {
-    if (!confirm('Delete "' + name + '"?')) return;
+    const confirmed = await showConfirm({ title: 'Delete File', message: 'Delete "' + name + '"?', confirmText: 'Delete', type: 'danger' });
+    if (!confirmed) return;
     try {
         const res = await fetch('/admin/media/' + id, { method: 'DELETE' });
         const data = await res.json();
         if (data.success) window.location.reload();
-        else alert(data.message);
-    } catch (e) { alert('Error: ' + e.message); }
+        else showToast(data.message, 'error');
+    } catch (e) { showToast('Error: ' + e.message, 'error'); }
 }
 </script>
 {{ end }}

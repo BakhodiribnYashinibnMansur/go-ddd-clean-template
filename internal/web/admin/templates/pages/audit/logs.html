@@ -113,7 +113,7 @@
                 </tr>
                 {{ else }}
                 <tr>
-                    <td colspan="6" class="text-center py-4 text-muted">No logs found</td>
+                    <td colspan="6">{{ template "empty_state" dict "Icon" "receipt_long" "Title" "No Logs Found" "Message" "No audit logs match your current filters." }}</td>
                 </tr>
                 {{ end }}
             </tbody>

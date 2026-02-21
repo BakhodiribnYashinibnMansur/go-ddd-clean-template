@@ -30,11 +30,14 @@ async function handleUserAction(userId, action) {
     if (!userId) return;
 
     const actionText = action === 'block' ? 'Block' : 'Unblock';
-    const confirmMessage = `Are you sure you want to ${actionText} user #${userId}?`;
+    const confirmed = await showConfirm({
+        title: actionText + ' User',
+        message: `Are you sure you want to ${actionText.toLowerCase()} this user?`,
+        confirmText: actionText,
+        type: action === 'block' ? 'danger' : 'info'
+    });
 
-    if (!confirm(confirmMessage)) {
-        return;
-    }
+    if (!confirmed) return;
 
     try {
         const response = await fetch(`/admin/users/${userId}/${action}`, {
@@ -48,10 +51,10 @@ async function handleUserAction(userId, action) {
             window.location.reload();
         } else {
             const data = await response.json();
-            alert(`Error: ${data.message || 'Action failed'}`);
+            showToast(data.message || 'Action failed', 'error');
         }
     } catch (error) {
         console.error('Error performing user action:', error);
-        alert('An unexpected error occurred.');
+        showToast('An unexpected error occurred.', 'error');
     }
 }

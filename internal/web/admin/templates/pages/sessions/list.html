@@ -29,7 +29,6 @@
                 <thead>
                     <tr>
                         <th style="width: 50px;">#</th>
-                        <th>ID</th>
                         <th>
                             <a href="?sort_by=user_id&sort_order={{ if eq .Pagination.SortOrder " ASC" }}DESC{{ else
                                 }}ASC{{ end }}" class="sort-link"
@@ -112,13 +111,6 @@
                     <tr>
                         <td style="text-align: center; color: var(--text-muted); font-weight: 600;">
                             {{ add (add $.Pagination.Offset $index) 1 }}
-                        </td>
-                        <td>
-                            <a href="/admin/sessions/{{ $session.ID }}"
-                                style="color: var(--primary-400); text-decoration: none; font-family: monospace; display: block; max-width: 100px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
-                                title="{{ $session.ID }}">
-                                {{ $session.ID }}
-                            </a>
                         </td>
                         <td>
                             <a href="/admin/users/{{ $session.UserID }}"

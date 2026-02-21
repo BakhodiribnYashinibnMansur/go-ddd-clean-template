@@ -69,12 +69,12 @@
 
                 {{ if not .IsNew }}
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <input type="checkbox" id="polActive" {{ if .Policy.Active }}checked{{ end }}>
+                    <input type="checkbox" id="polActive" class="form-checkbox" {{ if .Policy.Active }}checked{{ end }}>
                     <label for="polActive" style="font-size: 13px;">Active</label>
                 </div>
                 {{ else }}
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <input type="checkbox" id="polActive" checked>
+                    <input type="checkbox" id="polActive" class="form-checkbox" checked>
                     <label for="polActive" style="font-size: 13px;">Active</label>
                 </div>
                 {{ end }}
@@ -150,14 +150,14 @@ async function submitPolicy() {
     const active = document.getElementById('polActive').checked;
     const conditionsStr = document.getElementById('polConditions').value.trim();
 
-    if (!permissionId) { alert('Please select a permission'); return; }
+    if (!permissionId) { showToast('Please select a permission', 'warning'); return; }
 
     let conditions = {};
     if (conditionsStr) {
         try {
             conditions = JSON.parse(conditionsStr);
         } catch (e) {
-            alert('Invalid JSON in conditions: ' + e.message);
+            showToast('Invalid JSON in conditions: ' + e.message, 'error');
             return;
         }
     }
@@ -183,9 +183,9 @@ async function submitPolicy() {
                 window.location.reload();
             }
         } else {
-            alert(data.message);
+            showToast(data.message, 'error');
         }
-    } catch (e) { alert('Error: ' + e.message); }
+    } catch (e) { showToast('Error: ' + e.message, 'error'); }
 }
 
 async function toggleActive() {
@@ -193,18 +193,19 @@ async function toggleActive() {
         const res = await fetch('/admin/abac/policies/' + policyId + '/toggle', { method: 'POST' });
         const data = await res.json();
         if (data.success) window.location.reload();
-        else alert(data.message);
-    } catch (e) { alert('Error: ' + e.message); }
+        else showToast(data.message, 'error');
+    } catch (e) { showToast('Error: ' + e.message, 'error'); }
 }
 
 async function deletePolicy() {
-    if (!confirm('Delete this policy?')) return;
+    const confirmed = await showConfirm({ title: 'Delete Policy', message: 'Delete this policy?', confirmText: 'Delete', type: 'danger' });
+    if (!confirmed) return;
     try {
         const res = await fetch('/admin/abac/policies/' + policyId, { method: 'DELETE' });
         const data = await res.json();
         if (data.success) window.location.href = '/admin/abac/policies';
-        else alert(data.message);
-    } catch (e) { alert('Error: ' + e.message); }
+        else showToast(data.message, 'error');
+    } catch (e) { showToast('Error: ' + e.message, 'error'); }
 }
 </script>
 {{ end }}

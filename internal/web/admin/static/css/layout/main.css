@@ -1249,12 +1249,46 @@ textarea {
 }
 
 .form-control:focus,
-input:focus,
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="tel"]:focus,
+input[type="number"]:focus,
+input[type="search"]:focus,
+input[type="url"]:focus,
 select:focus,
 textarea:focus {
     border-color: var(--accent-500);
     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12), 0 0 20px rgba(99, 102, 241, 0.06);
-    background: rgba(14, 20, 40, 0.9);
+    background: var(--bg-input);
+    color: var(--text-primary);
+}
+
+/* Prevent browser autofill from turning inputs white */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0 1000px #0a0e1e inset !important;
+    -webkit-text-fill-color: #f1f5f9 !important;
+    box-shadow: 0 0 0 1000px #0a0e1e inset !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    transition: background-color 5000s ease-in-out 0s !important;
+    caret-color: #f1f5f9;
+}
+
+input:-webkit-autofill::first-line {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 13px;
+    color: #f1f5f9;
+}
+
+/* Selection highlight */
+::selection {
+    background: rgba(99, 102, 241, 0.3);
+    color: var(--text-primary);
 }
 
 .form-control:disabled,
@@ -1712,29 +1746,328 @@ select {
 }
 
 /* ==========================================================================
-   Toast / Notifications (future use)
+   Modal System
    ========================================================================== */
-.toast {
+.modal {
+    display: none;
     position: fixed;
-    bottom: 24px;
+    inset: 0;
+    z-index: 10000;
+    padding: 24px;
+}
+
+.modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(6px);
+    animation: modalBackdropIn 200ms ease;
+}
+
+@keyframes modalBackdropIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal-content {
+    position: relative;
+    z-index: 1;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-lg);
+    width: 100%;
+    max-width: 480px;
+    box-shadow:
+        0 24px 80px rgba(0, 0, 0, 0.6),
+        0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+        0 0 60px rgba(99, 102, 241, 0.06);
+    animation: modalContentIn 250ms var(--ease-spring);
+    overflow: hidden;
+}
+
+@keyframes modalContentIn {
+    from { opacity: 0; transform: scale(0.92) translateY(12px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.modal-content.modal-closing {
+    animation: modalContentOut 180ms ease forwards;
+}
+
+@keyframes modalContentOut {
+    from { opacity: 1; transform: scale(1) translateY(0); }
+    to { opacity: 0; transform: scale(0.95) translateY(8px); }
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px 0;
+}
+
+.modal-header h3 {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.modal-close-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 150ms;
+}
+
+.modal-close-btn:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-primary);
+}
+
+.modal-body {
+    padding: 20px 24px;
+}
+
+.modal-footer {
+    padding: 16px 24px 20px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+/* Confirm/Alert Dialog (global) */
+#_globalModal {
+    z-index: 10001;
+}
+
+#_globalModal .gm-dialog {
+    position: relative;
+    z-index: 1;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    max-width: 420px;
+    width: 100%;
+    box-shadow:
+        0 24px 80px rgba(0, 0, 0, 0.6),
+        0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+        0 0 60px rgba(99, 102, 241, 0.06);
+    animation: modalContentIn 250ms var(--ease-spring);
+}
+
+#_globalModal .gm-dialog.modal-closing {
+    animation: modalContentOut 180ms ease forwards;
+}
+
+#_globalModal .gm-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 18px;
+}
+
+#_globalModal .gm-icon.danger {
+    background: rgba(244, 63, 94, 0.12);
+    color: var(--rose);
+}
+
+#_globalModal .gm-icon.warning {
+    background: rgba(245, 158, 11, 0.12);
+    color: var(--amber);
+}
+
+#_globalModal .gm-icon.info {
+    background: rgba(99, 102, 241, 0.12);
+    color: var(--accent-400);
+}
+
+#_globalModal .gm-icon.success {
+    background: rgba(16, 185, 129, 0.12);
+    color: var(--emerald);
+}
+
+#_globalModal .gm-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 8px;
+}
+
+#_globalModal .gm-message {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin: 0 0 24px;
+}
+
+#_globalModal .gm-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+#_globalModal .gm-btn {
+    padding: 9px 20px;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 150ms;
+    font-family: inherit;
+    border: none;
+}
+
+#_globalModal .gm-btn:active {
+    transform: scale(0.97);
+}
+
+#_globalModal .gm-btn-cancel {
+    background: transparent;
+    border: 1px solid var(--border-default);
+    color: var(--text-secondary);
+}
+
+#_globalModal .gm-btn-cancel:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+    border-color: var(--border-hover);
+}
+
+#_globalModal .gm-btn-danger {
+    background: var(--rose);
+    color: white;
+    box-shadow: 0 0 20px rgba(244, 63, 94, 0.25);
+}
+
+#_globalModal .gm-btn-danger:hover {
+    background: #e11d48;
+    box-shadow: 0 0 28px rgba(244, 63, 94, 0.35);
+}
+
+#_globalModal .gm-btn-primary {
+    background: var(--accent-600);
+    color: white;
+    box-shadow: 0 0 16px rgba(99, 102, 241, 0.2);
+}
+
+#_globalModal .gm-btn-primary:hover {
+    background: var(--accent-500);
+    box-shadow: 0 0 24px rgba(99, 102, 241, 0.35);
+}
+
+/* ==========================================================================
+   Toast Notifications
+   ========================================================================== */
+.toast-container {
+    position: fixed;
+    top: 24px;
     right: 24px;
+    z-index: 10002;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+}
+
+.toast {
     background: var(--bg-elevated);
     border: 1px solid var(--border-default);
     border-radius: var(--radius-md);
     padding: 14px 20px;
     color: var(--text-primary);
     font-size: 13px;
-    box-shadow: var(--shadow-lg);
-    z-index: 9999;
-    animation: toastIn 0.3s var(--ease-out);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
     display: flex;
     align-items: center;
     gap: 10px;
+    min-width: 280px;
+    max-width: 420px;
+    pointer-events: auto;
+    animation: toastIn 300ms var(--ease-spring);
 }
 
+.toast.toast-out {
+    animation: toastOut 200ms ease forwards;
+}
+
+.toast-icon {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toast-icon i { font-size: 20px; }
+
+.toast.toast-error { border-color: rgba(244, 63, 94, 0.3); }
+.toast.toast-error .toast-icon { color: var(--rose); }
+
+.toast.toast-success { border-color: rgba(16, 185, 129, 0.3); }
+.toast.toast-success .toast-icon { color: var(--emerald); }
+
+.toast.toast-warning { border-color: rgba(245, 158, 11, 0.3); }
+.toast.toast-warning .toast-icon { color: var(--amber); }
+
+.toast.toast-info { border-color: rgba(99, 102, 241, 0.3); }
+.toast.toast-info .toast-icon { color: var(--accent-400); }
+
+.toast-text {
+    flex: 1;
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--text-primary);
+}
+
+.toast-close {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 2px;
+    border-radius: 4px;
+    transition: all 150ms;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toast-close:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-primary);
+}
+
+.toast-close i { font-size: 16px; }
+
 @keyframes toastIn {
-    from { opacity: 0; transform: translateY(16px) scale(0.95); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
+    from { opacity: 0; transform: translateX(24px) scale(0.95); }
+    to { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes toastOut {
+    from { opacity: 1; transform: translateX(0) scale(1); }
+    to { opacity: 0; transform: translateX(24px) scale(0.95); }
 }
 
 /* ==========================================================================

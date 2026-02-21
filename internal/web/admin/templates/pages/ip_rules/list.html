@@ -105,10 +105,7 @@
                     </tr>
                     {{ else }}
                     <tr>
-                        <td colspan="8" style="text-align: center; padding: 48px; color: var(--text-muted);">
-                            <i class="material-symbols-outlined" style="font-size: 48px; display: block; margin-bottom: 8px;">shield</i>
-                            No IP rules defined.
-                        </td>
+                        <td colspan="8">{{ template "empty_state" dict "Icon" "shield" "Title" "No IP Rules" "Message" "No IP rules have been defined yet." }}</td>
                     </tr>
                     {{ end }}
                 </tbody>
@@ -122,7 +119,7 @@
     <div class="modal-content" style="max-width: 520px;">
         <div class="modal-header">
             <h3>Add IP Rule</h3>
-            <button class="btn-icon" onclick="closeModal('createModal')" style="background: none; border: none; cursor: pointer; color: var(--text-muted);">
+            <button class="modal-close-btn" onclick="closeModal('createModal')">
                 <i class="material-symbols-outlined">close</i>
             </button>
         </div>
@@ -185,23 +182,24 @@ async function submitIPRule() {
         reason: document.getElementById('ipReason').value,
         expires_seconds: parseInt(document.getElementById('ipExpiry').value) || 0,
     };
-    if (!body.ip_address) { alert('IP Address is required'); return; }
+    if (!body.ip_address) { showToast('IP Address is required', 'warning'); return; }
     try {
         const res = await fetch('/admin/ip-rules', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
         const data = await res.json();
         if (data.success) window.location.reload();
-        else alert(data.message);
-    } catch (e) { alert('Error: ' + e.message); }
+        else showToast(data.message || 'Failed', 'error');
+    } catch (e) { showToast('Error: ' + e.message, 'error'); }
 }
 
 async function deleteIPRule(id) {
-    if (!confirm('Delete this IP rule?')) return;
+    const confirmed = await showConfirm({ title: 'Delete IP Rule', message: 'Delete this IP rule?', confirmText: 'Delete', type: 'danger' });
+    if (!confirmed) return;
     try {
         const res = await fetch('/admin/ip-rules/' + id, { method: 'DELETE' });
         const data = await res.json();
         if (data.success) window.location.reload();
-        else alert(data.message);
-    } catch (e) { alert('Error: ' + e.message); }
+        else showToast(data.message || 'Failed', 'error');
+    } catch (e) { showToast('Error: ' + e.message, 'error'); }
 }
 </script>
 {{ end }}

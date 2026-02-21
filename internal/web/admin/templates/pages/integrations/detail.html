@@ -140,7 +140,7 @@
     <div class="modal-content" style="max-width: 560px;">
         <div class="modal-header">
             <h3>Edit Integration</h3>
-            <button class="btn-icon" onclick="closeModal('editModal')" style="background: none; border: none; cursor: pointer; color: var(--text-muted);">
+            <button class="modal-close-btn" onclick="closeModal('editModal')">
                 <i class="material-symbols-outlined">close</i>
             </button>
         </div>
@@ -170,7 +170,7 @@
     <div class="modal-content" style="max-width: 480px;">
         <div class="modal-header">
             <h3>Generate API Key</h3>
-            <button class="btn-icon" onclick="closeModal('keyModal')" style="background: none; border: none; cursor: pointer; color: var(--text-muted);">
+            <button class="modal-close-btn" onclick="closeModal('keyModal')">
                 <i class="material-symbols-outlined">close</i>
             </button>
         </div>
@@ -230,14 +230,14 @@ async function submitEdit() {
         description: document.getElementById('editDescription').value,
         base_url: document.getElementById('editBaseURL').value,
     };
-    if (!body.name || !body.base_url) { alert('Name and Base URL are required'); return; }
+    if (!body.name || !body.base_url) { showToast('Name and Base URL are required', 'warning'); return; }
 
     try {
         const res = await fetch('/admin/integrations/' + integrationId, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
         const data = await res.json();
         if (data.success) window.location.reload();
-        else alert(data.message);
-    } catch (e) { alert('Error: ' + e.message); }
+        else showToast(data.message || 'Failed', 'error');
+    } catch (e) { showToast('Error: ' + e.message, 'error'); }
 }
 
 async function toggleActive() {
@@ -245,23 +245,24 @@ async function toggleActive() {
         const res = await fetch('/admin/integrations/' + integrationId + '/toggle', { method: 'POST', headers: {'Content-Type':'application/json'} });
         const data = await res.json();
         if (data.success) window.location.reload();
-        else alert(data.message);
-    } catch (e) { alert('Error: ' + e.message); }
+        else showToast(data.message || 'Failed', 'error');
+    } catch (e) { showToast('Error: ' + e.message, 'error'); }
 }
 
 async function deleteIntegration() {
-    if (!confirm('Delete this integration? This will also delete all API keys.')) return;
+    const confirmed = await showConfirm({ title: 'Delete Integration', message: 'Delete this integration? This will also delete all API keys.', confirmText: 'Delete', type: 'danger' });
+    if (!confirmed) return;
     try {
         const res = await fetch('/admin/integrations/' + integrationId, { method: 'DELETE' });
         const data = await res.json();
         if (data.success) window.location.href = '/admin/integrations';
-        else alert(data.message);
-    } catch (e) { alert('Error: ' + e.message); }
+        else showToast(data.message || 'Failed', 'error');
+    } catch (e) { showToast('Error: ' + e.message, 'error'); }
 }
 
 async function generateKey() {
     const name = document.getElementById('keyName').value;
-    if (!name) { alert('Key name is required'); return; }
+    if (!name) { showToast('Key name is required', 'warning'); return; }
 
     try {
         const res = await fetch('/admin/integrations/' + integrationId + '/keys', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ name }) });
@@ -271,9 +272,9 @@ async function generateKey() {
             document.getElementById('rawKeyValue').value = data.key;
             openModal('rawKeyModal');
         } else {
-            alert(data.message);
+            showToast(data.message || 'Failed', 'error');
         }
-    } catch (e) { alert('Error: ' + e.message); }
+    } catch (e) { showToast('Error: ' + e.message, 'error'); }
 }
 
 function closeRawKeyModal() {
@@ -288,23 +289,25 @@ function copyKey() {
 }
 
 async function revokeKey(kid, name) {
-    if (!confirm('Revoke API key "' + name + '"? It will no longer be usable.')) return;
+    const confirmed = await showConfirm({ title: 'Revoke API Key', message: 'Revoke API key "' + name + '"? It will no longer be usable.', confirmText: 'Revoke', type: 'danger' });
+    if (!confirmed) return;
     try {
         const res = await fetch('/admin/integrations/' + integrationId + '/keys/' + kid + '/revoke', { method: 'POST' });
         const data = await res.json();
         if (data.success) window.location.reload();
-        else alert(data.message);
-    } catch (e) { alert('Error: ' + e.message); }
+        else showToast(data.message || 'Failed', 'error');
+    } catch (e) { showToast('Error: ' + e.message, 'error'); }
 }
 
 async function deleteKey(kid, name) {
-    if (!confirm('Permanently delete API key "' + name + '"?')) return;
+    const confirmed = await showConfirm({ title: 'Delete API Key', message: 'Permanently delete API key "' + name + '"?', confirmText: 'Delete', type: 'danger' });
+    if (!confirmed) return;
     try {
         const res = await fetch('/admin/integrations/' + integrationId + '/keys/' + kid, { method: 'DELETE' });
         const data = await res.json();
         if (data.success) window.location.reload();
-        else alert(data.message);
-    } catch (e) { alert('Error: ' + e.message); }
+        else showToast(data.message || 'Failed', 'error');
+    } catch (e) { showToast('Error: ' + e.message, 'error'); }
 }
 </script>
 {{ end }}

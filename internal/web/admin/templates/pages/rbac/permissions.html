@@ -40,7 +40,6 @@
                 <thead>
                     <tr>
                         <th>Name</th>
-                        <th>ID</th>
                         <th>Created</th>
                         <th style="text-align: right;">Actions</th>
                     </tr>
@@ -49,7 +48,6 @@
                     {{ range .Permissions }}
                     <tr>
                         <td style="font-weight: 600; color: var(--accent-400);">{{ .Name }}</td>
-                        <td style="font-size: 12px; color: var(--text-muted);"><code>{{ shortUUID .ID }}</code></td>
                         <td style="font-size: 13px; color: var(--text-muted);">{{ .CreatedAt.Format "Jan 02, 2006" }}</td>
                         <td style="text-align: right;">
                             <button class="btn-icon" onclick="deletePermission('{{ .ID }}', '{{ .Name }}')" title="Delete" style="background: none; border: none; cursor: pointer; color: var(--rose);">
@@ -59,7 +57,7 @@
                     </tr>
                     {{ else }}
                     <tr>
-                        <td colspan="4" style="text-align: center; padding: 48px; color: var(--text-muted);">No permissions found.</td>
+                        <td colspan="3">{{ template "empty_state" dict "Icon" "lock" "Title" "No Permissions Found" "Message" "No permissions have been created yet." }}</td>
                     </tr>
                     {{ end }}
                 </tbody>
@@ -76,7 +74,7 @@
     <div class="modal-content" style="max-width: 420px;">
         <div class="modal-header">
             <h3>Create Permission</h3>
-            <button class="btn-icon" onclick="closeModal('createModal')" style="background: none; border: none; cursor: pointer; color: var(--text-muted);">
+            <button class="modal-close-btn" onclick="closeModal('createModal')">
                 <i class="material-symbols-outlined">close</i>
             </button>
         </div>
@@ -102,24 +100,25 @@ function openCreateModal() {
 
 async function createPermission() {
     const name = document.getElementById('permName').value;
-    if (!name) { alert('Name is required'); return; }
+    if (!name) { showToast('Name is required', 'warning'); return; }
 
     try {
         const res = await fetch('/admin/rbac/permissions', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ name }) });
         const data = await res.json();
         if (data.success) window.location.reload();
-        else alert(data.message);
-    } catch (e) { alert('Error: ' + e.message); }
+        else showToast(data.message, 'error');
+    } catch (e) { showToast('Error: ' + e.message, 'error'); }
 }
 
 async function deletePermission(id, name) {
-    if (!confirm('Delete permission "' + name + '"? This may affect roles that use it.')) return;
+    const confirmed = await showConfirm({ title: 'Delete Permission', message: 'Delete permission "' + name + '"? This may affect roles that use it.', confirmText: 'Delete', type: 'danger' });
+    if (!confirmed) return;
     try {
         const res = await fetch('/admin/rbac/permissions/' + id, { method: 'DELETE' });
         const data = await res.json();
         if (data.success) window.location.reload();
-        else alert(data.message);
-    } catch (e) { alert('Error: ' + e.message); }
+        else showToast(data.message, 'error');
+    } catch (e) { showToast('Error: ' + e.message, 'error'); }
 }
 </script>
 {{ end }}
