@@ -14,6 +14,7 @@ import (
 	"gct/internal/controller/restapi/v1/integration"
 	"gct/internal/controller/restapi/v1/minio"
 	"gct/internal/controller/restapi/v1/test"
+	"gct/internal/controller/restapi/v1/translation"
 	"gct/internal/controller/restapi/v1/user"
 	"gct/internal/usecase"
 	websystem "gct/internal/web/system"
@@ -95,6 +96,7 @@ func NewRouter(handler *gin.Engine, cfg *config.Config, uc *usecase.UseCase, l l
 		audit.AuditRoute(h, c.Audit, am.AuthClientAccess, am.Authz)
 		errcode.Route(h, c.ErrorCode, am.AuthClientAccess, am.Authz, csrfM)
 		integration.IntegrationRoute(h, c.Integration, am.AuthClientAccess, am.Authz)
+		translation.TranslationRoute(h, c.Translation, am.AuthClientAccess, am.Authz)
 
 		// Feature Flag demonstration endpoints.
 		featureflag.NewRouter(h, am.AuthClientAccess, am.Authz, l)

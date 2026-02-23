@@ -14,6 +14,7 @@ func (r *Repo) Update(ctx context.Context, p *domain.Permission) error {
 		Update(tableName).
 		Set("parent_id", p.ParentID).
 		Set("name", p.Name).
+		Set("description", p.Description).
 		Where(squirrel.Eq{"id": p.ID}).
 		ToSql()
 	if err != nil {

@@ -9,6 +9,7 @@ import (
 	"gct/internal/usecase/integration"
 	"gct/internal/usecase/minio"
 	"gct/internal/usecase/sitesetting"
+	"gct/internal/usecase/translation"
 	"gct/internal/usecase/user"
 	"gct/pkg/asynq"
 )
@@ -24,5 +25,6 @@ type UseCase struct {
 	ErrorCode   errorcode.UseCaseI
 	Database    database.UseCaseI
 	Integration integration.UseCaseI
+	Translation translation.UseCaseI
 	AsynqClient *asynq.Client
 }

@@ -9,8 +9,10 @@ import (
 	"gct/internal/repo/persistent/postgres/integration"
 	sitesetting "gct/internal/repo/persistent/postgres/sitesetting"
 	systemerror "gct/internal/repo/persistent/postgres/systemerror"
+	"gct/internal/repo/persistent/postgres/translation"
 	"gct/internal/repo/persistent/postgres/user"
 	integrationUC "gct/internal/usecase/integration"
+	translationUC "gct/internal/usecase/translation"
 	"gct/pkg/db/postgres"
 	"gct/pkg/logger"
 
@@ -25,6 +27,7 @@ type Repo struct {
 	SystemError *systemerror.Repo
 	ErrorCode   *errorcode.Repo
 	Integration integrationUC.Repository
+	Translation translationUC.Repository
 	DB          *postgres.Postgres
 }
 
@@ -38,6 +41,7 @@ func New(pg *postgres.Postgres, logger logger.Log) (*Repo, error) {
 		SystemError: systemerror.New(pg, logger),
 		ErrorCode:   errorcode.New(pg, logger),
 		Integration: integration.New(pg, logger),
+		Translation: translation.New(pg, logger),
 		DB:          pg,
 	}, nil
 }

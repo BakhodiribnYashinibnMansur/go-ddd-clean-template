@@ -14,6 +14,7 @@ func (r *Repo) Get(ctx context.Context, filter *domain.PermissionFilter) (*domai
 		"id",
 		"parent_id",
 		"name",
+		"description",
 		"created_at",
 	).From(tableName)
 
@@ -30,7 +31,7 @@ func (r *Repo) Get(ctx context.Context, filter *domain.PermissionFilter) (*domai
 	}
 
 	var p domain.Permission
-	err = r.pool.QueryRow(ctx, sql, args...).Scan(&p.ID, &p.ParentID, &p.Name, &p.CreatedAt)
+	err = r.pool.QueryRow(ctx, sql, args...).Scan(&p.ID, &p.ParentID, &p.Name, &p.Description, &p.CreatedAt)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}

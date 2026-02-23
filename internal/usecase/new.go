@@ -10,6 +10,7 @@ import (
 	"gct/internal/usecase/integration"
 	"gct/internal/usecase/minio"
 	"gct/internal/usecase/sitesetting"
+	"gct/internal/usecase/translation"
 	"gct/internal/usecase/user"
 	"gct/pkg/asynq"
 	"gct/pkg/logger"
@@ -27,6 +28,7 @@ func NewUseCase(repos *repo.Repo, logger logger.Log, cfg *config.Config, asynqCl
 		ErrorCode:   errorcode.New(repos, logger),
 		Database:    database.New(repos.Persistent.Postgres, logger, cfg),
 		Integration: integration.New(repos.Persistent.Postgres.Integration, logger, cfg),
+		Translation: translation.New(repos.Persistent.Postgres.Translation, logger),
 		AsynqClient: asynqClient,
 	}
 }

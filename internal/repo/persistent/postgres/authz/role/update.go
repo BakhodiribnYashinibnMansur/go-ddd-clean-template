@@ -13,6 +13,7 @@ func (r *Repo) Update(ctx context.Context, role *domain.Role) error {
 	sql, args, err := r.builder.
 		Update(tableName).
 		Set("name", role.Name).
+		Set("description", role.Description).
 		Where(squirrel.Eq{"id": role.ID}).
 		ToSql()
 	if err != nil {

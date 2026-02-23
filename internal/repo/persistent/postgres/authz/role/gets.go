@@ -11,7 +11,7 @@ import (
 )
 
 func (r *Repo) Gets(ctx context.Context, filter *domain.RolesFilter) ([]*domain.Role, int, error) {
-	query := r.builder.Select("id", "name", "created_at").From(tableName)
+	query := r.builder.Select("id", "name", "description", "created_at").From(tableName)
 	countQuery := r.builder.Select("COUNT(*)").From(tableName)
 
 	if filter.ID != nil {
@@ -41,7 +41,7 @@ func (r *Repo) Gets(ctx context.Context, filter *domain.RolesFilter) ([]*domain.
 	var roles []*domain.Role
 	for rows.Next() {
 		var role domain.Role
-		if err := rows.Scan(&role.ID, &role.Name, &role.CreatedAt); err != nil {
+		if err := rows.Scan(&role.ID, &role.Name, &role.Description, &role.CreatedAt); err != nil {
 			return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, fmt.Sprintf("failed to scan row: %v", err))
 		}
 		roles = append(roles, &role)

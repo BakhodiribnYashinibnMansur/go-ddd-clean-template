@@ -13,8 +13,8 @@ import (
 func (r *Repo) Create(ctx context.Context, role *domain.Role) error {
 	sql, args, err := r.builder.
 		Insert(tableName).
-		Columns("name", "created_at").
-		Values(role.Name, time.Now()).
+		Columns("name", "description", "created_at").
+		Values(role.Name, role.Description, time.Now()).
 		Suffix(fmt.Sprintf("RETURNING %s, %s", "id", "created_at")).
 		ToSql()
 	if err != nil {

@@ -112,7 +112,7 @@ func (uc *UseCase) SignIn(ctx context.Context, in *domain.SignInIn) (*domain.Sig
 		deviceName = in.Session.DeviceName
 	}
 	if in.Session.DeviceType != "" {
-		deviceType = domain.SessionDeviceType(in.Session.DeviceType)
+		deviceType = domain.SessionDeviceType(strings.ToUpper(in.Session.DeviceType))
 	}
 	if in.Session.OS != "" {
 		ua.OS = in.Session.OS

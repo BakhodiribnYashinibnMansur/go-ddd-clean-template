@@ -4210,6 +4210,185 @@ const docTemplate = `{
                 }
             }
         },
+        "/translations/{entity_type}/{entity_id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get all translations for an entity. Filter by ?lang=uz to get a specific language.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "translations"
+                ],
+                "summary": "Get translations",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Entity type",
+                        "name": "entity_type",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Entity UUID",
+                        "name": "entity_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Language code (uz, ru, en)",
+                        "name": "lang",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create or update translations for an entity. Merges new fields into existing data.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "translations"
+                ],
+                "summary": "Upsert translations",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Entity type (role, permission, relation, etc.)",
+                        "name": "entity_type",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Entity UUID",
+                        "name": "entity_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Translations body",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_domain.UpsertTranslationsRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete translations for an entity. Add ?lang=uz to delete only one language.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "translations"
+                ],
+                "summary": "Delete translations",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Entity type",
+                        "name": "entity_type",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Entity UUID",
+                        "name": "entity_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Language code — omit to delete all languages",
+                        "name": "lang",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/gct_internal_controller_restapi_response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/users": {
             "get": {
                 "security": [
@@ -4692,6 +4871,9 @@ const docTemplate = `{
                 "created_at": {
                     "type": "string"
                 },
+                "description": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "string"
                 },
@@ -4794,6 +4976,9 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "created_at": {
+                    "type": "string"
+                },
+                "description": {
                     "type": "string"
                 },
                 "id": {
@@ -5017,6 +5202,15 @@ const docTemplate = `{
                     "type": "string",
                     "minLength": 3,
                     "example": "john_doe"
+                }
+            }
+        },
+        "gct_internal_domain.UpsertTranslationsRequest": {
+            "type": "object",
+            "additionalProperties": {
+                "type": "object",
+                "additionalProperties": {
+                    "type": "string"
                 }
             }
         },

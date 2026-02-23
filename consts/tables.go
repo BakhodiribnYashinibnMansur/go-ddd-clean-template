@@ -17,4 +17,5 @@ const (
 	TableAuditLog        = "audit_log"
 	TableIntegrations    = "integrations"
 	TableAPIKeys         = "api_keys"
+	TableTranslations    = "translations"
 )

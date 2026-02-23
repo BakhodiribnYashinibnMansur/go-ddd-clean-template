@@ -8,6 +8,7 @@ import (
 	"gct/internal/controller/restapi/v1/integration"
 	"gct/internal/controller/restapi/v1/minio"
 	"gct/internal/controller/restapi/v1/test"
+	"gct/internal/controller/restapi/v1/translation"
 	"gct/internal/controller/restapi/v1/user"
 	"gct/internal/usecase"
 	"gct/pkg/logger"
@@ -20,6 +21,7 @@ type Controller struct {
 	Audit       *audit.Controller
 	ErrorCode   *errorcode.Controller
 	Integration integration.ControllerI
+	Translation translation.ControllerI
 	Test        *test.Controller
 }
 
@@ -31,6 +33,7 @@ func NewController(uc *usecase.UseCase, cfg *config.Config, l logger.Log) *Contr
 		Audit:       audit.New(uc, cfg, l),
 		ErrorCode:   errorcode.New(uc.ErrorCode, l),
 		Integration: integration.New(uc.Integration, cfg, l),
+		Translation: translation.New(uc.Translation, cfg, l),
 		Test:        test.New(uc, cfg, l),
 	}
 }

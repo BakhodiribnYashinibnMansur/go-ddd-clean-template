@@ -10,9 +10,10 @@ import (
 
 // Role represents a user role.
 type Role struct {
-	ID        uuid.UUID `json:"id"`
-	Name      string    `json:"name"`
-	CreatedAt time.Time `json:"created_at"`
+	ID          uuid.UUID `json:"id"`
+	Name        string    `json:"name"`
+	Description *string   `json:"description,omitempty"`
+	CreatedAt   time.Time `json:"created_at"`
 }
 
 // RoleFilter represents filter for role queries
@@ -29,10 +30,11 @@ type RolesFilter struct {
 
 // Permission represents a system permission.
 type Permission struct {
-	ID        uuid.UUID  `json:"id"`
-	ParentID  *uuid.UUID `json:"parent_id,omitempty"`
-	Name      string     `json:"name"`
-	CreatedAt time.Time  `json:"created_at"`
+	ID          uuid.UUID  `json:"id"`
+	ParentID    *uuid.UUID `json:"parent_id,omitempty"`
+	Name        string     `json:"name"`
+	Description *string    `json:"description,omitempty"`
+	CreatedAt   time.Time  `json:"created_at"`
 }
 
 // PermissionFilter represents filter for permission queries

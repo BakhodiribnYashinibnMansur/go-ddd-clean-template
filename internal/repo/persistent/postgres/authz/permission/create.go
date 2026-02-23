@@ -13,8 +13,8 @@ import (
 func (r *Repo) Create(ctx context.Context, p *domain.Permission) error {
 	sql, args, err := r.builder.
 		Insert(tableName).
-		Columns("parent_id", "name", "created_at").
-		Values(p.ParentID, p.Name, time.Now()).
+		Columns("parent_id", "name", "description", "created_at").
+		Values(p.ParentID, p.Name, p.Description, time.Now()).
 		Suffix(fmt.Sprintf("RETURNING %s, %s", "id", "created_at")).
 		ToSql()
 	if err != nil {

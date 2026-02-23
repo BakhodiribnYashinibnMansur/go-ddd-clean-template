@@ -15,6 +15,10 @@ func (uc *UseCase) Create(ctx context.Context, u *domain.User) error {
 	ctx, span := otel.Tracer("user-client-usecase").Start(ctx, "Create")
 	defer span.End()
 
+	if u.Attributes == nil {
+		u.Attributes = make(map[string]any)
+	}
+
 	// Validate input
 	if err := validator.ValidateStruct(u); err != nil {
 		return err

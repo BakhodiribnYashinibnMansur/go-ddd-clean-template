@@ -11,7 +11,7 @@ import (
 )
 
 func (r *Repo) Gets(ctx context.Context, filter *domain.PermissionsFilter) ([]*domain.Permission, int, error) {
-	query := r.builder.Select("id", "parent_id", "name", "created_at").From(tableName)
+	query := r.builder.Select("id", "parent_id", "name", "description", "created_at").From(tableName)
 	countQuery := r.builder.Select("COUNT(*)").From(tableName)
 
 	if filter.ID != nil {
@@ -41,7 +41,7 @@ func (r *Repo) Gets(ctx context.Context, filter *domain.PermissionsFilter) ([]*d
 	var perms []*domain.Permission
 	for rows.Next() {
 		var p domain.Permission
-		if err := rows.Scan(&p.ID, &p.ParentID, &p.Name, &p.CreatedAt); err != nil {
+		if err := rows.Scan(&p.ID, &p.ParentID, &p.Name, &p.Description, &p.CreatedAt); err != nil {
 			return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, fmt.Sprintf("failed to scan row: %v", err))
 		}
 		perms = append(perms, &p)

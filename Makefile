@@ -73,7 +73,17 @@ format: ### Run code formatter
 	gci write . --skip-generated -s standard -s default
 .PHONY: format
 
-run: ### run application with all code generation
+kill-port: ### kill process running on HTTP_PORT
+	@PORT=$${HTTP_PORT:-8080}; \
+	PID=$$(lsof -ti tcp:$$PORT 2>/dev/null); \
+	if [ -n "$$PID" ]; then \
+		echo "Port $$PORT da ishlaayotgan process (PID: $$PID) o'chirilmoqda..."; \
+		kill -9 $$PID; \
+		sleep 0.5; \
+	fi
+.PHONY: kill-port
+
+run: kill-port ### run application with all code generation
 	swag init --parseDependency --parseInternal -g cmd/app/main.go -o docs/swagger > /dev/null 2>&1 && \
 	CGO_ENABLED=0 go run ./cmd/app
 .PHONY: run

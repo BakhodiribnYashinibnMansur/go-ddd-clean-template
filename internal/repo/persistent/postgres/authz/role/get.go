@@ -10,7 +10,7 @@ import (
 )
 
 func (r *Repo) Get(ctx context.Context, filter *domain.RoleFilter) (*domain.Role, error) {
-	query := r.builder.Select("id", "name", "created_at").From(tableName)
+	query := r.builder.Select("id", "name", "description", "created_at").From(tableName)
 
 	if filter.ID != nil {
 		query = query.Where(squirrel.Eq{"id": *filter.ID})
@@ -25,7 +25,7 @@ func (r *Repo) Get(ctx context.Context, filter *domain.RoleFilter) (*domain.Role
 	}
 
 	var role domain.Role
-	err = r.pool.QueryRow(ctx, sql, args...).Scan(&role.ID, &role.Name, &role.CreatedAt)
+	err = r.pool.QueryRow(ctx, sql, args...).Scan(&role.ID, &role.Name, &role.Description, &role.CreatedAt)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}

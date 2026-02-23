@@ -105,6 +105,8 @@ definitions:
     properties:
       created_at:
         type: string
+      description:
+        type: string
       id:
         type: string
       name:
@@ -174,6 +176,8 @@ definitions:
   gct_internal_domain.Role:
     properties:
       created_at:
+        type: string
+      description:
         type: string
       id:
         type: string
@@ -335,6 +339,12 @@ definitions:
     - password
     - phone
     - session
+    type: object
+  gct_internal_domain.UpsertTranslationsRequest:
+    additionalProperties:
+      additionalProperties:
+        type: string
+      type: object
     type: object
   gct_internal_domain.User:
     properties:
@@ -3149,6 +3159,125 @@ paths:
       summary: Revoke all other sessions
       tags:
       - sessions
+  /translations/{entity_type}/{entity_id}:
+    delete:
+      description: Delete translations for an entity. Add ?lang=uz to delete only
+        one language.
+      parameters:
+      - description: Entity type
+        in: path
+        name: entity_type
+        required: true
+        type: string
+      - description: Entity UUID
+        in: path
+        name: entity_id
+        required: true
+        type: string
+      - description: Language code — omit to delete all languages
+        in: query
+        name: lang
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete translations
+      tags:
+      - translations
+    get:
+      description: Get all translations for an entity. Filter by ?lang=uz to get a
+        specific language.
+      parameters:
+      - description: Entity type
+        in: path
+        name: entity_type
+        required: true
+        type: string
+      - description: Entity UUID
+        in: path
+        name: entity_id
+        required: true
+        type: string
+      - description: Language code (uz, ru, en)
+        in: query
+        name: lang
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get translations
+      tags:
+      - translations
+    put:
+      consumes:
+      - application/json
+      description: Create or update translations for an entity. Merges new fields
+        into existing data.
+      parameters:
+      - description: Entity type (role, permission, relation, etc.)
+        in: path
+        name: entity_type
+        required: true
+        type: string
+      - description: Entity UUID
+        in: path
+        name: entity_id
+        required: true
+        type: string
+      - description: Translations body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/gct_internal_domain.UpsertTranslationsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Upsert translations
+      tags:
+      - translations
   /users:
     get:
       consumes:
