@@ -16,7 +16,7 @@ import (
 	"gct/internal/controller/restapi/v1/test"
 	"gct/internal/controller/restapi/v1/user"
 	"gct/internal/usecase"
-	webadmin "gct/internal/web/admin"
+	websystem "gct/internal/web/system"
 	"gct/pkg/logger"
 
 	"github.com/gin-gonic/gin"
@@ -64,8 +64,6 @@ func NewRouter(handler *gin.Engine, cfg *config.Config, uc *usecase.UseCase, l l
 	c := NewController(uc, cfg, l)
 	am := auth.NewAuthMiddleware(uc, cfg, l) // Centralized auth handler.
 
-	// Static assets for the Web Administration panel.
-	handler.Static("/static", "./internal/web/admin/static")
 
 	// Silence browser auto-requests (no auth needed).
 	handler.GET("/robots.txt", func(c *gin.Context) {
@@ -112,7 +110,12 @@ func NewRouter(handler *gin.Engine, cfg *config.Config, uc *usecase.UseCase, l l
 		// Serve dynamic linter reports.
 		handler.Static(lintPath, "./docs/report/linter")
 
-		// Web-based Administrative dashboard.
-		webadmin.New(uc, cfg, l).Register(handler.Group("/"), am)
 	}
+
+	// System error reference (JSON API for React admin panel).
+	sysCtrl := websystem.New(l)
+	h.GET("/system/errors", sysCtrl.GetErrors)
+
+	// Admin panel redirect page — React SPA replaces the Go template admin
+	setupAdminRedirect(handler)
 }

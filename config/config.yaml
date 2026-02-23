@@ -109,7 +109,7 @@ middleware:
   audit_change: true
   metrics: true
   health_check: true
-  signature: true
+  signature: false
 
 security:
   fetch_metadata_enabled: true
@@ -121,7 +121,7 @@ security:
       - "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://unpkg.com https://cdn.jsdelivr.net https://boxicons.com"
       - "font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com https://unpkg.com https://boxicons.com data:"
       - "img-src 'self' data: https:"
-      - "connect-src 'self'"
+      - "connect-src 'self' http://localhost:4200 http://localhost:8080"
       - "frame-ancestors 'none'"
       - "base-uri 'self'"
       - "form-action 'self'"
