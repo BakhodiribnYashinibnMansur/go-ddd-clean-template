@@ -20,7 +20,7 @@ func (r *Repo) Gets(ctx context.Context, filter *domain.EndpointHistoriesFilter)
 		"status_code",
 		"duration_ms",
 		"platform",
-		"ip_address",
+		"ip_address::text AS ip_address",
 		"user_agent",
 		"permission",
 		"decision",

@@ -15,9 +15,9 @@ func (r *Repo) Get(ctx context.Context) (domain.DashboardStats, error) {
 		dest *int64
 		sql  string
 	}{
-		{&stats.TotalUsers, `SELECT COUNT(*) FROM users WHERE deleted_at IS NULL`},
-		{&stats.ActiveSessions, `SELECT COUNT(*) FROM sessions WHERE expires_at > NOW()`},
-		{&stats.AuditLogsToday, `SELECT COUNT(*) FROM audit_logs WHERE created_at >= NOW()::date`},
+		{&stats.TotalUsers, `SELECT COUNT(*) FROM users WHERE deleted_at = 0`},
+		{&stats.ActiveSessions, `SELECT COUNT(*) FROM session WHERE expires_at > NOW()`},
+		{&stats.AuditLogsToday, `SELECT COUNT(*) FROM audit_log WHERE created_at >= NOW()::date`},
 		{&stats.SystemErrorsCount, `SELECT COUNT(*) FROM system_errors WHERE is_resolved = false`},
 		{&stats.TotalFeatureFlags, `SELECT COUNT(*) FROM feature_flags WHERE deleted_at IS NULL AND is_active = true`},
 		{&stats.TotalWebhooks, `SELECT COUNT(*) FROM webhooks WHERE deleted_at IS NULL AND is_active = true`},

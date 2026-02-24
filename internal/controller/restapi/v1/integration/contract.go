@@ -21,6 +21,7 @@ type IntegrationHandler interface {
 	ListIntegrations(ctx *gin.Context)
 	UpdateIntegration(ctx *gin.Context)
 	DeleteIntegration(ctx *gin.Context)
+	ToggleIntegration(ctx *gin.Context)
 }
 
 // APIKeyHandler handles api key requests.

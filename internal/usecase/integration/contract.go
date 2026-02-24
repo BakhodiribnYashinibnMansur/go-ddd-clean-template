@@ -36,6 +36,7 @@ type UseCaseI interface {
 	ListIntegrations(ctx context.Context, filter domain.IntegrationFilter) ([]domain.Integration, int64, error)
 	UpdateIntegration(ctx context.Context, id uuid.UUID, req domain.UpdateIntegrationRequest) (*domain.Integration, error)
 	DeleteIntegration(ctx context.Context, id uuid.UUID) error
+	ToggleIntegration(ctx context.Context, id uuid.UUID) (*domain.Integration, error)
 
 	// API Key operations
 	CreateAPIKey(ctx context.Context, req domain.CreateAPIKeyRequest) (*domain.APIKey, string, error) // Returns APIKey and raw key

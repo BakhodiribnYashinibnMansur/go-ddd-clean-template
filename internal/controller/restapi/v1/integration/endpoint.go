@@ -15,6 +15,7 @@ func IntegrationRoute(api *gin.RouterGroup, controller ControllerI, authMiddlewa
 		integration.DELETE("/:id", controller.DeleteIntegration)
 
 		// API Keys sub-resources
+		integration.POST("/:id/toggle", controller.ToggleIntegration)
 		integration.POST("/:id/keys", controller.CreateAPIKey)
 		integration.GET("/:id/keys", controller.ListAPIKeys)
 	}
