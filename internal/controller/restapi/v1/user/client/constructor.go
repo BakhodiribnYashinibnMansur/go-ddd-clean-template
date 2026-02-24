@@ -18,11 +18,14 @@ type Controller struct {
 
 // ControllerI defines the public contract for the client-side user operations.
 type ControllerI interface {
-	Create(c *gin.Context) // Admin-only user creation.
-	User(c *gin.Context)   // Fetch profile for the current user.
-	Users(c *gin.Context)  // List and filter users (Admin).
-	Update(c *gin.Context) // Modify profile details.
-	Delete(c *gin.Context) // Account deactivation/deletion.
+	Create(c *gin.Context)     // Admin-only user creation.
+	User(c *gin.Context)       // Fetch profile for the current user.
+	Users(c *gin.Context)      // List and filter users (Admin).
+	Update(c *gin.Context)     // Modify profile details.
+	Delete(c *gin.Context)     // Account deactivation/deletion.
+	BulkAction(c *gin.Context) // Bulk deactivate or delete users.
+	Approve(c *gin.Context)    // Approve a pending user.
+	ChangeRole(c *gin.Context) // Change a user's role.
 }
 
 // New initializes a User Client controller.

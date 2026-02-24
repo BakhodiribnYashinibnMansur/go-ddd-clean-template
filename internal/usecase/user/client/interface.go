@@ -21,4 +21,7 @@ type UseCaseI interface {
 	GetByPhone(ctx context.Context, in *domain.UserFilter) (*domain.User, error)
 	ActivateUser(ctx context.Context, userID string) error
 	SetStatus(ctx context.Context, id uuid.UUID, active bool) error
+	BulkAction(ctx context.Context, req domain.BulkActionRequest) error
+	Approve(ctx context.Context, id string) error
+	ChangeRole(ctx context.Context, id, role string) error
 }

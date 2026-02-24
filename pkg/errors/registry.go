@@ -97,6 +97,7 @@ func GetAllErrors() []ErrorDefinition {
 		ErrorDefinition{Code: ErrHandlerForbidden, NumericCode: CodeHandlerForbidden, Message: handlerMessages[ErrHandlerForbidden], Layer: "Handler", Category: "Security", HTTPStatus: 403},
 		ErrorDefinition{Code: ErrHandlerNotFound, NumericCode: CodeHandlerNotFound, Message: handlerMessages[ErrHandlerNotFound], Layer: "Handler", Category: "Data", HTTPStatus: 404},
 		ErrorDefinition{Code: ErrHandlerConflict, NumericCode: CodeHandlerConflict, Message: handlerMessages[ErrHandlerConflict], Layer: "Handler", Category: "Business", HTTPStatus: 409},
+		ErrorDefinition{Code: ErrHandlerTooManyRequests, NumericCode: CodeHandlerTooManyRequests, Message: handlerMessages[ErrHandlerTooManyRequests], Layer: "Handler", Category: "RateLimit", HTTPStatus: 429},
 		ErrorDefinition{Code: ErrHandlerInternal, NumericCode: CodeHandlerInternal, Message: handlerMessages[ErrHandlerInternal], Layer: "Handler", Category: "System", HTTPStatus: 500},
 		ErrorDefinition{Code: ErrHandlerUnknown, NumericCode: CodeHandlerUnknown, Message: handlerMessages[ErrHandlerUnknown], Layer: "Handler", Category: "System", HTTPStatus: 500},
 	)
@@ -352,13 +353,14 @@ var (
 	}
 
 	handlerNumericCodes = map[string]string{
-		ErrHandlerBadRequest:   CodeHandlerBadRequest,
-		ErrHandlerUnauthorized: CodeHandlerUnauthorized,
-		ErrHandlerForbidden:    CodeHandlerForbidden,
-		ErrHandlerNotFound:     CodeHandlerNotFound,
-		ErrHandlerConflict:     CodeHandlerConflict,
-		ErrHandlerInternal:     CodeHandlerInternal,
-		ErrHandlerUnknown:      CodeHandlerUnknown,
+		ErrHandlerBadRequest:       CodeHandlerBadRequest,
+		ErrHandlerUnauthorized:     CodeHandlerUnauthorized,
+		ErrHandlerForbidden:        CodeHandlerForbidden,
+		ErrHandlerNotFound:         CodeHandlerNotFound,
+		ErrHandlerConflict:         CodeHandlerConflict,
+		ErrHandlerTooManyRequests:  CodeHandlerTooManyRequests,
+		ErrHandlerInternal:         CodeHandlerInternal,
+		ErrHandlerUnknown:          CodeHandlerUnknown,
 	}
 
 	legacyNumericCodes = map[string]string{

@@ -61,6 +61,26 @@ func (m *MockClientRepo) GetByPhone(ctx context.Context, phone string) (*domain.
 	return args.Get(0).(*domain.User), args.Error(1)
 }
 
+func (m *MockClientRepo) BulkDeactivate(ctx context.Context, ids []string) error {
+	args := m.Called(ctx, ids)
+	return args.Error(0)
+}
+
+func (m *MockClientRepo) BulkDelete(ctx context.Context, ids []string) error {
+	args := m.Called(ctx, ids)
+	return args.Error(0)
+}
+
+func (m *MockClientRepo) Approve(ctx context.Context, id string) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *MockClientRepo) ChangeRole(ctx context.Context, id, role string) error {
+	args := m.Called(ctx, id, role)
+	return args.Error(0)
+}
+
 // MockSessionRepo implements session.RepoI
 type MockSessionRepo struct {
 	mock.Mock

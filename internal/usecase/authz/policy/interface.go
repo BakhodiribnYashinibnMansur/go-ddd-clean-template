@@ -13,4 +13,5 @@ type UseCaseI interface {
 	Gets(ctx context.Context, filter *domain.PoliciesFilter) ([]*domain.Policy, int, error)
 	Update(ctx context.Context, policy *domain.Policy) error
 	Delete(ctx context.Context, id uuid.UUID) error
+	Toggle(ctx context.Context, id uuid.UUID) error
 }

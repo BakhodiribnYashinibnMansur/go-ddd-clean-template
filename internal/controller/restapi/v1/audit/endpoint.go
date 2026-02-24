@@ -15,3 +15,11 @@ func AuditRoute(api *gin.RouterGroup, controller *Controller, authMiddleware, au
 	history.Route(api, controller.History, authMiddleware, authzMiddleware)
 	metric.Route(api, controller.Metric, authMiddleware, authzMiddleware)
 }
+
+// SystemErrorRoute registers routes for system error management.
+func SystemErrorRoute(api *gin.RouterGroup, controller *Controller, authMiddleware, authzMiddleware, csrfMiddleware gin.HandlerFunc) {
+	g := api.Group("/system/errors", authMiddleware, authzMiddleware)
+	{
+		g.POST("/:id/resolve", csrfMiddleware, controller.SystemError.Resolve)
+	}
+}

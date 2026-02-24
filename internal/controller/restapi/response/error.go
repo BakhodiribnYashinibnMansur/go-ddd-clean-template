@@ -319,6 +319,8 @@ func mapHandlerStatus(code string) int {
 		return 404
 	case "HANDLER_CONFLICT", "4009":
 		return 409
+	case "HANDLER_TOO_MANY_REQUESTS", "4029":
+		return 429
 	default:
 		return 0
 	}

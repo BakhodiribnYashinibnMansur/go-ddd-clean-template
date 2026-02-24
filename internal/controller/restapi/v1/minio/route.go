@@ -35,4 +35,13 @@ func MinioRoute(h *gin.RouterGroup, minio *Controller, authMiddleware gin.Handle
 	{
 		transfer.POST("", minio.TransferFile)
 	}
+	// FILE MANAGEMENT Group: CRUD on file_metadata table.
+	files := h.Group("files")
+	files.Use(authMiddleware)
+	files.Use(authzMiddleware)
+	{
+		files.GET("/list", minio.ListFiles)
+		files.PUT("/:id", csrfMiddleware, minio.UpdateFile)
+		files.DELETE("/:id", csrfMiddleware, minio.DeleteFile)
+	}
 }

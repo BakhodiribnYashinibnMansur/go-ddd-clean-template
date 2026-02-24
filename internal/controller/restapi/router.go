@@ -7,15 +7,26 @@ import (
 	"gct/internal/controller/restapi/middleware"
 	"gct/internal/controller/restapi/middleware/auth"
 	"gct/internal/controller/restapi/v1/admin"
+	"gct/internal/controller/restapi/v1/announcement"
 	"gct/internal/controller/restapi/v1/audit"
 	"gct/internal/controller/restapi/v1/authz"
+	"gct/internal/controller/restapi/v1/dashboard"
+	"gct/internal/controller/restapi/v1/dataexport"
+	"gct/internal/controller/restapi/v1/emailtemplate"
 	errcode "gct/internal/controller/restapi/v1/errorcode"
 	"gct/internal/controller/restapi/v1/featureflag"
+	"gct/internal/controller/restapi/v1/featureflagcrud"
 	"gct/internal/controller/restapi/v1/integration"
+	"gct/internal/controller/restapi/v1/iprule"
+	"gct/internal/controller/restapi/v1/job"
 	"gct/internal/controller/restapi/v1/minio"
+	"gct/internal/controller/restapi/v1/notification"
+	"gct/internal/controller/restapi/v1/ratelimit"
+	"gct/internal/controller/restapi/v1/sitesetting"
 	"gct/internal/controller/restapi/v1/test"
 	"gct/internal/controller/restapi/v1/translation"
 	"gct/internal/controller/restapi/v1/user"
+	"gct/internal/controller/restapi/v1/webhook"
 	"gct/internal/usecase"
 	websystem "gct/internal/web/system"
 	"gct/pkg/logger"
@@ -65,7 +76,6 @@ func NewRouter(handler *gin.Engine, cfg *config.Config, uc *usecase.UseCase, l l
 	c := NewController(uc, cfg, l)
 	am := auth.NewAuthMiddleware(uc, cfg, l) // Centralized auth handler.
 
-
 	// Silence browser auto-requests (no auth needed).
 	handler.GET("/robots.txt", func(c *gin.Context) {
 		c.String(200, "User-agent: *\nDisallow: /")
@@ -97,6 +107,37 @@ func NewRouter(handler *gin.Engine, cfg *config.Config, uc *usecase.UseCase, l l
 		errcode.Route(h, c.ErrorCode, am.AuthClientAccess, am.Authz, csrfM)
 		integration.IntegrationRoute(h, c.Integration, am.AuthClientAccess, am.Authz)
 		translation.TranslationRoute(h, c.Translation, am.AuthClientAccess, am.Authz)
+		sitesetting.SiteSettingRoute(h, c.SiteSetting, am.AuthClientAccess, am.Authz)
+
+		// Dashboard stats endpoint.
+		dashboard.Route(h, c.Dashboard, am.AuthClientAccess, am.Authz)
+
+		// Email Templates CRUD endpoints.
+		emailtemplate.Route(h, c.EmailTemplate, am.AuthClientAccess, am.Authz, csrfM)
+
+		// Data Export endpoints.
+		dataexport.Route(h, c.DataExport, am.AuthClientAccess, am.Authz, csrfM)
+
+		// Feature Flag CRUD endpoints.
+		featureflagcrud.Route(h, c.FeatureFlag, am.AuthClientAccess, am.Authz, csrfM)
+
+		// Rate Limit endpoints.
+		ratelimit.Route(h, c.RateLimit, am.AuthClientAccess, am.Authz, csrfM)
+
+		// IP Rules endpoints.
+		iprule.Route(h, c.IPRule, am.AuthClientAccess, am.Authz, csrfM)
+
+		// Webhook endpoints.
+		webhook.Route(h, c.Webhook, am.AuthClientAccess, am.Authz, csrfM)
+
+		// Job endpoints.
+		job.Route(h, c.Job, am.AuthClientAccess, am.Authz, csrfM)
+
+		// Announcement endpoints.
+		announcement.Route(h, c.Announcement, am.AuthClientAccess, am.Authz, csrfM)
+
+		// Notification endpoints.
+		notification.Route(h, c.Notification, am.AuthClientAccess, am.Authz, csrfM)
 
 		// Feature Flag demonstration endpoints.
 		featureflag.NewRouter(h, am.AuthClientAccess, am.Authz, l)
@@ -117,6 +158,7 @@ func NewRouter(handler *gin.Engine, cfg *config.Config, uc *usecase.UseCase, l l
 	// System error reference (JSON API for React admin panel).
 	sysCtrl := websystem.New(l)
 	h.GET("/system/errors", sysCtrl.GetErrors)
+	audit.SystemErrorRoute(h, c.Audit, am.AuthClientAccess, am.Authz, csrfM)
 
 	// Admin panel redirect page — React SPA replaces the Go template admin
 	setupAdminRedirect(handler)

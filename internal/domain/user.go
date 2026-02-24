@@ -84,6 +84,17 @@ func (f UsersFilter) IsValidOffset() bool {
 	return !f.IsPaginationNull() && f.Pagination.Offset > 0
 }
 
+// BulkActionRequest represents a request to perform a bulk action on multiple users.
+type BulkActionRequest struct {
+	IDs    []string `json:"ids" binding:"required"`
+	Action string   `json:"action" binding:"required"` // "deactivate" or "delete"
+}
+
+// ChangeRoleRequest represents a request to change a user's role.
+type ChangeRoleRequest struct {
+	Role string `json:"role" binding:"required"`
+}
+
 // Getters for User
 func (u *User) GetID() uuid.UUID              { return u.ID }
 func (u *User) GetRoleID() *uuid.UUID         { return u.RoleID }

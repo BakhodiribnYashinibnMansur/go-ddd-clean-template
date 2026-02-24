@@ -8,8 +8,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// Example_usage shows how to use the error logger
-func ExampleUsage() {
+// exampleUsage shows how to use the error logger
+func exampleUsage() {
 	// This is not a real test, just an example showing usage
 
 	// Initialize error logger (in real code, you would pass actual repo and logger)

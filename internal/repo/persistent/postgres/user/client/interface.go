@@ -26,4 +26,16 @@ type RepoI interface {
 
 	// Users retrieves users based on the provided filter and pagination.
 	Gets(ctx context.Context, filter *domain.UsersFilter) ([]*domain.User, int, error)
+
+	// BulkDeactivate sets active=false for all users with the given IDs.
+	BulkDeactivate(ctx context.Context, ids []string) error
+
+	// BulkDelete soft-deletes all users with the given IDs.
+	BulkDelete(ctx context.Context, ids []string) error
+
+	// Approve sets is_approved=true for the user with the given ID.
+	Approve(ctx context.Context, id string) error
+
+	// ChangeRole updates the role_id for the user with the given ID by role name.
+	ChangeRole(ctx context.Context, id, role string) error
 }

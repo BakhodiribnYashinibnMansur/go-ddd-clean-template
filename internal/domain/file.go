@@ -2,6 +2,33 @@ package domain
 
 import "time"
 
+// FileMetadata represents a record in the file_metadata table
+type FileMetadata struct {
+	ID           string    `json:"id" db:"id"`
+	OriginalName string    `json:"original_name" db:"original_name"`
+	StoredName   string    `json:"stored_name" db:"stored_name"`
+	Bucket       string    `json:"bucket" db:"bucket"`
+	URL          string    `json:"url" db:"url"`
+	Size         int64     `json:"size" db:"size"`
+	MimeType     *string   `json:"mime_type" db:"mime_type"`
+	UploadedBy   *string   `json:"uploaded_by" db:"uploaded_by"`
+	CreatedAt    time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at" db:"updated_at"`
+}
+
+// FileMetadataFilter holds pagination and filter options for listing file_metadata
+type FileMetadataFilter struct {
+	Search   string
+	MimeType string
+	Limit    int
+	Offset   int
+}
+
+// UpdateFileMetadataRequest is the request body for updating file metadata
+type UpdateFileMetadataRequest struct {
+	OriginalName *string `json:"original_name"`
+}
+
 // FileInfo represents uploaded file metadata
 type FileInfo struct {
 	FileName    string    `json:"file_name"`

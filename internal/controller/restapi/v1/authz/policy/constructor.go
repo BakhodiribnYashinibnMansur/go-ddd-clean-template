@@ -22,6 +22,7 @@ type ControllerI interface {
 	Gets(c *gin.Context)
 	Update(c *gin.Context)
 	Delete(c *gin.Context)
+	Toggle(c *gin.Context)
 }
 
 // New initializes a new Policy controller.

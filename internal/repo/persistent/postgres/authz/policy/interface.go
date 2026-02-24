@@ -14,4 +14,5 @@ type RepoI interface {
 	Update(ctx context.Context, p *domain.Policy) error
 	Delete(ctx context.Context, id uuid.UUID) error
 	GetByRole(ctx context.Context, roleID uuid.UUID) ([]*domain.Policy, error)
+	Toggle(ctx context.Context, id uuid.UUID) error
 }

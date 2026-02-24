@@ -29,6 +29,11 @@ func (m *MockSystemErrorUC) Gets(ctx context.Context, in *domain.SystemErrorsFil
 	return args.Get(0).([]*domain.SystemError), args.Int(1), args.Error(2)
 }
 
+func (m *MockSystemErrorUC) Resolve(ctx context.Context, id string, resolvedBy *string) error {
+	args := m.Called(ctx, id, resolvedBy)
+	return args.Error(0)
+}
+
 func TestSystemErrorMiddleware_Recovery(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 

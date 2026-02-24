@@ -16,11 +16,14 @@ func Route(api *gin.RouterGroup, c ControllerI, authMiddleware, authzMiddleware,
 		users.Use(csrfMiddleware)
 		{
 			// Account Management
-			users.POST("", c.Create)                        // Create a user manually (Admin privileged).
-			users.GET("", c.Users)                          // Fetch multiple users with filtering (Admin privileged).
-			users.GET("/:"+consts.ParamUserID, c.User)      // Retrieve detailed profile for a specific user.
-			users.PATCH("/:"+consts.ParamUserID, c.Update)  // Partially update user metadata or attributes.
-			users.DELETE("/:"+consts.ParamUserID, c.Delete) // Permanently remove or deactivate a user account.
+			users.POST("", c.Create)                                    // Create a user manually (Admin privileged).
+			users.GET("", c.Users)                                      // Fetch multiple users with filtering (Admin privileged).
+			users.GET("/:"+consts.ParamUserID, c.User)                  // Retrieve detailed profile for a specific user.
+			users.PATCH("/:"+consts.ParamUserID, c.Update)              // Partially update user metadata or attributes.
+			users.DELETE("/:"+consts.ParamUserID, c.Delete)             // Permanently remove or deactivate a user account.
+			users.POST("/bulk-action", c.BulkAction)                    // Bulk deactivate or delete multiple users.
+			users.POST("/:"+consts.ParamUserID+"/approve", c.Approve)   // Approve a pending user.
+			users.POST("/:"+consts.ParamUserID+"/role", c.ChangeRole)   // Change a user's role.
 		}
 	}
 }
