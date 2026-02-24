@@ -21,6 +21,7 @@ import (
 	"gct/internal/usecase/sitesetting"
 	"gct/internal/usecase/translation"
 	"gct/internal/usecase/user"
+	"gct/internal/usecase/usersetting"
 	"gct/internal/usecase/webhook"
 	"gct/pkg/asynq"
 )
@@ -48,5 +49,6 @@ type UseCase struct {
 	Announcement announcement.UseCaseI
 	Notification notification.UseCaseI
 	File         file.UseCaseI
+	UserSetting  usersetting.UseCaseI
 	AsynqClient  *asynq.Client
 }

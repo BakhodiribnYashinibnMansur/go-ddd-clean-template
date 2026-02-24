@@ -29,4 +29,5 @@ const (
 	TableEmailTemplates  = "email_templates"
 	TableEmailLogs       = "email_logs"
 	TableFileMetadata    = "file_metadata"
+	TableUserSettings    = "user_settings"
 )

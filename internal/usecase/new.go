@@ -22,6 +22,7 @@ import (
 	"gct/internal/usecase/sitesetting"
 	"gct/internal/usecase/translation"
 	"gct/internal/usecase/user"
+	"gct/internal/usecase/usersetting"
 	"gct/internal/usecase/webhook"
 	"gct/pkg/asynq"
 	"gct/pkg/logger"
@@ -52,6 +53,7 @@ func NewUseCase(repos *repo.Repo, logger logger.Log, cfg *config.Config, asynqCl
 		Notification: notification.New(pg.Notification, logger, cfg),
 		Dashboard:    dashboard.New(pg.Dashboard, logger),
 		File:         file.New(pg.FileMetadata, logger),
+		UserSetting:  usersetting.New(repos.Persistent.Postgres.User.Setting, logger),
 		AsynqClient:  asynqClient,
 	}
 }
