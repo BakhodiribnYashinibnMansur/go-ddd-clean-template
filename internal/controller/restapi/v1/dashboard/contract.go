@@ -2,7 +2,7 @@ package dashboard
 
 import (
 	ucdashboard "gct/internal/usecase/dashboard"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
 )

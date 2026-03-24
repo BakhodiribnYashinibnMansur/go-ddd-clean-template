@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"time"
 
-	"gct/consts"
-	"gct/pkg/contextx"
-	"gct/pkg/httpx"
-	"gct/pkg/logger"
+	"gct/internal/shared/domain/consts"
+	"gct/internal/shared/infrastructure/contextx"
+	"gct/internal/shared/infrastructure/httpx"
+	"gct/internal/shared/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"

@@ -9,7 +9,7 @@ import (
 	"gct/internal/usecase/authz/relation"
 	"gct/internal/usecase/authz/role"
 	"gct/internal/usecase/authz/scope"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 )
 
 type UseCaseI interface {

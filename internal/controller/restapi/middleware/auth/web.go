@@ -5,11 +5,11 @@ import (
 	"net/http"
 	"net/url"
 
-	"gct/consts"
+	"gct/internal/shared/domain/consts"
 	"gct/internal/controller/restapi/cookie"
 	"gct/internal/domain"
-	"gct/pkg/httpx"
-	"gct/pkg/jwt"
+	"gct/internal/shared/infrastructure/httpx"
+	"gct/internal/shared/infrastructure/security/jwt"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -30,7 +30,7 @@ func (m *AuthMiddleware) AuthWeb(ctx *gin.Context) {
 	if err != nil {
 		// Attempt logical auto-refresh if token is simply expired but refresh token exists
 		if errors.Is(err, httpx.ErrExpiredToken) {
-			refreshToken := cookie.GetCookie(ctx, consts.COOKIE_REFRESH_TOKEN)
+			refreshToken := cookie.GetCookie(ctx, consts.CookieRefreshToken)
 			if refreshToken != "" {
 				rt, pErr := jwt.ParseRefreshToken(refreshToken)
 
@@ -44,8 +44,8 @@ func (m *AuthMiddleware) AuthWeb(ctx *gin.Context) {
 						if rErr == nil {
 							isSecure := ctx.Request.TLS != nil || ctx.Request.Header.Get("X-Forwarded-Proto") == "https"
 
-							ctx.SetCookie(consts.COOKIE_ACCESS_TOKEN, res.AccessToken, int(m.cfg.JWT.AccessTTL.Seconds()), "/", "", isSecure, true)
-							ctx.SetCookie(consts.COOKIE_REFRESH_TOKEN, res.RefreshToken, int(m.cfg.JWT.RefreshTTL.Seconds()), "/", "", isSecure, true)
+							ctx.SetCookie(consts.CookieAccessToken, res.AccessToken, int(m.cfg.JWT.AccessTTL.Seconds()), "/", "", isSecure, true)
+							ctx.SetCookie(consts.CookieRefreshToken, res.RefreshToken, int(m.cfg.JWT.RefreshTTL.Seconds()), "/", "", isSecure, true)
 
 							freshSess, fErr := m.sessionuc.Get(ctx, &domain.SessionFilter{ID: &sID})
 							if fErr != nil {

@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"runtime/debug"
 
-	"gct/consts"
-	"gct/pkg/errorx"
+	"gct/internal/shared/domain/consts"
+	"gct/internal/shared/infrastructure/errorx"
 )
 
 // Create satisfies errorx.Repository interface

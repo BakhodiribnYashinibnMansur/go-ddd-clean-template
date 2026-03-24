@@ -18,9 +18,9 @@ import (
 
 	"gct/config"
 	"gct/internal/repo"
-	tc "gct/pkg/container"
-	dbPostgres "gct/pkg/db/postgres"
-	"gct/pkg/logger"
+	tc "gct/internal/shared/infrastructure/container"
+	dbPostgres "gct/internal/shared/infrastructure/db/postgres"
+	"gct/internal/shared/infrastructure/logger"
 	"github.com/minio/minio-go/v7"
 	"github.com/redis/go-redis/v9"
 )

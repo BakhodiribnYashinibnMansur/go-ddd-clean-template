@@ -5,8 +5,8 @@ import (
 
 	"gct/config"
 	"gct/internal/repo/persistent"
-	"gct/pkg/jwt"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/security/jwt"
+	"gct/internal/shared/infrastructure/logger"
 )
 
 // UseCase -.

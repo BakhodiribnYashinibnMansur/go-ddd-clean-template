@@ -3,7 +3,7 @@ package emailtemplate
 import (
 	"gct/config"
 	ucemailtemplate "gct/internal/usecase/emailtemplate"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
 )
@@ -14,8 +14,6 @@ type ControllerI interface {
 	List(c *gin.Context)
 	Update(c *gin.Context)
 	Delete(c *gin.Context)
-	Test(c *gin.Context)
-	ListLogs(c *gin.Context)
 }
 
 type Controller struct {

@@ -3,9 +3,9 @@ package systemerror
 import (
 	"context"
 
-	"gct/consts"
+	"gct/internal/shared/domain/consts"
 	"gct/internal/domain"
-	apperrors "gct/pkg/errors"
+	apperrors "gct/internal/shared/infrastructure/errors"
 )
 
 func (r *Repo) Create(ctx context.Context, e *domain.SystemError) error {

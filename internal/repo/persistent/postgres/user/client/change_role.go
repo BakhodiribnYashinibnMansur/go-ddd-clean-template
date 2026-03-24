@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	apperrors "gct/pkg/errors"
+	apperrors "gct/internal/shared/infrastructure/errors"
 )
 
 // ChangeRole updates the role_id for the user with the given ID, looking up role by name.

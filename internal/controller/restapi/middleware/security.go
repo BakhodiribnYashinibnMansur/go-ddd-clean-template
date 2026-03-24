@@ -3,7 +3,7 @@ package middleware
 import (
 	"strings"
 
-	"gct/consts"
+	"gct/internal/shared/domain/consts"
 
 	"github.com/gin-gonic/gin"
 )

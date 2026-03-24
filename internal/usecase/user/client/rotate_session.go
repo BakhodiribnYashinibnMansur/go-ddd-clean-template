@@ -4,11 +4,11 @@ import (
 	"context"
 	"time"
 
-	"gct/consts"
+	"gct/internal/shared/domain/consts"
 	"gct/internal/domain"
-	apperrors "gct/pkg/errors"
-	"gct/pkg/jwt"
-	"gct/pkg/validator"
+	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/security/jwt"
+	"gct/internal/shared/infrastructure/validator"
 )
 
 // RotateSession performs refresh token rotation by generating new tokens for an existing valid session.

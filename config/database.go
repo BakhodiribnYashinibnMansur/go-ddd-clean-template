@@ -25,7 +25,6 @@ type Database struct {
 	Cassandra     Cassandra     `envPrefix:"CASSANDRA_"`
 	Elasticsearch Elasticsearch `envPrefix:"ELASTIC_"`
 	ClickHouse    ClickHouse    `envPrefix:"CH_"`
-	SqlLite       SqlLite       `envPrefix:"SQLITE_"`
 }
 
 // BaseDB identifies common connectivity fields used across most relational and NoSQL databases.
@@ -49,12 +48,6 @@ type (
 	Cassandra     struct{ BaseDB }
 	Elasticsearch struct{ BaseDB }
 	ClickHouse    struct{ BaseDB }
-
-	// SqlLite uses local file-based storage instead of network connections.
-	SqlLite struct {
-		Enabled bool   `yaml:"enabled" env:"ENABLED" envDefault:"false"`
-		File    string `env:"FILE,required"`
-	}
 )
 
 // URL formats the connection string for the Postgres driver.
@@ -93,9 +86,4 @@ func (p *Postgres) IsSecure() bool {
 func (m *MySQL) URL() string {
 	return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?parseTime=true",
 		m.User, m.Password, m.Host, m.Port, m.Name)
-}
-
-// DSN returns the path to the localized SQLite database file.
-func (s *SqlLite) DSN() string {
-	return s.File
 }

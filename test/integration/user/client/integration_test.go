@@ -8,13 +8,13 @@ import (
 	"testing"
 	"time"
 
-	"gct/consts"
+	"gct/internal/shared/domain/consts"
 	authController "gct/internal/controller/restapi/v1/authz/auth"
 	clientController "gct/internal/controller/restapi/v1/user/client"
 	"gct/internal/domain"
 	"gct/internal/repo"
 	"gct/internal/usecase"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 	"gct/test/integration/common/setup"
 
 	"github.com/gin-gonic/gin"

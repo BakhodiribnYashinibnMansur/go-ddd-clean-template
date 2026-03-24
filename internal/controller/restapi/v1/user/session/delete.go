@@ -3,9 +3,9 @@ package session
 import (
 	"net/http"
 
-	"gct/consts"
+	"gct/internal/shared/domain/consts"
 	"gct/internal/controller/restapi/response"
-	"gct/pkg/httpx"
+	"gct/internal/shared/infrastructure/httpx"
 	"gct/internal/domain"
 	"github.com/gin-gonic/gin"
 )

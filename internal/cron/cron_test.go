@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 	getCron "github.com/robfig/cron/v3"
 	"github.com/stretchr/testify/assert"
 )

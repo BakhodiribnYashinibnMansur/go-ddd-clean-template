@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"gct/internal/controller/restapi/response"
-	"gct/pkg/httpx"
+	"gct/internal/shared/infrastructure/httpx"
 
 	"github.com/gin-gonic/gin"
 )

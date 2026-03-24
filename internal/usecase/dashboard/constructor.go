@@ -1,6 +1,6 @@
 package dashboard
 
-import "gct/pkg/logger"
+import "gct/internal/shared/infrastructure/logger"
 
 type UseCase struct {
 	repo   Repository

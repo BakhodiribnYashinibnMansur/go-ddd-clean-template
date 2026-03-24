@@ -10,7 +10,7 @@ import (
 	"gct/config"
 	"gct/internal/domain"
 	"gct/internal/repo/persistent/postgres"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 
 	"github.com/jackc/pgx/v5"
 	"go.uber.org/zap"

@@ -19,7 +19,7 @@ type CreateErrorCodeInput struct {
 
 // Create inserts a new error code into the database
 func (r *Repo) Create(ctx context.Context, input CreateErrorCodeInput) (*domain.ErrorCode, error) {
-	query, args, err := r.db.Builder.
+	query, args, err := r.builder.
 		Insert("error_code").
 		Columns(
 			"code",
@@ -61,7 +61,7 @@ func (r *Repo) Create(ctx context.Context, input CreateErrorCodeInput) (*domain.
 	}
 
 	var ec domain.ErrorCode
-	err = r.db.Pool.QueryRow(ctx, query, args...).Scan(
+	err = r.pool.QueryRow(ctx, query, args...).Scan(
 		&ec.ID,
 		&ec.Code,
 		&ec.Message,

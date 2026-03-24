@@ -3,7 +3,7 @@ package announcement
 import (
 	"gct/config"
 	ucannouncement "gct/internal/usecase/announcement"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
 )

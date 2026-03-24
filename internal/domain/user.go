@@ -3,7 +3,7 @@ package domain
 import (
 	"errors"
 	"fmt"
-	"gct/pkg/validation"
+	"gct/internal/shared/infrastructure/validation"
 	"time"
 
 	"github.com/google/uuid"

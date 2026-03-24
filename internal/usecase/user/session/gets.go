@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"gct/internal/domain"
-	apperrors "gct/pkg/errors"
+	apperrors "gct/internal/shared/infrastructure/errors"
 )
 
 func (uc *UseCase) Gets(ctx context.Context, in *domain.SessionsFilter) ([]*domain.Session, int, error) {

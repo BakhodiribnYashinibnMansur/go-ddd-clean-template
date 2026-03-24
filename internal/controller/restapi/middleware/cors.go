@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"gct/config"
-	"gct/consts"
+	"gct/internal/shared/domain/consts"
 
 	"github.com/gin-gonic/gin"
 )

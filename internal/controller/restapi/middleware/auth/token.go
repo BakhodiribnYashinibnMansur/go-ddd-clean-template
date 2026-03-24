@@ -3,11 +3,11 @@ package auth
 import (
 	"errors"
 
-	"gct/consts"
+	"gct/internal/shared/domain/consts"
 	"gct/internal/controller/restapi/cookie"
 	"gct/internal/domain"
-	"gct/pkg/httpx"
-	"gct/pkg/jwt"
+	"gct/internal/shared/infrastructure/httpx"
+	"gct/internal/shared/infrastructure/security/jwt"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -21,7 +21,7 @@ import (
 // 2. Authorization Header (for mobile, CLI, and API clients)
 func (m *AuthMiddleware) validateAccessToken(ctx *gin.Context) (*domain.Session, error) {
 	// Strategy 1: HTTP-Only Cookie (common for Web/Browser clients)
-	tokenStr := cookie.GetCookie(ctx, consts.COOKIE_ACCESS_TOKEN)
+	tokenStr := cookie.GetCookie(ctx, consts.CookieAccessToken)
 	// Strategy 2: Authorization Header (common for Native/Mobile/CLI clients)
 	if tokenStr == "" {
 		authHeader := httpx.GetAuthorization(ctx)

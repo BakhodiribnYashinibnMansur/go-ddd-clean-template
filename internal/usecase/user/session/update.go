@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"gct/internal/domain"
-	apperrors "gct/pkg/errors"
+	apperrors "gct/internal/shared/infrastructure/errors"
 )
 
 func (uc *UseCase) Update(ctx context.Context, in *domain.Session) error {

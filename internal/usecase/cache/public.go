@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"gct/internal/domain"
-	pkgcache "gct/pkg/cache"
+	pkgcache "gct/internal/shared/infrastructure/cache"
 )
 
 // CreatePublicCache stores data in Redis cache with pagination info

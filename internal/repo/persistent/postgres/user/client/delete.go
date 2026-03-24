@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"gct/consts"
-	apperrors "gct/pkg/errors"
+	"gct/internal/shared/domain/consts"
+	apperrors "gct/internal/shared/infrastructure/errors"
 
 	"github.com/google/uuid"
 )

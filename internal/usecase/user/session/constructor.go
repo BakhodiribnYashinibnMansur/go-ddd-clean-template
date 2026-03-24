@@ -2,7 +2,7 @@ package session
 
 import (
 	"gct/internal/repo/persistent"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 )
 
 // UseCase -.

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 
 	"gct/internal/domain"
-	apperrors "gct/pkg/errors"
+	apperrors "gct/internal/shared/infrastructure/errors"
 )
 
 func (r *Repo) Create(ctx context.Context, j *domain.Job) error {

@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"gct/internal/controller/restapi/response"
-	"gct/pkg/httpx"
+	"gct/internal/shared/infrastructure/httpx"
 	"gct/internal/domain"
 	"gct/internal/domain/mock"
 	"github.com/gin-gonic/gin"

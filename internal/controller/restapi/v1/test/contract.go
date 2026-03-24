@@ -4,7 +4,7 @@ import (
 	"gct/config"
 	"gct/internal/controller/restapi/v1/test/state"
 	"gct/internal/usecase"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 )
 
 // Controller acts as a composite handler for test-only operations.

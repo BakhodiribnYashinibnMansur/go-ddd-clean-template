@@ -11,8 +11,8 @@ import (
 	"gct/internal/usecase/integration"
 	"gct/internal/usecase/user/client"
 	"gct/internal/usecase/user/session"
-	"gct/pkg/jwt"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/security/jwt"
+	"gct/internal/shared/infrastructure/logger"
 )
 
 // AuthMiddleware manages identity verification and permission enforcement.

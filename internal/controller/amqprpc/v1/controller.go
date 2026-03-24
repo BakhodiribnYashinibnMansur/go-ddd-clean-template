@@ -2,7 +2,7 @@ package v1
 
 import (
 	"gct/internal/usecase"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 	"github.com/go-playground/validator/v10"
 )
 

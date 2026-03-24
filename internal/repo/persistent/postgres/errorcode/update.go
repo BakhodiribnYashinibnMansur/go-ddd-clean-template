@@ -22,7 +22,7 @@ type UpdateErrorCodeInput struct {
 
 // Update updates an existing error code
 func (r *Repo) Update(ctx context.Context, code string, input UpdateErrorCodeInput) (*domain.ErrorCode, error) {
-	builder := r.db.Builder.Update("error_code").
+	builder := r.builder.Update("error_code").
 		Set("updated_at", time.Now()).
 		Where(squirrel.Eq{"code": code}).
 		Suffix("RETURNING " +
@@ -66,7 +66,7 @@ func (r *Repo) Update(ctx context.Context, code string, input UpdateErrorCodeInp
 	}
 
 	var ec domain.ErrorCode
-	err = r.db.Pool.QueryRow(ctx, query, args...).Scan(
+	err = r.pool.QueryRow(ctx, query, args...).Scan(
 		&ec.ID,
 		&ec.Code,
 		&ec.Message,

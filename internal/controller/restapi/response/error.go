@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"time"
 
-	"gct/consts"
-	apperrors "gct/pkg/errors"
+	"gct/internal/shared/domain/consts"
+	apperrors "gct/internal/shared/infrastructure/errors"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"

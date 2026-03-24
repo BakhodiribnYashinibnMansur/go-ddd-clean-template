@@ -5,8 +5,8 @@ import (
 	"gct/internal/repo/persistent/postgres/audit/log"
 	"gct/internal/repo/persistent/postgres/audit/metric"
 	"gct/internal/repo/persistent/postgres/audit/systemerror"
-	"gct/pkg/db/postgres"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/db/postgres"
+	"gct/internal/shared/infrastructure/logger"
 )
 
 type Audit struct {

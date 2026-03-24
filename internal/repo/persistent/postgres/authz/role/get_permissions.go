@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"gct/internal/domain"
-	apperrors "gct/pkg/errors"
+	apperrors "gct/internal/shared/infrastructure/errors"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"

@@ -3,7 +3,7 @@ package translation
 import (
 	"gct/config"
 	translationUC "gct/internal/usecase/translation"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
 )

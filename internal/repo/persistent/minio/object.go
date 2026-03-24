@@ -3,7 +3,7 @@ package minio
 import (
 	"context"
 
-	apperrors "gct/pkg/errors"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"github.com/minio/minio-go/v7"
 )
 

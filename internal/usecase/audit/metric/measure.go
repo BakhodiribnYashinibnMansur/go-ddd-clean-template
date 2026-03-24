@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"gct/consts"
+	"gct/internal/shared/domain/consts"
 	"gct/internal/domain"
 
 	"go.uber.org/zap"

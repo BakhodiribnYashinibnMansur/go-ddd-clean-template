@@ -3,8 +3,8 @@ package setting
 import (
 	"context"
 
-	"gct/consts"
-	apperrors "gct/pkg/errors"
+	"gct/internal/shared/domain/consts"
+	apperrors "gct/internal/shared/infrastructure/errors"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"

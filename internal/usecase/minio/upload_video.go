@@ -4,7 +4,7 @@ import (
 	"context"
 	"io"
 
-	apperrors "gct/pkg/errors"
+	apperrors "gct/internal/shared/infrastructure/errors"
 )
 
 func (m *UseCase) UploadVideo(ctx context.Context, videoFile io.Reader, videoSize int64, contentType string) (string, error) {

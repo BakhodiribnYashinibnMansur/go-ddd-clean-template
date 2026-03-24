@@ -7,14 +7,14 @@ import (
 	"testing"
 	"time"
 
-	"gct/consts"
+	"gct/internal/shared/domain/consts"
 	"gct/internal/domain"
 	"gct/internal/usecase"
 	"gct/internal/usecase/audit/auditlog"
 	"gct/internal/usecase/audit/endpointhistory"
 	"gct/internal/usecase/audit/metric"
 	"gct/internal/usecase/audit/systemerror"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"

@@ -3,10 +3,10 @@ package auth
 import (
 	"net/http"
 
-	"gct/consts"
+	"gct/internal/shared/domain/consts"
 	"gct/internal/controller/restapi/response"
-	"gct/pkg/httpx"
-	"gct/pkg/csrf"
+	"gct/internal/shared/infrastructure/httpx"
+	"gct/internal/shared/infrastructure/security/csrf"
 	"github.com/gin-gonic/gin"
 )
 
@@ -53,7 +53,7 @@ func (c *Controller) CsrfToken(ctx *gin.Context) {
 	// Set cookie with CSRF token (plain value for double-submit pattern)
 	// HttpOnly=false because client JS needs to read it to send in header
 	http.SetCookie(ctx.Writer, &http.Cookie{
-		Name:     consts.COOKIE_CSRF_TOKEN,
+		Name:     consts.CookieCsrfToken,
 		Value:    token.Value,
 		Path:     consts.CookiePath,
 		HttpOnly: false,                   // Must be readable by JS for header submission

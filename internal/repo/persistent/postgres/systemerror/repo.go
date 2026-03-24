@@ -1,8 +1,8 @@
 package systemerror
 
 import (
-	"gct/pkg/db/postgres"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/db/postgres"
+	"gct/internal/shared/infrastructure/logger"
 )
 
 // Repo handles system error logging operations

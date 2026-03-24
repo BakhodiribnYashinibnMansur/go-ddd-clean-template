@@ -1,7 +1,7 @@
 package system
 
 import (
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 )
 
 type Controller struct {

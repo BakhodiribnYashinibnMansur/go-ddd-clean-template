@@ -4,11 +4,11 @@ import (
 	"net/http"
 	"strings"
 
-	"gct/consts"
+	"gct/internal/shared/domain/consts"
 	"gct/internal/controller/restapi/response"
-	"gct/pkg/csrf"
-	"gct/pkg/httpx"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/security/csrf"
+	"gct/internal/shared/infrastructure/httpx"
+	"gct/internal/shared/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
 )
@@ -29,7 +29,7 @@ func NewCSRFMiddleware(generator *csrf.Generator, store csrf.Store, l logger.Log
 		generator:  generator,
 		store:      store,
 		logger:     l,
-		cookieName: consts.COOKIE_CSRF_TOKEN,
+		cookieName: consts.CookieCsrfToken,
 		headerName: consts.HeaderXCSRFToken,
 	}
 }

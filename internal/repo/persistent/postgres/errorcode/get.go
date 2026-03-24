@@ -10,7 +10,7 @@ import (
 
 // GetByCode retrieves an error code by its unique code string
 func (r *Repo) GetByCode(ctx context.Context, code string) (*domain.ErrorCode, error) {
-	query, args, err := r.db.Builder.
+	query, args, err := r.builder.
 		Select(
 			"id",
 			"code",
@@ -34,7 +34,7 @@ func (r *Repo) GetByCode(ctx context.Context, code string) (*domain.ErrorCode, e
 	}
 
 	var ec domain.ErrorCode
-	err = r.db.Pool.QueryRow(ctx, query, args...).Scan(
+	err = r.pool.QueryRow(ctx, query, args...).Scan(
 		&ec.ID,
 		&ec.Code,
 		&ec.Message,

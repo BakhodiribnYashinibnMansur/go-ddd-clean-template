@@ -1,32 +1,32 @@
 package integration
 
 import (
+	"fmt"
 	"net/http"
 
 	"gct/internal/controller/restapi/response"
 	"gct/internal/domain"
+	"gct/internal/shared/infrastructure/httpx"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 // UpdateIntegration handles PUT /integrations/:id
 func (ctrl *Controller) UpdateIntegration(c *gin.Context) {
-	id, err := uuid.Parse(c.Param("id"))
+	id, err := httpx.GetUUIDParam(c, "id")
 	if err != nil {
-		response.ControllerResponse(c, http.StatusBadRequest, "invalid integration id", nil, false)
+		response.RespondWithError(c, fmt.Errorf("invalid integration id"), http.StatusBadRequest)
 		return
 	}
 
 	var req domain.UpdateIntegrationRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		response.ControllerResponse(c, http.StatusBadRequest, err, nil, false)
+	if !httpx.BindJSON(c, &req) {
 		return
 	}
 
 	res, err := ctrl.useCase.UpdateIntegration(c.Request.Context(), id, req)
 	if err != nil {
-		response.ControllerResponse(c, http.StatusInternalServerError, err, nil, false)
+		response.RespondWithError(c, err, http.StatusInternalServerError)
 		return
 	}
 

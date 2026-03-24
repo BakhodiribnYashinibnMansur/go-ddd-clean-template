@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 	"github.com/go-redis/redismock/v9"
 	"github.com/jackc/pgx/v5"
 	"github.com/pashagolub/pgxmock/v4"

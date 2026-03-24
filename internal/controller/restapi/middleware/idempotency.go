@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"

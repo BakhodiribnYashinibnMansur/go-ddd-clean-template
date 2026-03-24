@@ -24,8 +24,8 @@ import (
 	"gct/internal/usecase/user"
 	"gct/internal/usecase/usersetting"
 	"gct/internal/usecase/webhook"
-	"gct/pkg/asynq"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/asynq"
+	"gct/internal/shared/infrastructure/logger"
 )
 
 // NewUseCase -.

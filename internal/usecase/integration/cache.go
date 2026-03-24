@@ -3,7 +3,7 @@ package integration
 import (
 	"context"
 
-	"gct/consts"
+	"gct/internal/shared/domain/consts"
 	"gct/internal/domain"
 
 	"github.com/google/uuid"

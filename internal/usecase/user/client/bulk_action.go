@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"gct/internal/domain"
-	apperrors "gct/pkg/errors"
+	apperrors "gct/internal/shared/infrastructure/errors"
 )
 
 // BulkAction performs a bulk deactivation or deletion on the given user IDs.

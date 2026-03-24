@@ -1,7 +1,7 @@
 package file
 
 import (
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 )
 
 // UseCase implements UseCaseI.

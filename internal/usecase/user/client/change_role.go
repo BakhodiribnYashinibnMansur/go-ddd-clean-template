@@ -3,7 +3,7 @@ package client
 import (
 	"context"
 
-	apperrors "gct/pkg/errors"
+	apperrors "gct/internal/shared/infrastructure/errors"
 )
 
 // ChangeRole updates the role for the user with the given ID.

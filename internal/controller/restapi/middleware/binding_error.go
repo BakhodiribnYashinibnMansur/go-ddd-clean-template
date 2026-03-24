@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"gct/internal/controller/restapi/response"
-	apperrors "gct/pkg/errors"
+	apperrors "gct/internal/shared/infrastructure/errors"
 
 	"github.com/gin-gonic/gin"
 )

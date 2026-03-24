@@ -7,7 +7,7 @@ import (
 	"gct/internal/controller/restapi/v1/user/session"
 	"gct/internal/controller/restapi/v1/user/setting"
 	"gct/internal/usecase"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 )
 
 // Controller acts as a composite handler for user-related domains.

@@ -3,7 +3,7 @@ package scope
 import (
 	"context"
 
-	apperrors "gct/pkg/errors"
+	apperrors "gct/internal/shared/infrastructure/errors"
 )
 
 func (u *UseCase) Delete(ctx context.Context, path, method string) error {

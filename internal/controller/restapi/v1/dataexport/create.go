@@ -5,14 +5,14 @@ import (
 
 	"gct/internal/controller/restapi/response"
 	"gct/internal/domain"
+	"gct/internal/shared/infrastructure/httpx"
 
 	"github.com/gin-gonic/gin"
 )
 
 func (ctrl *Controller) Create(c *gin.Context) {
 	var req domain.CreateDataExportRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		response.ControllerResponse(c, http.StatusBadRequest, err, nil, false)
+	if !httpx.BindJSON(c, &req) {
 		return
 	}
 	// Get user ID from context (set by auth middleware)

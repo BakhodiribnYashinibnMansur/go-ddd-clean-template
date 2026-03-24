@@ -3,7 +3,7 @@
 package response
 
 import (
-	"gct/consts"
+	"gct/internal/shared/domain/consts"
 
 	"github.com/gin-gonic/gin"
 )

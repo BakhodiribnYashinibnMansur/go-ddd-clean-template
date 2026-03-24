@@ -3,7 +3,7 @@ package featureflagcrud
 import (
 	"gct/config"
 	ucff "gct/internal/usecase/featureflag"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
 )

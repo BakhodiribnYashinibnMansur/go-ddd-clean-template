@@ -8,7 +8,7 @@ import (
 
 	"gct/config"
 	"gct/internal/repo"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 	"github.com/brianvoe/gofakeit/v7"
 	"go.uber.org/zap"
 )

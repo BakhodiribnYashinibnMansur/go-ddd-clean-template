@@ -3,23 +3,17 @@ package client
 import (
 	"context"
 
+	"gct/internal/shared/domain/consts"
 	"gct/internal/domain"
-	apperrors "gct/pkg/errors"
-	"gct/pkg/validator"
+	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/ptrutil"
+	"gct/internal/shared/infrastructure/validator"
 )
 
 func (uc *UseCase) SignUp(ctx context.Context, in *domain.SignUpIn) (*domain.SignInOut, error) {
-	// Internal helper to get string from pointer
-	strVal := func(s *string) string {
-		if s == nil {
-			return ""
-		}
-		return *s
-	}
-
-	phone := strVal(in.Phone)
-	password := strVal(in.Password)
-	usernameStr := strVal(in.Username)
+	phone := ptrutil.StrVal(in.Phone)
+	password := ptrutil.StrVal(in.Password)
+	usernameStr := ptrutil.StrVal(in.Username)
 
 	uc.logger.Infoc(ctx, "user sign up started", "input", in)
 
@@ -34,7 +28,7 @@ func (uc *UseCase) SignUp(ctx context.Context, in *domain.SignUpIn) (*domain.Sig
 	}
 
 	// Assign default "user" role
-	defaultRoleName := "user"
+	defaultRoleName := consts.RoleUser
 	defaultRole, err := uc.repo.Postgres.Authz.Role.Get(ctx, &domain.RoleFilter{Name: &defaultRoleName})
 	if err != nil {
 		uc.logger.Errorc(ctx, "user sign up failed: get default role", "error", err)

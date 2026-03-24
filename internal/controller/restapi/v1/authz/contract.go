@@ -11,7 +11,7 @@ import (
 	"gct/internal/controller/restapi/v1/authz/role"
 	"gct/internal/controller/restapi/v1/authz/scope"
 	"gct/internal/usecase"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 )
 
 // Controller integrates sub-controllers for the entire Authorization subsystem.

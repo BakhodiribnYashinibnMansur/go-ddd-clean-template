@@ -3,7 +3,7 @@ package job
 import (
 	"gct/config"
 	ucjob "gct/internal/usecase/job"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
 )

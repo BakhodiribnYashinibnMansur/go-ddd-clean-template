@@ -1,7 +1,7 @@
 package translation
 
 import (
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 )
 
 type UseCase struct {

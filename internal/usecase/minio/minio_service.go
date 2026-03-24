@@ -2,7 +2,7 @@ package minio
 
 import (
 	"gct/internal/repo"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 )
 
 type UseCase struct {

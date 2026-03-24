@@ -8,7 +8,7 @@ import (
 
 // List returns all error codes
 func (r *Repo) List(ctx context.Context) ([]*domain.ErrorCode, error) {
-	query, args, err := r.db.Builder.
+	query, args, err := r.builder.
 		Select(
 			"id",
 			"code",
@@ -31,7 +31,7 @@ func (r *Repo) List(ctx context.Context) ([]*domain.ErrorCode, error) {
 		return nil, err
 	}
 
-	rows, err := r.db.Pool.Query(ctx, query, args...)
+	rows, err := r.pool.Query(ctx, query, args...)
 	if err != nil {
 		r.logger.Error("failed to list error codes", "error", err)
 		return nil, err

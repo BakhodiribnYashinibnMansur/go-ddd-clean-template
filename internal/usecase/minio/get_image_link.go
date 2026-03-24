@@ -3,7 +3,7 @@ package minio
 import (
 	"context"
 
-	apperrors "gct/pkg/errors"
+	apperrors "gct/internal/shared/infrastructure/errors"
 )
 
 func (m *UseCase) GetImageLink(ctx context.Context, imageName string) (string, error) {

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"gct/pkg/validation"
+	"gct/internal/shared/infrastructure/validation"
 
 	"github.com/google/uuid"
 )

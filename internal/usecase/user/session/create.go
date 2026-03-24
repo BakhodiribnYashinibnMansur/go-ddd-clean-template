@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"gct/internal/domain"
-	apperrors "gct/pkg/errors"
+	apperrors "gct/internal/shared/infrastructure/errors"
 
 	"github.com/google/uuid"
 )

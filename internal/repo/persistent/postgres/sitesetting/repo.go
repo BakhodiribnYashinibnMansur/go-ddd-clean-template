@@ -1,7 +1,7 @@
 package sitesetting
 
 import (
-	"gct/consts"
+	"gct/internal/shared/domain/consts"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5/pgxpool"

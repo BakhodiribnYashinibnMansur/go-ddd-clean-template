@@ -46,9 +46,6 @@ func TestNewTestConfig(t *testing.T) {
 	assert.Equal(t, 6379, cfg.Database.Redis.Port)
 	assert.Equal(t, "1", cfg.Database.Redis.Name)
 
-	// Verify SQLite settings
-	assert.Equal(t, "./test_data.db", cfg.Database.SqlLite.File)
-
 	// Verify JWT settings
 	assert.Equal(t, "auth-service-test", cfg.JWT.Issuer)
 	assert.Equal(t, 15*time.Minute, cfg.JWT.AccessTTL)
@@ -101,11 +98,6 @@ func TestDatabaseConnectionStrings(t *testing.T) {
 	mysqlURL := cfg.Database.MySQL.URL()
 	expectedMySQLURL := "test_user:test_password@tcp(localhost:3306)/test_db?parseTime=true"
 	assert.Equal(t, expectedMySQLURL, mysqlURL)
-
-	// Test SQLite DSN
-	sqliteDSN := cfg.Database.SqlLite.DSN()
-	expectedSQLiteDSN := "./test_data.db"
-	assert.Equal(t, expectedSQLiteDSN, sqliteDSN)
 
 	// Test PostgreSQL validation
 	err = cfg.Database.Postgres.Validate()

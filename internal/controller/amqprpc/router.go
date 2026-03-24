@@ -3,8 +3,8 @@ package amqprpc
 import (
 	v1 "gct/internal/controller/amqprpc/v1"
 	"gct/internal/usecase"
-	"gct/pkg/broker/rabbitmq/rmqrpc/server"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/broker/rabbitmq/rmqrpc/server"
+	"gct/internal/shared/infrastructure/logger"
 )
 
 // NewRouter -.

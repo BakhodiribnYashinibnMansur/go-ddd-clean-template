@@ -3,10 +3,10 @@ package emailtemplate
 import (
 	"context"
 
-	"gct/consts"
+	"gct/internal/shared/domain/consts"
 	ucemailtemplate "gct/internal/usecase/emailtemplate"
-	"gct/pkg/db/postgres"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/db/postgres"
+	"gct/internal/shared/infrastructure/logger"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5"
@@ -14,8 +14,7 @@ import (
 )
 
 const (
-	table    = consts.TableEmailTemplates
-	tableLog = consts.TableEmailLogs
+	table = consts.TableEmailTemplates
 )
 
 type Pool interface {

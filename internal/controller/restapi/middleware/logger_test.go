@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"

@@ -14,29 +14,11 @@ type EmailTemplate struct {
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 }
 
-type EmailLog struct {
-	ID         string     `json:"id" db:"id"`
-	TemplateID *string    `json:"template_id" db:"template_id"`
-	ToEmail    string     `json:"to_email" db:"to_email"`
-	Subject    string     `json:"subject" db:"subject"`
-	Status     string     `json:"status" db:"status"`
-	Error      *string    `json:"error" db:"error"`
-	SentAt     *time.Time `json:"sent_at" db:"sent_at"`
-	CreatedAt  time.Time  `json:"created_at" db:"created_at"`
-}
-
 type EmailTemplateFilter struct {
 	Search string
 	Type   string
 	Limit  int
 	Offset int
-}
-
-type EmailLogFilter struct {
-	TemplateID string
-	Status     string
-	Limit      int
-	Offset     int
 }
 
 type CreateEmailTemplateRequest struct {
@@ -56,6 +38,3 @@ type UpdateEmailTemplateRequest struct {
 	IsActive *bool   `json:"is_active"`
 }
 
-type TestEmailTemplateRequest struct {
-	ToEmail string `json:"to_email" binding:"required,email"`
-}

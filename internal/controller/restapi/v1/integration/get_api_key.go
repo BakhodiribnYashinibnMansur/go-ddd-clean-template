@@ -1,25 +1,26 @@
 package integration
 
 import (
+	"fmt"
 	"net/http"
 
 	"gct/internal/controller/restapi/response"
+	"gct/internal/shared/infrastructure/httpx"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 // GetAPIKey handles GET /api-keys/:id
 func (ctrl *Controller) GetAPIKey(c *gin.Context) {
-	id, err := uuid.Parse(c.Param("id"))
+	id, err := httpx.GetUUIDParam(c, "id")
 	if err != nil {
-		response.ControllerResponse(c, http.StatusBadRequest, "invalid api key id", nil, false)
+		response.RespondWithError(c, fmt.Errorf("invalid api key id"), http.StatusBadRequest)
 		return
 	}
 
 	res, err := ctrl.useCase.GetAPIKey(c.Request.Context(), id)
 	if err != nil {
-		response.ControllerResponse(c, http.StatusNotFound, "api key not found", nil, false)
+		response.RespondWithError(c, fmt.Errorf("api key not found"), http.StatusNotFound)
 		return
 	}
 

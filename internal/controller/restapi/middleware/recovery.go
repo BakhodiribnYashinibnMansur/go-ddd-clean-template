@@ -5,8 +5,8 @@ import (
 	"runtime/debug"
 
 	"gct/internal/controller/restapi/response"
-	"gct/pkg/httpx"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/httpx"
+	"gct/internal/shared/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
 )

@@ -3,7 +3,7 @@ package webhook
 import (
 	"gct/config"
 	ucwebhook "gct/internal/usecase/webhook"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
 )

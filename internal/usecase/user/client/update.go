@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"gct/internal/domain"
-	apperrors "gct/pkg/errors"
-	"gct/pkg/validation"
+	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/validation"
 
 	"github.com/google/uuid"
 )

@@ -4,11 +4,11 @@ import (
 	"net/http"
 	"time"
 
-	"gct/consts"
+	"gct/internal/shared/domain/consts"
 	"gct/internal/controller/restapi/response"
 	"gct/internal/domain"
 	"gct/internal/domain/mock"
-	"gct/pkg/httpx"
+	"gct/internal/shared/infrastructure/httpx"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"

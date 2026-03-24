@@ -9,7 +9,7 @@ import (
 
 // Delete removes an error code
 func (r *Repo) Delete(ctx context.Context, code string) error {
-	query, args, err := r.db.Builder.
+	query, args, err := r.builder.
 		Delete("error_code").
 		Where(squirrel.Eq{"code": code}).
 		ToSql()
@@ -19,7 +19,7 @@ func (r *Repo) Delete(ctx context.Context, code string) error {
 		return err
 	}
 
-	_, err = r.db.Pool.Exec(ctx, query, args...)
+	_, err = r.pool.Exec(ctx, query, args...)
 	if err != nil {
 		r.logger.Error("failed to delete error code", "error", err, "code", code)
 		return err

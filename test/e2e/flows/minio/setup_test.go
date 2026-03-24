@@ -7,7 +7,7 @@ import (
 	"gct/internal/controller/restapi"
 	"gct/internal/repo"
 	"gct/internal/usecase"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 	"gct/test/e2e/common/setup"
 	"github.com/gin-gonic/gin"
 )

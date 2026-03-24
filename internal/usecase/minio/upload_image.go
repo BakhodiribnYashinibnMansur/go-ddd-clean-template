@@ -5,7 +5,7 @@ import (
 	"context"
 	"io"
 
-	apperrors "gct/pkg/errors"
+	apperrors "gct/internal/shared/infrastructure/errors"
 
 	"github.com/disintegration/imaging"
 	"go.opentelemetry.io/otel"

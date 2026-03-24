@@ -2,7 +2,7 @@ package state
 
 import (
 	"gct/internal/controller/restapi/response"
-	apperrors "gct/pkg/errors"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

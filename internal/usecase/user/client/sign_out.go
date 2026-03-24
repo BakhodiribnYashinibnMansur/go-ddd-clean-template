@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"gct/internal/domain"
-	apperrors "gct/pkg/errors"
-	"gct/pkg/validator"
+	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/validator"
 )
 
 func (uc *UseCase) SignOut(ctx context.Context, in *domain.SignOutIn) error {

@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"gct/consts"
+	"gct/internal/shared/domain/consts"
 	"gct/internal/domain"
-	apperrors "gct/pkg/errors"
+	apperrors "gct/internal/shared/infrastructure/errors"
 
 	"github.com/google/uuid"
 )

@@ -1,25 +1,26 @@
 package integration
 
 import (
+	"fmt"
 	"net/http"
 
 	"gct/internal/controller/restapi/response"
+	"gct/internal/shared/infrastructure/httpx"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 // ListAPIKeys handles GET /integrations/:id/keys
 func (ctrl *Controller) ListAPIKeys(c *gin.Context) {
-	id, err := uuid.Parse(c.Param("id"))
+	id, err := httpx.GetUUIDParam(c, "id")
 	if err != nil {
-		response.ControllerResponse(c, http.StatusBadRequest, "invalid integration id", nil, false)
+		response.RespondWithError(c, fmt.Errorf("invalid integration id"), http.StatusBadRequest)
 		return
 	}
 
 	res, err := ctrl.useCase.ListAPIKeys(c.Request.Context(), id)
 	if err != nil {
-		response.ControllerResponse(c, http.StatusInternalServerError, err, nil, false)
+		response.RespondWithError(c, err, http.StatusInternalServerError)
 		return
 	}
 

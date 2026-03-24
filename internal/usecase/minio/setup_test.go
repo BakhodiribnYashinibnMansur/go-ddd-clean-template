@@ -9,7 +9,7 @@ import (
 	"gct/internal/repo/persistent"
 	miniorepo "gct/internal/repo/persistent/minio"
 	"gct/internal/usecase/minio"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 
 	"github.com/johannesboyne/gofakes3"
 	"github.com/johannesboyne/gofakes3/backend/s3mem"

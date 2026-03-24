@@ -2,7 +2,7 @@ package setting
 
 import (
 	"gct/internal/usecase/usersetting"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
 )

@@ -4,12 +4,12 @@ import (
 	"net/http"
 	"strings"
 
-	"gct/consts"
+	"gct/internal/shared/domain/consts"
 	"gct/internal/controller/restapi/cookie"
 	"gct/internal/controller/restapi/response"
 	"gct/internal/domain"
-	"gct/pkg/httpx"
-	"gct/pkg/jwt"
+	"gct/internal/shared/infrastructure/httpx"
+	"gct/internal/shared/infrastructure/security/jwt"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -43,7 +43,7 @@ func (m *AuthMiddleware) AuthClientAccess(ctx *gin.Context) {
 // is still active and not revoked. It uses cryptographic hash verification
 // to prevent token forgery.
 func (m *AuthMiddleware) AuthClientRefresh(ctx *gin.Context) {
-	token := cookie.GetCookie(ctx, consts.COOKIE_REFRESH_TOKEN)
+	token := cookie.GetCookie(ctx, consts.CookieRefreshToken)
 	if token == "" {
 		authHeader := httpx.GetAuthorization(ctx)
 		token = httpx.ExtractBearerToken(authHeader)

@@ -5,8 +5,8 @@ import (
 	"gct/internal/repo/persistent/minio"
 	"gct/internal/repo/persistent/postgres"
 	"gct/internal/repo/persistent/redis"
-	dbPostgres "gct/pkg/db/postgres"
-	"gct/pkg/logger"
+	dbPostgres "gct/internal/shared/infrastructure/db/postgres"
+	"gct/internal/shared/infrastructure/logger"
 	minioclient "github.com/minio/minio-go/v7"
 	redisclient "github.com/redis/go-redis/v9"
 )

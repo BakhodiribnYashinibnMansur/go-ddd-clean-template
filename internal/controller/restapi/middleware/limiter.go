@@ -2,12 +2,12 @@ package middleware
 
 import (
 	"fmt"
-	"gct/pkg/httpx"
+	"gct/internal/shared/infrastructure/httpx"
 	"net/http"
 
 	"gct/config"
 	"gct/internal/controller/restapi/response"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
 	libredis "github.com/redis/go-redis/v9"

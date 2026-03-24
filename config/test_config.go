@@ -53,7 +53,6 @@ func NewTestConfig() (*Config, error) {
 				Cassandra:     Cassandra{BaseDB: BaseDB{Host: "localhost", Port: 9042}},
 				Elasticsearch: Elasticsearch{BaseDB: BaseDB{Host: "localhost", Port: 9200}},
 				ClickHouse:    ClickHouse{BaseDB: BaseDB{Host: "localhost", Port: 9000}},
-				SqlLite:       SqlLite{File: "./test_data.db"},
 			},
 			Redis: RedisStore{
 				Host:     "localhost",

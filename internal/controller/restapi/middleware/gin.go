@@ -3,7 +3,7 @@ package middleware
 import (
 	"gct/config"
 	"gct/internal/usecase"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

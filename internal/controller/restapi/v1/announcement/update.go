@@ -5,25 +5,24 @@ import (
 
 	"gct/internal/controller/restapi/response"
 	"gct/internal/domain"
+	"gct/internal/shared/infrastructure/httpx"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 func (ctrl *Controller) Update(c *gin.Context) {
-	id, err := uuid.Parse(c.Param("id"))
+	id, err := httpx.GetUUIDParam(c, "id")
 	if err != nil {
-		response.ControllerResponse(c, http.StatusBadRequest, err, nil, false)
+		response.RespondWithError(c, err, http.StatusBadRequest)
 		return
 	}
 	var req domain.UpdateAnnouncementRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		response.ControllerResponse(c, http.StatusBadRequest, err, nil, false)
+	if !httpx.BindJSON(c, &req) {
 		return
 	}
 	res, err := ctrl.useCase.Update(c.Request.Context(), id, req)
 	if err != nil {
-		response.ControllerResponse(c, http.StatusInternalServerError, err, nil, false)
+		response.RespondWithError(c, err, http.StatusInternalServerError)
 		return
 	}
 	response.ControllerResponse(c, http.StatusOK, res, nil, true)

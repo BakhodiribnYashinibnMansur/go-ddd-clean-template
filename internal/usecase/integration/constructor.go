@@ -5,7 +5,7 @@ import (
 
 	"gct/config"
 	"gct/internal/domain"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 
 	"github.com/google/uuid"
 )

@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/controller/restapi/response"
 	"gct/internal/domain"
+	"gct/internal/shared/infrastructure/httpx"
 
 	"github.com/gin-gonic/gin"
 )
@@ -12,14 +13,13 @@ import (
 // CreateIntegration handles POST /integrations
 func (ctrl *Controller) CreateIntegration(c *gin.Context) {
 	var req domain.CreateIntegrationRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		response.ControllerResponse(c, http.StatusBadRequest, err, nil, false)
+	if !httpx.BindJSON(c, &req) {
 		return
 	}
 
 	res, err := ctrl.useCase.CreateIntegration(c.Request.Context(), req)
 	if err != nil {
-		response.ControllerResponse(c, http.StatusInternalServerError, err, nil, false)
+		response.RespondWithError(c, err, http.StatusInternalServerError)
 		return
 	}
 

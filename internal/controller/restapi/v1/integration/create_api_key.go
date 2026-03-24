@@ -1,33 +1,33 @@
 package integration
 
 import (
+	"fmt"
 	"net/http"
 
 	"gct/internal/controller/restapi/response"
 	"gct/internal/domain"
+	"gct/internal/shared/infrastructure/httpx"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 // CreateAPIKey handles POST /integrations/:id/keys
 func (ctrl *Controller) CreateAPIKey(c *gin.Context) {
-	integrationID, err := uuid.Parse(c.Param("id"))
+	integrationID, err := httpx.GetUUIDParam(c, "id")
 	if err != nil {
-		response.ControllerResponse(c, http.StatusBadRequest, "invalid integration id", nil, false)
+		response.RespondWithError(c, fmt.Errorf("invalid integration id"), http.StatusBadRequest)
 		return
 	}
 
 	var req domain.CreateAPIKeyRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		response.ControllerResponse(c, http.StatusBadRequest, err, nil, false)
+	if !httpx.BindJSON(c, &req) {
 		return
 	}
 	req.IntegrationID = integrationID
 
 	res, rawKey, err := ctrl.useCase.CreateAPIKey(c.Request.Context(), req)
 	if err != nil {
-		response.ControllerResponse(c, http.StatusInternalServerError, err, nil, false)
+		response.RespondWithError(c, err, http.StatusInternalServerError)
 		return
 	}
 

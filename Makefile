@@ -234,11 +234,7 @@ sqlc-mysql: ### generate type-safe Go code from MySQL queries
 	cd internal/repo/persistent/mysql/sqlc && sqlc generate
 .PHONY: sqlc-mysql
 
-sqlc-sqlite: ### generate type-safe Go code from SQLite queries
-	cd internal/repo/persistent/sqlite/sqlc && sqlc generate
-.PHONY: sqlc-sqlite
-
-sqlc: sqlc-postgres sqlc-mysql sqlc-sqlite ### generate all SQLC code
+sqlc: sqlc-postgres sqlc-mysql ### generate all SQLC code
 .PHONY: sqlc
 
 pre-commit: swag protogen mock format linter-golangci test ### run pre-commit checks

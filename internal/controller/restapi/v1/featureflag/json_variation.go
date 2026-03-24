@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"gct/internal/controller/restapi/response"
-	"gct/pkg/featureflag"
+	"gct/internal/shared/infrastructure/featureflag"
 
 	"github.com/gin-gonic/gin"
 )

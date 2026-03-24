@@ -3,9 +3,9 @@ package integration
 import (
 	"context"
 
-	"gct/consts"
+	"gct/internal/shared/domain/consts"
 	"gct/internal/domain"
-	apperrors "gct/pkg/errors"
+	apperrors "gct/internal/shared/infrastructure/errors"
 )
 
 func (r *Repo) CreateAPIKey(ctx context.Context, apiKey *domain.APIKey) error {

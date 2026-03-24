@@ -3,7 +3,7 @@ package domain
 import (
 	"time"
 
-	"gct/pkg/validation"
+	"gct/internal/shared/infrastructure/validation"
 
 	"github.com/google/uuid"
 )

@@ -1,7 +1,7 @@
 package featureflag
 
 import (
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 )
 
 // FeatureFlagController serves as a playground and reference implementation for the feature flag system.

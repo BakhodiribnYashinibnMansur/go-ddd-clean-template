@@ -5,7 +5,7 @@ import (
 
 	"gct/internal/domain"
 	"gct/internal/repo/persistent"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 )
 
 type UseCaseI interface {

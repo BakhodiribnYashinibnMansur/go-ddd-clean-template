@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/controller/restapi/response"
 	"gct/internal/domain"
+	"gct/internal/shared/infrastructure/httpx"
 
 	"github.com/gin-gonic/gin"
 )
@@ -12,8 +13,7 @@ import (
 func (ctrl *Controller) Update(c *gin.Context) {
 	id := c.Param("id")
 	var req domain.UpdateEmailTemplateRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		response.ControllerResponse(c, http.StatusBadRequest, err, nil, false)
+	if !httpx.BindJSON(c, &req) {
 		return
 	}
 	res, err := ctrl.useCase.Update(c.Request.Context(), id, req)

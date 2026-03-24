@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	apperrors "gct/pkg/errors"
+	apperrors "gct/internal/shared/infrastructure/errors"
 )
 
 // BulkDeactivate sets active=false for all users with the given IDs.

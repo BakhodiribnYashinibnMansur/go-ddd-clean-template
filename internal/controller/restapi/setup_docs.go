@@ -3,7 +3,7 @@ package restapi
 import (
 	"gct/config"
 	docs "gct/docs/swagger"
-	"gct/pkg/httpx"
+	"gct/internal/shared/infrastructure/httpx"
 
 	"github.com/gin-gonic/gin"
 	swaggerfiles "github.com/swaggo/files"

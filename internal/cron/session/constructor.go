@@ -3,7 +3,7 @@ package session
 import (
 	"context"
 
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/redis/go-redis/v9"

@@ -8,7 +8,7 @@ import (
 
 	"gct/internal/domain"
 	"gct/internal/usecase"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"

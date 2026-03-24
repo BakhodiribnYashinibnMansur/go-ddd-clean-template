@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 	"github.com/go-redis/redismock/v9"
 	"github.com/pashagolub/pgxmock/v4"
 	"github.com/stretchr/testify/assert"

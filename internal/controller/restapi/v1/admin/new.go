@@ -1,7 +1,7 @@
 package admin
 
 import (
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 )
 
 // Controller handles administrative tasks for the application.

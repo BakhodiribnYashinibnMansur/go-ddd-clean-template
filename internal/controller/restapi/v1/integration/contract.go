@@ -3,7 +3,7 @@ package integration
 import (
 	"gct/config"
 	"gct/internal/usecase/integration"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
 )

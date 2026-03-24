@@ -3,9 +3,9 @@ package relation
 import (
 	"net/http"
 
-	"gct/consts"
+	"gct/internal/shared/domain/consts"
 	"gct/internal/controller/restapi/response"
-	"gct/pkg/httpx"
+	"gct/internal/shared/infrastructure/httpx"
 
 	"github.com/gin-gonic/gin"
 )

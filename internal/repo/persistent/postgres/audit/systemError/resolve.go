@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	apperrors "gct/pkg/errors"
+	apperrors "gct/internal/shared/infrastructure/errors"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -23,5 +23,9 @@ func (r *Repo) Resolve(ctx context.Context, id uuid.UUID, resolvedBy *uuid.UUID)
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, "build resolve update")
 	}
 	_, err = r.pool.Exec(ctx, sql, args...)
-	return apperrors.HandlePgError(err, tableName, nil)
+	if err != nil {
+		return apperrors.HandlePgError(err, tableName, nil)
+	}
+
+	return nil
 }

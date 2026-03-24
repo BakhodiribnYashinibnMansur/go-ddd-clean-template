@@ -6,11 +6,11 @@ import (
 	"testing"
 	"time"
 
-	"gct/consts"
+	"gct/internal/shared/domain/consts"
 	"gct/internal/domain"
 	"gct/internal/repo/persistent/redis"
 	"gct/internal/usecase/cache"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 	"github.com/go-redis/redismock/v9"
 	redisclient "github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"

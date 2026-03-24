@@ -7,12 +7,12 @@ import (
 	"runtime/debug"
 	"time"
 
-	"gct/consts"
+	"gct/internal/shared/domain/consts"
 	"gct/internal/controller/restapi/response"
 	"gct/internal/domain"
 	"gct/internal/usecase"
-	"gct/pkg/httpx"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/httpx"
+	"gct/internal/shared/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"

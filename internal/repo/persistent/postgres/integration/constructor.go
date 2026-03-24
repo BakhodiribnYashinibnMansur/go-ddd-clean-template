@@ -3,10 +3,10 @@ package integration
 import (
 	"context"
 
-	"gct/consts"
+	"gct/internal/shared/domain/consts"
 	"gct/internal/usecase/integration"
-	"gct/pkg/db/postgres"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/db/postgres"
+	"gct/internal/shared/infrastructure/logger"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5"

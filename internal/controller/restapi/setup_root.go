@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"gct/config"
-	"gct/pkg/httpx"
+	"gct/internal/shared/infrastructure/httpx"
 
 	"github.com/gin-gonic/gin"
 )

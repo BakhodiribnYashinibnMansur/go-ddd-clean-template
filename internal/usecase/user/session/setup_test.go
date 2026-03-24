@@ -9,7 +9,7 @@ import (
 	"gct/internal/repo/persistent/postgres"
 	"gct/internal/repo/persistent/postgres/user"
 	sessionuc "gct/internal/usecase/user/session"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 	"github.com/stretchr/testify/mock"
 )
 

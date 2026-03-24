@@ -8,7 +8,7 @@ import (
 	"math/big"
 	"time"
 
-	"gct/consts"
+	"gct/internal/shared/domain/consts"
 
 	"github.com/google/uuid"
 )

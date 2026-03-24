@@ -22,7 +22,7 @@ import (
 	"gct/internal/controller/restapi/v1/user"
 	"gct/internal/controller/restapi/v1/webhook"
 	"gct/internal/usecase"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 )
 
 type Controller struct {

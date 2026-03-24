@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"gct/internal/domain"
-	apperrors "gct/pkg/errors"
+	apperrors "gct/internal/shared/infrastructure/errors"
 )
 
 func (u *UseCase) Gets(ctx context.Context, filter *domain.RolesFilter) ([]*domain.Role, int, error) {

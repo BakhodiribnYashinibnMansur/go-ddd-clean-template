@@ -3,9 +3,9 @@ package setting
 import (
 	"net/http"
 
-	"gct/consts"
+	"gct/internal/shared/domain/consts"
 	"gct/internal/controller/restapi/response"
-	apperrors "gct/pkg/errors"
+	apperrors "gct/internal/shared/infrastructure/errors"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"

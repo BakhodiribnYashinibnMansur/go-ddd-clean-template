@@ -4,8 +4,8 @@ import (
 	"context"
 
 	ucdashboard "gct/internal/usecase/dashboard"
-	"gct/pkg/db/postgres"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/db/postgres"
+	"gct/internal/shared/infrastructure/logger"
 
 	"github.com/jackc/pgx/v5"
 )

@@ -6,7 +6,7 @@ import (
 	"gct/internal/controller/restapi/response"
 	"gct/internal/domain"
 	"gct/internal/domain/mock"
-	"gct/pkg/httpx"
+	"gct/internal/shared/infrastructure/httpx"
 
 	"github.com/gin-gonic/gin"
 )

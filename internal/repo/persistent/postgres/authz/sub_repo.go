@@ -6,8 +6,8 @@ import (
 	"gct/internal/repo/persistent/postgres/authz/relation"
 	"gct/internal/repo/persistent/postgres/authz/role"
 	"gct/internal/repo/persistent/postgres/authz/scope"
-	"gct/pkg/db/postgres"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/db/postgres"
+	"gct/internal/shared/infrastructure/logger"
 )
 
 type Authz struct {

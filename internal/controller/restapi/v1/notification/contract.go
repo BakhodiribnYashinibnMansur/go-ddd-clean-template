@@ -3,7 +3,7 @@ package notification
 import (
 	"gct/config"
 	ucnotification "gct/internal/usecase/notification"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
 )

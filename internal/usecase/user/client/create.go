@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"gct/internal/domain"
-	apperrors "gct/pkg/errors"
-	"gct/pkg/validator"
+	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/validator"
 
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel"

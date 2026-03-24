@@ -2,7 +2,7 @@ package usersetting
 
 import (
 	"gct/internal/repo/persistent/postgres/user/setting"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 )
 
 const (

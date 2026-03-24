@@ -3,7 +3,7 @@ package featureflag
 import (
 	"context"
 
-	apperrors "gct/pkg/errors"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/domain"
 )
 

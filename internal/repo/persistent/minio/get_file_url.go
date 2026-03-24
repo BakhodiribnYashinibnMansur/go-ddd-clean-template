@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"time"
 
-	apperrors "gct/pkg/errors"
+	apperrors "gct/internal/shared/infrastructure/errors"
 )
 
 // GetFileURL generates a presigned URL for a file

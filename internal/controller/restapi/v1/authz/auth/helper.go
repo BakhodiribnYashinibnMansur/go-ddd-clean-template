@@ -1,10 +1,10 @@
 package auth
 
 import (
-	"gct/consts"
+	"gct/internal/shared/domain/consts"
 	"gct/internal/controller/restapi/cookie"
 	"gct/internal/domain"
-	"gct/pkg/httpx"
+	"gct/internal/shared/infrastructure/httpx"
 
 	"github.com/gin-gonic/gin"
 )
@@ -23,9 +23,9 @@ func (c *Controller) populateSessionInfo(ctx *gin.Context, s *domain.SessionIn) 
 func (c *Controller) setAuthCookies(ctx *gin.Context, out *domain.SignInOut) {
 	accessCookieCfg := c.cfg.Cookie
 	accessCookieCfg.MaxAge = int(c.cfg.JWT.AccessTTL.Seconds())
-	cookie.SaveCookies(ctx, map[string]string{consts.COOKIE_ACCESS_TOKEN: out.AccessToken}, accessCookieCfg)
+	cookie.SaveCookies(ctx, map[string]string{consts.CookieAccessToken: out.AccessToken}, accessCookieCfg)
 
 	refreshCookieCfg := c.cfg.Cookie
 	refreshCookieCfg.MaxAge = int(c.cfg.JWT.RefreshTTL.Seconds())
-	cookie.SaveCookies(ctx, map[string]string{consts.COOKIE_REFRESH_TOKEN: out.RefreshToken}, refreshCookieCfg)
+	cookie.SaveCookies(ctx, map[string]string{consts.CookieRefreshToken: out.RefreshToken}, refreshCookieCfg)
 }

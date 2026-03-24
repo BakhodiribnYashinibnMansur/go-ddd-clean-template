@@ -3,9 +3,9 @@ package relation
 import (
 	"context"
 
-	"gct/consts"
-	"gct/pkg/db/postgres"
-	"gct/pkg/logger"
+	"gct/internal/shared/domain/consts"
+	"gct/internal/shared/infrastructure/db/postgres"
+	"gct/internal/shared/infrastructure/logger"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5"

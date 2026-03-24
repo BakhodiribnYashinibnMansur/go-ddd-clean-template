@@ -6,8 +6,8 @@ import (
 
 	"gct/internal/domain"
 	systemerror "gct/internal/repo/persistent/postgres/systemerror"
-	"gct/pkg/db/postgres"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/db/postgres"
+	"gct/internal/shared/infrastructure/logger"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"

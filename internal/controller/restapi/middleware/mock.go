@@ -2,8 +2,8 @@ package middleware
 
 import (
 	"gct/config"
-	"gct/consts"
-	"gct/pkg/httpx"
+	"gct/internal/shared/domain/consts"
+	"gct/internal/shared/infrastructure/httpx"
 
 	"github.com/gin-gonic/gin"
 )

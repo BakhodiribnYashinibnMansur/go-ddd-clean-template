@@ -3,7 +3,7 @@ package sitesetting
 import (
 	"gct/config"
 	sitesettingUC "gct/internal/usecase/sitesetting"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
 )

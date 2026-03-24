@@ -3,7 +3,7 @@ package announcement
 import (
 	"context"
 
-	apperrors "gct/pkg/errors"
+	apperrors "gct/internal/shared/infrastructure/errors"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"

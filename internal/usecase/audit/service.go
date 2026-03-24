@@ -6,7 +6,7 @@ import (
 	"gct/internal/usecase/audit/endpointhistory"
 	"gct/internal/usecase/audit/metric"
 	"gct/internal/usecase/audit/systemerror"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 )
 
 type UseCaseI interface {

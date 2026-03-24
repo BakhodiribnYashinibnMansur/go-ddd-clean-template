@@ -8,8 +8,8 @@ import (
 	"os"
 
 	"gct/config"
-	"gct/pkg/asynq"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/asynq"
+	"gct/internal/shared/infrastructure/logger"
 
 	"go.uber.org/zap"
 )

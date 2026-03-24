@@ -5,7 +5,7 @@ import (
 	"io"
 	"strings"
 
-	apperrors "gct/pkg/errors"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
 )

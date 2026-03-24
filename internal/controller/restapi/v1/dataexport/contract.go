@@ -3,7 +3,7 @@ package dataexport
 import (
 	"gct/config"
 	ucdataexport "gct/internal/usecase/dataexport"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
 )

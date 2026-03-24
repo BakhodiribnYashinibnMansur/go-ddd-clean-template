@@ -2,8 +2,8 @@ package cache
 
 import (
 	"gct/internal/repo/persistent/redis"
-	pkgcache "gct/pkg/cache"
-	"gct/pkg/logger"
+	pkgcache "gct/internal/shared/infrastructure/cache"
+	"gct/internal/shared/infrastructure/logger"
 )
 
 type Cache struct {

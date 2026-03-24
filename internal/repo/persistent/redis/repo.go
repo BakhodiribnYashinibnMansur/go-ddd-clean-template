@@ -9,7 +9,7 @@ import (
 	"gct/internal/repo/persistent/redis/pubsub"
 	"gct/internal/repo/persistent/redis/store"
 	"gct/internal/repo/persistent/redis/stream"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 	"github.com/redis/go-redis/v9"
 )
 

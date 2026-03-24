@@ -1,7 +1,7 @@
 package system
 
 import (
-	apperrors "gct/pkg/errors"
+	apperrors "gct/internal/shared/infrastructure/errors"
 )
 
 type ErrorFilter struct {

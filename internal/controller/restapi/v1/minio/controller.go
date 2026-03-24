@@ -2,7 +2,7 @@ package minio
 
 import (
 	"gct/internal/usecase"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 )
 
 // Controller orchestrates file operations (upload, download, transfer) by

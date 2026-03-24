@@ -3,11 +3,11 @@ package auth
 import (
 	"net/http"
 
-	"gct/consts"
+	"gct/internal/shared/domain/consts"
 	"gct/internal/controller/restapi/cookie"
 	"gct/internal/controller/restapi/response"
 	"gct/internal/domain"
-	"gct/pkg/httpx"
+	"gct/internal/shared/infrastructure/httpx"
 
 	"github.com/gin-gonic/gin"
 )
@@ -52,7 +52,7 @@ func (c *Controller) SignOut(ctx *gin.Context) {
 		return
 	}
 
-	cookie.ExpireCookies(ctx, c.cfg.Cookie, consts.COOKIE_ACCESS_TOKEN, consts.COOKIE_REFRESH_TOKEN)
+	cookie.ExpireCookies(ctx, c.cfg.Cookie, consts.CookieAccessToken, consts.CookieRefreshToken)
 
 	response.ControllerResponse(ctx, http.StatusOK, "Signed out successfully", nil, true)
 }

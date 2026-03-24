@@ -2,8 +2,8 @@ package v1
 
 import (
 	"gct/internal/usecase"
-	"gct/pkg/broker/nats/natsrpc/server"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/broker/nats/natsrpc/server"
+	"gct/internal/shared/infrastructure/logger"
 	"github.com/go-playground/validator/v10"
 )
 

@@ -3,7 +3,7 @@ package restapi
 
 import (
 	"gct/config"
-	"gct/consts"
+	"gct/internal/shared/domain/consts"
 	"gct/internal/controller/restapi/middleware"
 	"gct/internal/controller/restapi/middleware/auth"
 	"gct/internal/controller/restapi/v1/admin"
@@ -29,7 +29,7 @@ import (
 	"gct/internal/controller/restapi/v1/webhook"
 	"gct/internal/usecase"
 	websystem "gct/internal/web/system"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
 )
@@ -94,7 +94,7 @@ func NewRouter(handler *gin.Engine, cfg *config.Config, uc *usecase.UseCase, l l
 	}
 
 	// CSRF: Protection for state-changing requests using HTTP-only cookies.
-	csrfM := middleware.HybridMiddleware(l, consts.COOKIE_CSRF_TOKEN)
+	csrfM := middleware.HybridMiddleware(l, consts.CookieCsrfToken)
 
 	// API V1 Group
 	h := handler.Group("/api/v1")

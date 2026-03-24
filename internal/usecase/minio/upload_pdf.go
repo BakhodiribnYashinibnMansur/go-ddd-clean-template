@@ -4,7 +4,7 @@ import (
 	"context"
 	"io"
 
-	apperrors "gct/pkg/errors"
+	apperrors "gct/internal/shared/infrastructure/errors"
 )
 
 func (m *UseCase) UploadPDF(ctx context.Context, docFile io.Reader, docSize int64, contentType string) (string, error) {

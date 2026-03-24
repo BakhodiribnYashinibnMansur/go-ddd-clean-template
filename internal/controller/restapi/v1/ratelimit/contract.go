@@ -3,7 +3,7 @@ package ratelimit
 import (
 	"gct/config"
 	ucratelimit "gct/internal/usecase/ratelimit"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
 )

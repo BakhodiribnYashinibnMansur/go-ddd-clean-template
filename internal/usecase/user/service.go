@@ -5,7 +5,7 @@ import (
 	"gct/internal/repo"
 	"gct/internal/usecase/user/client"
 	"gct/internal/usecase/user/session"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 )
 
 type UseCaseI interface {

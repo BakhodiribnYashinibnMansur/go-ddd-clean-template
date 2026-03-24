@@ -6,14 +6,18 @@ import (
 
 	"gct/internal/controller/restapi/response"
 	"gct/internal/domain"
+	"gct/internal/shared/infrastructure/httpx"
 
 	"github.com/gin-gonic/gin"
 )
 
 // ListIntegrations handles GET /integrations
 func (ctrl *Controller) ListIntegrations(c *gin.Context) {
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
+	pagination, err := httpx.GetPagination(c)
+	if err != nil {
+		response.RespondWithError(c, err, http.StatusBadRequest)
+		return
+	}
 	search := c.Query("search")
 
 	var isActive *bool
@@ -23,22 +27,22 @@ func (ctrl *Controller) ListIntegrations(c *gin.Context) {
 	}
 
 	filter := domain.IntegrationFilter{
-		Limit:    limit,
-		Offset:   offset,
+		Limit:    int(pagination.Limit),
+		Offset:   int(pagination.Offset),
 		Search:   search,
 		IsActive: isActive,
 	}
 
 	res, total, err := ctrl.useCase.ListIntegrations(c.Request.Context(), filter)
 	if err != nil {
-		response.ControllerResponse(c, http.StatusInternalServerError, err, nil, false)
+		response.RespondWithError(c, err, http.StatusInternalServerError)
 		return
 	}
 
 	meta := response.Meta{
 		Total:  total,
-		Limit:  int64(limit),
-		Offset: int64(offset),
+		Limit:  pagination.Limit,
+		Offset: pagination.Offset,
 	}
 
 	response.ControllerResponse(c, http.StatusOK, res, meta, true)

@@ -3,8 +3,8 @@ package natsrpc
 import (
 	v1 "gct/internal/controller/natsrpc/v1"
 	"gct/internal/usecase"
-	"gct/pkg/broker/nats/natsrpc/server"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/broker/nats/natsrpc/server"
+	"gct/internal/shared/infrastructure/logger"
 )
 
 // NewRouter -.

@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"gct/internal/domain"
-	apperrors "gct/pkg/errors"
+	apperrors "gct/internal/shared/infrastructure/errors"
 )
 
 // GetFileURLs generates presigned URLs for a list of files

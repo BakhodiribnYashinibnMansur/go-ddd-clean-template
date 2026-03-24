@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"gct/internal/domain"
-	"gct/pkg/asynq"
+	"gct/internal/shared/infrastructure/asynq"
 
 	"github.com/google/uuid"
 )

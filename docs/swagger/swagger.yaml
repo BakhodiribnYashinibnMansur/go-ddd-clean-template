@@ -73,6 +73,26 @@ definitions:
         example: 200
         type: integer
     type: object
+  gct_internal_domain.BulkActionRequest:
+    properties:
+      action:
+        description: '"deactivate" or "delete"'
+        type: string
+      ids:
+        items:
+          type: string
+        type: array
+    required:
+    - action
+    - ids
+    type: object
+  gct_internal_domain.ChangeRoleRequest:
+    properties:
+      role:
+        type: string
+    required:
+    - role
+    type: object
   gct_internal_domain.ErrorCategory:
     enum:
     - DATA
@@ -339,6 +359,11 @@ definitions:
     - password
     - phone
     - session
+    type: object
+  gct_internal_domain.UpdateFileMetadataRequest:
+    properties:
+      original_name:
+        type: string
     type: object
   gct_internal_domain.UpsertTranslationsRequest:
     additionalProperties:
@@ -1423,6 +1448,45 @@ paths:
       security:
       - BearerAuth: []
       summary: Update policy
+      tags:
+      - authz-policies
+  /authz/policies/{policy_id}/toggle:
+    post:
+      consumes:
+      - application/json
+      description: Flip the active boolean on a policy
+      parameters:
+      - description: Policy ID
+        in: path
+        name: policy_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Toggle policy active state
       tags:
       - authz-policies
   /authz/relations:
@@ -2598,6 +2662,73 @@ paths:
       summary: Example User Targeting
       tags:
       - feature-flags
+  /files/{id}:
+    delete:
+      description: |-
+        Deletes a file metadata record from the database by ID.
+        Note: the actual object in MinIO/S3 storage is NOT removed by this endpoint.
+      parameters:
+      - description: File metadata UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete file metadata
+      tags:
+      - files
+    put:
+      consumes:
+      - application/json
+      description: Updates the original name of a file metadata record
+      parameters:
+      - description: File metadata UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/gct_internal_domain.UpdateFileMetadataRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update file metadata
+      tags:
+      - files
   /files/download:
     get:
       description: Download a file by path
@@ -2621,6 +2752,44 @@ paths:
           schema:
             $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
       summary: Download file
+      tags:
+      - files
+  /files/list:
+    get:
+      description: Returns a paginated list of file metadata records
+      parameters:
+      - description: Search by original name
+        in: query
+        name: search
+        type: string
+      - description: Filter by MIME type
+        in: query
+        name: mime_type
+        type: string
+      - default: 20
+        description: Page size
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Page offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.SuccessResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List uploaded files
       tags:
       - files
   /files/transfer:
@@ -3497,6 +3666,132 @@ paths:
       security:
       - BearerAuth: []
       summary: Update user
+      tags:
+      - users
+  /users/{user_id}/approve:
+    post:
+      consumes:
+      - application/json
+      description: Set user status to active (is_approved=true)
+      parameters:
+      - description: User ID (UUID format)
+        format: uuid
+        in: path
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.SuccessResponse'
+        "400":
+          description: Invalid user ID
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Approve a pending user
+      tags:
+      - users
+  /users/{user_id}/role:
+    post:
+      consumes:
+      - application/json
+      description: Update the role assigned to a user
+      parameters:
+      - description: User ID (UUID format)
+        format: uuid
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: Role change request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/gct_internal_domain.ChangeRoleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.SuccessResponse'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Change user role
+      tags:
+      - users
+  /users/bulk-action:
+    post:
+      consumes:
+      - application/json
+      description: Deactivate or delete multiple users by IDs
+      parameters:
+      - description: Bulk action request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/gct_internal_domain.BulkActionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.SuccessResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/gct_internal_controller_restapi_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Bulk action on users
       tags:
       - users
 schemes:

@@ -2,7 +2,7 @@ package announcement
 
 import (
 	"gct/config"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 )
 
 type UseCase struct {

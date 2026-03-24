@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	apperrors "gct/pkg/errors"
+	apperrors "gct/internal/shared/infrastructure/errors"
 
 	"github.com/Masterminds/squirrel"
 )

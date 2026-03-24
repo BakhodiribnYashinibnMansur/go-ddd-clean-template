@@ -9,7 +9,7 @@ import (
 	auditsystemerror "gct/internal/controller/restapi/v1/audit/systemerror"
 
 	"gct/internal/usecase"
-	"gct/pkg/logger"
+	"gct/internal/shared/infrastructure/logger"
 )
 
 // Controller acts as a composite handler for various auditing sub-systems.

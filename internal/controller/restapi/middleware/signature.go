@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"gct/config"
-	"gct/consts"
+	"gct/internal/shared/domain/consts"
 	"gct/internal/controller/restapi/response"
 	"gct/internal/usecase"
 
