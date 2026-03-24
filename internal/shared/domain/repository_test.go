@@ -1,0 +1,35 @@
+package domain_test
+
+import (
+	"context"
+	"testing"
+
+	"github.com/google/uuid"
+
+	"gct/internal/shared/domain"
+)
+
+// mockEntity is a dummy entity for compile-time checks.
+type mockEntity struct {
+	ID   uuid.UUID
+	Name string
+}
+
+// mockRepo implements domain.Repository[mockEntity] for compile-time satisfaction.
+type mockRepo struct{}
+
+func (m *mockRepo) Save(_ context.Context, _ *mockEntity) error             { return nil }
+func (m *mockRepo) FindByID(_ context.Context, _ uuid.UUID) (*mockEntity, error) { return nil, nil }
+func (m *mockRepo) Update(_ context.Context, _ *mockEntity) error           { return nil }
+func (m *mockRepo) Delete(_ context.Context, _ uuid.UUID) error             { return nil }
+func (m *mockRepo) List(_ context.Context, _ domain.Pagination) ([]*mockEntity, int64, error) {
+	return nil, 0, nil
+}
+
+// Compile-time interface satisfaction check.
+var _ domain.Repository[mockEntity] = (*mockRepo)(nil)
+
+func TestRepository_CompileTimeCheck(t *testing.T) {
+	// If this compiles, the interface is properly defined.
+	t.Log("Repository[T] interface satisfaction verified")
+}
