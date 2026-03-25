@@ -31,7 +31,7 @@ import (
 
 // RegisterDDDRoutes registers HTTP routes for all DDD bounded contexts.
 func RegisterDDDRoutes(router *gin.Engine, bcs *DDDBoundedContexts, l logger.Log) {
-	api := router.Group("/api/v1")
+	api := router.Group("/api/v2")
 
 	// Core BCs
 	userhttp.NewHandler(bcs.User, l).RegisterRoutes(api)

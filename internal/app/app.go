@@ -20,6 +20,7 @@ import (
 	"gct/internal/shared/infrastructure/asynq"
 	"gct/internal/shared/infrastructure/db/postgres"
 	redispkg "gct/internal/shared/infrastructure/db/redis"
+	"gct/internal/shared/infrastructure/eventbus"
 	"gct/internal/shared/infrastructure/logger"
 	httpserver "gct/internal/shared/infrastructure/server/http"
 	"gct/internal/shared/infrastructure/tracing"
@@ -99,6 +100,11 @@ func Run(cfg *config.Config) {
 	// 4.1 Initialize Error Codes
 	initErrorCodes(ctx, useCases, l)
 
+	// === DDD Bootstrap ===
+	eventBus := eventbus.NewInMemoryEventBus()
+	dddBCs := NewDDDBoundedContexts(pg.Pool, eventBus, l)
+	RegisterEventSubscribers(eventBus, dddBCs)
+
 	// 5. Initialize Reactive Components
 	// cacheService manages memory-efficient data invalidation across clusters.
 	cacheService := cache.NewCache(repositories.Persistent.Redis, l)
@@ -128,6 +134,10 @@ func Run(cfg *config.Config) {
 	// 7. Initialize Web Router and Persistent Server
 	// Translates API requests into usecase calls while applying global middlewares.
 	handler := initRouter(cfg, useCases, l)
+
+	// === DDD Routes ===
+	RegisterDDDRoutes(handler, dddBCs, l)
+
 	httpServer := httpserver.NewServer()
 
 	// Launch the HTTP listener.
