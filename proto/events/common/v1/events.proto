@@ -1,0 +1,21 @@
+syntax = "proto3";
+package events.common.v1;
+option go_package = "gct/proto/gen/go/events/common/v1";
+
+message EntityCreatedEvent {
+  string entity_type = 1;
+  string entity_id = 2;
+  int64 occurred_at_unix = 3;
+}
+
+message EntityUpdatedEvent {
+  string entity_type = 1;
+  string entity_id = 2;
+  int64 occurred_at_unix = 3;
+}
+
+message EntityDeletedEvent {
+  string entity_type = 1;
+  string entity_id = 2;
+  int64 occurred_at_unix = 3;
+}

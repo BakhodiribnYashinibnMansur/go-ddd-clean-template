@@ -1,0 +1,12 @@
+syntax = "proto3";
+package events.audit.v1;
+option go_package = "gct/proto/gen/go/events/audit/v1";
+
+message AuditLogCreatedEvent {
+  string audit_log_id = 1;
+  string user_id = 2;
+  string action = 3;
+  string resource_type = 4;
+  string resource_id = 5;
+  int64 occurred_at_unix = 6;
+}
