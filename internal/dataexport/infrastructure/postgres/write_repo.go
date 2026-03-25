@@ -1,0 +1,138 @@
+package postgres
+
+import (
+	"context"
+	"time"
+
+	"gct/internal/dataexport/domain"
+	"gct/internal/shared/domain/consts"
+	apperrors "gct/internal/shared/infrastructure/errors"
+
+	"github.com/Masterminds/squirrel"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+)
+
+const tableName = consts.TableDataExports
+
+var writeColumns = []string{
+	"id", "user_id", "data_type", "format", "status",
+	"file_url", "error", "created_at", "updated_at",
+}
+
+// DataExportWriteRepo implements domain.DataExportRepository using PostgreSQL.
+type DataExportWriteRepo struct {
+	pool    *pgxpool.Pool
+	builder squirrel.StatementBuilderType
+}
+
+// NewDataExportWriteRepo creates a new DataExportWriteRepo.
+func NewDataExportWriteRepo(pool *pgxpool.Pool) *DataExportWriteRepo {
+	return &DataExportWriteRepo{
+		pool:    pool,
+		builder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+	}
+}
+
+// Save inserts a new DataExport aggregate into the database.
+func (r *DataExportWriteRepo) Save(ctx context.Context, de *domain.DataExport) error {
+	sql, args, err := r.builder.
+		Insert(tableName).
+		Columns(writeColumns...).
+		Values(
+			de.ID(),
+			de.UserID(),
+			de.DataType(),
+			de.Format(),
+			de.Status(),
+			de.FileURL(),
+			de.Error(),
+			de.CreatedAt(),
+			de.UpdatedAt(),
+		).
+		ToSql()
+	if err != nil {
+		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildInsert)
+	}
+
+	if _, err = r.pool.Exec(ctx, sql, args...); err != nil {
+		return apperrors.HandlePgError(err, tableName, nil)
+	}
+
+	return nil
+}
+
+// Update updates an existing DataExport aggregate in the database.
+func (r *DataExportWriteRepo) Update(ctx context.Context, de *domain.DataExport) error {
+	sql, args, err := r.builder.
+		Update(tableName).
+		Set("status", de.Status()).
+		Set("file_url", de.FileURL()).
+		Set("error", de.Error()).
+		Set("updated_at", de.UpdatedAt()).
+		Where(squirrel.Eq{"id": de.ID()}).
+		ToSql()
+	if err != nil {
+		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildUpdate)
+	}
+
+	if _, err = r.pool.Exec(ctx, sql, args...); err != nil {
+		return apperrors.HandlePgError(err, tableName, nil)
+	}
+
+	return nil
+}
+
+// FindByID retrieves a DataExport aggregate by its ID.
+func (r *DataExportWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.DataExport, error) {
+	sql, args, err := r.builder.
+		Select(writeColumns...).
+		From(tableName).
+		Where(squirrel.Eq{"id": id}).
+		ToSql()
+	if err != nil {
+		return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
+	}
+
+	row := r.pool.QueryRow(ctx, sql, args...)
+	return scanDataExport(row)
+}
+
+// Delete removes a data export by its ID.
+func (r *DataExportWriteRepo) Delete(ctx context.Context, id uuid.UUID) error {
+	sql, args, err := r.builder.
+		Delete(tableName).
+		Where(squirrel.Eq{"id": id}).
+		ToSql()
+	if err != nil {
+		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildDelete)
+	}
+
+	if _, err = r.pool.Exec(ctx, sql, args...); err != nil {
+		return apperrors.HandlePgError(err, tableName, nil)
+	}
+
+	return nil
+}
+
+func scanDataExport(row pgx.Row) (*domain.DataExport, error) {
+	var (
+		id        uuid.UUID
+		userID    uuid.UUID
+		dataType  string
+		format    string
+		status    string
+		fileURL   *string
+		errorMsg  *string
+		createdAt time.Time
+		updatedAt time.Time
+	)
+
+	err := row.Scan(&id, &userID, &dataType, &format, &status, &fileURL, &errorMsg, &createdAt, &updatedAt)
+	if err != nil {
+		return nil, apperrors.HandlePgError(err, tableName, nil)
+	}
+
+	return domain.ReconstructDataExport(id, createdAt, updatedAt, userID, dataType, format, status, fileURL, errorMsg), nil
+}
