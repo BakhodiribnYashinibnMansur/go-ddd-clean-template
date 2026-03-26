@@ -114,7 +114,6 @@ func (s *Session) GetUserAgent() *string             { return s.UserAgent }
 func (s *Session) GetFCMToken() *string              { return s.FCMToken }
 func (s *Session) GetRefreshTokenHash() string       { return s.RefreshTokenHash }
 
-// func (s *Session) GetData() RawMessage               { return s.Data }
 func (s *Session) GetExpiresAt() time.Time    { return s.ExpiresAt }
 func (s *Session) GetLastActivity() time.Time { return s.LastActivity }
 func (s *Session) GetRevoked() bool           { return s.Revoked }
@@ -138,11 +137,6 @@ func (s *Session) SetRefreshTokenHash(refreshTokenHash string) {
 	s.RefreshTokenHash = refreshTokenHash
 	s.UpdatedAt = time.Now()
 }
-
-// func (s *Session) SetData(data RawMessage) {
-// 	s.Data = data
-// 	s.UpdatedAt = time.Now()
-// }
 
 func (s *Session) SetExpiresAt(expiresAt time.Time) {
 	s.ExpiresAt = expiresAt

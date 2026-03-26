@@ -2,6 +2,12 @@ package domain
 
 import shared "gct/internal/shared/domain"
 
+// Sentinel domain errors for the User bounded context.
+// The presentation layer maps these codes to HTTP status codes:
+//   - NOT_FOUND errors -> 404
+//   - INACTIVE / NOT_APPROVED -> 403
+//   - INVALID_PASSWORD / WEAK_PASSWORD -> 400
+//   - MAX_SESSIONS -> 409
 var (
 	ErrUserNotFound       = shared.NewDomainError("USER_NOT_FOUND", "user not found")
 	ErrPhoneExists        = shared.NewDomainError("USER_PHONE_EXISTS", "phone already registered")

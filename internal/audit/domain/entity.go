@@ -8,7 +8,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// AuditAction represents the type of auditable action.
+// AuditAction is a closed set of auditable business actions stored as PostgreSQL-compatible string constants.
+// New actions require adding a constant here and ensuring any persistence layer accepts the new value.
 type AuditAction string
 
 const (
@@ -35,6 +36,9 @@ const (
 )
 
 // AuditLog is the aggregate root for audit log entries.
+// It is intentionally immutable after creation — there are no Update or Delete methods.
+// The metadata map captures arbitrary contextual data (request bodies, policy details) that
+// varies per action type, keeping the schema flexible without requiring column changes.
 type AuditLog struct {
 	shared.AggregateRoot
 	userID       *uuid.UUID

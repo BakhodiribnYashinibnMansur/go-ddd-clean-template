@@ -18,10 +18,8 @@ import (
 const tableName = consts.TableAnnouncements
 
 var writeColumns = []string{
-	"id", "title_uz", "title_ru", "title_en",
-	"content_uz", "content_ru", "content_en",
-	"published", "published_at", "priority",
-	"start_date", "end_date", "created_at", "updated_at",
+	"id", "title", "content", "type", "is_active",
+	"starts_at", "ends_at", "created_at", "updated_at",
 }
 
 // AnnouncementWriteRepo implements domain.AnnouncementRepository using PostgreSQL.
@@ -45,9 +43,10 @@ func (r *AnnouncementWriteRepo) Save(ctx context.Context, a *domain.Announcement
 		Columns(writeColumns...).
 		Values(
 			a.ID(),
-			a.Title().Uz, a.Title().Ru, a.Title().En,
-			a.Content().Uz, a.Content().Ru, a.Content().En,
-			a.Published(), a.PublishedAt(), a.Priority(),
+			a.Title().Uz,
+			a.Content().Uz,
+			"info",
+			a.Published(),
 			a.StartDate(), a.EndDate(),
 			a.CreatedAt(), a.UpdatedAt(),
 		).
@@ -82,17 +81,11 @@ func (r *AnnouncementWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (*do
 func (r *AnnouncementWriteRepo) Update(ctx context.Context, a *domain.Announcement) error {
 	sql, args, err := r.builder.
 		Update(tableName).
-		Set("title_uz", a.Title().Uz).
-		Set("title_ru", a.Title().Ru).
-		Set("title_en", a.Title().En).
-		Set("content_uz", a.Content().Uz).
-		Set("content_ru", a.Content().Ru).
-		Set("content_en", a.Content().En).
-		Set("published", a.Published()).
-		Set("published_at", a.PublishedAt()).
-		Set("priority", a.Priority()).
-		Set("start_date", a.StartDate()).
-		Set("end_date", a.EndDate()).
+		Set("title", a.Title().Uz).
+		Set("content", a.Content().Uz).
+		Set("is_active", a.Published()).
+		Set("starts_at", a.StartDate()).
+		Set("ends_at", a.EndDate()).
 		Set("updated_at", a.UpdatedAt()).
 		Where(squirrel.Eq{"id": a.ID()}).
 		ToSql()
@@ -187,78 +180,63 @@ func (r *AnnouncementWriteRepo) List(ctx context.Context, filter domain.Announce
 
 func applyFilters(conds squirrel.And, filter domain.AnnouncementFilter) squirrel.And {
 	if filter.Published != nil {
-		conds = append(conds, squirrel.Eq{"published": *filter.Published})
-	}
-	if filter.Priority != nil {
-		conds = append(conds, squirrel.Eq{"priority": *filter.Priority})
+		conds = append(conds, squirrel.Eq{"is_active": *filter.Published})
 	}
 	return conds
 }
 
 func scanAnnouncement(row pgx.Row) (*domain.Announcement, error) {
 	var (
-		id          uuid.UUID
-		titleUz     string
-		titleRu     string
-		titleEn     string
-		contentUz   string
-		contentRu   string
-		contentEn   string
-		published   bool
-		publishedAt *time.Time
-		priority    int
-		startDate   *time.Time
-		endDate     *time.Time
-		createdAt   time.Time
-		updatedAt   time.Time
+		id        uuid.UUID
+		title     string
+		content   string
+		aType     string
+		isActive  bool
+		startsAt  *time.Time
+		endsAt    *time.Time
+		createdAt time.Time
+		updatedAt time.Time
 	)
 
-	err := row.Scan(&id, &titleUz, &titleRu, &titleEn,
-		&contentUz, &contentRu, &contentEn,
-		&published, &publishedAt, &priority,
-		&startDate, &endDate, &createdAt, &updatedAt)
+	err := row.Scan(&id, &title, &content, &aType, &isActive, &startsAt, &endsAt, &createdAt, &updatedAt)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 
+	_ = aType
+
 	return domain.ReconstructAnnouncement(
 		id, createdAt, updatedAt,
-		shared.Lang{Uz: titleUz, Ru: titleRu, En: titleEn},
-		shared.Lang{Uz: contentUz, Ru: contentRu, En: contentEn},
-		published, publishedAt, priority, startDate, endDate,
+		shared.Lang{Uz: title, Ru: title, En: title},
+		shared.Lang{Uz: content, Ru: content, En: content},
+		isActive, nil, 0, startsAt, endsAt,
 	), nil
 }
 
 func scanAnnouncementFromRows(rows pgx.Rows) (*domain.Announcement, error) {
 	var (
-		id          uuid.UUID
-		titleUz     string
-		titleRu     string
-		titleEn     string
-		contentUz   string
-		contentRu   string
-		contentEn   string
-		published   bool
-		publishedAt *time.Time
-		priority    int
-		startDate   *time.Time
-		endDate     *time.Time
-		createdAt   time.Time
-		updatedAt   time.Time
+		id        uuid.UUID
+		title     string
+		content   string
+		aType     string
+		isActive  bool
+		startsAt  *time.Time
+		endsAt    *time.Time
+		createdAt time.Time
+		updatedAt time.Time
 	)
 
-	err := rows.Scan(&id, &titleUz, &titleRu, &titleEn,
-		&contentUz, &contentRu, &contentEn,
-		&published, &publishedAt, &priority,
-		&startDate, &endDate, &createdAt, &updatedAt)
+	err := rows.Scan(&id, &title, &content, &aType, &isActive, &startsAt, &endsAt, &createdAt, &updatedAt)
 	if err != nil {
 		return nil, err
 	}
 
+	_ = aType
+
 	return domain.ReconstructAnnouncement(
 		id, createdAt, updatedAt,
-		shared.Lang{Uz: titleUz, Ru: titleRu, En: titleEn},
-		shared.Lang{Uz: contentUz, Ru: contentRu, En: contentEn},
-		published, publishedAt, priority, startDate, endDate,
+		shared.Lang{Uz: title, Ru: title, En: title},
+		shared.Lang{Uz: content, Ru: content, En: content},
+		isActive, nil, 0, startsAt, endsAt,
 	), nil
 }

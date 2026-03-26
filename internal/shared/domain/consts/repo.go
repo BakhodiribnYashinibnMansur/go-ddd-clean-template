@@ -1,5 +1,8 @@
 package consts
 
+// Repository-layer error messages and SQL column name constants.
+// Error messages are used in fmt.Errorf wrapping to provide consistent context in logs.
+// Column names prevent typos in query builder calls across all repository implementations.
 const (
 	// Common error messages
 	ErrMsgFailedToBuildQuery       = "failed to build select query"

@@ -16,7 +16,7 @@ import (
 // readSessionColumns are the columns selected for read-model queries.
 var readSessionColumns = []string{
 	"id", "user_id", "device_id", "device_name", "device_type",
-	"ip_address", "user_agent", "expires_at", "last_activity",
+	"ip_address::text", "user_agent", "expires_at", "last_activity",
 	"revoked", "created_at",
 }
 

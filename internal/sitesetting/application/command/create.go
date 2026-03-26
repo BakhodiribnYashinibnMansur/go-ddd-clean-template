@@ -8,7 +8,8 @@ import (
 	"gct/internal/sitesetting/domain"
 )
 
-// CreateSiteSettingCommand holds the input for creating a new site setting.
+// CreateSiteSettingCommand represents an intent to register a new site-wide configuration entry.
+// Key must be unique across all settings; the repository will reject duplicates.
 type CreateSiteSettingCommand struct {
 	Key         string
 	Value       string
@@ -16,7 +17,8 @@ type CreateSiteSettingCommand struct {
 	Description string
 }
 
-// CreateSiteSettingHandler handles the CreateSiteSettingCommand.
+// CreateSiteSettingHandler orchestrates site setting creation through the repository layer.
+// Domain events are published after a successful save; event bus failures are logged but do not roll back the write.
 type CreateSiteSettingHandler struct {
 	repo     domain.SiteSettingRepository
 	eventBus application.EventBus
@@ -36,7 +38,8 @@ func NewCreateSiteSettingHandler(
 	}
 }
 
-// Handle executes the CreateSiteSettingCommand.
+// Handle persists a new site setting and publishes resulting domain events.
+// Returns repository errors (e.g., duplicate key, connection failure) directly to the caller.
 func (h *CreateSiteSettingHandler) Handle(ctx context.Context, cmd CreateSiteSettingCommand) error {
 	s := domain.NewSiteSetting(cmd.Key, cmd.Value, cmd.Type, cmd.Description)
 

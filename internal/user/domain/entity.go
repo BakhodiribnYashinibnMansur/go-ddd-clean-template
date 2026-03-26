@@ -8,12 +8,17 @@ import (
 	"github.com/google/uuid"
 )
 
-const maxSessions = 10
+// maxSessions enforces the upper bound on concurrent sessions per user.
+// When reached, the caller must revoke an existing session before creating a new one.
+const maxSessions = 50
 
 // ---------------------------------------------------------------------------
 // User Aggregate Root
 // ---------------------------------------------------------------------------
 
+// User is the central aggregate root for identity and authentication.
+// It owns Session child entities and enforces invariants: max session count, password strength,
+// and the active+approved preconditions for sign-in. All state mutations raise domain events.
 type User struct {
 	shared.AggregateRoot
 	phone      Phone
@@ -32,6 +37,8 @@ type User struct {
 // Functional Options
 // ---------------------------------------------------------------------------
 
+// UserOption applies optional configuration during User construction.
+// Use these to set nullable fields (email, username, role) without polluting the constructor signature.
 type UserOption func(*User)
 
 func WithEmail(email Email) UserOption       { return func(u *User) { u.email = &email } }
@@ -104,7 +111,8 @@ func ReconstructUser(
 // ---------------------------------------------------------------------------
 
 // AddSession creates a new session and appends it to the aggregate.
-// Returns an error if the user already has the maximum number of sessions.
+// Returns ErrMaxSessionsReached if the session cap is hit — callers should prompt the user
+// to revoke an existing session or call RevokeAllSessions first.
 func (u *User) AddSession(deviceType SessionDeviceType, ip, userAgent string) (*Session, error) {
 	if len(u.sessions) >= maxSessions {
 		return nil, ErrMaxSessionsReached
@@ -116,7 +124,8 @@ func (u *User) AddSession(deviceType SessionDeviceType, ip, userAgent string) (*
 	return s, nil
 }
 
-// RemoveSession removes a session by ID.
+// RemoveSession hard-deletes a session from the aggregate by ID.
+// Returns ErrSessionNotFound if no matching session exists.
 func (u *User) RemoveSession(sessionID uuid.UUID) error {
 	for i, s := range u.sessions {
 		if s.ID() == sessionID {
@@ -128,7 +137,8 @@ func (u *User) RemoveSession(sessionID uuid.UUID) error {
 	return ErrSessionNotFound
 }
 
-// RevokeAllSessions revokes every session in the aggregate.
+// RevokeAllSessions marks every session as revoked without removing them from the aggregate.
+// Revoked sessions remain visible for audit purposes but fail IsActive checks.
 func (u *User) RevokeAllSessions() {
 	for i := range u.sessions {
 		u.sessions[i].Revoke()
@@ -141,7 +151,8 @@ func (u *User) VerifyPassword(raw string) error {
 	return u.password.Compare(raw)
 }
 
-// ChangePassword verifies the old password and replaces it with the new one.
+// ChangePassword verifies the old password, validates the new one (min 8 chars), and replaces the hash.
+// Returns ErrInvalidPassword if the old password is wrong, or ErrWeakPassword if the new one is too short.
 func (u *User) ChangePassword(oldRaw, newRaw string) error {
 	if err := u.password.Compare(oldRaw); err != nil {
 		return err
@@ -162,21 +173,24 @@ func (u *User) Activate() {
 	u.Touch()
 }
 
-// Deactivate marks the user as inactive and raises a UserDeactivated event.
+// Deactivate marks the user as inactive, preventing future sign-ins.
+// Existing sessions are NOT automatically revoked — call RevokeAllSessions separately if needed.
 func (u *User) Deactivate() {
 	u.active = false
 	u.Touch()
 	u.AddEvent(NewUserDeactivated(u.ID()))
 }
 
-// Approve marks the user as approved and raises a UserApproved event.
+// Approve marks the user as approved, allowing sign-in. This is a one-way admin action;
+// there is no "unapprove" — deactivation serves that purpose.
 func (u *User) Approve() {
 	u.isApproved = true
 	u.Touch()
 	u.AddEvent(NewUserApproved(u.ID()))
 }
 
-// ChangeRole sets a new role and raises a RoleChanged event.
+// ChangeRole sets a new role and raises a RoleChanged event carrying both old and new role IDs
+// so that downstream consumers can detect privilege escalation or demotion.
 func (u *User) ChangeRole(roleID uuid.UUID) {
 	old := u.roleID
 	u.roleID = &roleID

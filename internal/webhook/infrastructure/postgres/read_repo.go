@@ -16,7 +16,7 @@ import (
 )
 
 var readColumns = []string{
-	"id", "name", "url", "secret", "events", "enabled", "created_at", "updated_at",
+	"id", "name", "url", "secret", "events", "is_active", "created_at", "updated_at",
 }
 
 // WebhookReadRepo implements domain.WebhookReadRepository for the CQRS read side.
@@ -55,7 +55,7 @@ func (r *WebhookReadRepo) List(ctx context.Context, filter domain.WebhookFilter)
 		conds = append(conds, squirrel.ILike{"name": "%" + *filter.Search + "%"})
 	}
 	if filter.Enabled != nil {
-		conds = append(conds, squirrel.Eq{"enabled": *filter.Enabled})
+		conds = append(conds, squirrel.Eq{"is_active": *filter.Enabled})
 	}
 
 	// Count total.

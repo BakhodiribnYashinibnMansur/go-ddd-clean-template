@@ -9,6 +9,8 @@ import (
 )
 
 // FeatureFlag is the aggregate root for feature flag management.
+// It combines a boolean kill-switch (enabled) with a rolloutPercentage for gradual rollouts.
+// When enabled is false, the flag is completely off regardless of rolloutPercentage.
 type FeatureFlag struct {
 	shared.AggregateRoot
 	name              string
@@ -47,14 +49,16 @@ func ReconstructFeatureFlag(
 	}
 }
 
-// Toggle flips the Enabled flag and raises a FlagToggled event.
+// Toggle flips the enabled state and raises a FlagToggled event.
+// This is the preferred method for quick on/off switches; use UpdateDetails for partial field updates.
 func (ff *FeatureFlag) Toggle() {
 	ff.enabled = !ff.enabled
 	ff.Touch()
 	ff.AddEvent(NewFlagToggled(ff.ID(), ff.enabled))
 }
 
-// UpdateDetails updates mutable fields.
+// UpdateDetails applies partial modifications to the feature flag.
+// Nil pointer arguments are treated as "no change." Unlike Toggle, this does not raise a FlagToggled event.
 func (ff *FeatureFlag) UpdateDetails(name, description *string, enabled *bool, rolloutPercentage *int) {
 	if name != nil {
 		ff.name = *name

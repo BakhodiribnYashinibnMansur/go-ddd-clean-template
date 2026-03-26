@@ -9,7 +9,9 @@ import (
 	"gct/internal/shared/infrastructure/logger"
 )
 
-// CreateJobCommand holds the input for creating a new job.
+// CreateJobCommand represents an intent to enqueue a new background job for deferred execution.
+// Payload carries task-specific arguments as schemaless JSON; its structure is defined by the TaskName consumer.
+// ScheduledAt is optional — nil means "execute as soon as a worker picks it up."
 type CreateJobCommand struct {
 	TaskName    string
 	Payload     map[string]any
@@ -17,14 +19,15 @@ type CreateJobCommand struct {
 	ScheduledAt *time.Time
 }
 
-// CreateJobHandler handles the CreateJobCommand.
+// CreateJobHandler persists a new job record and publishes domain events for worker pickup.
+// The job starts in a "pending" state; actual execution is handled by a separate worker process.
 type CreateJobHandler struct {
 	repo     domain.JobRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
-// NewCreateJobHandler creates a new CreateJobHandler.
+// NewCreateJobHandler wires up the handler with its required dependencies.
 func NewCreateJobHandler(
 	repo domain.JobRepository,
 	eventBus application.EventBus,
@@ -37,7 +40,8 @@ func NewCreateJobHandler(
 	}
 }
 
-// Handle executes the CreateJobCommand.
+// Handle creates the job domain entity, persists it, and publishes domain events (e.g., JobCreated).
+// Event publish failures are logged but do not fail the operation — the job is already saved.
 func (h *CreateJobHandler) Handle(ctx context.Context, cmd CreateJobCommand) error {
 	j := domain.NewJob(cmd.TaskName, cmd.Payload, cmd.MaxAttempts, cmd.ScheduledAt)
 

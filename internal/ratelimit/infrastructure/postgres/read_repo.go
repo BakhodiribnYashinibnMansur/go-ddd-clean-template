@@ -14,8 +14,8 @@ import (
 )
 
 var readColumns = []string{
-	"id", "name", "rule", "requests_per_window", "window_duration",
-	"enabled", "created_at", "updated_at",
+	"id", "name", "path_pattern", "limit_count", "window_seconds",
+	"is_active", "created_at", "updated_at",
 }
 
 // RateLimitReadRepo implements domain.RateLimitReadRepository for the CQRS read side.

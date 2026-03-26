@@ -15,8 +15,8 @@ import (
 )
 
 var readColumns = []string{
-	"id", "name", "original_name", "mime_type", "size",
-	"path", "url", "uploaded_by", "created_at",
+	"id", "stored_name", "original_name", "mime_type", "size",
+	"bucket", "url", "uploaded_by", "created_at",
 }
 
 // FileReadRepo implements domain.FileReadRepository for the CQRS read side.
@@ -109,7 +109,7 @@ func (r *FileReadRepo) List(ctx context.Context, filter domain.FileFilter) ([]*d
 
 func applyFilters(conds squirrel.And, filter domain.FileFilter) squirrel.And {
 	if filter.Name != nil {
-		conds = append(conds, squirrel.ILike{"name": "%" + *filter.Name + "%"})
+		conds = append(conds, squirrel.ILike{"original_name": "%" + *filter.Name + "%"})
 	}
 	if filter.MimeType != nil {
 		conds = append(conds, squirrel.Eq{"mime_type": *filter.MimeType})

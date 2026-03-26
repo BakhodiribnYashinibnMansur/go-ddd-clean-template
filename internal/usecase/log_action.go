@@ -23,9 +23,16 @@ func (u *UseCase) LogAction(ctx context.Context, action domain.AuditActionType, 
 		CreatedAt:    time.Now(),
 	}
 
+	payload := asynq.AuditPayload{
+		UserID:       al.UserID,
+		Action:       string(al.Action),
+		ResourceType: al.ResourceType,
+		ResourceID:   al.ResourceID,
+	}
+
 	// Reliable Audit Logging using Asynq
 	if u.AsynqClient != nil {
-		_, err := u.AsynqClient.EnqueueAudit(ctx, asynq.AuditPayload{Log: al})
+		_, err := u.AsynqClient.EnqueueAudit(ctx, payload)
 		if err != nil {
 			u.Audit.Log().Create(ctx, al) // Fallback to direct call if enqueue fails
 		}

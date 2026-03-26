@@ -9,7 +9,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// CreateEndpointHistoryCommand holds the input for creating a new endpoint history entry.
+// CreateEndpointHistoryCommand records a single HTTP request for API usage analytics and latency tracking.
+// UserID is nil for unauthenticated requests. Latency is stored in milliseconds.
 type CreateEndpointHistoryCommand struct {
 	UserID     *uuid.UUID
 	Endpoint   string
@@ -20,13 +21,14 @@ type CreateEndpointHistoryCommand struct {
 	UserAgent  *string
 }
 
-// CreateEndpointHistoryHandler handles the CreateEndpointHistoryCommand.
+// CreateEndpointHistoryHandler persists endpoint history entries for observability.
+// Unlike audit logs, no domain events are emitted — this is a fire-and-forget telemetry record.
 type CreateEndpointHistoryHandler struct {
 	repo   domain.EndpointHistoryRepository
 	logger logger.Log
 }
 
-// NewCreateEndpointHistoryHandler creates a new CreateEndpointHistoryHandler.
+// NewCreateEndpointHistoryHandler wires dependencies for endpoint history recording.
 func NewCreateEndpointHistoryHandler(
 	repo domain.EndpointHistoryRepository,
 	logger logger.Log,
@@ -37,7 +39,8 @@ func NewCreateEndpointHistoryHandler(
 	}
 }
 
-// Handle executes the CreateEndpointHistoryCommand.
+// Handle persists the endpoint history entry.
+// Returns nil on success; propagates repository errors to the caller.
 func (h *CreateEndpointHistoryHandler) Handle(ctx context.Context, cmd CreateEndpointHistoryCommand) error {
 	entry := domain.NewEndpointHistory(
 		cmd.UserID,

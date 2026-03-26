@@ -17,7 +17,7 @@ import (
 const tableName = consts.TableFeatureFlags
 
 var writeColumns = []string{
-	"id", "name", "description", "enabled", "rollout_percentage", "created_at", "updated_at",
+	"id", "key", "name", "type", "value", "description", "is_active", "created_at", "updated_at",
 }
 
 // FeatureFlagWriteRepo implements domain.FeatureFlagRepository using PostgreSQL.
@@ -42,9 +42,11 @@ func (r *FeatureFlagWriteRepo) Save(ctx context.Context, ff *domain.FeatureFlag)
 		Values(
 			ff.ID(),
 			ff.Name(),
+			ff.Name(),
+			"bool",
+			"",
 			ff.Description(),
 			ff.Enabled(),
-			ff.RolloutPercentage(),
 			ff.CreatedAt(),
 			ff.UpdatedAt(),
 		).
@@ -81,8 +83,7 @@ func (r *FeatureFlagWriteRepo) Update(ctx context.Context, ff *domain.FeatureFla
 		Update(tableName).
 		Set("name", ff.Name()).
 		Set("description", ff.Description()).
-		Set("enabled", ff.Enabled()).
-		Set("rollout_percentage", ff.RolloutPercentage()).
+		Set("is_active", ff.Enabled()).
 		Set("updated_at", ff.UpdatedAt()).
 		Where(squirrel.Eq{"id": ff.ID()}).
 		ToSql()
@@ -120,19 +121,25 @@ func (r *FeatureFlagWriteRepo) Delete(ctx context.Context, id uuid.UUID) error {
 
 func scanFeatureFlag(row pgx.Row) (*domain.FeatureFlag, error) {
 	var (
-		id                uuid.UUID
-		name              string
-		description       string
-		enabled           bool
-		rolloutPercentage int
-		createdAt         time.Time
-		updatedAt         time.Time
+		id          uuid.UUID
+		key         string
+		name        string
+		ffType      string
+		value       string
+		description string
+		isActive    bool
+		createdAt   time.Time
+		updatedAt   time.Time
 	)
 
-	err := row.Scan(&id, &name, &description, &enabled, &rolloutPercentage, &createdAt, &updatedAt)
+	err := row.Scan(&id, &key, &name, &ffType, &value, &description, &isActive, &createdAt, &updatedAt)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, map[string]any{"id": id})
 	}
 
-	return domain.ReconstructFeatureFlag(id, createdAt, updatedAt, nil, name, description, enabled, rolloutPercentage), nil
+	_ = key
+	_ = ffType
+	_ = value
+
+	return domain.ReconstructFeatureFlag(id, createdAt, updatedAt, nil, name, description, isActive, 0), nil
 }

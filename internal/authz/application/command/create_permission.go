@@ -9,20 +9,22 @@ import (
 	"github.com/google/uuid"
 )
 
-// CreatePermissionCommand holds the input for creating a new permission.
+// CreatePermissionCommand represents an intent to register a new permission in the authorization system.
+// ParentID enables hierarchical permission trees — nil means a root-level permission.
 type CreatePermissionCommand struct {
 	Name        string
 	ParentID    *uuid.UUID
 	Description *string
 }
 
-// CreatePermissionHandler handles the CreatePermissionCommand.
+// CreatePermissionHandler persists new permissions via the repository.
+// No domain events are emitted — permissions are structural metadata, not runtime state changes.
 type CreatePermissionHandler struct {
 	repo   domain.PermissionRepository
 	logger logger.Log
 }
 
-// NewCreatePermissionHandler creates a new CreatePermissionHandler.
+// NewCreatePermissionHandler wires dependencies for permission creation.
 func NewCreatePermissionHandler(
 	repo domain.PermissionRepository,
 	logger logger.Log,
@@ -33,7 +35,8 @@ func NewCreatePermissionHandler(
 	}
 }
 
-// Handle executes the CreatePermissionCommand.
+// Handle creates a permission, optionally sets its description, and persists it.
+// Returns nil on success; propagates repository errors (e.g., duplicate name, invalid parent) to the caller.
 func (h *CreatePermissionHandler) Handle(ctx context.Context, cmd CreatePermissionCommand) error {
 	perm := domain.NewPermission(cmd.Name, cmd.ParentID)
 	if cmd.Description != nil {

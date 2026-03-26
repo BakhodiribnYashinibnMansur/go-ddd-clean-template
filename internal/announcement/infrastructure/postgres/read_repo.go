@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"time"
 
 	"gct/internal/announcement/domain"
 	"gct/internal/shared/domain/consts"
@@ -14,10 +15,8 @@ import (
 )
 
 var readColumns = []string{
-	"id", "title_uz", "title_ru", "title_en",
-	"content_uz", "content_ru", "content_en",
-	"published", "published_at", "priority",
-	"start_date", "end_date", "created_at", "updated_at",
+	"id", "title", "content", "type", "is_active",
+	"starts_at", "ends_at", "created_at", "updated_at",
 }
 
 // AnnouncementReadRepo implements domain.AnnouncementReadRepository for the CQRS read side.
@@ -107,25 +106,61 @@ func (r *AnnouncementReadRepo) List(ctx context.Context, filter domain.Announcem
 }
 
 func scanAnnouncementView(row pgx.Row) (*domain.AnnouncementView, error) {
-	var v domain.AnnouncementView
-	err := row.Scan(&v.ID, &v.TitleUz, &v.TitleRu, &v.TitleEn,
-		&v.ContentUz, &v.ContentRu, &v.ContentEn,
-		&v.Published, &v.PublishedAt, &v.Priority,
-		&v.StartDate, &v.EndDate, &v.CreatedAt, &v.UpdatedAt)
+	var (
+		id        uuid.UUID
+		title     string
+		content   string
+		aType     string
+		isActive  bool
+		startsAt  *time.Time
+		endsAt    *time.Time
+		createdAt time.Time
+		updatedAt time.Time
+	)
+	err := row.Scan(&id, &title, &content, &aType, &isActive, &startsAt, &endsAt, &createdAt, &updatedAt)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
-	return &v, nil
+	_ = aType
+	return &domain.AnnouncementView{
+		ID:        id,
+		TitleUz:   title, TitleRu: title, TitleEn: title,
+		ContentUz: content, ContentRu: content, ContentEn: content,
+		Published: isActive,
+		Priority:  0,
+		StartDate: startsAt,
+		EndDate:   endsAt,
+		CreatedAt: createdAt,
+		UpdatedAt: updatedAt,
+	}, nil
 }
 
 func scanAnnouncementViewFromRows(rows pgx.Rows) (*domain.AnnouncementView, error) {
-	var v domain.AnnouncementView
-	err := rows.Scan(&v.ID, &v.TitleUz, &v.TitleRu, &v.TitleEn,
-		&v.ContentUz, &v.ContentRu, &v.ContentEn,
-		&v.Published, &v.PublishedAt, &v.Priority,
-		&v.StartDate, &v.EndDate, &v.CreatedAt, &v.UpdatedAt)
+	var (
+		id        uuid.UUID
+		title     string
+		content   string
+		aType     string
+		isActive  bool
+		startsAt  *time.Time
+		endsAt    *time.Time
+		createdAt time.Time
+		updatedAt time.Time
+	)
+	err := rows.Scan(&id, &title, &content, &aType, &isActive, &startsAt, &endsAt, &createdAt, &updatedAt)
 	if err != nil {
 		return nil, err
 	}
-	return &v, nil
+	_ = aType
+	return &domain.AnnouncementView{
+		ID:        id,
+		TitleUz:   title, TitleRu: title, TitleEn: title,
+		ContentUz: content, ContentRu: content, ContentEn: content,
+		Published: isActive,
+		Priority:  0,
+		StartDate: startsAt,
+		EndDate:   endsAt,
+		CreatedAt: createdAt,
+		UpdatedAt: updatedAt,
+	}, nil
 }

@@ -7,7 +7,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// ErrorCodeFilter carries filtering parameters for listing error codes.
+// ErrorCodeFilter carries optional criteria for querying error codes.
+// Nil pointer fields are treated as "no filter" by repository implementations.
 type ErrorCodeFilter struct {
 	Code     *string
 	Category *string
@@ -17,6 +18,7 @@ type ErrorCodeFilter struct {
 }
 
 // ErrorCodeRepository is the write-side repository for the ErrorCode aggregate.
+// Implementations must return ErrErrorCodeNotFound from FindByID when no row matches.
 type ErrorCodeRepository interface {
 	Save(ctx context.Context, entity *ErrorCode) error
 	Update(ctx context.Context, entity *ErrorCode) error
@@ -39,7 +41,8 @@ type ErrorCodeView struct {
 	UpdatedAt  time.Time `json:"updated_at"`
 }
 
-// ErrorCodeReadRepository is the read-side repository returning projected views.
+// ErrorCodeReadRepository is the read-side (CQRS query) repository.
+// It returns pre-projected ErrorCodeView DTOs for list and detail queries.
 type ErrorCodeReadRepository interface {
 	FindByID(ctx context.Context, id uuid.UUID) (*ErrorCodeView, error)
 	List(ctx context.Context, filter ErrorCodeFilter) ([]*ErrorCodeView, int64, error)

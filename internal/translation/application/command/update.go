@@ -10,7 +10,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// UpdateTranslationCommand holds the input for updating a translation.
+// UpdateTranslationCommand represents a partial update to an existing translation record.
+// Pointer fields use nil-means-unchanged semantics, so callers only set the fields they want to modify.
 type UpdateTranslationCommand struct {
 	ID       uuid.UUID
 	Key      *string
@@ -19,7 +20,8 @@ type UpdateTranslationCommand struct {
 	Group    *string
 }
 
-// UpdateTranslationHandler handles the UpdateTranslationCommand.
+// UpdateTranslationHandler applies partial updates to translations via a load-modify-save cycle.
+// Event bus failures are logged but do not cause the handler to return an error.
 type UpdateTranslationHandler struct {
 	repo     domain.TranslationRepository
 	eventBus application.EventBus
@@ -39,7 +41,8 @@ func NewUpdateTranslationHandler(
 	}
 }
 
-// Handle executes the UpdateTranslationCommand.
+// Handle loads the translation by ID, applies the partial update, and persists the result.
+// Returns not-found or repository errors to the caller; authorization is the caller's responsibility.
 func (h *UpdateTranslationHandler) Handle(ctx context.Context, cmd UpdateTranslationCommand) error {
 	t, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {

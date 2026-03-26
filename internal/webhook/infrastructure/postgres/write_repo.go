@@ -18,7 +18,7 @@ import (
 const tableName = consts.TableWebhooks
 
 var writeColumns = []string{
-	"id", "name", "url", "secret", "events", "enabled", "created_at", "updated_at",
+	"id", "name", "url", "secret", "events", "is_active", "created_at", "updated_at",
 }
 
 // WebhookWriteRepo implements domain.WebhookRepository using PostgreSQL.
@@ -95,7 +95,7 @@ func (r *WebhookWriteRepo) Update(ctx context.Context, w *domain.Webhook) error 
 		Set("url", w.URL()).
 		Set("secret", w.Secret()).
 		Set("events", eventsJSON).
-		Set("enabled", w.Enabled()).
+		Set("is_active", w.Enabled()).
 		Set("updated_at", w.UpdatedAt()).
 		Where(squirrel.Eq{"id": w.ID()}).
 		ToSql()

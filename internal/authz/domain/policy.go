@@ -8,7 +8,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// PolicyEffect represents the effect of a policy.
+// PolicyEffect is a value type restricting policy outcomes to ALLOW or DENY.
+// When multiple policies apply, the evaluation engine uses priority to resolve conflicts.
 type PolicyEffect string
 
 const (
@@ -16,7 +17,9 @@ const (
 	PolicyDeny  PolicyEffect = "DENY"
 )
 
-// Policy is an ABAC policy entity.
+// Policy is an Attribute-Based Access Control (ABAC) entity bound to a specific Permission.
+// The conditions map holds arbitrary key-value predicates evaluated at runtime (e.g., IP range, time window).
+// Higher-priority policies take precedence; inactive policies are skipped during evaluation.
 type Policy struct {
 	shared.BaseEntity
 	permissionID uuid.UUID
@@ -77,7 +80,8 @@ func (p *Policy) IsActive() bool { return p.active }
 // Conditions returns the ABAC conditions.
 func (p *Policy) Conditions() map[string]any { return p.conditions }
 
-// Toggle flips the active state.
+// Toggle flips the active state between enabled and disabled.
+// Toggling an inactive policy re-enables it without changing its conditions or priority.
 func (p *Policy) Toggle() {
 	p.active = !p.active
 	p.Touch()
@@ -95,7 +99,8 @@ func (p *Policy) SetEffect(effect PolicyEffect) {
 	p.Touch()
 }
 
-// SetConditions sets the ABAC conditions.
+// SetConditions replaces the full ABAC condition map.
+// A nil input is normalized to an empty map to avoid nil-pointer issues in JSON serialization.
 func (p *Policy) SetConditions(conditions map[string]any) {
 	if conditions == nil {
 		conditions = make(map[string]any)

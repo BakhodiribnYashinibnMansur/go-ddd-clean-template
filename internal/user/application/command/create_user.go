@@ -10,7 +10,9 @@ import (
 	"github.com/google/uuid"
 )
 
-// CreateUserCommand holds the input for creating a new user.
+// CreateUserCommand represents an admin-initiated user creation (as opposed to self-registration via SignUp).
+// Phone and Password are required; all other fields are optional enrichments.
+// The password is supplied in raw form and will be hashed by the domain layer before persistence.
 type CreateUserCommand struct {
 	Phone      string
 	Password   string
@@ -20,7 +22,8 @@ type CreateUserCommand struct {
 	Attributes map[string]any
 }
 
-// CreateUserHandler handles the CreateUserCommand.
+// CreateUserHandler orchestrates user creation with domain validation (phone format, email format, password strength).
+// Domain events are published after a successful save; event bus failures are logged but do not roll back the write.
 type CreateUserHandler struct {
 	repo     domain.UserRepository
 	eventBus application.EventBus
@@ -40,7 +43,8 @@ func NewCreateUserHandler(
 	}
 }
 
-// Handle executes the CreateUserCommand.
+// Handle validates inputs through domain value objects, constructs the User aggregate, and persists it.
+// Returns domain validation errors (invalid phone, weak password) or repository errors (duplicate phone/email).
 func (h *CreateUserHandler) Handle(ctx context.Context, cmd CreateUserCommand) error {
 	phone, err := domain.NewPhone(cmd.Phone)
 	if err != nil {

@@ -9,6 +9,9 @@ import (
 )
 
 // DataExport is the aggregate root for data export requests.
+// It models a state machine: PENDING -> PROCESSING -> COMPLETED | FAILED.
+// Transitions are enforced by the Complete, Fail, and StartProcessing methods.
+// The fileURL is only populated on successful completion.
 type DataExport struct {
 	shared.AggregateRoot
 	userID   uuid.UUID
@@ -19,7 +22,8 @@ type DataExport struct {
 	errorMsg *string
 }
 
-// DataExport status constants.
+// DataExport status constants representing the export lifecycle state machine.
+// Transitions: PENDING -> PROCESSING -> COMPLETED or FAILED. No backward transitions are allowed.
 const (
 	ExportStatusPending    = "PENDING"
 	ExportStatusProcessing = "PROCESSING"
@@ -59,7 +63,8 @@ func ReconstructDataExport(
 	}
 }
 
-// Complete marks the export as completed with a file URL.
+// Complete transitions the export to COMPLETED and stores the download URL.
+// An ExportCompleted event is raised for downstream notification handlers.
 func (de *DataExport) Complete(fileURL string) {
 	de.status = ExportStatusCompleted
 	de.fileURL = &fileURL
@@ -67,14 +72,16 @@ func (de *DataExport) Complete(fileURL string) {
 	de.AddEvent(NewExportCompleted(de.ID(), de.userID, fileURL))
 }
 
-// Fail marks the export as failed with an error message.
+// Fail transitions the export to FAILED and records the error message.
+// No domain event is raised on failure — callers should log the error externally if needed.
 func (de *DataExport) Fail(errMsg string) {
 	de.status = ExportStatusFailed
 	de.errorMsg = &errMsg
 	de.Touch()
 }
 
-// StartProcessing marks the export as processing.
+// StartProcessing transitions the export from PENDING to PROCESSING.
+// This should be called by the background worker before beginning the actual export job.
 func (de *DataExport) StartProcessing() {
 	de.status = ExportStatusProcessing
 	de.Touch()

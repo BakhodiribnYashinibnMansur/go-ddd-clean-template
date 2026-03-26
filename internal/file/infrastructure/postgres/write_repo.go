@@ -14,8 +14,8 @@ import (
 const tableName = consts.TableFileMetadata
 
 var writeColumns = []string{
-	"id", "name", "original_name", "mime_type", "size",
-	"path", "url", "uploaded_by", "created_at",
+	"id", "stored_name", "original_name", "mime_type", "size",
+	"bucket", "url", "uploaded_by", "created_at",
 }
 
 // FileWriteRepo implements domain.FileRepository using PostgreSQL.

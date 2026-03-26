@@ -15,8 +15,8 @@ import (
 )
 
 var readColumns = []string{
-	"id", "user_id", "data_type", "format", "status",
-	"file_url", "error", "created_at", "updated_at",
+	"id", "type", "status", "file_url", "filters",
+	"created_by", "created_at", "completed_at",
 }
 
 // DataExportReadRepo implements domain.DataExportReadRepository for the CQRS read side.
@@ -109,10 +109,10 @@ func (r *DataExportReadRepo) List(ctx context.Context, filter domain.DataExportF
 
 func applyFilters(conds squirrel.And, filter domain.DataExportFilter) squirrel.And {
 	if filter.UserID != nil {
-		conds = append(conds, squirrel.Eq{"user_id": *filter.UserID})
+		conds = append(conds, squirrel.Eq{"created_by": *filter.UserID})
 	}
 	if filter.DataType != nil {
-		conds = append(conds, squirrel.Eq{"data_type": *filter.DataType})
+		conds = append(conds, squirrel.Eq{"type": *filter.DataType})
 	}
 	if filter.Status != nil {
 		conds = append(conds, squirrel.Eq{"status": *filter.Status})
@@ -122,62 +122,86 @@ func applyFilters(conds squirrel.And, filter domain.DataExportFilter) squirrel.A
 
 func scanDataExportView(row pgx.Row) (*domain.DataExportView, error) {
 	var (
-		id        uuid.UUID
-		userID    uuid.UUID
-		dataType  string
-		format    string
-		status    string
-		fileURL   *string
-		errorMsg  *string
-		createdAt time.Time
-		updatedAt time.Time
+		id          uuid.UUID
+		dataType    string
+		status      string
+		fileURL     string
+		filtersJSON []byte
+		createdBy   *uuid.UUID
+		createdAt   time.Time
+		completedAt *time.Time
 	)
 
-	err := row.Scan(&id, &userID, &dataType, &format, &status, &fileURL, &errorMsg, &createdAt, &updatedAt)
+	err := row.Scan(&id, &dataType, &status, &fileURL, &filtersJSON, &createdBy, &createdAt, &completedAt)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
+	}
+
+	_ = filtersJSON
+	_ = completedAt
+
+	userID := uuid.Nil
+	if createdBy != nil {
+		userID = *createdBy
+	}
+
+	var fileURLPtr *string
+	if fileURL != "" {
+		fileURLPtr = &fileURL
 	}
 
 	return &domain.DataExportView{
 		ID:        id,
 		UserID:    userID,
 		DataType:  dataType,
-		Format:    format,
+		Format:    "",
 		Status:    status,
-		FileURL:   fileURL,
-		Error:     errorMsg,
+		FileURL:   fileURLPtr,
+		Error:     nil,
 		CreatedAt: createdAt,
-		UpdatedAt: updatedAt,
+		UpdatedAt: createdAt,
 	}, nil
 }
 
 func scanDataExportViewFromRows(rows pgx.Rows) (*domain.DataExportView, error) {
 	var (
-		id        uuid.UUID
-		userID    uuid.UUID
-		dataType  string
-		format    string
-		status    string
-		fileURL   *string
-		errorMsg  *string
-		createdAt time.Time
-		updatedAt time.Time
+		id          uuid.UUID
+		dataType    string
+		status      string
+		fileURL     string
+		filtersJSON []byte
+		createdBy   *uuid.UUID
+		createdAt   time.Time
+		completedAt *time.Time
 	)
 
-	err := rows.Scan(&id, &userID, &dataType, &format, &status, &fileURL, &errorMsg, &createdAt, &updatedAt)
+	err := rows.Scan(&id, &dataType, &status, &fileURL, &filtersJSON, &createdBy, &createdAt, &completedAt)
 	if err != nil {
 		return nil, err
+	}
+
+	_ = filtersJSON
+	_ = completedAt
+
+	userID := uuid.Nil
+	if createdBy != nil {
+		userID = *createdBy
+	}
+
+	var fileURLPtr *string
+	if fileURL != "" {
+		fileURLPtr = &fileURL
 	}
 
 	return &domain.DataExportView{
 		ID:        id,
 		UserID:    userID,
 		DataType:  dataType,
-		Format:    format,
+		Format:    "",
 		Status:    status,
-		FileURL:   fileURL,
-		Error:     errorMsg,
+		FileURL:   fileURLPtr,
+		Error:     nil,
 		CreatedAt: createdAt,
-		UpdatedAt: updatedAt,
+		UpdatedAt: createdAt,
 	}, nil
 }

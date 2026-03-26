@@ -6,7 +6,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// ErrorCodeUpdated is raised when an error code is created or updated.
+// ErrorCodeUpdated is a domain event emitted on both creation and modification of an error code.
+// Consumers can use this to refresh a cached error-code lookup table used by API error mappers.
 type ErrorCodeUpdated struct {
 	aggregateID uuid.UUID
 	occurredAt  time.Time

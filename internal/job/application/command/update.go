@@ -10,7 +10,9 @@ import (
 	"github.com/google/uuid"
 )
 
-// UpdateJobCommand holds the input for updating an existing job.
+// UpdateJobCommand represents a state transition for an existing job, typically issued by a worker.
+// Status drives the domain state machine (pending -> running -> completed/failed).
+// Result captures the output on success; Error captures the failure message on failure.
 type UpdateJobCommand struct {
 	ID     uuid.UUID
 	Status *string
@@ -18,14 +20,15 @@ type UpdateJobCommand struct {
 	Error  *string
 }
 
-// UpdateJobHandler handles the UpdateJobCommand.
+// UpdateJobHandler transitions a job through its lifecycle states and persists the outcome.
+// State transitions are delegated to domain methods (Start, Complete, Fail) which enforce valid transitions.
 type UpdateJobHandler struct {
 	repo     domain.JobRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
-// NewUpdateJobHandler creates a new UpdateJobHandler.
+// NewUpdateJobHandler wires up the handler with its required dependencies.
 func NewUpdateJobHandler(
 	repo domain.JobRepository,
 	eventBus application.EventBus,
@@ -38,7 +41,8 @@ func NewUpdateJobHandler(
 	}
 }
 
-// Handle executes the UpdateJobCommand.
+// Handle fetches the job by ID, applies the requested state transition, and persists the updated entity.
+// Unrecognized status values are silently ignored — only Running, Completed, and Failed trigger transitions.
 func (h *UpdateJobHandler) Handle(ctx context.Context, cmd UpdateJobCommand) error {
 	j, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {

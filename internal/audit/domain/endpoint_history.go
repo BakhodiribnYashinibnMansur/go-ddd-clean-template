@@ -8,7 +8,9 @@ import (
 	"github.com/google/uuid"
 )
 
-// EndpointHistory tracks HTTP request history for auditing purposes.
+// EndpointHistory is an append-only entity that records individual HTTP request metadata.
+// Unlike AuditLog, this captures raw transport-level data (latency, status code) rather than
+// business-level actions. It is not an aggregate root — it has no domain events or invariants.
 type EndpointHistory struct {
 	shared.BaseEntity
 	userID     *uuid.UUID

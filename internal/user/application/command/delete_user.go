@@ -10,12 +10,14 @@ import (
 	"github.com/google/uuid"
 )
 
-// DeleteUserCommand holds the input for soft-deleting a user.
+// DeleteUserCommand represents an intent to soft-delete a user by their unique identifier.
+// The user is deactivated and marked as deleted but not physically removed from the database.
 type DeleteUserCommand struct {
 	ID uuid.UUID
 }
 
-// DeleteUserHandler handles the DeleteUserCommand.
+// DeleteUserHandler performs a two-step soft-delete: deactivation followed by a soft-delete timestamp.
+// The user record is preserved for audit/recovery; domain events are emitted for downstream cleanup.
 type DeleteUserHandler struct {
 	repo     domain.UserRepository
 	eventBus application.EventBus
@@ -35,7 +37,8 @@ func NewDeleteUserHandler(
 	}
 }
 
-// Handle executes the DeleteUserCommand.
+// Handle loads the user, deactivates them, sets the soft-delete timestamp, and persists the update.
+// Active sessions are not explicitly revoked here — downstream event handlers should invalidate tokens.
 func (h *DeleteUserHandler) Handle(ctx context.Context, cmd DeleteUserCommand) error {
 	user, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {

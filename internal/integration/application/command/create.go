@@ -8,7 +8,9 @@ import (
 	"gct/internal/shared/infrastructure/logger"
 )
 
-// CreateCommand holds the input for creating a new integration.
+// CreateCommand represents an intent to register a new third-party integration.
+// Config carries provider-specific settings (e.g., Slack channel, SMTP host) and is stored as schemaless JSON.
+// The APIKey is persisted as-is — callers should encrypt sensitive credentials before constructing this command.
 type CreateCommand struct {
 	Name       string
 	Type       string
@@ -18,14 +20,15 @@ type CreateCommand struct {
 	Config     map[string]any
 }
 
-// CreateHandler handles the CreateCommand.
+// CreateHandler orchestrates integration creation through the repository and event bus.
+// Domain events are emitted on success so downstream listeners can initialize provider connections.
 type CreateHandler struct {
 	repo     domain.IntegrationRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
-// NewCreateHandler creates a new CreateHandler.
+// NewCreateHandler wires up the handler with its required dependencies.
 func NewCreateHandler(
 	repo domain.IntegrationRepository,
 	eventBus application.EventBus,
@@ -38,7 +41,8 @@ func NewCreateHandler(
 	}
 }
 
-// Handle executes the CreateCommand.
+// Handle persists the new integration and publishes domain events.
+// Event publish failures are logged but do not roll back the save — eventual consistency is acceptable here.
 func (h *CreateHandler) Handle(ctx context.Context, cmd CreateCommand) error {
 	i := domain.NewIntegration(cmd.Name, cmd.Type, cmd.APIKey, cmd.WebhookURL, cmd.Enabled, cmd.Config)
 

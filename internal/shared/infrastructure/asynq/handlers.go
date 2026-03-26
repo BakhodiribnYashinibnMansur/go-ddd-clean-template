@@ -5,10 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"gct/internal/domain"
-	"gct/internal/usecase/audit"
+	auditcmd "gct/internal/audit/application/command"
+	auditdomain "gct/internal/audit/domain"
 	"gct/internal/shared/infrastructure/logger"
 
+	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
 )
 
@@ -41,18 +42,31 @@ type SeedPayload struct {
 
 // AuditPayload represents audit log task payload.
 type AuditPayload struct {
-	Log *domain.AuditLog `json:"log"`
+	UserID       *uuid.UUID     `json:"user_id,omitempty"`
+	SessionID    *uuid.UUID     `json:"session_id,omitempty"`
+	Action       string         `json:"action"`
+	ResourceType *string        `json:"resource_type,omitempty"`
+	ResourceID   *uuid.UUID     `json:"resource_id,omitempty"`
+	Platform     *string        `json:"platform,omitempty"`
+	IPAddress    *string        `json:"ip_address,omitempty"`
+	UserAgent    *string        `json:"user_agent,omitempty"`
+	Permission   *string        `json:"permission,omitempty"`
+	PolicyID     *uuid.UUID     `json:"policy_id,omitempty"`
+	Decision     *string        `json:"decision,omitempty"`
+	Success      bool           `json:"success"`
+	ErrorMessage *string        `json:"error_message,omitempty"`
+	Metadata     map[string]any `json:"metadata,omitempty"`
 }
 
 // Handlers contains all task handlers.
 type Handlers struct {
-	log   logger.Log
-	audit audit.UseCaseI
+	log            logger.Log
+	createAuditLog *auditcmd.CreateAuditLogHandler
 }
 
 // NewHandlers creates a new handlers instance.
-func NewHandlers(log logger.Log, audit audit.UseCaseI) *Handlers {
-	return &Handlers{log: log, audit: audit}
+func NewHandlers(log logger.Log, createAuditLog *auditcmd.CreateAuditLogHandler) *Handlers {
+	return &Handlers{log: log, createAuditLog: createAuditLog}
 }
 
 // HandleImageResize processes image resize task.
@@ -111,7 +125,24 @@ func (h *Handlers) HandleAuditLog(ctx context.Context, task *asynq.Task) error {
 		return fmt.Errorf("unmarshal payload: %w", err)
 	}
 
-	if err := h.audit.Log().Create(ctx, payload.Log); err != nil {
+	cmd := auditcmd.CreateAuditLogCommand{
+		UserID:       payload.UserID,
+		SessionID:    payload.SessionID,
+		Action:       auditdomain.AuditAction(payload.Action),
+		ResourceType: payload.ResourceType,
+		ResourceID:   payload.ResourceID,
+		Platform:     payload.Platform,
+		IPAddress:    payload.IPAddress,
+		UserAgent:    payload.UserAgent,
+		Permission:   payload.Permission,
+		PolicyID:     payload.PolicyID,
+		Decision:     payload.Decision,
+		Success:      payload.Success,
+		ErrorMessage: payload.ErrorMessage,
+		Metadata:     payload.Metadata,
+	}
+
+	if err := h.createAuditLog.Handle(ctx, cmd); err != nil {
 		h.log.Errorc(ctx, "failed to save audit log via task", "error", err)
 		return err
 	}

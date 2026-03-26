@@ -8,7 +8,9 @@ import (
 	"github.com/google/uuid"
 )
 
-// RateLimit is the aggregate root for rate limits.
+// RateLimit is the aggregate root for API rate limiting policies.
+// Each rule defines a sliding window (windowDuration in seconds) with a maximum request count.
+// The enabled flag allows disabling a rule without deleting it, supporting temporary overrides.
 type RateLimit struct {
 	shared.AggregateRoot
 	name              string
@@ -48,7 +50,8 @@ func ReconstructRateLimit(
 	}
 }
 
-// Update modifies the rate limit fields and raises a RateLimitChanged event.
+// Update applies a partial update to the rate limit using pointer-based optionality.
+// A RateLimitChanged event is raised so that enforcement middleware can reload its cached rules.
 func (r *RateLimit) Update(name, rule *string, requestsPerWindow, windowDuration *int, enabled *bool) {
 	if name != nil {
 		r.name = *name

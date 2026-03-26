@@ -9,6 +9,9 @@ import (
 )
 
 // EmailTemplate is the aggregate root for email template management.
+// It stores both HTML and plain-text bodies to support multipart email rendering.
+// The variables slice declares placeholder names (e.g., "{{.UserName}}") that the
+// email sender must resolve at send time — no validation is done here.
 type EmailTemplate struct {
 	shared.AggregateRoot
 	name      string
@@ -55,7 +58,8 @@ func ReconstructEmailTemplate(
 	}
 }
 
-// UpdateDetails updates mutable fields and raises a TemplateUpdated event.
+// UpdateDetails applies partial modifications to the template and raises a TemplateUpdated event.
+// Nil pointer arguments are treated as "no change"; a nil variables slice preserves the existing list.
 func (et *EmailTemplate) UpdateDetails(name, subject, htmlBody, textBody *string, variables []string) {
 	if name != nil {
 		et.name = *name

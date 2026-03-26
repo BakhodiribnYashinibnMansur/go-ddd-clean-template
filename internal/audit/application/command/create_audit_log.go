@@ -10,7 +10,9 @@ import (
 	"github.com/google/uuid"
 )
 
-// CreateAuditLogCommand holds the input for creating a new audit log entry.
+// CreateAuditLogCommand captures a security-relevant event for immutable storage.
+// Most fields are optional pointers because not all actions have an associated user, resource, or policy.
+// Metadata carries arbitrary key-value context (e.g., changed fields, request IDs) for post-hoc forensic analysis.
 type CreateAuditLogCommand struct {
 	UserID       *uuid.UUID
 	SessionID    *uuid.UUID
@@ -28,14 +30,15 @@ type CreateAuditLogCommand struct {
 	Metadata     map[string]any
 }
 
-// CreateAuditLogHandler handles the CreateAuditLogCommand.
+// CreateAuditLogHandler persists audit log entries and emits domain events for downstream consumers.
+// Event publish failures are logged but swallowed — audit persistence is the critical path, not event delivery.
 type CreateAuditLogHandler struct {
 	repo     domain.AuditLogRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
-// NewCreateAuditLogHandler creates a new CreateAuditLogHandler.
+// NewCreateAuditLogHandler wires dependencies for audit log creation.
 func NewCreateAuditLogHandler(
 	repo domain.AuditLogRepository,
 	eventBus application.EventBus,
@@ -48,7 +51,8 @@ func NewCreateAuditLogHandler(
 	}
 }
 
-// Handle executes the CreateAuditLogCommand.
+// Handle constructs the audit log aggregate from the command, persists it, and publishes domain events.
+// Returns nil on success; propagates repository errors to the caller.
 func (h *CreateAuditLogHandler) Handle(ctx context.Context, cmd CreateAuditLogCommand) error {
 	auditLog := domain.NewAuditLog(
 		cmd.UserID,

@@ -6,7 +6,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// SystemErrorRecorded is raised when a new system error is recorded.
+// SystemErrorRecorded is raised when a new system error is persisted.
+// Subscribers can use Code and Severity to decide whether to trigger alerts (e.g., Telegram, PagerDuty).
 type SystemErrorRecorded struct {
 	aggregateID uuid.UUID
 	occurredAt  time.Time
@@ -27,7 +28,8 @@ func (e SystemErrorRecorded) EventName() string      { return "system_error.reco
 func (e SystemErrorRecorded) OccurredAt() time.Time   { return e.occurredAt }
 func (e SystemErrorRecorded) AggregateID() uuid.UUID  { return e.aggregateID }
 
-// SystemErrorResolved is raised when a system error is resolved.
+// SystemErrorResolved is raised when an admin marks a system error as resolved.
+// This can be used to close alerting tickets or update dashboards.
 type SystemErrorResolved struct {
 	aggregateID uuid.UUID
 	occurredAt  time.Time

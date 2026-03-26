@@ -8,7 +8,9 @@ import (
 	"github.com/google/uuid"
 )
 
-// FunctionMetric is the aggregate root for recorded function metrics.
+// FunctionMetric is the aggregate root for recorded function-level performance metrics.
+// It is append-only — metrics are never updated after creation, preserving an immutable time-series record.
+// Panic information is captured separately to enable alerting on unrecovered panics.
 type FunctionMetric struct {
 	shared.AggregateRoot
 	name       string

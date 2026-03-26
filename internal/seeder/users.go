@@ -5,55 +5,60 @@ import (
 	"fmt"
 	"time"
 
-	"gct/internal/domain"
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func (s *Seeder) seedUsers(ctx context.Context, count int) error {
 	s.logger.Infoc(ctx, "Seeding users...", zap.Int("count", count))
 
 	// Get all role IDs to assign them to users
-	roles, _, err := s.repo.Persistent.Postgres.Authz.Role.Gets(ctx, &domain.RolesFilter{})
+	rows, err := s.pool.Query(ctx, "SELECT id FROM role")
 	if err != nil {
 		return fmt.Errorf("failed to get roles for user seeding: %w", err)
 	}
+	defer rows.Close()
+
+	var roleIDs []uuid.UUID
+	for rows.Next() {
+		var id uuid.UUID
+		if err := rows.Scan(&id); err != nil {
+			return fmt.Errorf("failed to scan role id: %w", err)
+		}
+		roleIDs = append(roleIDs, id)
+	}
+
+	// Standard password for all fake users
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte("Password123!"), bcrypt.DefaultCost)
+	if err != nil {
+		return fmt.Errorf("failed to hash password: %w", err)
+	}
 
 	for i := 0; i < count; i++ {
-		u := domain.NewUser()
-		u.ID = uuid.New()
-
+		id := uuid.New()
 		username := gofakeit.Username()
 		email := gofakeit.Email()
 		phone := gofakeit.Phone()
+		active := gofakeit.Bool()
+		now := time.Now()
 
-		u.Username = &username
-		u.Email = &email
-		u.Phone = &phone
-
-		if len(roles) > 0 {
-			role := roles[gofakeit.Number(0, len(roles)-1)]
-			u.RoleID = &role.ID
+		var roleID *uuid.UUID
+		if len(roleIDs) > 0 {
+			r := roleIDs[gofakeit.Number(0, len(roleIDs)-1)]
+			roleID = &r
 		}
 
-		// Standard password for all fake users for easier testing
-		err := u.SetPassword("Password123!")
+		attributes := fmt.Sprintf(`{"region":"%s","branch":"%s","dept":"%s"}`,
+			gofakeit.State(), gofakeit.Company(), gofakeit.JobTitle())
+
+		_, err := s.pool.Exec(ctx,
+			`INSERT INTO users (id, username, email, phone, password, role_id, active, attributes, created_at, updated_at)
+			 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+			id, username, email, phone, string(hashedPassword), roleID, active, attributes, now, now,
+		)
 		if err != nil {
-			return fmt.Errorf("failed to set password for fake user: %w", err)
-		}
-
-		u.Attributes = map[string]any{
-			"region": gofakeit.State(),
-			"branch": gofakeit.Company(),
-			"dept":   gofakeit.JobTitle(),
-		}
-
-		u.Active = gofakeit.Bool()
-		u.CreatedAt = time.Now()
-		u.UpdatedAt = time.Now()
-
-		if err := s.repo.Persistent.Postgres.User.Client.Create(ctx, u); err != nil {
 			s.logger.Warnc(ctx, "Failed to create fake user", zap.Error(err), zap.String("username", username))
 			continue
 		}

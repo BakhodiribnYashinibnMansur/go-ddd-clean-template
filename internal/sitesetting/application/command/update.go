@@ -10,7 +10,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// UpdateSiteSettingCommand holds the input for updating a site setting.
+// UpdateSiteSettingCommand represents a partial update to an existing site setting.
+// Pointer fields use nil-means-unchanged semantics, so callers only populate the fields they want to modify.
 type UpdateSiteSettingCommand struct {
 	ID          uuid.UUID
 	Key         *string
@@ -19,7 +20,8 @@ type UpdateSiteSettingCommand struct {
 	Description *string
 }
 
-// UpdateSiteSettingHandler handles the UpdateSiteSettingCommand.
+// UpdateSiteSettingHandler applies partial updates to site settings via a load-modify-save cycle.
+// Event bus failures are logged but do not cause the handler to return an error.
 type UpdateSiteSettingHandler struct {
 	repo     domain.SiteSettingRepository
 	eventBus application.EventBus
@@ -39,7 +41,8 @@ func NewUpdateSiteSettingHandler(
 	}
 }
 
-// Handle executes the UpdateSiteSettingCommand.
+// Handle loads the setting by ID, applies the partial update, and persists the result.
+// Returns not-found or repository errors to the caller; authorization is the caller's responsibility.
 func (h *UpdateSiteSettingHandler) Handle(ctx context.Context, cmd UpdateSiteSettingCommand) error {
 	s, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {

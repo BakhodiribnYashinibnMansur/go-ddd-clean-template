@@ -8,7 +8,9 @@ import (
 	"github.com/google/uuid"
 )
 
-// SystemError is the aggregate root for recorded system errors.
+// SystemError is the aggregate root for recorded system errors, acting as the structured error log.
+// Each instance captures a single error occurrence with its full request context (IP, path, user).
+// Resolution is a one-way transition: once resolved, the error cannot be re-opened.
 type SystemError struct {
 	shared.AggregateRoot
 	code        string
@@ -27,7 +29,9 @@ type SystemError struct {
 	resolvedBy  *uuid.UUID
 }
 
-// NewSystemError creates a new SystemError aggregate and raises a SystemErrorRecorded event.
+// NewSystemError creates a new SystemError aggregate with the minimum required fields.
+// Optional context (stack trace, request info) should be attached via the Set* methods before persistence.
+// Raises a SystemErrorRecorded event that can trigger alerting for high-severity errors.
 func NewSystemError(code, message, severity string) *SystemError {
 	se := &SystemError{
 		AggregateRoot: shared.NewAggregateRoot(),
@@ -81,7 +85,8 @@ func ReconstructSystemError(
 	}
 }
 
-// Resolve marks the system error as resolved.
+// Resolve marks the system error as resolved by a specific admin user.
+// This is an irreversible state transition — calling Resolve on an already-resolved error is idempotent.
 func (se *SystemError) Resolve(resolvedBy uuid.UUID) {
 	now := time.Now()
 	se.isResolved = true
@@ -91,28 +96,16 @@ func (se *SystemError) Resolve(resolvedBy uuid.UUID) {
 	se.AddEvent(NewSystemErrorResolved(se.ID(), resolvedBy))
 }
 
-// SetStackTrace sets the stack trace.
+// Enrichment setters — these attach optional request context to the error before it is persisted.
+// They are designed to be called in a builder pattern immediately after NewSystemError.
+
 func (se *SystemError) SetStackTrace(st *string) { se.stackTrace = st }
-
-// SetMetadata sets the metadata.
 func (se *SystemError) SetMetadata(m map[string]any) { se.metadata = m }
-
-// SetServiceName sets the service name.
 func (se *SystemError) SetServiceName(s *string) { se.serviceName = s }
-
-// SetRequestID sets the request ID.
 func (se *SystemError) SetRequestID(id *uuid.UUID) { se.requestID = id }
-
-// SetUserID sets the user ID.
 func (se *SystemError) SetUserID(id *uuid.UUID) { se.userID = id }
-
-// SetIPAddress sets the IP address.
 func (se *SystemError) SetIPAddress(ip *string) { se.ipAddress = ip }
-
-// SetPath sets the request path.
 func (se *SystemError) SetPath(p *string) { se.path = p }
-
-// SetMethod sets the HTTP method.
 func (se *SystemError) SetMethod(m *string) { se.method = m }
 
 // ---------------------------------------------------------------------------

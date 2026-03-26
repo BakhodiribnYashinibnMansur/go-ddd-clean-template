@@ -6,7 +6,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// AnnouncementPublished is raised when an announcement is published.
+// AnnouncementPublished is a domain event raised when an announcement transitions from draft to published.
+// Downstream consumers may use this to trigger push notifications, cache invalidation, or read-model projections.
 type AnnouncementPublished struct {
 	aggregateID uuid.UUID
 	occurredAt  time.Time

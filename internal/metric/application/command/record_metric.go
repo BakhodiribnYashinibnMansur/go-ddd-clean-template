@@ -8,7 +8,9 @@ import (
 	"gct/internal/shared/infrastructure/logger"
 )
 
-// RecordMetricCommand holds the input for recording a new function metric.
+// RecordMetricCommand captures a single function execution observation for performance monitoring.
+// IsPanic flags whether the function recovered from a panic; PanicError holds the recovered message if so.
+// This is typically dispatched by middleware or instrumentation wrappers, not by business logic directly.
 type RecordMetricCommand struct {
 	Name       string
 	LatencyMs  float64

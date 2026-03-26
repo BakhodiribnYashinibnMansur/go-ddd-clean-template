@@ -31,8 +31,16 @@ var userColumns = []string{
 	"created_at", "updated_at", "deleted_at", "last_seen",
 }
 
-// sessionColumns are the columns for the session table.
-var sessionColumns = []string{
+// sessionSelectColumns are the columns for SELECT queries (ip_address cast to text for pgx).
+var sessionSelectColumns = []string{
+	"id", "user_id", "device_id", "device_name", "device_type",
+	"ip_address::text", "user_agent", "refresh_token_hash",
+	"expires_at", "last_activity", "revoked",
+	"created_at", "updated_at",
+}
+
+// sessionInsertColumns are the columns for INSERT queries (no cast).
+var sessionInsertColumns = []string{
 	"id", "user_id", "device_id", "device_name", "device_type",
 	"ip_address", "user_agent", "refresh_token_hash",
 	"expires_at", "last_activity", "revoked",
@@ -115,7 +123,7 @@ func (r *UserWriteRepo) Save(ctx context.Context, user *domain.User) error {
 func (r *UserWriteRepo) insertSession(ctx context.Context, tx pgx.Tx, s *domain.Session) error {
 	sql, args, err := r.builder.
 		Insert(sessionTable).
-		Columns(sessionColumns...).
+		Columns(sessionInsertColumns...).
 		Values(
 			s.ID(),
 			s.UserID(),
@@ -228,21 +236,24 @@ func (r *UserWriteRepo) Update(ctx context.Context, user *domain.User) error {
 			return apperrors.HandlePgError(err, usersTable, nil)
 		}
 
-		// Sync sessions: delete existing and re-insert.
-		delSQL, delArgs, err := r.builder.
-			Delete(sessionTable).
-			Where(squirrel.Eq{"user_id": user.ID()}).
-			ToSql()
-		if err != nil {
-			return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildDelete)
-		}
-		if _, err = tx.Exec(ctx, delSQL, delArgs...); err != nil {
-			return apperrors.HandlePgError(err, sessionTable, nil)
-		}
-
+		// Upsert sessions: INSERT new ones, UPDATE existing ones (avoid FK violations).
 		for _, s := range user.Sessions() {
-			if err := r.insertSession(ctx, tx, &s); err != nil {
-				return err
+			upsertSQL, upsertArgs, upsertErr := r.builder.
+				Insert(sessionTable).
+				Columns(sessionInsertColumns...).
+				Values(
+					s.ID(), s.UserID(), s.DeviceID(), s.DeviceName(), string(s.DeviceType()),
+					s.IPAddress(), s.UserAgent(), s.RefreshTokenHash(),
+					s.ExpiresAt(), s.LastActivity(), s.IsRevoked(),
+					s.CreatedAt(), s.UpdatedAt(),
+				).
+				Suffix("ON CONFLICT (id) DO UPDATE SET refresh_token_hash = EXCLUDED.refresh_token_hash, last_activity = EXCLUDED.last_activity, revoked = EXCLUDED.revoked, updated_at = EXCLUDED.updated_at").
+				ToSql()
+			if upsertErr != nil {
+				return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildInsert)
+			}
+			if _, err = tx.Exec(ctx, upsertSQL, upsertArgs...); err != nil {
+				return apperrors.HandlePgError(err, sessionTable, nil)
 			}
 		}
 
@@ -412,7 +423,7 @@ func (r *UserWriteRepo) FindByEmail(ctx context.Context, email domain.Email) (*d
 // findSessionsByUserID returns all sessions for a given user ID.
 func (r *UserWriteRepo) findSessionsByUserID(ctx context.Context, userID uuid.UUID) ([]domain.Session, error) {
 	sql, args, err := r.builder.
-		Select(sessionColumns...).
+		Select(sessionSelectColumns...).
 		From(sessionTable).
 		Where(squirrel.Eq{"user_id": userID}).
 		ToSql()
@@ -447,7 +458,7 @@ func scanUser(row pgx.Row) (*domain.User, error) {
 		email      *string
 		phone      string
 		pwHash     string
-		salt       string
+		salt       *string
 		attrsJSON  []byte
 		active     bool
 		isApproved bool
@@ -482,7 +493,7 @@ func scanUserFromRows(rows pgx.Rows) (*domain.User, error) {
 		email      *string
 		phone      string
 		pwHash     string
-		salt       string
+		salt       *string
 		attrsJSON  []byte
 		active     bool
 		isApproved bool
@@ -563,12 +574,12 @@ func scanSessionFromRows(rows pgx.Rows) (*domain.Session, error) {
 	var (
 		id               uuid.UUID
 		userID           uuid.UUID
-		deviceID         string
-		deviceName       string
-		deviceType       string
-		ipAddress        string
-		userAgent        string
-		refreshTokenHash string
+		deviceID         *string
+		deviceName       *string
+		deviceType       *string
+		ipAddress        *string
+		userAgent        *string
+		refreshTokenHash *string
 		expiresAt        time.Time
 		lastActivity     time.Time
 		revoked          bool
@@ -586,13 +597,20 @@ func scanSessionFromRows(rows pgx.Rows) (*domain.Session, error) {
 		return nil, err
 	}
 
+	deref := func(s *string) string {
+		if s == nil {
+			return ""
+		}
+		return *s
+	}
+
 	s := domain.ReconstructSession(
 		id,
 		createdAt, updatedAt, nil,
 		userID,
-		deviceID, deviceName,
-		domain.SessionDeviceType(deviceType),
-		ipAddress, userAgent, refreshTokenHash,
+		deref(deviceID), deref(deviceName),
+		domain.SessionDeviceType(deref(deviceType)),
+		deref(ipAddress), deref(userAgent), deref(refreshTokenHash),
 		expiresAt, lastActivity,
 		revoked,
 	)

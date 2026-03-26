@@ -12,7 +12,9 @@ import (
 	"github.com/google/uuid"
 )
 
-// UpdateAnnouncementCommand holds the input for updating an announcement.
+// UpdateAnnouncementCommand represents a partial update to an existing announcement.
+// Nil pointer fields are skipped (no change), while Publish triggers a one-way state transition
+// from draft to published — already-published announcements ignore this flag.
 type UpdateAnnouncementCommand struct {
 	ID        uuid.UUID
 	Title     *shared.Lang
@@ -23,14 +25,15 @@ type UpdateAnnouncementCommand struct {
 	Publish   bool
 }
 
-// UpdateAnnouncementHandler handles the UpdateAnnouncementCommand.
+// UpdateAnnouncementHandler applies partial updates and optional publication to an announcement.
+// Event publish failures are logged but do not cause the handler to return an error.
 type UpdateAnnouncementHandler struct {
 	repo     domain.AnnouncementRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
-// NewUpdateAnnouncementHandler creates a new UpdateAnnouncementHandler.
+// NewUpdateAnnouncementHandler wires dependencies for announcement updates.
 func NewUpdateAnnouncementHandler(
 	repo domain.AnnouncementRepository,
 	eventBus application.EventBus,
@@ -43,7 +46,8 @@ func NewUpdateAnnouncementHandler(
 	}
 }
 
-// Handle executes the UpdateAnnouncementCommand.
+// Handle fetches the announcement by ID, applies field-level changes, optionally publishes it, then persists.
+// Returns a repository error if the announcement is not found or the update fails.
 func (h *UpdateAnnouncementHandler) Handle(ctx context.Context, cmd UpdateAnnouncementCommand) error {
 	a, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {

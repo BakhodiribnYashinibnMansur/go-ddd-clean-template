@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	"encoding/json"
 	"time"
 
 	"gct/internal/emailtemplate/domain"
@@ -16,7 +15,7 @@ import (
 )
 
 var readColumns = []string{
-	"id", "name", "subject", "html_body", "text_body", "variables", "created_at", "updated_at",
+	"id", "name", "subject", "html_body", "text_body", "type", "is_active", "created_at", "updated_at",
 }
 
 // EmailTemplateReadRepo implements domain.EmailTemplateReadRepository for the CQRS read side.
@@ -116,20 +115,19 @@ func scanEmailTemplateView(row pgx.Row) (*domain.EmailTemplateView, error) {
 		subject   string
 		htmlBody  string
 		textBody  string
-		varsJSON  []byte
+		etType    string
+		isActive  bool
 		createdAt time.Time
 		updatedAt time.Time
 	)
 
-	err := row.Scan(&id, &name, &subject, &htmlBody, &textBody, &varsJSON, &createdAt, &updatedAt)
+	err := row.Scan(&id, &name, &subject, &htmlBody, &textBody, &etType, &isActive, &createdAt, &updatedAt)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, map[string]any{"id": id})
 	}
 
-	var variables []string
-	if len(varsJSON) > 0 {
-		_ = json.Unmarshal(varsJSON, &variables)
-	}
+	_ = etType
+	_ = isActive
 
 	return &domain.EmailTemplateView{
 		ID:        id,
@@ -137,7 +135,7 @@ func scanEmailTemplateView(row pgx.Row) (*domain.EmailTemplateView, error) {
 		Subject:   subject,
 		HTMLBody:  htmlBody,
 		TextBody:  textBody,
-		Variables: variables,
+		Variables: nil,
 		CreatedAt: createdAt,
 		UpdatedAt: updatedAt,
 	}, nil
@@ -150,20 +148,19 @@ func scanEmailTemplateViewFromRows(rows pgx.Rows) (*domain.EmailTemplateView, er
 		subject   string
 		htmlBody  string
 		textBody  string
-		varsJSON  []byte
+		etType    string
+		isActive  bool
 		createdAt time.Time
 		updatedAt time.Time
 	)
 
-	err := rows.Scan(&id, &name, &subject, &htmlBody, &textBody, &varsJSON, &createdAt, &updatedAt)
+	err := rows.Scan(&id, &name, &subject, &htmlBody, &textBody, &etType, &isActive, &createdAt, &updatedAt)
 	if err != nil {
 		return nil, err
 	}
 
-	var variables []string
-	if len(varsJSON) > 0 {
-		_ = json.Unmarshal(varsJSON, &variables)
-	}
+	_ = etType
+	_ = isActive
 
 	return &domain.EmailTemplateView{
 		ID:        id,
@@ -171,7 +168,7 @@ func scanEmailTemplateViewFromRows(rows pgx.Rows) (*domain.EmailTemplateView, er
 		Subject:   subject,
 		HTMLBody:  htmlBody,
 		TextBody:  textBody,
-		Variables: variables,
+		Variables: nil,
 		CreatedAt: createdAt,
 		UpdatedAt: updatedAt,
 	}, nil

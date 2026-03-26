@@ -1,6 +1,7 @@
 package consts
 
-
+// Database table names. These serve double duty: they're used in SQL queries by repository
+// implementations AND as cache key prefixes for the invalidation pub/sub channel.
 const (
 	// Table names used as prefixes for cache keys to ensure proper invalidation.
 	TableUsers           = "users"

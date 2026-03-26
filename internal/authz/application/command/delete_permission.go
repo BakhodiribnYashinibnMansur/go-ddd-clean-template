@@ -9,18 +9,20 @@ import (
 	"github.com/google/uuid"
 )
 
-// DeletePermissionCommand holds the input for deleting a permission.
+// DeletePermissionCommand represents an intent to permanently remove a permission.
+// Deleting a permission may cascade to role-permission assignments depending on the repository's FK constraints.
 type DeletePermissionCommand struct {
 	ID uuid.UUID
 }
 
-// DeletePermissionHandler handles the DeletePermissionCommand.
+// DeletePermissionHandler performs hard deletion of a permission via the repository.
+// No domain events are emitted; callers needing cascade notifications should handle that at a higher layer.
 type DeletePermissionHandler struct {
 	repo   domain.PermissionRepository
 	logger logger.Log
 }
 
-// NewDeletePermissionHandler creates a new DeletePermissionHandler.
+// NewDeletePermissionHandler wires dependencies for permission deletion.
 func NewDeletePermissionHandler(
 	repo domain.PermissionRepository,
 	logger logger.Log,
@@ -31,7 +33,8 @@ func NewDeletePermissionHandler(
 	}
 }
 
-// Handle executes the DeletePermissionCommand.
+// Handle deletes the permission identified by cmd.ID.
+// Returns nil on success; propagates repository errors (e.g., not found, FK violation) to the caller.
 func (h *DeletePermissionHandler) Handle(ctx context.Context, cmd DeletePermissionCommand) error {
 	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
 		h.logger.Errorf("failed to delete permission: %v", err)

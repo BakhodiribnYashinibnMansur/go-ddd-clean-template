@@ -1,6 +1,7 @@
 package consts
 
-// Path Parameters
+// Path parameters extracted from gin route patterns (e.g., "/users/:id").
+// These must match the parameter names registered in the router.
 const (
 	ParamUserID     string = "user_id"
 	ParamID         string = "id"
@@ -11,7 +12,7 @@ const (
 	ParamRelationID string = "relation_id"
 )
 
-// Query Parameters
+// Query parameter names bound from the URL query string by gin's ShouldBindQuery.
 const (
 	QueryName     string = "name"
 	QueryPath     string = "path"

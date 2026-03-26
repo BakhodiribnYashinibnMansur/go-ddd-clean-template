@@ -7,7 +7,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// SystemErrorFilter carries filtering parameters for listing system errors.
+// SystemErrorFilter enables multi-dimensional querying of system errors.
+// Date range filters (FromDate/ToDate) use inclusive bounds. Nil fields are ignored.
 type SystemErrorFilter struct {
 	Code       *string
 	Severity   *string
@@ -20,7 +21,8 @@ type SystemErrorFilter struct {
 	Offset     int64
 }
 
-// SystemErrorRepository is the write-side repository for the SystemError aggregate.
+// SystemErrorRepository is the write-side persistence contract. Note the absence of Delete —
+// system errors are never deleted, only resolved, to maintain a complete audit trail.
 type SystemErrorRepository interface {
 	Save(ctx context.Context, entity *SystemError) error
 	FindByID(ctx context.Context, id uuid.UUID) (*SystemError, error)
@@ -28,7 +30,7 @@ type SystemErrorRepository interface {
 	List(ctx context.Context, filter SystemErrorFilter) ([]*SystemError, int64, error)
 }
 
-// SystemErrorView is a read-model DTO for the system error.
+// SystemErrorView is a flat read-model projection for API responses and admin dashboard rendering.
 type SystemErrorView struct {
 	ID          uuid.UUID      `json:"id"`
 	Code        string         `json:"code"`
@@ -48,7 +50,7 @@ type SystemErrorView struct {
 	CreatedAt   time.Time      `json:"created_at"`
 }
 
-// SystemErrorReadRepository is the read-side repository returning projected views.
+// SystemErrorReadRepository provides read-only access optimized for listing and detail views.
 type SystemErrorReadRepository interface {
 	FindByID(ctx context.Context, id uuid.UUID) (*SystemErrorView, error)
 	List(ctx context.Context, filter SystemErrorFilter) ([]*SystemErrorView, int64, error)

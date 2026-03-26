@@ -8,20 +8,22 @@ import (
 	"gct/internal/shared/infrastructure/logger"
 )
 
-// CreateRoleCommand holds the input for creating a new role.
+// CreateRoleCommand represents an intent to create a new authorization role.
+// Roles are the top-level grouping in the RBAC hierarchy; permissions are assigned to roles separately.
 type CreateRoleCommand struct {
 	Name        string
 	Description *string
 }
 
-// CreateRoleHandler handles the CreateRoleCommand.
+// CreateRoleHandler orchestrates role creation and emits domain events for downstream authorization cache invalidation.
+// Event publish failures are logged but do not roll back the persisted role.
 type CreateRoleHandler struct {
 	repo     domain.RoleRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
-// NewCreateRoleHandler creates a new CreateRoleHandler.
+// NewCreateRoleHandler wires dependencies for role creation.
 func NewCreateRoleHandler(
 	repo domain.RoleRepository,
 	eventBus application.EventBus,
@@ -34,7 +36,8 @@ func NewCreateRoleHandler(
 	}
 }
 
-// Handle executes the CreateRoleCommand.
+// Handle creates a new role, optionally sets its description, persists it, and publishes domain events.
+// Returns nil on success; propagates repository errors (e.g., duplicate name) to the caller.
 func (h *CreateRoleHandler) Handle(ctx context.Context, cmd CreateRoleCommand) error {
 	role := domain.NewRole(cmd.Name)
 	if cmd.Description != nil {

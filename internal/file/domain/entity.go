@@ -8,7 +8,9 @@ import (
 	"github.com/google/uuid"
 )
 
-// File is the aggregate root for uploaded file metadata. It is immutable after creation.
+// File is the aggregate root for uploaded file metadata.
+// It is intentionally immutable after creation — files are never updated, only uploaded or deleted.
+// The uploadedBy field is nullable to support anonymous or system-generated uploads.
 type File struct {
 	shared.AggregateRoot
 	name         string
@@ -36,7 +38,8 @@ func NewFile(name, originalName, mimeType string, size int64, path, url string, 
 	return f
 }
 
-// ReconstructFile rebuilds a File aggregate from persisted data.
+// ReconstructFile rebuilds a File aggregate from persisted data without raising domain events.
+// Used exclusively by the repository layer during hydration from the database.
 func ReconstructFile(
 	id uuid.UUID,
 	createdAt time.Time,

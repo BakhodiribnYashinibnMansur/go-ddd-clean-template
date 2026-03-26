@@ -7,7 +7,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// DataExportFilter carries filtering parameters for listing data exports.
+// DataExportFilter carries optional criteria for querying data exports.
+// Nil pointer fields are treated as "no filter" by repository implementations.
 type DataExportFilter struct {
 	UserID   *uuid.UUID
 	DataType *string
@@ -17,6 +18,8 @@ type DataExportFilter struct {
 }
 
 // DataExportRepository is the write-side repository for the DataExport aggregate.
+// Implementations must return ErrDataExportNotFound from FindByID when no row matches.
+// Update must persist status transitions and file URL changes atomically.
 type DataExportRepository interface {
 	Save(ctx context.Context, entity *DataExport) error
 	Update(ctx context.Context, entity *DataExport) error
@@ -37,7 +40,8 @@ type DataExportView struct {
 	UpdatedAt time.Time  `json:"updated_at"`
 }
 
-// DataExportReadRepository is the read-side repository returning projected views.
+// DataExportReadRepository is the read-side (CQRS query) repository.
+// It returns pre-projected DataExportView DTOs, bypassing aggregate reconstruction for read performance.
 type DataExportReadRepository interface {
 	FindByID(ctx context.Context, id uuid.UUID) (*DataExportView, error)
 	List(ctx context.Context, filter DataExportFilter) ([]*DataExportView, int64, error)

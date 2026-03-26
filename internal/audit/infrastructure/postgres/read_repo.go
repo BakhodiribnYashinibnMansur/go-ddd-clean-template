@@ -18,14 +18,14 @@ import (
 // readAuditLogColumns are the columns selected for audit log read-model queries.
 var readAuditLogColumns = []string{
 	"id", "user_id", "session_id", "action", "resource_type", "resource_id",
-	"platform", "ip_address", "user_agent", "permission", "policy_id",
+	"platform", "ip_address::text", "user_agent", "permission", "policy_id",
 	"decision", "success", "error_message", "metadata", "created_at",
 }
 
 // readEndpointHistoryColumns are the columns selected for endpoint history read-model queries.
 var readEndpointHistoryColumns = []string{
-	"id", "user_id", "endpoint", "method", "status_code", "latency",
-	"ip_address", "user_agent", "created_at",
+	"id", "user_id", "path", "method", "status_code", "duration_ms",
+	"ip_address::text", "user_agent", "created_at",
 }
 
 // AuditReadRepo implements domain.AuditReadRepository for the CQRS read side.
@@ -187,7 +187,7 @@ func (r *AuditReadRepo) ListEndpointHistory(ctx context.Context, filter domain.E
 		conds = append(conds, squirrel.Eq{"method": *filter.Method})
 	}
 	if filter.Endpoint != nil {
-		conds = append(conds, squirrel.Eq{"endpoint": *filter.Endpoint})
+		conds = append(conds, squirrel.Eq{"path": *filter.Endpoint})
 	}
 	if filter.StatusCode != nil {
 		conds = append(conds, squirrel.Eq{"status_code": *filter.StatusCode})

@@ -1,10 +1,13 @@
 package domain
 
-// SignInService is a stateless domain service that orchestrates sign-in logic.
+// SignInService is a stateless domain service that coordinates the multi-step sign-in flow.
+// It exists because sign-in spans multiple aggregate concerns (status checks, password verification,
+// session creation) that don't naturally belong to a single method on User.
 type SignInService struct{}
 
 // SignIn validates credentials and creates a session on the User aggregate.
-// It does NOT touch any infrastructure — pure domain logic.
+// Preconditions: user must be active AND approved. Returns domain errors (ErrUserInactive,
+// ErrUserNotApproved, ErrInvalidPassword, ErrMaxSessionsReached) — no infrastructure side effects.
 func (s *SignInService) SignIn(
 	user *User,
 	rawPassword string,

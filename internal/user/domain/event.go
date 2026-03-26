@@ -6,7 +6,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// UserCreated is raised when a new user is registered.
+// UserCreated is raised when a new user aggregate is instantiated via NewUser.
+// Carries the phone number so downstream handlers can trigger welcome SMS without re-querying.
 type UserCreated struct {
 	aggregateID uuid.UUID
 	occurredAt  time.Time
@@ -25,7 +26,8 @@ func (e UserCreated) EventName() string      { return "user.created" }
 func (e UserCreated) OccurredAt() time.Time  { return e.occurredAt }
 func (e UserCreated) AggregateID() uuid.UUID { return e.aggregateID }
 
-// UserSignedIn is raised when a user successfully signs in.
+// UserSignedIn is raised after successful credential verification and session creation.
+// Carries session ID and IP for audit logging and anomaly detection (e.g., new-IP alerts).
 type UserSignedIn struct {
 	aggregateID uuid.UUID
 	occurredAt  time.Time
@@ -46,7 +48,8 @@ func (e UserSignedIn) EventName() string      { return "user.signed_in" }
 func (e UserSignedIn) OccurredAt() time.Time  { return e.occurredAt }
 func (e UserSignedIn) AggregateID() uuid.UUID { return e.aggregateID }
 
-// UserDeactivated is raised when a user is deactivated.
+// UserDeactivated is raised when an admin deactivates a user account.
+// Subscribers should consider revoking active sessions or sending a notification.
 type UserDeactivated struct {
 	aggregateID uuid.UUID
 	occurredAt  time.Time
@@ -63,7 +66,8 @@ func (e UserDeactivated) EventName() string      { return "user.deactivated" }
 func (e UserDeactivated) OccurredAt() time.Time  { return e.occurredAt }
 func (e UserDeactivated) AggregateID() uuid.UUID { return e.aggregateID }
 
-// PasswordChanged is raised when a user changes their password.
+// PasswordChanged is raised after a successful password change.
+// Subscribers should invalidate all refresh tokens or notify the user of the change.
 type PasswordChanged struct {
 	aggregateID uuid.UUID
 	occurredAt  time.Time
@@ -97,7 +101,8 @@ func (e UserApproved) EventName() string      { return "user.approved" }
 func (e UserApproved) OccurredAt() time.Time  { return e.occurredAt }
 func (e UserApproved) AggregateID() uuid.UUID { return e.aggregateID }
 
-// RoleChanged is raised when a user's role is changed.
+// RoleChanged is raised when a user's role is changed. Carries both old (nullable, for first assignment)
+// and new role IDs so subscribers can detect privilege escalation in audit logs.
 type RoleChanged struct {
 	aggregateID uuid.UUID
 	occurredAt  time.Time

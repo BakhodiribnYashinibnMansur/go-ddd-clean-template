@@ -8,7 +8,9 @@ import (
 	"github.com/google/uuid"
 )
 
-// UserSetting is the aggregate root for user settings (key-value pairs per user).
+// UserSetting is the aggregate root for per-user configuration (e.g., theme, locale, notification preferences).
+// Each (userID, key) pair is unique — the repository enforces this via Upsert semantics.
+// Values are stored as opaque strings; type interpretation is the caller's responsibility.
 type UserSetting struct {
 	shared.AggregateRoot
 	userID uuid.UUID
@@ -43,7 +45,8 @@ func ReconstructUserSetting(
 	}
 }
 
-// ChangeValue updates the setting value.
+// ChangeValue updates the setting value and raises a UserSettingChanged event.
+// The event carries the full (userID, key, value) tuple so subscribers can react without re-querying.
 func (us *UserSetting) ChangeValue(value string) {
 	us.value = value
 	us.Touch()

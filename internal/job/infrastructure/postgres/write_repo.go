@@ -18,9 +18,9 @@ import (
 const tableName = consts.TableJobs
 
 var writeColumns = []string{
-	"id", "task_name", "status", "payload", "result",
-	"attempts", "max_attempts", "scheduled_at", "started_at",
-	"completed_at", "error", "created_at", "updated_at",
+	"id", "name", "type", "cron_schedule", "payload",
+	"is_active", "status", "last_run_at", "next_run_at",
+	"created_at", "updated_at",
 }
 
 // JobWriteRepo implements domain.JobRepository using PostgreSQL.
@@ -40,7 +40,6 @@ func NewJobWriteRepo(pool *pgxpool.Pool) *JobWriteRepo {
 // Save inserts a new Job aggregate into the database.
 func (r *JobWriteRepo) Save(ctx context.Context, j *domain.Job) error {
 	payloadJSON, _ := json.Marshal(j.Payload())
-	resultJSON, _ := json.Marshal(j.Result())
 
 	sql, args, err := r.builder.
 		Insert(tableName).
@@ -48,15 +47,13 @@ func (r *JobWriteRepo) Save(ctx context.Context, j *domain.Job) error {
 		Values(
 			j.ID(),
 			j.TaskName(),
-			j.Status(),
+			"default",
+			"",
 			payloadJSON,
-			resultJSON,
-			j.Attempts(),
-			j.MaxAttempts(),
-			j.ScheduledAt(),
+			true,
+			j.Status(),
 			j.StartedAt(),
-			j.CompletedAt(),
-			j.Error(),
+			j.ScheduledAt(),
 			j.CreatedAt(),
 			j.UpdatedAt(),
 		).
@@ -75,20 +72,14 @@ func (r *JobWriteRepo) Save(ctx context.Context, j *domain.Job) error {
 // Update updates an existing Job aggregate in the database.
 func (r *JobWriteRepo) Update(ctx context.Context, j *domain.Job) error {
 	payloadJSON, _ := json.Marshal(j.Payload())
-	resultJSON, _ := json.Marshal(j.Result())
 
 	sql, args, err := r.builder.
 		Update(tableName).
-		Set("task_name", j.TaskName()).
+		Set("name", j.TaskName()).
 		Set("status", j.Status()).
 		Set("payload", payloadJSON).
-		Set("result", resultJSON).
-		Set("attempts", j.Attempts()).
-		Set("max_attempts", j.MaxAttempts()).
-		Set("scheduled_at", j.ScheduledAt()).
-		Set("started_at", j.StartedAt()).
-		Set("completed_at", j.CompletedAt()).
-		Set("error", j.Error()).
+		Set("last_run_at", j.StartedAt()).
+		Set("next_run_at", j.ScheduledAt()).
 		Set("updated_at", j.UpdatedAt()).
 		Where(squirrel.Eq{"id": j.ID()}).
 		ToSql()
@@ -137,41 +128,40 @@ func (r *JobWriteRepo) Delete(ctx context.Context, id uuid.UUID) error {
 
 func scanJob(row pgx.Row) (*domain.Job, error) {
 	var (
-		id          uuid.UUID
-		taskName    string
-		status      string
-		payloadJSON []byte
-		resultJSON  []byte
-		attempts    int
-		maxAttempts int
-		scheduledAt *time.Time
-		startedAt   *time.Time
-		completedAt *time.Time
-		errorMsg    *string
-		createdAt   time.Time
-		updatedAt   time.Time
+		id           uuid.UUID
+		name         string
+		jobType      string
+		cronSchedule string
+		payloadJSON  []byte
+		isActive     bool
+		status       string
+		lastRunAt    *time.Time
+		nextRunAt    *time.Time
+		createdAt    time.Time
+		updatedAt    time.Time
 	)
 
 	err := row.Scan(
-		&id, &taskName, &status, &payloadJSON, &resultJSON,
-		&attempts, &maxAttempts, &scheduledAt, &startedAt,
-		&completedAt, &errorMsg, &createdAt, &updatedAt,
+		&id, &name, &jobType, &cronSchedule, &payloadJSON,
+		&isActive, &status, &lastRunAt, &nextRunAt,
+		&createdAt, &updatedAt,
 	)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 
+	_ = jobType
+	_ = cronSchedule
+	_ = isActive
+
 	var payload map[string]any
 	_ = json.Unmarshal(payloadJSON, &payload)
 
-	var result map[string]any
-	_ = json.Unmarshal(resultJSON, &result)
-
 	return domain.ReconstructJob(
 		id, createdAt, updatedAt,
-		taskName, status, payload, result,
-		attempts, maxAttempts,
-		scheduledAt, startedAt, completedAt,
-		errorMsg,
+		name, status, payload, nil,
+		0, 0,
+		nextRunAt, lastRunAt, nil,
+		nil,
 	), nil
 }

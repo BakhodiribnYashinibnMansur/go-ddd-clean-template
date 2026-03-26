@@ -1,6 +1,7 @@
 package consts
 
-// Policy Condition Keys
+// Policy condition keys and operators used by the ABAC (Attribute-Based Access Control) engine.
+// Conditions are evaluated at runtime against request context (IP, user agent, time, etc.).
 const (
 	PolicyKeyIP        string = "ip"
 	PolicyKeyUserAgent string = "user_agent"
@@ -35,7 +36,8 @@ const (
 	KeyRelation string = "relation"
 )
 
-// List of allowed keys for validation
+// AllowedPolicyKeys is the whitelist of valid condition keys. The policy evaluator rejects any
+// key not present here, preventing injection of arbitrary attributes into access decisions.
 var AllowedPolicyKeys = map[string]bool{
 	// Legacy/Direct keys
 	PolicyKeyIP:        true,

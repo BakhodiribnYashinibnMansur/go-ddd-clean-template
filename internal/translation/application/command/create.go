@@ -8,7 +8,8 @@ import (
 	"gct/internal/translation/domain"
 )
 
-// CreateTranslationCommand holds the input for creating a new translation.
+// CreateTranslationCommand represents an intent to add a new localized string entry.
+// The Key+Language pair must be unique; the repository will reject duplicates.
 type CreateTranslationCommand struct {
 	Key      string
 	Language string
@@ -16,7 +17,8 @@ type CreateTranslationCommand struct {
 	Group    string
 }
 
-// CreateTranslationHandler handles the CreateTranslationCommand.
+// CreateTranslationHandler orchestrates translation creation and domain event publication.
+// Event bus failures are logged but do not roll back the persisted translation.
 type CreateTranslationHandler struct {
 	repo     domain.TranslationRepository
 	eventBus application.EventBus
@@ -36,7 +38,8 @@ func NewCreateTranslationHandler(
 	}
 }
 
-// Handle executes the CreateTranslationCommand.
+// Handle persists the new translation and publishes resulting domain events.
+// Returns repository errors (e.g., duplicate key+language, connection failure) directly to the caller.
 func (h *CreateTranslationHandler) Handle(ctx context.Context, cmd CreateTranslationCommand) error {
 	t := domain.NewTranslation(cmd.Key, cmd.Language, cmd.Value, cmd.Group)
 

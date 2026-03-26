@@ -8,7 +8,9 @@ import (
 	"github.com/google/uuid"
 )
 
-// Notification is the aggregate root for notification management.
+// Notification is the aggregate root for per-user notification management.
+// Each notification is scoped to a single user via userID. The readAt field tracks read/unread state —
+// a nil value means unread. The nType field categorizes the notification (e.g., "INFO", "WARNING", "ALERT").
 type Notification struct {
 	shared.AggregateRoot
 	userID  uuid.UUID
@@ -49,7 +51,8 @@ func ReconstructNotification(
 	}
 }
 
-// MarkAsRead sets the ReadAt timestamp.
+// MarkAsRead sets the readAt timestamp to now, transitioning the notification to "read" state.
+// This operation is idempotent — calling it on an already-read notification overwrites the timestamp.
 func (n *Notification) MarkAsRead() {
 	now := time.Now()
 	n.readAt = &now

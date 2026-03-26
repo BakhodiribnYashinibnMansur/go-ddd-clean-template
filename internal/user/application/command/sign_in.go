@@ -2,16 +2,21 @@ package command
 
 import (
 	"context"
+	"crypto/rsa"
 	"strings"
+	"time"
 
 	"gct/internal/shared/application"
 	"gct/internal/shared/infrastructure/logger"
+	jwtpkg "gct/internal/shared/infrastructure/security/jwt"
 	"gct/internal/user/domain"
 
 	"github.com/google/uuid"
 )
 
-// SignInCommand holds the input for user sign-in.
+// SignInCommand represents an authentication attempt using login credentials and device metadata.
+// Login accepts either a phone number or email — the handler auto-detects the format via "@" presence.
+// DeviceType is uppercased internally to match the PostgreSQL ENUM constraint (e.g., "WEB", "MOBILE").
 type SignInCommand struct {
 	Login      string
 	Password   string
@@ -28,12 +33,21 @@ type SignInResult struct {
 	RefreshToken string
 }
 
+// JWTConfig holds the parameters needed for JWT token generation.
+type JWTConfig struct {
+	PrivateKey *rsa.PrivateKey
+	Issuer     string
+	AccessTTL  time.Duration
+	RefreshTTL time.Duration
+}
+
 // SignInHandler handles the SignInCommand.
 type SignInHandler struct {
-	repo     domain.UserRepository
-	eventBus application.EventBus
-	logger   logger.Log
-	signIn   domain.SignInService
+	repo      domain.UserRepository
+	eventBus  application.EventBus
+	logger    logger.Log
+	signIn    domain.SignInService
+	jwtConfig JWTConfig
 }
 
 // NewSignInHandler creates a new SignInHandler.
@@ -41,12 +55,14 @@ func NewSignInHandler(
 	repo domain.UserRepository,
 	eventBus application.EventBus,
 	logger logger.Log,
+	jwtCfg JWTConfig,
 ) *SignInHandler {
 	return &SignInHandler{
-		repo:     repo,
-		eventBus: eventBus,
-		logger:   logger,
-		signIn:   domain.SignInService{},
+		repo:      repo,
+		eventBus:  eventBus,
+		logger:    logger,
+		signIn:    domain.SignInService{},
+		jwtConfig: jwtCfg,
 	}
 }
 
@@ -65,6 +81,20 @@ func (h *SignInHandler) Handle(ctx context.Context, cmd SignInCommand) (*SignInR
 		return nil, err
 	}
 
+	// Generate refresh token and store its hash on the session before persisting.
+	refToken, err := jwtpkg.GenerateRefreshToken(
+		user.ID().String(),
+		session.ID().String(),
+		session.DeviceID(),
+		h.jwtConfig.RefreshTTL,
+	)
+	if err != nil {
+		h.logger.Errorf("failed to generate refresh token: %v", err)
+		return nil, err
+	}
+	session.SetRefreshTokenHash(refToken.Hashed)
+
+	// Persist user (with the updated session containing the refresh token hash).
 	if err := h.repo.Update(ctx, user); err != nil {
 		h.logger.Errorf("failed to save user after sign-in: %v", err)
 		return nil, err
@@ -74,13 +104,25 @@ func (h *SignInHandler) Handle(ctx context.Context, cmd SignInCommand) (*SignInR
 		h.logger.Errorf("failed to publish sign-in events: %v", err)
 	}
 
-	// TODO: Generate JWT access and refresh tokens here.
-	// Actual JWT generation will be wired in Plan 6 when integrating with the existing JWT package.
+	// Generate access token (signed JWT).
+	accessToken, err := jwtpkg.GenerateAccessToken(
+		user.ID().String(),
+		session.ID().String(),
+		h.jwtConfig.Issuer,
+		"", // audience
+		h.jwtConfig.PrivateKey,
+		h.jwtConfig.AccessTTL,
+	)
+	if err != nil {
+		h.logger.Errorf("failed to generate access token: %v", err)
+		return nil, err
+	}
+
 	result := &SignInResult{
 		UserID:       user.ID(),
 		SessionID:    session.ID(),
-		AccessToken:  "", // TODO: generate JWT access token
-		RefreshToken: "", // TODO: generate JWT refresh token
+		AccessToken:  accessToken,
+		RefreshToken: refToken.String(),
 	}
 
 	return result, nil

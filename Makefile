@@ -20,7 +20,7 @@ help: ## Display this help screen
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
 compose-up: ### Run docker compose (without backend and reverse proxy)
-	$(BASE_STACK) up --build -d db rabbitmq nats && docker compose logs -f
+	$(BASE_STACK) up --build -d db && docker compose logs -f
 .PHONY: compose-up
 
 compose-up-all: ### Run docker compose (with backend and reverse proxy)
@@ -38,27 +38,6 @@ compose-down: ### Down docker compose
 swag: ### generate swagger documentation
 	swag init --parseDependency --parseInternal -g cmd/app/main.go -o docs/swagger
 .PHONY: swag
-
-protogen: ### generate all proto files
-	@bash script/protogen.sh
-.PHONY: protogen
-
-lint-proto: ### lint proto files using buf
-	cd docs/protobuf/proto && buf lint
-.PHONY: lint-proto
-
-check-breaking: ### check breaking changes
-	cd docs/protobuf/proto && buf breaking --against "../../.git#branch=master,subdir=docs/protobuf/proto"
-.PHONY: check-breaking
-
-doc-proto: ### generate proto documentation (all proto files in single HTML)
-	mkdir -p docs/protobuf/doc
-	protoc --doc_out=docs/protobuf/doc --doc_opt=html,index.html \
-		--proto_path=docs/protobuf/proto \
-		docs/protobuf/proto/v1/common/pagination.proto \
-		docs/protobuf/proto/v1/user/user.proto \
-		docs/protobuf/proto/v1/user/session.proto
-.PHONY: doc-proto
 
 deps: ### deps tidy + verify
 	go mod tidy && go mod verify
@@ -170,26 +149,6 @@ migration-fix: ### apply sequential ordering to migrations
 .PHONY: migration-fix
 
 # ==============================================================================
-# Mongo Migration Targets
-# ==============================================================================
-
-export MIGRATE_MONGO_DIR = $(CURRENT_DIR)/migrations/mongo
-export MONGO_DSN ?= "mongodb://localhost:27017/test"
-
-mongo-migration-create: ### create new mongo migration
-	@read -p "Enter migration name: " MIGRATION_NAME; \
-	migrate create -ext json -dir $(MIGRATE_MONGO_DIR) -seq $$MIGRATION_NAME
-.PHONY: mongo-migration-create
-
-mongo-migration-up: ### run mongo migrations
-	migrate -path $(MIGRATE_MONGO_DIR) -database "$(MONGO_DSN)" up
-.PHONY: mongo-migration-up
-
-mongo-migration-down: ### roll back mongo migration
-	migrate -path $(MIGRATE_MONGO_DIR) -database "$(MONGO_DSN)" down 1
-.PHONY: mongo-migration-down
-
-# ==============================================================================
 # Air Hot-Reload Targets
 # ==============================================================================
 
@@ -208,12 +167,7 @@ air: ### run application with hot-reload
 bin-deps: ### install development tools
 	go install github.com/swaggo/swag/cmd/swag@latest
 	go install github.com/pressly/goose/v3/cmd/goose@latest
-	go install -tags 'mongodb' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
-	go install github.com/pseudomuto/protoc-gen-doc/cmd/protoc-gen-doc@latest
-	go install github.com/bufbuild/buf/cmd/buf@latest
 	go install github.com/air-verse/air@latest
-	go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 	go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
 .PHONY: bin-deps
@@ -230,14 +184,10 @@ sqlc-postgres: ### generate type-safe Go code from PostgreSQL queries
 	cd internal/repo/persistent/postgres/sqlc && sqlc generate
 .PHONY: sqlc-postgres
 
-sqlc-mysql: ### generate type-safe Go code from MySQL queries
-	cd internal/repo/persistent/mysql/sqlc && sqlc generate
-.PHONY: sqlc-mysql
-
-sqlc: sqlc-postgres sqlc-mysql ### generate all SQLC code
+sqlc: sqlc-postgres ### generate all SQLC code
 .PHONY: sqlc
 
-pre-commit: swag protogen mock format linter-golangci test ### run pre-commit checks
+pre-commit: swag mock format linter-golangci test ### run pre-commit checks
 .PHONY: pre-commit
 
 test-e2e: ### run e2e-test

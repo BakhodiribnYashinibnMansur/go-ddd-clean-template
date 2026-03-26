@@ -15,7 +15,7 @@ import (
 )
 
 var readColumns = []string{
-	"id", "name", "description", "enabled", "rollout_percentage", "created_at", "updated_at",
+	"id", "key", "name", "type", "value", "description", "is_active", "created_at", "updated_at",
 }
 
 // FeatureFlagReadRepo implements domain.FeatureFlagReadRepository for the CQRS read side.
@@ -54,7 +54,7 @@ func (r *FeatureFlagReadRepo) List(ctx context.Context, filter domain.FeatureFla
 		conds = append(conds, squirrel.ILike{"name": "%" + *filter.Search + "%"})
 	}
 	if filter.Enabled != nil {
-		conds = append(conds, squirrel.Eq{"enabled": *filter.Enabled})
+		conds = append(conds, squirrel.Eq{"is_active": *filter.Enabled})
 	}
 
 	// Count total.
@@ -113,26 +113,32 @@ func (r *FeatureFlagReadRepo) List(ctx context.Context, filter domain.FeatureFla
 
 func scanFeatureFlagView(row pgx.Row) (*domain.FeatureFlagView, error) {
 	var (
-		id                uuid.UUID
-		name              string
-		description       string
-		enabled           bool
-		rolloutPercentage int
-		createdAt         time.Time
-		updatedAt         time.Time
+		id          uuid.UUID
+		key         string
+		name        string
+		ffType      string
+		value       string
+		description string
+		isActive    bool
+		createdAt   time.Time
+		updatedAt   time.Time
 	)
 
-	err := row.Scan(&id, &name, &description, &enabled, &rolloutPercentage, &createdAt, &updatedAt)
+	err := row.Scan(&id, &key, &name, &ffType, &value, &description, &isActive, &createdAt, &updatedAt)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, map[string]any{"id": id})
 	}
+
+	_ = key
+	_ = ffType
+	_ = value
 
 	return &domain.FeatureFlagView{
 		ID:                id,
 		Name:              name,
 		Description:       description,
-		Enabled:           enabled,
-		RolloutPercentage: rolloutPercentage,
+		Enabled:           isActive,
+		RolloutPercentage: 0,
 		CreatedAt:         createdAt.Format(time.RFC3339),
 		UpdatedAt:         updatedAt.Format(time.RFC3339),
 	}, nil
@@ -140,26 +146,32 @@ func scanFeatureFlagView(row pgx.Row) (*domain.FeatureFlagView, error) {
 
 func scanFeatureFlagViewFromRows(rows pgx.Rows) (*domain.FeatureFlagView, error) {
 	var (
-		id                uuid.UUID
-		name              string
-		description       string
-		enabled           bool
-		rolloutPercentage int
-		createdAt         time.Time
-		updatedAt         time.Time
+		id          uuid.UUID
+		key         string
+		name        string
+		ffType      string
+		value       string
+		description string
+		isActive    bool
+		createdAt   time.Time
+		updatedAt   time.Time
 	)
 
-	err := rows.Scan(&id, &name, &description, &enabled, &rolloutPercentage, &createdAt, &updatedAt)
+	err := rows.Scan(&id, &key, &name, &ffType, &value, &description, &isActive, &createdAt, &updatedAt)
 	if err != nil {
 		return nil, err
 	}
+
+	_ = key
+	_ = ffType
+	_ = value
 
 	return &domain.FeatureFlagView{
 		ID:                id,
 		Name:              name,
 		Description:       description,
-		Enabled:           enabled,
-		RolloutPercentage: rolloutPercentage,
+		Enabled:           isActive,
+		RolloutPercentage: 0,
 		CreatedAt:         createdAt.Format(time.RFC3339),
 		UpdatedAt:         updatedAt.Format(time.RFC3339),
 	}, nil

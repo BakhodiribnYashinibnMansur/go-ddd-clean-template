@@ -1,5 +1,9 @@
+// Package consts defines application-wide constants shared across all bounded contexts.
+// These values are intentionally kept in a single place to prevent drift between layers.
 package consts
 
+// HTTP header names used by middleware, handlers, and CORS configuration.
+// Security headers (HSTS, CSP, X-Frame-Options) are set by the security middleware on every response.
 const (
 	HeaderAuthorization                 = "Authorization"
 	HeaderXRequestID                    = "X-Request-ID"
@@ -38,6 +42,7 @@ const (
 	ParamAPIKey                         = "api_key"
 )
 
+// Standard header values for security-related response headers.
 const (
 	HeaderValueNoSniff      = "nosniff"
 	HeaderValueDeny         = "DENY"

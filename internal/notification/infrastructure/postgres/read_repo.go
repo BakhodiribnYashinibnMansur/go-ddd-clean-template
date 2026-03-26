@@ -15,7 +15,7 @@ import (
 )
 
 var readColumns = []string{
-	"id", "user_id", "title", "message", "type", "read_at", "created_at",
+	"id", "title", "body", "type", "target_type", "is_active", "created_at", "updated_at",
 }
 
 // NotificationReadRepo implements domain.NotificationReadRepository for the CQRS read side.
@@ -50,14 +50,8 @@ func (r *NotificationReadRepo) FindByID(ctx context.Context, id uuid.UUID) (*dom
 // List returns a paginated list of NotificationView with optional filters.
 func (r *NotificationReadRepo) List(ctx context.Context, filter domain.NotificationFilter) ([]*domain.NotificationView, int64, error) {
 	conds := squirrel.And{}
-	if filter.UserID != nil {
-		conds = append(conds, squirrel.Eq{"user_id": *filter.UserID})
-	}
 	if filter.Type != nil {
 		conds = append(conds, squirrel.Eq{"type": *filter.Type})
-	}
-	if filter.Unread != nil && *filter.Unread {
-		conds = append(conds, squirrel.Eq{"read_at": nil})
 	}
 
 	// Count total.
@@ -116,54 +110,64 @@ func (r *NotificationReadRepo) List(ctx context.Context, filter domain.Notificat
 
 func scanNotificationView(row pgx.Row) (*domain.NotificationView, error) {
 	var (
-		id        uuid.UUID
-		userID    uuid.UUID
-		title     string
-		message   string
-		nType     string
-		readAt    *time.Time
-		createdAt time.Time
+		id         uuid.UUID
+		title      string
+		body       string
+		nType      string
+		targetType string
+		isActive   bool
+		createdAt  time.Time
+		updatedAt  time.Time
 	)
 
-	err := row.Scan(&id, &userID, &title, &message, &nType, &readAt, &createdAt)
+	err := row.Scan(&id, &title, &body, &nType, &targetType, &isActive, &createdAt, &updatedAt)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, map[string]any{"id": id})
 	}
 
+	_ = targetType
+	_ = isActive
+	_ = updatedAt
+
 	return &domain.NotificationView{
 		ID:        id,
-		UserID:    userID,
+		UserID:    uuid.Nil,
 		Title:     title,
-		Message:   message,
+		Message:   body,
 		Type:      nType,
-		ReadAt:    readAt,
+		ReadAt:    nil,
 		CreatedAt: createdAt,
 	}, nil
 }
 
 func scanNotificationViewFromRows(rows pgx.Rows) (*domain.NotificationView, error) {
 	var (
-		id        uuid.UUID
-		userID    uuid.UUID
-		title     string
-		message   string
-		nType     string
-		readAt    *time.Time
-		createdAt time.Time
+		id         uuid.UUID
+		title      string
+		body       string
+		nType      string
+		targetType string
+		isActive   bool
+		createdAt  time.Time
+		updatedAt  time.Time
 	)
 
-	err := rows.Scan(&id, &userID, &title, &message, &nType, &readAt, &createdAt)
+	err := rows.Scan(&id, &title, &body, &nType, &targetType, &isActive, &createdAt, &updatedAt)
 	if err != nil {
 		return nil, err
 	}
 
+	_ = targetType
+	_ = isActive
+	_ = updatedAt
+
 	return &domain.NotificationView{
 		ID:        id,
-		UserID:    userID,
+		UserID:    uuid.Nil,
 		Title:     title,
-		Message:   message,
+		Message:   body,
 		Type:      nType,
-		ReadAt:    readAt,
+		ReadAt:    nil,
 		CreatedAt: createdAt,
 	}, nil
 }

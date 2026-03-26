@@ -78,21 +78,11 @@ func figlet(port int) {
 	options := figlet4go.NewRenderOptions()
 	options.FontName = "larry3d"
 	options.FontColor = []figlet4go.Color{
-		// Colors can be given by default ansi color codes...
 		figlet4go.ColorGreen,
-		// figlet4go.ColorYellow,
 		figlet4go.ColorCyan,
-		// figlet4go.ColorMagenta,
-		// figlet4go.ColorWhite,
 		figlet4go.ColorRed,
 		figlet4go.ColorBlue,
 		figlet4go.ColorBlack,
-		// ...or by an rgb value
-		// figlet4go.Color{R: 255, G: 0, B: 0},
-		// ...or by an hex string...
-		// figlet4go.NewTrueColorFromHexString("885DBA"),
-		// ...or by an TrueColor object with rgb values
-		// figlet4go.TrueColor{136, 93, 186},
 	}
 	renderStr, err := ascii.RenderOpts(strconv.Itoa(port), options)
 	if err != nil {

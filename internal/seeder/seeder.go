@@ -7,23 +7,24 @@ import (
 	"time"
 
 	"gct/config"
-	"gct/internal/repo"
 	"gct/internal/shared/infrastructure/logger"
+
 	"github.com/brianvoe/gofakeit/v7"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 )
 
 // Seeder manages data seeding operations.
 type Seeder struct {
-	repo   *repo.Repo
+	pool   *pgxpool.Pool
 	logger logger.Log
 	cfg    *config.Config
 }
 
 // New creates a new Seeder instance.
-func New(repo *repo.Repo, logger logger.Log, cfg *config.Config) *Seeder {
+func New(pool *pgxpool.Pool, logger logger.Log, cfg *config.Config) *Seeder {
 	return &Seeder{
-		repo:   repo,
+		pool:   pool,
 		logger: logger,
 		cfg:    cfg,
 	}
@@ -124,7 +125,7 @@ func (s *Seeder) clearData(ctx context.Context) error {
 
 	for _, table := range tables {
 		query := fmt.Sprintf("TRUNCATE TABLE %s CASCADE", table)
-		if _, err := s.repo.Persistent.Postgres.DB.Pool.Exec(ctx, query); err != nil {
+		if _, err := s.pool.Exec(ctx, query); err != nil {
 			return fmt.Errorf("failed to truncate table %s: %w", table, err)
 		}
 		s.logger.Infoc(ctx, "Table truncated", zap.String("table", table))

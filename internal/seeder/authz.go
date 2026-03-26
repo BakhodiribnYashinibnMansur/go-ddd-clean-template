@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"gct/internal/domain"
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -22,13 +21,13 @@ func (s *Seeder) seedPermissions(ctx context.Context, count int) error {
 		"reports.generate",
 	}
 
+	now := time.Now()
 	for _, name := range predefined {
-		p := &domain.Permission{
-			ID:        uuid.New(),
-			Name:      name,
-			CreatedAt: time.Now(),
-		}
-		if err := s.repo.Persistent.Postgres.Authz.Permission.Create(ctx, p); err != nil {
+		_, err := s.pool.Exec(ctx,
+			"INSERT INTO permission (id, name, created_at) VALUES ($1, $2, $3)",
+			uuid.New(), name, now,
+		)
+		if err != nil {
 			s.logger.Warnc(ctx, "Failed to create predefined permission", zap.Error(err), zap.String("name", name))
 		}
 	}
@@ -36,12 +35,11 @@ func (s *Seeder) seedPermissions(ctx context.Context, count int) error {
 	// Add some random ones
 	for i := 0; i < count; i++ {
 		name := fmt.Sprintf("%s.%s", gofakeit.FileExtension(), gofakeit.Verb())
-		p := &domain.Permission{
-			ID:        uuid.New(),
-			Name:      name,
-			CreatedAt: time.Now(),
-		}
-		if err := s.repo.Persistent.Postgres.Authz.Permission.Create(ctx, p); err != nil {
+		_, err := s.pool.Exec(ctx,
+			"INSERT INTO permission (id, name, created_at) VALUES ($1, $2, $3)",
+			uuid.New(), name, now,
+		)
+		if err != nil {
 			s.logger.Warnc(ctx, "Failed to create random permission", zap.Error(err), zap.String("name", name))
 		}
 	}
@@ -52,26 +50,25 @@ func (s *Seeder) seedPermissions(ctx context.Context, count int) error {
 func (s *Seeder) seedRoles(ctx context.Context, count int) error {
 	s.logger.Infoc(ctx, "Seeding roles...", zap.Int("count", count))
 
+	now := time.Now()
 	predefined := []string{"Admin", "Manager", "User", "Auditor", "Support"}
 	for _, name := range predefined {
-		r := &domain.Role{
-			ID:        uuid.New(),
-			Name:      name,
-			CreatedAt: time.Now(),
-		}
-		if err := s.repo.Persistent.Postgres.Authz.Role.Create(ctx, r); err != nil {
+		_, err := s.pool.Exec(ctx,
+			"INSERT INTO role (id, name, created_at) VALUES ($1, $2, $3)",
+			uuid.New(), name, now,
+		)
+		if err != nil {
 			s.logger.Warnc(ctx, "Failed to create predefined role", zap.Error(err), zap.String("name", name))
 		}
 	}
 
 	for i := 0; i < count; i++ {
 		name := gofakeit.JobLevel() + " " + gofakeit.JobTitle()
-		r := &domain.Role{
-			ID:        uuid.New(),
-			Name:      name,
-			CreatedAt: time.Now(),
-		}
-		if err := s.repo.Persistent.Postgres.Authz.Role.Create(ctx, r); err != nil {
+		_, err := s.pool.Exec(ctx,
+			"INSERT INTO role (id, name, created_at) VALUES ($1, $2, $3)",
+			uuid.New(), name, now,
+		)
+		if err != nil {
 			s.logger.Warnc(ctx, "Failed to create random role", zap.Error(err), zap.String("name", name))
 		}
 	}
@@ -82,35 +79,57 @@ func (s *Seeder) seedRoles(ctx context.Context, count int) error {
 func (s *Seeder) seedRolePermissions(ctx context.Context) error {
 	s.logger.Infoc(ctx, "Seeding role-permission mappings...")
 
-	roles, _, err := s.repo.Persistent.Postgres.Authz.Role.Gets(ctx, &domain.RolesFilter{})
+	// Get all roles
+	roleRows, err := s.pool.Query(ctx, "SELECT id FROM role")
 	if err != nil {
 		return err
 	}
+	defer roleRows.Close()
 
-	perms, _, err := s.repo.Persistent.Postgres.Authz.Permission.Gets(ctx, &domain.PermissionsFilter{})
+	var roleIDs []uuid.UUID
+	for roleRows.Next() {
+		var id uuid.UUID
+		if err := roleRows.Scan(&id); err != nil {
+			return err
+		}
+		roleIDs = append(roleIDs, id)
+	}
+
+	// Get all permissions
+	permRows, err := s.pool.Query(ctx, "SELECT id FROM permission")
 	if err != nil {
 		return err
 	}
+	defer permRows.Close()
 
-	if len(roles) == 0 || len(perms) == 0 {
+	var permIDs []uuid.UUID
+	for permRows.Next() {
+		var id uuid.UUID
+		if err := permRows.Scan(&id); err != nil {
+			return err
+		}
+		permIDs = append(permIDs, id)
+	}
+
+	if len(roleIDs) == 0 || len(permIDs) == 0 {
 		return nil
 	}
 
-	for _, role := range roles {
-		// Assign 1-5 random permissions to each role
+	for _, roleID := range roleIDs {
+		// Assign 1-4 random permissions to each role
 		numPerms := gofakeit.Number(1, 4)
-		if numPerms > len(perms) {
-			numPerms = len(perms)
+		if numPerms > len(permIDs) {
+			numPerms = len(permIDs)
 		}
 
 		for i := 0; i < numPerms; i++ {
-			perm := perms[gofakeit.Number(0, len(perms)-1)]
-			if err := s.repo.Persistent.Postgres.Authz.Role.AddPermission(ctx, role.ID, perm.ID); err != nil {
-				s.logger.Warnc(ctx, "Failed to link role and permission",
-					zap.Error(err),
-					zap.String("role", role.Name),
-					zap.String("permission", perm.Name),
-				)
+			permID := permIDs[gofakeit.Number(0, len(permIDs)-1)]
+			_, err := s.pool.Exec(ctx,
+				"INSERT INTO role_permission (role_id, permission_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+				roleID, permID,
+			)
+			if err != nil {
+				s.logger.Warnc(ctx, "Failed to link role and permission", zap.Error(err))
 			}
 		}
 	}
@@ -121,30 +140,37 @@ func (s *Seeder) seedRolePermissions(ctx context.Context) error {
 func (s *Seeder) seedPolicies(ctx context.Context, count int) error {
 	s.logger.Infoc(ctx, "Seeding policies...", zap.Int("count", count))
 
-	perms, _, err := s.repo.Persistent.Postgres.Authz.Permission.Gets(ctx, &domain.PermissionsFilter{})
+	// Get all permissions
+	rows, err := s.pool.Query(ctx, "SELECT id FROM permission")
 	if err != nil {
 		return err
 	}
+	defer rows.Close()
 
-	if len(perms) == 0 {
+	var permIDs []uuid.UUID
+	for rows.Next() {
+		var id uuid.UUID
+		if err := rows.Scan(&id); err != nil {
+			return err
+		}
+		permIDs = append(permIDs, id)
+	}
+
+	if len(permIDs) == 0 {
 		return nil
 	}
 
+	now := time.Now()
 	for i := 0; i < count; i++ {
-		perm := perms[gofakeit.Number(0, len(perms)-1)]
-		p := &domain.Policy{
-			ID:           uuid.New(),
-			PermissionID: perm.ID,
-			Effect:       domain.PolicyEffectAllow,
-			Priority:     gofakeit.Number(1, 100),
-			Active:       true,
-			Conditions: map[string]any{
-				"region": gofakeit.State(),
-				"branch": gofakeit.Company(),
-			},
-			CreatedAt: time.Now(),
-		}
-		if err := s.repo.Persistent.Postgres.Authz.Policy.Create(ctx, p); err != nil {
+		permID := permIDs[gofakeit.Number(0, len(permIDs)-1)]
+		conditions := fmt.Sprintf(`{"region":"%s","branch":"%s"}`, gofakeit.State(), gofakeit.Company())
+
+		_, err := s.pool.Exec(ctx,
+			`INSERT INTO policy (id, permission_id, effect, priority, active, conditions, created_at)
+			 VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+			uuid.New(), permID, "ALLOW", gofakeit.Number(1, 100), true, conditions, now,
+		)
+		if err != nil {
 			s.logger.Warnc(ctx, "Failed to create policy", zap.Error(err))
 		}
 	}

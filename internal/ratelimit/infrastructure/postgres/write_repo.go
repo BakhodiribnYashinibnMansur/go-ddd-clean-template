@@ -17,8 +17,8 @@ import (
 const tableName = consts.TableRateLimits
 
 var writeColumns = []string{
-	"id", "name", "rule", "requests_per_window", "window_duration",
-	"enabled", "created_at", "updated_at",
+	"id", "name", "path_pattern", "limit_count", "window_seconds",
+	"is_active", "created_at", "updated_at",
 }
 
 // RateLimitWriteRepo implements domain.RateLimitRepository using PostgreSQL.
@@ -77,10 +77,10 @@ func (r *RateLimitWriteRepo) Update(ctx context.Context, rl *domain.RateLimit) e
 	sql, args, err := r.builder.
 		Update(tableName).
 		Set("name", rl.Name()).
-		Set("rule", rl.Rule()).
-		Set("requests_per_window", rl.RequestsPerWindow()).
-		Set("window_duration", rl.WindowDuration()).
-		Set("enabled", rl.Enabled()).
+		Set("path_pattern", rl.Rule()).
+		Set("limit_count", rl.RequestsPerWindow()).
+		Set("window_seconds", rl.WindowDuration()).
+		Set("is_active", rl.Enabled()).
 		Set("updated_at", rl.UpdatedAt()).
 		Where(squirrel.Eq{"id": rl.ID()}).
 		ToSql()
@@ -178,7 +178,7 @@ func applyFilters(conds squirrel.And, filter domain.RateLimitFilter) squirrel.An
 		conds = append(conds, squirrel.Eq{"name": *filter.Name})
 	}
 	if filter.Enabled != nil {
-		conds = append(conds, squirrel.Eq{"enabled": *filter.Enabled})
+		conds = append(conds, squirrel.Eq{"is_active": *filter.Enabled})
 	}
 	return conds
 }

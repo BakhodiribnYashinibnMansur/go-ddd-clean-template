@@ -14,7 +14,7 @@ import (
 )
 
 var readColumns = []string{
-	"id", "ip_address", "action", "reason", "expires_at", "created_at", "updated_at",
+	"id", "ip_address", "type", "reason", "is_active", "created_at", "updated_at",
 }
 
 // IPRuleReadRepo implements domain.IPRuleReadRepository for the CQRS read side.
@@ -104,19 +104,29 @@ func (r *IPRuleReadRepo) List(ctx context.Context, filter domain.IPRuleFilter) (
 }
 
 func scanIPRuleView(row pgx.Row) (*domain.IPRuleView, error) {
-	var v domain.IPRuleView
-	err := row.Scan(&v.ID, &v.IPAddress, &v.Action, &v.Reason, &v.ExpiresAt, &v.CreatedAt, &v.UpdatedAt)
+	var (
+		v        domain.IPRuleView
+		isActive bool
+	)
+	err := row.Scan(&v.ID, &v.IPAddress, &v.Action, &v.Reason, &isActive, &v.CreatedAt, &v.UpdatedAt)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
+	_ = isActive
+	v.ExpiresAt = nil
 	return &v, nil
 }
 
 func scanIPRuleViewFromRows(rows pgx.Rows) (*domain.IPRuleView, error) {
-	var v domain.IPRuleView
-	err := rows.Scan(&v.ID, &v.IPAddress, &v.Action, &v.Reason, &v.ExpiresAt, &v.CreatedAt, &v.UpdatedAt)
+	var (
+		v        domain.IPRuleView
+		isActive bool
+	)
+	err := rows.Scan(&v.ID, &v.IPAddress, &v.Action, &v.Reason, &isActive, &v.CreatedAt, &v.UpdatedAt)
 	if err != nil {
 		return nil, err
 	}
+	_ = isActive
+	v.ExpiresAt = nil
 	return &v, nil
 }

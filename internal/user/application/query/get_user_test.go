@@ -2,6 +2,7 @@ package query
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"gct/internal/user/domain"
@@ -16,6 +17,21 @@ type mockUserReadRepository struct {
 	views []*domain.UserView
 	total int64
 }
+
+// errorReadRepo always returns an error.
+type errorReadRepo struct {
+	err error
+}
+
+func (m *errorReadRepo) FindByID(_ context.Context, _ uuid.UUID) (*domain.UserView, error) {
+	return nil, m.err
+}
+
+func (m *errorReadRepo) List(_ context.Context, _ domain.UsersFilter) ([]*domain.UserView, int64, error) {
+	return nil, 0, m.err
+}
+
+var errRepoFailure = errors.New("repository failure")
 
 func (m *mockUserReadRepository) FindByID(_ context.Context, id uuid.UUID) (*domain.UserView, error) {
 	if m.view != nil && m.view.ID == id {
@@ -87,5 +103,83 @@ func TestGetUserHandler_NotFound(t *testing.T) {
 	_, err := handler.Handle(context.Background(), q)
 	if err == nil {
 		t.Fatal("expected error for non-existent user, got nil")
+	}
+}
+
+func TestGetUserHandler_AllFieldsMapped(t *testing.T) {
+	userID := uuid.New()
+	roleID := uuid.New()
+	phone := "+998901234567"
+	email := "full@example.com"
+	username := "fulluser"
+
+	readRepo := &mockUserReadRepository{
+		view: &domain.UserView{
+			ID:         userID,
+			Phone:      phone,
+			Email:      &email,
+			Username:   &username,
+			RoleID:     &roleID,
+			Attributes: map[string]any{"level": 5},
+			Active:     true,
+			IsApproved: true,
+		},
+	}
+
+	handler := NewGetUserHandler(readRepo)
+	result, err := handler.Handle(context.Background(), GetUserQuery{ID: userID})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if result.RoleID == nil || *result.RoleID != roleID {
+		t.Error("roleID not mapped")
+	}
+	if result.Username == nil || *result.Username != "fulluser" {
+		t.Error("username not mapped")
+	}
+	if result.Attributes["level"] != 5 {
+		t.Error("attributes not mapped")
+	}
+}
+
+func TestGetUserHandler_NilOptionalFields(t *testing.T) {
+	userID := uuid.New()
+
+	readRepo := &mockUserReadRepository{
+		view: &domain.UserView{
+			ID:     userID,
+			Phone:  "+998900000000",
+			Active: false,
+		},
+	}
+
+	handler := NewGetUserHandler(readRepo)
+	result, err := handler.Handle(context.Background(), GetUserQuery{ID: userID})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if result.Email != nil {
+		t.Error("email should be nil")
+	}
+	if result.Username != nil {
+		t.Error("username should be nil")
+	}
+	if result.RoleID != nil {
+		t.Error("roleID should be nil")
+	}
+	if result.Active {
+		t.Error("expected inactive user")
+	}
+}
+
+func TestGetUserHandler_RepoError(t *testing.T) {
+	readRepo := &errorReadRepo{err: errRepoFailure}
+
+	handler := NewGetUserHandler(readRepo)
+	_, err := handler.Handle(context.Background(), GetUserQuery{ID: uuid.New()})
+	if err == nil {
+		t.Fatal("expected error from repo")
 	}
 }

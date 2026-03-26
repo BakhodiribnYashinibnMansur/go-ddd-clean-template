@@ -10,7 +10,9 @@ import (
 	"github.com/google/uuid"
 )
 
-// CreateSystemErrorCommand holds the input for recording a new system error.
+// CreateSystemErrorCommand captures a structured error record for observability and incident triage.
+// Code and Severity are required; all other fields are optional context enrichments.
+// Pointer fields use nil-means-absent semantics — the handler only sets them on the aggregate when non-nil.
 type CreateSystemErrorCommand struct {
 	Code        string
 	Message     string
@@ -25,7 +27,8 @@ type CreateSystemErrorCommand struct {
 	Method      *string
 }
 
-// CreateSystemErrorHandler handles the CreateSystemErrorCommand.
+// CreateSystemErrorHandler persists system error records and emits domain events for downstream alerting.
+// Event bus failures are logged but swallowed so that error recording is never blocked by event delivery.
 type CreateSystemErrorHandler struct {
 	repo     domain.SystemErrorRepository
 	eventBus application.EventBus
@@ -45,7 +48,8 @@ func NewCreateSystemErrorHandler(
 	}
 }
 
-// Handle executes the CreateSystemErrorCommand.
+// Handle constructs a SystemError aggregate from the command, enriches it with optional context fields,
+// persists it, and publishes domain events. Returns only repository-level errors.
 func (h *CreateSystemErrorHandler) Handle(ctx context.Context, cmd CreateSystemErrorCommand) error {
 	se := domain.NewSystemError(cmd.Code, cmd.Message, cmd.Severity)
 

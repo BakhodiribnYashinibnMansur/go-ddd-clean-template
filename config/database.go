@@ -16,15 +16,9 @@ var (
 )
 
 // Database aggregates configurations for all supported storage engines.
-// Each field uses an environment prefix to avoid naming collisions when loading from OS variables.
 type Database struct {
-	Postgres      Postgres      `envPrefix:"PG_"`
-	MySQL         MySQL         `envPrefix:"MYSQL_"`
-	MongoDB       MongoDB       `envPrefix:"MONGO_"`
-	Redis         Redis         `envPrefix:"REDIS_"`
-	Cassandra     Cassandra     `envPrefix:"CASSANDRA_"`
-	Elasticsearch Elasticsearch `envPrefix:"ELASTIC_"`
-	ClickHouse    ClickHouse    `envPrefix:"CH_"`
+	Postgres Postgres `envPrefix:"PG_"`
+	Redis    Redis    `envPrefix:"REDIS_"`
 }
 
 // BaseDB identifies common connectivity fields used across most relational and NoSQL databases.
@@ -41,13 +35,8 @@ type BaseDB struct {
 
 // Specialized driver configurations inheriting common connection logic.
 type (
-	Postgres      struct{ BaseDB }
-	MySQL         struct{ BaseDB }
-	MongoDB       struct{ BaseDB }
-	Redis         struct{ BaseDB }
-	Cassandra     struct{ BaseDB }
-	Elasticsearch struct{ BaseDB }
-	ClickHouse    struct{ BaseDB }
+	Postgres struct{ BaseDB }
+	Redis    struct{ BaseDB }
 )
 
 // URL formats the connection string for the Postgres driver.
@@ -82,8 +71,3 @@ func (p *Postgres) IsSecure() bool {
 	return mode != "disable" && mode != ""
 }
 
-// URL generates the DSN required for MySQL protocol interaction.
-func (m *MySQL) URL() string {
-	return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?parseTime=true",
-		m.User, m.Password, m.Host, m.Port, m.Name)
-}

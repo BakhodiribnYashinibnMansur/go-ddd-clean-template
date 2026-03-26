@@ -7,7 +7,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// JobFilter carries filtering parameters for listing jobs.
+// JobFilter carries optional filtering parameters for listing jobs.
+// Nil pointer fields are treated as "no filter" by the repository implementation.
 type JobFilter struct {
 	TaskName *string
 	Status   *string
@@ -16,6 +17,7 @@ type JobFilter struct {
 }
 
 // JobRepository is the write-side repository for the Job aggregate.
+// Implementations must persist the full aggregate state including status transitions and attempt counts.
 type JobRepository interface {
 	Save(ctx context.Context, entity *Job) error
 	Update(ctx context.Context, entity *Job) error
@@ -23,7 +25,7 @@ type JobRepository interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 }
 
-// JobView is a read-model DTO for jobs.
+// JobView is a read-model projection for jobs, optimized for admin dashboard and monitoring queries.
 type JobView struct {
 	ID          uuid.UUID      `json:"id"`
 	TaskName    string         `json:"task_name"`
@@ -41,6 +43,7 @@ type JobView struct {
 }
 
 // JobReadRepository is the read-side repository returning projected views.
+// Implementations must return ErrJobNotFound when FindByID yields no result.
 type JobReadRepository interface {
 	FindByID(ctx context.Context, id uuid.UUID) (*JobView, error)
 	List(ctx context.Context, filter JobFilter) ([]*JobView, int64, error)

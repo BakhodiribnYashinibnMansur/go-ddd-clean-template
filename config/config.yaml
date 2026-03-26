@@ -26,26 +26,9 @@ database:
   postgres:
     enabled: true
     pool_max: 10
-  mysql:
-    enabled: false
-    pool_max: 10
-  mongodb:
-    enabled: false
-    pool_max: 10
   redis:
     enabled: false
     pool_max: 10
-  cassandra:
-    enabled: false
-    pool_max: 10
-  elasticsearch:
-    enabled: false
-    pool_max: 10
-  clickhouse:
-    enabled: false
-    pool_max: 10
-  sqllite:
-    enabled: false
 
 jwt:
   access_ttl: "15m"
@@ -125,15 +108,6 @@ security:
       - "frame-ancestors 'none'"
       - "base-uri 'self'"
       - "form-action 'self'"
-
-# Brokers
-broker:
-  kafka:
-    enabled: false
-  nats:
-    enabled: false
-  rabbitmq:
-    enabled: false
 
 # Asynq
 asynq:

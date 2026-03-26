@@ -6,7 +6,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// NotificationSent is raised when a new notification is created.
+// NotificationSent is a domain event raised when a new notification is created for a user.
+// Subscribers can use this to push real-time updates via WebSocket or trigger email/SMS delivery.
 type NotificationSent struct {
 	aggregateID uuid.UUID
 	occurredAt  time.Time

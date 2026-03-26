@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// UserSettingFilter carries filtering parameters for listing user settings.
+// UserSettingFilter carries optional filtering parameters. Nil fields are ignored by the repository.
 type UserSettingFilter struct {
 	UserID *uuid.UUID
 	Key    *string
@@ -15,14 +15,16 @@ type UserSettingFilter struct {
 	Offset int64
 }
 
-// UserSettingRepository is the write-side repository for the UserSetting aggregate.
+// UserSettingRepository is the write-side persistence contract for the UserSetting aggregate.
+// Upsert creates or updates based on the (userID, key) natural key — this avoids requiring
+// callers to check existence before saving. FindByUserIDAndKey returns ErrUserSettingNotFound on miss.
 type UserSettingRepository interface {
 	Upsert(ctx context.Context, entity *UserSetting) error
 	FindByUserIDAndKey(ctx context.Context, userID uuid.UUID, key string) (*UserSetting, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 }
 
-// UserSettingView is a read-model DTO for user settings.
+// UserSettingView is a flat read-model projection for API responses.
 type UserSettingView struct {
 	ID        uuid.UUID `json:"id"`
 	UserID    uuid.UUID `json:"user_id"`
@@ -32,7 +34,7 @@ type UserSettingView struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-// UserSettingReadRepository is the read-side repository returning projected views.
+// UserSettingReadRepository provides read-only access for listing and detail views.
 type UserSettingReadRepository interface {
 	FindByID(ctx context.Context, id uuid.UUID) (*UserSettingView, error)
 	List(ctx context.Context, filter UserSettingFilter) ([]*UserSettingView, int64, error)

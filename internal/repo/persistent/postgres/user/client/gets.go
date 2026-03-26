@@ -72,38 +72,6 @@ func (r *Repo) Gets(ctx context.Context, filter *domain.UsersFilter) ([]*domain.
 		users = append(users, &u)
 	}
 
-	// Fetch attributes for all users (batch)
-	// This block is no longer needed as attributes are fetched directly in the main query
-	// if len(users) > 0 {
-	// 	userIDs := make([]any, len(users))
-	// 	userMap := make(map[string]*domain.User)
-	// 	for i, u := range users {
-	// 		userIDs[i] = u.ID
-	// 		userMap[u.ID.String()] = u
-	// 		u.Attributes = make(map[string]any)
-	// 	}
-
-	// 	attrSql, attrArgs, err := r.builder.Select("user_id", "key", "value").
-	// 		From("user_attributes").
-	// 		Where(squirrel.Eq{"user_id": userIDs}).
-	// 		ToSql()
-
-	// 	if err == nil {
-	// 		rows, err := r.pool.Query(ctx, attrSql, attrArgs...)
-	// 		if err == nil {
-	// 			defer rows.Close()
-	// 			for rows.Next() {
-	// 				var uid, key, value string
-	// 				if err := rows.Scan(&uid, &key, &value); err == nil {
-	// 					if u, ok := userMap[uid]; ok {
-	// 						u.Attributes[key] = value
-	// 					}
-	// 				}
-	// 			}
-	// 		}
-	// 	}
-	// }
-
 	if err := rows.Err(); err != nil {
 		return nil, 0, apperrors.HandlePgError(err, tableName, nil)
 	}

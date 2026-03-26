@@ -14,7 +14,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-const tableName = "error_codes"
+const tableName = "error_code"
 
 var writeColumns = []string{
 	"id", "code", "message", "http_status", "category", "severity",

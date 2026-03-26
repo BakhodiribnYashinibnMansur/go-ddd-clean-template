@@ -14,7 +14,7 @@ import (
 )
 
 var readColumns = []string{
-	"id", "key", "value", "type", "description", "created_at", "updated_at",
+	"id", "key", "value", "value_type", "description", "created_at", "updated_at",
 }
 
 // SiteSettingReadRepo implements domain.SiteSettingReadRepository for the CQRS read side.

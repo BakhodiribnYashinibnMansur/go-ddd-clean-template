@@ -17,7 +17,7 @@ import (
 const tableName = consts.TableTranslations
 
 var writeColumns = []string{
-	"id", "key", "language", "value", "group_name", "created_at", "updated_at",
+	"id", "entity_type", "entity_id", "lang_code", "data", "created_at", "updated_at",
 }
 
 // TranslationWriteRepo implements domain.TranslationRepository using PostgreSQL.
@@ -74,10 +74,10 @@ func (r *TranslationWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (*dom
 func (r *TranslationWriteRepo) Update(ctx context.Context, t *domain.Translation) error {
 	sql, args, err := r.builder.
 		Update(tableName).
-		Set("key", t.Key()).
-		Set("language", t.Language()).
-		Set("value", t.Value()).
-		Set("group_name", t.Group()).
+		Set("entity_type", t.Key()).
+		Set("lang_code", t.Language()).
+		Set("data", t.Value()).
+		Set("entity_id", t.Group()).
 		Set("updated_at", t.UpdatedAt()).
 		Where(squirrel.Eq{"id": t.ID()}).
 		ToSql()
@@ -172,51 +172,51 @@ func (r *TranslationWriteRepo) List(ctx context.Context, filter domain.Translati
 
 func applyFilters(conds squirrel.And, filter domain.TranslationFilter) squirrel.And {
 	if filter.Key != nil {
-		conds = append(conds, squirrel.Eq{"key": *filter.Key})
+		conds = append(conds, squirrel.Eq{"entity_type": *filter.Key})
 	}
 	if filter.Language != nil {
-		conds = append(conds, squirrel.Eq{"language": *filter.Language})
+		conds = append(conds, squirrel.Eq{"lang_code": *filter.Language})
 	}
 	if filter.Group != nil {
-		conds = append(conds, squirrel.Eq{"group_name": *filter.Group})
+		conds = append(conds, squirrel.Eq{"entity_id": *filter.Group})
 	}
 	return conds
 }
 
 func scanTranslation(row pgx.Row) (*domain.Translation, error) {
 	var (
-		id        uuid.UUID
-		key       string
-		language  string
-		value     string
-		group     string
-		createdAt time.Time
-		updatedAt time.Time
+		id         uuid.UUID
+		entityType string
+		entityID   uuid.UUID
+		langCode   string
+		data       []byte
+		createdAt  time.Time
+		updatedAt  time.Time
 	)
 
-	err := row.Scan(&id, &key, &language, &value, &group, &createdAt, &updatedAt)
+	err := row.Scan(&id, &entityType, &entityID, &langCode, &data, &createdAt, &updatedAt)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 
-	return domain.ReconstructTranslation(id, createdAt, updatedAt, key, language, value, group), nil
+	return domain.ReconstructTranslation(id, createdAt, updatedAt, entityType, langCode, string(data), entityID.String()), nil
 }
 
 func scanTranslationFromRows(rows pgx.Rows) (*domain.Translation, error) {
 	var (
-		id        uuid.UUID
-		key       string
-		language  string
-		value     string
-		group     string
-		createdAt time.Time
-		updatedAt time.Time
+		id         uuid.UUID
+		entityType string
+		entityID   uuid.UUID
+		langCode   string
+		data       []byte
+		createdAt  time.Time
+		updatedAt  time.Time
 	)
 
-	err := rows.Scan(&id, &key, &language, &value, &group, &createdAt, &updatedAt)
+	err := rows.Scan(&id, &entityType, &entityID, &langCode, &data, &createdAt, &updatedAt)
 	if err != nil {
 		return nil, err
 	}
 
-	return domain.ReconstructTranslation(id, createdAt, updatedAt, key, language, value, group), nil
+	return domain.ReconstructTranslation(id, createdAt, updatedAt, entityType, langCode, string(data), entityID.String()), nil
 }

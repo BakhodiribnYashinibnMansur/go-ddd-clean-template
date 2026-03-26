@@ -9,7 +9,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// CreatePolicyCommand holds the input for creating a new policy.
+// CreatePolicyCommand represents an intent to create an authorization policy binding a permission to an effect.
+// Priority determines evaluation order when multiple policies match; Conditions enable attribute-based access control (ABAC).
 type CreatePolicyCommand struct {
 	PermissionID uuid.UUID
 	Effect       domain.PolicyEffect
@@ -17,13 +18,14 @@ type CreatePolicyCommand struct {
 	Conditions   map[string]any
 }
 
-// CreatePolicyHandler handles the CreatePolicyCommand.
+// CreatePolicyHandler persists new authorization policies via the repository.
+// No domain events are emitted — policy evaluation relies on direct repository reads.
 type CreatePolicyHandler struct {
 	repo   domain.PolicyRepository
 	logger logger.Log
 }
 
-// NewCreatePolicyHandler creates a new CreatePolicyHandler.
+// NewCreatePolicyHandler wires dependencies for policy creation.
 func NewCreatePolicyHandler(
 	repo domain.PolicyRepository,
 	logger logger.Log,
@@ -34,7 +36,8 @@ func NewCreatePolicyHandler(
 	}
 }
 
-// Handle executes the CreatePolicyCommand.
+// Handle creates a policy with the specified effect and priority, optionally attaches conditions, and persists it.
+// Returns nil on success; propagates repository errors to the caller.
 func (h *CreatePolicyHandler) Handle(ctx context.Context, cmd CreatePolicyCommand) error {
 	policy := domain.NewPolicy(cmd.PermissionID, cmd.Effect)
 	policy.SetPriority(cmd.Priority)

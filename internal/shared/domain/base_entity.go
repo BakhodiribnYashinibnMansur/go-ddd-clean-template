@@ -6,7 +6,9 @@ import (
 	"github.com/google/uuid"
 )
 
-// BaseEntity provides common fields for all domain entities.
+// BaseEntity provides identity and lifecycle tracking for all domain entities.
+// It embeds a UUID-based identity, creation/update timestamps, and soft-delete support.
+// Child entities (e.g., Session within User) embed this directly; aggregate roots embed it via AggregateRoot.
 type BaseEntity struct {
 	id        uuid.UUID
 	createdAt time.Time
@@ -54,6 +56,7 @@ func (e *BaseEntity) IsDeleted() bool { return e.deletedAt != nil }
 func (e *BaseEntity) Touch() { e.updatedAt = time.Now() }
 
 // SoftDelete marks the entity as deleted by setting deletedAt to the current time.
+// Repository implementations should filter soft-deleted entities from default queries.
 func (e *BaseEntity) SoftDelete() {
 	now := time.Now()
 	e.deletedAt = &now

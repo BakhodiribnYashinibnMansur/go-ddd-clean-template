@@ -6,7 +6,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// RateLimitChanged is raised when a rate limit is created or updated.
+// RateLimitChanged is a domain event raised when a rate limit rule is created or updated.
+// Enforcement middleware should subscribe to this event to invalidate cached rate limit configurations.
 type RateLimitChanged struct {
 	aggregateID uuid.UUID
 	occurredAt  time.Time

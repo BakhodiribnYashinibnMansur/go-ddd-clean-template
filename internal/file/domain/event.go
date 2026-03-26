@@ -6,7 +6,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// FileUploaded is raised when a new file is uploaded.
+// FileUploaded is a domain event raised when a new file is persisted.
+// Downstream subscribers can use this to trigger virus scanning, thumbnail generation, or audit logging.
 type FileUploaded struct {
 	aggregateID uuid.UUID
 	occurredAt  time.Time

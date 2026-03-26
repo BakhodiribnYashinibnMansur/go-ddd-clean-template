@@ -10,19 +10,22 @@ import (
 	"github.com/google/uuid"
 )
 
-// DeleteCommand holds the input for deleting an integration.
+// DeleteCommand represents an intent to permanently remove an integration by its unique identifier.
+// Once deleted, any webhooks or API keys associated with this integration become inoperative.
 type DeleteCommand struct {
 	ID uuid.UUID
 }
 
-// DeleteHandler handles the DeleteCommand.
+// DeleteHandler orchestrates integration deletion through the repository layer.
+// It enforces a hard-delete strategy — no soft-delete or event emission is performed.
+// Callers are responsible for authorization checks before invoking this handler.
 type DeleteHandler struct {
 	repo     domain.IntegrationRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
-// NewDeleteHandler creates a new DeleteHandler.
+// NewDeleteHandler wires up the handler with its required dependencies.
 func NewDeleteHandler(
 	repo domain.IntegrationRepository,
 	eventBus application.EventBus,
@@ -35,7 +38,8 @@ func NewDeleteHandler(
 	}
 }
 
-// Handle executes the DeleteCommand.
+// Handle performs the deletion of the integration identified by cmd.ID.
+// Returns nil on success; propagates repository errors (e.g., not found, connection failure) to the caller.
 func (h *DeleteHandler) Handle(ctx context.Context, cmd DeleteCommand) error {
 	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
 		h.logger.Errorf("failed to delete integration: %v", err)

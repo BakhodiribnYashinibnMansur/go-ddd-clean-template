@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	"encoding/json"
 	"time"
 
 	"gct/internal/emailtemplate/domain"
@@ -18,7 +17,7 @@ import (
 const tableName = consts.TableEmailTemplates
 
 var writeColumns = []string{
-	"id", "name", "subject", "html_body", "text_body", "variables", "created_at", "updated_at",
+	"id", "name", "subject", "html_body", "text_body", "type", "is_active", "created_at", "updated_at",
 }
 
 // EmailTemplateWriteRepo implements domain.EmailTemplateRepository using PostgreSQL.
@@ -37,11 +36,6 @@ func NewEmailTemplateWriteRepo(pool *pgxpool.Pool) *EmailTemplateWriteRepo {
 
 // Save inserts a new EmailTemplate aggregate into the database.
 func (r *EmailTemplateWriteRepo) Save(ctx context.Context, et *domain.EmailTemplate) error {
-	varsJSON, err := json.Marshal(et.Variables())
-	if err != nil {
-		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToMarshalJSON)
-	}
-
 	sql, args, err := r.builder.
 		Insert(tableName).
 		Columns(writeColumns...).
@@ -51,7 +45,8 @@ func (r *EmailTemplateWriteRepo) Save(ctx context.Context, et *domain.EmailTempl
 			et.Subject(),
 			et.HTMLBody(),
 			et.TextBody(),
-			varsJSON,
+			"transactional",
+			true,
 			et.CreatedAt(),
 			et.UpdatedAt(),
 		).
@@ -84,18 +79,12 @@ func (r *EmailTemplateWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (*d
 
 // Update updates an EmailTemplate aggregate in the database.
 func (r *EmailTemplateWriteRepo) Update(ctx context.Context, et *domain.EmailTemplate) error {
-	varsJSON, err := json.Marshal(et.Variables())
-	if err != nil {
-		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToMarshalJSON)
-	}
-
 	sql, args, err := r.builder.
 		Update(tableName).
 		Set("name", et.Name()).
 		Set("subject", et.Subject()).
 		Set("html_body", et.HTMLBody()).
 		Set("text_body", et.TextBody()).
-		Set("variables", varsJSON).
 		Set("updated_at", et.UpdatedAt()).
 		Where(squirrel.Eq{"id": et.ID()}).
 		ToSql()
@@ -138,20 +127,19 @@ func scanEmailTemplate(row pgx.Row) (*domain.EmailTemplate, error) {
 		subject   string
 		htmlBody  string
 		textBody  string
-		varsJSON  []byte
+		etType    string
+		isActive  bool
 		createdAt time.Time
 		updatedAt time.Time
 	)
 
-	err := row.Scan(&id, &name, &subject, &htmlBody, &textBody, &varsJSON, &createdAt, &updatedAt)
+	err := row.Scan(&id, &name, &subject, &htmlBody, &textBody, &etType, &isActive, &createdAt, &updatedAt)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, map[string]any{"id": id})
 	}
 
-	var variables []string
-	if len(varsJSON) > 0 {
-		_ = json.Unmarshal(varsJSON, &variables)
-	}
+	_ = etType
+	_ = isActive
 
-	return domain.ReconstructEmailTemplate(id, createdAt, updatedAt, nil, name, subject, htmlBody, textBody, variables), nil
+	return domain.ReconstructEmailTemplate(id, createdAt, updatedAt, nil, name, subject, htmlBody, textBody, nil), nil
 }

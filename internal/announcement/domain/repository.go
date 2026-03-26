@@ -7,7 +7,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// AnnouncementFilter carries filtering parameters for listing announcements.
+// AnnouncementFilter carries optional filtering criteria for listing announcements.
+// Zero-value fields (nil pointers, zero ints) mean "no filter" — implementations should ignore them.
 type AnnouncementFilter struct {
 	Published *bool
 	Priority  *int
@@ -16,6 +17,8 @@ type AnnouncementFilter struct {
 }
 
 // AnnouncementRepository is the write-side repository for the Announcement aggregate.
+// Implementations must return ErrAnnouncementNotFound from FindByID when no row matches.
+// Save and Update should persist the full aggregate state including any pending domain events.
 type AnnouncementRepository interface {
 	Save(ctx context.Context, entity *Announcement) error
 	FindByID(ctx context.Context, id uuid.UUID) (*Announcement, error)
@@ -24,7 +27,8 @@ type AnnouncementRepository interface {
 	List(ctx context.Context, filter AnnouncementFilter) ([]*Announcement, int64, error)
 }
 
-// AnnouncementView is a read-model DTO for announcements.
+// AnnouncementView is a read-model DTO projected from the announcement aggregate.
+// It flattens the Lang value object into per-locale string fields for direct JSON serialization.
 type AnnouncementView struct {
 	ID          uuid.UUID  `json:"id"`
 	TitleUz     string     `json:"title_uz"`
@@ -42,7 +46,8 @@ type AnnouncementView struct {
 	UpdatedAt   time.Time  `json:"updated_at"`
 }
 
-// AnnouncementReadRepository is the read-side repository returning projected views.
+// AnnouncementReadRepository is the read-side (CQRS query) repository.
+// It returns pre-projected AnnouncementView DTOs, bypassing aggregate reconstruction for read performance.
 type AnnouncementReadRepository interface {
 	FindByID(ctx context.Context, id uuid.UUID) (*AnnouncementView, error)
 	List(ctx context.Context, filter AnnouncementFilter) ([]*AnnouncementView, int64, error)

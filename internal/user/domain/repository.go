@@ -8,9 +8,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// UserView is a read-model DTO used by the read side. It will be fully defined
-// in the application layer (application/dto.go); declared here as a placeholder
-// so that the read-repository interface compiles.
+// UserView is a read-model DTO for API responses. Intentionally omits sensitive fields
+// (password hash, sessions) that should never leave the domain layer.
 type UserView struct {
 	ID         uuid.UUID      `json:"id"`
 	Phone      string         `json:"phone"`
@@ -22,7 +21,8 @@ type UserView struct {
 	IsApproved bool           `json:"is_approved"`
 }
 
-// UsersFilter carries filtering and pagination parameters for listing users.
+// UsersFilter carries optional filtering and pagination parameters for listing users.
+// Nil pointer fields are ignored by the repository (no filtering on that dimension).
 type UsersFilter struct {
 	Phone      *string
 	Email      *string
@@ -31,14 +31,17 @@ type UsersFilter struct {
 	Pagination *shared.Pagination
 }
 
-// UserRepository is the write-side repository for the User aggregate.
+// UserRepository is the write-side persistence contract for the User aggregate.
+// It extends the generic Repository with phone/email lookup methods needed for sign-in and uniqueness checks.
+// FindByPhone/FindByEmail must return ErrUserNotFound when no match exists.
 type UserRepository interface {
 	shared.Repository[User]
 	FindByPhone(ctx context.Context, phone Phone) (*User, error)
 	FindByEmail(ctx context.Context, email Email) (*User, error)
 }
 
-// UserReadRepository is the read-side repository returning projected views.
+// UserReadRepository provides read-only access returning lightweight UserView projections.
+// It should never be used for write operations or aggregate reconstruction.
 type UserReadRepository interface {
 	FindByID(ctx context.Context, id uuid.UUID) (*UserView, error)
 	List(ctx context.Context, filter UsersFilter) ([]*UserView, int64, error)

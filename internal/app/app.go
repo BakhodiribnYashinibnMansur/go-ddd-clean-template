@@ -14,6 +14,8 @@ import (
 	"gct/config"
 	"gct/internal/shared/domain/consts"
 	"gct/internal/controller/restapi"
+	"gct/internal/controller/restapi/middleware"
+	"gct/internal/controller/restapi/middleware/auth"
 	"gct/internal/repo"
 	"gct/internal/usecase"
 	"gct/internal/usecase/cache"
@@ -22,6 +24,7 @@ import (
 	redispkg "gct/internal/shared/infrastructure/db/redis"
 	"gct/internal/shared/infrastructure/eventbus"
 	"gct/internal/shared/infrastructure/logger"
+	jwtpkg "gct/internal/shared/infrastructure/security/jwt"
 	httpserver "gct/internal/shared/infrastructure/server/http"
 	"gct/internal/shared/infrastructure/tracing"
 
@@ -97,30 +100,36 @@ func Run(cfg *config.Config) {
 	// useCases layer contains the core business rules and domain logic.
 	useCases := usecase.NewUseCase(repositories, l, cfg, asynqClient)
 
-	// 4.1 Initialize Error Codes
-	initErrorCodes(ctx, useCases, l)
-
 	// === DDD Bootstrap ===
 	eventBus := eventbus.NewInMemoryEventBus()
-	dddBCs := NewDDDBoundedContexts(pg.Pool, eventBus, l)
-	RegisterEventSubscribers(eventBus, dddBCs)
+
+	// Parse RSA private key for DDD JWT token generation.
+	jwtPrivateKey, err := jwtpkg.ParseRSAPrivateKey(cfg.JWT.PrivateKey)
+	if err != nil {
+		l.Fatalw("failed to parse RSA private key for DDD", "error", err)
+	}
+
+	dddBCs := NewDDDBoundedContexts(pg.Pool, eventBus, l, jwtPrivateKey, cfg.JWT.Issuer, cfg.JWT.AccessTTL, cfg.JWT.RefreshTTL)
+
+	// 4.1 Initialize Error Codes (via DDD ErrorCode BC)
+	initErrorCodes(ctx, dddBCs.ErrorCode, l)
 
 	// 5. Initialize Reactive Components
 	// cacheService manages memory-efficient data invalidation across clusters.
 	cacheService := cache.NewCache(repositories.Persistent.Redis, l)
 
-	// 5.1 Initialize Integration Cache (In-memory)
-	if err := useCases.Integration.InitCache(ctx); err != nil {
+	// 5.1 Initialize Integration Cache (In-memory, via DDD Integration BC)
+	if err := dddBCs.Integration.Cache.InitCache(ctx); err != nil {
 		l.Errorc(ctx, "⚠️ Failed to initialize integration cache", "error", err)
 	}
 
 	// Start background listeners for database-driven cache invalidation events.
 	go pg.Listen(ctx, consts.CacheInvalidationChannel, cacheService.DeletePublicCaches, l)
-	go pg.Listen(ctx, consts.CacheInvalidationChannel, useCases.Integration.InvalidateCache, l)
+	go pg.Listen(ctx, consts.CacheInvalidationChannel, dddBCs.Integration.Cache.InvalidateCache, l)
 
 	var asynqWorker *asynq.Worker
 	if cfg.Asynq.Enabled {
-		asynqWorker, err = initAsynqWorker(ctx, cfg, repositories, useCases, l)
+		asynqWorker, err = initAsynqWorker(ctx, cfg, pg.Pool, dddBCs.Audit.CreateAuditLog, l)
 		if err != nil {
 			l.Errorc(ctx, "⚠️ Failed to initialize Asynq worker", "error", err)
 		}
@@ -132,11 +141,7 @@ func Run(cfg *config.Config) {
 	}
 
 	// 7. Initialize Web Router and Persistent Server
-	// Translates API requests into usecase calls while applying global middlewares.
-	handler := initRouter(cfg, useCases, l)
-
-	// === DDD Routes ===
-	RegisterDDDRoutes(handler, dddBCs, l)
+	handler := initRouterWithDDD(cfg, useCases, dddBCs, l)
 
 	httpServer := httpserver.NewServer()
 
@@ -154,11 +159,11 @@ func Run(cfg *config.Config) {
 }
 
 // initRouter configures the Gin engine with environment-specific modes and routes.
-func initRouter(cfg *config.Config, useCases *usecase.UseCase, l logger.Log) *gin.Engine {
+func initRouterWithDDD(cfg *config.Config, useCases *usecase.UseCase, dddBCs *DDDBoundedContexts, l logger.Log) *gin.Engine {
 	// 1. Separate Gin Mode
 	gin.SetMode(cfg.HTTP.GinMode)
 
-	// 2. Control Gin Logs (logga qo'shmaslik imkoniyati)
+	// 2. Control Gin Logs
 	if cfg.Log.ShowGin {
 		gin.ForceConsoleColor()
 		gin.DefaultWriter = logger.NewColorfulWriter(os.Stdout)
@@ -169,7 +174,15 @@ func initRouter(cfg *config.Config, useCases *usecase.UseCase, l logger.Log) *gi
 	}
 
 	handler := gin.New()
+
+	// Global middleware + infra routes
 	restapi.NewRouter(handler, cfg, useCases, l)
+
+	// DDD routes (after all global middleware)
+	am := auth.NewAuthMiddleware(useCases, cfg, l)
+	csrfM := middleware.HybridMiddleware(l, consts.CookieCsrfToken)
+	RegisterDDDRoutes(handler, dddBCs, am.AuthClientAccess, am.Authz, csrfM, l)
+
 	return handler
 }
 

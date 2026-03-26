@@ -94,11 +94,6 @@ func TestDatabaseConnectionStrings(t *testing.T) {
 	expectedPGURL := "postgres://test_user:test_password@localhost:5432/test_db?sslmode=disable"
 	assert.Equal(t, expectedPGURL, pgURL)
 
-	// Test MySQL URL
-	mysqlURL := cfg.Database.MySQL.URL()
-	expectedMySQLURL := "test_user:test_password@tcp(localhost:3306)/test_db?parseTime=true"
-	assert.Equal(t, expectedMySQLURL, mysqlURL)
-
 	// Test PostgreSQL validation
 	err = cfg.Database.Postgres.Validate()
 	assert.NoError(t, err)

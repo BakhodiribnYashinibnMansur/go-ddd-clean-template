@@ -6,7 +6,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// FlagToggled is raised when a feature flag's enabled state is toggled.
+// FlagToggled is a domain event emitted when a feature flag's enabled state flips.
+// Consumers can use this to invalidate feature-flag caches or push real-time updates to connected clients.
 type FlagToggled struct {
 	aggregateID uuid.UUID
 	occurredAt  time.Time

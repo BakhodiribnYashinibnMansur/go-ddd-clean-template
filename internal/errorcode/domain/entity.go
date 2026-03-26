@@ -8,7 +8,10 @@ import (
 	"github.com/google/uuid"
 )
 
-// ErrorCode is the aggregate root for application error codes.
+// ErrorCode is the aggregate root representing a cataloged application error.
+// It serves as a central registry entry that maps a machine-readable code to human-readable
+// metadata (message, suggestion) and operational hints (httpStatus, retryable, retryAfter).
+// The code field is immutable after creation — only the descriptive fields can be updated.
 type ErrorCode struct {
 	shared.AggregateRoot
 	code       string
@@ -69,7 +72,8 @@ func ReconstructErrorCode(
 	}
 }
 
-// Update modifies the error code fields.
+// Update replaces all mutable fields of the error code and raises an ErrorCodeUpdated event.
+// Note: the code field itself is immutable — only metadata fields are updated.
 func (ec *ErrorCode) Update(
 	message string,
 	httpStatus int,

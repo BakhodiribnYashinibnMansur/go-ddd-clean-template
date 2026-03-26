@@ -6,7 +6,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// ExportRequested is raised when a new data export is requested.
+// ExportRequested is a domain event emitted when a user initiates a data export.
+// A background job handler should subscribe to this event to begin async processing.
 type ExportRequested struct {
 	aggregateID uuid.UUID
 	occurredAt  time.Time
@@ -27,7 +28,8 @@ func (e ExportRequested) EventName() string      { return "dataexport.requested"
 func (e ExportRequested) OccurredAt() time.Time   { return e.occurredAt }
 func (e ExportRequested) AggregateID() uuid.UUID  { return e.aggregateID }
 
-// ExportCompleted is raised when a data export finishes successfully.
+// ExportCompleted is emitted when the export file has been generated and uploaded.
+// Consumers can use this to send download-ready notifications to the requesting user.
 type ExportCompleted struct {
 	aggregateID uuid.UUID
 	occurredAt  time.Time

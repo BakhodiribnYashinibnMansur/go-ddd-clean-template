@@ -7,7 +7,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// RateLimitFilter carries filtering parameters for listing rate limits.
+// RateLimitFilter carries optional filtering parameters for listing rate limits.
+// Nil pointer fields are treated as "no filter" by the repository implementation.
 type RateLimitFilter struct {
 	Name    *string
 	Enabled *bool
@@ -16,6 +17,8 @@ type RateLimitFilter struct {
 }
 
 // RateLimitRepository is the write-side repository for the RateLimit aggregate.
+// List is included on the write side because enforcement middleware needs access to full aggregates
+// for real-time rate limit evaluation, not just read-model projections.
 type RateLimitRepository interface {
 	Save(ctx context.Context, entity *RateLimit) error
 	FindByID(ctx context.Context, id uuid.UUID) (*RateLimit, error)
@@ -24,7 +27,7 @@ type RateLimitRepository interface {
 	List(ctx context.Context, filter RateLimitFilter) ([]*RateLimit, int64, error)
 }
 
-// RateLimitView is a read-model DTO for rate limits.
+// RateLimitView is a read-model projection for rate limits, optimized for admin UI display.
 type RateLimitView struct {
 	ID                uuid.UUID `json:"id"`
 	Name              string    `json:"name"`
@@ -37,6 +40,7 @@ type RateLimitView struct {
 }
 
 // RateLimitReadRepository is the read-side repository returning projected views.
+// Implementations must return ErrRateLimitNotFound when FindByID yields no result.
 type RateLimitReadRepository interface {
 	FindByID(ctx context.Context, id uuid.UUID) (*RateLimitView, error)
 	List(ctx context.Context, filter RateLimitFilter) ([]*RateLimitView, int64, error)

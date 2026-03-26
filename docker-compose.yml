@@ -1,98 +1,101 @@
 version: "3.9"
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Umumiy stack: GCA backend + AdminPanel frontend + barcha infra servislar
+# Ishga tushirish:
+#   make up-all            → barcha servislar
+#   make up                → faqat infra (db, redis, ...)
+#   docker compose up gca admin-panel → faqat ilovalar
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ─── Shared variables ────────────────────────────────────────────────────────
 
 x-db-environment: &x-db-environment
   POSTGRES_SSL_MODE: "disable"
   POSTGRES_HOST: "db"
   POSTGRES_PORT: "5432"
-  POSTGRES_DB: "db"
-  POSTGRES_PASSWORD: "myAwEsOm3pa55@w0rd"
-  POSTGRES_USER: "user"
+  POSTGRES_DB: ${POSTGRES_DB:-db}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-myAwEsOm3pa55@w0rd}
+  POSTGRES_USER: ${POSTGRES_USER:-user}
 
 x-rabbitmq-variables: &x-rabbitmq-variables
-  RABBITMQ_DEFAULT_USER: "guest"
-  RABBITMQ_DEFAULT_PASS: "guest"
+  RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+  RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-guest}
 
-x-backend-app-environment: &x-backend-app-environment
+x-backend-env: &x-backend-env
   GOMAXPROCS: "1"
-  # App
   APP_NAME: "go-clean-template"
   APP_VERSION: "1.0.0"
-  # HTTP settings
   HTTP_PORT: "8080"
   HTTP_USE_PREFORK_MODE: "false"
-  # Logger
   LOG_LEVEL: "debug"
-  # PG
   PG_POOL_MAX: "2"
-  PG_URL: "postgres://user:myAwEsOm3pa55@w0rd@db:5432/db"
-  # gRPC
+  PG_URL: "postgres://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-myAwEsOm3pa55@w0rd}@db:5432/${POSTGRES_DB:-db}"
   GRPC_PORT: "8081"
-  # RMQ
   RMQ_RPC_SERVER: "rpc_server"
   RMQ_RPC_CLIENT: "rpc_client"
-  RMQ_URL: "amqp://guest:guest@rabbitmq:5672/"
-  # NATS
+  RMQ_URL: "amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672/"
   NATS_RPC_SERVER: "rpc_server"
   NATS_URL: "nats://guest:guest@nats:4222/"
-  # Metrics
   METRICS_ENABLED: "true"
-  # Swagger
   SWAGGER_ENABLED: "true"
-  # Tracing
   TRACING_ENABLED: "true"
   TRACING_ENDPOINT: "http://jaeger:14268/api/traces"
   TRACING_INSECURE: "true"
 
+# ─── Networks & Volumes ──────────────────────────────────────────────────────
+
+networks:
+  app_network:
+    driver: bridge
+
+volumes:
+  db_data:
+  rabbitmq_data:
+  nats_data:
+  redis_data:
+  mongodb_data:
+  mysql_data:
+  minio_data:
+  elasticsearch_data:
+  clickhouse_data:
+  cassandra_data:
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Services
+# ─────────────────────────────────────────────────────────────────────────────
 
 services:
+
+  # ══════════════════════════════════════════════════════
+  # Infrastructure
+  # ══════════════════════════════════════════════════════
+
   db:
     container_name: db
     image: postgres:18.1-alpine
+    restart: unless-stopped
     environment:
       <<: *x-db-environment
-    volumes:
-      - db_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
     networks:
       app_network:
         aliases:
           - db.lvh.me
-
-  rabbitmq:
-    container_name: rabbitmq
-    image: rabbitmq:4.2.1-management
-    environment:
-      <<: *x-rabbitmq-variables
-    ports:
-      - "15672:15672"
-      - "5672:5672"
-    volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
-    networks:
-      app_network:
-        aliases:
-          - rabbitmq.lvh.me
-
-  nats:
-    container_name: nats
-    image: nats:2.12-alpine
-    command: [ "-m", "8222", "-sd", "/nats-data", "-user", "guest", "-pass", "guest" ]
-    ports:
-      - "4222:4222"
-      - "8222:8222"
-    volumes:
-      - nats_data:/nats-data
-    networks:
-      app_network:
-        aliases:
-          - nats.lvh.me
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-user} -d ${POSTGRES_DB:-db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
     container_name: redis
     image: redis:7.4-alpine
-    command: redis-server --requirepass redisPassword123
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD:-redisPassword123}
     ports:
       - "6379:6379"
     volumes:
@@ -101,14 +104,20 @@ services:
       app_network:
         aliases:
           - redis.lvh.me
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redisPassword123}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   mongodb:
     container_name: mongodb
     image: mongo:8.0
+    restart: unless-stopped
     environment:
-      MONGO_INITDB_ROOT_USERNAME: mongoUser
-      MONGO_INITDB_ROOT_PASSWORD: mongoPassword123
-      MONGO_INITDB_DATABASE: mongodb
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-mongoUser}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-mongoPassword123}
+      MONGO_INITDB_DATABASE: ${MONGO_DB:-mongodb}
     ports:
       - "27017:27017"
     volumes:
@@ -121,11 +130,12 @@ services:
   mysql:
     container_name: mysql
     image: mysql:9.1
+    restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: rootPassword123
-      MYSQL_DATABASE: mysqldb
-      MYSQL_USER: mysqlUser
-      MYSQL_PASSWORD: mysqlPassword123
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootPassword123}
+      MYSQL_DATABASE: ${MYSQL_DB:-mysqldb}
+      MYSQL_USER: ${MYSQL_USER:-mysqlUser}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-mysqlPassword123}
     ports:
       - "3306:3306"
     volumes:
@@ -139,10 +149,11 @@ services:
   minio:
     container_name: minio
     image: minio/minio:latest
+    restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: minioUser
-      MINIO_ROOT_PASSWORD: minioPassword123
+      MINIO_ROOT_USER: ${MINIO_USER:-minioUser}
+      MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD:-minioPassword123}
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -153,9 +164,41 @@ services:
         aliases:
           - minio.lvh.me
 
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:4.2.1-management
+    restart: unless-stopped
+    environment:
+      <<: *x-rabbitmq-variables
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      app_network:
+        aliases:
+          - rabbitmq.lvh.me
+
+  nats:
+    container_name: nats
+    image: nats:2.12-alpine
+    restart: unless-stopped
+    command: ["-m", "8222", "-sd", "/nats-data", "-user", "guest", "-pass", "guest"]
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    volumes:
+      - nats_data:/nats-data
+    networks:
+      app_network:
+        aliases:
+          - nats.lvh.me
+
   elasticsearch:
     container_name: elasticsearch
     image: elasticsearch:8.17.0
+    restart: unless-stopped
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
@@ -173,14 +216,14 @@ services:
   clickhouse:
     container_name: clickhouse
     image: clickhouse/clickhouse-server:24.12-alpine
+    restart: unless-stopped
     environment:
-      CLICKHOUSE_DB: clickhousedb
-      CLICKHOUSE_USER: clickhouseUser
-      CLICKHOUSE_PASSWORD: clickhousePassword123
+      CLICKHOUSE_DB: ${CLICKHOUSE_DB:-clickhousedb}
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-clickhouseUser}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-clickhousePassword123}
       CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
     ports:
       - "8123:8123"
-      - "9000:9000"
     volumes:
       - clickhouse_data:/var/lib/clickhouse
     ulimits:
@@ -195,6 +238,7 @@ services:
   cassandra:
     container_name: cassandra
     image: cassandra:5.0
+    restart: unless-stopped
     environment:
       CASSANDRA_CLUSTER_NAME: "CassandraCluster"
       CASSANDRA_DC: "dc1"
@@ -211,77 +255,99 @@ services:
         aliases:
           - cassandra.lvh.me
 
-  app:
-    container_name: app
-    platform: linux/amd64
-    pid: "host"
-    build:
-      context: .
-    environment:
-      <<: *x-backend-app-environment
-    ports:
-      - "8080:8080"
-      - "8081:8081"
-    depends_on:
-      - db
-      - rabbitmq
-    deploy:
-      resources:
-        limits:
-          cpus: '1.00'
-          memory: '2Gb'
-        reservations:
-          cpus: '0.60'
-          memory: '1Gb'
-    networks:
-      app_network:
-        aliases:
-          - app.lvh.me
-
-  nginx:
-    container_name: nginx
-    image: nginx:1.29.4-alpine
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-    ports:
-      - "80:80"
-    depends_on:
-      - rabbitmq
-      - app
-    networks:
-      app_network:
-        aliases:
-          - nginx.lvh.me
-
   jaeger:
     container_name: jaeger
     image: jaegertracing/all-in-one:1.64
+    restart: unless-stopped
     environment:
       - COLLECTOR_OTLP_ENABLED=true
     ports:
-      - "16686:16686" # UI
-      - "4317:4317"   # OTLP gRPC
-      - "4318:4318"   # OTLP HTTP
-      - "14268:14268" # Jaeger Collector HTTP
+      - "16686:16686"   # Jaeger UI
+      - "4317:4317"     # OTLP gRPC
+      - "4318:4318"     # OTLP HTTP
+      - "14268:14268"   # Jaeger Collector HTTP
     networks:
       app_network:
         aliases:
           - jaeger.lvh.me
 
+  # ══════════════════════════════════════════════════════
+  # GCA — Go backend
+  # ══════════════════════════════════════════════════════
 
-networks:
-  app_network:
-    external: false
+  gca:
+    container_name: gca
+    platform: linux/amd64
+    build:
+      context: ./GCA
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      <<: *x-backend-env
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+    deploy:
+      resources:
+        limits:
+          cpus: "1.00"
+          memory: "2Gb"
+        reservations:
+          cpus: "0.60"
+          memory: "1Gb"
+    networks:
+      app_network:
+        aliases:
+          - gca.lvh.me
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
 
+  # ══════════════════════════════════════════════════════
+  # AdminPanel — React SPA (Nginx)
+  # ══════════════════════════════════════════════════════
 
-volumes:
-  db_data:
-  rabbitmq_data:
-  nats_data:
-  redis_data:
-  mongodb_data:
-  mysql_data:
-  minio_data:
-  elasticsearch_data:
-  clickhouse_data:
-  cassandra_data:
+  admin-panel:
+    container_name: admin-panel
+    build:
+      context: ./AdminPanel
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${ADMIN_PORT:-3000}:80"
+    depends_on:
+      gca:
+        condition: service_healthy
+    networks:
+      app_network:
+        aliases:
+          - admin.lvh.me
+
+  # ══════════════════════════════════════════════════════
+  # Nginx — Reverse proxy (faqat / → admin, /api → gca, /docs → gca)
+  # ══════════════════════════════════════════════════════
+
+  nginx:
+    container_name: nginx
+    image: nginx:1.29.4-alpine
+    restart: unless-stopped
+    volumes:
+      - ./GCA/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "80:80"
+    depends_on:
+      - gca
+      - admin-panel
+    networks:
+      app_network:
+        aliases:
+          - nginx.lvh.me

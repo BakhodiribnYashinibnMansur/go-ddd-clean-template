@@ -6,7 +6,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// JobScheduled is raised when a new job is scheduled.
+// JobScheduled is a domain event raised when a new job enters the queue.
+// Subscribers can use this to trigger immediate execution or update dashboard counters.
 type JobScheduled struct {
 	aggregateID uuid.UUID
 	occurredAt  time.Time
@@ -25,7 +26,8 @@ func (e JobScheduled) EventName() string      { return "job.scheduled" }
 func (e JobScheduled) OccurredAt() time.Time   { return e.occurredAt }
 func (e JobScheduled) AggregateID() uuid.UUID  { return e.aggregateID }
 
-// JobCompleted is raised when a job finishes successfully.
+// JobCompleted is a domain event raised when a job finishes successfully.
+// This is only emitted on success — failures do not produce a domain event.
 type JobCompleted struct {
 	aggregateID uuid.UUID
 	occurredAt  time.Time

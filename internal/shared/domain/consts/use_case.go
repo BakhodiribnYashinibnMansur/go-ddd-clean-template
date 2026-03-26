@@ -1,5 +1,7 @@
 package consts
 
+// Structured log message constants used by use-case handlers for consistent observability.
+// Each operation has a corresponding "started"/"success"/"failed" lifecycle logged at the application layer.
 const (
 	// Common log messages
 	LogStarted = "started"

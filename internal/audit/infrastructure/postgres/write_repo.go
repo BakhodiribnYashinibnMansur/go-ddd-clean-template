@@ -21,7 +21,7 @@ var auditLogColumns = []string{
 
 // endpointHistoryColumns are the columns for the endpoint_history table.
 var endpointHistoryColumns = []string{
-	"id", "user_id", "endpoint", "method", "status_code", "latency",
+	"id", "user_id", "path", "method", "status_code", "duration_ms",
 	"ip_address", "user_agent", "created_at",
 }
 

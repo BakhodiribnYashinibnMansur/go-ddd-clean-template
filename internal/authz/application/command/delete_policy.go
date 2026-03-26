@@ -9,18 +9,20 @@ import (
 	"github.com/google/uuid"
 )
 
-// DeletePolicyCommand holds the input for deleting a policy.
+// DeletePolicyCommand represents an intent to permanently remove an authorization policy.
+// Once deleted, any access previously governed by this policy falls through to the next matching policy or default deny.
 type DeletePolicyCommand struct {
 	ID uuid.UUID
 }
 
-// DeletePolicyHandler handles the DeletePolicyCommand.
+// DeletePolicyHandler performs hard deletion of an authorization policy via the repository.
+// Callers are responsible for verifying that removing this policy does not inadvertently grant or deny critical access.
 type DeletePolicyHandler struct {
 	repo   domain.PolicyRepository
 	logger logger.Log
 }
 
-// NewDeletePolicyHandler creates a new DeletePolicyHandler.
+// NewDeletePolicyHandler wires dependencies for policy deletion.
 func NewDeletePolicyHandler(
 	repo domain.PolicyRepository,
 	logger logger.Log,
@@ -31,7 +33,8 @@ func NewDeletePolicyHandler(
 	}
 }
 
-// Handle executes the DeletePolicyCommand.
+// Handle deletes the policy identified by cmd.ID.
+// Returns nil on success; propagates repository errors (e.g., not found) to the caller.
 func (h *DeletePolicyHandler) Handle(ctx context.Context, cmd DeletePolicyCommand) error {
 	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
 		h.logger.Errorf("failed to delete policy: %v", err)

@@ -10,13 +10,15 @@ import (
 	"github.com/google/uuid"
 )
 
-// ResolveErrorCommand holds the input for resolving a system error.
+// ResolveErrorCommand represents an intent to mark a system error as resolved by a specific user.
+// This is an irreversible status transition — once resolved, the error cannot be re-opened.
 type ResolveErrorCommand struct {
 	ID         uuid.UUID
 	ResolvedBy uuid.UUID
 }
 
-// ResolveErrorHandler handles the ResolveErrorCommand.
+// ResolveErrorHandler transitions a system error to the resolved state via a load-modify-save cycle.
+// Callers are responsible for verifying that ResolvedBy refers to a user with sufficient privileges.
 type ResolveErrorHandler struct {
 	repo     domain.SystemErrorRepository
 	eventBus application.EventBus
@@ -36,7 +38,8 @@ func NewResolveErrorHandler(
 	}
 }
 
-// Handle executes the ResolveErrorCommand.
+// Handle loads the system error, marks it resolved, persists the update, and publishes domain events.
+// Returns not-found or repository errors; event bus failures are logged but do not fail the operation.
 func (h *ResolveErrorHandler) Handle(ctx context.Context, cmd ResolveErrorCommand) error {
 	se, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {

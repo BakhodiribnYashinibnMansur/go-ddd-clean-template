@@ -9,7 +9,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// AuditLogFilter carries filtering parameters for listing audit logs.
+// AuditLogFilter carries optional criteria for querying audit logs.
+// All pointer fields are treated as "no filter" when nil. FromDate/ToDate define an inclusive time range.
 type AuditLogFilter struct {
 	UserID       *uuid.UUID
 	Action       *AuditAction
@@ -21,7 +22,8 @@ type AuditLogFilter struct {
 	Pagination   *shared.Pagination
 }
 
-// EndpointHistoryFilter carries filtering parameters for listing endpoint history.
+// EndpointHistoryFilter carries optional criteria for querying endpoint history records.
+// Nil pointer fields are ignored. StatusCode filters to an exact HTTP status match.
 type EndpointHistoryFilter struct {
 	UserID     *uuid.UUID
 	Method     *string
@@ -32,23 +34,29 @@ type EndpointHistoryFilter struct {
 	Pagination *shared.Pagination
 }
 
-// AuditLogRepository is the write-side repository for audit logs (immutable — Save only).
+// AuditLogRepository is the write-side repository for audit logs.
+// It exposes only Save because audit logs are append-only — no update or delete is permitted.
+// Implementations must dispatch any pending domain events (e.g., AuditLogCreated) after persistence.
 type AuditLogRepository interface {
 	Save(ctx context.Context, auditLog *AuditLog) error
 }
 
-// EndpointHistoryRepository is the write-side repository for endpoint history (immutable — Save only).
+// EndpointHistoryRepository is the write-side repository for endpoint history.
+// Like AuditLogRepository, it is append-only — entries are never modified or deleted.
 type EndpointHistoryRepository interface {
 	Save(ctx context.Context, entry *EndpointHistory) error
 }
 
-// AuditReadRepository is the read-side repository for audit queries.
+// AuditReadRepository is the read-side (CQRS query) repository for the audit bounded context.
+// It returns pre-projected view DTOs and supports paginated, filtered listing for both
+// audit logs and endpoint history in a single interface.
 type AuditReadRepository interface {
 	ListAuditLogs(ctx context.Context, filter AuditLogFilter) ([]*AuditLogView, int64, error)
 	ListEndpointHistory(ctx context.Context, filter EndpointHistoryFilter) ([]*EndpointHistoryView, int64, error)
 }
 
-// AuditLogView is a read-model DTO for audit log queries.
+// AuditLogView is a flat read-model DTO for audit log queries.
+// It mirrors the AuditLog aggregate fields but is safe for direct JSON serialization without domain logic.
 type AuditLogView struct {
 	ID           uuid.UUID      `json:"id"`
 	UserID       *uuid.UUID     `json:"user_id,omitempty"`
@@ -68,7 +76,8 @@ type AuditLogView struct {
 	CreatedAt    time.Time      `json:"created_at"`
 }
 
-// EndpointHistoryView is a read-model DTO for endpoint history queries.
+// EndpointHistoryView is a flat read-model DTO for endpoint history queries.
+// Latency is stored in milliseconds; StatusCode is the raw HTTP response code.
 type EndpointHistoryView struct {
 	ID         uuid.UUID  `json:"id"`
 	UserID     *uuid.UUID `json:"user_id,omitempty"`

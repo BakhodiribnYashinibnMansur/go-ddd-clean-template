@@ -17,7 +17,7 @@ import (
 const tableName = consts.TableSiteSetting
 
 var writeColumns = []string{
-	"id", "key", "value", "type", "description", "created_at", "updated_at",
+	"id", "key", "value", "value_type", "description", "created_at", "updated_at",
 }
 
 // SiteSettingWriteRepo implements domain.SiteSettingRepository using PostgreSQL.
@@ -76,7 +76,7 @@ func (r *SiteSettingWriteRepo) Update(ctx context.Context, s *domain.SiteSetting
 		Update(tableName).
 		Set("key", s.Key()).
 		Set("value", s.Value()).
-		Set("type", s.Type()).
+		Set("value_type", s.Type()).
 		Set("description", s.Description()).
 		Set("updated_at", s.UpdatedAt()).
 		Where(squirrel.Eq{"id": s.ID()}).
@@ -175,7 +175,7 @@ func applyFilters(conds squirrel.And, filter domain.SiteSettingFilter) squirrel.
 		conds = append(conds, squirrel.Eq{"key": *filter.Key})
 	}
 	if filter.Type != nil {
-		conds = append(conds, squirrel.Eq{"type": *filter.Type})
+		conds = append(conds, squirrel.Eq{"value_type": *filter.Type})
 	}
 	return conds
 }

@@ -17,7 +17,7 @@ import (
 const tableName = consts.TableNotifications
 
 var writeColumns = []string{
-	"id", "user_id", "title", "message", "type", "read_at", "created_at",
+	"id", "title", "body", "type", "target_type", "is_active", "created_at", "updated_at",
 }
 
 // NotificationWriteRepo implements domain.NotificationRepository using PostgreSQL.
@@ -41,11 +41,12 @@ func (r *NotificationWriteRepo) Save(ctx context.Context, n *domain.Notification
 		Columns(writeColumns...).
 		Values(
 			n.ID(),
-			n.UserID(),
 			n.Title(),
 			n.Message(),
 			n.Type(),
-			n.ReadAt(),
+			"all",
+			true,
+			n.CreatedAt(),
 			n.CreatedAt(),
 		).
 		ToSql()
@@ -79,7 +80,7 @@ func (r *NotificationWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (*do
 func (r *NotificationWriteRepo) Update(ctx context.Context, n *domain.Notification) error {
 	sql, args, err := r.builder.
 		Update(tableName).
-		Set("read_at", n.ReadAt()).
+		Set("is_active", false).
 		Where(squirrel.Eq{"id": n.ID()}).
 		ToSql()
 	if err != nil {
@@ -116,19 +117,24 @@ func (r *NotificationWriteRepo) Delete(ctx context.Context, id uuid.UUID) error 
 
 func scanNotification(row pgx.Row) (*domain.Notification, error) {
 	var (
-		id        uuid.UUID
-		userID    uuid.UUID
-		title     string
-		message   string
-		nType     string
-		readAt    *time.Time
-		createdAt time.Time
+		id         uuid.UUID
+		title      string
+		body       string
+		nType      string
+		targetType string
+		isActive   bool
+		createdAt  time.Time
+		updatedAt  time.Time
 	)
 
-	err := row.Scan(&id, &userID, &title, &message, &nType, &readAt, &createdAt)
+	err := row.Scan(&id, &title, &body, &nType, &targetType, &isActive, &createdAt, &updatedAt)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, map[string]any{"id": id})
 	}
 
-	return domain.ReconstructNotification(id, createdAt, userID, title, message, nType, readAt), nil
+	_ = targetType
+	_ = isActive
+	_ = updatedAt
+
+	return domain.ReconstructNotification(id, createdAt, uuid.Nil, title, body, nType, nil), nil
 }

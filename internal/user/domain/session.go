@@ -12,6 +12,7 @@ import (
 // SessionDeviceType
 // ---------------------------------------------------------------------------
 
+// SessionDeviceType classifies the client device. Values must be UPPERCASE to match the PostgreSQL ENUM.
 type SessionDeviceType string
 
 const (
@@ -26,6 +27,9 @@ const (
 // Session — child entity within the User aggregate
 // ---------------------------------------------------------------------------
 
+// Session is a child entity owned by the User aggregate. It must never be persisted or queried
+// independently — all session mutations flow through the User aggregate root to maintain invariants.
+// Sessions have a sliding 7-day expiry window that resets on each activity update.
 type Session struct {
 	shared.BaseEntity
 	userID           uuid.UUID
@@ -105,13 +109,15 @@ func (s *Session) Revoke() {
 }
 
 // UpdateActivity refreshes the last activity timestamp and extends expiry by 7 days.
+// Called by middleware on each authenticated request to implement sliding session expiry.
 func (s *Session) UpdateActivity() {
 	s.lastActivity = time.Now()
 	s.expiresAt = time.Now().Add(defaultSessionDuration)
 	s.Touch()
 }
 
-// SetRefreshTokenHash stores the hashed refresh token.
+// SetRefreshTokenHash stores the hashed refresh token for rotation verification.
+// The raw refresh token is never stored — only its hash, for constant-time comparison during rotation.
 func (s *Session) SetRefreshTokenHash(hash string) {
 	s.refreshTokenHash = hash
 	s.Touch()

@@ -9,6 +9,8 @@ import (
 )
 
 // Job is the aggregate root for background/scheduled jobs.
+// It enforces a strict state machine: PENDING -> RUNNING -> COMPLETED|FAILED.
+// The attempts counter is incremented on each Start call, enabling retry-aware execution up to maxAttempts.
 type Job struct {
 	shared.AggregateRoot
 	taskName    string
@@ -23,7 +25,8 @@ type Job struct {
 	errorMsg    *string
 }
 
-// Job status constants.
+// Job status constants representing the lifecycle states.
+// Transitions: PENDING -> RUNNING -> COMPLETED or PENDING -> RUNNING -> FAILED.
 const (
 	JobStatusPending   = "PENDING"
 	JobStatusRunning   = "RUNNING"
@@ -81,7 +84,9 @@ func ReconstructJob(
 	}
 }
 
-// Complete marks the job as completed with a result.
+// Complete transitions the job to COMPLETED status and captures the result payload.
+// A JobCompleted event is raised for downstream subscribers (e.g., notification triggers).
+// Callers must ensure the job is in RUNNING state before calling this.
 func (j *Job) Complete(result map[string]any) {
 	now := time.Now()
 	j.status = JobStatusCompleted
@@ -91,14 +96,16 @@ func (j *Job) Complete(result map[string]any) {
 	j.AddEvent(NewJobCompleted(j.ID(), j.taskName))
 }
 
-// Fail marks the job as failed with an error message.
+// Fail transitions the job to FAILED status and records the error message.
+// No domain event is raised on failure — monitoring should rely on polling or the error log.
 func (j *Job) Fail(errMsg string) {
 	j.status = JobStatusFailed
 	j.errorMsg = &errMsg
 	j.Touch()
 }
 
-// Start marks the job as running.
+// Start transitions the job to RUNNING status and increments the attempt counter.
+// Callers should check attempts vs maxAttempts before calling to enforce retry limits.
 func (j *Job) Start() {
 	now := time.Now()
 	j.status = JobStatusRunning

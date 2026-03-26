@@ -29,7 +29,7 @@ type BoundedContext struct {
 }
 
 // NewBoundedContext creates a fully wired User bounded context.
-func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, l logger.Log) *BoundedContext {
+func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, l logger.Log, jwtCfg command.JWTConfig) *BoundedContext {
 	writeRepo := postgres.NewUserWriteRepo(pool)
 	readRepo := postgres.NewUserReadRepo(pool)
 
@@ -37,7 +37,7 @@ func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, l logg
 		CreateUser:  command.NewCreateUserHandler(writeRepo, eventBus, l),
 		UpdateUser:  command.NewUpdateUserHandler(writeRepo, eventBus, l),
 		DeleteUser:  command.NewDeleteUserHandler(writeRepo, eventBus, l),
-		SignIn:      command.NewSignInHandler(writeRepo, eventBus, l),
+		SignIn:      command.NewSignInHandler(writeRepo, eventBus, l, jwtCfg),
 		SignUp:      command.NewSignUpHandler(writeRepo, eventBus, l),
 		SignOut:     command.NewSignOutHandler(writeRepo, eventBus, l),
 		ApproveUser: command.NewApproveUserHandler(writeRepo, eventBus, l),

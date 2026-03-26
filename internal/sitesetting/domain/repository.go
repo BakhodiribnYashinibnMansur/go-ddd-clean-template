@@ -7,7 +7,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// SiteSettingFilter carries filtering parameters for listing site settings.
+// SiteSettingFilter carries optional filtering parameters for listing site settings.
+// Nil pointer fields are ignored by the repository implementation (no filtering on that dimension).
 type SiteSettingFilter struct {
 	Key  *string
 	Type *string
@@ -15,7 +16,8 @@ type SiteSettingFilter struct {
 	Offset int64
 }
 
-// SiteSettingRepository is the write-side repository for the SiteSetting aggregate.
+// SiteSettingRepository is the write-side persistence contract for the SiteSetting aggregate.
+// Implementations must return ErrSiteSettingNotFound from FindByID when no row matches.
 type SiteSettingRepository interface {
 	Save(ctx context.Context, entity *SiteSetting) error
 	FindByID(ctx context.Context, id uuid.UUID) (*SiteSetting, error)
@@ -24,7 +26,8 @@ type SiteSettingRepository interface {
 	List(ctx context.Context, filter SiteSettingFilter) ([]*SiteSetting, int64, error)
 }
 
-// SiteSettingView is a read-model DTO for site settings.
+// SiteSettingView is a read-model projection optimized for API responses. It bypasses
+// aggregate reconstruction, returning flat data directly from the database for read performance.
 type SiteSettingView struct {
 	ID          uuid.UUID `json:"id"`
 	Key         string    `json:"key"`
@@ -35,7 +38,8 @@ type SiteSettingView struct {
 	UpdatedAt   time.Time `json:"updated_at"`
 }
 
-// SiteSettingReadRepository is the read-side repository returning projected views.
+// SiteSettingReadRepository is the read-side query interface. It returns lightweight view DTOs
+// and should never be used for write operations — use SiteSettingRepository for mutations.
 type SiteSettingReadRepository interface {
 	FindByID(ctx context.Context, id uuid.UUID) (*SiteSettingView, error)
 	List(ctx context.Context, filter SiteSettingFilter) ([]*SiteSettingView, int64, error)

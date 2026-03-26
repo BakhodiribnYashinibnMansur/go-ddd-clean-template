@@ -6,7 +6,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// TranslationUpdated is raised when a translation is updated.
+// TranslationUpdated is raised when any field of a translation changes.
+// Subscribers should invalidate any cached translation bundles for the affected language/group.
 type TranslationUpdated struct {
 	aggregateID uuid.UUID
 	occurredAt  time.Time

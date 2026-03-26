@@ -41,18 +41,7 @@ func NewTestConfig() (*Config, error) {
 						PoolMax:  10,
 					},
 				},
-				MySQL: MySQL{BaseDB: BaseDB{
-					Host:     "localhost",
-					Port:     3306,
-					Name:     "test_db",
-					User:     "test_user",
-					Password: "test_password",
-				}},
-				MongoDB:       MongoDB{BaseDB: BaseDB{Host: "localhost", Port: 27017}},
-				Redis:         Redis{BaseDB: BaseDB{Host: "localhost", Port: 6379, Name: "1"}},
-				Cassandra:     Cassandra{BaseDB: BaseDB{Host: "localhost", Port: 9042}},
-				Elasticsearch: Elasticsearch{BaseDB: BaseDB{Host: "localhost", Port: 9200}},
-				ClickHouse:    ClickHouse{BaseDB: BaseDB{Host: "localhost", Port: 9000}},
+				Redis: Redis{BaseDB: BaseDB{Host: "localhost", Port: 6379, Name: "1"}},
 			},
 			Redis: RedisStore{
 				Host:     "localhost",
@@ -127,23 +116,6 @@ fwIDAQAB
 			Telegram: Telegram{
 				BotToken: "test_token",
 				ChatID:   "test_chat_id",
-			},
-			Connectivity: Connectivity{
-				GRPC: GRPC{Port: "50051"},
-				RMQ: RMQ{
-					ServerExchange: "server",
-					ClientExchange: "client",
-					URL:            "amqp://guest:guest@localhost:5672/",
-				},
-				NATS: NATS{
-					ServerExchange: "server",
-					URL:            "nats://localhost:4222",
-				},
-				Kafka: Kafka{
-					Brokers: []string{"localhost:9092"},
-					Topic:   "topic",
-					GroupId: "group",
-				},
 			},
 			Firebase: Firebase{
 				Mobile: FirebaseConf{Type: "service_account"},

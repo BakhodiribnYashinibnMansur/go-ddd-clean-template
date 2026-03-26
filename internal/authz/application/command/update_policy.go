@@ -9,7 +9,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// UpdatePolicyCommand holds the input for updating an existing policy.
+// UpdatePolicyCommand represents a partial update to an existing authorization policy.
+// Nil pointer fields are left unchanged. Conditions use a full-replace strategy — pass nil to keep existing, pass a map to overwrite.
 type UpdatePolicyCommand struct {
 	ID         uuid.UUID
 	Effect     *domain.PolicyEffect
@@ -17,13 +18,14 @@ type UpdatePolicyCommand struct {
 	Conditions map[string]any
 }
 
-// UpdatePolicyHandler handles the UpdatePolicyCommand.
+// UpdatePolicyHandler applies partial modifications to an existing policy using a fetch-mutate-persist pattern.
+// Callers should be aware that policy changes take effect immediately on the next authorization evaluation.
 type UpdatePolicyHandler struct {
 	repo   domain.PolicyRepository
 	logger logger.Log
 }
 
-// NewUpdatePolicyHandler creates a new UpdatePolicyHandler.
+// NewUpdatePolicyHandler wires dependencies for policy updates.
 func NewUpdatePolicyHandler(
 	repo domain.PolicyRepository,
 	logger logger.Log,
@@ -34,7 +36,8 @@ func NewUpdatePolicyHandler(
 	}
 }
 
-// Handle executes the UpdatePolicyCommand.
+// Handle fetches the policy by ID, applies non-nil field updates, and persists the changes.
+// Returns a repository error if the policy is not found or the update fails.
 func (h *UpdatePolicyHandler) Handle(ctx context.Context, cmd UpdatePolicyCommand) error {
 	policy, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {

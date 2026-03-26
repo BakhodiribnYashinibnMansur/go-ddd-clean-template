@@ -9,6 +9,8 @@ import (
 )
 
 // Integration is the aggregate root for third-party integration management.
+// It encapsulates credentials (apiKey) and routing (webhookURL) for external services.
+// The config map provides extensibility for integration-specific settings without schema changes.
 type Integration struct {
 	shared.AggregateRoot
 	name       string
@@ -60,7 +62,9 @@ func ReconstructIntegration(
 	}
 }
 
-// UpdateDetails updates mutable fields.
+// UpdateDetails applies a partial update using pointer-based optionality.
+// Nil pointers are skipped, allowing callers to update only the fields they provide.
+// Touch is called to advance the updatedAt timestamp for optimistic concurrency.
 func (i *Integration) UpdateDetails(name, intType, apiKey, webhookURL *string, enabled *bool, config *map[string]any) {
 	if name != nil {
 		i.name = *name

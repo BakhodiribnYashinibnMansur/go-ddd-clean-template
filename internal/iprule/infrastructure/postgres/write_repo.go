@@ -17,7 +17,7 @@ import (
 const tableName = consts.TableIPRules
 
 var writeColumns = []string{
-	"id", "ip_address", "action", "reason", "expires_at", "created_at", "updated_at",
+	"id", "ip_address", "type", "reason", "is_active", "created_at", "updated_at",
 }
 
 // IPRuleWriteRepo implements domain.IPRuleRepository using PostgreSQL.
@@ -41,7 +41,7 @@ func (r *IPRuleWriteRepo) Save(ctx context.Context, rule *domain.IPRule) error {
 		Columns(writeColumns...).
 		Values(
 			rule.ID(), rule.IPAddress(), rule.Action(), rule.Reason(),
-			rule.ExpiresAt(), rule.CreatedAt(), rule.UpdatedAt(),
+			true, rule.CreatedAt(), rule.UpdatedAt(),
 		).
 		ToSql()
 	if err != nil {
@@ -75,9 +75,8 @@ func (r *IPRuleWriteRepo) Update(ctx context.Context, rule *domain.IPRule) error
 	sql, args, err := r.builder.
 		Update(tableName).
 		Set("ip_address", rule.IPAddress()).
-		Set("action", rule.Action()).
+		Set("type", rule.Action()).
 		Set("reason", rule.Reason()).
-		Set("expires_at", rule.ExpiresAt()).
 		Set("updated_at", rule.UpdatedAt()).
 		Where(squirrel.Eq{"id": rule.ID()}).
 		ToSql()
@@ -175,7 +174,7 @@ func applyFilters(conds squirrel.And, filter domain.IPRuleFilter) squirrel.And {
 		conds = append(conds, squirrel.Eq{"ip_address": *filter.IPAddress})
 	}
 	if filter.Action != nil {
-		conds = append(conds, squirrel.Eq{"action": *filter.Action})
+		conds = append(conds, squirrel.Eq{"type": *filter.Action})
 	}
 	return conds
 }
@@ -184,36 +183,40 @@ func scanIPRule(row pgx.Row) (*domain.IPRule, error) {
 	var (
 		id        uuid.UUID
 		ipAddress string
-		action    string
+		ruleType  string
 		reason    string
-		expiresAt *time.Time
+		isActive  bool
 		createdAt time.Time
 		updatedAt time.Time
 	)
 
-	err := row.Scan(&id, &ipAddress, &action, &reason, &expiresAt, &createdAt, &updatedAt)
+	err := row.Scan(&id, &ipAddress, &ruleType, &reason, &isActive, &createdAt, &updatedAt)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 
-	return domain.ReconstructIPRule(id, createdAt, updatedAt, ipAddress, action, reason, expiresAt), nil
+	_ = isActive
+
+	return domain.ReconstructIPRule(id, createdAt, updatedAt, ipAddress, ruleType, reason, nil), nil
 }
 
 func scanIPRuleFromRows(rows pgx.Rows) (*domain.IPRule, error) {
 	var (
 		id        uuid.UUID
 		ipAddress string
-		action    string
+		ruleType  string
 		reason    string
-		expiresAt *time.Time
+		isActive  bool
 		createdAt time.Time
 		updatedAt time.Time
 	)
 
-	err := rows.Scan(&id, &ipAddress, &action, &reason, &expiresAt, &createdAt, &updatedAt)
+	err := rows.Scan(&id, &ipAddress, &ruleType, &reason, &isActive, &createdAt, &updatedAt)
 	if err != nil {
 		return nil, err
 	}
 
-	return domain.ReconstructIPRule(id, createdAt, updatedAt, ipAddress, action, reason, expiresAt), nil
+	_ = isActive
+
+	return domain.ReconstructIPRule(id, createdAt, updatedAt, ipAddress, ruleType, reason, nil), nil
 }

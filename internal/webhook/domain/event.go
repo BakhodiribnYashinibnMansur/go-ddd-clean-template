@@ -6,7 +6,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// WebhookTriggered is raised when a webhook is triggered.
+// WebhookTriggered is raised when a webhook fires. The URL is captured at trigger time so that
+// the delivery handler has the correct endpoint even if the webhook URL is changed afterward.
 type WebhookTriggered struct {
 	aggregateID uuid.UUID
 	occurredAt  time.Time

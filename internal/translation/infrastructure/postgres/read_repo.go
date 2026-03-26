@@ -14,7 +14,7 @@ import (
 )
 
 var readColumns = []string{
-	"id", "key", "language", "value", "group_name", "created_at", "updated_at",
+	"id", "entity_type", "entity_id::text", "lang_code", "data::text", "created_at", "updated_at",
 }
 
 // TranslationReadRepo implements domain.TranslationReadRepository for the CQRS read side.

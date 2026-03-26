@@ -11,7 +11,9 @@ import (
 	"github.com/google/uuid"
 )
 
-// UpdateIPRuleCommand holds the input for updating an IP rule.
+// UpdateIPRuleCommand represents a partial update to an existing IP rule identified by ID.
+// Pointer fields implement patch semantics — nil means "leave unchanged," non-nil means "overwrite."
+// Changing Action or IPAddress takes effect immediately for subsequent traffic evaluations.
 type UpdateIPRuleCommand struct {
 	ID        uuid.UUID
 	IPAddress *string
@@ -20,14 +22,15 @@ type UpdateIPRuleCommand struct {
 	ExpiresAt *time.Time
 }
 
-// UpdateIPRuleHandler handles the UpdateIPRuleCommand.
+// UpdateIPRuleHandler applies partial modifications to an existing IP rule via fetch-then-update.
+// Domain events are emitted so downstream caches or firewalls can refresh their rule sets.
 type UpdateIPRuleHandler struct {
 	repo     domain.IPRuleRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
-// NewUpdateIPRuleHandler creates a new UpdateIPRuleHandler.
+// NewUpdateIPRuleHandler wires up the handler with its required dependencies.
 func NewUpdateIPRuleHandler(
 	repo domain.IPRuleRepository,
 	eventBus application.EventBus,
@@ -40,7 +43,8 @@ func NewUpdateIPRuleHandler(
 	}
 }
 
-// Handle executes the UpdateIPRuleCommand.
+// Handle fetches the IP rule by ID, applies the patch via domain logic, and persists the result.
+// Returns a repository error if the rule is not found. Event publish failures are logged but non-fatal.
 func (h *UpdateIPRuleHandler) Handle(ctx context.Context, cmd UpdateIPRuleCommand) error {
 	r, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {

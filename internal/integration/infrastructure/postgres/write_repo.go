@@ -18,7 +18,7 @@ import (
 const tableName = consts.TableIntegrations
 
 var writeColumns = []string{
-	"id", "name", "type", "api_key", "webhook_url", "enabled", "config", "created_at", "updated_at",
+	"id", "name", "description", "base_url", "is_active", "config", "created_at", "updated_at",
 }
 
 // IntegrationWriteRepo implements domain.IntegrationRepository using PostgreSQL.
@@ -49,7 +49,6 @@ func (r *IntegrationWriteRepo) Save(ctx context.Context, i *domain.Integration) 
 			i.ID(),
 			i.Name(),
 			i.Type(),
-			i.APIKey(),
 			i.WebhookURL(),
 			i.Enabled(),
 			configJSON,
@@ -93,10 +92,9 @@ func (r *IntegrationWriteRepo) Update(ctx context.Context, i *domain.Integration
 	sql, args, err := r.builder.
 		Update(tableName).
 		Set("name", i.Name()).
-		Set("type", i.Type()).
-		Set("api_key", i.APIKey()).
-		Set("webhook_url", i.WebhookURL()).
-		Set("enabled", i.Enabled()).
+		Set("description", i.Type()).
+		Set("base_url", i.WebhookURL()).
+		Set("is_active", i.Enabled()).
 		Set("config", configJSON).
 		Set("updated_at", i.UpdatedAt()).
 		Where(squirrel.Eq{"id": i.ID()}).
@@ -135,18 +133,17 @@ func (r *IntegrationWriteRepo) Delete(ctx context.Context, id uuid.UUID) error {
 
 func scanIntegration(row pgx.Row) (*domain.Integration, error) {
 	var (
-		id         uuid.UUID
-		name       string
-		intType    string
-		apiKey     string
-		webhookURL string
-		enabled    bool
-		configJSON []byte
-		createdAt  time.Time
-		updatedAt  time.Time
+		id          uuid.UUID
+		name        string
+		description *string
+		baseURL     string
+		isActive    bool
+		configJSON  []byte
+		createdAt   time.Time
+		updatedAt   time.Time
 	)
 
-	err := row.Scan(&id, &name, &intType, &apiKey, &webhookURL, &enabled, &configJSON, &createdAt, &updatedAt)
+	err := row.Scan(&id, &name, &description, &baseURL, &isActive, &configJSON, &createdAt, &updatedAt)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, map[string]any{"id": id})
 	}
@@ -156,5 +153,10 @@ func scanIntegration(row pgx.Row) (*domain.Integration, error) {
 		_ = json.Unmarshal(configJSON, &config)
 	}
 
-	return domain.ReconstructIntegration(id, createdAt, updatedAt, nil, name, intType, apiKey, webhookURL, enabled, config), nil
+	desc := ""
+	if description != nil {
+		desc = *description
+	}
+
+	return domain.ReconstructIntegration(id, createdAt, updatedAt, nil, name, desc, "", baseURL, isActive, config), nil
 }

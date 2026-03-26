@@ -1,5 +1,8 @@
 package consts
 
+// Context keys injected by authentication/authorization middleware and read by handlers.
+// These are string-typed to work with gin.Context.Get/Set. Never use raw string literals
+// elsewhere — always reference these constants to enable compile-time refactoring.
 const (
 	CtxUserID           string = "user_id"
 	CtxUser             string = "user"
@@ -42,7 +45,7 @@ const (
 	CtxIntegrationName string = "integration_name"
 )
 
-// Middleware constants
+// Middleware infrastructure constants: request tracing, status thresholds, and timeout values.
 const (
 	// Context keys
 	CtxKeyRequestID string = "request_id"

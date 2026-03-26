@@ -7,7 +7,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// FileFilter carries filtering parameters for listing files.
+// FileFilter carries optional filtering parameters for listing files.
+// Nil pointer fields are treated as "no filter" by the repository implementation.
 type FileFilter struct {
 	Name     *string
 	MimeType *string
@@ -16,11 +17,13 @@ type FileFilter struct {
 }
 
 // FileRepository is the write-side repository for the File aggregate.
+// It only exposes Save because files are immutable — updates and soft-deletes are not supported.
 type FileRepository interface {
 	Save(ctx context.Context, entity *File) error
 }
 
-// FileView is a read-model DTO for files.
+// FileView is a read-model projection optimized for query responses.
+// It is decoupled from the File aggregate to allow the read side to evolve independently.
 type FileView struct {
 	ID           uuid.UUID  `json:"id"`
 	Name         string     `json:"name"`
@@ -34,6 +37,8 @@ type FileView struct {
 }
 
 // FileReadRepository is the read-side repository returning projected views.
+// Implementations must return ErrFileNotFound when FindByID yields no result.
+// List returns matching views plus the total count for pagination.
 type FileReadRepository interface {
 	FindByID(ctx context.Context, id uuid.UUID) (*FileView, error)
 	List(ctx context.Context, filter FileFilter) ([]*FileView, int64, error)

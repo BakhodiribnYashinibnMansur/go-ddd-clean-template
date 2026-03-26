@@ -1,5 +1,7 @@
 package consts
 
+// Infrastructure and transport-layer constants: URL prefixes, cookie names, token types, and API key generation.
+// Cookie names prefixed with "c_" are set by the auth handler and consumed by HybridMiddleware for CSRF validation.
 const (
 	// BASE URL
 	BaseURLV1 string = "/api/v1"

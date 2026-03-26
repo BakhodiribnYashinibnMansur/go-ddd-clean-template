@@ -1,7 +1,8 @@
 package consts
 
-// Error codes for system error logging
-// These codes are used to categorize and track errors in the database
+// Error codes for the SystemError aggregate. Each code is persisted in the system_errors table
+// and used for filtering, alerting, and dashboard aggregation. Add new codes here rather than
+// using ad-hoc strings to maintain a searchable, finite error taxonomy.
 const (
 	// Authentication & Authorization Errors
 	ErrCodeAuthFailed              = "AUTH_FAILED"
@@ -92,7 +93,7 @@ const (
 	ErrCodeDataCorruption     = "DATA_CORRUPTION"
 )
 
-// Error severity levels
+// Error severity levels for SystemError. FATAL and PANIC trigger immediate alerting (e.g., Telegram notifications).
 const (
 	SeverityWarn  = "WARN"
 	SeverityError = "ERROR"

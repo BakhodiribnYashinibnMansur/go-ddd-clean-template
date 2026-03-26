@@ -10,7 +10,9 @@ import (
 	"github.com/google/uuid"
 )
 
-// CreateFileCommand holds the input for creating a new file record.
+// CreateFileCommand captures metadata for a newly uploaded file to be persisted as a domain record.
+// UploadedBy is optional — nil indicates an anonymous or system-initiated upload.
+// The caller must ensure the physical file already exists at Path before issuing this command.
 type CreateFileCommand struct {
 	Name         string
 	OriginalName string
@@ -21,14 +23,16 @@ type CreateFileCommand struct {
 	UploadedBy   *uuid.UUID
 }
 
-// CreateFileHandler handles the CreateFileCommand.
+// CreateFileHandler persists file metadata and publishes domain events upon successful creation.
+// It does not handle the physical file upload — only the database record and event propagation.
+// Callers are responsible for authorization and virus/malware scanning before invoking this handler.
 type CreateFileHandler struct {
 	repo     domain.FileRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
-// NewCreateFileHandler creates a new CreateFileHandler.
+// NewCreateFileHandler wires up the handler with its required dependencies.
 func NewCreateFileHandler(
 	repo domain.FileRepository,
 	eventBus application.EventBus,
@@ -41,7 +45,8 @@ func NewCreateFileHandler(
 	}
 }
 
-// Handle executes the CreateFileCommand.
+// Handle creates a file domain entity and persists it via the repository.
+// On success, domain events (e.g., FileCreated) are published; event publish failures are logged but do not fail the operation.
 func (h *CreateFileHandler) Handle(ctx context.Context, cmd CreateFileCommand) error {
 	f := domain.NewFile(cmd.Name, cmd.OriginalName, cmd.MimeType, cmd.Size, cmd.Path, cmd.URL, cmd.UploadedBy)
 

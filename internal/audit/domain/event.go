@@ -6,7 +6,9 @@ import (
 	"github.com/google/uuid"
 )
 
-// AuditLogCreated is raised when a new audit log entry is created.
+// AuditLogCreated is a domain event emitted every time a new audit record is persisted.
+// Downstream handlers can use this for real-time alerting (e.g., on ACCESS_DENIED actions)
+// or to fan out to external SIEM systems.
 type AuditLogCreated struct {
 	aggregateID uuid.UUID
 	occurredAt  time.Time

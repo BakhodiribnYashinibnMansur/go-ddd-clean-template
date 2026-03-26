@@ -26,8 +26,7 @@ type Config struct {
 	HTTP         HTTP         `yaml:"http"`                                   // Web server settings (port, timeouts).
 	Log          Log          `yaml:"log"`                                    // Logging preferences (level, format).
 	Database     Database     `yaml:"database"`                               // Persistent storage connection details (Postgres).
-	Connectivity Connectivity `yaml:"connectivity"`                           // Remote service health check parameters.
-	JWT          JWT          `yaml:"jwt" envPrefix:"JWT_"`                   // Authentication token parameters (secrets, TTL).
+	JWT JWT `yaml:"jwt" envPrefix:"JWT_"` // Authentication token parameters (secrets, TTL).
 	Firebase     Firebase     `yaml:"firebase" envPrefix:"FIREBASE_"`         // Firebase Admin SDK integration.
 	APIKeys      APIKeys      `yaml:"api_keys"`                               // Registered keys for service-to-service auth.
 	Metrics      Metrics      `yaml:"metrics"`                                // Observability and monitoring exports.
@@ -46,8 +45,7 @@ type Config struct {
 	Asynq        AsynqConfig  `yaml:"asynq"`                                  // background task queue settings.
 	Seeder       Seeder       `yaml:"seeder" envPrefix:"SEEDER_"`             // Mock data generation parameters.
 	Middleware   Middleware   `yaml:"middleware"`                             // Middleware toggle flags.
-	Broker       Broker       `yaml:"broker" envPrefix:"BROKER_"`             // Message broker configurations.
-	Sqlc         Sqlc         `yaml:"sqlc" envPrefix:"SQLC_"`                 // SQL code generation settings.
+	Sqlc Sqlc `yaml:"sqlc" envPrefix:"SQLC_"` // SQL code generation settings.
 }
 
 // Telegram holds credentials for interacting with the Telegram Bot API.
@@ -68,10 +66,7 @@ func NewConfig() (*Config, error) {
 		cfg := &Config{}
 
 		// 1. Load .env file into process environment
-		// Try to find .env in current or parent directories
-		_ = gotenv.Load() // Default load
-		// _ = gotenv.Load("../.env")
-		// _ = gotenv.Load("../../.env")
+		_ = gotenv.Load()
 
 		// 2. Load YAML configuration first (baseline)
 		yamlFile, errYaml := os.ReadFile("config/config.yaml")
@@ -82,9 +77,6 @@ func NewConfig() (*Config, error) {
 			}
 		}
 
-		// Debug: check environment before parsing
-		// fmt.Printf("DEBUG: JWT_PRIVATE_KEY env: %s\n", os.Getenv("JWT_PRIVATE_KEY"))
-
 		// 3. Override with Environment Variables (takes precedence)
 		if e := env.Parse(cfg); e != nil {
 			err = fmt.Errorf("config parse error: %w", e)
@@ -93,9 +85,6 @@ func NewConfig() (*Config, error) {
 
 		// 4. Perform sanitation (removing stray quotes)
 		cleanConfigStrings(reflect.ValueOf(cfg).Elem())
-
-		// Debug: check value after parsing
-		// fmt.Printf("DEBUG: cfg.JWT.PrivateKey length: %d\n", len(cfg.JWT.PrivateKey))
 
 		// 5. Validate the final configuration
 		validate := validator.New()

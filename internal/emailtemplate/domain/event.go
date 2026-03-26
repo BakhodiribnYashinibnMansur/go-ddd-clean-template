@@ -6,7 +6,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// TemplateUpdated is raised when an email template is updated.
+// TemplateUpdated is a domain event emitted when any field of an email template changes.
+// Consumers can use this to invalidate cached rendered templates or trigger preview regeneration.
 type TemplateUpdated struct {
 	aggregateID uuid.UUID
 	occurredAt  time.Time

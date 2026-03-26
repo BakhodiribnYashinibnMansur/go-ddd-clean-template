@@ -8,7 +8,9 @@ import (
 	"github.com/google/uuid"
 )
 
-// Webhook is the aggregate root for webhook management.
+// Webhook is the aggregate root for outbound webhook subscriptions.
+// The events slice holds domain event names (e.g., "user.created") this webhook listens to.
+// The secret field is used to sign payloads (HMAC-SHA256) so receivers can verify authenticity.
 type Webhook struct {
 	shared.AggregateRoot
 	name    string
@@ -56,12 +58,14 @@ func ReconstructWebhook(
 	}
 }
 
-// Trigger adds a WebhookTriggered event.
+// Trigger raises a WebhookTriggered event that the application layer uses to enqueue HTTP delivery.
+// Callers should verify the webhook is enabled before calling this.
 func (w *Webhook) Trigger() {
 	w.AddEvent(NewWebhookTriggered(w.ID(), w.url))
 }
 
-// UpdateDetails updates mutable fields.
+// UpdateDetails applies partial modifications using pointer semantics — nil fields are left unchanged.
+// Note: events uses slice semantics (nil = no change, empty slice = clear all subscriptions).
 func (w *Webhook) UpdateDetails(name, url, secret *string, events []string, enabled *bool) {
 	if name != nil {
 		w.name = *name

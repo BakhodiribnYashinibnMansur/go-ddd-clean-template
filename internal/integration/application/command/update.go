@@ -10,7 +10,9 @@ import (
 	"github.com/google/uuid"
 )
 
-// UpdateCommand holds the input for updating an integration.
+// UpdateCommand represents a partial update to an existing integration identified by ID.
+// Pointer fields implement patch semantics — nil means "leave unchanged," non-nil means "overwrite."
+// Callers must provide at least one non-nil field for the update to be meaningful.
 type UpdateCommand struct {
 	ID         uuid.UUID
 	Name       *string
@@ -21,14 +23,15 @@ type UpdateCommand struct {
 	Config     *map[string]any
 }
 
-// UpdateHandler handles the UpdateCommand.
+// UpdateHandler applies partial modifications to an existing integration via fetch-then-update.
+// Callers are responsible for authorization; this handler only enforces repository-level constraints.
 type UpdateHandler struct {
 	repo     domain.IntegrationRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
-// NewUpdateHandler creates a new UpdateHandler.
+// NewUpdateHandler wires up the handler with its required dependencies.
 func NewUpdateHandler(
 	repo domain.IntegrationRepository,
 	eventBus application.EventBus,
@@ -41,7 +44,8 @@ func NewUpdateHandler(
 	}
 }
 
-// Handle executes the UpdateCommand.
+// Handle fetches the integration by ID, applies the patch via domain logic, and persists the result.
+// Returns a repository error if the integration is not found. Event publish failures are logged but non-fatal.
 func (h *UpdateHandler) Handle(ctx context.Context, cmd UpdateCommand) error {
 	i, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {

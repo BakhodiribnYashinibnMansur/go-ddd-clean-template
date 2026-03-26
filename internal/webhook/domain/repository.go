@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// WebhookFilter carries filtering parameters for listing webhooks.
+// WebhookFilter carries optional filtering parameters. Search performs a LIKE match on name/URL.
 type WebhookFilter struct {
 	Search  *string
 	Enabled *bool
@@ -15,7 +15,8 @@ type WebhookFilter struct {
 	Offset  int64
 }
 
-// WebhookView is a read-model DTO for webhooks.
+// WebhookView is a flat read-model projection for API responses. Note that the Secret field
+// is included — the presentation layer should redact or omit it in list endpoints.
 type WebhookView struct {
 	ID        uuid.UUID `json:"id"`
 	Name      string    `json:"name"`
@@ -27,7 +28,8 @@ type WebhookView struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-// WebhookRepository is the write-side repository for the Webhook aggregate.
+// WebhookRepository is the write-side persistence contract for the Webhook aggregate.
+// Implementations must return ErrWebhookNotFound from FindByID when no row matches.
 type WebhookRepository interface {
 	Save(ctx context.Context, entity *Webhook) error
 	FindByID(ctx context.Context, id uuid.UUID) (*Webhook, error)
@@ -35,7 +37,7 @@ type WebhookRepository interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 }
 
-// WebhookReadRepository is the read-side repository returning projected views.
+// WebhookReadRepository provides read-only access for listing and detail views.
 type WebhookReadRepository interface {
 	FindByID(ctx context.Context, id uuid.UUID) (*WebhookView, error)
 	List(ctx context.Context, filter WebhookFilter) ([]*WebhookView, int64, error)

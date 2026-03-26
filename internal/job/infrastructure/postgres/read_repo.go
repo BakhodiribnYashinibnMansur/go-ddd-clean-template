@@ -16,9 +16,9 @@ import (
 )
 
 var readColumns = []string{
-	"id", "task_name", "status", "payload", "result",
-	"attempts", "max_attempts", "scheduled_at", "started_at",
-	"completed_at", "error", "created_at", "updated_at",
+	"id", "name", "type", "cron_schedule", "payload",
+	"is_active", "status", "last_run_at", "next_run_at",
+	"created_at", "updated_at",
 }
 
 // JobReadRepo implements domain.JobReadRepository for the CQRS read side.
@@ -111,7 +111,7 @@ func (r *JobReadRepo) List(ctx context.Context, filter domain.JobFilter) ([]*dom
 
 func applyFilters(conds squirrel.And, filter domain.JobFilter) squirrel.And {
 	if filter.TaskName != nil {
-		conds = append(conds, squirrel.Eq{"task_name": *filter.TaskName})
+		conds = append(conds, squirrel.Eq{"name": *filter.TaskName})
 	}
 	if filter.Status != nil {
 		conds = append(conds, squirrel.Eq{"status": *filter.Status})
@@ -121,47 +121,47 @@ func applyFilters(conds squirrel.And, filter domain.JobFilter) squirrel.And {
 
 func scanJobView(row pgx.Row) (*domain.JobView, error) {
 	var (
-		id          uuid.UUID
-		taskName    string
-		status      string
-		payloadJSON []byte
-		resultJSON  []byte
-		attempts    int
-		maxAttempts int
-		scheduledAt *time.Time
-		startedAt   *time.Time
-		completedAt *time.Time
-		errorMsg    *string
-		createdAt   time.Time
-		updatedAt   time.Time
+		id           uuid.UUID
+		name         string
+		jobType      string
+		cronSchedule string
+		payloadJSON  []byte
+		isActive     bool
+		status       string
+		lastRunAt    *time.Time
+		nextRunAt    *time.Time
+		createdAt    time.Time
+		updatedAt    time.Time
 	)
 
 	err := row.Scan(
-		&id, &taskName, &status, &payloadJSON, &resultJSON,
-		&attempts, &maxAttempts, &scheduledAt, &startedAt,
-		&completedAt, &errorMsg, &createdAt, &updatedAt,
+		&id, &name, &jobType, &cronSchedule, &payloadJSON,
+		&isActive, &status, &lastRunAt, &nextRunAt,
+		&createdAt, &updatedAt,
 	)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 
+	_ = jobType
+	_ = cronSchedule
+	_ = isActive
+
 	var payload map[string]any
 	_ = json.Unmarshal(payloadJSON, &payload)
-	var result map[string]any
-	_ = json.Unmarshal(resultJSON, &result)
 
 	return &domain.JobView{
 		ID:          id,
-		TaskName:    taskName,
+		TaskName:    name,
 		Status:      status,
 		Payload:     payload,
-		Result:      result,
-		Attempts:    attempts,
-		MaxAttempts: maxAttempts,
-		ScheduledAt: scheduledAt,
-		StartedAt:   startedAt,
-		CompletedAt: completedAt,
-		Error:       errorMsg,
+		Result:      nil,
+		Attempts:    0,
+		MaxAttempts: 0,
+		ScheduledAt: nextRunAt,
+		StartedAt:   lastRunAt,
+		CompletedAt: nil,
+		Error:       nil,
 		CreatedAt:   createdAt,
 		UpdatedAt:   updatedAt,
 	}, nil
@@ -169,47 +169,47 @@ func scanJobView(row pgx.Row) (*domain.JobView, error) {
 
 func scanJobViewFromRows(rows pgx.Rows) (*domain.JobView, error) {
 	var (
-		id          uuid.UUID
-		taskName    string
-		status      string
-		payloadJSON []byte
-		resultJSON  []byte
-		attempts    int
-		maxAttempts int
-		scheduledAt *time.Time
-		startedAt   *time.Time
-		completedAt *time.Time
-		errorMsg    *string
-		createdAt   time.Time
-		updatedAt   time.Time
+		id           uuid.UUID
+		name         string
+		jobType      string
+		cronSchedule string
+		payloadJSON  []byte
+		isActive     bool
+		status       string
+		lastRunAt    *time.Time
+		nextRunAt    *time.Time
+		createdAt    time.Time
+		updatedAt    time.Time
 	)
 
 	err := rows.Scan(
-		&id, &taskName, &status, &payloadJSON, &resultJSON,
-		&attempts, &maxAttempts, &scheduledAt, &startedAt,
-		&completedAt, &errorMsg, &createdAt, &updatedAt,
+		&id, &name, &jobType, &cronSchedule, &payloadJSON,
+		&isActive, &status, &lastRunAt, &nextRunAt,
+		&createdAt, &updatedAt,
 	)
 	if err != nil {
 		return nil, err
 	}
 
+	_ = jobType
+	_ = cronSchedule
+	_ = isActive
+
 	var payload map[string]any
 	_ = json.Unmarshal(payloadJSON, &payload)
-	var result map[string]any
-	_ = json.Unmarshal(resultJSON, &result)
 
 	return &domain.JobView{
 		ID:          id,
-		TaskName:    taskName,
+		TaskName:    name,
 		Status:      status,
 		Payload:     payload,
-		Result:      result,
-		Attempts:    attempts,
-		MaxAttempts: maxAttempts,
-		ScheduledAt: scheduledAt,
-		StartedAt:   startedAt,
-		CompletedAt: completedAt,
-		Error:       errorMsg,
+		Result:      nil,
+		Attempts:    0,
+		MaxAttempts: 0,
+		ScheduledAt: nextRunAt,
+		StartedAt:   lastRunAt,
+		CompletedAt: nil,
+		Error:       nil,
 		CreatedAt:   createdAt,
 		UpdatedAt:   updatedAt,
 	}, nil

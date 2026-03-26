@@ -16,7 +16,7 @@ import (
 )
 
 var readColumns = []string{
-	"id", "name", "type", "api_key", "webhook_url", "enabled", "config", "created_at", "updated_at",
+	"id", "name", "description", "base_url", "is_active", "config", "created_at", "updated_at",
 }
 
 // IntegrationReadRepo implements domain.IntegrationReadRepository for the CQRS read side.
@@ -54,11 +54,8 @@ func (r *IntegrationReadRepo) List(ctx context.Context, filter domain.Integratio
 	if filter.Search != nil {
 		conds = append(conds, squirrel.ILike{"name": "%" + *filter.Search + "%"})
 	}
-	if filter.Type != nil {
-		conds = append(conds, squirrel.Eq{"type": *filter.Type})
-	}
 	if filter.Enabled != nil {
-		conds = append(conds, squirrel.Eq{"enabled": *filter.Enabled})
+		conds = append(conds, squirrel.Eq{"is_active": *filter.Enabled})
 	}
 
 	// Count total.
@@ -117,18 +114,17 @@ func (r *IntegrationReadRepo) List(ctx context.Context, filter domain.Integratio
 
 func scanIntegrationView(row pgx.Row) (*domain.IntegrationView, error) {
 	var (
-		id         uuid.UUID
-		name       string
-		intType    string
-		apiKey     string
-		webhookURL string
-		enabled    bool
-		configJSON []byte
-		createdAt  time.Time
-		updatedAt  time.Time
+		id          uuid.UUID
+		name        string
+		description *string
+		baseURL     string
+		isActive    bool
+		configJSON  []byte
+		createdAt   time.Time
+		updatedAt   time.Time
 	)
 
-	err := row.Scan(&id, &name, &intType, &apiKey, &webhookURL, &enabled, &configJSON, &createdAt, &updatedAt)
+	err := row.Scan(&id, &name, &description, &baseURL, &isActive, &configJSON, &createdAt, &updatedAt)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, map[string]any{"id": id})
 	}
@@ -138,13 +134,18 @@ func scanIntegrationView(row pgx.Row) (*domain.IntegrationView, error) {
 		_ = json.Unmarshal(configJSON, &config)
 	}
 
+	desc := ""
+	if description != nil {
+		desc = *description
+	}
+
 	return &domain.IntegrationView{
 		ID:         id,
 		Name:       name,
-		Type:       intType,
-		APIKey:     apiKey,
-		WebhookURL: webhookURL,
-		Enabled:    enabled,
+		Type:       desc,
+		APIKey:     "",
+		WebhookURL: baseURL,
+		Enabled:    isActive,
 		Config:     config,
 		CreatedAt:  createdAt,
 		UpdatedAt:  updatedAt,
@@ -153,18 +154,17 @@ func scanIntegrationView(row pgx.Row) (*domain.IntegrationView, error) {
 
 func scanIntegrationViewFromRows(rows pgx.Rows) (*domain.IntegrationView, error) {
 	var (
-		id         uuid.UUID
-		name       string
-		intType    string
-		apiKey     string
-		webhookURL string
-		enabled    bool
-		configJSON []byte
-		createdAt  time.Time
-		updatedAt  time.Time
+		id          uuid.UUID
+		name        string
+		description *string
+		baseURL     string
+		isActive    bool
+		configJSON  []byte
+		createdAt   time.Time
+		updatedAt   time.Time
 	)
 
-	err := rows.Scan(&id, &name, &intType, &apiKey, &webhookURL, &enabled, &configJSON, &createdAt, &updatedAt)
+	err := rows.Scan(&id, &name, &description, &baseURL, &isActive, &configJSON, &createdAt, &updatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -174,13 +174,18 @@ func scanIntegrationViewFromRows(rows pgx.Rows) (*domain.IntegrationView, error)
 		_ = json.Unmarshal(configJSON, &config)
 	}
 
+	desc := ""
+	if description != nil {
+		desc = *description
+	}
+
 	return &domain.IntegrationView{
 		ID:         id,
 		Name:       name,
-		Type:       intType,
-		APIKey:     apiKey,
-		WebhookURL: webhookURL,
-		Enabled:    enabled,
+		Type:       desc,
+		APIKey:     "",
+		WebhookURL: baseURL,
+		Enabled:    isActive,
 		Config:     config,
 		CreatedAt:  createdAt,
 		UpdatedAt:  updatedAt,

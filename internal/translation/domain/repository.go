@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// TranslationFilter carries filtering parameters for listing translations.
+// TranslationFilter carries optional filtering parameters. Nil fields are ignored by the repository.
 type TranslationFilter struct {
 	Key      *string
 	Language *string
@@ -16,7 +16,8 @@ type TranslationFilter struct {
 	Offset   int64
 }
 
-// TranslationRepository is the write-side repository for the Translation aggregate.
+// TranslationRepository is the write-side persistence contract for the Translation aggregate.
+// Implementations must return ErrTranslationNotFound from FindByID when no row matches.
 type TranslationRepository interface {
 	Save(ctx context.Context, entity *Translation) error
 	FindByID(ctx context.Context, id uuid.UUID) (*Translation, error)
@@ -25,7 +26,7 @@ type TranslationRepository interface {
 	List(ctx context.Context, filter TranslationFilter) ([]*Translation, int64, error)
 }
 
-// TranslationView is a read-model DTO for translations.
+// TranslationView is a flat read-model projection for API responses, bypassing aggregate reconstruction.
 type TranslationView struct {
 	ID        uuid.UUID `json:"id"`
 	Key       string    `json:"key"`
@@ -36,7 +37,7 @@ type TranslationView struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-// TranslationReadRepository is the read-side repository returning projected views.
+// TranslationReadRepository provides read-only access optimized for listing and detail views.
 type TranslationReadRepository interface {
 	FindByID(ctx context.Context, id uuid.UUID) (*TranslationView, error)
 	List(ctx context.Context, filter TranslationFilter) ([]*TranslationView, int64, error)

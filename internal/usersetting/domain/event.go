@@ -6,7 +6,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// UserSettingChanged is raised when a user setting is created or updated.
+// UserSettingChanged is raised on both creation and update of a user setting.
+// It carries the full key-value pair so subscribers can update caches or push real-time notifications.
 type UserSettingChanged struct {
 	aggregateID uuid.UUID
 	occurredAt  time.Time

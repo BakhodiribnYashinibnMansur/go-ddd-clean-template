@@ -17,7 +17,7 @@ import (
 var readColumns = []string{
 	"id", "code", "message", "stack_trace", "metadata",
 	"severity", "service_name", "request_id", "user_id",
-	"ip_address", "path", "method",
+	"ip_address::text", "path", "method",
 	"is_resolved", "resolved_at", "resolved_by", "created_at",
 }
 

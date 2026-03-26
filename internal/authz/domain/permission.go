@@ -8,7 +8,9 @@ import (
 	"github.com/google/uuid"
 )
 
-// Permission is a child entity of Role.
+// Permission is a child entity of Role that groups a set of API scopes under a named capability.
+// Permissions form a tree via parentID — a nil parentID indicates a root-level permission.
+// Scopes are managed as an ordered slice; duplicates are the caller's responsibility to prevent.
 type Permission struct {
 	shared.BaseEntity
 	parentID    *uuid.UUID
@@ -79,7 +81,8 @@ func (p *Permission) AddScope(scope Scope) {
 	p.Touch()
 }
 
-// RemoveScope removes a scope from the permission by path and method.
+// RemoveScope removes a scope identified by its path+method composite key.
+// Returns ErrScopeNotFound if no matching scope exists in the permission's scope list.
 func (p *Permission) RemoveScope(path, method string) error {
 	for i, s := range p.scopes {
 		if s.Path == path && s.Method == method {

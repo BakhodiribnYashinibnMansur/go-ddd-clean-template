@@ -8,7 +8,9 @@ import (
 	"github.com/google/uuid"
 )
 
-// Role is the aggregate root for authorization roles.
+// Role is the aggregate root for the authz bounded context.
+// It owns a set of Permission child entities. Adding or removing permissions raises domain events
+// that downstream consumers can use for cache invalidation or audit logging.
 type Role struct {
 	shared.AggregateRoot
 	name        string
@@ -68,7 +70,8 @@ func (r *Role) SetDescription(desc *string) {
 	r.Touch()
 }
 
-// AddPermission adds a permission to the role.
+// AddPermission appends a permission to the role and raises a PermissionGranted event.
+// Callers must ensure the permission is not already present — this method does not check for duplicates.
 func (r *Role) AddPermission(perm Permission) {
 	r.permissions = append(r.permissions, perm)
 	r.Touch()
@@ -76,6 +79,7 @@ func (r *Role) AddPermission(perm Permission) {
 }
 
 // RemovePermission removes a permission from the role by its ID.
+// Returns ErrPermissionNotFound if the permission is not part of this role.
 func (r *Role) RemovePermission(permID uuid.UUID) error {
 	for i, p := range r.permissions {
 		if p.ID() == permID {

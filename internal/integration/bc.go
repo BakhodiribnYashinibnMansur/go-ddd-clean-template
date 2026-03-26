@@ -1,6 +1,7 @@
 package integration
 
 import (
+	appl "gct/internal/integration/application"
 	"gct/internal/integration/application/command"
 	"gct/internal/integration/application/query"
 	"gct/internal/integration/infrastructure/postgres"
@@ -20,6 +21,9 @@ type BoundedContext struct {
 	// Queries
 	GetIntegration   *query.GetHandler
 	ListIntegrations *query.ListHandler
+
+	// Services
+	Cache *appl.CacheService
 }
 
 // NewBoundedContext creates a fully wired Integration bounded context.
@@ -33,5 +37,6 @@ func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, l logg
 		DeleteIntegration: command.NewDeleteHandler(writeRepo, eventBus, l),
 		GetIntegration:    query.NewGetHandler(readRepo),
 		ListIntegrations:  query.NewListHandler(readRepo),
+		Cache:             appl.NewCacheService(readRepo, l),
 	}
 }

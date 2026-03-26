@@ -6,7 +6,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// IntegrationConnected is raised when a new integration is created.
+// IntegrationConnected is a domain event raised when a new third-party integration is registered.
+// Subscribers may use this to perform initial connectivity checks or provision webhooks.
 type IntegrationConnected struct {
 	aggregateID uuid.UUID
 	occurredAt  time.Time

@@ -8,7 +8,9 @@ import (
 	"github.com/google/uuid"
 )
 
-// SiteSetting is the aggregate root for site settings.
+// SiteSetting is the aggregate root for global configuration key-value pairs (e.g., maintenance mode, site name).
+// Keys are opaque strings; the settingType field categorizes them for UI grouping (e.g., "general", "email").
+// All fields are unexported to enforce invariants through domain methods.
 type SiteSetting struct {
 	shared.AggregateRoot
 	key         string
@@ -43,7 +45,8 @@ func ReconstructSiteSetting(
 	}
 }
 
-// Update modifies the site setting fields and raises a SettingUpdated event.
+// Update applies partial modifications using pointer semantics — nil fields are left unchanged.
+// Raises a SettingUpdated event so downstream caches or projections can refresh.
 func (s *SiteSetting) Update(key, value, settingType, description *string) {
 	if key != nil {
 		s.key = *key

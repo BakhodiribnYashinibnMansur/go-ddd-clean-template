@@ -10,21 +10,23 @@ import (
 	"github.com/google/uuid"
 )
 
-// UpdateRoleCommand holds the input for updating an existing role.
+// UpdateRoleCommand represents a partial update to an existing role.
+// Nil pointer fields are left unchanged, enabling callers to modify name or description independently.
 type UpdateRoleCommand struct {
 	ID          uuid.UUID
 	Name        *string
 	Description *string
 }
 
-// UpdateRoleHandler handles the UpdateRoleCommand.
+// UpdateRoleHandler applies partial modifications to an existing role and emits domain events.
+// The handler follows a fetch-mutate-persist pattern; event publish failures are non-fatal.
 type UpdateRoleHandler struct {
 	repo     domain.RoleRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
-// NewUpdateRoleHandler creates a new UpdateRoleHandler.
+// NewUpdateRoleHandler wires dependencies for role updates.
 func NewUpdateRoleHandler(
 	repo domain.RoleRepository,
 	eventBus application.EventBus,
@@ -37,7 +39,8 @@ func NewUpdateRoleHandler(
 	}
 }
 
-// Handle executes the UpdateRoleCommand.
+// Handle fetches the role by ID, applies non-nil field updates, persists, and publishes events.
+// Returns a repository error if the role is not found or the update fails.
 func (h *UpdateRoleHandler) Handle(ctx context.Context, cmd UpdateRoleCommand) error {
 	role, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {

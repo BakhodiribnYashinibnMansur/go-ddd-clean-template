@@ -10,7 +10,9 @@ import (
 	"gct/internal/shared/infrastructure/logger"
 )
 
-// CreateAnnouncementCommand holds the input for creating a new announcement.
+// CreateAnnouncementCommand represents an intent to create a new system announcement.
+// Title and Content are multilingual; Priority controls display ordering (higher = more prominent).
+// StartDate/EndDate define the visibility window — nil means unbounded on that side.
 type CreateAnnouncementCommand struct {
 	Title     shared.Lang
 	Content   shared.Lang
@@ -19,14 +21,15 @@ type CreateAnnouncementCommand struct {
 	EndDate   *time.Time
 }
 
-// CreateAnnouncementHandler handles the CreateAnnouncementCommand.
+// CreateAnnouncementHandler orchestrates announcement creation through the repository layer.
+// It emits domain events after a successful save; event publish failures are logged but do not roll back the save.
 type CreateAnnouncementHandler struct {
 	repo     domain.AnnouncementRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
-// NewCreateAnnouncementHandler creates a new CreateAnnouncementHandler.
+// NewCreateAnnouncementHandler wires dependencies for announcement creation.
 func NewCreateAnnouncementHandler(
 	repo domain.AnnouncementRepository,
 	eventBus application.EventBus,
@@ -39,7 +42,8 @@ func NewCreateAnnouncementHandler(
 	}
 }
 
-// Handle executes the CreateAnnouncementCommand.
+// Handle persists a new announcement and publishes its domain events.
+// Returns nil on success; propagates repository errors to the caller.
 func (h *CreateAnnouncementHandler) Handle(ctx context.Context, cmd CreateAnnouncementCommand) error {
 	a := domain.NewAnnouncement(cmd.Title, cmd.Content, cmd.Priority, cmd.StartDate, cmd.EndDate)
 

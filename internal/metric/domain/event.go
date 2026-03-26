@@ -6,7 +6,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// FunctionMetricRecorded is raised when a new function metric is recorded.
+// FunctionMetricRecorded is a domain event raised when a new function metric is persisted.
+// Subscribers can use this for real-time alerting on high-latency functions or panic occurrences.
 type FunctionMetricRecorded struct {
 	aggregateID uuid.UUID
 	occurredAt  time.Time

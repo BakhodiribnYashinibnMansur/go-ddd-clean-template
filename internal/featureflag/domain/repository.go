@@ -6,7 +6,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// FeatureFlagFilter carries filtering parameters for listing feature flags.
+// FeatureFlagFilter carries optional criteria for querying feature flags.
+// Search performs a substring match against the flag name. Nil fields mean "no filter."
 type FeatureFlagFilter struct {
 	Search  *string
 	Enabled *bool
@@ -26,6 +27,7 @@ type FeatureFlagView struct {
 }
 
 // FeatureFlagRepository is the write-side repository for the FeatureFlag aggregate.
+// Implementations must return ErrFeatureFlagNotFound from FindByID when no row matches.
 type FeatureFlagRepository interface {
 	Save(ctx context.Context, entity *FeatureFlag) error
 	FindByID(ctx context.Context, id uuid.UUID) (*FeatureFlag, error)
@@ -33,7 +35,8 @@ type FeatureFlagRepository interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 }
 
-// FeatureFlagReadRepository is the read-side repository returning projected views.
+// FeatureFlagReadRepository is the read-side (CQRS query) repository.
+// It returns pre-projected FeatureFlagView DTOs, bypassing aggregate reconstruction for read performance.
 type FeatureFlagReadRepository interface {
 	FindByID(ctx context.Context, id uuid.UUID) (*FeatureFlagView, error)
 	List(ctx context.Context, filter FeatureFlagFilter) ([]*FeatureFlagView, int64, error)

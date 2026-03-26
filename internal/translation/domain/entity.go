@@ -8,7 +8,9 @@ import (
 	"github.com/google/uuid"
 )
 
-// Translation is the aggregate root for translations.
+// Translation is the aggregate root for i18n key-value pairs.
+// Each instance represents a single key in a single language; the (key, language) pair forms the natural uniqueness constraint.
+// The group field enables logical grouping (e.g., "auth", "dashboard") for bulk export or frontend module loading.
 type Translation struct {
 	shared.AggregateRoot
 	key      string
@@ -43,7 +45,9 @@ func ReconstructTranslation(
 	}
 }
 
-// Update modifies the translation fields and raises a TranslationUpdated event.
+// Update applies partial modifications using pointer semantics — nil fields are left unchanged.
+// Changing the key or language effectively re-identifies the translation; callers should
+// ensure no duplicate (key, language) pair exists before calling this.
 func (t *Translation) Update(key, language, value, group *string) {
 	if key != nil {
 		t.key = *key

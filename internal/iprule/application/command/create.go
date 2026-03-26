@@ -9,7 +9,9 @@ import (
 	"gct/internal/shared/infrastructure/logger"
 )
 
-// CreateIPRuleCommand holds the input for creating a new IP rule.
+// CreateIPRuleCommand represents an intent to add a new IP-based access control rule.
+// Action determines the enforcement behavior (e.g., "allow" or "block") for matching traffic.
+// ExpiresAt is optional — nil creates a permanent rule; otherwise the rule auto-expires at the given time.
 type CreateIPRuleCommand struct {
 	IPAddress string
 	Action    string
@@ -17,14 +19,15 @@ type CreateIPRuleCommand struct {
 	ExpiresAt *time.Time
 }
 
-// CreateIPRuleHandler handles the CreateIPRuleCommand.
+// CreateIPRuleHandler persists a new IP rule and emits domain events for downstream enforcement.
+// Callers are responsible for validating IP format and ensuring no conflicting rule already exists.
 type CreateIPRuleHandler struct {
 	repo     domain.IPRuleRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
-// NewCreateIPRuleHandler creates a new CreateIPRuleHandler.
+// NewCreateIPRuleHandler wires up the handler with its required dependencies.
 func NewCreateIPRuleHandler(
 	repo domain.IPRuleRepository,
 	eventBus application.EventBus,
@@ -37,7 +40,8 @@ func NewCreateIPRuleHandler(
 	}
 }
 
-// Handle executes the CreateIPRuleCommand.
+// Handle creates the IP rule domain entity, persists it, and publishes domain events (e.g., IPRuleCreated).
+// Event publish failures are logged but do not fail the operation — the rule is already saved.
 func (h *CreateIPRuleHandler) Handle(ctx context.Context, cmd CreateIPRuleCommand) error {
 	r := domain.NewIPRule(cmd.IPAddress, cmd.Action, cmd.Reason, cmd.ExpiresAt)
 

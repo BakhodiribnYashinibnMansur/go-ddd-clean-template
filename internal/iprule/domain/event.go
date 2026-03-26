@@ -6,7 +6,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// IPRuleCreated is raised when a new IP rule is created.
+// IPRuleCreated is a domain event raised when a new IP rule is created.
+// Subscribers can use this to invalidate cached firewall rules or trigger real-time enforcement updates.
 type IPRuleCreated struct {
 	aggregateID uuid.UUID
 	occurredAt  time.Time

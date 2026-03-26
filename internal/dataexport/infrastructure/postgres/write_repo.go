@@ -17,8 +17,8 @@ import (
 const tableName = consts.TableDataExports
 
 var writeColumns = []string{
-	"id", "user_id", "data_type", "format", "status",
-	"file_url", "error", "created_at", "updated_at",
+	"id", "type", "status", "file_url", "filters",
+	"created_by", "created_at", "completed_at",
 }
 
 // DataExportWriteRepo implements domain.DataExportRepository using PostgreSQL.
@@ -42,14 +42,13 @@ func (r *DataExportWriteRepo) Save(ctx context.Context, de *domain.DataExport) e
 		Columns(writeColumns...).
 		Values(
 			de.ID(),
-			de.UserID(),
 			de.DataType(),
-			de.Format(),
 			de.Status(),
 			de.FileURL(),
-			de.Error(),
+			"{}",
+			de.UserID(),
 			de.CreatedAt(),
-			de.UpdatedAt(),
+			nil,
 		).
 		ToSql()
 	if err != nil {
@@ -69,8 +68,6 @@ func (r *DataExportWriteRepo) Update(ctx context.Context, de *domain.DataExport)
 		Update(tableName).
 		Set("status", de.Status()).
 		Set("file_url", de.FileURL()).
-		Set("error", de.Error()).
-		Set("updated_at", de.UpdatedAt()).
 		Where(squirrel.Eq{"id": de.ID()}).
 		ToSql()
 	if err != nil {
@@ -118,21 +115,33 @@ func (r *DataExportWriteRepo) Delete(ctx context.Context, id uuid.UUID) error {
 
 func scanDataExport(row pgx.Row) (*domain.DataExport, error) {
 	var (
-		id        uuid.UUID
-		userID    uuid.UUID
-		dataType  string
-		format    string
-		status    string
-		fileURL   *string
-		errorMsg  *string
-		createdAt time.Time
-		updatedAt time.Time
+		id          uuid.UUID
+		dataType    string
+		status      string
+		fileURL     string
+		filtersJSON []byte
+		createdBy   *uuid.UUID
+		createdAt   time.Time
+		completedAt *time.Time
 	)
 
-	err := row.Scan(&id, &userID, &dataType, &format, &status, &fileURL, &errorMsg, &createdAt, &updatedAt)
+	err := row.Scan(&id, &dataType, &status, &fileURL, &filtersJSON, &createdBy, &createdAt, &completedAt)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 
-	return domain.ReconstructDataExport(id, createdAt, updatedAt, userID, dataType, format, status, fileURL, errorMsg), nil
+	_ = filtersJSON
+	_ = completedAt
+
+	userID := uuid.Nil
+	if createdBy != nil {
+		userID = *createdBy
+	}
+
+	var fileURLPtr *string
+	if fileURL != "" {
+		fileURLPtr = &fileURL
+	}
+
+	return domain.ReconstructDataExport(id, createdAt, createdAt, userID, dataType, "", status, fileURLPtr, nil), nil
 }

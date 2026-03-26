@@ -4,6 +4,9 @@
 package app
 
 import (
+	"crypto/rsa"
+	"time"
+
 	"gct/internal/announcement"
 	"gct/internal/audit"
 	"gct/internal/authz"
@@ -26,6 +29,7 @@ import (
 	"gct/internal/systemerror"
 	"gct/internal/translation"
 	"gct/internal/user"
+	"gct/internal/user/application/command"
 	"gct/internal/usersetting"
 	"gct/internal/webhook"
 
@@ -59,10 +63,17 @@ type DDDBoundedContexts struct {
 }
 
 // NewDDDBoundedContexts creates all DDD bounded contexts with their correct dependencies.
-func NewDDDBoundedContexts(pool *pgxpool.Pool, eventBus application.EventBus, l logger.Log) *DDDBoundedContexts {
+func NewDDDBoundedContexts(pool *pgxpool.Pool, eventBus application.EventBus, l logger.Log, jwtPrivateKey *rsa.PrivateKey, jwtIssuer string, jwtAccessTTL, jwtRefreshTTL time.Duration) *DDDBoundedContexts {
+	userJWTCfg := command.JWTConfig{
+		PrivateKey: jwtPrivateKey,
+		Issuer:     jwtIssuer,
+		AccessTTL:  jwtAccessTTL,
+		RefreshTTL: jwtRefreshTTL,
+	}
+
 	return &DDDBoundedContexts{
 		// Full BCs: (pool, eventBus, logger)
-		User:          user.NewBoundedContext(pool, eventBus, l),
+		User:          user.NewBoundedContext(pool, eventBus, l, userJWTCfg),
 		Authz:         authz.NewBoundedContext(pool, eventBus, l),
 		Audit:         audit.NewBoundedContext(pool, eventBus, l),
 		SystemError:   systemerror.NewBoundedContext(pool, eventBus, l),

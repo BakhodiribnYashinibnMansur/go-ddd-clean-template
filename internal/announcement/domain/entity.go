@@ -9,6 +9,8 @@ import (
 )
 
 // Announcement is the aggregate root for announcements.
+// It enforces a one-way publish lifecycle: once published, an announcement cannot revert to draft.
+// The priority field determines display ordering; startDate/endDate define the visibility window.
 type Announcement struct {
 	shared.AggregateRoot
 	title       shared.Lang
@@ -64,7 +66,9 @@ func ReconstructAnnouncement(
 	}
 }
 
-// Publish sets the announcement as published and raises an AnnouncementPublished event.
+// Publish performs a one-way state transition from draft to published.
+// Callers should guard against double-publish by checking Published() first — this method
+// does not enforce idempotency internally, so calling it twice will overwrite publishedAt.
 func (a *Announcement) Publish() {
 	now := time.Now()
 	a.published = true
@@ -73,7 +77,9 @@ func (a *Announcement) Publish() {
 	a.AddEvent(NewAnnouncementPublished(a.ID()))
 }
 
-// Update modifies the announcement fields and touches the updatedAt timestamp.
+// Update applies partial modifications to the announcement.
+// Nil pointer arguments are treated as "no change" — only non-nil fields are overwritten.
+// This does not check published state, so callers must decide whether editing a published announcement is allowed.
 func (a *Announcement) Update(title *shared.Lang, content *shared.Lang, priority *int, startDate *time.Time, endDate *time.Time) {
 	if title != nil {
 		a.title = *title

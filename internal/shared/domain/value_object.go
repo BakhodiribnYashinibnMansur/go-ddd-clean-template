@@ -1,6 +1,7 @@
 package domain
 
-// SortOrder represents the direction of sorting.
+// SortOrder represents the direction of sorting in query results.
+// Always validate with IsValid before passing to SQL to prevent injection.
 type SortOrder string
 
 const (
@@ -13,7 +14,8 @@ func (s SortOrder) IsValid() bool {
 	return s == SortOrderASC || s == SortOrderDESC
 }
 
-// Pagination handles pagination data.
+// Pagination carries cursor-based pagination and sorting parameters across layer boundaries.
+// Limit is capped at 1000 via binding tags; callers should set Total after the query returns.
 type Pagination struct {
 	Limit     int64  `default:"10"      json:"limit"      binding:"min=1,max=1000"`
 	Offset    int64  `default:"0"       json:"offset"     binding:"min=0"`
@@ -30,7 +32,8 @@ func (p *Pagination) SetOffset(offset int64) { p.Offset = offset }
 func (p *Pagination) GetTotal() int64        { return p.Total }
 func (p *Pagination) SetTotal(total int64)   { p.Total = total }
 
-// Lang handles multi-language strings.
+// Lang is a value object holding localized strings for the three supported languages (Uzbek, Russian, English).
+// All three fields should be populated; empty strings indicate a missing translation, not absence.
 type Lang struct {
 	Uz string `json:"uz"`
 	Ru string `json:"ru"`
@@ -45,7 +48,8 @@ func (l *Lang) SetRu(ru string) { l.Ru = ru }
 func (l *Lang) GetEn() string   { return l.En }
 func (l *Lang) SetEn(en string) { l.En = en }
 
-// File handles file metadata.
+// File is a value object representing file metadata. Link holds the storage URL or relative path;
+// the actual binary content is managed outside the domain layer.
 type File struct {
 	Name string `json:"name"`
 	Link string `json:"link"`

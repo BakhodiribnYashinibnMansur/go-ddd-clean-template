@@ -10,7 +10,9 @@ import (
 	"github.com/google/uuid"
 )
 
-// UpdateUserCommand holds the input for updating an existing user.
+// UpdateUserCommand represents a partial update to a user's profile fields.
+// Pointer fields use nil-means-unchanged semantics. Phone, password, and role are excluded —
+// use dedicated commands (ChangeRole, etc.) for those privileged mutations.
 type UpdateUserCommand struct {
 	ID         uuid.UUID
 	Email      *string
@@ -18,7 +20,8 @@ type UpdateUserCommand struct {
 	Attributes map[string]any
 }
 
-// UpdateUserHandler handles the UpdateUserCommand.
+// UpdateUserHandler applies partial profile updates via a load-reconstruct-save cycle.
+// Because the User aggregate uses unexported fields, the handler reconstructs the entity with merged values.
 type UpdateUserHandler struct {
 	repo     domain.UserRepository
 	eventBus application.EventBus
@@ -38,7 +41,8 @@ func NewUpdateUserHandler(
 	}
 }
 
-// Handle executes the UpdateUserCommand.
+// Handle loads the user, merges changed fields with existing data, reconstructs the aggregate, and persists it.
+// Calls Touch() to update the modification timestamp. Returns domain or repository errors to the caller.
 func (h *UpdateUserHandler) Handle(ctx context.Context, cmd UpdateUserCommand) error {
 	user, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {
