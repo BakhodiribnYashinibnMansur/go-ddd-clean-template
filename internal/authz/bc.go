@@ -41,6 +41,7 @@ type BoundedContext struct {
 	ListPermissions *query.ListPermissionsHandler
 	ListPolicies    *query.ListPoliciesHandler
 	ListScopes      *query.ListScopesHandler
+	CheckAccess     *query.CheckAccessHandler
 }
 
 // NewBoundedContext creates a fully wired Authz bounded context.
@@ -83,5 +84,6 @@ func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, l logg
 		ListPermissions: query.NewListPermissionsHandler(readRepo),
 		ListPolicies:    query.NewListPoliciesHandler(readRepo),
 		ListScopes:      query.NewListScopesHandler(readRepo),
+		CheckAccess:     query.NewCheckAccessHandler(readRepo, l),
 	}
 }

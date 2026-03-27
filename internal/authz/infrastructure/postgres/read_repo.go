@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"gct/internal/authz/domain"
 	"gct/internal/shared/domain/consts"
@@ -281,4 +282,98 @@ func (r *AuthzReadRepo) ListScopes(ctx context.Context, pagination shared.Pagina
 	}
 
 	return views, total, nil
+}
+
+// CheckAccess returns true if the role identified by roleID is allowed to access the given path+method.
+// Super-admin roles bypass all checks. For other roles the method walks the
+// role → permission → scope chain looking for a matching scope entry.
+func (r *AuthzReadRepo) CheckAccess(ctx context.Context, roleID uuid.UUID, path, method string) (bool, error) {
+	// Single query: fetch role name together with every scope reachable through
+	// the role_permission + permission_scope join chain.
+	sql, args, err := r.builder.
+		Select("r.name", "s.path", "s.method").
+		From(consts.TableRole + " r").
+		LeftJoin(rolePermissionTable + " rp ON r.id = rp.role_id").
+		LeftJoin(permissionScopeTable + " ps ON rp.permission_id = ps.permission_id").
+		LeftJoin(consts.TableScope + " s ON ps.path = s.path AND ps.method = s.method").
+		Where(squirrel.Eq{"r.id": roleID}).
+		ToSql()
+	if err != nil {
+		return false, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
+	}
+
+	rows, err := r.pool.Query(ctx, sql, args...)
+	if err != nil {
+		return false, apperrors.HandlePgError(err, consts.TableRole, map[string]any{"id": roleID})
+	}
+	defer rows.Close()
+
+	var roleName string
+	foundRole := false
+
+	for rows.Next() {
+		var (
+			rName       string
+			scopePath   *string
+			scopeMethod *string
+		)
+		if err := rows.Scan(&rName, &scopePath, &scopeMethod); err != nil {
+			return false, apperrors.HandlePgError(err, consts.TableRole, map[string]any{"id": roleID})
+		}
+
+		if !foundRole {
+			roleName = rName
+			foundRole = true
+
+			// Super-admin bypass — grant access unconditionally.
+			if strings.ToLower(roleName) == "super_admin" {
+				return true, nil
+			}
+		}
+
+		// LEFT JOIN may produce NULL scope columns when no scopes are assigned.
+		if scopePath == nil || scopeMethod == nil {
+			continue
+		}
+
+		if matchScope(*scopePath, *scopeMethod, path, method) {
+			return true, nil
+		}
+	}
+
+	if !foundRole {
+		return false, apperrors.HandlePgError(fmt.Errorf("role not found"), consts.TableRole, map[string]any{"id": roleID})
+	}
+
+	return false, nil
+}
+
+// matchScope checks whether a scope entry matches the requested path and method.
+// It supports exact match, wildcard ("*") method, and prefix matching when the
+// scope path ends with "*" (e.g. "/api/v1/users*" matches "/api/v1/users/123").
+func matchScope(scopePath, scopeMethod, requestPath, requestMethod string) bool {
+	// Method must match exactly or be a wildcard.
+	if scopeMethod != "*" && !strings.EqualFold(scopeMethod, requestMethod) {
+		return false
+	}
+
+	// Exact path match.
+	if scopePath == requestPath {
+		return true
+	}
+
+	// Wildcard path — matches everything.
+	if scopePath == "*" {
+		return true
+	}
+
+	// Prefix match: scope path ending with "*".
+	if strings.HasSuffix(scopePath, "*") {
+		prefix := strings.TrimSuffix(scopePath, "*")
+		if strings.HasPrefix(requestPath, prefix) {
+			return true
+		}
+	}
+
+	return false
 }

@@ -2,14 +2,32 @@ package client
 
 import (
 	"testing"
+	"time"
 
-	"gct/internal/domain"
 	"gct/test/e2e/common/setup"
 	"github.com/google/uuid"
 )
 
-// getUserFromDB retrieves a user from the database using repository layer
-func getUserFromDB(t *testing.T, userID string) *domain.User {
+// testUser is a lightweight struct for test assertions (replaces legacy domain.User).
+type testUser struct {
+	ID         uuid.UUID
+	Phone      *string
+	Email      *string
+	Username   *string
+	Active     bool
+	IsApproved bool
+}
+
+// testSession is a lightweight struct for test assertions (replaces legacy domain.Session).
+type testSession struct {
+	ID        uuid.UUID
+	UserID    uuid.UUID
+	Revoked   bool
+	ExpiresAt time.Time
+}
+
+// getUserFromDB retrieves a user from the database using direct SQL.
+func getUserFromDB(t *testing.T, userID string) *testUser {
 	t.Helper()
 
 	uid, err := uuid.Parse(userID)
@@ -19,21 +37,20 @@ func getUserFromDB(t *testing.T, userID string) *domain.User {
 	}
 
 	ctx := t.Context()
-	filter := &domain.UserFilter{
-		ID: &uid,
-	}
-
-	user, err := setup.TestRepo.Persistent.Postgres.User.Client.Get(ctx, filter)
+	var u testUser
+	err = setup.TestPG.Pool.QueryRow(ctx,
+		`SELECT id, phone, email, username, active, is_approved FROM users WHERE id = $1 AND deleted_at = 0`, uid,
+	).Scan(&u.ID, &u.Phone, &u.Email, &u.Username, &u.Active, &u.IsApproved)
 	if err != nil {
 		t.Logf("getUserFromDB error: %v", err)
 		return nil
 	}
 
-	return user
+	return &u
 }
 
-// getSessionFromDB retrieves a session from the database using repository layer
-func getSessionFromDB(t *testing.T, sessionID string) *domain.Session {
+// getSessionFromDB retrieves a session from the database using direct SQL.
+func getSessionFromDB(t *testing.T, sessionID string) *testSession {
 	t.Helper()
 
 	sid, err := uuid.Parse(sessionID)
@@ -43,15 +60,14 @@ func getSessionFromDB(t *testing.T, sessionID string) *domain.Session {
 	}
 
 	ctx := t.Context()
-	filter := &domain.SessionFilter{
-		ID: &sid,
-	}
-
-	session, err := setup.TestRepo.Persistent.Postgres.User.SessionRepo.Get(ctx, filter)
+	var s testSession
+	err = setup.TestPG.Pool.QueryRow(ctx,
+		`SELECT id, user_id, revoked, expires_at FROM session WHERE id = $1`, sid,
+	).Scan(&s.ID, &s.UserID, &s.Revoked, &s.ExpiresAt)
 	if err != nil {
 		t.Logf("getSessionFromDB error: %v", err)
 		return nil
 	}
 
-	return session
+	return &s
 }

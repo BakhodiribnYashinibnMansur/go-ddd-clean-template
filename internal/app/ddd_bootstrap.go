@@ -12,7 +12,7 @@ import (
 	"gct/internal/authz"
 	"gct/internal/dashboard"
 	"gct/internal/dataexport"
-	"gct/internal/emailtemplate"
+	// "gct/internal/emailtemplate" // TODO: BC not yet created
 	"gct/internal/errorcode"
 	"gct/internal/featureflag"
 	"gct/internal/file"
@@ -49,7 +49,7 @@ type DDDBoundedContexts struct {
 	Integration   *integration.BoundedContext
 	Webhook       *webhook.BoundedContext
 	Notification  *notification.BoundedContext
-	EmailTemplate *emailtemplate.BoundedContext
+	// EmailTemplate *emailtemplate.BoundedContext // TODO: BC not yet created
 	Announcement  *announcement.BoundedContext
 	Translation   *translation.BoundedContext
 	SiteSetting   *sitesetting.BoundedContext
@@ -82,7 +82,7 @@ func NewDDDBoundedContexts(pool *pgxpool.Pool, eventBus application.EventBus, l 
 		Integration:   integration.NewBoundedContext(pool, eventBus, l),
 		Webhook:       webhook.NewBoundedContext(pool, eventBus, l),
 		Notification:  notification.NewBoundedContext(pool, eventBus, l),
-		EmailTemplate: emailtemplate.NewBoundedContext(pool, eventBus, l),
+		// EmailTemplate: emailtemplate.NewBoundedContext(pool, eventBus, l), // TODO: BC not yet created
 		Announcement:  announcement.NewBoundedContext(pool, eventBus, l),
 		Translation:   translation.NewBoundedContext(pool, eventBus, l),
 		SiteSetting:   sitesetting.NewBoundedContext(pool, eventBus, l),

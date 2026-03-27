@@ -8,7 +8,7 @@ import (
 	authzhttp "gct/internal/authz/interfaces/http"
 	dashboardhttp "gct/internal/dashboard/interfaces/http"
 	dataexporthttp "gct/internal/dataexport/interfaces/http"
-	emailtemplatehttp "gct/internal/emailtemplate/interfaces/http"
+	// emailtemplatehttp "gct/internal/emailtemplate/interfaces/http" // TODO: BC not yet created
 	errorcodehttp "gct/internal/errorcode/interfaces/http"
 	featureflaghttp "gct/internal/featureflag/interfaces/http"
 	filehttp "gct/internal/file/interfaces/http"
@@ -43,7 +43,7 @@ func RegisterDDDRoutes(router *gin.Engine, bcs *DDDBoundedContexts, authMW, auth
 	integrationHandler := integrationhttp.NewHandler(bcs.Integration, l)
 	webhookHandler := webhookhttp.NewHandler(bcs.Webhook, l)
 	notifHandler := notificationhttp.NewHandler(bcs.Notification, l)
-	emailHandler := emailtemplatehttp.NewHandler(bcs.EmailTemplate, l)
+	// emailHandler := emailtemplatehttp.NewHandler(bcs.EmailTemplate, l) // TODO: BC not yet created
 	announcementHandler := announcementhttp.NewHandler(bcs.Announcement, l)
 	translationHandler := translationhttp.NewHandler(bcs.Translation, l)
 	siteSettingHandler := sitesettinghttp.NewHandler(bcs.SiteSetting, l)
@@ -217,16 +217,16 @@ func RegisterDDDRoutes(router *gin.Engine, bcs *DDDBoundedContexts, authMW, auth
 		notifications.DELETE("/:id", notifHandler.Delete)
 	}
 
-	// Email Templates
-	emailTemplates := router.Group("/api/v1/email-templates")
-	emailTemplates.Use(authMW, authzMW, csrfMW)
-	{
-		emailTemplates.POST("", emailHandler.Create)
-		emailTemplates.GET("", emailHandler.List)
-		emailTemplates.GET("/:id", emailHandler.Get)
-		emailTemplates.PATCH("/:id", emailHandler.Update)
-		emailTemplates.DELETE("/:id", emailHandler.Delete)
-	}
+	// Email Templates — TODO: BC not yet created
+	// emailTemplates := router.Group("/api/v1/email-templates")
+	// emailTemplates.Use(authMW, authzMW, csrfMW)
+	// {
+	// 	emailTemplates.POST("", emailHandler.Create)
+	// 	emailTemplates.GET("", emailHandler.List)
+	// 	emailTemplates.GET("/:id", emailHandler.Get)
+	// 	emailTemplates.PATCH("/:id", emailHandler.Update)
+	// 	emailTemplates.DELETE("/:id", emailHandler.Delete)
+	// }
 
 	// Announcements
 	announcements := router.Group("/api/v1/announcements")

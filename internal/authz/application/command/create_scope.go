@@ -7,19 +7,21 @@ import (
 	"gct/internal/shared/infrastructure/logger"
 )
 
-// CreateScopeCommand holds the input for creating a new scope.
+// CreateScopeCommand represents an intent to register an API endpoint (path + HTTP method) as a protected scope.
+// Scopes are the finest-grained authorization targets — permissions are mapped to scopes to control endpoint access.
 type CreateScopeCommand struct {
 	Path   string
 	Method string
 }
 
-// CreateScopeHandler handles the CreateScopeCommand.
+// CreateScopeHandler persists new API scopes via the repository.
+// No domain events are emitted — scopes are structural metadata consumed during authorization evaluation.
 type CreateScopeHandler struct {
 	repo   domain.ScopeRepository
 	logger logger.Log
 }
 
-// NewCreateScopeHandler creates a new CreateScopeHandler.
+// NewCreateScopeHandler wires dependencies for scope creation.
 func NewCreateScopeHandler(
 	repo domain.ScopeRepository,
 	logger logger.Log,
@@ -30,7 +32,8 @@ func NewCreateScopeHandler(
 	}
 }
 
-// Handle executes the CreateScopeCommand.
+// Handle persists the scope defined by Path and Method.
+// Returns nil on success; propagates repository errors (e.g., duplicate path+method pair) to the caller.
 func (h *CreateScopeHandler) Handle(ctx context.Context, cmd CreateScopeCommand) error {
 	scope := domain.Scope{
 		Path:   cmd.Path,

@@ -1,5 +1,5 @@
 // Package app contains the highest-level logic for configuring and launching the application.
-// It orchestrates the initialization of databases, repositories, usecases, and network servers.
+// It orchestrates the initialization of databases, DDD bounded contexts, and the HTTP server.
 package app
 
 import (
@@ -13,12 +13,15 @@ import (
 
 	"gct/config"
 	"gct/internal/shared/domain/consts"
-	"gct/internal/controller/restapi"
-	"gct/internal/controller/restapi/middleware"
-	"gct/internal/controller/restapi/middleware/auth"
-	"gct/internal/repo"
-	"gct/internal/usecase"
-	"gct/internal/usecase/cache"
+	sharedmw "gct/internal/shared/infrastructure/middleware"
+
+	// DDD BC middleware
+	auditmw "gct/internal/audit/interfaces/http/middleware"
+	authzmw "gct/internal/authz/interfaces/http/middleware"
+	integrationmw "gct/internal/integration/interfaces/http/middleware"
+	syserrmw "gct/internal/systemerror/interfaces/http/middleware"
+	usermw "gct/internal/user/interfaces/http/middleware"
+
 	"gct/internal/shared/infrastructure/asynq"
 	"gct/internal/shared/infrastructure/db/postgres"
 	redispkg "gct/internal/shared/infrastructure/db/redis"
@@ -34,76 +37,57 @@ import (
 )
 
 // Run initializes the entire application component stack in the correct dependency order.
-// This includes telemetry, SQL/NoSQL databases, task queues, and finally the HTTP server.
 func Run(cfg *config.Config) {
-	// Initialize the centralized logger with the configured severity level.
 	l := logger.New(cfg.Log.Level)
+	l.Infoc(context.Background(), "Application configuration loaded", zap.Any("config", cfg))
 
-	// Log configuration for debugging purposes using zap.Any for clear structure.
-	l.Infoc(context.Background(), "🛠️  Application configuration loaded", zap.Any("config", cfg))
-
-	// Context for tracking the initialization phase.
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// Initialize OpenTelemetry Tracing to monitor application performance and trace requests.
+	// OpenTelemetry Tracing
 	shutdown, err := telemetry.InitTracer(ctx, cfg.Tracing)
 	if err != nil {
-		l.Errorc(ctx, "⚠️  Failed to initialize tracer (non-critical)", "error", err)
+		l.Errorc(ctx, "Failed to initialize tracer (non-critical)", "error", err)
 	}
 	defer func() {
 		if err := shutdown(context.Background()); err != nil {
-			l.Errorc(context.Background(), "⚠️  Failed to shutdown tracer", "error", err)
+			l.Errorc(context.Background(), "Failed to shutdown tracer", "error", err)
 		}
 	}()
 
-	// 1. Initialize PostgresSQL
-	// Sets up the connection pool and applies any pre-run logic like migrations checks.
+	// 1. PostgreSQL
 	pg, err := postgres.New(ctx, cfg.App.Environment, cfg.Database.Postgres, l)
 	if err != nil {
-		l.Fatalc(ctx, "❌ Failed to initialize PostgreSQL", "error", err)
+		l.Fatalc(ctx, "Failed to initialize PostgreSQL", "error", err)
 	}
 	defer pg.Close()
 
-	// 2. Initialize Redis
-	// Provides the primary storage for caching, rate limiting, and session management.
+	// 2. Redis
 	var redisclient *redis.Client
 	if cfg.Database.Redis.Enabled {
 		redisInstance, err := redispkg.New(ctx, cfg.App.Environment, cfg.Database.Redis, l)
 		if err != nil {
-			l.Fatalc(ctx, "❌ Failed to initialize Redis", "error", err)
+			l.Fatalc(ctx, "Failed to initialize Redis", "error", err)
 		}
 		defer redisInstance.Close()
 		redisclient = redisInstance.Client
 	} else {
-		l.Infoc(ctx, "⚠️ Redis is disabled in configuration")
+		l.Infoc(ctx, "Redis is disabled in configuration")
 	}
 
-	// 3. Initialize Asynq Client
-	// Used by API handlers to push tasks into background queues.
+	// 3. Asynq Client
 	var asynqClient *asynq.Client
 	if cfg.Asynq.Enabled {
-		asynqClient = asynq.NewClient(
-			cfg.Redis.Addr(),
-			cfg.Redis.Password,
-			cfg.Redis.DB,
-			l,
-		)
+		asynqClient = asynq.NewClient(cfg.Redis.Addr(), cfg.Redis.Password, cfg.Redis.DB, l)
 		defer asynqClient.Close()
 	} else {
-		l.Infoc(ctx, "⚠️ Asynq client is disabled in configuration")
+		l.Infoc(ctx, "Asynq client is disabled in configuration")
 	}
+	_ = asynqClient // used by asynq worker below
 
-	// 4. Initialize Data Access and Business Layers
-	// repositories layer handles raw data retrieval and persistence.
-	repositories := repo.New(pg, nil, redisclient, &cfg.Minio, l)
-	// useCases layer contains the core business rules and domain logic.
-	useCases := usecase.NewUseCase(repositories, l, cfg, asynqClient)
-
-	// === DDD Bootstrap ===
+	// 4. DDD Bootstrap — all bounded contexts
 	eventBus := eventbus.NewInMemoryEventBus()
 
-	// Parse RSA private key for DDD JWT token generation.
 	jwtPrivateKey, err := jwtpkg.ParseRSAPrivateKey(cfg.JWT.PrivateKey)
 	if err != nil {
 		l.Fatalw("failed to parse RSA private key for DDD", "error", err)
@@ -111,59 +95,46 @@ func Run(cfg *config.Config) {
 
 	dddBCs := NewDDDBoundedContexts(pg.Pool, eventBus, l, jwtPrivateKey, cfg.JWT.Issuer, cfg.JWT.AccessTTL, cfg.JWT.RefreshTTL)
 
-	// 4.1 Initialize Error Codes (via DDD ErrorCode BC)
+	// 4.1 Initialize Error Codes
 	initErrorCodes(ctx, dddBCs.ErrorCode, l)
 
-	// 5. Initialize Reactive Components
-	// cacheService manages memory-efficient data invalidation across clusters.
-	cacheService := cache.NewCache(repositories.Persistent.Redis, l)
-
-	// 5.1 Initialize Integration Cache (In-memory, via DDD Integration BC)
+	// 5. Integration Cache
 	if err := dddBCs.Integration.Cache.InitCache(ctx); err != nil {
-		l.Errorc(ctx, "⚠️ Failed to initialize integration cache", "error", err)
+		l.Errorc(ctx, "Failed to initialize integration cache", "error", err)
 	}
-
-	// Start background listeners for database-driven cache invalidation events.
-	go pg.Listen(ctx, consts.CacheInvalidationChannel, cacheService.DeletePublicCaches, l)
 	go pg.Listen(ctx, consts.CacheInvalidationChannel, dddBCs.Integration.Cache.InvalidateCache, l)
 
-	var asynqWorker *asynq.Worker
+	// 6. Asynq Worker
 	if cfg.Asynq.Enabled {
-		asynqWorker, err = initAsynqWorker(ctx, cfg, pg.Pool, dddBCs.Audit.CreateAuditLog, l)
+		asynqWorker, err := initAsynqWorker(ctx, cfg, pg.Pool, dddBCs.Audit.CreateAuditLog, l)
 		if err != nil {
-			l.Errorc(ctx, "⚠️ Failed to initialize Asynq worker", "error", err)
+			l.Errorc(ctx, "Failed to initialize Asynq worker", "error", err)
 		}
 		if asynqWorker != nil {
 			defer asynqWorker.Stop()
 		}
 	} else {
-		l.Infoc(ctx, "⚠️ Asynq worker is disabled in configuration")
+		l.Infoc(ctx, "Asynq worker is disabled in configuration")
 	}
 
-	// 7. Initialize Web Router and Persistent Server
-	handler := initRouterWithDDD(cfg, useCases, dddBCs, l)
+	// 7. HTTP Router (pure DDD)
+	handler := initRouter(cfg, dddBCs, redisclient, pg, l)
 
 	httpServer := httpserver.NewServer()
-
-	// Launch the HTTP listener.
 	startServer(cfg.HTTP.Port, handler, httpServer, l)
 
-	// 8. Lifecycle Management
-	// Blocks execution until an OS termination signal is received.
+	// 8. Wait for shutdown
 	waitForSignal(l)
 	cancel()
 
-	// 9. Graceful Shutdown
-	// Closes network listeners and allows inflight requests to complete within the timeout.
+	// 9. Graceful shutdown
 	shutdownServer(httpServer, l, cfg.HTTP.ShutdownTimeout)
 }
 
-// initRouter configures the Gin engine with environment-specific modes and routes.
-func initRouterWithDDD(cfg *config.Config, useCases *usecase.UseCase, dddBCs *DDDBoundedContexts, l logger.Log) *gin.Engine {
-	// 1. Separate Gin Mode
+// initRouter configures the Gin engine with DDD middleware and routes.
+func initRouter(cfg *config.Config, bcs *DDDBoundedContexts, redisClient *redis.Client, pg *postgres.Postgres, l logger.Log) *gin.Engine {
 	gin.SetMode(cfg.HTTP.GinMode)
 
-	// 2. Control Gin Logs
 	if cfg.Log.ShowGin {
 		gin.ForceConsoleColor()
 		gin.DefaultWriter = logger.NewColorfulWriter(os.Stdout)
@@ -175,13 +146,31 @@ func initRouterWithDDD(cfg *config.Config, useCases *usecase.UseCase, dddBCs *DD
 
 	handler := gin.New()
 
-	// Global middleware + infra routes
-	restapi.NewRouter(handler, cfg, useCases, l)
+	// === BC-specific middleware (injected into shared setup) ===
+	sysErrMW := syserrmw.NewSystemErrorMiddleware(bcs.SystemError.CreateSystemError, l)
+	auditMW := auditmw.NewAuditMiddleware(bcs.Audit.CreateEndpointHistory, bcs.Audit.CreateAuditLog, l)
+	sigMW := integrationmw.NewSignatureMiddleware(bcs.Integration.ValidateAPIKey, cfg)
 
-	// DDD routes (after all global middleware)
-	am := auth.NewAuthMiddleware(useCases, cfg, l)
-	csrfM := middleware.HybridMiddleware(l, consts.CookieCsrfToken)
-	RegisterDDDRoutes(handler, dddBCs, am.AuthClientAccess, am.Authz, csrfM, l)
+	bcMW := &sharedmw.BCMiddleware{
+		Recovery:     sysErrMW.Recovery(),
+		Persist5xx:   sysErrMW.Persist5xx(),
+		AuditHistory: auditMW.EndpointHistory(),
+		AuditChange:  auditMW.ChangeAudit(),
+		Signature:    sigMW.Validate(),
+	}
+
+	// === Global shared middleware ===
+	sharedmw.Setup(handler, cfg, redisClient, bcMW, l)
+
+	// === Infrastructure routes (swagger, health, static) ===
+	setupInfraRoutes(handler, cfg, pg.Pool, redisClient)
+
+	// === DDD API routes ===
+	authMW := usermw.NewAuthMiddleware(bcs.User.FindSession, bcs.User.FindUserForAuth, cfg, l)
+	authzMiddleware := authzmw.NewAuthzMiddleware(bcs.Authz.CheckAccess, bcs.User.FindUserForAuth, l)
+	csrfMW := sharedmw.HybridMiddleware(l, consts.CookieCsrfToken)
+
+	RegisterDDDRoutes(handler, bcs, authMW.AuthClientAccess, authzMiddleware.Authz, csrfMW, l)
 
 	return handler
 }
@@ -190,15 +179,15 @@ func initRouterWithDDD(cfg *config.Config, useCases *usecase.UseCase, dddBCs *DD
 func startServer(portStr string, handler *gin.Engine, server *httpserver.Server, l logger.Log) {
 	port, err := strconv.Atoi(portStr)
 	if err != nil {
-		l.Fatalc(context.Background(), "❌ Invalid HTTP port", "error", err, "port", portStr)
+		l.Fatalc(context.Background(), "Invalid HTTP port", "error", err, "port", portStr)
 	}
 
-	l.Infoc(context.Background(), "🚀 Starting HTTP server...", "port", port)
+	l.Infoc(context.Background(), "Starting HTTP server...", "port", port)
 	logger.PrintGinBanner(port, gin.Mode())
 
 	go func() {
 		if err := server.Run(port, handler); err != nil {
-			l.Errorc(context.Background(), "❌ HTTP server error", "error", err, "port", port)
+			l.Errorc(context.Background(), "HTTP server error", "error", err, "port", port)
 		}
 	}()
 }
@@ -207,24 +196,22 @@ func startServer(portStr string, handler *gin.Engine, server *httpserver.Server,
 func waitForSignal(l logger.Log) {
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
-
-	l.Infoc(context.Background(), "✅ Application is running. Press Ctrl+C to stop.")
-
+	l.Infoc(context.Background(), "Application is running. Press Ctrl+C to stop.")
 	s := <-interrupt
-	l.Infoc(context.Background(), "🛑 Shutdown signal received", "signal", s.String())
+	l.Infoc(context.Background(), "Shutdown signal received", "signal", s.String())
 }
 
 // shutdownServer attempts to close the HTTP server and its underlying connections.
 func shutdownServer(server *httpserver.Server, l logger.Log, timeout int64) {
-	l.Infoc(context.Background(), "⏳ Shutting down HTTP server gracefully...", "timeout_seconds", timeout)
+	l.Infoc(context.Background(), "Shutting down HTTP server gracefully...", "timeout_seconds", timeout)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
 	defer cancel()
 
 	err := server.Shutdown(ctx)
 	if err != nil {
-		l.Errorc(context.Background(), "❌ HTTP server shutdown failed", "error", err)
+		l.Errorc(context.Background(), "HTTP server shutdown failed", "error", err)
 	} else {
-		l.Infoc(context.Background(), "✅ HTTP server shutdown successfully")
+		l.Infoc(context.Background(), "HTTP server shutdown successfully")
 	}
 }

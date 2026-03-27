@@ -106,4 +106,5 @@ type AuthzReadRepository interface {
 	ListPermissions(ctx context.Context, pagination shared.Pagination) ([]*PermissionView, int64, error)
 	ListPolicies(ctx context.Context, pagination shared.Pagination) ([]*PolicyView, int64, error)
 	ListScopes(ctx context.Context, pagination shared.Pagination) ([]*ScopeView, int64, error)
+	CheckAccess(ctx context.Context, roleID uuid.UUID, path, method string) (bool, error)
 }

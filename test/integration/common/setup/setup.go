@@ -17,7 +17,6 @@ import (
 	"time"
 
 	"gct/config"
-	"gct/internal/repo"
 	tc "gct/internal/shared/infrastructure/container"
 	dbPostgres "gct/internal/shared/infrastructure/db/postgres"
 	"gct/internal/shared/infrastructure/logger"
@@ -30,7 +29,6 @@ var (
 	TestRedis *redis.Client
 	TestMinio *minio.Client
 	TestCfg   *config.Config
-	TestRepo  *repo.Repo
 	rootPath  string
 )
 
@@ -102,9 +100,6 @@ func SetupTestEnvironment(m *testing.M) {
 		log.Fatalf("Postgres init error: %s", err)
 	}
 	TestPG = pg
-
-	// Initialize repository for Integration tests
-	TestRepo = repo.New(pg, nil, TestRedis, &cfg.Minio, l)
 
 	// Run tests
 	exitCode := m.Run()
