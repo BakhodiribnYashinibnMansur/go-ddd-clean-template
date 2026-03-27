@@ -126,7 +126,7 @@ func TestUser_AddSession_MaxReached(t *testing.T) {
 	pw := mustPassword(t, "SecureP@ss1")
 	u := domain.NewUser(phone, pw)
 
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 50; i++ {
 		_, err := u.AddSession(domain.DeviceMobile, "1.1.1.1", "Agent")
 		if err != nil {
 			t.Fatalf("AddSession %d: %v", i, err)

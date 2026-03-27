@@ -2,10 +2,27 @@ package command
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
 	"testing"
+	"time"
 
 	"gct/internal/user/domain"
 )
+
+func testJWTConfig(t *testing.T) JWTConfig {
+	t.Helper()
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatalf("failed to generate RSA key: %v", err)
+	}
+	return JWTConfig{
+		PrivateKey: key,
+		Issuer:     "test",
+		AccessTTL:  15 * time.Minute,
+		RefreshTTL: 7 * 24 * time.Hour,
+	}
+}
 
 func TestSignInHandler_Handle(t *testing.T) {
 	// Create a user with known credentials.
@@ -34,7 +51,7 @@ func TestSignInHandler_Handle(t *testing.T) {
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewSignInHandler(phoneRepo, eventBus, log)
+	handler := NewSignInHandler(phoneRepo, eventBus, log, testJWTConfig(t))
 
 	cmd := SignInCommand{
 		Login:      "+998901234567",
@@ -87,7 +104,7 @@ func TestSignInHandler_WrongPassword(t *testing.T) {
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewSignInHandler(phoneRepo, eventBus, log)
+	handler := NewSignInHandler(phoneRepo, eventBus, log, testJWTConfig(t))
 
 	cmd := SignInCommand{
 		Login:      "+998901234567",
@@ -115,7 +132,7 @@ func TestSignInHandler_InactiveUser(t *testing.T) {
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewSignInHandler(phoneRepo, eventBus, log)
+	handler := NewSignInHandler(phoneRepo, eventBus, log, testJWTConfig(t))
 
 	cmd := SignInCommand{
 		Login:      "+998901234567",

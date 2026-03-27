@@ -21,6 +21,7 @@ type BoundedContext struct {
 	// Queries
 	GetIntegration   *query.GetHandler
 	ListIntegrations *query.ListHandler
+	ValidateAPIKey   *query.ValidateAPIKeyHandler
 
 	// Services
 	Cache *appl.CacheService
@@ -37,6 +38,7 @@ func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, l logg
 		DeleteIntegration: command.NewDeleteHandler(writeRepo, eventBus, l),
 		GetIntegration:    query.NewGetHandler(readRepo),
 		ListIntegrations:  query.NewListHandler(readRepo),
+		ValidateAPIKey:    query.NewValidateAPIKeyHandler(readRepo, l),
 		Cache:             appl.NewCacheService(readRepo, l),
 	}
 }

@@ -131,7 +131,7 @@ func newBC(repo *mockUserRepo, readRepo *mockReadRepo) *user.BoundedContext {
 		CreateUser:  command.NewCreateUserHandler(repo, eb, l),
 		UpdateUser:  command.NewUpdateUserHandler(repo, eb, l),
 		DeleteUser:  command.NewDeleteUserHandler(repo, eb, l),
-		SignIn:      command.NewSignInHandler(repo, eb, l),
+		SignIn:      command.NewSignInHandler(repo, eb, l, command.JWTConfig{}),
 		SignUp:      command.NewSignUpHandler(repo, eb, l),
 		SignOut:     command.NewSignOutHandler(repo, eb, l),
 		ApproveUser: command.NewApproveUserHandler(repo, eb, l),

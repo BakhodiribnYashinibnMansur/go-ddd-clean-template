@@ -40,9 +40,18 @@ type IntegrationRepository interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 }
 
+// IntegrationAPIKeyView is a read-model projection for API key validation.
+type IntegrationAPIKeyView struct {
+	ID            uuid.UUID
+	IntegrationID uuid.UUID
+	Key           string
+	Active        bool
+}
+
 // IntegrationReadRepository is the read-side repository returning projected views.
 // Implementations must return ErrIntegrationNotFound when FindByID yields no result.
 type IntegrationReadRepository interface {
 	FindByID(ctx context.Context, id uuid.UUID) (*IntegrationView, error)
 	List(ctx context.Context, filter IntegrationFilter) ([]*IntegrationView, int64, error)
+	FindByAPIKey(ctx context.Context, apiKey string) (*IntegrationAPIKeyView, error)
 }

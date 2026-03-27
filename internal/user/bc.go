@@ -24,8 +24,10 @@ type BoundedContext struct {
 	BulkAction  *command.BulkActionHandler
 
 	// Queries
-	GetUser   *query.GetUserHandler
-	ListUsers *query.ListUsersHandler
+	GetUser         *query.GetUserHandler
+	ListUsers       *query.ListUsersHandler
+	FindSession     *query.FindSessionHandler
+	FindUserForAuth *query.FindUserForAuthHandler
 }
 
 // NewBoundedContext creates a fully wired User bounded context.
@@ -43,7 +45,9 @@ func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, l logg
 		ApproveUser: command.NewApproveUserHandler(writeRepo, eventBus, l),
 		ChangeRole:  command.NewChangeRoleHandler(writeRepo, eventBus, l),
 		BulkAction:  command.NewBulkActionHandler(writeRepo, eventBus, l),
-		GetUser:     query.NewGetUserHandler(readRepo),
-		ListUsers:   query.NewListUsersHandler(readRepo),
+		GetUser:         query.NewGetUserHandler(readRepo),
+		ListUsers:       query.NewListUsersHandler(readRepo),
+		FindSession:     query.NewFindSessionHandler(readRepo),
+		FindUserForAuth: query.NewFindUserForAuthHandler(readRepo),
 	}
 }

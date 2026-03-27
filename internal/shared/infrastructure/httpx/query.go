@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"gct/internal/shared/domain/consts"
-	"gct/internal/domain"
+	shared "gct/internal/shared/domain"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -279,14 +279,14 @@ func GetPageSizeQuery(ctx *gin.Context) (int64, error) {
 	return limit, nil
 }
 
-func GetPagination(ctx *gin.Context) (domain.Pagination, error) {
+func GetPagination(ctx *gin.Context) (shared.Pagination, error) {
 	limit, err := GetInt64Query(ctx, consts.QueryLimit)
 	if err != nil {
-		return domain.Pagination{}, err
+		return shared.Pagination{}, err
 	}
 	offset, err := GetInt64Query(ctx, consts.QueryOffset)
 	if err != nil {
-		return domain.Pagination{}, err
+		return shared.Pagination{}, err
 	}
 
 	// Default limit
@@ -296,16 +296,16 @@ func GetPagination(ctx *gin.Context) (domain.Pagination, error) {
 
 	// Hard limit to prevent deep pagination abuse or large memory usage
 	if limit > 1000 {
-		return domain.Pagination{}, fmt.Errorf("%w: limit cannot exceed 1000", ErrParamIsInvalid)
+		return shared.Pagination{}, fmt.Errorf("%w: limit cannot exceed 1000", ErrParamIsInvalid)
 	}
 
 	if offset < 0 {
-		return domain.Pagination{}, fmt.Errorf("%w: offset cannot be negative", ErrParamIsInvalid)
+		return shared.Pagination{}, fmt.Errorf("%w: offset cannot be negative", ErrParamIsInvalid)
 	}
 
-	return domain.Pagination{Limit: limit, Offset: offset}, nil
+	return shared.Pagination{Limit: limit, Offset: offset}, nil
 }
 
-func ListPagination(ctx *gin.Context) (domain.Pagination, error) {
+func ListPagination(ctx *gin.Context) (shared.Pagination, error) {
 	return GetPagination(ctx)
 }

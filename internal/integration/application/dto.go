@@ -18,3 +18,11 @@ type IntegrationView struct {
 	CreatedAt  time.Time      `json:"created_at"`
 	UpdatedAt  time.Time      `json:"updated_at"`
 }
+
+// APIKeyView is a read-model DTO for API key validation results.
+type APIKeyView struct {
+	ID            uuid.UUID `json:"id"`
+	IntegrationID uuid.UUID `json:"integration_id"`
+	Key           string    `json:"key"`
+	Active        bool      `json:"active"`
+}

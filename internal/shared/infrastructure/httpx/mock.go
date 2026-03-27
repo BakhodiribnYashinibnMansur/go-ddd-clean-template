@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"gct/internal/shared/domain/consts"
-	"gct/internal/controller/restapi/response"
+	"gct/internal/shared/infrastructure/httpx/response"
 	apperrors "gct/internal/shared/infrastructure/errors"
 
 	"github.com/brianvoe/gofakeit/v7"

@@ -15,6 +15,8 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+const tableAPIKeys = consts.TableAPIKeys
+
 var readColumns = []string{
 	"id", "name", "description", "base_url", "is_active", "config", "created_at", "updated_at",
 }
@@ -190,4 +192,31 @@ func scanIntegrationViewFromRows(rows pgx.Rows) (*domain.IntegrationView, error)
 		CreatedAt:  createdAt,
 		UpdatedAt:  updatedAt,
 	}, nil
+}
+
+// FindByAPIKey returns an IntegrationAPIKeyView for the given API key string.
+func (r *IntegrationReadRepo) FindByAPIKey(ctx context.Context, apiKey string) (*domain.IntegrationAPIKeyView, error) {
+	sql, args, err := r.builder.
+		Select("id", "integration_id", "key", "is_active").
+		From(tableAPIKeys).
+		Where(squirrel.Eq{"key": apiKey}).
+		Where(squirrel.Eq{"is_active": true}).
+		Where(squirrel.Eq{"deleted_at": nil}).
+		ToSql()
+	if err != nil {
+		return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
+	}
+
+	var view domain.IntegrationAPIKeyView
+	err = r.pool.QueryRow(ctx, sql, args...).Scan(
+		&view.ID,
+		&view.IntegrationID,
+		&view.Key,
+		&view.Active,
+	)
+	if err != nil {
+		return nil, apperrors.HandlePgError(err, tableAPIKeys, nil)
+	}
+
+	return &view, nil
 }

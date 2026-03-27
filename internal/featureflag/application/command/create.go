@@ -8,7 +8,9 @@ import (
 	"gct/internal/shared/infrastructure/logger"
 )
 
-// CreateCommand holds the input for creating a new feature flag.
+// CreateCommand represents an intent to register a new feature flag for gradual rollout control.
+// Enabled controls the global kill-switch; RolloutPercentage (0-100) determines what fraction of eligible
+// users see the feature when enabled. A flag created with Enabled=false is dormant regardless of rollout.
 type CreateCommand struct {
 	Name              string
 	Description       string
@@ -16,14 +18,15 @@ type CreateCommand struct {
 	RolloutPercentage int
 }
 
-// CreateHandler handles the CreateCommand.
+// CreateHandler orchestrates feature flag creation and emits domain events for downstream cache/config systems.
+// Event publish failures are logged but do not roll back the persisted flag.
 type CreateHandler struct {
 	repo     domain.FeatureFlagRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
-// NewCreateHandler creates a new CreateHandler.
+// NewCreateHandler wires dependencies for feature flag creation.
 func NewCreateHandler(
 	repo domain.FeatureFlagRepository,
 	eventBus application.EventBus,
@@ -36,7 +39,8 @@ func NewCreateHandler(
 	}
 }
 
-// Handle executes the CreateCommand.
+// Handle persists a new feature flag and publishes its domain events.
+// Returns nil on success; propagates repository errors (e.g., duplicate name) to the caller.
 func (h *CreateHandler) Handle(ctx context.Context, cmd CreateCommand) error {
 	ff := domain.NewFeatureFlag(cmd.Name, cmd.Description, cmd.Enabled, cmd.RolloutPercentage)
 

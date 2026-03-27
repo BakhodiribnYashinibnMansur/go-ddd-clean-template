@@ -10,7 +10,9 @@ import (
 	"github.com/google/uuid"
 )
 
-// UpdateDataExportCommand holds the input for updating a data export.
+// UpdateDataExportCommand represents a state transition for an in-progress data export.
+// Status drives the export through its lifecycle: pending -> processing -> completed|failed.
+// FileURL is required when completing; Error is required when failing. Nil fields are ignored.
 type UpdateDataExportCommand struct {
 	ID      uuid.UUID
 	Status  *string
@@ -18,14 +20,16 @@ type UpdateDataExportCommand struct {
 	Error   *string
 }
 
-// UpdateDataExportHandler handles the UpdateDataExportCommand.
+// UpdateDataExportHandler drives data export state transitions and emits lifecycle events.
+// The handler delegates state-machine logic to the domain aggregate (StartProcessing, Complete, Fail).
+// Event publish failures are logged but do not roll back the status change.
 type UpdateDataExportHandler struct {
 	repo     domain.DataExportRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
-// NewUpdateDataExportHandler creates a new UpdateDataExportHandler.
+// NewUpdateDataExportHandler wires dependencies for data export status updates.
 func NewUpdateDataExportHandler(
 	repo domain.DataExportRepository,
 	eventBus application.EventBus,
@@ -38,7 +42,8 @@ func NewUpdateDataExportHandler(
 	}
 }
 
-// Handle executes the UpdateDataExportCommand.
+// Handle fetches the export by ID, applies the status transition, persists, and publishes lifecycle events.
+// Returns a repository error if the export is not found or the update fails.
 func (h *UpdateDataExportHandler) Handle(ctx context.Context, cmd UpdateDataExportCommand) error {
 	de, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {

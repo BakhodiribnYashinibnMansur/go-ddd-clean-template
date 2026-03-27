@@ -10,7 +10,9 @@ import (
 	"github.com/google/uuid"
 )
 
-// UpdateErrorCodeCommand holds the input for updating an existing error code.
+// UpdateErrorCodeCommand represents a full replacement of an error code's mutable fields.
+// The Code field is immutable after creation — only Message, HTTPStatus, and behavioral hints can be changed.
+// All fields are required (non-pointer), so every update is a full overwrite of the mutable attributes.
 type UpdateErrorCodeCommand struct {
 	ID         uuid.UUID
 	Message    string
@@ -22,14 +24,15 @@ type UpdateErrorCodeCommand struct {
 	Suggestion string
 }
 
-// UpdateErrorCodeHandler handles the UpdateErrorCodeCommand.
+// UpdateErrorCodeHandler applies a full replacement of an error code's mutable fields using a fetch-mutate-persist pattern.
+// Event publish failures are logged but do not roll back the persisted changes.
 type UpdateErrorCodeHandler struct {
 	repo     domain.ErrorCodeRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
-// NewUpdateErrorCodeHandler creates a new UpdateErrorCodeHandler.
+// NewUpdateErrorCodeHandler wires dependencies for error code updates.
 func NewUpdateErrorCodeHandler(
 	repo domain.ErrorCodeRepository,
 	eventBus application.EventBus,
@@ -42,7 +45,8 @@ func NewUpdateErrorCodeHandler(
 	}
 }
 
-// Handle executes the UpdateErrorCodeCommand.
+// Handle fetches the error code by ID, overwrites all mutable fields, persists, and publishes events.
+// Returns a repository error if the error code is not found or the update fails.
 func (h *UpdateErrorCodeHandler) Handle(ctx context.Context, cmd UpdateErrorCodeCommand) error {
 	ec, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {

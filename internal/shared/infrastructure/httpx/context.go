@@ -6,10 +6,10 @@ import (
 
 	"gct/internal/shared/domain/consts"
 
+	shared "gct/internal/shared/domain"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-
-	"gct/internal/domain"
 )
 
 // Gin Context Helpers are used to safely retrieve values injected by the authentication
@@ -80,13 +80,13 @@ func GetUserRole(ctx *gin.Context) (uuid.UUID, error) {
 	return uuid.Nil, ErrRoleNotFound
 }
 
-// GetCtxSession retrieves the complete Session object from the context.
-func GetCtxSession(ctx *gin.Context) (*domain.Session, error) {
+// GetCtxSession retrieves the AuthSession from the context (set by DDD auth middleware).
+func GetCtxSession(ctx *gin.Context) (*shared.AuthSession, error) {
 	sessionVal, exists := ctx.Get(consts.CtxSession)
 	if !exists {
 		return nil, ErrSessionNotFound
 	}
-	session, ok := sessionVal.(*domain.Session)
+	session, ok := sessionVal.(*shared.AuthSession)
 	if !ok {
 		return nil, ErrSessionCastFailed
 	}

@@ -45,4 +45,6 @@ type UserRepository interface {
 type UserReadRepository interface {
 	FindByID(ctx context.Context, id uuid.UUID) (*UserView, error)
 	List(ctx context.Context, filter UsersFilter) ([]*UserView, int64, error)
+	FindSessionByID(ctx context.Context, id uuid.UUID) (*shared.AuthSession, error)
+	FindUserForAuth(ctx context.Context, id uuid.UUID) (*shared.AuthUser, error)
 }

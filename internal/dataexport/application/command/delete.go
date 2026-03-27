@@ -9,18 +9,20 @@ import (
 	"github.com/google/uuid"
 )
 
-// DeleteDataExportCommand holds the input for deleting a data export.
+// DeleteDataExportCommand represents an intent to permanently remove a data export record.
+// This deletes the metadata only — callers are responsible for cleaning up the exported file from storage.
 type DeleteDataExportCommand struct {
 	ID uuid.UUID
 }
 
-// DeleteDataExportHandler handles the DeleteDataExportCommand.
+// DeleteDataExportHandler performs hard deletion of a data export record via the repository.
+// No domain events are emitted — callers needing file cleanup should handle that at a higher layer.
 type DeleteDataExportHandler struct {
 	repo   domain.DataExportRepository
 	logger logger.Log
 }
 
-// NewDeleteDataExportHandler creates a new DeleteDataExportHandler.
+// NewDeleteDataExportHandler wires dependencies for data export deletion.
 func NewDeleteDataExportHandler(
 	repo domain.DataExportRepository,
 	logger logger.Log,
@@ -31,7 +33,8 @@ func NewDeleteDataExportHandler(
 	}
 }
 
-// Handle executes the DeleteDataExportCommand.
+// Handle deletes the data export record identified by cmd.ID.
+// Returns nil on success; propagates repository errors (e.g., not found) to the caller.
 func (h *DeleteDataExportHandler) Handle(ctx context.Context, cmd DeleteDataExportCommand) error {
 	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
 		h.logger.Errorf("failed to delete data export: %v", err)

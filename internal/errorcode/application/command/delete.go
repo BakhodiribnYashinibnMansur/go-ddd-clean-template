@@ -9,18 +9,20 @@ import (
 	"github.com/google/uuid"
 )
 
-// DeleteErrorCodeCommand holds the input for deleting an error code.
+// DeleteErrorCodeCommand represents an intent to permanently remove a standardized error code.
+// Callers should ensure no API handlers still reference this code before deletion to avoid runtime lookup failures.
 type DeleteErrorCodeCommand struct {
 	ID uuid.UUID
 }
 
-// DeleteErrorCodeHandler handles the DeleteErrorCodeCommand.
+// DeleteErrorCodeHandler performs hard deletion of an error code via the repository.
+// No domain events are emitted — deletion is a silent removal.
 type DeleteErrorCodeHandler struct {
 	repo   domain.ErrorCodeRepository
 	logger logger.Log
 }
 
-// NewDeleteErrorCodeHandler creates a new DeleteErrorCodeHandler.
+// NewDeleteErrorCodeHandler wires dependencies for error code deletion.
 func NewDeleteErrorCodeHandler(
 	repo domain.ErrorCodeRepository,
 	logger logger.Log,
@@ -31,7 +33,8 @@ func NewDeleteErrorCodeHandler(
 	}
 }
 
-// Handle executes the DeleteErrorCodeCommand.
+// Handle deletes the error code identified by cmd.ID.
+// Returns nil on success; propagates repository errors (e.g., not found) to the caller.
 func (h *DeleteErrorCodeHandler) Handle(ctx context.Context, cmd DeleteErrorCodeCommand) error {
 	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
 		h.logger.Errorf("failed to delete error code: %v", err)

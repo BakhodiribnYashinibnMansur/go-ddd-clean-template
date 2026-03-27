@@ -235,7 +235,7 @@ func TestSignInHandler_RepoUpdateError(t *testing.T) {
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewSignInHandler(repo, eventBus, log)
+	handler := NewSignInHandler(repo, eventBus, log, testJWTConfig(t))
 
 	_, err := handler.Handle(context.Background(), SignInCommand{
 		Login:      "+998901234567",

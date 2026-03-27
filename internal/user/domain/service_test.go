@@ -81,7 +81,7 @@ func TestSignInService_MaxSessions(t *testing.T) {
 	svc := &domain.SignInService{}
 	u := activeApprovedUser(t)
 
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 50; i++ {
 		_, err := svc.SignIn(u, "SecureP@ss1", domain.DeviceMobile, "1.1.1.1", "Agent")
 		if err != nil {
 			t.Fatalf("SignIn %d: %v", i, err)

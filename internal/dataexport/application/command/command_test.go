@@ -8,6 +8,7 @@ import (
 
 	"gct/internal/dataexport/application/command"
 	"gct/internal/dataexport/domain"
+	"gct/internal/shared/application"
 	shared "gct/internal/shared/domain"
 
 	"github.com/google/uuid"
@@ -71,7 +72,7 @@ func (m *mockEventBus) Publish(ctx context.Context, events ...shared.DomainEvent
 	return nil
 }
 
-func (m *mockEventBus) Subscribe(_ string, _ func(context.Context, shared.DomainEvent) error) error {
+func (m *mockEventBus) Subscribe(_ string, _ application.EventHandler) error {
 	return nil
 }
 

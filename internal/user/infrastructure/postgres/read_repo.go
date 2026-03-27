@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	shared "gct/internal/shared/domain"
 	"gct/internal/shared/domain/consts"
 	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/user/domain"
@@ -194,4 +195,59 @@ func (r *UserReadRepo) List(ctx context.Context, filter domain.UsersFilter) ([]*
 	}
 
 	return views, total, nil
+}
+
+// FindSessionByID returns an AuthSession for the given session ID.
+func (r *UserReadRepo) FindSessionByID(ctx context.Context, id uuid.UUID) (*shared.AuthSession, error) {
+	sql, args, err := r.builder.
+		Select("id", "user_id", "device_id", "refresh_token_hash", "expires_at", "revoked", "last_activity").
+		From(consts.TableSession).
+		Where(squirrel.Eq{"id": id}).
+		ToSql()
+	if err != nil {
+		return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
+	}
+
+	row := r.pool.QueryRow(ctx, sql, args...)
+
+	var s shared.AuthSession
+	err = row.Scan(
+		&s.ID, &s.UserID, &s.DeviceID, &s.RefreshTokenHash,
+		&s.ExpiresAt, &s.Revoked, &s.LastActivity,
+	)
+	if err != nil {
+		return nil, apperrors.HandlePgError(err, consts.TableSession, map[string]any{"id": id})
+	}
+
+	return &s, nil
+}
+
+// FindUserForAuth returns an AuthUser with minimal columns for auth middleware.
+func (r *UserReadRepo) FindUserForAuth(ctx context.Context, id uuid.UUID) (*shared.AuthUser, error) {
+	sql, args, err := r.builder.
+		Select("id", "role_id", "active", "is_approved", "attributes").
+		From(consts.TableUsers).
+		Where(squirrel.Eq{"id": id}).
+		Where(squirrel.Eq{"deleted_at": 0}).
+		ToSql()
+	if err != nil {
+		return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
+	}
+
+	row := r.pool.QueryRow(ctx, sql, args...)
+
+	var (
+		u         shared.AuthUser
+		attrsJSON []byte
+	)
+	err = row.Scan(&u.ID, &u.RoleID, &u.Active, &u.IsApproved, &attrsJSON)
+	if err != nil {
+		return nil, apperrors.HandlePgError(err, consts.TableUsers, map[string]any{"id": id})
+	}
+
+	if len(attrsJSON) > 0 {
+		_ = json.Unmarshal(attrsJSON, &u.Attributes)
+	}
+
+	return &u, nil
 }

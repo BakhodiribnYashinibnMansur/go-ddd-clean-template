@@ -8,7 +8,9 @@ import (
 	"gct/internal/shared/infrastructure/logger"
 )
 
-// CreateErrorCodeCommand holds the input for creating a new error code.
+// CreateErrorCodeCommand represents an intent to register a new standardized error code in the system.
+// Code is the stable identifier returned to API consumers (e.g., "AUTH_001"). Retryable and RetryAfter
+// instruct clients whether and when to retry; Suggestion provides human-readable remediation guidance.
 type CreateErrorCodeCommand struct {
 	Code       string
 	Message    string
@@ -20,14 +22,15 @@ type CreateErrorCodeCommand struct {
 	Suggestion string
 }
 
-// CreateErrorCodeHandler handles the CreateErrorCodeCommand.
+// CreateErrorCodeHandler orchestrates error code creation and emits domain events for downstream consumers.
+// Event publish failures are logged but do not roll back the persisted error code.
 type CreateErrorCodeHandler struct {
 	repo     domain.ErrorCodeRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
-// NewCreateErrorCodeHandler creates a new CreateErrorCodeHandler.
+// NewCreateErrorCodeHandler wires dependencies for error code creation.
 func NewCreateErrorCodeHandler(
 	repo domain.ErrorCodeRepository,
 	eventBus application.EventBus,
@@ -40,7 +43,8 @@ func NewCreateErrorCodeHandler(
 	}
 }
 
-// Handle executes the CreateErrorCodeCommand.
+// Handle persists a new error code and publishes its domain events.
+// Returns nil on success; propagates repository errors (e.g., duplicate code) to the caller.
 func (h *CreateErrorCodeHandler) Handle(ctx context.Context, cmd CreateErrorCodeCommand) error {
 	ec := domain.NewErrorCode(
 		cmd.Code, cmd.Message, cmd.HTTPStatus,
