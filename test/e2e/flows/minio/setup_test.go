@@ -1,14 +1,20 @@
 package minio
 
+// TODO: This e2e test needs rewriting for the DDD architecture.
+// The old imports (gct/internal/controller/restapi, gct/internal/repo,
+// gct/internal/usecase) have been removed during the DDD migration.
+//
+// To rewrite startTestServer:
+//   - Use gct/internal/app.NewDDDBoundedContexts to create bounded contexts
+//   - Use gct/internal/app.RegisterDDDRoutes to wire HTTP routes
+//   - See test/e2e/flows/user/client/helpers.go for a working DDD example
+
 import (
 	"net/http/httptest"
 	"testing"
 
-	"gct/internal/controller/restapi"
-	"gct/internal/repo"
-	"gct/internal/usecase"
-	"gct/internal/shared/infrastructure/logger"
 	"gct/test/e2e/common/setup"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -21,14 +27,17 @@ func cleanDB(t *testing.T) {
 	setup.CleanDB(t)
 }
 
+// startTestServer is a stub that panics until rewritten for DDD.
+// TODO: Rewrite using DDD bootstrap (see test/e2e/flows/user/client/helpers.go).
 func startTestServer() *httptest.Server {
-	l := logger.New("debug")
-
-	repositories := repo.New(setup.TestPG, setup.TestMinio, setup.TestRedis, &setup.TestCfg.Minio, l)
-	useCases := usecase.NewUseCase(repositories, l, setup.TestCfg, nil)
-
 	handler := gin.New()
-	restapi.NewRouter(handler, setup.TestCfg, useCases, l)
-
-	return httptest.NewServer(handler)
+	// TODO: Wire DDD bounded contexts and routes here.
+	// Example from test/e2e/flows/user/client/helpers.go:
+	//   eventBus := eventbus.NewInMemoryEventBus()
+	//   jwtPrivateKey, _ := jwtpkg.ParseRSAPrivateKey(setup.TestCfg.JWT.PrivateKey)
+	//   bcs := app.NewDDDBoundedContexts(setup.TestPG.Pool, eventBus, l, jwtPrivateKey, ...)
+	//   app.RegisterDDDRoutes(handler, bcs, authMW, authzMW, csrfMW, l)
+	// TODO: Wire DDD bounded contexts, then remove this panic.
+	_ = handler
+	panic("startTestServer: not yet rewritten for DDD architecture — see TODO in setup_test.go")
 }

@@ -30,6 +30,10 @@ func (m *mockReadRepo) List(_ context.Context, _ domain.IntegrationFilter) ([]*d
 	return m.views, m.total, nil
 }
 
+func (m *mockReadRepo) FindByAPIKey(_ context.Context, _ string) (*domain.IntegrationAPIKeyView, error) {
+	return nil, domain.ErrIntegrationNotFound
+}
+
 type errorReadRepo struct{ err error }
 
 func (m *errorReadRepo) FindByID(_ context.Context, _ uuid.UUID) (*domain.IntegrationView, error) {
@@ -38,6 +42,10 @@ func (m *errorReadRepo) FindByID(_ context.Context, _ uuid.UUID) (*domain.Integr
 
 func (m *errorReadRepo) List(_ context.Context, _ domain.IntegrationFilter) ([]*domain.IntegrationView, int64, error) {
 	return nil, 0, m.err
+}
+
+func (m *errorReadRepo) FindByAPIKey(_ context.Context, _ string) (*domain.IntegrationAPIKeyView, error) {
+	return nil, m.err
 }
 
 var errRepo = errors.New("repo failure")

@@ -2,7 +2,10 @@ package ddd
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
 	"testing"
+	"time"
 
 	"gct/internal/shared/application"
 	shared "gct/internal/shared/domain"
@@ -16,11 +19,25 @@ import (
 	"github.com/google/uuid"
 )
 
+func newTestJWTConfig(t *testing.T) command.JWTConfig {
+	t.Helper()
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatalf("rsa.GenerateKey: %v", err)
+	}
+	return command.JWTConfig{
+		PrivateKey: key,
+		Issuer:     "gct-test",
+		AccessTTL:  15 * time.Minute,
+		RefreshTTL: 7 * 24 * time.Hour,
+	}
+}
+
 func newTestBC(t *testing.T) *user.BoundedContext {
 	t.Helper()
 	eb := eventbus.NewInMemoryEventBus()
 	l := logger.New("error")
-	return user.NewBoundedContext(testPool, eb, l)
+	return user.NewBoundedContext(testPool, eb, l, newTestJWTConfig(t))
 }
 
 // ---------------------------------------------------------------------------
@@ -255,7 +272,7 @@ func TestIntegration_SignUp_SignIn_SignOut(t *testing.T) {
 	})
 
 	l := logger.New("error")
-	bc := user.NewBoundedContext(testPool, eb, l)
+	bc := user.NewBoundedContext(testPool, eb, l, newTestJWTConfig(t))
 	ctx := context.Background()
 
 	// Sign Up
@@ -372,7 +389,7 @@ func TestIntegration_EventBus_PublishesOnCreate(t *testing.T) {
 	})
 
 	l := logger.New("error")
-	bc := user.NewBoundedContext(testPool, eb, l)
+	bc := user.NewBoundedContext(testPool, eb, l, newTestJWTConfig(t))
 	ctx := context.Background()
 
 	err := bc.CreateUser.Handle(ctx, command.CreateUserCommand{

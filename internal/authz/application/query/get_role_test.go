@@ -66,6 +66,10 @@ func (m *mockAuthzReadRepository) ListScopes(ctx context.Context, p shared.Pagin
 	return nil, 0, nil
 }
 
+func (m *mockAuthzReadRepository) CheckAccess(_ context.Context, _ uuid.UUID, _, _ string) (bool, error) {
+	return false, nil
+}
+
 // ---------------------------------------------------------------------------
 // Tests: GetRoleHandler
 // ---------------------------------------------------------------------------

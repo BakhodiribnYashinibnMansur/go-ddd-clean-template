@@ -111,6 +111,14 @@ func (m *mockReadRepo) List(_ context.Context, _ domain.UsersFilter) ([]*domain.
 	return m.views, m.total, nil
 }
 
+func (m *mockReadRepo) FindSessionByID(_ context.Context, _ uuid.UUID) (*shared.AuthSession, error) {
+	return nil, domain.ErrUserNotFound
+}
+
+func (m *mockReadRepo) FindUserForAuth(_ context.Context, _ uuid.UUID) (*shared.AuthUser, error) {
+	return nil, domain.ErrUserNotFound
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------

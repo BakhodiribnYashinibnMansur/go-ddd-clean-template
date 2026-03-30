@@ -64,6 +64,10 @@ func (m *mockReadRepo) List(_ context.Context, _ domain.IntegrationFilter) ([]*d
 	return m.views, m.total, nil
 }
 
+func (m *mockReadRepo) FindByAPIKey(_ context.Context, _ string) (*domain.IntegrationAPIKeyView, error) {
+	return nil, domain.ErrIntegrationNotFound
+}
+
 type mockEventBus struct{ published []shared.DomainEvent }
 
 func (m *mockEventBus) Publish(_ context.Context, events ...shared.DomainEvent) error {

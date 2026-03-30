@@ -174,6 +174,10 @@ func (m *mockAuthzReadRepository) ListScopes(ctx context.Context, p shared.Pagin
 	return []*domain.ScopeView{}, 0, nil
 }
 
+func (m *mockAuthzReadRepository) CheckAccess(_ context.Context, _ uuid.UUID, _, _ string) (bool, error) {
+	return false, nil
+}
+
 type mockEventBus struct {
 	publishedEvents []shared.DomainEvent
 }

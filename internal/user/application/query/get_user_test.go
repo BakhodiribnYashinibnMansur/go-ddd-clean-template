@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	shared "gct/internal/shared/domain"
 	"gct/internal/user/domain"
 
 	"github.com/google/uuid"
@@ -31,6 +32,14 @@ func (m *errorReadRepo) List(_ context.Context, _ domain.UsersFilter) ([]*domain
 	return nil, 0, m.err
 }
 
+func (m *errorReadRepo) FindSessionByID(_ context.Context, _ uuid.UUID) (*shared.AuthSession, error) {
+	return nil, m.err
+}
+
+func (m *errorReadRepo) FindUserForAuth(_ context.Context, _ uuid.UUID) (*shared.AuthUser, error) {
+	return nil, m.err
+}
+
 var errRepoFailure = errors.New("repository failure")
 
 func (m *mockUserReadRepository) FindByID(_ context.Context, id uuid.UUID) (*domain.UserView, error) {
@@ -42,6 +51,14 @@ func (m *mockUserReadRepository) FindByID(_ context.Context, id uuid.UUID) (*dom
 
 func (m *mockUserReadRepository) List(_ context.Context, _ domain.UsersFilter) ([]*domain.UserView, int64, error) {
 	return m.views, m.total, nil
+}
+
+func (m *mockUserReadRepository) FindSessionByID(_ context.Context, _ uuid.UUID) (*shared.AuthSession, error) {
+	return nil, domain.ErrUserNotFound
+}
+
+func (m *mockUserReadRepository) FindUserForAuth(_ context.Context, _ uuid.UUID) (*shared.AuthUser, error) {
+	return nil, domain.ErrUserNotFound
 }
 
 // --- Tests ---
