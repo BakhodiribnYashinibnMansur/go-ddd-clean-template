@@ -10,12 +10,12 @@ import (
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 var readColumns = []string{
-	"id", "key", "name", "type", "value", "description", "is_active", "created_at", "updated_at",
+	"id", "key", "name", "flag_type", "default_value",
+	"description", "rollout_percentage", "is_active", "created_at", "updated_at",
 }
 
 // FeatureFlagReadRepo implements domain.FeatureFlagReadRepository for the CQRS read side.
@@ -37,19 +37,53 @@ func (r *FeatureFlagReadRepo) FindByID(ctx context.Context, id uuid.UUID) (*doma
 	sql, args, err := r.builder.
 		Select(readColumns...).
 		From(tableName).
-		Where(squirrel.Eq{"id": id}).
+		Where(squirrel.Eq{"id": id, "deleted_at": nil}).
 		ToSql()
 	if err != nil {
 		return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
 	}
 
+	var (
+		ffID              uuid.UUID
+		key               string
+		name              string
+		flagType          string
+		defaultValue      string
+		description       string
+		rolloutPercentage int
+		isActive          bool
+		createdAt         time.Time
+		updatedAt         time.Time
+	)
+
 	row := r.pool.QueryRow(ctx, sql, args...)
-	return scanFeatureFlagView(row)
+	if err := row.Scan(&ffID, &key, &name, &flagType, &defaultValue, &description, &rolloutPercentage, &isActive, &createdAt, &updatedAt); err != nil {
+		return nil, apperrors.HandlePgError(err, tableName, map[string]any{"id": id})
+	}
+
+	ruleGroupViews, err := r.loadRuleGroupViews(ctx, ffID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &domain.FeatureFlagView{
+		ID:                ffID,
+		Name:              name,
+		Key:               key,
+		Description:       description,
+		FlagType:          flagType,
+		DefaultValue:      defaultValue,
+		RolloutPercentage: rolloutPercentage,
+		IsActive:          isActive,
+		RuleGroups:        ruleGroupViews,
+		CreatedAt:         createdAt.Format(time.RFC3339),
+		UpdatedAt:         updatedAt.Format(time.RFC3339),
+	}, nil
 }
 
 // List returns a paginated list of FeatureFlagView with optional filters.
 func (r *FeatureFlagReadRepo) List(ctx context.Context, filter domain.FeatureFlagFilter) ([]*domain.FeatureFlagView, int64, error) {
-	conds := squirrel.And{}
+	conds := squirrel.And{squirrel.Eq{"deleted_at": nil}}
 	if filter.Search != nil {
 		conds = append(conds, squirrel.ILike{"name": "%" + *filter.Search + "%"})
 	}
@@ -58,10 +92,7 @@ func (r *FeatureFlagReadRepo) List(ctx context.Context, filter domain.FeatureFla
 	}
 
 	// Count total.
-	countQB := r.builder.Select("COUNT(*)").From(tableName)
-	if len(conds) > 0 {
-		countQB = countQB.Where(conds)
-	}
+	countQB := r.builder.Select("COUNT(*)").From(tableName).Where(conds)
 	countSQL, countArgs, err := countQB.ToSql()
 	if err != nil {
 		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
@@ -80,13 +111,10 @@ func (r *FeatureFlagReadRepo) List(ctx context.Context, filter domain.FeatureFla
 	qb := r.builder.
 		Select(readColumns...).
 		From(tableName).
+		Where(conds).
 		OrderBy("created_at DESC").
 		Limit(uint64(limit)).
 		Offset(uint64(filter.Offset))
-
-	if len(conds) > 0 {
-		qb = qb.Where(conds)
-	}
 
 	sql, args, err := qb.ToSql()
 	if err != nil {
@@ -101,78 +129,134 @@ func (r *FeatureFlagReadRepo) List(ctx context.Context, filter domain.FeatureFla
 
 	var views []*domain.FeatureFlagView
 	for rows.Next() {
-		v, err := scanFeatureFlagViewFromRows(rows)
-		if err != nil {
+		var (
+			id                uuid.UUID
+			key               string
+			name              string
+			flagType          string
+			defaultValue      string
+			description       string
+			rolloutPercentage int
+			isActive          bool
+			createdAt         time.Time
+			updatedAt         time.Time
+		)
+
+		if err := rows.Scan(&id, &key, &name, &flagType, &defaultValue, &description, &rolloutPercentage, &isActive, &createdAt, &updatedAt); err != nil {
 			return nil, 0, apperrors.HandlePgError(err, tableName, nil)
 		}
-		views = append(views, v)
+
+		ruleGroupViews, err := r.loadRuleGroupViews(ctx, id)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		views = append(views, &domain.FeatureFlagView{
+			ID:                id,
+			Name:              name,
+			Key:               key,
+			Description:       description,
+			FlagType:          flagType,
+			DefaultValue:      defaultValue,
+			RolloutPercentage: rolloutPercentage,
+			IsActive:          isActive,
+			RuleGroups:        ruleGroupViews,
+			CreatedAt:         createdAt.Format(time.RFC3339),
+			UpdatedAt:         updatedAt.Format(time.RFC3339),
+		})
 	}
 
 	return views, total, nil
 }
 
-func scanFeatureFlagView(row pgx.Row) (*domain.FeatureFlagView, error) {
-	var (
-		id          uuid.UUID
-		key         string
-		name        string
-		ffType      string
-		value       string
-		description string
-		isActive    bool
-		createdAt   time.Time
-		updatedAt   time.Time
-	)
+// ---------------------------------------------------------------------------
+// View loaders
+// ---------------------------------------------------------------------------
 
-	err := row.Scan(&id, &key, &name, &ffType, &value, &description, &isActive, &createdAt, &updatedAt)
+func (r *FeatureFlagReadRepo) loadRuleGroupViews(ctx context.Context, flagID uuid.UUID) ([]domain.RuleGroupView, error) {
+	sql, args, err := r.builder.
+		Select("id", "name", "variation", "priority", "created_at", "updated_at").
+		From(consts.TableFeatureFlagRuleGroups).
+		Where(squirrel.Eq{"flag_id": flagID}).
+		OrderBy("priority ASC").
+		ToSql()
 	if err != nil {
-		return nil, apperrors.HandlePgError(err, tableName, map[string]any{"id": id})
+		return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
 	}
 
-	_ = key
-	_ = ffType
-	_ = value
+	rows, err := r.pool.Query(ctx, sql, args...)
+	if err != nil {
+		return nil, apperrors.HandlePgError(err, consts.TableFeatureFlagRuleGroups, nil)
+	}
+	defer rows.Close()
 
-	return &domain.FeatureFlagView{
-		ID:                id,
-		Name:              name,
-		Description:       description,
-		Enabled:           isActive,
-		RolloutPercentage: 0,
-		CreatedAt:         createdAt.Format(time.RFC3339),
-		UpdatedAt:         updatedAt.Format(time.RFC3339),
-	}, nil
+	var views []domain.RuleGroupView
+	for rows.Next() {
+		var (
+			id        uuid.UUID
+			name      string
+			variation string
+			priority  int
+			createdAt time.Time
+			updatedAt time.Time
+		)
+		if err := rows.Scan(&id, &name, &variation, &priority, &createdAt, &updatedAt); err != nil {
+			return nil, apperrors.HandlePgError(err, consts.TableFeatureFlagRuleGroups, nil)
+		}
+
+		condViews, err := r.loadConditionViews(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+
+		views = append(views, domain.RuleGroupView{
+			ID:         id,
+			Name:       name,
+			Variation:  variation,
+			Priority:   priority,
+			Conditions: condViews,
+			CreatedAt:  createdAt.Format(time.RFC3339),
+			UpdatedAt:  updatedAt.Format(time.RFC3339),
+		})
+	}
+
+	return views, nil
 }
 
-func scanFeatureFlagViewFromRows(rows pgx.Rows) (*domain.FeatureFlagView, error) {
-	var (
-		id          uuid.UUID
-		key         string
-		name        string
-		ffType      string
-		value       string
-		description string
-		isActive    bool
-		createdAt   time.Time
-		updatedAt   time.Time
-	)
-
-	err := rows.Scan(&id, &key, &name, &ffType, &value, &description, &isActive, &createdAt, &updatedAt)
+func (r *FeatureFlagReadRepo) loadConditionViews(ctx context.Context, ruleGroupID uuid.UUID) ([]domain.ConditionView, error) {
+	sql, args, err := r.builder.
+		Select("id", "attribute", "operator", "value").
+		From(consts.TableFeatureFlagConditions).
+		Where(squirrel.Eq{"rule_group_id": ruleGroupID}).
+		ToSql()
 	if err != nil {
-		return nil, err
+		return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
 	}
 
-	_ = key
-	_ = ffType
-	_ = value
+	rows, err := r.pool.Query(ctx, sql, args...)
+	if err != nil {
+		return nil, apperrors.HandlePgError(err, consts.TableFeatureFlagConditions, nil)
+	}
+	defer rows.Close()
 
-	return &domain.FeatureFlagView{
-		ID:                id,
-		Name:              name,
-		Description:       description,
-		Enabled:           isActive,
-		RolloutPercentage: 0,
-		CreatedAt:         createdAt.Format(time.RFC3339),
-		UpdatedAt:         updatedAt.Format(time.RFC3339),
-	}, nil
+	var views []domain.ConditionView
+	for rows.Next() {
+		var (
+			id    uuid.UUID
+			attr  string
+			op    string
+			value string
+		)
+		if err := rows.Scan(&id, &attr, &op, &value); err != nil {
+			return nil, apperrors.HandlePgError(err, consts.TableFeatureFlagConditions, nil)
+		}
+		views = append(views, domain.ConditionView{
+			ID:        id,
+			Attribute: attr,
+			Operator:  op,
+			Value:     value,
+		})
+	}
+
+	return views, nil
 }
