@@ -1,9 +1,7 @@
 package consts
 
-// Database table names. These serve double duty: they're used in SQL queries by repository
-// implementations AND as cache key prefixes for the invalidation pub/sub channel.
+// Database table names used in SQL queries and as cache key prefixes for invalidation.
 const (
-	// Table names used as prefixes for cache keys to ensure proper invalidation.
 	TableUsers           = "users"
 	TableRole            = "role"
 	TablePermission      = "permission"
@@ -20,14 +18,15 @@ const (
 	TableAPIKeys         = "api_keys"
 	TableTranslations    = "translations"
 	TableDataExports     = "data_exports"
-	TableFeatureFlags    = "feature_flags"
+	TableFeatureFlags          = "feature_flags"
+	TableFeatureFlagRuleGroups = "feature_flag_rule_groups"
+	TableFeatureFlagConditions = "feature_flag_conditions"
 	TableRateLimits      = "rate_limits"
 	TableIPRules         = "ip_rules"
-	TableWebhooks        = "webhooks"
-	TableJobs            = "jobs"
+
+
 	TableAnnouncements   = "announcements"
 	TableNotifications   = "notifications"
-	TableEmailTemplates  = "email_templates"
 	TableFileMetadata    = "file_metadata"
 	TableUserSettings    = "user_settings"
 )
