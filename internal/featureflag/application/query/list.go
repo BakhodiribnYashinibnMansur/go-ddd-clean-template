@@ -37,13 +37,7 @@ func (h *ListHandler) Handle(ctx context.Context, q ListQuery) (*ListResult, err
 
 	result := make([]*appdto.FeatureFlagView, len(views))
 	for i, v := range views {
-		result[i] = &appdto.FeatureFlagView{
-			ID:                v.ID,
-			Name:              v.Name,
-			Description:       v.Description,
-			Enabled:           v.Enabled,
-			RolloutPercentage: v.RolloutPercentage,
-		}
+		result[i] = mapToAppView(v)
 	}
 
 	return &ListResult{

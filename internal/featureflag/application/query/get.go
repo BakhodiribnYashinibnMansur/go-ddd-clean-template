@@ -2,6 +2,7 @@ package query
 
 import (
 	"context"
+	"time"
 
 	appdto "gct/internal/featureflag/application"
 	"gct/internal/featureflag/domain"
@@ -31,11 +32,51 @@ func (h *GetHandler) Handle(ctx context.Context, q GetQuery) (*appdto.FeatureFla
 		return nil, err
 	}
 
+	return mapToAppView(view), nil
+}
+
+// mapToAppView converts a domain FeatureFlagView to an application FeatureFlagView.
+func mapToAppView(v *domain.FeatureFlagView) *appdto.FeatureFlagView {
+	ruleGroups := make([]appdto.RuleGroupView, len(v.RuleGroups))
+	for i, rg := range v.RuleGroups {
+		conditions := make([]appdto.ConditionView, len(rg.Conditions))
+		for j, c := range rg.Conditions {
+			conditions[j] = appdto.ConditionView{
+				ID:        c.ID,
+				Attribute: c.Attribute,
+				Operator:  c.Operator,
+				Value:     c.Value,
+			}
+		}
+
+		createdAt, _ := time.Parse(time.RFC3339, rg.CreatedAt)
+		updatedAt, _ := time.Parse(time.RFC3339, rg.UpdatedAt)
+
+		ruleGroups[i] = appdto.RuleGroupView{
+			ID:         rg.ID,
+			Name:       rg.Name,
+			Variation:  rg.Variation,
+			Priority:   rg.Priority,
+			Conditions: conditions,
+			CreatedAt:  createdAt,
+			UpdatedAt:  updatedAt,
+		}
+	}
+
+	createdAt, _ := time.Parse(time.RFC3339, v.CreatedAt)
+	updatedAt, _ := time.Parse(time.RFC3339, v.UpdatedAt)
+
 	return &appdto.FeatureFlagView{
-		ID:                view.ID,
-		Name:              view.Name,
-		Description:       view.Description,
-		Enabled:           view.Enabled,
-		RolloutPercentage: view.RolloutPercentage,
-	}, nil
+		ID:                v.ID,
+		Name:              v.Name,
+		Key:               v.Key,
+		Description:       v.Description,
+		FlagType:          v.FlagType,
+		DefaultValue:      v.DefaultValue,
+		RolloutPercentage: v.RolloutPercentage,
+		IsActive:          v.IsActive,
+		RuleGroups:        ruleGroups,
+		CreatedAt:         createdAt,
+		UpdatedAt:         updatedAt,
+	}
 }
