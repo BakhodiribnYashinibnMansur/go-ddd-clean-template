@@ -201,7 +201,12 @@ func TestIntegration_ChangeRole(t *testing.T) {
 	})
 	userID := list.Users[0].ID
 
-	newRoleID := uuid.New()
+	var newRoleID uuid.UUID
+	err = testPool.QueryRow(ctx, "SELECT id FROM role WHERE name = 'manager' LIMIT 1").Scan(&newRoleID)
+	if err != nil {
+		t.Fatalf("fetch role: %v", err)
+	}
+
 	err = bc.ChangeRole.Handle(ctx, command.ChangeRoleCommand{
 		UserID: userID,
 		RoleID: newRoleID,

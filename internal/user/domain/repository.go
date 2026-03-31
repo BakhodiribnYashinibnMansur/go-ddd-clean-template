@@ -38,6 +38,7 @@ type UserRepository interface {
 	shared.Repository[User]
 	FindByPhone(ctx context.Context, phone Phone) (*User, error)
 	FindByEmail(ctx context.Context, email Email) (*User, error)
+	FindDefaultRoleID(ctx context.Context) (uuid.UUID, error)
 }
 
 // UserReadRepository provides read-only access returning lightweight UserView projections.

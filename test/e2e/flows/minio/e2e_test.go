@@ -27,19 +27,19 @@ func TestMinio_ComprehensiveFlow(t *testing.T) {
 	// Unique user for this test run
 	ts := time.Now().UnixNano()
 	username := fmt.Sprintf("minio_user_%d", ts)
-	phone := strconv.FormatInt(ts%1000000000000, 10)
-	password := "password123"
+	phone := "+" + strconv.FormatInt(ts%1000000000000, 10)
+	password := "P@ssw0rd!"
 
 	// 1. Sign Up
 	signupBody := fmt.Sprintf(`{"username":"%s","phone":"%s","password":"%s"}`, username, phone, password)
-	resp, err := http.Post(server.URL+"/api/v1/users/sign-up", "application/json", strings.NewReader(signupBody))
+	resp, err := http.Post(server.URL+"/api/v1/auth/sign-up", "application/json", strings.NewReader(signupBody))
 	require.NoError(t, err)
 	require.Equal(t, http.StatusCreated, resp.StatusCode)
 	resp.Body.Close()
 
 	// 2. Sign In
-	signinBody := fmt.Sprintf(`{"phone":"%s","password":"%s"}`, phone, password)
-	resp, err = http.Post(server.URL+"/api/v1/users/sign-in", "application/json", strings.NewReader(signinBody))
+	signinBody := fmt.Sprintf(`{"login":"%s","password":"%s","device_type":"desktop"}`, phone, password)
+	resp, err = http.Post(server.URL+"/api/v1/auth/sign-in", "application/json", strings.NewReader(signinBody))
 	require.NoError(t, err)
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 

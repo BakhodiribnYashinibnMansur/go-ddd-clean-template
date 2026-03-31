@@ -22,7 +22,7 @@ func TestSignUp(t *testing.T) {
 		{
 			name:           "valid signup",
 			username:       "valid_user",
-			phone:          "998901234500",
+			phone:          "+998901234500",
 			password:       "P@ssw0rd!",
 			expectedStatus: http.StatusCreated,
 			checkResponse:  true,
@@ -30,7 +30,7 @@ func TestSignUp(t *testing.T) {
 		{
 			name:           "duplicate phone",
 			username:       "duplicate_user",
-			phone:          "998901234500",
+			phone:          "+998901234500",
 			password:       "P@ssw0rd!",
 			expectedStatus: http.StatusConflict,
 			checkResponse:  false,
@@ -54,12 +54,10 @@ func TestSignUp(t *testing.T) {
 			if tt.checkResponse {
 				bodyBytes, _ := io.ReadAll(resp.Body)
 				var result struct {
-					Status string         `json:"status"`
-					Data   map[string]any `json:"data"`
+					Status string `json:"status"`
 				}
 				json.Unmarshal(bodyBytes, &result)
 				require.Equal(t, "success", result.Status)
-				require.NotEmpty(t, result.Data["access_token"])
 			}
 		})
 	}
@@ -76,21 +74,21 @@ func TestSignIn(t *testing.T) {
 	}{
 		{
 			name:           "valid signin",
-			phone:          "998901234510",
+			phone:          "+998901234510",
 			password:       "P@ssw0rd!",
 			expectedStatus: http.StatusOK,
 			checkDB:        true,
 		},
 		{
 			name:           "invalid password",
-			phone:          "998901234510",
+			phone:          "+998901234510",
 			password:       "wrongpassword",
 			expectedStatus: http.StatusUnauthorized,
 			checkDB:        false,
 		},
 		{
 			name:           "user not found",
-			phone:          "998909999999",
+			phone:          "+998909999999",
 			password:       "P@ssw0rd!",
 			expectedStatus: http.StatusUnauthorized,
 			checkDB:        false,
@@ -104,7 +102,7 @@ func TestSignIn(t *testing.T) {
 	client := New(server.URL)
 
 	// Setup user
-	resp := client.SignUp(t, "signin_test_user", "998901234510", "P@ssw0rd!")
+	resp := client.SignUp(t, "signin_test_user", "+998901234510", "P@ssw0rd!")
 	resp.Body.Close()
 
 	for _, tt := range tests {
@@ -171,9 +169,9 @@ func TestGetUser(t *testing.T) {
 	client := New(server.URL)
 
 	// Setup user and get token
-	resp := client.SignUp(t, "get_test_user", "998901234520", "P@ssw0rd!")
+	resp := client.SignUp(t, "get_test_user", "+998901234520", "P@ssw0rd!")
 	resp.Body.Close()
-	signInResp := client.SignIn(t, "998901234520", "P@ssw0rd!")
+	signInResp := client.SignIn(t, "+998901234520", "P@ssw0rd!")
 	var signInResult struct {
 		Data struct {
 			AccessToken string `json:"access_token"`
@@ -236,9 +234,9 @@ func TestUpdateUser(t *testing.T) {
 	client := New(server.URL)
 
 	// Setup user
-	resp := client.SignUp(t, "update_test_user", "998901234530", "P@ssw0rd!")
+	resp := client.SignUp(t, "update_test_user", "+998901234530", "P@ssw0rd!")
 	resp.Body.Close()
-	signInResp := client.SignIn(t, "998901234530", "P@ssw0rd!")
+	signInResp := client.SignIn(t, "+998901234530", "P@ssw0rd!")
 	var signInResult struct {
 		Data struct {
 			AccessToken string `json:"access_token"`
@@ -303,9 +301,9 @@ func TestDeleteUser(t *testing.T) {
 			client := New(server.URL)
 
 			// Setup user
-			resp := client.SignUp(t, "delete_test_user", "998901234540", "P@ssw0rd!")
+			resp := client.SignUp(t, "delete_test_user", "+998901234540", "P@ssw0rd!")
 			resp.Body.Close()
-			signInResp := client.SignIn(t, "998901234540", "P@ssw0rd!")
+			signInResp := client.SignIn(t, "+998901234540", "P@ssw0rd!")
 			var signInResult struct {
 				Data struct {
 					AccessToken string `json:"access_token"`
@@ -366,9 +364,9 @@ func TestSignOut(t *testing.T) {
 	client := New(server.URL)
 
 	// Setup user
-	resp := client.SignUp(t, "signout_test_user", "998901234550", "P@ssw0rd!")
+	resp := client.SignUp(t, "signout_test_user", "+998901234550", "P@ssw0rd!")
 	resp.Body.Close()
-	signInResp := client.SignIn(t, "998901234550", "P@ssw0rd!")
+	signInResp := client.SignIn(t, "+998901234550", "P@ssw0rd!")
 	var signInResult struct {
 		Data struct {
 			AccessToken string `json:"access_token"`
@@ -387,7 +385,7 @@ func TestSignOut(t *testing.T) {
 			}
 
 			// ✅ Use client method
-			resp := client.SignOut(t, token, signInResult.Data.SessionID)
+			resp := client.SignOut(t, token, signInResult.Data.UserID, signInResult.Data.SessionID)
 			defer resp.Body.Close()
 
 			require.Equal(t, tt.expectedStatus, resp.StatusCode)

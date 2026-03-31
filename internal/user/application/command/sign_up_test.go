@@ -34,8 +34,8 @@ func TestSignUpHandler_Handle(t *testing.T) {
 		t.Errorf("expected phone +998901234567, got %s", repo.savedUser.Phone().Value())
 	}
 
-	if repo.savedUser.IsApproved() {
-		t.Error("sign-up user should NOT be approved by default")
+	if !repo.savedUser.IsApproved() {
+		t.Error("sign-up user should be auto-approved")
 	}
 
 	if repo.savedUser.Email() == nil || repo.savedUser.Email().Value() != "newuser@example.com" {

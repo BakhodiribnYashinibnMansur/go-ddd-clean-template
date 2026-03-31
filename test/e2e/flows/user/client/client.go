@@ -26,7 +26,6 @@ func (c *Client) SignUp(t *testing.T, username, phone, password string) *http.Re
 		"username": username,
 		"phone":    phone,
 		"password": password,
-		"session":  map[string]any{},
 	})
 	req, err := http.NewRequest(http.MethodPost, c.endpoint+"/api/v1/auth/sign-up", bytes.NewBuffer(body))
 	if err != nil {
@@ -45,9 +44,9 @@ func (c *Client) SignUp(t *testing.T, username, phone, password string) *http.Re
 func (c *Client) SignIn(t *testing.T, phone, password string) *http.Response {
 	t.Helper()
 	body, _ := json.Marshal(map[string]any{
-		"login":    phone,
-		"password": password,
-		"session":  map[string]any{},
+		"login":       phone,
+		"password":    password,
+		"device_type": "desktop",
 	})
 	req, err := http.NewRequest(http.MethodPost, c.endpoint+"/api/v1/auth/sign-in", bytes.NewBuffer(body))
 	if err != nil {
@@ -63,9 +62,10 @@ func (c *Client) SignIn(t *testing.T, phone, password string) *http.Response {
 }
 
 // SignOut revokes the current session
-func (c *Client) SignOut(t *testing.T, token, sessionID string) *http.Response {
+func (c *Client) SignOut(t *testing.T, token, userID, sessionID string) *http.Response {
 	t.Helper()
 	body, _ := json.Marshal(map[string]string{
+		"user_id":    userID,
 		"session_id": sessionID,
 	})
 	req, err := http.NewRequest(http.MethodPost, c.endpoint+"/api/v1/auth/sign-out", bytes.NewBuffer(body))

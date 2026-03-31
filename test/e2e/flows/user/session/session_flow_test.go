@@ -33,7 +33,7 @@ func TestSession_ComprehensiveFlow(t *testing.T) {
 	}
 
 	ctx := &TestContext{
-		Phone:    "998901112233",
+		Phone:    "+998901112233",
 		Password: "P@ssw0rd!",
 		Username: "session_user",
 	}

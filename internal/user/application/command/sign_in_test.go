@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"gct/internal/user/domain"
+
+	"github.com/google/uuid"
 )
 
 func testJWTConfig(t *testing.T) JWTConfig {
@@ -166,6 +168,10 @@ func (m *signInMockRepo) FindByEmail(_ context.Context, email domain.Email) (*do
 		return m.user, nil
 	}
 	return nil, domain.ErrUserNotFound
+}
+
+func (m *signInMockRepo) FindDefaultRoleID(_ context.Context) (uuid.UUID, error) {
+	return uuid.New(), nil
 }
 
 func (m *signInMockRepo) Update(ctx context.Context, entity *domain.User) error {

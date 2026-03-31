@@ -60,6 +60,10 @@ func (m *mockUserRepo) FindByEmail(_ context.Context, email domain.Email) (*doma
 	return nil, domain.ErrUserNotFound
 }
 
+func (m *mockUserRepo) FindDefaultRoleID(_ context.Context) (uuid.UUID, error) {
+	return uuid.New(), nil
+}
+
 type mockEventBus struct {
 	publishedEvents []shared.DomainEvent
 }

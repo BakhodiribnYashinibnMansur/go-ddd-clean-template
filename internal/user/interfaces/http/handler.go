@@ -234,10 +234,12 @@ func (h *Handler) SignIn(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"user_id":       result.UserID,
-		"session_id":    result.SessionID,
-		"access_token":  result.AccessToken,
-		"refresh_token": result.RefreshToken,
+		"data": gin.H{
+			"user_id":       result.UserID,
+			"session_id":    result.SessionID,
+			"access_token":  result.AccessToken,
+			"refresh_token": result.RefreshToken,
+		},
 	})
 }
 
@@ -260,7 +262,7 @@ func (h *Handler) SignUp(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, gin.H{"success": true})
+	ctx.JSON(http.StatusCreated, gin.H{"status": "success"})
 }
 
 // SignOut handles POST /auth/sign-out.

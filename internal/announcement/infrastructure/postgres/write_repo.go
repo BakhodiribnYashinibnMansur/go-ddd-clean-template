@@ -19,7 +19,7 @@ const tableName = consts.TableAnnouncements
 
 var writeColumns = []string{
 	"id", "title", "content", "type", "is_active",
-	"starts_at", "ends_at", "created_at", "updated_at",
+	"priority", "starts_at", "ends_at", "created_at", "updated_at",
 }
 
 // AnnouncementWriteRepo implements domain.AnnouncementRepository using PostgreSQL.
@@ -47,6 +47,7 @@ func (r *AnnouncementWriteRepo) Save(ctx context.Context, a *domain.Announcement
 			a.Content().Uz,
 			"info",
 			a.Published(),
+			a.Priority(),
 			a.StartDate(), a.EndDate(),
 			a.CreatedAt(), a.UpdatedAt(),
 		).
@@ -84,6 +85,7 @@ func (r *AnnouncementWriteRepo) Update(ctx context.Context, a *domain.Announceme
 		Set("title", a.Title().Uz).
 		Set("content", a.Content().Uz).
 		Set("is_active", a.Published()).
+		Set("priority", a.Priority()).
 		Set("starts_at", a.StartDate()).
 		Set("ends_at", a.EndDate()).
 		Set("updated_at", a.UpdatedAt()).
@@ -192,13 +194,14 @@ func scanAnnouncement(row pgx.Row) (*domain.Announcement, error) {
 		content   string
 		aType     string
 		isActive  bool
+		priority  int
 		startsAt  *time.Time
 		endsAt    *time.Time
 		createdAt time.Time
 		updatedAt time.Time
 	)
 
-	err := row.Scan(&id, &title, &content, &aType, &isActive, &startsAt, &endsAt, &createdAt, &updatedAt)
+	err := row.Scan(&id, &title, &content, &aType, &isActive, &priority, &startsAt, &endsAt, &createdAt, &updatedAt)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
@@ -209,7 +212,7 @@ func scanAnnouncement(row pgx.Row) (*domain.Announcement, error) {
 		id, createdAt, updatedAt,
 		shared.Lang{Uz: title, Ru: title, En: title},
 		shared.Lang{Uz: content, Ru: content, En: content},
-		isActive, nil, 0, startsAt, endsAt,
+		isActive, nil, priority, startsAt, endsAt,
 	), nil
 }
 
@@ -220,13 +223,14 @@ func scanAnnouncementFromRows(rows pgx.Rows) (*domain.Announcement, error) {
 		content   string
 		aType     string
 		isActive  bool
+		priority  int
 		startsAt  *time.Time
 		endsAt    *time.Time
 		createdAt time.Time
 		updatedAt time.Time
 	)
 
-	err := rows.Scan(&id, &title, &content, &aType, &isActive, &startsAt, &endsAt, &createdAt, &updatedAt)
+	err := rows.Scan(&id, &title, &content, &aType, &isActive, &priority, &startsAt, &endsAt, &createdAt, &updatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -237,6 +241,6 @@ func scanAnnouncementFromRows(rows pgx.Rows) (*domain.Announcement, error) {
 		id, createdAt, updatedAt,
 		shared.Lang{Uz: title, Ru: title, En: title},
 		shared.Lang{Uz: content, Ru: content, En: content},
-		isActive, nil, 0, startsAt, endsAt,
+		isActive, nil, priority, startsAt, endsAt,
 	), nil
 }

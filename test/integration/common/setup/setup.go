@@ -130,6 +130,7 @@ func CleanDB(t *testing.T) {
 	var err error
 	for range 5 {
 		_, err = TestPG.Pool.Exec(ctx, `
+			DELETE FROM file_metadata;
 			DELETE FROM endpoint_history;
 			DELETE FROM audit_log;
 			DELETE FROM user_relation;

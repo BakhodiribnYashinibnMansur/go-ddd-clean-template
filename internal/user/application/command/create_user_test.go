@@ -52,6 +52,10 @@ func (m *mockUserRepository) FindByEmail(ctx context.Context, email domain.Email
 	return nil, domain.ErrUserNotFound
 }
 
+func (m *mockUserRepository) FindDefaultRoleID(_ context.Context) (uuid.UUID, error) {
+	return uuid.New(), nil
+}
+
 // --- Mock EventBus ---
 
 type mockEventBus struct {

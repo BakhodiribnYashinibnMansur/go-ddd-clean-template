@@ -449,6 +449,16 @@ func (r *UserWriteRepo) findSessionsByUserID(ctx context.Context, userID uuid.UU
 	return sessions, nil
 }
 
+// FindDefaultRoleID returns the ID of the "user" role (the default role for self-registration).
+func (r *UserWriteRepo) FindDefaultRoleID(ctx context.Context) (uuid.UUID, error) {
+	var id uuid.UUID
+	err := r.pool.QueryRow(ctx, "SELECT id FROM role WHERE name = 'user' LIMIT 1").Scan(&id)
+	if err != nil {
+		return uuid.Nil, apperrors.HandlePgError(err, "role", nil)
+	}
+	return id, nil
+}
+
 // scanUser scans a single user row (pgx.Row) and returns a User aggregate without sessions.
 func scanUser(row pgx.Row) (*domain.User, error) {
 	var (

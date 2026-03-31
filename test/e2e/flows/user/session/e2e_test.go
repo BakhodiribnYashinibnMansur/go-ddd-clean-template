@@ -51,10 +51,7 @@ func TestListSessions(t *testing.T) {
 			// Use unique phone/username to be safe
 			timestamp := time.Now().UnixNano()
 			username := fmt.Sprintf("list_%d", timestamp)
-			phone := fmt.Sprintf("90%d", timestamp%1000000000) // Ensure < 13 chars mostly, logic simplified
-			if len(phone) > 13 {
-				phone = phone[:13]
-			}
+			phone := fmt.Sprintf("+90%d", timestamp%1000000000)
 
 			resp := uClient.SignUp(t, username, phone, "P@ssw0rd!")
 			require.Equal(t, http.StatusCreated, resp.StatusCode, "SignUp failed")
@@ -144,10 +141,7 @@ func TestDeleteSession(t *testing.T) {
 			cleanDB(t)
 
 			timestamp := time.Now().UnixNano()
-			phone := fmt.Sprintf("91%d", timestamp%1000000000)
-			if len(phone) > 13 {
-				phone = phone[:13]
-			}
+			phone := fmt.Sprintf("+91%d", timestamp%1000000000)
 
 			resp := uClient.SignUp(t, "user_"+phone, phone, "P@ssw0rd!")
 			require.Equal(t, http.StatusCreated, resp.StatusCode, "SignUp failed")
@@ -230,10 +224,7 @@ func TestRevokeAllSessions(t *testing.T) {
 			cleanDB(t)
 
 			timestamp := time.Now().UnixNano()
-			phone := fmt.Sprintf("92%d", timestamp%1000000000)
-			if len(phone) > 13 {
-				phone = phone[:13]
-			}
+			phone := fmt.Sprintf("+92%d", timestamp%1000000000)
 
 			resp := uClient.SignUp(t, "user_"+phone, phone, "P@ssw0rd!")
 			require.Equal(t, http.StatusCreated, resp.StatusCode, "SignUp failed")

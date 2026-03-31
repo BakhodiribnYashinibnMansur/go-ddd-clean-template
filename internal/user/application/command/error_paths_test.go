@@ -267,6 +267,10 @@ func (m *signInErrorRepo) FindByEmail(_ context.Context, email domain.Email) (*d
 	return nil, domain.ErrUserNotFound
 }
 
+func (m *signInErrorRepo) FindDefaultRoleID(_ context.Context) (uuid.UUID, error) {
+	return uuid.New(), nil
+}
+
 func (m *signInErrorRepo) Update(_ context.Context, _ *domain.User) error {
 	return m.updateErr
 }

@@ -38,6 +38,7 @@ func ReconstructRuleGroup(id, flagID uuid.UUID, name, variation string, priority
 }
 
 func (rg *RuleGroup) AddCondition(c Condition) {
+	c.ruleGroupID = rg.id
 	rg.conditions = append(rg.conditions, c)
 }
 

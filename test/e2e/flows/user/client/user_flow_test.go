@@ -31,7 +31,7 @@ func TestUser_ComprehensiveFlow(t *testing.T) {
 	}
 
 	ctx := &TestContext{
-		Phone:    "998901234567",
+		Phone:    "+998901234567",
 		Password: "P@ssw0rd!",
 		Username: "testuser",
 	}
@@ -112,7 +112,7 @@ func TestUser_ComprehensiveFlow(t *testing.T) {
 			name: "Step 5: Sign Out",
 			run: func(t *testing.T, ctx *TestContext) {
 				t.Helper()
-				resp := client.SignOut(t, ctx.Token, ctx.SessionID)
+				resp := client.SignOut(t, ctx.Token, ctx.UserID, ctx.SessionID)
 				defer resp.Body.Close()
 				require.Equal(t, http.StatusOK, resp.StatusCode)
 			},

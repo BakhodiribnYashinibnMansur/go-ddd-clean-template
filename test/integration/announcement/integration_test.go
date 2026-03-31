@@ -1,15 +1,142 @@
 package announcement
 
-// TODO: This integration test needs rewriting for the DDD architecture.
-// The old imports have been removed during the DDD migration:
-//   - gct/internal/controller/restapi/v1/announcement -> use gct/internal/announcement/interfaces/http
-//   - gct/internal/domain -> use gct/internal/announcement/domain (or gct/internal/shared/domain)
-//   - gct/internal/repo -> repos are now per-BC under gct/internal/announcement/infrastructure/postgres
-//   - gct/internal/usecase -> use cases are now command/query handlers in gct/internal/announcement/application
-//
-// To rewrite:
-//   - Create announcement BC via announcement.NewBoundedContext(pool, eventBus, logger)
-//   - Create HTTP handler via announcementhttp.NewHandler(bc, logger)
-//   - Call handler methods (Create, Get, List, Update, Delete) directly on the DDD handler
-//   - Replace domain.CreateAnnouncementRequest with the DDD command types
-//   - See test/integration/user/ddd/ for a working example of DDD integration tests
+import (
+	"context"
+	"testing"
+
+	"gct/internal/announcement"
+	"gct/internal/announcement/application/command"
+	"gct/internal/announcement/application/query"
+	"gct/internal/announcement/domain"
+	shared "gct/internal/shared/domain"
+	"gct/internal/shared/infrastructure/eventbus"
+	"gct/internal/shared/infrastructure/logger"
+	"gct/test/integration/common/setup"
+)
+
+func newTestBC(t *testing.T) *announcement.BoundedContext {
+	t.Helper()
+	eb := eventbus.NewInMemoryEventBus()
+	l := logger.New("error")
+	return announcement.NewBoundedContext(setup.TestPG.Pool, eb, l)
+}
+
+func TestIntegration_CreateAndGetAnnouncement(t *testing.T) {
+	cleanDB(t)
+	bc := newTestBC(t)
+	ctx := context.Background()
+
+	err := bc.CreateAnnouncement.Handle(ctx, command.CreateAnnouncementCommand{
+		Title:    shared.Lang{Uz: "Test", Ru: "Тест", En: "Test"},
+		Content:  shared.Lang{Uz: "Mazmun", Ru: "Содержание", En: "Content"},
+		Priority: 1,
+	})
+	if err != nil {
+		t.Fatalf("CreateAnnouncement: %v", err)
+	}
+
+	result, err := bc.ListAnnouncements.Handle(ctx, query.ListAnnouncementsQuery{
+		Filter: domain.AnnouncementFilter{Limit: 10},
+	})
+	if err != nil {
+		t.Fatalf("ListAnnouncements: %v", err)
+	}
+	if result.Total != 1 {
+		t.Fatalf("expected 1 announcement, got %d", result.Total)
+	}
+
+	a := result.Announcements[0]
+	if a.Title.En != "Test" {
+		t.Errorf("expected title_en Test, got %s", a.Title.En)
+	}
+	if a.Priority != 1 {
+		t.Errorf("expected priority 1, got %d", a.Priority)
+	}
+
+	view, err := bc.GetAnnouncement.Handle(ctx, query.GetAnnouncementQuery{ID: a.ID})
+	if err != nil {
+		t.Fatalf("GetAnnouncement: %v", err)
+	}
+	if view.ID != a.ID {
+		t.Errorf("ID mismatch: %s vs %s", view.ID, a.ID)
+	}
+}
+
+func TestIntegration_UpdateAndPublishAnnouncement(t *testing.T) {
+	cleanDB(t)
+	bc := newTestBC(t)
+	ctx := context.Background()
+
+	err := bc.CreateAnnouncement.Handle(ctx, command.CreateAnnouncementCommand{
+		Title:    shared.Lang{Uz: "Draft", Ru: "Черновик", En: "Draft"},
+		Content:  shared.Lang{Uz: "Mazmun", Ru: "Содержание", En: "Content"},
+		Priority: 2,
+	})
+	if err != nil {
+		t.Fatalf("CreateAnnouncement: %v", err)
+	}
+
+	list, _ := bc.ListAnnouncements.Handle(ctx, query.ListAnnouncementsQuery{
+		Filter: domain.AnnouncementFilter{Limit: 10},
+	})
+	aID := list.Announcements[0].ID
+
+	if list.Announcements[0].Published {
+		t.Fatal("new announcement should not be published")
+	}
+
+	newTitle := shared.Lang{Uz: "Yangilangan", Ru: "Обновлено", En: "Updated"}
+	newPriority := 5
+	err = bc.UpdateAnnouncement.Handle(ctx, command.UpdateAnnouncementCommand{
+		ID:       aID,
+		Title:    &newTitle,
+		Priority: &newPriority,
+		Publish:  true,
+	})
+	if err != nil {
+		t.Fatalf("UpdateAnnouncement: %v", err)
+	}
+
+	view, _ := bc.GetAnnouncement.Handle(ctx, query.GetAnnouncementQuery{ID: aID})
+	if view.Title.Uz != "Yangilangan" {
+		t.Errorf("title not updated, got %s", view.Title.Uz)
+	}
+	if view.Priority != 5 {
+		t.Errorf("priority not updated, got %d", view.Priority)
+	}
+	if !view.Published {
+		t.Error("announcement should be published")
+	}
+}
+
+func TestIntegration_DeleteAnnouncement(t *testing.T) {
+	cleanDB(t)
+	bc := newTestBC(t)
+	ctx := context.Background()
+
+	err := bc.CreateAnnouncement.Handle(ctx, command.CreateAnnouncementCommand{
+		Title:    shared.Lang{Uz: "O'chirish", Ru: "Удалить", En: "Delete"},
+		Content:  shared.Lang{Uz: "Mazmun", Ru: "Содержание", En: "Content"},
+		Priority: 1,
+	})
+	if err != nil {
+		t.Fatalf("CreateAnnouncement: %v", err)
+	}
+
+	list, _ := bc.ListAnnouncements.Handle(ctx, query.ListAnnouncementsQuery{
+		Filter: domain.AnnouncementFilter{Limit: 10},
+	})
+	aID := list.Announcements[0].ID
+
+	err = bc.DeleteAnnouncement.Handle(ctx, command.DeleteAnnouncementCommand{ID: aID})
+	if err != nil {
+		t.Fatalf("DeleteAnnouncement: %v", err)
+	}
+
+	list2, _ := bc.ListAnnouncements.Handle(ctx, query.ListAnnouncementsQuery{
+		Filter: domain.AnnouncementFilter{Limit: 10},
+	})
+	if list2.Total != 0 {
+		t.Errorf("expected 0 announcements after delete, got %d", list2.Total)
+	}
+}

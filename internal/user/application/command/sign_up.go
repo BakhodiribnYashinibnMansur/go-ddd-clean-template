@@ -63,8 +63,13 @@ func (h *SignUpHandler) Handle(ctx context.Context, cmd SignUpCommand) error {
 		opts = append(opts, domain.WithUsername(*cmd.Username))
 	}
 
-	// NewUser sets isApproved=false by default.
+	// Self-registration: user is auto-approved with default role.
 	user := domain.NewUser(phone, password, opts...)
+	user.Approve()
+
+	if defaultRoleID, err := h.repo.FindDefaultRoleID(ctx); err == nil {
+		user.ChangeRole(defaultRoleID)
+	}
 
 	if err := h.repo.Save(ctx, user); err != nil {
 		h.logger.Errorf("failed to save user during sign-up: %v", err)

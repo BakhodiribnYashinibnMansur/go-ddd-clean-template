@@ -16,7 +16,7 @@ import (
 
 var readColumns = []string{
 	"id", "title", "content", "type", "is_active",
-	"starts_at", "ends_at", "created_at", "updated_at",
+	"priority", "starts_at", "ends_at", "created_at", "updated_at",
 }
 
 // AnnouncementReadRepo implements domain.AnnouncementReadRepository for the CQRS read side.
@@ -112,12 +112,13 @@ func scanAnnouncementView(row pgx.Row) (*domain.AnnouncementView, error) {
 		content   string
 		aType     string
 		isActive  bool
+		priority  int
 		startsAt  *time.Time
 		endsAt    *time.Time
 		createdAt time.Time
 		updatedAt time.Time
 	)
-	err := row.Scan(&id, &title, &content, &aType, &isActive, &startsAt, &endsAt, &createdAt, &updatedAt)
+	err := row.Scan(&id, &title, &content, &aType, &isActive, &priority, &startsAt, &endsAt, &createdAt, &updatedAt)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
@@ -127,7 +128,7 @@ func scanAnnouncementView(row pgx.Row) (*domain.AnnouncementView, error) {
 		TitleUz:   title, TitleRu: title, TitleEn: title,
 		ContentUz: content, ContentRu: content, ContentEn: content,
 		Published: isActive,
-		Priority:  0,
+		Priority:  priority,
 		StartDate: startsAt,
 		EndDate:   endsAt,
 		CreatedAt: createdAt,
@@ -142,12 +143,13 @@ func scanAnnouncementViewFromRows(rows pgx.Rows) (*domain.AnnouncementView, erro
 		content   string
 		aType     string
 		isActive  bool
+		priority  int
 		startsAt  *time.Time
 		endsAt    *time.Time
 		createdAt time.Time
 		updatedAt time.Time
 	)
-	err := rows.Scan(&id, &title, &content, &aType, &isActive, &startsAt, &endsAt, &createdAt, &updatedAt)
+	err := rows.Scan(&id, &title, &content, &aType, &isActive, &priority, &startsAt, &endsAt, &createdAt, &updatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -157,7 +159,7 @@ func scanAnnouncementViewFromRows(rows pgx.Rows) (*domain.AnnouncementView, erro
 		TitleUz:   title, TitleRu: title, TitleEn: title,
 		ContentUz: content, ContentRu: content, ContentEn: content,
 		Published: isActive,
-		Priority:  0,
+		Priority:  priority,
 		StartDate: startsAt,
 		EndDate:   endsAt,
 		CreatedAt: createdAt,
