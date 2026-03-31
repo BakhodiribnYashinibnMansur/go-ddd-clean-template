@@ -41,11 +41,12 @@ type Config struct {
 	Tracing      Tracing      `yaml:"tracing" envPrefix:"TRACING_"`           // Distributed tracing export settings.
 	Limiter      Limiter      `yaml:"limiter" envPrefix:"LIMITER_"`           // Global and per-IP rate limit rules.
 	Security     Security     `yaml:"security" envPrefix:"SECURITY_"`         // Cross-cutting safety flags.
-	FeatureFlag  FeatureFlag  `yaml:"feature_flag" envPrefix:"FEATURE_FLAG_"` // dynamic toggle controls.
+	// FeatureFlag configuration removed — flags are now managed via the DDD bounded context.
 	Asynq        AsynqConfig  `yaml:"asynq"`                                  // background task queue settings.
 	Seeder       Seeder       `yaml:"seeder" envPrefix:"SEEDER_"`             // Mock data generation parameters.
 	Middleware   Middleware   `yaml:"middleware"`                             // Middleware toggle flags.
 	Sqlc Sqlc `yaml:"sqlc" envPrefix:"SQLC_"` // SQL code generation settings.
+	SSE  SSE  `yaml:"sse" envPrefix:"SSE_"`   // Server-Sent Events streaming.
 }
 
 // Telegram holds credentials for interacting with the Telegram Bot API.

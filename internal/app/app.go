@@ -20,13 +20,17 @@ import (
 	authzmw "gct/internal/authz/interfaces/http/middleware"
 	integrationmw "gct/internal/integration/interfaces/http/middleware"
 	syserrmw "gct/internal/systemerror/interfaces/http/middleware"
+	"gct/internal/user/application/command"
 	usermw "gct/internal/user/interfaces/http/middleware"
 
+	"gct/internal/shared/application"
 	"gct/internal/shared/infrastructure/asynq"
 	"gct/internal/shared/infrastructure/db/postgres"
 	redispkg "gct/internal/shared/infrastructure/db/redis"
 	"gct/internal/shared/infrastructure/eventbus"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pubsub"
+	"gct/internal/shared/infrastructure/sse"
 	jwtpkg "gct/internal/shared/infrastructure/security/jwt"
 	httpserver "gct/internal/shared/infrastructure/server/http"
 	"gct/internal/shared/infrastructure/tracing"
@@ -85,15 +89,30 @@ func Run(cfg *config.Config) {
 	}
 	_ = asynqClient // used by asynq worker below
 
-	// 4. DDD Bootstrap — all bounded contexts
-	eventBus := eventbus.NewInMemoryEventBus()
+	// 4. Event Bus — Redis Streams if Redis enabled, otherwise in-memory fallback
+	var eventBusInstance application.EventBus
+	if redisclient != nil && cfg.SSE.Enabled {
+		eventBusInstance = eventbus.NewRedisStreamsEventBus(redisclient, cfg.SSE.StreamMaxLen)
+		l.Infoc(ctx, "EventBus: Redis Streams")
+	} else {
+		eventBusInstance = eventbus.NewInMemoryEventBus()
+		l.Infoc(ctx, "EventBus: In-Memory (dev mode)")
+	}
 
 	jwtPrivateKey, err := jwtpkg.ParseRSAPrivateKey(cfg.JWT.PrivateKey)
 	if err != nil {
 		l.Fatalw("failed to parse RSA private key for DDD", "error", err)
 	}
 
-	dddBCs := NewDDDBoundedContexts(pg.Pool, eventBus, l, jwtPrivateKey, cfg.JWT.Issuer, cfg.JWT.AccessTTL, cfg.JWT.RefreshTTL)
+	dddBCs, err := NewDDDBoundedContexts(ctx, pg.Pool, eventBusInstance, l, command.JWTConfig{
+		PrivateKey: jwtPrivateKey,
+		Issuer:     cfg.JWT.Issuer,
+		AccessTTL:  cfg.JWT.AccessTTL,
+		RefreshTTL: cfg.JWT.RefreshTTL,
+	})
+	if err != nil {
+		l.Fatalw("failed to initialize DDD bounded contexts", "error", err)
+	}
 
 	// 4.1 Initialize Error Codes
 	initErrorCodes(ctx, dddBCs.ErrorCode, l)
@@ -117,8 +136,73 @@ func Run(cfg *config.Config) {
 		l.Infoc(ctx, "Asynq worker is disabled in configuration")
 	}
 
-	// 7. HTTP Router (pure DDD)
-	handler := initRouter(cfg, dddBCs, redisclient, pg, l)
+	// 7. SSE Hub + Bridge + Pub/Sub Listeners
+	var sseHub *sse.Hub
+	if redisclient != nil && cfg.SSE.Enabled {
+		sseHub = sse.NewHub(cfg.SSE.ClientBufferSize)
+		bridge := sse.NewBridge(redisclient, sseHub)
+
+		// SSE bridges for stream → hub
+		go bridge.Listen(ctx, "audit", "signal:audit_log.created", "stream:audit_log.created")
+		go bridge.Listen(ctx, "monitoring", "signal:system_error.recorded", "stream:system_error.recorded")
+
+		// Notification bridge (user-specific routing)
+		go func() {
+			ps := redisclient.Subscribe(ctx, "signal:notification.sent")
+			defer ps.Close()
+
+			lastID := "0"
+			psCh := ps.Channel()
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case _, ok := <-psCh:
+					if !ok {
+						return
+					}
+					msgs, err := redisclient.XRead(ctx, &redis.XReadArgs{
+						Streams: []string{"stream:notification.sent", lastID},
+						Count:   100,
+					}).Result()
+					if err != nil {
+						continue
+					}
+					for _, stream := range msgs {
+						for _, msg := range stream.Messages {
+							lastID = msg.ID
+							data, ok := msg.Values["data"]
+							if !ok {
+								continue
+							}
+							// Broadcast to all connected notification clients
+							sseHub.Broadcast("notifications", sse.Message{
+								ID:    msg.ID,
+								Event: "notification",
+								Data:  []byte(data.(string)),
+							})
+						}
+					}
+				}
+			}
+		}()
+
+		// Internal listeners
+		ffListener := pubsub.NewFeatureFlagListener(redisclient, func() {
+			l.Infoc(ctx, "Feature flag cache invalidated via Pub/Sub")
+		})
+		go ffListener.Start(ctx)
+
+		cacheListener := pubsub.NewCacheInvalidationListener(redisclient, func(key string) {
+			l.Infoc(ctx, "Cache invalidated via Pub/Sub", "key", key)
+		})
+		go cacheListener.Start(ctx)
+
+		l.Infoc(ctx, "SSE Hub and Pub/Sub listeners started")
+	}
+
+	// 8. HTTP Router (pure DDD)
+	handler := initRouter(cfg, dddBCs, redisclient, pg, sseHub, l)
 
 	httpServer := httpserver.NewServer()
 	startServer(cfg.HTTP.Port, handler, httpServer, l)
@@ -132,7 +216,7 @@ func Run(cfg *config.Config) {
 }
 
 // initRouter configures the Gin engine with DDD middleware and routes.
-func initRouter(cfg *config.Config, bcs *DDDBoundedContexts, redisClient *redis.Client, pg *postgres.Postgres, l logger.Log) *gin.Engine {
+func initRouter(cfg *config.Config, bcs *DDDBoundedContexts, redisClient *redis.Client, pg *postgres.Postgres, sseHub *sse.Hub, l logger.Log) *gin.Engine {
 	gin.SetMode(cfg.HTTP.GinMode)
 
 	if cfg.Log.ShowGin {
@@ -171,6 +255,13 @@ func initRouter(cfg *config.Config, bcs *DDDBoundedContexts, redisClient *redis.
 	csrfMW := sharedmw.HybridMiddleware(l, consts.CookieCsrfToken)
 
 	RegisterDDDRoutes(handler, bcs, authMW.AuthClientAccess, authzMiddleware.Authz, csrfMW, l)
+
+	// === SSE streaming routes ===
+	if sseHub != nil {
+		heartbeat := time.Duration(cfg.SSE.HeartbeatInterval) * time.Second
+		sseHandler := sse.NewHandler(sseHub, heartbeat)
+		sse.RegisterRoutes(handler, sseHandler, authMW.AuthClientAccess, authzMiddleware.Authz)
+	}
 
 	return handler
 }
