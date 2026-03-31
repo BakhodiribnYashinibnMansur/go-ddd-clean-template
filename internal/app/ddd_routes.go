@@ -8,13 +8,12 @@ import (
 	authzhttp "gct/internal/authz/interfaces/http"
 	dashboardhttp "gct/internal/dashboard/interfaces/http"
 	dataexporthttp "gct/internal/dataexport/interfaces/http"
-	// emailtemplatehttp "gct/internal/emailtemplate/interfaces/http" // TODO: BC not yet created
 	errorcodehttp "gct/internal/errorcode/interfaces/http"
 	featureflaghttp "gct/internal/featureflag/interfaces/http"
 	filehttp "gct/internal/file/interfaces/http"
 	integrationhttp "gct/internal/integration/interfaces/http"
 	iprulehttp "gct/internal/iprule/interfaces/http"
-	jobhttp "gct/internal/job/interfaces/http"
+
 	metrichttp "gct/internal/metric/interfaces/http"
 	notificationhttp "gct/internal/notification/interfaces/http"
 	ratelimithttp "gct/internal/ratelimit/interfaces/http"
@@ -24,14 +23,13 @@ import (
 	translationhttp "gct/internal/translation/interfaces/http"
 	userhttp "gct/internal/user/interfaces/http"
 	usersettinghttp "gct/internal/usersetting/interfaces/http"
-	webhookhttp "gct/internal/webhook/interfaces/http"
+
 
 	"github.com/gin-gonic/gin"
 )
 
-// RegisterDDDRoutes registers HTTP routes for all DDD bounded contexts.
+// RegisterDDDRoutes registers all HTTP routes for DDD bounded contexts.
 func RegisterDDDRoutes(router *gin.Engine, bcs *DDDBoundedContexts, authMW, authzMW, csrfMW gin.HandlerFunc, l logger.Log) {
-	// Create handlers
 	userHandler := userhttp.NewHandler(bcs.User, l)
 	authzHandler := authzhttp.NewHandler(bcs.Authz, l)
 	sessionHandler := sessionhttp.NewHandler(bcs.Session, l)
@@ -41,39 +39,38 @@ func RegisterDDDRoutes(router *gin.Engine, bcs *DDDBoundedContexts, authMW, auth
 	metricHandler := metrichttp.NewHandler(bcs.Metric, l)
 	ffHandler := featureflaghttp.NewHandler(bcs.FeatureFlag, l)
 	integrationHandler := integrationhttp.NewHandler(bcs.Integration, l)
-	webhookHandler := webhookhttp.NewHandler(bcs.Webhook, l)
+
 	notifHandler := notificationhttp.NewHandler(bcs.Notification, l)
-	// emailHandler := emailtemplatehttp.NewHandler(bcs.EmailTemplate, l) // TODO: BC not yet created
 	announcementHandler := announcementhttp.NewHandler(bcs.Announcement, l)
 	translationHandler := translationhttp.NewHandler(bcs.Translation, l)
 	siteSettingHandler := sitesettinghttp.NewHandler(bcs.SiteSetting, l)
 	rateLimitHandler := ratelimithttp.NewHandler(bcs.RateLimit, l)
 	ipRuleHandler := iprulehttp.NewHandler(bcs.IPRule, l)
-	jobHandler := jobhttp.NewHandler(bcs.Job, l)
+
 	dataExportHandler := dataexporthttp.NewHandler(bcs.DataExport, l)
 	fileHandler := filehttp.NewHandler(bcs.File, l)
 	userSettingHandler := usersettinghttp.NewHandler(bcs.UserSetting, l)
 	errorCodeHandler := errorcodehttp.NewHandler(bcs.ErrorCode, l)
 
-	// === Public routes (no auth) ===
+	// Public routes
 	auth := router.Group("/api/v1/auth")
 	{
 		auth.POST("/sign-in", userHandler.SignIn)
 		auth.POST("/sign-up", userHandler.SignUp)
 	}
 
-	// === Auth-only (sign-out) ===
+	// Auth-only
 	authOnly := router.Group("/api/v1/auth")
 	authOnly.Use(authMW)
 	{
 		authOnly.POST("/sign-out", userHandler.SignOut)
 	}
 
-	// === Protected routes (auth + authz + csrf) ===
+	// Protected routes
+	protected := router.Group("/api/v1")
+	protected.Use(authMW, authzMW, csrfMW)
 
-	// Users
-	users := router.Group("/api/v1/users")
-	users.Use(authMW, authzMW, csrfMW)
+	users := protected.Group("/users")
 	{
 		users.POST("", userHandler.Create)
 		users.GET("", userHandler.List)
@@ -85,9 +82,7 @@ func RegisterDDDRoutes(router *gin.Engine, bcs *DDDBoundedContexts, authMW, auth
 		users.POST("/bulk-action", userHandler.BulkAction)
 	}
 
-	// Roles
-	roles := router.Group("/api/v1/roles")
-	roles.Use(authMW, authzMW, csrfMW)
+	roles := protected.Group("/roles")
 	{
 		roles.POST("", authzHandler.CreateRole)
 		roles.GET("", authzHandler.ListRoles)
@@ -97,9 +92,7 @@ func RegisterDDDRoutes(router *gin.Engine, bcs *DDDBoundedContexts, authMW, auth
 		roles.POST("/:id/permissions", authzHandler.AssignPermission)
 	}
 
-	// Permissions
-	permissions := router.Group("/api/v1/permissions")
-	permissions.Use(authMW, authzMW, csrfMW)
+	permissions := protected.Group("/permissions")
 	{
 		permissions.POST("", authzHandler.CreatePermission)
 		permissions.GET("", authzHandler.ListPermissions)
@@ -107,9 +100,7 @@ func RegisterDDDRoutes(router *gin.Engine, bcs *DDDBoundedContexts, authMW, auth
 		permissions.POST("/:id/scopes", authzHandler.AssignScope)
 	}
 
-	// Policies
-	policies := router.Group("/api/v1/policies")
-	policies.Use(authMW, authzMW, csrfMW)
+	policies := protected.Group("/policies")
 	{
 		policies.POST("", authzHandler.CreatePolicy)
 		policies.GET("", authzHandler.ListPolicies)
@@ -118,47 +109,35 @@ func RegisterDDDRoutes(router *gin.Engine, bcs *DDDBoundedContexts, authMW, auth
 		policies.POST("/:id/toggle", authzHandler.TogglePolicy)
 	}
 
-	// Scopes
-	scopes := router.Group("/api/v1/scopes")
-	scopes.Use(authMW, authzMW, csrfMW)
+	scopes := protected.Group("/scopes")
 	{
 		scopes.POST("", authzHandler.CreateScope)
 		scopes.GET("", authzHandler.ListScopes)
 		scopes.DELETE("", authzHandler.DeleteScope)
 	}
 
-	// Sessions
-	sessions := router.Group("/api/v1/sessions")
-	sessions.Use(authMW, authzMW, csrfMW)
+	sessions := protected.Group("/sessions")
 	{
 		sessions.GET("", sessionHandler.List)
 		sessions.GET("/:id", sessionHandler.Get)
 	}
 
-	// Audit Logs
-	auditLogs := router.Group("/api/v1/audit-logs")
-	auditLogs.Use(authMW, authzMW, csrfMW)
+	auditLogs := protected.Group("/audit-logs")
 	{
 		auditLogs.GET("", auditHandler.ListAuditLogs)
 	}
 
-	// Endpoint History
-	endpointHistory := router.Group("/api/v1/endpoint-history")
-	endpointHistory.Use(authMW, authzMW, csrfMW)
+	endpointHistory := protected.Group("/endpoint-history")
 	{
 		endpointHistory.GET("", auditHandler.ListEndpointHistory)
 	}
 
-	// Dashboard
-	dashboard := router.Group("/api/v1/dashboard")
-	dashboard.Use(authMW, authzMW, csrfMW)
+	dashboard := protected.Group("/dashboard")
 	{
 		dashboard.GET("/stats", dashboardHandler.GetStats)
 	}
 
-	// System Errors
-	systemErrors := router.Group("/api/v1/system-errors")
-	systemErrors.Use(authMW, authzMW, csrfMW)
+	systemErrors := protected.Group("/system-errors")
 	{
 		systemErrors.POST("", sysErrHandler.Create)
 		systemErrors.GET("", sysErrHandler.List)
@@ -166,28 +145,15 @@ func RegisterDDDRoutes(router *gin.Engine, bcs *DDDBoundedContexts, authMW, auth
 		systemErrors.POST("/:id/resolve", sysErrHandler.Resolve)
 	}
 
-	// Metrics
-	metrics := router.Group("/api/v1/metrics")
-	metrics.Use(authMW, authzMW, csrfMW)
+	metrics := protected.Group("/metrics")
 	{
 		metrics.POST("", metricHandler.Create)
 		metrics.GET("", metricHandler.List)
 	}
 
-	// Feature Flags
-	featureFlags := router.Group("/api/v1/feature-flags")
-	featureFlags.Use(authMW, authzMW, csrfMW)
-	{
-		featureFlags.POST("", ffHandler.Create)
-		featureFlags.GET("", ffHandler.List)
-		featureFlags.GET("/:id", ffHandler.Get)
-		featureFlags.PATCH("/:id", ffHandler.Update)
-		featureFlags.DELETE("/:id", ffHandler.Delete)
-	}
+	ffHandler.RegisterRoutes(protected)
 
-	// Integrations
-	integrations := router.Group("/api/v1/integrations")
-	integrations.Use(authMW, authzMW, csrfMW)
+	integrations := protected.Group("/integrations")
 	{
 		integrations.POST("", integrationHandler.Create)
 		integrations.GET("", integrationHandler.List)
@@ -196,20 +162,8 @@ func RegisterDDDRoutes(router *gin.Engine, bcs *DDDBoundedContexts, authMW, auth
 		integrations.DELETE("/:id", integrationHandler.Delete)
 	}
 
-	// Webhooks
-	webhooks := router.Group("/api/v1/webhooks")
-	webhooks.Use(authMW, authzMW, csrfMW)
-	{
-		webhooks.POST("", webhookHandler.Create)
-		webhooks.GET("", webhookHandler.List)
-		webhooks.GET("/:id", webhookHandler.Get)
-		webhooks.PATCH("/:id", webhookHandler.Update)
-		webhooks.DELETE("/:id", webhookHandler.Delete)
-	}
 
-	// Notifications
-	notifications := router.Group("/api/v1/notifications")
-	notifications.Use(authMW, authzMW, csrfMW)
+	notifications := protected.Group("/notifications")
 	{
 		notifications.POST("", notifHandler.Create)
 		notifications.GET("", notifHandler.List)
@@ -217,20 +171,7 @@ func RegisterDDDRoutes(router *gin.Engine, bcs *DDDBoundedContexts, authMW, auth
 		notifications.DELETE("/:id", notifHandler.Delete)
 	}
 
-	// Email Templates — TODO: BC not yet created
-	// emailTemplates := router.Group("/api/v1/email-templates")
-	// emailTemplates.Use(authMW, authzMW, csrfMW)
-	// {
-	// 	emailTemplates.POST("", emailHandler.Create)
-	// 	emailTemplates.GET("", emailHandler.List)
-	// 	emailTemplates.GET("/:id", emailHandler.Get)
-	// 	emailTemplates.PATCH("/:id", emailHandler.Update)
-	// 	emailTemplates.DELETE("/:id", emailHandler.Delete)
-	// }
-
-	// Announcements
-	announcements := router.Group("/api/v1/announcements")
-	announcements.Use(authMW, authzMW, csrfMW)
+	announcements := protected.Group("/announcements")
 	{
 		announcements.POST("", announcementHandler.Create)
 		announcements.GET("", announcementHandler.List)
@@ -239,9 +180,7 @@ func RegisterDDDRoutes(router *gin.Engine, bcs *DDDBoundedContexts, authMW, auth
 		announcements.DELETE("/:id", announcementHandler.Delete)
 	}
 
-	// Translations
-	translations := router.Group("/api/v1/translations")
-	translations.Use(authMW, authzMW, csrfMW)
+	translations := protected.Group("/translations")
 	{
 		translations.POST("", translationHandler.Create)
 		translations.GET("", translationHandler.List)
@@ -250,9 +189,7 @@ func RegisterDDDRoutes(router *gin.Engine, bcs *DDDBoundedContexts, authMW, auth
 		translations.DELETE("/:id", translationHandler.Delete)
 	}
 
-	// Site Settings
-	siteSettings := router.Group("/api/v1/site-settings")
-	siteSettings.Use(authMW, authzMW, csrfMW)
+	siteSettings := protected.Group("/site-settings")
 	{
 		siteSettings.POST("", siteSettingHandler.Create)
 		siteSettings.GET("", siteSettingHandler.List)
@@ -261,9 +198,7 @@ func RegisterDDDRoutes(router *gin.Engine, bcs *DDDBoundedContexts, authMW, auth
 		siteSettings.DELETE("/:id", siteSettingHandler.Delete)
 	}
 
-	// Rate Limits
-	rateLimits := router.Group("/api/v1/rate-limits")
-	rateLimits.Use(authMW, authzMW, csrfMW)
+	rateLimits := protected.Group("/rate-limits")
 	{
 		rateLimits.POST("", rateLimitHandler.Create)
 		rateLimits.GET("", rateLimitHandler.List)
@@ -272,9 +207,7 @@ func RegisterDDDRoutes(router *gin.Engine, bcs *DDDBoundedContexts, authMW, auth
 		rateLimits.DELETE("/:id", rateLimitHandler.Delete)
 	}
 
-	// IP Rules
-	ipRules := router.Group("/api/v1/ip-rules")
-	ipRules.Use(authMW, authzMW, csrfMW)
+	ipRules := protected.Group("/ip-rules")
 	{
 		ipRules.POST("", ipRuleHandler.Create)
 		ipRules.GET("", ipRuleHandler.List)
@@ -283,20 +216,8 @@ func RegisterDDDRoutes(router *gin.Engine, bcs *DDDBoundedContexts, authMW, auth
 		ipRules.DELETE("/:id", ipRuleHandler.Delete)
 	}
 
-	// Jobs
-	jobs := router.Group("/api/v1/jobs")
-	jobs.Use(authMW, authzMW, csrfMW)
-	{
-		jobs.POST("", jobHandler.Create)
-		jobs.GET("", jobHandler.List)
-		jobs.GET("/:id", jobHandler.Get)
-		jobs.PATCH("/:id", jobHandler.Update)
-		jobs.DELETE("/:id", jobHandler.Delete)
-	}
 
-	// Data Exports
-	dataExports := router.Group("/api/v1/data-exports")
-	dataExports.Use(authMW, authzMW, csrfMW)
+	dataExports := protected.Group("/data-exports")
 	{
 		dataExports.POST("", dataExportHandler.Create)
 		dataExports.GET("", dataExportHandler.List)
@@ -305,27 +226,21 @@ func RegisterDDDRoutes(router *gin.Engine, bcs *DDDBoundedContexts, authMW, auth
 		dataExports.DELETE("/:id", dataExportHandler.Delete)
 	}
 
-	// Files
-	files := router.Group("/api/v1/files")
-	files.Use(authMW, authzMW, csrfMW)
+	files := protected.Group("/files")
 	{
 		files.POST("", fileHandler.Create)
 		files.GET("", fileHandler.List)
 		files.GET("/:id", fileHandler.Get)
 	}
 
-	// User Settings
-	userSettings := router.Group("/api/v1/user-settings")
-	userSettings.Use(authMW, authzMW, csrfMW)
+	userSettings := protected.Group("/user-settings")
 	{
 		userSettings.POST("", userSettingHandler.Upsert)
 		userSettings.GET("", userSettingHandler.List)
 		userSettings.DELETE("/:id", userSettingHandler.Delete)
 	}
 
-	// Error Codes
-	errorCodes := router.Group("/api/v1/error-codes")
-	errorCodes.Use(authMW, authzMW, csrfMW)
+	errorCodes := protected.Group("/error-codes")
 	{
 		errorCodes.POST("", errorCodeHandler.Create)
 		errorCodes.GET("", errorCodeHandler.List)

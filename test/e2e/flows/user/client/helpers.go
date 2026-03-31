@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"net/http/httptest"
 
 	"gct/internal/app"
@@ -10,6 +11,7 @@ import (
 	"gct/internal/shared/infrastructure/eventbus"
 	"gct/internal/shared/infrastructure/logger"
 	jwtpkg "gct/internal/shared/infrastructure/security/jwt"
+	"gct/internal/user/application/command"
 	usermw "gct/internal/user/interfaces/http/middleware"
 	"gct/test/e2e/common/setup"
 
@@ -26,10 +28,17 @@ func startTestServer() *httptest.Server {
 		panic("failed to parse RSA private key: " + err.Error())
 	}
 
-	bcs := app.NewDDDBoundedContexts(
-		setup.TestPG.Pool, eventBus, l, jwtPrivateKey,
-		setup.TestCfg.JWT.Issuer, setup.TestCfg.JWT.AccessTTL, setup.TestCfg.JWT.RefreshTTL,
+	bcs, err := app.NewDDDBoundedContexts(
+		context.Background(), setup.TestPG.Pool, eventBus, l, command.JWTConfig{
+			PrivateKey: jwtPrivateKey,
+			Issuer:     setup.TestCfg.JWT.Issuer,
+			AccessTTL:  setup.TestCfg.JWT.AccessTTL,
+			RefreshTTL: setup.TestCfg.JWT.RefreshTTL,
+		},
 	)
+	if err != nil {
+		panic("failed to initialize DDD bounded contexts: " + err.Error())
+	}
 
 	handler := gin.New()
 

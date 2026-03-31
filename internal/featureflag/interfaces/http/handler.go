@@ -34,9 +34,12 @@ func (h *Handler) Create(ctx *gin.Context) {
 	}
 	cmd := command.CreateCommand{
 		Name:              req.Name,
+		Key:               req.Key,
 		Description:       req.Description,
-		Enabled:           req.Enabled,
+		FlagType:          req.FlagType,
+		DefaultValue:      req.DefaultValue,
 		RolloutPercentage: req.RolloutPercentage,
+		IsActive:          req.IsActive,
 	}
 	if err := h.bc.CreateFlag.Handle(ctx.Request.Context(), cmd); err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -91,9 +94,12 @@ func (h *Handler) Update(ctx *gin.Context) {
 	cmd := command.UpdateCommand{
 		ID:                id,
 		Name:              req.Name,
+		Key:               req.Key,
 		Description:       req.Description,
-		Enabled:           req.Enabled,
+		FlagType:          req.FlagType,
+		DefaultValue:      req.DefaultValue,
 		RolloutPercentage: req.RolloutPercentage,
+		IsActive:          req.IsActive,
 	}
 	if err := h.bc.UpdateFlag.Handle(ctx.Request.Context(), cmd); err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -110,6 +116,95 @@ func (h *Handler) Delete(ctx *gin.Context) {
 		return
 	}
 	if err := h.bc.DeleteFlag.Handle(ctx.Request.Context(), command.DeleteCommand{ID: id}); err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{"success": true})
+}
+
+// CreateRuleGroup adds a rule group to a feature flag.
+func (h *Handler) CreateRuleGroup(ctx *gin.Context) {
+	flagID, err := uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		return
+	}
+	var req CreateRuleGroupRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	conditions := make([]command.ConditionInput, len(req.Conditions))
+	for i, c := range req.Conditions {
+		conditions[i] = command.ConditionInput{
+			Attribute: c.Attribute,
+			Operator:  c.Operator,
+			Value:     c.Value,
+		}
+	}
+
+	cmd := command.CreateRuleGroupCommand{
+		FlagID:     flagID,
+		Name:       req.Name,
+		Variation:  req.Variation,
+		Priority:   req.Priority,
+		Conditions: conditions,
+	}
+	if err := h.bc.CreateRuleGroup.Handle(ctx.Request.Context(), cmd); err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	ctx.JSON(http.StatusCreated, gin.H{"success": true})
+}
+
+// UpdateRuleGroup updates an existing rule group.
+func (h *Handler) UpdateRuleGroup(ctx *gin.Context) {
+	groupID, err := uuid.Parse(ctx.Param("groupId"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid groupId"})
+		return
+	}
+	var req UpdateRuleGroupRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	cmd := command.UpdateRuleGroupCommand{
+		ID:        groupID,
+		Name:      req.Name,
+		Variation: req.Variation,
+		Priority:  req.Priority,
+	}
+
+	if req.Conditions != nil {
+		conditions := make([]command.ConditionInput, len(*req.Conditions))
+		for i, c := range *req.Conditions {
+			conditions[i] = command.ConditionInput{
+				Attribute: c.Attribute,
+				Operator:  c.Operator,
+				Value:     c.Value,
+			}
+		}
+		cmd.Conditions = &conditions
+	}
+
+	if err := h.bc.UpdateRuleGroup.Handle(ctx.Request.Context(), cmd); err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{"success": true})
+}
+
+// DeleteRuleGroup removes a rule group.
+func (h *Handler) DeleteRuleGroup(ctx *gin.Context) {
+	groupID, err := uuid.Parse(ctx.Param("groupId"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid groupId"})
+		return
+	}
+	if err := h.bc.DeleteRuleGroup.Handle(ctx.Request.Context(), command.DeleteRuleGroupCommand{ID: groupID}); err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

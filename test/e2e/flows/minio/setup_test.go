@@ -1,18 +1,19 @@
 package minio
 
-// TODO: This e2e test needs rewriting for the DDD architecture.
-// The old imports (gct/internal/controller/restapi, gct/internal/repo,
-// gct/internal/usecase) have been removed during the DDD migration.
-//
-// To rewrite startTestServer:
-//   - Use gct/internal/app.NewDDDBoundedContexts to create bounded contexts
-//   - Use gct/internal/app.RegisterDDDRoutes to wire HTTP routes
-//   - See test/e2e/flows/user/client/helpers.go for a working DDD example
-
 import (
+	"context"
 	"net/http/httptest"
 	"testing"
 
+	"gct/internal/app"
+	authzmw "gct/internal/authz/interfaces/http/middleware"
+	"gct/internal/shared/domain/consts"
+	sharedmw "gct/internal/shared/infrastructure/middleware"
+	"gct/internal/shared/infrastructure/eventbus"
+	"gct/internal/shared/infrastructure/logger"
+	jwtpkg "gct/internal/shared/infrastructure/security/jwt"
+	"gct/internal/user/application/command"
+	usermw "gct/internal/user/interfaces/http/middleware"
 	"gct/test/e2e/common/setup"
 
 	"github.com/gin-gonic/gin"
@@ -27,17 +28,36 @@ func cleanDB(t *testing.T) {
 	setup.CleanDB(t)
 }
 
-// startTestServer is a stub that panics until rewritten for DDD.
-// TODO: Rewrite using DDD bootstrap (see test/e2e/flows/user/client/helpers.go).
 func startTestServer() *httptest.Server {
+	l := logger.New("debug")
+
+	eventBus := eventbus.NewInMemoryEventBus()
+	jwtPrivateKey, err := jwtpkg.ParseRSAPrivateKey(setup.TestCfg.JWT.PrivateKey)
+	if err != nil {
+		panic("failed to parse RSA private key: " + err.Error())
+	}
+
+	bcs, err := app.NewDDDBoundedContexts(
+		context.Background(), setup.TestPG.Pool, eventBus, l, command.JWTConfig{
+			PrivateKey: jwtPrivateKey,
+			Issuer:     setup.TestCfg.JWT.Issuer,
+			AccessTTL:  setup.TestCfg.JWT.AccessTTL,
+			RefreshTTL: setup.TestCfg.JWT.RefreshTTL,
+		},
+	)
+	if err != nil {
+		panic("failed to initialize DDD bounded contexts: " + err.Error())
+	}
+
 	handler := gin.New()
-	// TODO: Wire DDD bounded contexts and routes here.
-	// Example from test/e2e/flows/user/client/helpers.go:
-	//   eventBus := eventbus.NewInMemoryEventBus()
-	//   jwtPrivateKey, _ := jwtpkg.ParseRSAPrivateKey(setup.TestCfg.JWT.PrivateKey)
-	//   bcs := app.NewDDDBoundedContexts(setup.TestPG.Pool, eventBus, l, jwtPrivateKey, ...)
-	//   app.RegisterDDDRoutes(handler, bcs, authMW, authzMW, csrfMW, l)
-	// TODO: Wire DDD bounded contexts, then remove this panic.
-	_ = handler
-	panic("startTestServer: not yet rewritten for DDD architecture — see TODO in setup_test.go")
+
+	sharedmw.Setup(handler, setup.TestCfg, setup.TestRedis, nil, l)
+
+	authMW := usermw.NewAuthMiddleware(bcs.User.FindSession, bcs.User.FindUserForAuth, setup.TestCfg, l)
+	authzMiddleware := authzmw.NewAuthzMiddleware(bcs.Authz.CheckAccess, bcs.User.FindUserForAuth, l)
+	csrfMW := sharedmw.HybridMiddleware(l, consts.CookieCsrfToken)
+
+	app.RegisterDDDRoutes(handler, bcs, authMW.AuthClientAccess, authzMiddleware.Authz, csrfMW, l)
+
+	return httptest.NewServer(handler)
 }
