@@ -11,14 +11,11 @@ import (
 )
 
 // DeleteCommand represents an intent to permanently remove a feature flag.
-// Once deleted, any code paths checking this flag will no longer find it — callers should ensure
-// application code handles missing flags gracefully (e.g., defaulting to disabled).
 type DeleteCommand struct {
 	ID uuid.UUID
 }
 
 // DeleteHandler performs hard deletion of a feature flag via the repository.
-// Despite having an event bus dependency, no events are currently emitted on deletion.
 type DeleteHandler struct {
 	repo     domain.FeatureFlagRepository
 	eventBus application.EventBus
@@ -38,12 +35,15 @@ func NewDeleteHandler(
 	}
 }
 
-// Handle deletes the feature flag identified by cmd.ID.
-// Returns nil on success; propagates repository errors (e.g., not found) to the caller.
+// Handle deletes the feature flag and publishes a FlagDeleted event.
 func (h *DeleteHandler) Handle(ctx context.Context, cmd DeleteCommand) error {
 	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
 		h.logger.Errorf("failed to delete feature flag: %v", err)
 		return err
+	}
+
+	if err := h.eventBus.Publish(ctx, domain.NewFlagDeleted(cmd.ID)); err != nil {
+		h.logger.Errorf("failed to publish events: %v", err)
 	}
 
 	return nil

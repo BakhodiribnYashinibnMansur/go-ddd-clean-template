@@ -1,0 +1,58 @@
+package command
+
+import (
+	"context"
+
+	"gct/internal/featureflag/domain"
+	"gct/internal/shared/application"
+	"gct/internal/shared/infrastructure/logger"
+
+	"github.com/google/uuid"
+)
+
+// DeleteRuleGroupCommand represents an intent to remove a rule group.
+type DeleteRuleGroupCommand struct {
+	ID uuid.UUID
+}
+
+// DeleteRuleGroupHandler performs deletion of a rule group.
+type DeleteRuleGroupHandler struct {
+	rgRepo   domain.RuleGroupRepository
+	eventBus application.EventBus
+	logger   logger.Log
+}
+
+// NewDeleteRuleGroupHandler wires dependencies for rule group deletion.
+func NewDeleteRuleGroupHandler(
+	rgRepo domain.RuleGroupRepository,
+	eventBus application.EventBus,
+	logger logger.Log,
+) *DeleteRuleGroupHandler {
+	return &DeleteRuleGroupHandler{
+		rgRepo:   rgRepo,
+		eventBus: eventBus,
+		logger:   logger,
+	}
+}
+
+// Handle deletes the rule group and publishes a FlagUpdated event for the parent flag.
+func (h *DeleteRuleGroupHandler) Handle(ctx context.Context, cmd DeleteRuleGroupCommand) error {
+	// Find the rule group to get its flagID before deletion.
+	rg, err := h.rgRepo.FindByID(ctx, cmd.ID)
+	if err != nil {
+		return err
+	}
+
+	flagID := rg.FlagID()
+
+	if err := h.rgRepo.Delete(ctx, cmd.ID); err != nil {
+		h.logger.Errorf("failed to delete rule group: %v", err)
+		return err
+	}
+
+	if err := h.eventBus.Publish(ctx, domain.NewFlagUpdated(flagID)); err != nil {
+		h.logger.Errorf("failed to publish events: %v", err)
+	}
+
+	return nil
+}
