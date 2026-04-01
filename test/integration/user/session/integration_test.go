@@ -1,16 +1,92 @@
 package session
 
-// TODO: This integration test needs rewriting for the DDD architecture.
-// The old imports have been removed during the DDD migration:
-//   - gct/internal/controller/restapi/v1/user/session -> use gct/internal/session/interfaces/http
-//   - gct/internal/domain -> use gct/internal/session/domain (or gct/internal/shared/domain)
-//   - gct/internal/repo -> repos are now per-BC under gct/internal/session/infrastructure/postgres
-//   - gct/internal/usecase -> use cases are now command/query handlers in gct/internal/session/application
-//
-// To rewrite:
-//   - Create session BC via session.NewBoundedContext(pool, logger) (note: no eventBus for read-only BCs)
-//   - Create HTTP handler via sessionhttp.NewHandler(bc, logger)
-//   - Call handler methods (List, Get) on the DDD handler
-//   - The old Sessions/Session/UpdateActivity/Delete/RevokeCurrent/RevokeAll/Create methods
-//     may need new DDD commands or may map to the session BC's query handlers
-//   - See test/integration/user/ddd/ for a working example of DDD integration tests
+import (
+	"context"
+	"crypto/rand"
+	"crypto/rsa"
+	"testing"
+	"time"
+
+	"gct/internal/session"
+	sessionapp "gct/internal/session/application"
+	sessionquery "gct/internal/session/application/query"
+	shared "gct/internal/shared/domain"
+	"gct/internal/shared/infrastructure/eventbus"
+	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/user"
+	"gct/internal/user/application/command"
+	userquery "gct/internal/user/application/query"
+	"gct/internal/user/domain"
+	"gct/test/integration/common/setup"
+)
+
+func newTestJWTConfig(t *testing.T) command.JWTConfig {
+	t.Helper()
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatalf("rsa.GenerateKey: %v", err)
+	}
+	return command.JWTConfig{
+		PrivateKey: key,
+		Issuer:     "gct-test",
+		AccessTTL:  15 * time.Minute,
+		RefreshTTL: 7 * 24 * time.Hour,
+	}
+}
+
+func TestIntegration_ListAndGetSessions(t *testing.T) {
+	cleanDB(t)
+	l := logger.New("error")
+	eb := eventbus.NewInMemoryEventBus()
+
+	userBC := user.NewBoundedContext(setup.TestPG.Pool, eb, l, newTestJWTConfig(t))
+	sessionBC := session.NewBoundedContext(setup.TestPG.Pool, l)
+	ctx := context.Background()
+
+	// Create and approve user
+	err := userBC.SignUp.Handle(ctx, command.SignUpCommand{
+		Phone:    "+998901234567",
+		Password: "StrongP@ss123",
+	})
+	if err != nil {
+		t.Fatalf("SignUp: %v", err)
+	}
+
+	list, _ := userBC.ListUsers.Handle(ctx, userquery.ListUsersQuery{
+		Filter: domain.UsersFilter{Pagination: &shared.Pagination{Limit: 10}},
+	})
+	userID := list.Users[0].ID
+	_ = userBC.ApproveUser.Handle(ctx, command.ApproveUserCommand{ID: userID})
+
+	// Sign in to create a session
+	signInResult, err := userBC.SignIn.Handle(ctx, command.SignInCommand{
+		Login:      "+998901234567",
+		Password:   "StrongP@ss123",
+		DeviceType: "desktop",
+		IP:         "10.0.0.1",
+		UserAgent:  "IntegrationTest/1.0",
+	})
+	if err != nil {
+		t.Fatalf("SignIn: %v", err)
+	}
+
+	// List sessions
+	sessions, err := sessionBC.ListSessions.Handle(ctx, sessionquery.ListSessionsQuery{
+		Filter: sessionapp.SessionsFilter{UserID: &userID, Limit: 10},
+	})
+	if err != nil {
+		t.Fatalf("ListSessions: %v", err)
+	}
+	if sessions.Total != 1 {
+		t.Fatalf("expected 1 session, got %d", sessions.Total)
+	}
+
+	// Get session by ID
+	sess, err := sessionBC.GetSession.Handle(ctx, sessionquery.GetSessionQuery{ID: signInResult.SessionID})
+	if err != nil {
+		t.Fatalf("GetSession: %v", err)
+	}
+	if sess.UserID != userID {
+		t.Errorf("user ID mismatch: %s vs %s", sess.UserID, userID)
+	}
+}

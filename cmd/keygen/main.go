@@ -35,22 +35,15 @@ func main() {
 		Bytes: pubKeyBytes,
 	})
 
-	// Write to files
-	err = os.WriteFile("new_private.pem", privPEM, 0600)
+	// Combine into single PEM file
+	combined := append(privPEM, pubPEM...)
+
+	err = os.WriteFile("keypair.pem", combined, 0600)
 	if err != nil {
-		fmt.Printf("failed to write private key: %v\n", err)
+		fmt.Printf("failed to write keypair.pem: %v\n", err)
 		os.Exit(1)
 	}
 
-	err = os.WriteFile("new_public.pem", pubPEM, 0644)
-	if err != nil {
-		fmt.Printf("failed to write public key: %v\n", err)
-		os.Exit(1)
-	}
-
-	fmt.Println("Successfully generated new_private.pem and new_public.pem")
-	fmt.Println("\nPrivate Key (for .env):")
-	fmt.Println(string(privPEM))
-	fmt.Println("\nPublic Key (for .env):")
-	fmt.Println(string(pubPEM))
+	fmt.Println("Successfully generated keypair.pem (private + public key)")
+	fmt.Println(string(combined))
 }

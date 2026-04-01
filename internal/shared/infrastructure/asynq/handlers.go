@@ -84,10 +84,7 @@ func (h *Handlers) HandleImageResize(ctx context.Context, task *asynq.Task) erro
 		"height", payload.Height,
 	)
 
-	// TODO: Implement actual image resizing logic
-	// Example: imageService.Resize(ctx, payload)
-
-	h.log.Infoc(ctx, "image resized successfully",
+	h.log.Infoc(ctx, "image resize completed (no-op)",
 		"target", payload.TargetPath,
 	)
 
@@ -107,10 +104,7 @@ func (h *Handlers) HandlePushNotification(ctx context.Context, task *asynq.Task)
 		"title", payload.Title,
 	)
 
-	// TODO: Implement actual push notification logic
-	// Example: notificationService.SendPush(ctx, payload)
-
-	h.log.Infoc(ctx, "push notification sent successfully",
+	h.log.Infoc(ctx, "push notification completed (no-op)",
 		"user_id", payload.UserID,
 	)
 

@@ -1,6 +1,6 @@
 -- +goose Up
 -- +goose StatementBegin
-CREATE TABLE site_settings (
+CREATE TABLE IF NOT EXISTS site_settings (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     key VARCHAR(64) UNIQUE NOT NULL,
     value TEXT,
@@ -14,11 +14,11 @@ CREATE TABLE site_settings (
 );
 
 -- Create index for fast lookups
-CREATE INDEX idx_site_settings_key ON site_settings(key);
-CREATE INDEX idx_site_settings_category ON site_settings(category);
-CREATE INDEX idx_site_settings_public ON site_settings(is_public);
+CREATE INDEX IF NOT EXISTS idx_site_settings_key ON site_settings(key);
+CREATE INDEX IF NOT EXISTS idx_site_settings_category ON site_settings(category);
+CREATE INDEX IF NOT EXISTS idx_site_settings_public ON site_settings(is_public);
 
--- Insert default settings
+-- Insert default settings (skip if already exist)
 INSERT INTO site_settings (key, value, value_type, category, description, is_public) VALUES
     ('site_name', 'Go Clean Template', 'string', 'general', 'Application name', true),
     ('site_description', 'A clean architecture template for Go applications', 'string', 'general', 'Site description', true),
@@ -29,7 +29,8 @@ INSERT INTO site_settings (key, value, value_type, category, description, is_pub
     ('session_timeout', '3600', 'integer', 'general', 'Session timeout in seconds', false),
     ('admin_email', 'admin@example.com', 'string', 'email', 'Admin email address', false),
     ('smtp_enabled', 'false', 'boolean', 'email', 'Enable SMTP email sending', false),
-    ('items_per_page', '10', 'integer', 'general', 'Default items per page', false);
+    ('items_per_page', '10', 'integer', 'general', 'Default items per page', false)
+ON CONFLICT (key) DO NOTHING;
 
 -- +goose StatementEnd
 

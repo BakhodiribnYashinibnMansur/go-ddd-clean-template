@@ -4,7 +4,7 @@
 -- =========================
 -- ENDPOINT HISTORY TABLE
 -- =========================
-CREATE TABLE endpoint_history (
+CREATE TABLE IF NOT EXISTS endpoint_history (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
     -- identity
@@ -40,24 +40,24 @@ CREATE TABLE endpoint_history (
 -- =========================
 -- INDEXES FOR PERFORMANCE
 -- =========================
-CREATE INDEX idx_eh_user_id ON endpoint_history(user_id);
-CREATE INDEX idx_eh_session_id ON endpoint_history(session_id);
-CREATE INDEX idx_eh_path ON endpoint_history(path);
-CREATE INDEX idx_eh_method ON endpoint_history(method);
-CREATE INDEX idx_eh_status ON endpoint_history(status_code);
-CREATE INDEX idx_eh_created_at ON endpoint_history(created_at);
+CREATE INDEX IF NOT EXISTS idx_eh_user_id ON endpoint_history(user_id);
+CREATE INDEX IF NOT EXISTS idx_eh_session_id ON endpoint_history(session_id);
+CREATE INDEX IF NOT EXISTS idx_eh_path ON endpoint_history(path);
+CREATE INDEX IF NOT EXISTS idx_eh_method ON endpoint_history(method);
+CREATE INDEX IF NOT EXISTS idx_eh_status ON endpoint_history(status_code);
+CREATE INDEX IF NOT EXISTS idx_eh_created_at ON endpoint_history(created_at);
 
 -- Composite indexes for common queries
-CREATE INDEX idx_eh_user_created ON endpoint_history(user_id, created_at);
-CREATE INDEX idx_eh_path_status ON endpoint_history(path, status_code);
-CREATE INDEX idx_eh_decision ON endpoint_history(decision) WHERE decision IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_eh_user_created ON endpoint_history(user_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_eh_path_status ON endpoint_history(path, status_code);
+CREATE INDEX IF NOT EXISTS idx_eh_decision ON endpoint_history(decision) WHERE decision IS NOT NULL;
 
 -- Partial index for errors (monitoring)
-CREATE INDEX idx_eh_errors ON endpoint_history(created_at, path, status_code) 
+CREATE INDEX IF NOT EXISTS idx_eh_errors ON endpoint_history(created_at, path, status_code)
 WHERE status_code >= 500;
 
 -- Partial index for slow requests (performance monitoring)
-CREATE INDEX idx_eh_slow_requests ON endpoint_history(created_at, path, duration_ms) 
+CREATE INDEX IF NOT EXISTS idx_eh_slow_requests ON endpoint_history(created_at, path, duration_ms)
 WHERE duration_ms > 1000;
 
 -- +goose StatementEnd

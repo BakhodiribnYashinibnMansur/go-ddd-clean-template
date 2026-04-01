@@ -1,16 +1,99 @@
 package minio
 
-// TODO: This integration test needs rewriting for the DDD architecture.
-// The old imports have been removed during the DDD migration:
-//   - gct/internal/controller/restapi/v1/minio -> use gct/internal/file/interfaces/http
-//   - gct/internal/domain -> use gct/internal/file/domain (or gct/internal/shared/domain)
-//   - gct/internal/repo -> repos are now per-BC under gct/internal/file/infrastructure/
-//   - gct/internal/usecase -> use cases are now command/query handlers in gct/internal/file/application
-//
-// To rewrite:
-//   - Create file BC via file.NewBoundedContext(pool, eventBus, logger)
-//   - Create HTTP handler via filehttp.NewHandler(bc, logger)
-//   - Call handler methods (Create, List, Get) on the DDD handler
-//   - The old UploadImage/UploadDoc/UploadVideo/TransferFile methods may map to
-//     the new file BC's Create handler or may need new DDD commands
-//   - See test/integration/user/ddd/ for a working example of DDD integration tests
+import (
+	"context"
+	"testing"
+
+	"gct/internal/file"
+	"gct/internal/file/application/command"
+	"gct/internal/file/application/query"
+	"gct/internal/file/domain"
+	"gct/internal/shared/infrastructure/eventbus"
+	"gct/internal/shared/infrastructure/logger"
+	"gct/test/integration/common/setup"
+)
+
+func newTestBC(t *testing.T) *file.BoundedContext {
+	t.Helper()
+	eb := eventbus.NewInMemoryEventBus()
+	l := logger.New("error")
+	return file.NewBoundedContext(setup.TestPG.Pool, eb, l)
+}
+
+func TestIntegration_CreateAndGetFile(t *testing.T) {
+	cleanDB(t)
+	bc := newTestBC(t)
+	ctx := context.Background()
+
+	err := bc.CreateFile.Handle(ctx, command.CreateFileCommand{
+		Name:         "test-image.jpg",
+		OriginalName: "photo.jpg",
+		MimeType:     "image/jpeg",
+		Size:         1024,
+		Path:         "/uploads/test-image.jpg",
+		URL:          "https://cdn.example.com/test-image.jpg",
+	})
+	if err != nil {
+		t.Fatalf("CreateFile: %v", err)
+	}
+
+	result, err := bc.ListFiles.Handle(ctx, query.ListFilesQuery{
+		Filter: domain.FileFilter{Limit: 10},
+	})
+	if err != nil {
+		t.Fatalf("ListFiles: %v", err)
+	}
+	if result.Total != 1 {
+		t.Fatalf("expected 1 file, got %d", result.Total)
+	}
+
+	f := result.Files[0]
+	if f.Name != "test-image.jpg" {
+		t.Errorf("expected name test-image.jpg, got %s", f.Name)
+	}
+	if f.MimeType != "image/jpeg" {
+		t.Errorf("expected mime image/jpeg, got %s", f.MimeType)
+	}
+
+	view, err := bc.GetFile.Handle(ctx, query.GetFileQuery{ID: f.ID})
+	if err != nil {
+		t.Fatalf("GetFile: %v", err)
+	}
+	if view.ID != f.ID {
+		t.Errorf("ID mismatch: %s vs %s", view.ID, f.ID)
+	}
+}
+
+func TestIntegration_ListFilesWithFilter(t *testing.T) {
+	cleanDB(t)
+	bc := newTestBC(t)
+	ctx := context.Background()
+
+	// Create two files with different mime types
+	_ = bc.CreateFile.Handle(ctx, command.CreateFileCommand{
+		Name:         "doc.pdf",
+		OriginalName: "document.pdf",
+		MimeType:     "application/pdf",
+		Size:         2048,
+		Path:         "/uploads/doc.pdf",
+		URL:          "https://cdn.example.com/doc.pdf",
+	})
+	_ = bc.CreateFile.Handle(ctx, command.CreateFileCommand{
+		Name:         "image.png",
+		OriginalName: "screenshot.png",
+		MimeType:     "image/png",
+		Size:         4096,
+		Path:         "/uploads/image.png",
+		URL:          "https://cdn.example.com/image.png",
+	})
+
+	result, err := bc.ListFiles.Handle(ctx, query.ListFilesQuery{
+		Filter: domain.FileFilter{Limit: 10},
+	})
+	if err != nil {
+		t.Fatalf("ListFiles: %v", err)
+	}
+	if result.Total != 2 {
+		t.Fatalf("expected 2 files, got %d", result.Total)
+	}
+}

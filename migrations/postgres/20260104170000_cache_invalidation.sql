@@ -16,31 +16,37 @@ $$ LANGUAGE plpgsql;
 
 -- 2. Create Triggers for key tables
 -- Users table
+DROP TRIGGER IF EXISTS invalidate_cache_users ON users;
 CREATE TRIGGER invalidate_cache_users
 AFTER INSERT OR UPDATE OR DELETE ON users
 FOR EACH ROW EXECUTE FUNCTION notify_cache_invalidation();
 
 -- Role table
+DROP TRIGGER IF EXISTS invalidate_cache_role ON role;
 CREATE TRIGGER invalidate_cache_role
 AFTER INSERT OR UPDATE OR DELETE ON role
 FOR EACH ROW EXECUTE FUNCTION notify_cache_invalidation();
 
 -- Permission table
+DROP TRIGGER IF EXISTS invalidate_cache_permission ON permission;
 CREATE TRIGGER invalidate_cache_permission
 AFTER INSERT OR UPDATE OR DELETE ON permission
 FOR EACH ROW EXECUTE FUNCTION notify_cache_invalidation();
 
 -- Policy table
+DROP TRIGGER IF EXISTS invalidate_cache_policy ON policy;
 CREATE TRIGGER invalidate_cache_policy
 AFTER INSERT OR UPDATE OR DELETE ON policy
 FOR EACH ROW EXECUTE FUNCTION notify_cache_invalidation();
 
 -- Session table (optional, but good for security)
+DROP TRIGGER IF EXISTS invalidate_cache_session ON session;
 CREATE TRIGGER invalidate_cache_session
 AFTER INSERT OR UPDATE OR DELETE ON session
 FOR EACH ROW EXECUTE FUNCTION notify_cache_invalidation();
 
 -- Relation table
+DROP TRIGGER IF EXISTS invalidate_cache_relation ON relation;
 CREATE TRIGGER invalidate_cache_relation
 AFTER INSERT OR UPDATE OR DELETE ON relation
 FOR EACH ROW EXECUTE FUNCTION notify_cache_invalidation();

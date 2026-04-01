@@ -1,6 +1,6 @@
 -- +goose Up
 -- +goose StatementBegin
-CREATE TABLE user_settings (
+CREATE TABLE IF NOT EXISTS user_settings (
     id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id    UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     key        VARCHAR(64) NOT NULL,
@@ -10,7 +10,7 @@ CREATE TABLE user_settings (
     UNIQUE(user_id, key)
 );
 
-CREATE INDEX idx_user_settings_user_id ON user_settings(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_settings_user_id ON user_settings(user_id);
 -- +goose StatementEnd
 
 -- +goose Down

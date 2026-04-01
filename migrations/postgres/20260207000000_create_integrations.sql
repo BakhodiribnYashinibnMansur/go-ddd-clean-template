@@ -53,11 +53,13 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trigger_integrations_updated_at ON integrations;
 CREATE TRIGGER trigger_integrations_updated_at
     BEFORE UPDATE ON integrations
     FOR EACH ROW
     EXECUTE FUNCTION update_integrations_updated_at();
 
+DROP TRIGGER IF EXISTS trigger_api_keys_updated_at ON api_keys;
 CREATE TRIGGER trigger_api_keys_updated_at
     BEFORE UPDATE ON api_keys
     FOR EACH ROW

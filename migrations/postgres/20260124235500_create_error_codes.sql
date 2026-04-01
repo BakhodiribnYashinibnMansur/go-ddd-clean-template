@@ -1,9 +1,18 @@
 -- +goose Up
 -- +goose StatementBegin
-CREATE TYPE error_severity_enum AS ENUM ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL');
-CREATE TYPE error_category_enum AS ENUM ('DATA', 'AUTH', 'SYSTEM', 'VALIDATION', 'BUSINESS', 'UNKNOWN');
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'error_severity_enum') THEN
+        CREATE TYPE error_severity_enum AS ENUM ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL');
+    END IF;
+END $$;
 
-CREATE TABLE error_code (
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'error_category_enum') THEN
+        CREATE TYPE error_category_enum AS ENUM ('DATA', 'AUTH', 'SYSTEM', 'VALIDATION', 'BUSINESS', 'UNKNOWN');
+    END IF;
+END $$;
+
+CREATE TABLE IF NOT EXISTS error_code (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     code VARCHAR(255) NOT NULL UNIQUE,
     message TEXT NOT NULL,
@@ -20,10 +29,10 @@ CREATE TABLE error_code (
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_error_code_code ON error_code(code);
-CREATE INDEX idx_error_code_category ON error_code(category);
+CREATE INDEX IF NOT EXISTS idx_error_code_code ON error_code(code);
+CREATE INDEX IF NOT EXISTS idx_error_code_category ON error_code(category);
 
--- Seed initial error code
+-- Seed initial error code (skip if already exists)
 INSERT INTO error_code (code, message, http_status, category, severity, retryable, retry_after, suggestion)
 VALUES (
     'RESOURCE_NOT_FOUND',
@@ -34,7 +43,8 @@ VALUES (
     FALSE,
     5,
     'Please check our documentation.'
-);
+)
+ON CONFLICT (code) DO NOTHING;
 -- +goose StatementEnd
 
 -- +goose Down

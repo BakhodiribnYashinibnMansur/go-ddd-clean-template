@@ -59,19 +59,7 @@ func (r *DashboardReadRepo) GetStats(ctx context.Context) (*appdto.DashboardStat
 		return nil, apperrors.HandlePgError(err, consts.TableFeatureFlags, nil)
 	}
 
-	// Total webhooks.
-	if err := r.pool.QueryRow(ctx,
-		"SELECT COUNT(*) FROM "+consts.TableWebhooks,
-	).Scan(&view.TotalWebhooks); err != nil {
-		return nil, apperrors.HandlePgError(err, consts.TableWebhooks, nil)
-	}
 
-	// Total jobs.
-	if err := r.pool.QueryRow(ctx,
-		"SELECT COUNT(*) FROM "+consts.TableJobs,
-	).Scan(&view.TotalJobs); err != nil {
-		return nil, apperrors.HandlePgError(err, consts.TableJobs, nil)
-	}
 
 	return view, nil
 }

@@ -57,8 +57,8 @@ func TestGetStatsHandler_Handle(t *testing.T) {
 			AuditLogsToday:    87,
 			SystemErrorsCount: 3,
 			TotalFeatureFlags: 12,
-			TotalWebhooks:     5,
-			TotalJobs:         8,
+
+
 		},
 	}
 
@@ -93,13 +93,8 @@ func TestGetStatsHandler_Handle(t *testing.T) {
 		t.Errorf("expected TotalFeatureFlags 12, got %d", result.TotalFeatureFlags)
 	}
 
-	if result.TotalWebhooks != 5 {
-		t.Errorf("expected TotalWebhooks 5, got %d", result.TotalWebhooks)
-	}
 
-	if result.TotalJobs != 8 {
-		t.Errorf("expected TotalJobs 8, got %d", result.TotalJobs)
-	}
+
 }
 
 func TestGetStatsHandler_RepoError(t *testing.T) {

@@ -14,9 +14,11 @@ import (
 // --- Mock Read Repository ---
 
 type mockUserReadRepository struct {
-	view  *domain.UserView
-	views []*domain.UserView
-	total int64
+	view     *domain.UserView
+	views    []*domain.UserView
+	total    int64
+	session  *shared.AuthSession
+	authUser *shared.AuthUser
 }
 
 // errorReadRepo always returns an error.
@@ -54,10 +56,16 @@ func (m *mockUserReadRepository) List(_ context.Context, _ domain.UsersFilter) (
 }
 
 func (m *mockUserReadRepository) FindSessionByID(_ context.Context, _ uuid.UUID) (*shared.AuthSession, error) {
+	if m.session != nil {
+		return m.session, nil
+	}
 	return nil, domain.ErrUserNotFound
 }
 
 func (m *mockUserReadRepository) FindUserForAuth(_ context.Context, _ uuid.UUID) (*shared.AuthUser, error) {
+	if m.authUser != nil {
+		return m.authUser, nil
+	}
 	return nil, domain.ErrUserNotFound
 }
 

@@ -1,6 +1,6 @@
 -- +goose Up
 -- +goose StatementBegin
-CREATE TABLE function_metrics (
+CREATE TABLE IF NOT EXISTS function_metrics (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(255) NOT NULL,
     latency_ms INTEGER NOT NULL,
@@ -9,9 +9,9 @@ CREATE TABLE function_metrics (
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_func_metrics_name ON function_metrics(name);
-CREATE INDEX idx_func_metrics_created_at ON function_metrics(created_at);
-CREATE INDEX idx_func_metrics_panic ON function_metrics(is_panic);
+CREATE INDEX IF NOT EXISTS idx_func_metrics_name ON function_metrics(name);
+CREATE INDEX IF NOT EXISTS idx_func_metrics_created_at ON function_metrics(created_at);
+CREATE INDEX IF NOT EXISTS idx_func_metrics_panic ON function_metrics(is_panic);
 -- +goose StatementEnd
 
 -- +goose Down

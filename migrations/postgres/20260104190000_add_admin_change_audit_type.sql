@@ -1,6 +1,10 @@
 -- +goose Up
 -- +goose StatementBegin
-ALTER TYPE audit_action_type ADD VALUE 'ADMIN_CHANGE';
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumlabel = 'ADMIN_CHANGE' AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'audit_action_type')) THEN
+        ALTER TYPE audit_action_type ADD VALUE 'ADMIN_CHANGE';
+    END IF;
+END $$;
 -- +goose StatementEnd
 
 -- +goose Down

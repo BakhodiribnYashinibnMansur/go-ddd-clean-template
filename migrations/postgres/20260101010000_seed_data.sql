@@ -28,20 +28,23 @@ SELECT id, 'settings' FROM sys_perm;
 -- Role Permissions
 -- Grant root to super_admin (unrestricted access)
 INSERT INTO role_permission (role_id, permission_id)
-SELECT r.id, p.id 
-FROM role r, permission p 
-WHERE r.name = 'super_admin' AND p.name = 'root';
+SELECT r.id, p.id
+FROM role r, permission p
+WHERE r.name = 'super_admin' AND p.name = 'root'
+ON CONFLICT DO NOTHING;
 
 -- Grant root to admin
 INSERT INTO role_permission (role_id, permission_id)
-SELECT r.id, p.id 
-FROM role r, permission p 
-WHERE r.name = 'admin' AND p.name = 'root';
+SELECT r.id, p.id
+FROM role r, permission p
+WHERE r.name = 'admin' AND p.name = 'root'
+ON CONFLICT DO NOTHING;
 
 -- NO USERS SEEDED (Use /admin/setup to create first user)
 
 -- Relations
-INSERT INTO relation (type, name) VALUES ('REGION', 'Tashkent'), ('BRANCH', 'Chilonzor');
+INSERT INTO relation (type, name) VALUES ('REGION', 'Tashkent'), ('BRANCH', 'Chilonzor')
+ON CONFLICT DO NOTHING;
 -- +goose StatementEnd
 
 -- +goose Down

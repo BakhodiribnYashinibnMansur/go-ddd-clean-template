@@ -74,8 +74,8 @@ func TestHandler_GetStats_Success(t *testing.T) {
 			AuditLogsToday:    87,
 			SystemErrorsCount: 3,
 			TotalFeatureFlags: 12,
-			TotalWebhooks:     5,
-			TotalJobs:         8,
+
+
 		},
 	}
 	router := setupRouter(readRepo)

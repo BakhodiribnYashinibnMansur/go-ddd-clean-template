@@ -4,32 +4,36 @@
 -- =========================
 -- AUDIT ACTION TYPES ENUM
 -- =========================
-CREATE TYPE audit_action_type AS ENUM (
-    'LOGIN',
-    'LOGOUT',
-    'SESSION_REVOKE',
-    'PASSWORD_CHANGE',
-    'MFA_VERIFY_FAIL',
-    'ACCESS_GRANTED',
-    'ACCESS_DENIED',
-    'POLICY_MATCHED',
-    'POLICY_DENIED',
-    'USER_CREATE',
-    'USER_UPDATE',
-    'USER_DELETE',
-    'ROLE_ASSIGN',
-    'ROLE_REMOVE',
-    'ORDER_APPROVE',
-    'ORDER_CANCEL',
-    'PAYMENT_PROCESS',
-    'PAYMENT_CANCEL',
-    'POLICY_EVALUATED'
-);
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'audit_action_type') THEN
+        CREATE TYPE audit_action_type AS ENUM (
+            'LOGIN',
+            'LOGOUT',
+            'SESSION_REVOKE',
+            'PASSWORD_CHANGE',
+            'MFA_VERIFY_FAIL',
+            'ACCESS_GRANTED',
+            'ACCESS_DENIED',
+            'POLICY_MATCHED',
+            'POLICY_DENIED',
+            'USER_CREATE',
+            'USER_UPDATE',
+            'USER_DELETE',
+            'ROLE_ASSIGN',
+            'ROLE_REMOVE',
+            'ORDER_APPROVE',
+            'ORDER_CANCEL',
+            'PAYMENT_PROCESS',
+            'PAYMENT_CANCEL',
+            'POLICY_EVALUATED'
+        );
+    END IF;
+END $$;
 
 -- =========================
 -- AUDIT LOG TABLE
 -- =========================
-CREATE TABLE audit_log (
+CREATE TABLE IF NOT EXISTS audit_log (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
     -- who
@@ -64,16 +68,16 @@ CREATE TABLE audit_log (
 -- =========================
 -- INDEXES FOR PERFORMANCE
 -- =========================
-CREATE INDEX idx_audit_user_id ON audit_log(user_id);
-CREATE INDEX idx_audit_session_id ON audit_log(session_id);
-CREATE INDEX idx_audit_action ON audit_log(action);
-CREATE INDEX idx_audit_resource ON audit_log(resource_type, resource_id);
-CREATE INDEX idx_audit_created_at ON audit_log(created_at);
-CREATE INDEX idx_audit_decision ON audit_log(decision) WHERE decision IS NOT NULL;
-CREATE INDEX idx_audit_policy_id ON audit_log(policy_id) WHERE policy_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_audit_user_id ON audit_log(user_id);
+CREATE INDEX IF NOT EXISTS idx_audit_session_id ON audit_log(session_id);
+CREATE INDEX IF NOT EXISTS idx_audit_action ON audit_log(action);
+CREATE INDEX IF NOT EXISTS idx_audit_resource ON audit_log(resource_type, resource_id);
+CREATE INDEX IF NOT EXISTS idx_audit_created_at ON audit_log(created_at);
+CREATE INDEX IF NOT EXISTS idx_audit_decision ON audit_log(decision) WHERE decision IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_audit_policy_id ON audit_log(policy_id) WHERE policy_id IS NOT NULL;
 
 -- Partial index for failed attempts (security monitoring)
-CREATE INDEX idx_audit_failed_attempts ON audit_log(created_at, user_id, action) 
+CREATE INDEX IF NOT EXISTS idx_audit_failed_attempts ON audit_log(created_at, user_id, action)
 WHERE success = FALSE;
 
 -- =========================

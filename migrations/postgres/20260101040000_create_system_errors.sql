@@ -1,6 +1,6 @@
 -- +goose Up
 -- +goose StatementBegin
-CREATE TABLE system_errors (
+CREATE TABLE IF NOT EXISTS system_errors (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     code VARCHAR(64) NOT NULL,
     message TEXT NOT NULL,
@@ -23,11 +23,11 @@ CREATE TABLE system_errors (
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_sys_err_code ON system_errors(code);
-CREATE INDEX idx_sys_err_severity ON system_errors(severity);
-CREATE INDEX idx_sys_err_created_at ON system_errors(created_at);
-CREATE INDEX idx_sys_err_req_id ON system_errors(request_id) WHERE request_id IS NOT NULL;
-CREATE INDEX idx_sys_err_resolved ON system_errors(is_resolved);
+CREATE INDEX IF NOT EXISTS idx_sys_err_code ON system_errors(code);
+CREATE INDEX IF NOT EXISTS idx_sys_err_severity ON system_errors(severity);
+CREATE INDEX IF NOT EXISTS idx_sys_err_created_at ON system_errors(created_at);
+CREATE INDEX IF NOT EXISTS idx_sys_err_req_id ON system_errors(request_id) WHERE request_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_sys_err_resolved ON system_errors(is_resolved);
 
 -- +goose StatementEnd
 
