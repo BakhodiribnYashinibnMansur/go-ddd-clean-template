@@ -12,7 +12,7 @@ type SystemErrorView struct {
 	Code        string         `json:"code"`
 	Message     string         `json:"message"`
 	StackTrace  *string        `json:"stack_trace,omitempty"`
-	Metadata    map[string]any `json:"metadata,omitempty"`
+	Metadata    map[string]string `json:"metadata,omitempty"`
 	Severity    string         `json:"severity"`
 	ServiceName *string        `json:"service_name,omitempty"`
 	RequestID   *uuid.UUID     `json:"request_id,omitempty"`

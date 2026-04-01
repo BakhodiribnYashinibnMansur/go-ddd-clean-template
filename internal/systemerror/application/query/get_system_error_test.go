@@ -108,7 +108,7 @@ func TestGetSystemErrorHandler_AllFieldsMapped(t *testing.T) {
 			Code:        "ERR",
 			Message:     "msg",
 			StackTrace:  &stack,
-			Metadata:    map[string]any{"k": "v"},
+			Metadata:    map[string]string{"k": "v"},
 			Severity:    "high",
 			ServiceName: &svc,
 			RequestID:   &reqID,

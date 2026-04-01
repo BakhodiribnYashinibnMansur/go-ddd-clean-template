@@ -2,11 +2,11 @@ package postgres
 
 import (
 	"context"
-	"encoding/json"
 	"time"
 
 	"gct/internal/shared/domain/consts"
 	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/metadata"
 	"gct/internal/systemerror/domain"
 
 	"github.com/Masterminds/squirrel"
@@ -18,7 +18,7 @@ import (
 const tableName = consts.TableSystemError
 
 var writeColumns = []string{
-	"id", "code", "message", "stack_trace", "metadata",
+	"id", "code", "message", "stack_trace",
 	"severity", "service_name", "request_id", "user_id",
 	"ip_address", "path", "method",
 	"is_resolved", "resolved_at", "resolved_by", "created_at",
@@ -26,25 +26,22 @@ var writeColumns = []string{
 
 // SystemErrorWriteRepo implements domain.SystemErrorRepository using PostgreSQL.
 type SystemErrorWriteRepo struct {
-	pool    *pgxpool.Pool
-	builder squirrel.StatementBuilderType
+	pool     *pgxpool.Pool
+	builder  squirrel.StatementBuilderType
+	metadata *metadata.GenericMetadataRepo
 }
 
 // NewSystemErrorWriteRepo creates a new SystemErrorWriteRepo.
 func NewSystemErrorWriteRepo(pool *pgxpool.Pool) *SystemErrorWriteRepo {
 	return &SystemErrorWriteRepo{
-		pool:    pool,
-		builder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+		pool:     pool,
+		builder:  squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+		metadata: metadata.NewGenericMetadataRepo(pool),
 	}
 }
 
 // Save inserts a new SystemError aggregate into the database.
 func (r *SystemErrorWriteRepo) Save(ctx context.Context, se *domain.SystemError) error {
-	metaJSON, err := json.Marshal(se.Metadata())
-	if err != nil {
-		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToMarshalJSON)
-	}
-
 	sql, args, err := r.builder.
 		Insert(tableName).
 		Columns(writeColumns...).
@@ -53,7 +50,6 @@ func (r *SystemErrorWriteRepo) Save(ctx context.Context, se *domain.SystemError)
 			se.Code(),
 			se.Message(),
 			se.StackTrace(),
-			metaJSON,
 			se.Severity(),
 			se.ServiceName(),
 			se.RequestID(),
@@ -75,6 +71,10 @@ func (r *SystemErrorWriteRepo) Save(ctx context.Context, se *domain.SystemError)
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 
+	if err = r.metadata.SetMany(ctx, metadata.EntityTypeSystemErrorMeta, se.ID(), se.Metadata()); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -94,22 +94,23 @@ func (r *SystemErrorWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (*dom
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, map[string]any{"id": id})
 	}
+
+	meta, err := r.metadata.GetAll(ctx, metadata.EntityTypeSystemErrorMeta, id)
+	if err != nil {
+		return nil, err
+	}
+	se.SetMetadata(meta)
+
 	return se, nil
 }
 
 // Update updates the SystemError aggregate in the database.
 func (r *SystemErrorWriteRepo) Update(ctx context.Context, se *domain.SystemError) error {
-	metaJSON, err := json.Marshal(se.Metadata())
-	if err != nil {
-		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToMarshalJSON)
-	}
-
 	sql, args, err := r.builder.
 		Update(tableName).
 		Set("code", se.Code()).
 		Set("message", se.Message()).
 		Set("stack_trace", se.StackTrace()).
-		Set("metadata", metaJSON).
 		Set("severity", se.Severity()).
 		Set("service_name", se.ServiceName()).
 		Set("request_id", se.RequestID()).
@@ -128,6 +129,10 @@ func (r *SystemErrorWriteRepo) Update(ctx context.Context, se *domain.SystemErro
 
 	if _, err = r.pool.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
+	}
+
+	if err = r.metadata.SetMany(ctx, metadata.EntityTypeSystemErrorMeta, se.ID(), se.Metadata()); err != nil {
+		return err
 	}
 
 	return nil
@@ -186,6 +191,11 @@ func (r *SystemErrorWriteRepo) List(ctx context.Context, filter domain.SystemErr
 		if err != nil {
 			return nil, 0, apperrors.HandlePgError(err, tableName, nil)
 		}
+		meta, err := r.metadata.GetAll(ctx, metadata.EntityTypeSystemErrorMeta, se.ID())
+		if err != nil {
+			return nil, 0, err
+		}
+		se.SetMetadata(meta)
 		results = append(results, se)
 	}
 
@@ -227,7 +237,6 @@ func scanSystemError(row pgx.Row) (*domain.SystemError, error) {
 		code        string
 		message     string
 		stackTrace  *string
-		metaJSON    []byte
 		severity    string
 		serviceName *string
 		requestID   *uuid.UUID
@@ -242,7 +251,7 @@ func scanSystemError(row pgx.Row) (*domain.SystemError, error) {
 	)
 
 	err := row.Scan(
-		&id, &code, &message, &stackTrace, &metaJSON,
+		&id, &code, &message, &stackTrace,
 		&severity, &serviceName, &requestID, &userID,
 		&ipAddress, &path, &method,
 		&isResolved, &resolvedAt, &resolvedBy, &createdAt,
@@ -252,7 +261,7 @@ func scanSystemError(row pgx.Row) (*domain.SystemError, error) {
 	}
 
 	return reconstructFromRow(
-		id, createdAt, code, message, stackTrace, metaJSON,
+		id, createdAt, code, message, stackTrace,
 		severity, serviceName, requestID, userID,
 		ipAddress, path, method,
 		isResolved, resolvedAt, resolvedBy,
@@ -265,7 +274,6 @@ func scanSystemErrorFromRows(rows pgx.Rows) (*domain.SystemError, error) {
 		code        string
 		message     string
 		stackTrace  *string
-		metaJSON    []byte
 		severity    string
 		serviceName *string
 		requestID   *uuid.UUID
@@ -280,7 +288,7 @@ func scanSystemErrorFromRows(rows pgx.Rows) (*domain.SystemError, error) {
 	)
 
 	err := rows.Scan(
-		&id, &code, &message, &stackTrace, &metaJSON,
+		&id, &code, &message, &stackTrace,
 		&severity, &serviceName, &requestID, &userID,
 		&ipAddress, &path, &method,
 		&isResolved, &resolvedAt, &resolvedBy, &createdAt,
@@ -290,7 +298,7 @@ func scanSystemErrorFromRows(rows pgx.Rows) (*domain.SystemError, error) {
 	}
 
 	return reconstructFromRow(
-		id, createdAt, code, message, stackTrace, metaJSON,
+		id, createdAt, code, message, stackTrace,
 		severity, serviceName, requestID, userID,
 		ipAddress, path, method,
 		isResolved, resolvedAt, resolvedBy,
@@ -302,7 +310,6 @@ func reconstructFromRow(
 	createdAt time.Time,
 	code, message string,
 	stackTrace *string,
-	metaJSON []byte,
 	severity string,
 	serviceName *string,
 	requestID *uuid.UUID,
@@ -314,14 +321,9 @@ func reconstructFromRow(
 	resolvedAt *time.Time,
 	resolvedBy *uuid.UUID,
 ) *domain.SystemError {
-	var metadata map[string]any
-	if len(metaJSON) > 0 {
-		_ = json.Unmarshal(metaJSON, &metadata)
-	}
-
 	return domain.ReconstructSystemError(
 		id, createdAt,
-		code, message, stackTrace, metadata,
+		code, message, stackTrace, nil,
 		severity, serviceName, requestID, userID,
 		ipAddress, path, method,
 		isResolved, resolvedAt, resolvedBy,

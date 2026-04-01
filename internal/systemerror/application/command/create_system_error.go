@@ -17,7 +17,7 @@ type CreateSystemErrorCommand struct {
 	Code        string
 	Message     string
 	StackTrace  *string
-	Metadata    map[string]any
+	Metadata    map[string]string
 	Severity    string
 	ServiceName *string
 	RequestID   *uuid.UUID

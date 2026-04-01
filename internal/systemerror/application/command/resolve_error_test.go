@@ -96,7 +96,7 @@ func TestCreateSystemErrorHandler_Handle(t *testing.T) {
 		Code:        "ERR_500",
 		Message:     "internal server error",
 		StackTrace:  &stack,
-		Metadata:    map[string]any{"key": "val"},
+		Metadata:    map[string]string{"key": "val"},
 		Severity:    "critical",
 		ServiceName: &svc,
 		RequestID:   &reqID,

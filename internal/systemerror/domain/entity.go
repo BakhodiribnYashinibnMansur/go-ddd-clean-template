@@ -16,7 +16,7 @@ type SystemError struct {
 	code        string
 	message     string
 	stackTrace  *string
-	metadata    map[string]any
+	metadata    map[string]string
 	severity    string
 	serviceName *string
 	requestID   *uuid.UUID
@@ -38,7 +38,7 @@ func NewSystemError(code, message, severity string) *SystemError {
 		code:          code,
 		message:       message,
 		severity:      severity,
-		metadata:      make(map[string]any),
+		metadata:      make(map[string]string),
 		isResolved:    false,
 	}
 	se.AddEvent(NewSystemErrorRecorded(se.ID(), code, severity))
@@ -51,7 +51,7 @@ func ReconstructSystemError(
 	createdAt time.Time,
 	code, message string,
 	stackTrace *string,
-	metadata map[string]any,
+	metadata map[string]string,
 	severity string,
 	serviceName *string,
 	requestID *uuid.UUID,
@@ -64,7 +64,7 @@ func ReconstructSystemError(
 	resolvedBy *uuid.UUID,
 ) *SystemError {
 	if metadata == nil {
-		metadata = make(map[string]any)
+		metadata = make(map[string]string)
 	}
 	return &SystemError{
 		AggregateRoot: shared.NewAggregateRootWithID(id, createdAt, createdAt, nil),
@@ -100,7 +100,7 @@ func (se *SystemError) Resolve(resolvedBy uuid.UUID) {
 // They are designed to be called in a builder pattern immediately after NewSystemError.
 
 func (se *SystemError) SetStackTrace(st *string) { se.stackTrace = st }
-func (se *SystemError) SetMetadata(m map[string]any) { se.metadata = m }
+func (se *SystemError) SetMetadata(m map[string]string) { se.metadata = m }
 func (se *SystemError) SetServiceName(s *string) { se.serviceName = s }
 func (se *SystemError) SetRequestID(id *uuid.UUID) { se.requestID = id }
 func (se *SystemError) SetUserID(id *uuid.UUID) { se.userID = id }
@@ -115,7 +115,7 @@ func (se *SystemError) SetMethod(m *string) { se.method = m }
 func (se *SystemError) Code() string          { return se.code }
 func (se *SystemError) Message() string       { return se.message }
 func (se *SystemError) StackTrace() *string   { return se.stackTrace }
-func (se *SystemError) Metadata() map[string]any { return se.metadata }
+func (se *SystemError) Metadata() map[string]string { return se.metadata }
 func (se *SystemError) Severity() string      { return se.severity }
 func (se *SystemError) ServiceName() *string  { return se.serviceName }
 func (se *SystemError) RequestID() *uuid.UUID { return se.requestID }

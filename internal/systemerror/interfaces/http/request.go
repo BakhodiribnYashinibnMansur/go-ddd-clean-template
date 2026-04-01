@@ -7,7 +7,7 @@ type CreateRequest struct {
 	Code        string         `json:"code" binding:"required"`
 	Message     string         `json:"message" binding:"required"`
 	StackTrace  *string        `json:"stack_trace,omitempty"`
-	Metadata    map[string]any `json:"metadata,omitempty"`
+	Metadata    map[string]string `json:"metadata,omitempty"`
 	Severity    string         `json:"severity" binding:"required"`
 	ServiceName *string        `json:"service_name,omitempty"`
 	RequestID   *uuid.UUID     `json:"request_id,omitempty"`

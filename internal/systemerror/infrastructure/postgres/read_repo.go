@@ -2,11 +2,11 @@ package postgres
 
 import (
 	"context"
-	"encoding/json"
 	"time"
 
 	"gct/internal/shared/domain/consts"
 	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/metadata"
 	"gct/internal/systemerror/domain"
 
 	"github.com/Masterminds/squirrel"
@@ -15,7 +15,7 @@ import (
 )
 
 var readColumns = []string{
-	"id", "code", "message", "stack_trace", "metadata",
+	"id", "code", "message", "stack_trace",
 	"severity", "service_name", "request_id", "user_id",
 	"ip_address::text", "path", "method",
 	"is_resolved", "resolved_at", "resolved_by", "created_at",
@@ -23,15 +23,17 @@ var readColumns = []string{
 
 // SystemErrorReadRepo implements domain.SystemErrorReadRepository for the CQRS read side.
 type SystemErrorReadRepo struct {
-	pool    *pgxpool.Pool
-	builder squirrel.StatementBuilderType
+	pool     *pgxpool.Pool
+	builder  squirrel.StatementBuilderType
+	metadata *metadata.GenericMetadataRepo
 }
 
 // NewSystemErrorReadRepo creates a new SystemErrorReadRepo.
 func NewSystemErrorReadRepo(pool *pgxpool.Pool) *SystemErrorReadRepo {
 	return &SystemErrorReadRepo{
-		pool:    pool,
-		builder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+		pool:     pool,
+		builder:  squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+		metadata: metadata.NewGenericMetadataRepo(pool),
 	}
 }
 
@@ -47,7 +49,18 @@ func (r *SystemErrorReadRepo) FindByID(ctx context.Context, id uuid.UUID) (*doma
 	}
 
 	row := r.pool.QueryRow(ctx, sql, args...)
-	return scanView(row)
+	v, err := scanView(row)
+	if err != nil {
+		return nil, err
+	}
+
+	meta, err := r.metadata.GetAll(ctx, metadata.EntityTypeSystemErrorMeta, v.ID)
+	if err != nil {
+		return nil, err
+	}
+	v.Metadata = meta
+
+	return v, nil
 }
 
 // List returns a paginated list of SystemErrorView with optional filters.
@@ -103,6 +116,11 @@ func (r *SystemErrorReadRepo) List(ctx context.Context, filter domain.SystemErro
 		if err != nil {
 			return nil, 0, apperrors.HandlePgError(err, tableName, nil)
 		}
+		meta, err := r.metadata.GetAll(ctx, metadata.EntityTypeSystemErrorMeta, v.ID)
+		if err != nil {
+			return nil, 0, err
+		}
+		v.Metadata = meta
 		views = append(views, v)
 	}
 
@@ -123,7 +141,6 @@ func scanViewFields(s rowScanner) (*domain.SystemErrorView, error) {
 		code        string
 		message     string
 		stackTrace  *string
-		metaJSON    []byte
 		severity    string
 		serviceName *string
 		requestID   *uuid.UUID
@@ -138,7 +155,7 @@ func scanViewFields(s rowScanner) (*domain.SystemErrorView, error) {
 	)
 
 	err := s.Scan(
-		&id, &code, &message, &stackTrace, &metaJSON,
+		&id, &code, &message, &stackTrace,
 		&severity, &serviceName, &requestID, &userID,
 		&ipAddress, &path, &method,
 		&isResolved, &resolvedAt, &resolvedBy, &createdAt,
@@ -147,17 +164,11 @@ func scanViewFields(s rowScanner) (*domain.SystemErrorView, error) {
 		return nil, err
 	}
 
-	var metadata map[string]any
-	if len(metaJSON) > 0 {
-		_ = json.Unmarshal(metaJSON, &metadata)
-	}
-
 	return &domain.SystemErrorView{
 		ID:          id,
 		Code:        code,
 		Message:     message,
 		StackTrace:  stackTrace,
-		Metadata:    metadata,
 		Severity:    severity,
 		ServiceName: serviceName,
 		RequestID:   requestID,

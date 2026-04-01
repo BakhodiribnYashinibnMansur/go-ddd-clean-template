@@ -96,8 +96,8 @@ func (m *SystemErrorMiddleware) saveError(c *gin.Context, errVal any, stack *str
 		Path:        &path,
 		Method:      &method,
 		IPAddress:   &ip,
-		Metadata: map[string]any{
-			"duration_ms": time.Since(start).Milliseconds(),
+		Metadata: map[string]string{
+			"duration_ms": fmt.Sprintf("%d", time.Since(start).Milliseconds()),
 			"user_agent":  httpx.GetUserAgent(c),
 		},
 	}

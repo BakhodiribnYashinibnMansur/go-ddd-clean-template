@@ -88,7 +88,7 @@ func TestNewSystemError_Setters(t *testing.T) {
 		t.Fatal("stack trace not set correctly")
 	}
 
-	meta := map[string]any{"key": "value"}
+	meta := map[string]string{"key": "value"}
 	se.SetMetadata(meta)
 	if se.Metadata()["key"] != "value" {
 		t.Fatal("metadata not set correctly")
@@ -137,7 +137,7 @@ func TestReconstructSystemError(t *testing.T) {
 	msg := "connection failed"
 	severity := "FATAL"
 	stack := "goroutine 1..."
-	meta := map[string]any{"db": "postgres"}
+	meta := map[string]string{"db": "postgres"}
 
 	se := domain.ReconstructSystemError(
 		id, se_now(),
