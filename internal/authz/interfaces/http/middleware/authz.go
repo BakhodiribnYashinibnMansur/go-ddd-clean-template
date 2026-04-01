@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	authzquery "gct/internal/authz/application/query"
+	access "gct/internal/authz/application/query"
 	shared "gct/internal/shared/domain"
 	"gct/internal/shared/domain/consts"
 	"gct/internal/shared/infrastructure/httpx"
@@ -19,14 +19,14 @@ import (
 // AuthzMiddleware performs fine-grained access control (RBAC) via the authorization engine.
 // It assumes identity has already been verified and injected into the context by a prior auth middleware.
 type AuthzMiddleware struct {
-	checkAccess     *authzquery.CheckAccessHandler
+	checkAccess     *access.CheckAccessHandler
 	findUserForAuth *query.FindUserForAuthHandler
 	l               logger.Log
 }
 
 // NewAuthzMiddleware creates a new AuthzMiddleware with the required DDD query handlers.
 func NewAuthzMiddleware(
-	checkAccess *authzquery.CheckAccessHandler,
+	checkAccess *access.CheckAccessHandler,
 	findUserForAuth *query.FindUserForAuthHandler,
 	l logger.Log,
 ) *AuthzMiddleware {
@@ -89,7 +89,7 @@ func (m *AuthzMiddleware) Authz(ctx *gin.Context) {
 	method := ctx.Request.Method
 
 	// 5. Check access via the Authz BC query handler.
-	allowed, err := m.checkAccess.Handle(ctx.Request.Context(), authzquery.CheckAccessQuery{
+	allowed, err := m.checkAccess.Handle(ctx.Request.Context(), access.CheckAccessQuery{
 		RoleID: *user.RoleID,
 		Path:   path,
 		Method: strings.ToUpper(method),

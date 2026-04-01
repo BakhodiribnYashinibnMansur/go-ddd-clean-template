@@ -14,9 +14,10 @@ import (
 // --- Mocks ---
 
 type mockReadRepo struct {
-	view  *domain.IntegrationView
-	views []*domain.IntegrationView
-	total int64
+	view       *domain.IntegrationView
+	views      []*domain.IntegrationView
+	total      int64
+	apiKeyView *domain.IntegrationAPIKeyView
 }
 
 func (m *mockReadRepo) FindByID(_ context.Context, id uuid.UUID) (*domain.IntegrationView, error) {
@@ -31,6 +32,9 @@ func (m *mockReadRepo) List(_ context.Context, _ domain.IntegrationFilter) ([]*d
 }
 
 func (m *mockReadRepo) FindByAPIKey(_ context.Context, _ string) (*domain.IntegrationAPIKeyView, error) {
+	if m.apiKeyView != nil {
+		return m.apiKeyView, nil
+	}
 	return nil, domain.ErrIntegrationNotFound
 }
 
