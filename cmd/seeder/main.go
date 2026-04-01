@@ -42,12 +42,24 @@ func main() {
 	// CONFIGURATION: Define the scope of data generation.
 	// ---------------------------------------------------------
 	payload := asynq.SeedPayload{
-		UsersCount:       100,  // Number of random user profiles to generate.
-		RolesCount:       10,   // Number of security roles to create.
-		PermissionsCount: 20,   // Number of granular permissions to simulate.
-		PoliciesCount:    20,   // Number of access policies to define.
-		Seed:             0,    // Deterministic seed (0 for absolute randomness).
-		ClearData:        true, // If true, wipes existing tables before seeding.
+		UsersCount:           100,
+		RolesCount:           10,
+		PermissionsCount:     20,
+		PoliciesCount:        20,
+		AnnouncementsCount:   10,
+		NotificationsCount:   30,
+		FeatureFlagsCount:    15,
+		IntegrationsCount:    5,
+		TranslationsCount:    50,
+		FileMetadataCount:    20,
+		SiteSettingsCount:    15,
+		ErrorCodesCount:      20,
+		IPRulesCount:         10,
+		RateLimitsCount:      8,
+		AuditLogsCount:       50,
+		FunctionMetricsCount: 30,
+		Seed:                 0,
+		ClearData:            true,
 	}
 	// ---------------------------------------------------------
 

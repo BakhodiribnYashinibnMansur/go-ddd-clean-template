@@ -99,6 +99,69 @@ func (s *Seeder) Seed(ctx context.Context, customCounts map[string]int) error {
 		return fmt.Errorf("failed to seed policies: %w", err)
 	}
 
+	// Phase 1: Independent tables
+	siteSettingsCount := s.getCount(customCounts, "site_settings", s.cfg.Seeder.SiteSettingsCount)
+	if err := s.seedSiteSettings(ctx, siteSettingsCount); err != nil {
+		return fmt.Errorf("failed to seed site settings: %w", err)
+	}
+
+	errorCodesCount := s.getCount(customCounts, "error_codes", s.cfg.Seeder.ErrorCodesCount)
+	if err := s.seedErrorCodes(ctx, errorCodesCount); err != nil {
+		return fmt.Errorf("failed to seed error codes: %w", err)
+	}
+
+	featureFlagsCount := s.getCount(customCounts, "feature_flags", s.cfg.Seeder.FeatureFlagsCount)
+	if err := s.seedFeatureFlags(ctx, featureFlagsCount); err != nil {
+		return fmt.Errorf("failed to seed feature flags: %w", err)
+	}
+
+	rateLimitsCount := s.getCount(customCounts, "rate_limits", s.cfg.Seeder.RateLimitsCount)
+	if err := s.seedRateLimits(ctx, rateLimitsCount); err != nil {
+		return fmt.Errorf("failed to seed rate limits: %w", err)
+	}
+
+	ipRulesCount := s.getCount(customCounts, "ip_rules", s.cfg.Seeder.IPRulesCount)
+	if err := s.seedIPRules(ctx, ipRulesCount); err != nil {
+		return fmt.Errorf("failed to seed ip rules: %w", err)
+	}
+
+	functionMetricsCount := s.getCount(customCounts, "function_metrics", s.cfg.Seeder.FunctionMetricsCount)
+	if err := s.seedFunctionMetrics(ctx, functionMetricsCount); err != nil {
+		return fmt.Errorf("failed to seed function metrics: %w", err)
+	}
+
+	// Phase 2: Depends on users
+	integrationsCount := s.getCount(customCounts, "integrations", s.cfg.Seeder.IntegrationsCount)
+	if err := s.seedIntegrations(ctx, integrationsCount); err != nil {
+		return fmt.Errorf("failed to seed integrations: %w", err)
+	}
+
+	fileMetadataCount := s.getCount(customCounts, "file_metadata", s.cfg.Seeder.FileMetadataCount)
+	if err := s.seedFileMetadata(ctx, fileMetadataCount); err != nil {
+		return fmt.Errorf("failed to seed file metadata: %w", err)
+	}
+
+	translationsCount := s.getCount(customCounts, "translations", s.cfg.Seeder.TranslationsCount)
+	if err := s.seedTranslations(ctx, translationsCount); err != nil {
+		return fmt.Errorf("failed to seed translations: %w", err)
+	}
+
+	announcementsCount := s.getCount(customCounts, "announcements", s.cfg.Seeder.AnnouncementsCount)
+	if err := s.seedAnnouncements(ctx, announcementsCount); err != nil {
+		return fmt.Errorf("failed to seed announcements: %w", err)
+	}
+
+	notificationsCount := s.getCount(customCounts, "notifications", s.cfg.Seeder.NotificationsCount)
+	if err := s.seedNotifications(ctx, notificationsCount); err != nil {
+		return fmt.Errorf("failed to seed notifications: %w", err)
+	}
+
+	// Phase 3: Depends on users + sessions + policies
+	auditLogsCount := s.getCount(customCounts, "audit_logs", s.cfg.Seeder.AuditLogsCount)
+	if err := s.seedAuditLogs(ctx, auditLogsCount); err != nil {
+		return fmt.Errorf("failed to seed audit logs: %w", err)
+	}
+
 	duration := time.Since(startTime)
 	s.logger.Infoc(ctx, "Data seeding completed successfully",
 		zap.Duration("duration", duration),
@@ -113,10 +176,25 @@ func (s *Seeder) clearData(ctx context.Context) error {
 
 	// Order matters: delete in reverse order of foreign key dependencies
 	tables := []string{
+		// Reverse FK order — dependent tables first
+		"function_metrics",
+		"endpoint_history",
+		"audit_log",
+		"notifications",
+		"announcements",
+		"translations",
+		"file_metadata",
+		"api_keys",
+		"integrations",
+		"ip_rules",
+		"rate_limits",
+		"feature_flags",
+		"error_code",
+		"site_settings",
+		// Original tables
 		"user_relation",
 		"role_permission",
 		"session",
-		"audit_log",
 		"policy",
 		"users",
 		"role",

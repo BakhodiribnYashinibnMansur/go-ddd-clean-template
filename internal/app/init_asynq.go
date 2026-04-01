@@ -62,6 +62,42 @@ func initAsynqWorker(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool
 		if payload.PoliciesCount > 0 {
 			customCounts["policies"] = payload.PoliciesCount
 		}
+		if payload.AnnouncementsCount > 0 {
+			customCounts["announcements"] = payload.AnnouncementsCount
+		}
+		if payload.NotificationsCount > 0 {
+			customCounts["notifications"] = payload.NotificationsCount
+		}
+		if payload.FeatureFlagsCount > 0 {
+			customCounts["feature_flags"] = payload.FeatureFlagsCount
+		}
+		if payload.IntegrationsCount > 0 {
+			customCounts["integrations"] = payload.IntegrationsCount
+		}
+		if payload.TranslationsCount > 0 {
+			customCounts["translations"] = payload.TranslationsCount
+		}
+		if payload.FileMetadataCount > 0 {
+			customCounts["file_metadata"] = payload.FileMetadataCount
+		}
+		if payload.SiteSettingsCount > 0 {
+			customCounts["site_settings"] = payload.SiteSettingsCount
+		}
+		if payload.ErrorCodesCount > 0 {
+			customCounts["error_codes"] = payload.ErrorCodesCount
+		}
+		if payload.IPRulesCount > 0 {
+			customCounts["ip_rules"] = payload.IPRulesCount
+		}
+		if payload.RateLimitsCount > 0 {
+			customCounts["rate_limits"] = payload.RateLimitsCount
+		}
+		if payload.AuditLogsCount > 0 {
+			customCounts["audit_logs"] = payload.AuditLogsCount
+		}
+		if payload.FunctionMetricsCount > 0 {
+			customCounts["function_metrics"] = payload.FunctionMetricsCount
+		}
 		if payload.Seed != 0 {
 			customCounts["seed"] = int(payload.Seed)
 		}

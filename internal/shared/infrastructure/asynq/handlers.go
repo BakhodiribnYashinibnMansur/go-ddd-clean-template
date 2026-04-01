@@ -35,8 +35,20 @@ type SeedPayload struct {
 	UsersCount       int   `json:"users_count"`
 	RolesCount       int   `json:"roles_count"`
 	PermissionsCount int   `json:"permissions_count"`
-	PoliciesCount    int   `json:"policies_count"`
-	Seed             int64 `json:"seed"`
+	PoliciesCount        int   `json:"policies_count"`
+	AnnouncementsCount   int   `json:"announcements_count"`
+	NotificationsCount   int   `json:"notifications_count"`
+	FeatureFlagsCount    int   `json:"feature_flags_count"`
+	IntegrationsCount    int   `json:"integrations_count"`
+	TranslationsCount    int   `json:"translations_count"`
+	FileMetadataCount    int   `json:"file_metadata_count"`
+	SiteSettingsCount    int   `json:"site_settings_count"`
+	ErrorCodesCount      int   `json:"error_codes_count"`
+	IPRulesCount         int   `json:"ip_rules_count"`
+	RateLimitsCount      int   `json:"rate_limits_count"`
+	AuditLogsCount       int   `json:"audit_logs_count"`
+	FunctionMetricsCount int   `json:"function_metrics_count"`
+	Seed                 int64 `json:"seed"`
 	ClearData        bool  `json:"clear_data"`
 }
 
