@@ -176,7 +176,7 @@ func TestListAuditLogsHandler_MapsAllFields(t *testing.T) {
 				Decision:     &decision,
 				Success:      false,
 				ErrorMessage: &errMsg,
-				Metadata:     map[string]any{"reason": "role_mismatch"},
+				Metadata:     map[string]string{"reason": "role_mismatch"},
 				CreatedAt:    now,
 			},
 		},

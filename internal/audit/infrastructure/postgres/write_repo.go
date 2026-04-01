@@ -2,11 +2,11 @@ package postgres
 
 import (
 	"context"
-	"encoding/json"
 
 	"gct/internal/audit/domain"
 	"gct/internal/shared/domain/consts"
 	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/metadata"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -16,7 +16,7 @@ import (
 var auditLogColumns = []string{
 	"id", "user_id", "session_id", "action", "resource_type", "resource_id",
 	"platform", "ip_address", "user_agent", "permission", "policy_id",
-	"decision", "success", "error_message", "metadata", "created_at",
+	"decision", "success", "error_message", "created_at",
 }
 
 // endpointHistoryColumns are the columns for the endpoint_history table.
@@ -27,25 +27,22 @@ var endpointHistoryColumns = []string{
 
 // AuditLogWriteRepo implements domain.AuditLogRepository using PostgreSQL.
 type AuditLogWriteRepo struct {
-	pool    *pgxpool.Pool
-	builder squirrel.StatementBuilderType
+	pool     *pgxpool.Pool
+	builder  squirrel.StatementBuilderType
+	metadata *metadata.GenericMetadataRepo
 }
 
 // NewAuditLogWriteRepo creates a new AuditLogWriteRepo.
 func NewAuditLogWriteRepo(pool *pgxpool.Pool) *AuditLogWriteRepo {
 	return &AuditLogWriteRepo{
-		pool:    pool,
-		builder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+		pool:     pool,
+		builder:  squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+		metadata: metadata.NewGenericMetadataRepo(pool),
 	}
 }
 
 // Save inserts a new audit log entry. Audit logs are immutable.
 func (r *AuditLogWriteRepo) Save(ctx context.Context, auditLog *domain.AuditLog) error {
-	metadataJSON, err := json.Marshal(auditLog.Metadata())
-	if err != nil {
-		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToMarshalJSON)
-	}
-
 	sql, args, err := r.builder.
 		Insert(consts.TableAuditLog).
 		Columns(auditLogColumns...).
@@ -64,7 +61,6 @@ func (r *AuditLogWriteRepo) Save(ctx context.Context, auditLog *domain.AuditLog)
 			auditLog.Decision(),
 			auditLog.Success(),
 			auditLog.ErrorMessage(),
-			metadataJSON,
 			auditLog.CreatedAt(),
 		).
 		ToSql()
@@ -76,7 +72,7 @@ func (r *AuditLogWriteRepo) Save(ctx context.Context, auditLog *domain.AuditLog)
 		return apperrors.HandlePgError(err, consts.TableAuditLog, nil)
 	}
 
-	return nil
+	return r.metadata.SetMany(ctx, metadata.EntityTypeAuditLogMetadata, auditLog.ID(), auditLog.Metadata())
 }
 
 // EndpointHistoryWriteRepo implements domain.EndpointHistoryRepository using PostgreSQL.

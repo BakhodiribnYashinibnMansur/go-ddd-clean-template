@@ -27,7 +27,7 @@ type CreateAuditLogCommand struct {
 	Decision     *string
 	Success      bool
 	ErrorMessage *string
-	Metadata     map[string]any
+	Metadata     map[string]string
 }
 
 // CreateAuditLogHandler persists audit log entries and emits domain events for downstream consumers.

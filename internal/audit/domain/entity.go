@@ -54,7 +54,7 @@ type AuditLog struct {
 	decision     *string
 	success      bool
 	errorMessage *string
-	metadata     map[string]any
+	metadata     map[string]string
 }
 
 // NewAuditLog creates a new AuditLog aggregate.
@@ -72,10 +72,10 @@ func NewAuditLog(
 	decision *string,
 	success bool,
 	errorMessage *string,
-	metadata map[string]any,
+	metadata map[string]string,
 ) *AuditLog {
 	if metadata == nil {
-		metadata = make(map[string]any)
+		metadata = make(map[string]string)
 	}
 
 	a := &AuditLog{
@@ -118,10 +118,10 @@ func ReconstructAuditLog(
 	decision *string,
 	success bool,
 	errorMessage *string,
-	metadata map[string]any,
+	metadata map[string]string,
 ) *AuditLog {
 	if metadata == nil {
-		metadata = make(map[string]any)
+		metadata = make(map[string]string)
 	}
 
 	return &AuditLog{
@@ -158,4 +158,4 @@ func (a *AuditLog) PolicyID() *uuid.UUID         { return a.policyID }
 func (a *AuditLog) Decision() *string            { return a.decision }
 func (a *AuditLog) Success() bool                { return a.success }
 func (a *AuditLog) ErrorMessage() *string        { return a.errorMessage }
-func (a *AuditLog) Metadata() map[string]any     { return a.metadata }
+func (a *AuditLog) Metadata() map[string]string   { return a.metadata }

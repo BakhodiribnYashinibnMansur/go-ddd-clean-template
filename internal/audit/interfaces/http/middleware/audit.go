@@ -3,6 +3,7 @@ package middleware
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"gct/internal/audit/application/command"
@@ -119,10 +120,10 @@ func (m *AuditMiddleware) ChangeAudit() gin.HandlerFunc {
 			IPAddress: &ip,
 			UserAgent: &ua,
 			Success:   c.Writer.Status() < consts.HTTPStatusSuccessThreshold, // HTTP status < 400 indicates success
-			Metadata: map[string]any{
+			Metadata: map[string]string{
 				"path":   path,
 				"method": method,
-				"status": c.Writer.Status(),
+				"status": fmt.Sprintf("%d", c.Writer.Status()),
 				"query":  c.Request.URL.RawQuery,
 			},
 		}

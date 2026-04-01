@@ -55,7 +55,7 @@ type AuditPayload struct {
 	Decision     *string        `json:"decision,omitempty"`
 	Success      bool           `json:"success"`
 	ErrorMessage *string        `json:"error_message,omitempty"`
-	Metadata     map[string]any `json:"metadata,omitempty"`
+	Metadata     map[string]string `json:"metadata,omitempty"`
 }
 
 // Handlers contains all task handlers.

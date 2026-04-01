@@ -81,7 +81,7 @@ func TestNewAuditLog_AllFields(t *testing.T) {
 	perm := "users:read"
 	decision := "allow"
 	errMsg := "some error"
-	meta := map[string]any{"key": "value"}
+	meta := map[string]string{"key": "value"}
 
 	a := domain.NewAuditLog(
 		&userID, &sessionID, domain.AuditActionUserCreate,

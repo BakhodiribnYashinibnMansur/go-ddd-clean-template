@@ -153,7 +153,7 @@ func TestCreateAuditLogHandler_WithMetadata(t *testing.T) {
 
 	handler := NewCreateAuditLogHandler(repo, eventBus, log)
 
-	meta := map[string]any{"browser": "Chrome", "version": "120"}
+	meta := map[string]string{"browser": "Chrome", "version": "120"}
 
 	cmd := CreateAuditLogCommand{
 		Action:   domain.AuditActionUserUpdate,

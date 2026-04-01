@@ -2,13 +2,13 @@ package postgres
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
 	"gct/internal/audit/domain"
 	"gct/internal/shared/domain/consts"
 	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/metadata"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -19,7 +19,7 @@ import (
 var readAuditLogColumns = []string{
 	"id", "user_id", "session_id", "action", "resource_type", "resource_id",
 	"platform", "ip_address::text", "user_agent", "permission", "policy_id",
-	"decision", "success", "error_message", "metadata", "created_at",
+	"decision", "success", "error_message", "created_at",
 }
 
 // readEndpointHistoryColumns are the columns selected for endpoint history read-model queries.
@@ -30,15 +30,17 @@ var readEndpointHistoryColumns = []string{
 
 // AuditReadRepo implements domain.AuditReadRepository for the CQRS read side.
 type AuditReadRepo struct {
-	pool    *pgxpool.Pool
-	builder squirrel.StatementBuilderType
+	pool     *pgxpool.Pool
+	builder  squirrel.StatementBuilderType
+	metadata *metadata.GenericMetadataRepo
 }
 
 // NewAuditReadRepo creates a new AuditReadRepo.
 func NewAuditReadRepo(pool *pgxpool.Pool) *AuditReadRepo {
 	return &AuditReadRepo{
-		pool:    pool,
-		builder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+		pool:     pool,
+		builder:  squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+		metadata: metadata.NewGenericMetadataRepo(pool),
 	}
 }
 
@@ -136,21 +138,20 @@ func (r *AuditReadRepo) ListAuditLogs(ctx context.Context, filter domain.AuditLo
 			decision     *string
 			success      bool
 			errorMessage *string
-			metadataJSON []byte
 			createdAt    time.Time
 		)
 
 		if err := rows.Scan(
 			&id, &userID, &sessionID, &action, &resourceType, &resourceID,
 			&platform, &ipAddress, &userAgent, &permission, &policyID,
-			&decision, &success, &errorMessage, &metadataJSON, &createdAt,
+			&decision, &success, &errorMessage, &createdAt,
 		); err != nil {
 			return nil, 0, apperrors.HandlePgError(err, consts.TableAuditLog, nil)
 		}
 
-		var metadata map[string]any
-		if len(metadataJSON) > 0 {
-			_ = json.Unmarshal(metadataJSON, &metadata)
+		meta, err := r.metadata.GetAll(ctx, metadata.EntityTypeAuditLogMetadata, id)
+		if err != nil {
+			return nil, 0, err
 		}
 
 		views = append(views, &domain.AuditLogView{
@@ -168,7 +169,7 @@ func (r *AuditReadRepo) ListAuditLogs(ctx context.Context, filter domain.AuditLo
 			Decision:     decision,
 			Success:      success,
 			ErrorMessage: errorMessage,
-			Metadata:     metadata,
+			Metadata:     meta,
 			CreatedAt:    createdAt,
 		})
 	}

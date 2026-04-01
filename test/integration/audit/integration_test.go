@@ -33,7 +33,7 @@ func TestIntegration_CreateAuditLogAndList(t *testing.T) {
 		IPAddress: &ip,
 		UserAgent: &ua,
 		Success:   true,
-		Metadata:  map[string]any{"source": "integration-test"},
+		Metadata:  map[string]string{"source": "integration-test"},
 	})
 	if err != nil {
 		t.Fatalf("CreateAuditLog: %v", err)
