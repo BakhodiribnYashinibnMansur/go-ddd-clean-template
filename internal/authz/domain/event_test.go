@@ -62,7 +62,7 @@ func TestReconstructPolicy_Full(t *testing.T) {
 	id := uuid.New()
 	permID := uuid.New()
 	now := time.Now()
-	conds := map[string]string{"ip": "10.0.0.0/8"}
+	conds := map[string]any{"ip": "10.0.0.0/8"}
 
 	policy := ReconstructPolicy(id, now, now, nil, permID, PolicyDeny, 50, false, conds)
 

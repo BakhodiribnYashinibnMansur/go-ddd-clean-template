@@ -31,7 +31,7 @@ func TestIntegration_CreateAndGetIntegration(t *testing.T) {
 		APIKey:     "key-123",
 		WebhookURL: "https://example.com/hook",
 		Enabled:    true,
-		Config:     map[string]any{"channel": "#general"},
+		Config:     map[string]string{"channel": "#general"},
 	})
 	if err != nil {
 		t.Fatalf("CreateIntegration: %v", err)
@@ -75,7 +75,7 @@ func TestIntegration_UpdateIntegration(t *testing.T) {
 		APIKey:     "key-abc",
 		WebhookURL: "https://example.com/original",
 		Enabled:    true,
-		Config:     map[string]any{},
+		Config:     map[string]string{},
 	})
 	if err != nil {
 		t.Fatalf("CreateIntegration: %v", err)
@@ -117,7 +117,7 @@ func TestIntegration_DeleteIntegration(t *testing.T) {
 		APIKey:     "key-del",
 		WebhookURL: "https://example.com/delete",
 		Enabled:    true,
-		Config:     map[string]any{},
+		Config:     map[string]string{},
 	})
 	if err != nil {
 		t.Fatalf("CreateIntegration: %v", err)

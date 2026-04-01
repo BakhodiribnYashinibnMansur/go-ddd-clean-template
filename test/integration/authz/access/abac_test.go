@@ -239,3 +239,176 @@ func TestIntegration_ABAC_InactivePolicy_Ignored(t *testing.T) {
 		t.Error("expected access allowed when DENY policy is inactive")
 	}
 }
+
+// ---------------------------------------------------------------------------
+// Time-based ABAC policies (between operator)
+// ---------------------------------------------------------------------------
+
+// TestIntegration_ABAC_TimeBetween_Allowed verifies that access is granted
+// when the current time falls within the allowed window (e.g., 02:00–17:00).
+func TestIntegration_ABAC_TimeBetween_Allowed(t *testing.T) {
+	cleanDB(t)
+	bc := newTestBC(t)
+	ctx := context.Background()
+
+	seedRoleWithScope(t, bc, "worker", "tasks.manage", "/api/v1/tasks", "POST")
+
+	roles, _ := bc.ListRoles.Handle(ctx, query.ListRolesQuery{Pagination: shared.Pagination{Limit: 10}})
+	perms, _ := bc.ListPermissions.Handle(ctx, query.ListPermissionsQuery{Pagination: shared.Pagination{Limit: 10}})
+	roleID := roles.Roles[0].ID
+	permID := perms.Permissions[0].ID
+
+	// ALLOW only between 02:00 and 17:00.
+	if err := bc.CreatePolicy.Handle(ctx, command.CreatePolicyCommand{
+		PermissionID: permID,
+		Effect:       "ALLOW",
+		Priority:     10,
+		Conditions:   map[string]any{"env.time_between": []any{"02:00", "17:00"}},
+	}); err != nil {
+		t.Fatalf("CreatePolicy: %v", err)
+	}
+
+	// Request at 10:30 — within range.
+	allowed, err := bc.CheckAccess.Handle(ctx, query.CheckAccessQuery{
+		RoleID: roleID,
+		Path:   "/api/v1/tasks",
+		Method: "POST",
+		EvalCtx: domain.EvaluationContext{Attrs: map[string]map[string]any{
+			"user": {},
+			"env":  {"time": "10:30"},
+		}},
+	})
+	if err != nil {
+		t.Fatalf("CheckAccess: %v", err)
+	}
+	if !allowed {
+		t.Error("expected allowed — 10:30 is within 02:00–17:00")
+	}
+}
+
+// TestIntegration_ABAC_TimeBetween_DenyOutsideHours verifies that a DENY policy
+// blocks access during off-hours (e.g., deny between 17:00 and 23:59).
+func TestIntegration_ABAC_TimeBetween_DenyOutsideHours(t *testing.T) {
+	cleanDB(t)
+	bc := newTestBC(t)
+	ctx := context.Background()
+
+	seedRoleWithScope(t, bc, "worker", "tasks.manage", "/api/v1/tasks", "POST")
+
+	roles, _ := bc.ListRoles.Handle(ctx, query.ListRolesQuery{Pagination: shared.Pagination{Limit: 10}})
+	perms, _ := bc.ListPermissions.Handle(ctx, query.ListPermissionsQuery{Pagination: shared.Pagination{Limit: 10}})
+	roleID := roles.Roles[0].ID
+	permID := perms.Permissions[0].ID
+
+	// DENY between 17:00 and 23:59 (off-hours).
+	if err := bc.CreatePolicy.Handle(ctx, command.CreatePolicyCommand{
+		PermissionID: permID,
+		Effect:       "DENY",
+		Priority:     10,
+		Conditions:   map[string]any{"env.time_between": []any{"17:00", "23:59"}},
+	}); err != nil {
+		t.Fatalf("CreatePolicy: %v", err)
+	}
+
+	// 23:00 is within off-hours → DENY matches → blocked.
+	allowed, err := bc.CheckAccess.Handle(ctx, query.CheckAccessQuery{
+		RoleID: roleID,
+		Path:   "/api/v1/tasks",
+		Method: "POST",
+		EvalCtx: domain.EvaluationContext{Attrs: map[string]map[string]any{
+			"user": {},
+			"env":  {"time": "23:00"},
+		}},
+	})
+	if err != nil {
+		t.Fatalf("CheckAccess: %v", err)
+	}
+	if allowed {
+		t.Error("expected denied — 23:00 is within off-hours 17:00–23:59")
+	}
+
+	// 10:30 is outside off-hours → DENY doesn't match → RBAC stands → allowed.
+	allowed, err = bc.CheckAccess.Handle(ctx, query.CheckAccessQuery{
+		RoleID: roleID,
+		Path:   "/api/v1/tasks",
+		Method: "POST",
+		EvalCtx: domain.EvaluationContext{Attrs: map[string]map[string]any{
+			"user": {},
+			"env":  {"time": "10:30"},
+		}},
+	})
+	if err != nil {
+		t.Fatalf("CheckAccess: %v", err)
+	}
+	if !allowed {
+		t.Error("expected allowed — 10:30 is outside off-hours")
+	}
+}
+
+// TestIntegration_ABAC_TimeBetween_WorkingHours verifies the 02:00–05:00 working
+// window pattern using a DENY policy for outside-hours.
+func TestIntegration_ABAC_TimeBetween_WorkingHours(t *testing.T) {
+	cleanDB(t)
+	bc := newTestBC(t)
+	ctx := context.Background()
+
+	seedRoleWithScope(t, bc, "guard", "gates.open", "/api/v1/gates", "POST")
+
+	roles, _ := bc.ListRoles.Handle(ctx, query.ListRolesQuery{Pagination: shared.Pagination{Limit: 10}})
+	perms, _ := bc.ListPermissions.Handle(ctx, query.ListPermissionsQuery{Pagination: shared.Pagination{Limit: 10}})
+	roleID := roles.Roles[0].ID
+	permID := perms.Permissions[0].ID
+
+	// Pattern: "only allow 02:00–05:00" = two DENY policies covering the outside.
+	// DENY 00:00–01:59 (before window).
+	if err := bc.CreatePolicy.Handle(ctx, command.CreatePolicyCommand{
+		PermissionID: permID,
+		Effect:       "DENY",
+		Priority:     10,
+		Conditions:   map[string]any{"env.time_between": []any{"00:00", "01:59"}},
+	}); err != nil {
+		t.Fatalf("CreatePolicy: %v", err)
+	}
+	// DENY 05:01–23:59 (after window).
+	if err := bc.CreatePolicy.Handle(ctx, command.CreatePolicyCommand{
+		PermissionID: permID,
+		Effect:       "DENY",
+		Priority:     10,
+		Conditions:   map[string]any{"env.time_between": []any{"05:01", "23:59"}},
+	}); err != nil {
+		t.Fatalf("CreatePolicy: %v", err)
+	}
+
+	tests := []struct {
+		time    string
+		allowed bool
+	}{
+		{"02:00", true},  // lower bound — inside window
+		{"03:30", true},  // middle of window
+		{"05:00", true},  // upper bound — inside window
+		{"01:59", false}, // just before window
+		{"05:01", false}, // just after window
+		{"12:00", false}, // afternoon — outside
+		{"00:00", false}, // midnight — outside
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.time, func(t *testing.T) {
+			allowed, err := bc.CheckAccess.Handle(ctx, query.CheckAccessQuery{
+				RoleID: roleID,
+				Path:   "/api/v1/gates",
+				Method: "POST",
+				EvalCtx: domain.EvaluationContext{Attrs: map[string]map[string]any{
+					"user": {},
+					"env":  {"time": tt.time},
+				}},
+			})
+			if err != nil {
+				t.Fatalf("CheckAccess: %v", err)
+			}
+			if allowed != tt.allowed {
+				t.Errorf("time %s: expected allowed=%v, got %v", tt.time, tt.allowed, allowed)
+			}
+		})
+	}
+}
