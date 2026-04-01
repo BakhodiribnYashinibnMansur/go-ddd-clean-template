@@ -288,7 +288,7 @@ func resolveDynamicRef(val any, ctx EvaluationContext) any {
 
 // evaluateConditions checks whether all conditions in the map hold true against
 // the given context. Empty conditions always match (return true). Uses AND semantics.
-func evaluateConditions(conditions map[string]any, ctx EvaluationContext) bool {
+func evaluateConditions(conditions map[string]string, ctx EvaluationContext) bool {
 	if len(conditions) == 0 {
 		return true
 	}
@@ -300,13 +300,13 @@ func evaluateConditions(conditions map[string]any, ctx EvaluationContext) bool {
 			return false
 		}
 
-		condVal = resolveDynamicRef(condVal, ctx)
+		resolved := resolveDynamicRef(condVal, ctx)
 
 		opFunc, opOk := operators[op]
 		if !opOk {
 			return false
 		}
-		if !opFunc(fieldVal, condVal) {
+		if !opFunc(fieldVal, resolved) {
 			return false
 		}
 	}

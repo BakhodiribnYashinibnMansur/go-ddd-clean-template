@@ -2,15 +2,14 @@ package postgres
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
-	"time"
 
 	"gct/internal/authz/domain"
 	"gct/internal/shared/domain/consts"
 	shared "gct/internal/shared/domain"
 	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/metadata"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -19,15 +18,17 @@ import (
 
 // AuthzReadRepo implements domain.AuthzReadRepository for the CQRS read side.
 type AuthzReadRepo struct {
-	pool    *pgxpool.Pool
-	builder squirrel.StatementBuilderType
+	pool     *pgxpool.Pool
+	builder  squirrel.StatementBuilderType
+	metadata *metadata.GenericMetadataRepo
 }
 
 // NewAuthzReadRepo creates a new AuthzReadRepo.
 func NewAuthzReadRepo(pool *pgxpool.Pool) *AuthzReadRepo {
 	return &AuthzReadRepo{
-		pool:    pool,
-		builder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+		pool:     pool,
+		builder:  squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+		metadata: metadata.NewGenericMetadataRepo(pool),
 	}
 }
 
@@ -191,7 +192,7 @@ func (r *AuthzReadRepo) ListPolicies(ctx context.Context, pagination shared.Pagi
 	}
 
 	qb := r.builder.
-		Select("id", "permission_id", "effect", "priority", "active", "conditions").
+		Select("id", "permission_id", "effect", "priority", "active").
 		From(consts.TablePolicy).
 		Limit(uint64(pagination.Limit)).
 		Offset(uint64(pagination.Offset))
@@ -217,17 +218,19 @@ func (r *AuthzReadRepo) ListPolicies(ctx context.Context, pagination shared.Pagi
 
 	var views []*domain.PolicyView
 	for rows.Next() {
-		var (
-			v        domain.PolicyView
-			condJSON []byte
-		)
-		if err := rows.Scan(&v.ID, &v.PermissionID, &v.Effect, &v.Priority, &v.Active, &condJSON); err != nil {
+		var v domain.PolicyView
+		if err := rows.Scan(&v.ID, &v.PermissionID, &v.Effect, &v.Priority, &v.Active); err != nil {
 			return nil, 0, apperrors.HandlePgError(err, consts.TablePolicy, nil)
 		}
-		if len(condJSON) > 0 {
-			_ = json.Unmarshal(condJSON, &v.Conditions)
-		}
 		views = append(views, &v)
+	}
+
+	for _, v := range views {
+		conds, err := r.metadata.GetAll(ctx, metadata.EntityTypePolicyConditions, v.ID)
+		if err != nil {
+			return nil, 0, err
+		}
+		v.Conditions = conds
 	}
 
 	return views, total, nil
@@ -396,7 +399,7 @@ func (r *AuthzReadRepo) FindPoliciesByPermissionIDs(ctx context.Context, permiss
 	}
 
 	sql, args, err := r.builder.
-		Select("id", "permission_id", "effect", "priority", "active", "conditions", "created_at", "updated_at").
+		Select(policyColumns...).
 		From(consts.TablePolicy).
 		Where(squirrel.Eq{"permission_id": permissionIDs}).
 		ToSql()
@@ -412,27 +415,19 @@ func (r *AuthzReadRepo) FindPoliciesByPermissionIDs(ctx context.Context, permiss
 
 	var policies []*domain.Policy
 	for rows.Next() {
-		var (
-			id           uuid.UUID
-			permID       uuid.UUID
-			effect       string
-			priority     int
-			active       bool
-			condJSON     []byte
-			createdAt    time.Time
-			updatedAt    time.Time
-		)
-		if err := rows.Scan(&id, &permID, &effect, &priority, &active, &condJSON, &createdAt, &updatedAt); err != nil {
+		p, err := scanPolicyFromRows(rows)
+		if err != nil {
 			return nil, apperrors.HandlePgError(err, consts.TablePolicy, nil)
 		}
-
-		var conditions map[string]any
-		if len(condJSON) > 0 {
-			_ = json.Unmarshal(condJSON, &conditions)
-		}
-
-		p := domain.ReconstructPolicy(id, createdAt, updatedAt, nil, permID, domain.PolicyEffect(effect), priority, active, conditions)
 		policies = append(policies, p)
+	}
+
+	for _, p := range policies {
+		conds, err := r.metadata.GetAll(ctx, metadata.EntityTypePolicyConditions, p.ID())
+		if err != nil {
+			return nil, err
+		}
+		p.SetConditions(conds)
 	}
 
 	return policies, nil

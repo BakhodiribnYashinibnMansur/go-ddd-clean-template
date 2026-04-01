@@ -87,7 +87,7 @@ type PolicyView struct {
 	Effect       string         `json:"effect"`
 	Priority     int            `json:"priority"`
 	Active       bool           `json:"active"`
-	Conditions   map[string]any `json:"conditions,omitempty"`
+	Conditions   map[string]string `json:"conditions,omitempty"`
 }
 
 // ScopeView is a read-model DTO for scopes.

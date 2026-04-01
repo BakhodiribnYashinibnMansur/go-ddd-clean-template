@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -10,6 +9,7 @@ import (
 	"gct/internal/shared/domain/consts"
 	shared "gct/internal/shared/domain"
 	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/metadata"
 	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/Masterminds/squirrel"
@@ -30,7 +30,7 @@ const (
 var (
 	roleColumns       = []string{"id", "name", "description", "created_at", "updated_at"}
 	permissionColumns = []string{"id", "parent_id", "name", "description", "created_at", "updated_at"}
-	policyColumns     = []string{"id", "permission_id", "effect", "priority", "active", "conditions", "created_at", "updated_at"}
+	policyColumns     = []string{"id", "permission_id", "effect", "priority", "active", "created_at", "updated_at"}
 	scopeColumns      = []string{"path", "method"}
 )
 
@@ -368,25 +368,22 @@ func (r *PermissionWriteRepo) List(ctx context.Context, pagination shared.Pagina
 
 // PolicyWriteRepo implements domain.PolicyRepository using PostgreSQL.
 type PolicyWriteRepo struct {
-	pool    *pgxpool.Pool
-	builder squirrel.StatementBuilderType
+	pool     *pgxpool.Pool
+	builder  squirrel.StatementBuilderType
+	metadata *metadata.GenericMetadataRepo
 }
 
 // NewPolicyWriteRepo creates a new PolicyWriteRepo.
 func NewPolicyWriteRepo(pool *pgxpool.Pool) *PolicyWriteRepo {
 	return &PolicyWriteRepo{
-		pool:    pool,
-		builder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+		pool:     pool,
+		builder:  squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+		metadata: metadata.NewGenericMetadataRepo(pool),
 	}
 }
 
 // Save inserts a new policy.
 func (r *PolicyWriteRepo) Save(ctx context.Context, policy *domain.Policy) error {
-	condJSON, err := json.Marshal(policy.Conditions())
-	if err != nil {
-		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToMarshalJSON)
-	}
-
 	sql, args, err := r.builder.
 		Insert(policyTable).
 		Columns(policyColumns...).
@@ -396,7 +393,6 @@ func (r *PolicyWriteRepo) Save(ctx context.Context, policy *domain.Policy) error
 			string(policy.Effect()),
 			policy.Priority(),
 			policy.IsActive(),
-			condJSON,
 			policy.CreatedAt(),
 			policy.UpdatedAt(),
 		).
@@ -408,6 +404,11 @@ func (r *PolicyWriteRepo) Save(ctx context.Context, policy *domain.Policy) error
 	if _, err = r.pool.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, policyTable, nil)
 	}
+
+	if err := r.metadata.SetMany(ctx, metadata.EntityTypePolicyConditions, policy.ID(), policy.Conditions()); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -423,22 +424,27 @@ func (r *PolicyWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.P
 	}
 
 	row := r.pool.QueryRow(ctx, sql, args...)
-	return scanPolicy(row)
+	policy, err := scanPolicy(row)
+	if err != nil {
+		return nil, err
+	}
+
+	conds, err := r.metadata.GetAll(ctx, metadata.EntityTypePolicyConditions, policy.ID())
+	if err != nil {
+		return nil, err
+	}
+	policy.SetConditions(conds)
+
+	return policy, nil
 }
 
 // Update updates an existing policy.
 func (r *PolicyWriteRepo) Update(ctx context.Context, policy *domain.Policy) error {
-	condJSON, err := json.Marshal(policy.Conditions())
-	if err != nil {
-		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToMarshalJSON)
-	}
-
 	sql, args, err := r.builder.
 		Update(policyTable).
 		Set("effect", string(policy.Effect())).
 		Set("priority", policy.Priority()).
 		Set("active", policy.IsActive()).
-		Set("conditions", condJSON).
 		Set("updated_at", policy.UpdatedAt()).
 		Where(squirrel.Eq{"id": policy.ID()}).
 		ToSql()
@@ -449,6 +455,11 @@ func (r *PolicyWriteRepo) Update(ctx context.Context, policy *domain.Policy) err
 	if _, err = r.pool.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, policyTable, nil)
 	}
+
+	if err := r.metadata.SetMany(ctx, metadata.EntityTypePolicyConditions, policy.ID(), policy.Conditions()); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -465,6 +476,11 @@ func (r *PolicyWriteRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	if _, err = r.pool.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, policyTable, nil)
 	}
+
+	if err := r.metadata.DeleteAll(ctx, metadata.EntityTypePolicyConditions, id); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -517,6 +533,14 @@ func (r *PolicyWriteRepo) List(ctx context.Context, pagination shared.Pagination
 		policies = append(policies, p)
 	}
 
+	for _, p := range policies {
+		conds, err := r.metadata.GetAll(ctx, metadata.EntityTypePolicyConditions, p.ID())
+		if err != nil {
+			return nil, 0, err
+		}
+		p.SetConditions(conds)
+	}
+
 	return policies, total, nil
 }
 
@@ -544,6 +568,14 @@ func (r *PolicyWriteRepo) FindByPermissionID(ctx context.Context, permissionID u
 			return nil, apperrors.HandlePgError(err, policyTable, nil)
 		}
 		policies = append(policies, p)
+	}
+
+	for _, p := range policies {
+		conds, err := r.metadata.GetAll(ctx, metadata.EntityTypePolicyConditions, p.ID())
+		if err != nil {
+			return nil, err
+		}
+		p.SetConditions(conds)
 	}
 
 	return policies, nil
@@ -845,21 +877,15 @@ func scanPolicy(row pgx.Row) (*domain.Policy, error) {
 		effect       string
 		priority     int
 		active       bool
-		condJSON     []byte
 		ct, ut       interface{}
 	)
 
-	err := row.Scan(&id, &permissionID, &effect, &priority, &active, &condJSON, &ct, &ut)
+	err := row.Scan(&id, &permissionID, &effect, &priority, &active, &ct, &ut)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, policyTable, nil)
 	}
 
-	var conditions map[string]any
-	if len(condJSON) > 0 {
-		_ = json.Unmarshal(condJSON, &conditions)
-	}
-
-	return domain.ReconstructPolicy(id, toTime(ct), toTime(ut), nil, permissionID, domain.PolicyEffect(effect), priority, active, conditions), nil
+	return domain.ReconstructPolicy(id, toTime(ct), toTime(ut), nil, permissionID, domain.PolicyEffect(effect), priority, active, nil), nil
 }
 
 func scanPolicyFromRows(rows pgx.Rows) (*domain.Policy, error) {
@@ -869,21 +895,15 @@ func scanPolicyFromRows(rows pgx.Rows) (*domain.Policy, error) {
 		effect       string
 		priority     int
 		active       bool
-		condJSON     []byte
 		ct, ut       interface{}
 	)
 
-	err := rows.Scan(&id, &permissionID, &effect, &priority, &active, &condJSON, &ct, &ut)
+	err := rows.Scan(&id, &permissionID, &effect, &priority, &active, &ct, &ut)
 	if err != nil {
 		return nil, err
 	}
 
-	var conditions map[string]any
-	if len(condJSON) > 0 {
-		_ = json.Unmarshal(condJSON, &conditions)
-	}
-
-	return domain.ReconstructPolicy(id, toTime(ct), toTime(ut), nil, permissionID, domain.PolicyEffect(effect), priority, active, conditions), nil
+	return domain.ReconstructPolicy(id, toTime(ct), toTime(ut), nil, permissionID, domain.PolicyEffect(effect), priority, active, nil), nil
 }
 
 // toTime converts an interface{} (from pgx scan) to time.Time.
@@ -898,3 +918,5 @@ func toTime(v interface{}) (t time.Time) {
 		return t
 	}
 }
+
+

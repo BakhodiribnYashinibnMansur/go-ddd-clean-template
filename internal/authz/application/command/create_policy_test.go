@@ -132,9 +132,9 @@ func TestCreatePolicyHandler_WithConditions(t *testing.T) {
 
 	handler := NewCreatePolicyHandler(repo, log)
 
-	conditions := map[string]any{
+	conditions := map[string]string{
 		"ip_range": "10.0.0.0/8",
-		"max_age":  float64(3600),
+		"max_age":  "3600",
 	}
 
 	cmd := CreatePolicyCommand{
@@ -162,7 +162,7 @@ func TestCreatePolicyHandler_WithConditions(t *testing.T) {
 		t.Errorf("expected ip_range '10.0.0.0/8', got '%v'", conds["ip_range"])
 	}
 
-	if conds["max_age"] != float64(3600) {
+	if conds["max_age"] != "3600" {
 		t.Errorf("expected max_age 3600, got '%v'", conds["max_age"])
 	}
 }

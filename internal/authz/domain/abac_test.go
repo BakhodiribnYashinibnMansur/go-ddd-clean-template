@@ -262,7 +262,7 @@ func TestOpBetween(t *testing.T) {
 
 // --- PolicyEvaluator ---
 
-func newTestPolicy(effect PolicyEffect, priority int, active bool, conditions map[string]any) *Policy {
+func newTestPolicy(effect PolicyEffect, priority int, active bool, conditions map[string]string) *Policy {
 	p := NewPolicy(uuid.New(), effect)
 	p.SetPriority(priority)
 	p.SetConditions(conditions)
@@ -274,7 +274,7 @@ func newTestPolicy(effect PolicyEffect, priority int, active bool, conditions ma
 
 func TestPolicyEvaluator_SingleAllow(t *testing.T) {
 	e := &PolicyEvaluator{}
-	p := newTestPolicy(PolicyAllow, 1, true, map[string]any{
+	p := newTestPolicy(PolicyAllow, 1, true, map[string]string{
 		"user.role_name": "admin",
 	})
 	ctx := EvaluationContext{
@@ -290,7 +290,7 @@ func TestPolicyEvaluator_SingleAllow(t *testing.T) {
 
 func TestPolicyEvaluator_SingleDeny(t *testing.T) {
 	e := &PolicyEvaluator{}
-	p := newTestPolicy(PolicyDeny, 1, true, map[string]any{
+	p := newTestPolicy(PolicyDeny, 1, true, map[string]string{
 		"user.role_name": "guest",
 	})
 	ctx := EvaluationContext{
@@ -306,10 +306,10 @@ func TestPolicyEvaluator_SingleDeny(t *testing.T) {
 
 func TestPolicyEvaluator_DenyWinsOverAllow(t *testing.T) {
 	e := &PolicyEvaluator{}
-	allow := newTestPolicy(PolicyAllow, 10, true, map[string]any{
+	allow := newTestPolicy(PolicyAllow, 10, true, map[string]string{
 		"user.role_name": "admin",
 	})
-	deny := newTestPolicy(PolicyDeny, 1, true, map[string]any{
+	deny := newTestPolicy(PolicyDeny, 1, true, map[string]string{
 		"user.role_name": "admin",
 	})
 	ctx := EvaluationContext{
@@ -325,7 +325,7 @@ func TestPolicyEvaluator_DenyWinsOverAllow(t *testing.T) {
 
 func TestPolicyEvaluator_InactivePolicySkipped(t *testing.T) {
 	e := &PolicyEvaluator{}
-	p := newTestPolicy(PolicyAllow, 1, false, map[string]any{
+	p := newTestPolicy(PolicyAllow, 1, false, map[string]string{
 		"user.role_name": "admin",
 	})
 	ctx := EvaluationContext{
@@ -341,7 +341,7 @@ func TestPolicyEvaluator_InactivePolicySkipped(t *testing.T) {
 
 func TestPolicyEvaluator_NoMatch(t *testing.T) {
 	e := &PolicyEvaluator{}
-	p := newTestPolicy(PolicyAllow, 1, true, map[string]any{
+	p := newTestPolicy(PolicyAllow, 1, true, map[string]string{
 		"user.role_name": "admin",
 	})
 	ctx := EvaluationContext{
@@ -357,7 +357,7 @@ func TestPolicyEvaluator_NoMatch(t *testing.T) {
 
 func TestPolicyEvaluator_ANDSemantics(t *testing.T) {
 	e := &PolicyEvaluator{}
-	p := newTestPolicy(PolicyAllow, 1, true, map[string]any{
+	p := newTestPolicy(PolicyAllow, 1, true, map[string]string{
 		"user.role_name":   "admin",
 		"user.department":  "engineering",
 	})
@@ -374,7 +374,7 @@ func TestPolicyEvaluator_ANDSemantics(t *testing.T) {
 
 func TestPolicyEvaluator_EmptyConditions_AlwaysMatches(t *testing.T) {
 	e := &PolicyEvaluator{}
-	p := newTestPolicy(PolicyAllow, 1, true, map[string]any{})
+	p := newTestPolicy(PolicyAllow, 1, true, map[string]string{})
 	ctx := EvaluationContext{
 		Attrs: map[string]map[string]any{},
 	}
@@ -386,7 +386,7 @@ func TestPolicyEvaluator_EmptyConditions_AlwaysMatches(t *testing.T) {
 
 func TestPolicyEvaluator_DynamicReference(t *testing.T) {
 	e := &PolicyEvaluator{}
-	p := newTestPolicy(PolicyAllow, 1, true, map[string]any{
+	p := newTestPolicy(PolicyAllow, 1, true, map[string]string{
 		"user.relation_names_any": "$target.user.relation_names",
 	})
 	ctx := EvaluationContext{
@@ -403,7 +403,7 @@ func TestPolicyEvaluator_DynamicReference(t *testing.T) {
 
 func TestPolicyEvaluator_DynamicReference_NoMatch(t *testing.T) {
 	e := &PolicyEvaluator{}
-	p := newTestPolicy(PolicyAllow, 1, true, map[string]any{
+	p := newTestPolicy(PolicyAllow, 1, true, map[string]string{
 		"user.relation_names_any": "$target.user.relation_names",
 	})
 	ctx := EvaluationContext{

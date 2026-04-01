@@ -32,7 +32,7 @@ func TestUpdatePolicyHandler_UpdateFields(t *testing.T) {
 
 	newEffect := domain.PolicyDeny
 	newPriority := 99
-	newConditions := map[string]any{"env": "production"}
+	newConditions := map[string]string{"env": "production"}
 
 	cmd := UpdatePolicyCommand{
 		ID:         policyID,
