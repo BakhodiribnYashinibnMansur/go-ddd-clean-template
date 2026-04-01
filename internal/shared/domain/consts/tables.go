@@ -29,4 +29,5 @@ const (
 	TableNotifications   = "notifications"
 	TableFileMetadata    = "file_metadata"
 	TableUserSettings    = "user_settings"
+	TableEntityMetadata  = "entity_metadata"
 )
