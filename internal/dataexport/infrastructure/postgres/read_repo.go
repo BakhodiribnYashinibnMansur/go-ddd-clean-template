@@ -15,7 +15,7 @@ import (
 )
 
 var readColumns = []string{
-	"id", "type", "status", "file_url", "filters",
+	"id", "type", "status", "file_url",
 	"created_by", "created_at", "completed_at",
 }
 
@@ -126,18 +126,16 @@ func scanDataExportView(row pgx.Row) (*domain.DataExportView, error) {
 		dataType    string
 		status      string
 		fileURL     string
-		filtersJSON []byte
 		createdBy   *uuid.UUID
 		createdAt   time.Time
 		completedAt *time.Time
 	)
 
-	err := row.Scan(&id, &dataType, &status, &fileURL, &filtersJSON, &createdBy, &createdAt, &completedAt)
+	err := row.Scan(&id, &dataType, &status, &fileURL, &createdBy, &createdAt, &completedAt)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 
-	_ = filtersJSON
 	_ = completedAt
 
 	userID := uuid.Nil
@@ -169,18 +167,16 @@ func scanDataExportViewFromRows(rows pgx.Rows) (*domain.DataExportView, error) {
 		dataType    string
 		status      string
 		fileURL     string
-		filtersJSON []byte
 		createdBy   *uuid.UUID
 		createdAt   time.Time
 		completedAt *time.Time
 	)
 
-	err := rows.Scan(&id, &dataType, &status, &fileURL, &filtersJSON, &createdBy, &createdAt, &completedAt)
+	err := rows.Scan(&id, &dataType, &status, &fileURL, &createdBy, &createdAt, &completedAt)
 	if err != nil {
 		return nil, err
 	}
 
-	_ = filtersJSON
 	_ = completedAt
 
 	userID := uuid.Nil

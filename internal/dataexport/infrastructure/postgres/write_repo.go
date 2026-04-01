@@ -17,7 +17,7 @@ import (
 const tableName = consts.TableDataExports
 
 var writeColumns = []string{
-	"id", "type", "status", "file_url", "filters",
+	"id", "type", "status", "file_url",
 	"created_by", "created_at", "completed_at",
 }
 
@@ -45,7 +45,6 @@ func (r *DataExportWriteRepo) Save(ctx context.Context, de *domain.DataExport) e
 			de.DataType(),
 			de.Status(),
 			de.FileURL(),
-			"{}",
 			de.UserID(),
 			de.CreatedAt(),
 			nil,
@@ -119,18 +118,16 @@ func scanDataExport(row pgx.Row) (*domain.DataExport, error) {
 		dataType    string
 		status      string
 		fileURL     string
-		filtersJSON []byte
 		createdBy   *uuid.UUID
 		createdAt   time.Time
 		completedAt *time.Time
 	)
 
-	err := row.Scan(&id, &dataType, &status, &fileURL, &filtersJSON, &createdBy, &createdAt, &completedAt)
+	err := row.Scan(&id, &dataType, &status, &fileURL, &createdBy, &createdAt, &completedAt)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 
-	_ = filtersJSON
 	_ = completedAt
 
 	userID := uuid.Nil
