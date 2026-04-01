@@ -19,7 +19,7 @@ func TestFindUserForAuthHandler_Success(t *testing.T) {
 			RoleID:     &roleID,
 			Active:     true,
 			IsApproved: true,
-			Attributes: map[string]any{"level": 10},
+			Attributes: map[string]string{"level": "10"},
 		},
 	}
 
@@ -50,7 +50,7 @@ func TestFindUserForAuthHandler_Success(t *testing.T) {
 		t.Error("expected user to be approved")
 	}
 
-	if result.Attributes["level"] != 10 {
+	if result.Attributes["level"] != "10" {
 		t.Error("expected attributes to be mapped")
 	}
 }

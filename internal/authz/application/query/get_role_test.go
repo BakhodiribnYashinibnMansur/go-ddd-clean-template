@@ -22,7 +22,8 @@ type mockAuthzReadRepository struct {
 	listPermsFn      func(ctx context.Context, p shared.Pagination) ([]*domain.PermissionView, int64, error)
 	listPoliciesFn   func(ctx context.Context, p shared.Pagination) ([]*domain.PolicyView, int64, error)
 	listScopesFn     func(ctx context.Context, p shared.Pagination) ([]*domain.ScopeView, int64, error)
-	checkAccessFn    func(ctx context.Context, roleID uuid.UUID, path, method string) (bool, error)
+	checkAccessFn              func(ctx context.Context, roleID uuid.UUID, path, method string, evalCtx domain.EvaluationContext) (bool, error)
+	findPoliciesByPermIDsFn    func(ctx context.Context, permissionIDs []uuid.UUID) ([]*domain.Policy, error)
 }
 
 func (m *mockAuthzReadRepository) GetRole(ctx context.Context, id uuid.UUID) (*domain.RoleView, error) {
@@ -67,11 +68,18 @@ func (m *mockAuthzReadRepository) ListScopes(ctx context.Context, p shared.Pagin
 	return nil, 0, nil
 }
 
-func (m *mockAuthzReadRepository) CheckAccess(ctx context.Context, roleID uuid.UUID, path, method string) (bool, error) {
+func (m *mockAuthzReadRepository) CheckAccess(ctx context.Context, roleID uuid.UUID, path, method string, evalCtx domain.EvaluationContext) (bool, error) {
 	if m.checkAccessFn != nil {
-		return m.checkAccessFn(ctx, roleID, path, method)
+		return m.checkAccessFn(ctx, roleID, path, method, evalCtx)
 	}
 	return false, nil
+}
+
+func (m *mockAuthzReadRepository) FindPoliciesByPermissionIDs(ctx context.Context, permissionIDs []uuid.UUID) ([]*domain.Policy, error) {
+	if m.findPoliciesByPermIDsFn != nil {
+		return m.findPoliciesByPermIDsFn(ctx, permissionIDs)
+	}
+	return nil, nil
 }
 
 // ---------------------------------------------------------------------------

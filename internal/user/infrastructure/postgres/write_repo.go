@@ -2,13 +2,13 @@ package postgres
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
 	"gct/internal/shared/domain/consts"
 	shared "gct/internal/shared/domain"
 	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/metadata"
 	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/user/domain"
 
@@ -26,7 +26,7 @@ const (
 // userColumns are the columns for the users table.
 var userColumns = []string{
 	"id", "role_id", "username", "email", "phone",
-	"password_hash", "salt", "attributes",
+	"password_hash", "salt",
 	"active", "is_approved",
 	"created_at", "updated_at", "deleted_at", "last_seen",
 }
@@ -49,26 +49,23 @@ var sessionInsertColumns = []string{
 
 // UserWriteRepo implements domain.UserRepository using PostgreSQL.
 type UserWriteRepo struct {
-	pool    *pgxpool.Pool
-	builder squirrel.StatementBuilderType
+	pool     *pgxpool.Pool
+	builder  squirrel.StatementBuilderType
+	metadata *metadata.GenericMetadataRepo
 }
 
 // NewUserWriteRepo creates a new UserWriteRepo.
 func NewUserWriteRepo(pool *pgxpool.Pool) *UserWriteRepo {
 	return &UserWriteRepo{
-		pool:    pool,
-		builder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+		pool:     pool,
+		builder:  squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+		metadata: metadata.NewGenericMetadataRepo(pool),
 	}
 }
 
 // Save inserts a new User aggregate (and its sessions) into the database.
 func (r *UserWriteRepo) Save(ctx context.Context, user *domain.User) error {
 	return pgxutil.WithTx(ctx, r.pool, func(tx pgx.Tx) error {
-		attrsJSON, err := json.Marshal(user.Attributes())
-		if err != nil {
-			return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToMarshalJSON)
-		}
-
 		var emailVal *string
 		if user.Email() != nil {
 			v := user.Email().Value()
@@ -91,7 +88,6 @@ func (r *UserWriteRepo) Save(ctx context.Context, user *domain.User) error {
 				user.Phone().Value(),
 				user.Password().Hash(),
 				"", // salt — bcrypt includes salt in hash
-				attrsJSON,
 				user.IsActive(),
 				user.IsApproved(),
 				user.CreatedAt(),
@@ -106,6 +102,11 @@ func (r *UserWriteRepo) Save(ctx context.Context, user *domain.User) error {
 
 		if _, err = tx.Exec(ctx, sql, args...); err != nil {
 			return apperrors.HandlePgError(err, usersTable, nil)
+		}
+
+		// Persist user attributes via EAV table.
+		if err := r.metadata.SetManyTx(ctx, tx, metadata.EntityTypeUserAttributes, user.ID(), user.Attributes()); err != nil {
+			return err
 		}
 
 		// Insert sessions if any.
@@ -169,13 +170,19 @@ func (r *UserWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Use
 		return nil, apperrors.HandlePgError(err, usersTable, map[string]any{"id": id})
 	}
 
+	// Load attributes from EAV table.
+	attrs, err := r.metadata.GetAll(ctx, metadata.EntityTypeUserAttributes, user.ID())
+	if err != nil {
+		return nil, err
+	}
+
 	// Fetch sessions for this user.
 	sessions, err := r.findSessionsByUserID(ctx, user.ID())
 	if err != nil {
 		return nil, err
 	}
 
-	// Reconstruct with sessions.
+	// Reconstruct with sessions and attributes.
 	return domain.ReconstructUser(
 		user.ID(),
 		user.CreatedAt(),
@@ -186,7 +193,7 @@ func (r *UserWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Use
 		user.Username(),
 		user.Password(),
 		user.RoleID(),
-		user.Attributes(),
+		attrs,
 		user.IsActive(),
 		user.IsApproved(),
 		user.LastSeen(),
@@ -197,11 +204,6 @@ func (r *UserWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Use
 // Update updates the User aggregate in the database.
 func (r *UserWriteRepo) Update(ctx context.Context, user *domain.User) error {
 	return pgxutil.WithTx(ctx, r.pool, func(tx pgx.Tx) error {
-		attrsJSON, err := json.Marshal(user.Attributes())
-		if err != nil {
-			return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToMarshalJSON)
-		}
-
 		var emailVal *string
 		if user.Email() != nil {
 			v := user.Email().Value()
@@ -220,7 +222,6 @@ func (r *UserWriteRepo) Update(ctx context.Context, user *domain.User) error {
 			Set("email", emailVal).
 			Set("phone", user.Phone().Value()).
 			Set("password_hash", user.Password().Hash()).
-			Set("attributes", attrsJSON).
 			Set("active", user.IsActive()).
 			Set("is_approved", user.IsApproved()).
 			Set("updated_at", user.UpdatedAt()).
@@ -234,6 +235,11 @@ func (r *UserWriteRepo) Update(ctx context.Context, user *domain.User) error {
 
 		if _, err = tx.Exec(ctx, sql, args...); err != nil {
 			return apperrors.HandlePgError(err, usersTable, nil)
+		}
+
+		// Persist user attributes via EAV table.
+		if err := r.metadata.SetManyTx(ctx, tx, metadata.EntityTypeUserAttributes, user.ID(), user.Attributes()); err != nil {
+			return err
 		}
 
 		// Upsert sessions: INSERT new ones, UPDATE existing ones (avoid FK violations).
@@ -331,6 +337,19 @@ func (r *UserWriteRepo) List(ctx context.Context, filter shared.Pagination) ([]*
 		users = append(users, u)
 	}
 
+	// Load attributes from EAV table for each user.
+	for i, u := range users {
+		attrs, err := r.metadata.GetAll(ctx, metadata.EntityTypeUserAttributes, u.ID())
+		if err != nil {
+			return nil, 0, err
+		}
+		users[i] = domain.ReconstructUser(
+			u.ID(), u.CreatedAt(), u.UpdatedAt(), u.DeletedAt(),
+			u.Phone(), u.Email(), u.Username(), u.Password(), u.RoleID(),
+			attrs, u.IsActive(), u.IsApproved(), u.LastSeen(), nil,
+		)
+	}
+
 	return users, total, nil
 }
 
@@ -352,6 +371,11 @@ func (r *UserWriteRepo) FindByPhone(ctx context.Context, phone domain.Phone) (*d
 		return nil, apperrors.HandlePgError(err, usersTable, map[string]any{"phone": phone.Value()})
 	}
 
+	attrs, err := r.metadata.GetAll(ctx, metadata.EntityTypeUserAttributes, user.ID())
+	if err != nil {
+		return nil, err
+	}
+
 	sessions, err := r.findSessionsByUserID(ctx, user.ID())
 	if err != nil {
 		return nil, err
@@ -367,7 +391,7 @@ func (r *UserWriteRepo) FindByPhone(ctx context.Context, phone domain.Phone) (*d
 		user.Username(),
 		user.Password(),
 		user.RoleID(),
-		user.Attributes(),
+		attrs,
 		user.IsActive(),
 		user.IsApproved(),
 		user.LastSeen(),
@@ -393,6 +417,11 @@ func (r *UserWriteRepo) FindByEmail(ctx context.Context, email domain.Email) (*d
 		return nil, apperrors.HandlePgError(err, usersTable, map[string]any{"email": email.Value()})
 	}
 
+	attrs, err := r.metadata.GetAll(ctx, metadata.EntityTypeUserAttributes, user.ID())
+	if err != nil {
+		return nil, err
+	}
+
 	sessions, err := r.findSessionsByUserID(ctx, user.ID())
 	if err != nil {
 		return nil, err
@@ -408,7 +437,7 @@ func (r *UserWriteRepo) FindByEmail(ctx context.Context, email domain.Email) (*d
 		user.Username(),
 		user.Password(),
 		user.RoleID(),
-		user.Attributes(),
+		attrs,
 		user.IsActive(),
 		user.IsApproved(),
 		user.LastSeen(),
@@ -469,7 +498,6 @@ func scanUser(row pgx.Row) (*domain.User, error) {
 		phone      string
 		pwHash     string
 		salt       *string
-		attrsJSON  []byte
 		active     bool
 		isApproved bool
 		createdAt  time.Time
@@ -480,7 +508,7 @@ func scanUser(row pgx.Row) (*domain.User, error) {
 
 	err := row.Scan(
 		&id, &roleID, &username, &email, &phone,
-		&pwHash, &salt, &attrsJSON,
+		&pwHash, &salt,
 		&active, &isApproved,
 		&createdAt, &updatedAt, &deletedAt, &lastSeen,
 	)
@@ -489,7 +517,7 @@ func scanUser(row pgx.Row) (*domain.User, error) {
 	}
 
 	return reconstructUserFromRow(
-		id, roleID, username, email, phone, pwHash, attrsJSON,
+		id, roleID, username, email, phone, pwHash,
 		active, isApproved, createdAt, updatedAt, deletedAt, lastSeen,
 	), nil
 }
@@ -504,7 +532,6 @@ func scanUserFromRows(rows pgx.Rows) (*domain.User, error) {
 		phone      string
 		pwHash     string
 		salt       *string
-		attrsJSON  []byte
 		active     bool
 		isApproved bool
 		createdAt  time.Time
@@ -515,7 +542,7 @@ func scanUserFromRows(rows pgx.Rows) (*domain.User, error) {
 
 	err := rows.Scan(
 		&id, &roleID, &username, &email, &phone,
-		&pwHash, &salt, &attrsJSON,
+		&pwHash, &salt,
 		&active, &isApproved,
 		&createdAt, &updatedAt, &deletedAt, &lastSeen,
 	)
@@ -524,19 +551,19 @@ func scanUserFromRows(rows pgx.Rows) (*domain.User, error) {
 	}
 
 	return reconstructUserFromRow(
-		id, roleID, username, email, phone, pwHash, attrsJSON,
+		id, roleID, username, email, phone, pwHash,
 		active, isApproved, createdAt, updatedAt, deletedAt, lastSeen,
 	), nil
 }
 
 // reconstructUserFromRow builds a domain.User from raw scanned values.
+// Attributes are loaded separately via the metadata repo; nil is passed here.
 func reconstructUserFromRow(
 	id uuid.UUID,
 	roleID *uuid.UUID,
 	username *string,
 	emailStr *string,
 	phone, pwHash string,
-	attrsJSON []byte,
 	active, isApproved bool,
 	createdAt, updatedAt time.Time,
 	deletedAtUnix int64,
@@ -553,11 +580,6 @@ func reconstructUserFromRow(
 		}
 	}
 
-	var attrs map[string]any
-	if len(attrsJSON) > 0 {
-		_ = json.Unmarshal(attrsJSON, &attrs)
-	}
-
 	var deletedAt *time.Time
 	if deletedAtUnix != 0 {
 		t := time.Unix(deletedAtUnix, 0)
@@ -572,7 +594,7 @@ func reconstructUserFromRow(
 		username,
 		password,
 		roleID,
-		attrs,
+		nil, // attributes loaded separately via metadata repo
 		active, isApproved,
 		lastSeen,
 		nil, // sessions loaded separately

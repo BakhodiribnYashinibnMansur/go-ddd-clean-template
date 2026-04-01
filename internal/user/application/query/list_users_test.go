@@ -157,7 +157,7 @@ func TestListUsersHandler_AllFieldsMapped(t *testing.T) {
 				Email:      &email,
 				Username:   &username,
 				RoleID:     &roleID,
-				Attributes: map[string]any{"key": "val"},
+				Attributes: map[string]string{"key": "val"},
 				Active:     true,
 				IsApproved: true,
 			},

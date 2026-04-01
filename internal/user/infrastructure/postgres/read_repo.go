@@ -2,13 +2,13 @@ package postgres
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
 	shared "gct/internal/shared/domain"
 	"gct/internal/shared/domain/consts"
 	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/metadata"
 	"gct/internal/user/domain"
 
 	"github.com/Masterminds/squirrel"
@@ -19,21 +19,23 @@ import (
 // readUserColumns are the columns selected for read-model queries.
 var readUserColumns = []string{
 	"id", "role_id", "username", "email", "phone",
-	"attributes", "active", "is_approved",
+	"active", "is_approved",
 	"last_seen", "created_at", "updated_at",
 }
 
 // UserReadRepo implements domain.UserReadRepository for the CQRS read side.
 type UserReadRepo struct {
-	pool    *pgxpool.Pool
-	builder squirrel.StatementBuilderType
+	pool     *pgxpool.Pool
+	builder  squirrel.StatementBuilderType
+	metadata *metadata.GenericMetadataRepo
 }
 
 // NewUserReadRepo creates a new UserReadRepo.
 func NewUserReadRepo(pool *pgxpool.Pool) *UserReadRepo {
 	return &UserReadRepo{
-		pool:    pool,
-		builder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+		pool:     pool,
+		builder:  squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+		metadata: metadata.NewGenericMetadataRepo(pool),
 	}
 }
 
@@ -57,7 +59,6 @@ func (r *UserReadRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.User
 		username   *string
 		email      *string
 		phone      string
-		attrsJSON  []byte
 		active     bool
 		isApproved bool
 		lastSeen   *time.Time
@@ -67,16 +68,16 @@ func (r *UserReadRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.User
 
 	err = row.Scan(
 		&uid, &roleID, &username, &email, &phone,
-		&attrsJSON, &active, &isApproved,
+		&active, &isApproved,
 		&lastSeen, &createdAt, &updatedAt,
 	)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, consts.TableUsers, map[string]any{"id": id})
 	}
 
-	var attrs map[string]any
-	if len(attrsJSON) > 0 {
-		_ = json.Unmarshal(attrsJSON, &attrs)
+	attrs, err := r.metadata.GetAll(ctx, metadata.EntityTypeUserAttributes, uid)
+	if err != nil {
+		return nil, err
 	}
 
 	return &domain.UserView{
@@ -161,7 +162,6 @@ func (r *UserReadRepo) List(ctx context.Context, filter domain.UsersFilter) ([]*
 			username   *string
 			email      *string
 			phone      string
-			attrsJSON  []byte
 			active     bool
 			isApproved bool
 			lastSeen   *time.Time
@@ -171,15 +171,15 @@ func (r *UserReadRepo) List(ctx context.Context, filter domain.UsersFilter) ([]*
 
 		if err := rows.Scan(
 			&uid, &roleID, &username, &email, &phone,
-			&attrsJSON, &active, &isApproved,
+			&active, &isApproved,
 			&lastSeen, &createdAt, &updatedAt,
 		); err != nil {
 			return nil, 0, apperrors.HandlePgError(err, consts.TableUsers, nil)
 		}
 
-		var attrs map[string]any
-		if len(attrsJSON) > 0 {
-			_ = json.Unmarshal(attrsJSON, &attrs)
+		attrs, err := r.metadata.GetAll(ctx, metadata.EntityTypeUserAttributes, uid)
+		if err != nil {
+			return nil, 0, err
 		}
 
 		views = append(views, &domain.UserView{
@@ -225,7 +225,7 @@ func (r *UserReadRepo) FindSessionByID(ctx context.Context, id uuid.UUID) (*shar
 // FindUserForAuth returns an AuthUser with minimal columns for auth middleware.
 func (r *UserReadRepo) FindUserForAuth(ctx context.Context, id uuid.UUID) (*shared.AuthUser, error) {
 	sql, args, err := r.builder.
-		Select("id", "role_id", "active", "is_approved", "attributes").
+		Select("id", "role_id", "active", "is_approved").
 		From(consts.TableUsers).
 		Where(squirrel.Eq{"id": id}).
 		Where(squirrel.Eq{"deleted_at": 0}).
@@ -236,18 +236,17 @@ func (r *UserReadRepo) FindUserForAuth(ctx context.Context, id uuid.UUID) (*shar
 
 	row := r.pool.QueryRow(ctx, sql, args...)
 
-	var (
-		u         shared.AuthUser
-		attrsJSON []byte
-	)
-	err = row.Scan(&u.ID, &u.RoleID, &u.Active, &u.IsApproved, &attrsJSON)
+	var u shared.AuthUser
+	err = row.Scan(&u.ID, &u.RoleID, &u.Active, &u.IsApproved)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, consts.TableUsers, map[string]any{"id": id})
 	}
 
-	if len(attrsJSON) > 0 {
-		_ = json.Unmarshal(attrsJSON, &u.Attributes)
+	attrs, err := r.metadata.GetAll(ctx, metadata.EntityTypeUserAttributes, u.ID)
+	if err != nil {
+		return nil, err
 	}
+	u.Attributes = attrs
 
 	return &u, nil
 }

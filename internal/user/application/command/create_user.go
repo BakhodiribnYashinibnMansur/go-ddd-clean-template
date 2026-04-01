@@ -19,7 +19,7 @@ type CreateUserCommand struct {
 	Email      *string
 	Username   *string
 	RoleID     *uuid.UUID
-	Attributes map[string]any
+	Attributes map[string]string
 }
 
 // CreateUserHandler orchestrates user creation with domain validation (phone format, email format, password strength).

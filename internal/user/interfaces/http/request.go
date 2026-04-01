@@ -9,14 +9,14 @@ type CreateUserRequest struct {
 	Email      *string        `json:"email,omitempty"`
 	Username   *string        `json:"username,omitempty"`
 	RoleID     *uuid.UUID     `json:"role_id,omitempty"`
-	Attributes map[string]any `json:"attributes,omitempty"`
+	Attributes map[string]string `json:"attributes,omitempty"`
 }
 
 // UpdateUserRequest is the request DTO for updating a user.
 type UpdateUserRequest struct {
 	Email      *string        `json:"email,omitempty"`
 	Username   *string        `json:"username,omitempty"`
-	Attributes map[string]any `json:"attributes,omitempty"`
+	Attributes map[string]string `json:"attributes,omitempty"`
 }
 
 // ChangeRoleRequest is the request DTO for changing a user's role.

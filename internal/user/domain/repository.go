@@ -16,7 +16,7 @@ type UserView struct {
 	Email      *string        `json:"email,omitempty"`
 	Username   *string        `json:"username,omitempty"`
 	RoleID     *uuid.UUID     `json:"role_id,omitempty"`
-	Attributes map[string]any `json:"attributes,omitempty"`
+	Attributes map[string]string `json:"attributes,omitempty"`
 	Active     bool           `json:"active"`
 	IsApproved bool           `json:"is_approved"`
 }

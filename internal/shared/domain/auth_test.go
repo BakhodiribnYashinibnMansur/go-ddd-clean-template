@@ -113,7 +113,7 @@ func TestAuthUser_Fields(t *testing.T) {
 		RoleID:     &roleID,
 		Active:     true,
 		IsApproved: true,
-		Attributes: map[string]any{"key": "value"},
+		Attributes: map[string]string{"key": "value"},
 	}
 
 	if u.ID != id {

@@ -26,7 +26,7 @@ func makeTestUser(t *testing.T) *domain.User {
 		uuid.New(),
 		time.Now(), time.Now(), nil,
 		phone, &email, &username, pw,
-		nil, map[string]any{"key": "val"},
+		nil, map[string]string{"key": "val"},
 		true, false, nil, nil,
 	)
 }
@@ -124,7 +124,7 @@ func TestUpdateUserHandler_OnlyAttributes(t *testing.T) {
 
 	cmd := UpdateUserCommand{
 		ID:         user.ID(),
-		Attributes: map[string]any{"new_key": "new_val"},
+		Attributes: map[string]string{"new_key": "new_val"},
 	}
 
 	err := handler.Handle(context.Background(), cmd)

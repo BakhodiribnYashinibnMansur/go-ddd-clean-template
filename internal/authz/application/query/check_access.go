@@ -11,9 +11,10 @@ import (
 
 // CheckAccessQuery holds the input for checking whether a role has access to a specific endpoint.
 type CheckAccessQuery struct {
-	RoleID uuid.UUID
-	Path   string
-	Method string
+	RoleID  uuid.UUID
+	Path    string
+	Method  string
+	EvalCtx domain.EvaluationContext
 }
 
 // CheckAccessHandler handles the CheckAccessQuery by delegating to the read repository.
@@ -29,7 +30,7 @@ func NewCheckAccessHandler(readRepo domain.AuthzReadRepository, l logger.Log) *C
 
 // Handle executes the CheckAccessQuery and returns true if the role has access.
 func (h *CheckAccessHandler) Handle(ctx context.Context, q CheckAccessQuery) (bool, error) {
-	allowed, err := h.readRepo.CheckAccess(ctx, q.RoleID, q.Path, q.Method)
+	allowed, err := h.readRepo.CheckAccess(ctx, q.RoleID, q.Path, q.Method, q.EvalCtx)
 	if err != nil {
 		h.logger.Errorf("check access failed for role %s on %s %s: %v", q.RoleID, q.Method, q.Path, err)
 		return false, err

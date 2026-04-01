@@ -36,5 +36,5 @@ type AuthUser struct {
 	RoleID     *uuid.UUID     `json:"role_id,omitempty"`
 	Active     bool           `json:"active"`
 	IsApproved bool           `json:"is_approved"`
-	Attributes map[string]any `json:"attributes,omitempty"`
+	Attributes map[string]string `json:"attributes,omitempty"`
 }

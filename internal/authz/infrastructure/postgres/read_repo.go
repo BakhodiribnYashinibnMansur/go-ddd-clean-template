@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"gct/internal/authz/domain"
 	"gct/internal/shared/domain/consts"
@@ -286,12 +287,13 @@ func (r *AuthzReadRepo) ListScopes(ctx context.Context, pagination shared.Pagina
 
 // CheckAccess returns true if the role identified by roleID is allowed to access the given path+method.
 // Super-admin roles bypass all checks. For other roles the method walks the
-// role → permission → scope chain looking for a matching scope entry.
-func (r *AuthzReadRepo) CheckAccess(ctx context.Context, roleID uuid.UUID, path, method string) (bool, error) {
+// role → permission → scope chain looking for a matching scope entry, then evaluates
+// any ABAC policies bound to the matched permissions.
+func (r *AuthzReadRepo) CheckAccess(ctx context.Context, roleID uuid.UUID, path, method string, evalCtx domain.EvaluationContext) (bool, error) {
 	// Single query: fetch role name together with every scope reachable through
-	// the role_permission + permission_scope join chain.
+	// the role_permission + permission_scope join chain, plus the permission ID.
 	sql, args, err := r.builder.
-		Select("r.name", "s.path", "s.method").
+		Select("r.name", "s.path", "s.method", "rp.permission_id").
 		From(consts.TableRole + " r").
 		LeftJoin(rolePermissionTable + " rp ON r.id = rp.role_id").
 		LeftJoin(permissionScopeTable + " ps ON rp.permission_id = ps.permission_id").
@@ -310,14 +312,16 @@ func (r *AuthzReadRepo) CheckAccess(ctx context.Context, roleID uuid.UUID, path,
 
 	var roleName string
 	foundRole := false
+	matchedPermIDs := map[uuid.UUID]struct{}{}
 
 	for rows.Next() {
 		var (
 			rName       string
 			scopePath   *string
 			scopeMethod *string
+			permID      *uuid.UUID
 		)
-		if err := rows.Scan(&rName, &scopePath, &scopeMethod); err != nil {
+		if err := rows.Scan(&rName, &scopePath, &scopeMethod, &permID); err != nil {
 			return false, apperrors.HandlePgError(err, consts.TableRole, map[string]any{"id": roleID})
 		}
 
@@ -336,8 +340,8 @@ func (r *AuthzReadRepo) CheckAccess(ctx context.Context, roleID uuid.UUID, path,
 			continue
 		}
 
-		if matchScope(*scopePath, *scopeMethod, path, method) {
-			return true, nil
+		if matchScope(*scopePath, *scopeMethod, path, method) && permID != nil {
+			matchedPermIDs[*permID] = struct{}{}
 		}
 	}
 
@@ -345,7 +349,93 @@ func (r *AuthzReadRepo) CheckAccess(ctx context.Context, roleID uuid.UUID, path,
 		return false, apperrors.HandlePgError(fmt.Errorf("role not found"), consts.TableRole, map[string]any{"id": roleID})
 	}
 
-	return false, nil
+	// No RBAC match — deny.
+	if len(matchedPermIDs) == 0 {
+		return false, nil
+	}
+
+	// Collect permission IDs.
+	permIDs := make([]uuid.UUID, 0, len(matchedPermIDs))
+	for id := range matchedPermIDs {
+		permIDs = append(permIDs, id)
+	}
+
+	// Fetch ABAC policies for matched permissions.
+	policies, err := r.FindPoliciesByPermissionIDs(ctx, permIDs)
+	if err != nil {
+		return false, err
+	}
+
+	// No policies — RBAC sufficient.
+	if len(policies) == 0 {
+		return true, nil
+	}
+
+	// Inject role_name into evalCtx user attrs.
+	if evalCtx.Attrs == nil {
+		evalCtx.Attrs = make(map[string]map[string]any)
+	}
+	if evalCtx.Attrs["user"] == nil {
+		evalCtx.Attrs["user"] = make(map[string]any)
+	}
+	evalCtx.Attrs["user"]["role_name"] = roleName
+
+	evaluator := domain.PolicyEvaluator{}
+	effect, matched := evaluator.Evaluate(policies, evalCtx)
+	if !matched {
+		// No policy matched conditions — RBAC sufficient.
+		return true, nil
+	}
+	return effect == domain.PolicyAllow, nil
+}
+
+// FindPoliciesByPermissionIDs returns all policies bound to any of the given permission IDs.
+func (r *AuthzReadRepo) FindPoliciesByPermissionIDs(ctx context.Context, permissionIDs []uuid.UUID) ([]*domain.Policy, error) {
+	if len(permissionIDs) == 0 {
+		return nil, nil
+	}
+
+	sql, args, err := r.builder.
+		Select("id", "permission_id", "effect", "priority", "active", "conditions", "created_at", "updated_at").
+		From(consts.TablePolicy).
+		Where(squirrel.Eq{"permission_id": permissionIDs}).
+		ToSql()
+	if err != nil {
+		return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
+	}
+
+	rows, err := r.pool.Query(ctx, sql, args...)
+	if err != nil {
+		return nil, apperrors.HandlePgError(err, consts.TablePolicy, nil)
+	}
+	defer rows.Close()
+
+	var policies []*domain.Policy
+	for rows.Next() {
+		var (
+			id           uuid.UUID
+			permID       uuid.UUID
+			effect       string
+			priority     int
+			active       bool
+			condJSON     []byte
+			createdAt    time.Time
+			updatedAt    time.Time
+		)
+		if err := rows.Scan(&id, &permID, &effect, &priority, &active, &condJSON, &createdAt, &updatedAt); err != nil {
+			return nil, apperrors.HandlePgError(err, consts.TablePolicy, nil)
+		}
+
+		var conditions map[string]any
+		if len(condJSON) > 0 {
+			_ = json.Unmarshal(condJSON, &conditions)
+		}
+
+		p := domain.ReconstructPolicy(id, createdAt, updatedAt, nil, permID, domain.PolicyEffect(effect), priority, active, conditions)
+		policies = append(policies, p)
+	}
+
+	return policies, nil
 }
 
 // matchScope checks whether a scope entry matches the requested path and method.

@@ -47,7 +47,7 @@ func (m *mockLogger) Errorc(_ context.Context, _ string, _ ...any)              
 func (m *mockLogger) Fatalc(_ context.Context, _ string, _ ...any)                     {}
 
 type mockAuthzReadRepository struct {
-	checkAccessFn func(ctx context.Context, roleID uuid.UUID, path, method string) (bool, error)
+	checkAccessFn func(ctx context.Context, roleID uuid.UUID, path, method string, evalCtx domain.EvaluationContext) (bool, error)
 }
 
 func (m *mockAuthzReadRepository) GetRole(context.Context, uuid.UUID) (*domain.RoleView, error) {
@@ -68,11 +68,15 @@ func (m *mockAuthzReadRepository) ListPolicies(context.Context, shared.Paginatio
 func (m *mockAuthzReadRepository) ListScopes(context.Context, shared.Pagination) ([]*domain.ScopeView, int64, error) {
 	return nil, 0, nil
 }
-func (m *mockAuthzReadRepository) CheckAccess(ctx context.Context, roleID uuid.UUID, path, method string) (bool, error) {
+func (m *mockAuthzReadRepository) CheckAccess(ctx context.Context, roleID uuid.UUID, path, method string, evalCtx domain.EvaluationContext) (bool, error) {
 	if m.checkAccessFn != nil {
-		return m.checkAccessFn(ctx, roleID, path, method)
+		return m.checkAccessFn(ctx, roleID, path, method, evalCtx)
 	}
 	return false, nil
+}
+
+func (m *mockAuthzReadRepository) FindPoliciesByPermissionIDs(_ context.Context, _ []uuid.UUID) ([]*domain.Policy, error) {
+	return nil, nil
 }
 
 type mockUserReadRepository struct {
@@ -100,7 +104,7 @@ func (m *mockUserReadRepository) FindUserForAuth(ctx context.Context, userID uui
 // ---------------------------------------------------------------------------
 
 func setupMiddleware(
-	checkAccessFn func(ctx context.Context, roleID uuid.UUID, path, method string) (bool, error),
+	checkAccessFn func(ctx context.Context, roleID uuid.UUID, path, method string, evalCtx domain.EvaluationContext) (bool, error),
 	findUserFn func(ctx context.Context, userID uuid.UUID) (*shared.AuthUser, error),
 ) *AuthzMiddleware {
 	l := &mockLogger{}
@@ -213,7 +217,7 @@ func TestAuthzMiddleware_AccessAllowed(t *testing.T) {
 	roleID := uuid.New()
 
 	mw := setupMiddleware(
-		func(_ context.Context, _ uuid.UUID, _ string, _ string) (bool, error) {
+		func(_ context.Context, _ uuid.UUID, _ string, _ string, _ domain.EvaluationContext) (bool, error) {
 			return true, nil
 		},
 		func(_ context.Context, userID uuid.UUID) (*shared.AuthUser, error) {
@@ -239,7 +243,7 @@ func TestAuthzMiddleware_AccessDenied(t *testing.T) {
 	roleID := uuid.New()
 
 	mw := setupMiddleware(
-		func(_ context.Context, _ uuid.UUID, _ string, _ string) (bool, error) {
+		func(_ context.Context, _ uuid.UUID, _ string, _ string, _ domain.EvaluationContext) (bool, error) {
 			return false, nil
 		},
 		func(_ context.Context, userID uuid.UUID) (*shared.AuthUser, error) {
@@ -265,7 +269,7 @@ func TestAuthzMiddleware_CheckAccessError(t *testing.T) {
 	roleID := uuid.New()
 
 	mw := setupMiddleware(
-		func(_ context.Context, _ uuid.UUID, _ string, _ string) (bool, error) {
+		func(_ context.Context, _ uuid.UUID, _ string, _ string, _ domain.EvaluationContext) (bool, error) {
 			return false, errors.New("db connection error")
 		},
 		func(_ context.Context, userID uuid.UUID) (*shared.AuthUser, error) {
@@ -294,7 +298,7 @@ func TestAuthzMiddleware_CorrectRoleIDPassedToCheckAccess(t *testing.T) {
 	var capturedMethod string
 
 	mw := setupMiddleware(
-		func(_ context.Context, rID uuid.UUID, path string, method string) (bool, error) {
+		func(_ context.Context, rID uuid.UUID, path string, method string, _ domain.EvaluationContext) (bool, error) {
 			capturedRoleID = rID
 			capturedPath = path
 			capturedMethod = method
@@ -356,7 +360,7 @@ func TestAuthzMiddleware_DifferentHTTPMethods(t *testing.T) {
 			var capturedMethod string
 
 			mw := setupMiddleware(
-				func(_ context.Context, _ uuid.UUID, _ string, m string) (bool, error) {
+				func(_ context.Context, _ uuid.UUID, _ string, m string, _ domain.EvaluationContext) (bool, error) {
 					capturedMethod = m
 					return true, nil
 				},
@@ -397,7 +401,7 @@ func TestAuthzMiddleware_AbortsPipelineOnDenied(t *testing.T) {
 	})
 
 	mw := setupMiddleware(
-		func(_ context.Context, _ uuid.UUID, _ string, _ string) (bool, error) {
+		func(_ context.Context, _ uuid.UUID, _ string, _ string, _ domain.EvaluationContext) (bool, error) {
 			return false, nil
 		},
 		func(_ context.Context, userID uuid.UUID) (*shared.AuthUser, error) {
@@ -441,7 +445,7 @@ func TestAuthzMiddleware_AllowsPipelineOnGranted(t *testing.T) {
 	})
 
 	mw := setupMiddleware(
-		func(_ context.Context, _ uuid.UUID, _ string, _ string) (bool, error) {
+		func(_ context.Context, _ uuid.UUID, _ string, _ string, _ domain.EvaluationContext) (bool, error) {
 			return true, nil
 		},
 		func(_ context.Context, userID uuid.UUID) (*shared.AuthUser, error) {

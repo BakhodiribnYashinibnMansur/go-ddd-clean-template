@@ -77,7 +77,7 @@ func TestNewUser_WithOptions(t *testing.T) {
 		domain.WithEmail(email),
 		domain.WithUsername("john"),
 		domain.WithRoleID(roleID),
-		domain.WithAttributes(map[string]any{"level": 5}),
+		domain.WithAttributes(map[string]string{"level": "5"}),
 	)
 
 	if u.Email() == nil || u.Email().Value() != "test@example.com" {
@@ -89,7 +89,7 @@ func TestNewUser_WithOptions(t *testing.T) {
 	if u.RoleID() == nil || *u.RoleID() != roleID {
 		t.Fatal("roleID option not applied")
 	}
-	if u.Attributes()["level"] != 5 {
+	if u.Attributes()["level"] != "5" {
 		t.Fatal("attributes option not applied")
 	}
 }

@@ -17,7 +17,7 @@ type UpdateUserCommand struct {
 	ID         uuid.UUID
 	Email      *string
 	Username   *string
-	Attributes map[string]any
+	Attributes map[string]string
 }
 
 // UpdateUserHandler applies partial profile updates via a load-reconstruct-save cycle.

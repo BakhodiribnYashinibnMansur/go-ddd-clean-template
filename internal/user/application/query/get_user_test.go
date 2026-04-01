@@ -145,7 +145,7 @@ func TestGetUserHandler_AllFieldsMapped(t *testing.T) {
 			Email:      &email,
 			Username:   &username,
 			RoleID:     &roleID,
-			Attributes: map[string]any{"level": 5},
+			Attributes: map[string]string{"level": "5"},
 			Active:     true,
 			IsApproved: true,
 		},
@@ -163,7 +163,7 @@ func TestGetUserHandler_AllFieldsMapped(t *testing.T) {
 	if result.Username == nil || *result.Username != "fulluser" {
 		t.Error("username not mapped")
 	}
-	if result.Attributes["level"] != 5 {
+	if result.Attributes["level"] != "5" {
 		t.Error("attributes not mapped")
 	}
 }

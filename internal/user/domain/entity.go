@@ -26,7 +26,7 @@ type User struct {
 	username   *string
 	password   Password
 	roleID     *uuid.UUID
-	attributes map[string]any
+	attributes map[string]string
 	active     bool
 	isApproved bool
 	lastSeen   *time.Time
@@ -44,7 +44,7 @@ type UserOption func(*User)
 func WithEmail(email Email) UserOption       { return func(u *User) { u.email = &email } }
 func WithUsername(name string) UserOption     { return func(u *User) { u.username = &name } }
 func WithRoleID(id uuid.UUID) UserOption     { return func(u *User) { u.roleID = &id } }
-func WithAttributes(attrs map[string]any) UserOption {
+func WithAttributes(attrs map[string]string) UserOption {
 	return func(u *User) { u.attributes = attrs }
 }
 
@@ -58,7 +58,7 @@ func NewUser(phone Phone, password Password, opts ...UserOption) *User {
 		AggregateRoot: shared.NewAggregateRoot(),
 		phone:         phone,
 		password:      password,
-		attributes:    make(map[string]any),
+		attributes:    make(map[string]string),
 		active:        true,
 		isApproved:    false,
 		sessions:      make([]Session, 0),
@@ -80,13 +80,13 @@ func ReconstructUser(
 	username *string,
 	password Password,
 	roleID *uuid.UUID,
-	attributes map[string]any,
+	attributes map[string]string,
 	active, isApproved bool,
 	lastSeen *time.Time,
 	sessions []Session,
 ) *User {
 	if attributes == nil {
-		attributes = make(map[string]any)
+		attributes = make(map[string]string)
 	}
 	if sessions == nil {
 		sessions = make([]Session, 0)
@@ -226,7 +226,7 @@ func (u *User) Email() *Email          { return u.email }
 func (u *User) Username() *string      { return u.username }
 func (u *User) Password() Password     { return u.password }
 func (u *User) RoleID() *uuid.UUID     { return u.roleID }
-func (u *User) Attributes() map[string]any { return u.attributes }
+func (u *User) Attributes() map[string]string { return u.attributes }
 func (u *User) IsActive() bool         { return u.active }
 func (u *User) IsApproved() bool       { return u.isApproved }
 func (u *User) LastSeen() *time.Time   { return u.lastSeen }

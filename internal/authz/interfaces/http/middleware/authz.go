@@ -4,8 +4,10 @@ package middleware
 import (
 	"net/http"
 	"strings"
+	"time"
 
 	access "gct/internal/authz/application/query"
+	"gct/internal/authz/domain"
 	shared "gct/internal/shared/domain"
 	"gct/internal/shared/domain/consts"
 	"gct/internal/shared/infrastructure/httpx"
@@ -88,11 +90,22 @@ func (m *AuthzMiddleware) Authz(ctx *gin.Context) {
 	}
 	method := ctx.Request.Method
 
-	// 5. Check access via the Authz BC query handler.
+	// 5. Build ABAC evaluation context.
+	evalCtx := domain.EvaluationContext{
+		Attrs: map[string]map[string]any{
+			"user":     buildUserAttrs(user),
+			"env":      buildEnvAttrs(ctx),
+			"resource": {},
+			"target":   {},
+		},
+	}
+
+	// 6. Check access via the Authz BC query handler.
 	allowed, err := m.checkAccess.Handle(ctx.Request.Context(), access.CheckAccessQuery{
-		RoleID: *user.RoleID,
-		Path:   path,
-		Method: strings.ToUpper(method),
+		RoleID:  *user.RoleID,
+		Path:    path,
+		Method:  strings.ToUpper(method),
+		EvalCtx: evalCtx,
 	})
 	if err != nil {
 		m.l.Errorw("AuthzMiddleware - Authz - CheckAccess", "error", err)
@@ -108,4 +121,27 @@ func (m *AuthzMiddleware) Authz(ctx *gin.Context) {
 	}
 
 	ctx.Next()
+}
+
+// buildUserAttrs constructs the "user" attribute bag for ABAC evaluation.
+// It merges the user's static attributes with their ID and role ID.
+func buildUserAttrs(user *shared.AuthUser) map[string]any {
+	attrs := make(map[string]any)
+	for k, v := range user.Attributes {
+		attrs[k] = v
+	}
+	attrs["id"] = user.ID.String()
+	if user.RoleID != nil {
+		attrs["role_id"] = user.RoleID.String()
+	}
+	return attrs
+}
+
+// buildEnvAttrs constructs the "env" attribute bag from the current request context.
+func buildEnvAttrs(ctx *gin.Context) map[string]any {
+	return map[string]any{
+		"ip":         ctx.ClientIP(),
+		"user_agent": ctx.GetHeader("User-Agent"),
+		"time":       time.Now().Format("15:04"),
+	}
 }
