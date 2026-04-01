@@ -22,7 +22,7 @@ func TestListPoliciesHandler_WithResults(t *testing.T) {
 					Effect:       "ALLOW",
 					Priority:     10,
 					Active:       true,
-					Conditions:   map[string]string{"ip_range": "10.0.0.0/8"},
+					Conditions:   map[string]any{"ip_range": "10.0.0.0/8"},
 				},
 				{
 					ID:           uuid.New(),

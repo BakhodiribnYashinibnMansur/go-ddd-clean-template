@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -405,7 +406,7 @@ func (r *PolicyWriteRepo) Save(ctx context.Context, policy *domain.Policy) error
 		return apperrors.HandlePgError(err, policyTable, nil)
 	}
 
-	if err := r.metadata.SetMany(ctx, metadata.EntityTypePolicyConditions, policy.ID(), policy.Conditions()); err != nil {
+	if err := r.metadata.SetMany(ctx, metadata.EntityTypePolicyConditions, policy.ID(), conditionsToStrings(policy.Conditions())); err != nil {
 		return err
 	}
 
@@ -433,7 +434,7 @@ func (r *PolicyWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.P
 	if err != nil {
 		return nil, err
 	}
-	policy.SetConditions(conds)
+	policy.SetConditions(stringsToConditions(conds))
 
 	return policy, nil
 }
@@ -456,7 +457,7 @@ func (r *PolicyWriteRepo) Update(ctx context.Context, policy *domain.Policy) err
 		return apperrors.HandlePgError(err, policyTable, nil)
 	}
 
-	if err := r.metadata.SetMany(ctx, metadata.EntityTypePolicyConditions, policy.ID(), policy.Conditions()); err != nil {
+	if err := r.metadata.SetMany(ctx, metadata.EntityTypePolicyConditions, policy.ID(), conditionsToStrings(policy.Conditions())); err != nil {
 		return err
 	}
 
@@ -538,7 +539,7 @@ func (r *PolicyWriteRepo) List(ctx context.Context, pagination shared.Pagination
 		if err != nil {
 			return nil, 0, err
 		}
-		p.SetConditions(conds)
+		p.SetConditions(stringsToConditions(conds))
 	}
 
 	return policies, total, nil
@@ -575,7 +576,7 @@ func (r *PolicyWriteRepo) FindByPermissionID(ctx context.Context, permissionID u
 		if err != nil {
 			return nil, err
 		}
-		p.SetConditions(conds)
+		p.SetConditions(stringsToConditions(conds))
 	}
 
 	return policies, nil
@@ -919,3 +920,37 @@ func toTime(v interface{}) (t time.Time) {
 	}
 }
 
+// conditionsToStrings converts map[string]any to map[string]string for metadata storage.
+func conditionsToStrings(m map[string]any) map[string]string {
+	out := make(map[string]string, len(m))
+	for k, v := range m {
+		switch v.(type) {
+		case string:
+			out[k] = v.(string)
+		default:
+			b, err := json.Marshal(v)
+			if err != nil {
+				out[k] = fmt.Sprintf("%v", v)
+			} else {
+				out[k] = string(b)
+			}
+		}
+	}
+	return out
+}
+
+// stringsToConditions converts map[string]string from metadata back to map[string]any.
+func stringsToConditions(m map[string]string) map[string]any {
+	out := make(map[string]any, len(m))
+	for k, v := range m {
+		if len(v) > 0 && (v[0] == '[' || v[0] == '{') {
+			var parsed any
+			if err := json.Unmarshal([]byte(v), &parsed); err == nil {
+				out[k] = parsed
+				continue
+			}
+		}
+		out[k] = v
+	}
+	return out
+}

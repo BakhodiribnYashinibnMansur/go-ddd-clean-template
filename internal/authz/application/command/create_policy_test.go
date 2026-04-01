@@ -132,7 +132,7 @@ func TestCreatePolicyHandler_WithConditions(t *testing.T) {
 
 	handler := NewCreatePolicyHandler(repo, log)
 
-	conditions := map[string]string{
+	conditions := map[string]any{
 		"ip_range": "10.0.0.0/8",
 		"max_age":  "3600",
 	}

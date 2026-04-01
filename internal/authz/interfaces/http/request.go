@@ -30,14 +30,14 @@ type CreatePolicyRequest struct {
 	PermissionID uuid.UUID          `json:"permission_id" binding:"required"`
 	Effect       domain.PolicyEffect `json:"effect" binding:"required"`
 	Priority     int                `json:"priority"`
-	Conditions   map[string]string   `json:"conditions,omitempty"`
+	Conditions   map[string]any   `json:"conditions,omitempty"`
 }
 
 // UpdatePolicyRequest is the request DTO for updating a policy.
 type UpdatePolicyRequest struct {
 	Effect     *domain.PolicyEffect `json:"effect,omitempty"`
 	Priority   *int                 `json:"priority,omitempty"`
-	Conditions map[string]string     `json:"conditions,omitempty"`
+	Conditions map[string]any     `json:"conditions,omitempty"`
 }
 
 // CreateScopeRequest is the request DTO for creating a scope.

@@ -15,7 +15,7 @@ type UpdatePolicyCommand struct {
 	ID         uuid.UUID
 	Effect     *domain.PolicyEffect
 	Priority   *int
-	Conditions map[string]string
+	Conditions map[string]any
 }
 
 // UpdatePolicyHandler applies partial modifications to an existing policy using a fetch-mutate-persist pattern.

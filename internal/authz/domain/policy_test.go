@@ -65,7 +65,7 @@ func TestPolicy_SetEffect(t *testing.T) {
 
 func TestPolicy_SetConditions(t *testing.T) {
 	policy := NewPolicy(uuid.New(), PolicyAllow)
-	conditions := map[string]string{"ip_range": "10.0.0.0/8"}
+	conditions := map[string]any{"ip_range": "10.0.0.0/8"}
 	policy.SetConditions(conditions)
 
 	if policy.Conditions()["ip_range"] != "10.0.0.0/8" {

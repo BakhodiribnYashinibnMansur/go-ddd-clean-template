@@ -26,7 +26,7 @@ type Policy struct {
 	effect       PolicyEffect
 	priority     int
 	active       bool
-	conditions   map[string]string
+	conditions   map[string]any
 }
 
 // NewPolicy creates a new Policy with a generated ID.
@@ -37,7 +37,7 @@ func NewPolicy(permissionID uuid.UUID, effect PolicyEffect) *Policy {
 		effect:       effect,
 		priority:     0,
 		active:       true,
-		conditions:   make(map[string]string),
+		conditions:   make(map[string]any),
 	}
 }
 
@@ -50,10 +50,10 @@ func ReconstructPolicy(
 	effect PolicyEffect,
 	priority int,
 	active bool,
-	conditions map[string]string,
+	conditions map[string]any,
 ) *Policy {
 	if conditions == nil {
-		conditions = make(map[string]string)
+		conditions = make(map[string]any)
 	}
 	return &Policy{
 		BaseEntity:   shared.NewBaseEntityWithID(id, createdAt, updatedAt, deletedAt),
@@ -78,7 +78,7 @@ func (p *Policy) Priority() int { return p.priority }
 func (p *Policy) IsActive() bool { return p.active }
 
 // Conditions returns the ABAC conditions.
-func (p *Policy) Conditions() map[string]string { return p.conditions }
+func (p *Policy) Conditions() map[string]any { return p.conditions }
 
 // Toggle flips the active state between enabled and disabled.
 // Toggling an inactive policy re-enables it without changing its conditions or priority.
@@ -101,9 +101,9 @@ func (p *Policy) SetEffect(effect PolicyEffect) {
 
 // SetConditions replaces the full ABAC condition map.
 // A nil input is normalized to an empty map to avoid nil-pointer issues in JSON serialization.
-func (p *Policy) SetConditions(conditions map[string]string) {
+func (p *Policy) SetConditions(conditions map[string]any) {
 	if conditions == nil {
-		conditions = make(map[string]string)
+		conditions = make(map[string]any)
 	}
 	p.conditions = conditions
 	p.Touch()

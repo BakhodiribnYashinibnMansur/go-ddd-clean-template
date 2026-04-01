@@ -230,7 +230,7 @@ func (r *AuthzReadRepo) ListPolicies(ctx context.Context, pagination shared.Pagi
 		if err != nil {
 			return nil, 0, err
 		}
-		v.Conditions = conds
+		v.Conditions = stringsToConditions(conds)
 	}
 
 	return views, total, nil
@@ -427,7 +427,7 @@ func (r *AuthzReadRepo) FindPoliciesByPermissionIDs(ctx context.Context, permiss
 		if err != nil {
 			return nil, err
 		}
-		p.SetConditions(conds)
+		p.SetConditions(stringsToConditions(conds))
 	}
 
 	return policies, nil

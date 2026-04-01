@@ -15,7 +15,7 @@ type CreatePolicyCommand struct {
 	PermissionID uuid.UUID
 	Effect       domain.PolicyEffect
 	Priority     int
-	Conditions   map[string]string
+	Conditions   map[string]any
 }
 
 // CreatePolicyHandler persists new authorization policies via the repository.
