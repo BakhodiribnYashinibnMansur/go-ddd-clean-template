@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/authz/domain"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/google/uuid"
 )
@@ -37,7 +38,10 @@ func NewAssignScopeHandler(
 
 // Handle creates the permission-scope binding for the given permission ID, path, and method.
 // Returns nil on success; propagates repository errors (e.g., duplicate binding, invalid FK) to the caller.
-func (h *AssignScopeHandler) Handle(ctx context.Context, cmd AssignScopeCommand) error {
+func (h *AssignScopeHandler) Handle(ctx context.Context, cmd AssignScopeCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "AssignScopeHandler.Handle")
+	defer func() { end(err) }()
+
 	if err := h.permScopeRepo.Assign(ctx, cmd.PermissionID, cmd.Path, cmd.Method); err != nil {
 		h.logger.Errorf("failed to assign scope to permission: %v", err)
 		return err

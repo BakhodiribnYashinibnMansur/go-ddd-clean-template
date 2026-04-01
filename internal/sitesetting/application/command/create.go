@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/shared/application"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/sitesetting/domain"
 )
 
@@ -40,7 +41,10 @@ func NewCreateSiteSettingHandler(
 
 // Handle persists a new site setting and publishes resulting domain events.
 // Returns repository errors (e.g., duplicate key, connection failure) directly to the caller.
-func (h *CreateSiteSettingHandler) Handle(ctx context.Context, cmd CreateSiteSettingCommand) error {
+func (h *CreateSiteSettingHandler) Handle(ctx context.Context, cmd CreateSiteSettingCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "CreateSiteSettingHandler.Handle")
+	defer func() { end(err) }()
+
 	s := domain.NewSiteSetting(cmd.Key, cmd.Value, cmd.Type, cmd.Description)
 
 	if err := h.repo.Save(ctx, s); err != nil {

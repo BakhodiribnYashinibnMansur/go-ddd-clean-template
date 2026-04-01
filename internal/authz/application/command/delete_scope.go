@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/authz/domain"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 )
 
 // DeleteScopeCommand represents an intent to remove a protected API scope identified by its path and HTTP method.
@@ -34,7 +35,10 @@ func NewDeleteScopeHandler(
 
 // Handle deletes the scope identified by the Path+Method composite key.
 // Returns nil on success; propagates repository errors (e.g., not found) to the caller.
-func (h *DeleteScopeHandler) Handle(ctx context.Context, cmd DeleteScopeCommand) error {
+func (h *DeleteScopeHandler) Handle(ctx context.Context, cmd DeleteScopeCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "DeleteScopeHandler.Handle")
+	defer func() { end(err) }()
+
 	if err := h.repo.Delete(ctx, cmd.Path, cmd.Method); err != nil {
 		h.logger.Errorf("failed to delete scope: %v", err)
 		return err

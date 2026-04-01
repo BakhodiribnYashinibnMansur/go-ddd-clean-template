@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/authz/domain"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/google/uuid"
 )
@@ -37,7 +38,10 @@ func NewCreatePermissionHandler(
 
 // Handle creates a permission, optionally sets its description, and persists it.
 // Returns nil on success; propagates repository errors (e.g., duplicate name, invalid parent) to the caller.
-func (h *CreatePermissionHandler) Handle(ctx context.Context, cmd CreatePermissionCommand) error {
+func (h *CreatePermissionHandler) Handle(ctx context.Context, cmd CreatePermissionCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "CreatePermissionHandler.Handle")
+	defer func() { end(err) }()
+
 	perm := domain.NewPermission(cmd.Name, cmd.ParentID)
 	if cmd.Description != nil {
 		perm.SetDescription(cmd.Description)

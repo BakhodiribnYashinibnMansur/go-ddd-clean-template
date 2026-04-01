@@ -5,6 +5,7 @@ import (
 
 	appdto "gct/internal/notification/application"
 	"gct/internal/notification/domain"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/google/uuid"
 )
@@ -25,7 +26,10 @@ func NewGetHandler(readRepo domain.NotificationReadRepository) *GetHandler {
 }
 
 // Handle executes the GetQuery and returns a NotificationView.
-func (h *GetHandler) Handle(ctx context.Context, q GetQuery) (*appdto.NotificationView, error) {
+func (h *GetHandler) Handle(ctx context.Context, q GetQuery) (result *appdto.NotificationView, err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "GetHandler.Handle")
+	defer func() { end(err) }()
+
 	view, err := h.readRepo.FindByID(ctx, q.ID)
 	if err != nil {
 		return nil, err

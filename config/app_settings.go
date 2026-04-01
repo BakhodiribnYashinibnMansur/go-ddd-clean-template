@@ -32,7 +32,8 @@ type (
 
 	// Metrics -.
 	Metrics struct {
-		Enabled bool `yaml:"enabled"`
+		Enabled            bool   `yaml:"enabled"`
+		SlowQueryThreshold string `yaml:"slow_query_threshold" env:"METRICS_SLOW_QUERY_THRESHOLD" envDefault:"100ms"`
 	}
 
 	// Swagger -.

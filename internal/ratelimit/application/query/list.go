@@ -5,6 +5,7 @@ import (
 
 	appdto "gct/internal/ratelimit/application"
 	"gct/internal/ratelimit/domain"
+	"gct/internal/shared/infrastructure/pgxutil"
 )
 
 // ListRateLimitsQuery holds the input for listing rate limits.
@@ -29,15 +30,18 @@ func NewListRateLimitsHandler(readRepo domain.RateLimitReadRepository) *ListRate
 }
 
 // Handle executes the ListRateLimitsQuery and returns a list of RateLimitView with total count.
-func (h *ListRateLimitsHandler) Handle(ctx context.Context, q ListRateLimitsQuery) (*ListRateLimitsResult, error) {
+func (h *ListRateLimitsHandler) Handle(ctx context.Context, q ListRateLimitsQuery) (result *ListRateLimitsResult, err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "ListRateLimitsHandler.Handle")
+	defer func() { end(err) }()
+
 	views, total, err := h.readRepo.List(ctx, q.Filter)
 	if err != nil {
 		return nil, err
 	}
 
-	result := make([]*appdto.RateLimitView, len(views))
+	items := make([]*appdto.RateLimitView, len(views))
 	for i, v := range views {
-		result[i] = &appdto.RateLimitView{
+		items[i] = &appdto.RateLimitView{
 			ID:                v.ID,
 			Name:              v.Name,
 			Rule:              v.Rule,
@@ -50,7 +54,7 @@ func (h *ListRateLimitsHandler) Handle(ctx context.Context, q ListRateLimitsQuer
 	}
 
 	return &ListRateLimitsResult{
-		RateLimits: result,
+		RateLimits: items,
 		Total:      total,
 	}, nil
 }

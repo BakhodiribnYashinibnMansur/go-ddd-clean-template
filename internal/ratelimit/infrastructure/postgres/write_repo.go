@@ -7,6 +7,7 @@ import (
 	"gct/internal/ratelimit/domain"
 	"gct/internal/shared/domain/consts"
 	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -36,7 +37,10 @@ func NewRateLimitWriteRepo(pool *pgxpool.Pool) *RateLimitWriteRepo {
 }
 
 // Save inserts a new RateLimit aggregate into the database.
-func (r *RateLimitWriteRepo) Save(ctx context.Context, rl *domain.RateLimit) error {
+func (r *RateLimitWriteRepo) Save(ctx context.Context, rl *domain.RateLimit) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "RateLimitWriteRepo.Save")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Insert(tableName).
 		Columns(writeColumns...).
@@ -58,7 +62,10 @@ func (r *RateLimitWriteRepo) Save(ctx context.Context, rl *domain.RateLimit) err
 }
 
 // FindByID retrieves a RateLimit aggregate by its ID.
-func (r *RateLimitWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.RateLimit, error) {
+func (r *RateLimitWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.RateLimit, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "RateLimitWriteRepo.FindByID")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Select(writeColumns...).
 		From(tableName).
@@ -73,7 +80,10 @@ func (r *RateLimitWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (*domai
 }
 
 // Update updates an existing RateLimit aggregate in the database.
-func (r *RateLimitWriteRepo) Update(ctx context.Context, rl *domain.RateLimit) error {
+func (r *RateLimitWriteRepo) Update(ctx context.Context, rl *domain.RateLimit) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "RateLimitWriteRepo.Update")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Update(tableName).
 		Set("name", rl.Name()).
@@ -96,7 +106,10 @@ func (r *RateLimitWriteRepo) Update(ctx context.Context, rl *domain.RateLimit) e
 }
 
 // Delete removes a RateLimit by its ID.
-func (r *RateLimitWriteRepo) Delete(ctx context.Context, id uuid.UUID) error {
+func (r *RateLimitWriteRepo) Delete(ctx context.Context, id uuid.UUID) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "RateLimitWriteRepo.Delete")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Delete(tableName).
 		Where(squirrel.Eq{"id": id}).
@@ -113,7 +126,10 @@ func (r *RateLimitWriteRepo) Delete(ctx context.Context, id uuid.UUID) error {
 }
 
 // List retrieves a paginated list of RateLimit aggregates with optional filters.
-func (r *RateLimitWriteRepo) List(ctx context.Context, filter domain.RateLimitFilter) ([]*domain.RateLimit, int64, error) {
+func (r *RateLimitWriteRepo) List(ctx context.Context, filter domain.RateLimitFilter) (results []*domain.RateLimit, total int64, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "RateLimitWriteRepo.List")
+	defer func() { end(err) }()
+
 	conds := squirrel.And{}
 	conds = applyFilters(conds, filter)
 
@@ -126,7 +142,6 @@ func (r *RateLimitWriteRepo) List(ctx context.Context, filter domain.RateLimitFi
 		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
 	}
 
-	var total int64
 	if err = r.pool.QueryRow(ctx, countSQL, countArgs...).Scan(&total); err != nil {
 		return nil, 0, apperrors.HandlePgError(err, tableName, nil)
 	}
@@ -157,7 +172,6 @@ func (r *RateLimitWriteRepo) List(ctx context.Context, filter domain.RateLimitFi
 	}
 	defer rows.Close()
 
-	var results []*domain.RateLimit
 	for rows.Next() {
 		rl, err := scanRateLimitFromRows(rows)
 		if err != nil {

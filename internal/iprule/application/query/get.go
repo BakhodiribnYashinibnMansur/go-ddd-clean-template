@@ -5,6 +5,7 @@ import (
 
 	appdto "gct/internal/iprule/application"
 	"gct/internal/iprule/domain"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/google/uuid"
 )
@@ -25,7 +26,10 @@ func NewGetIPRuleHandler(readRepo domain.IPRuleReadRepository) *GetIPRuleHandler
 }
 
 // Handle executes the GetIPRuleQuery and returns an IPRuleView.
-func (h *GetIPRuleHandler) Handle(ctx context.Context, q GetIPRuleQuery) (*appdto.IPRuleView, error) {
+func (h *GetIPRuleHandler) Handle(ctx context.Context, q GetIPRuleQuery) (result *appdto.IPRuleView, err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "GetIPRuleHandler.Handle")
+	defer func() { end(err) }()
+
 	v, err := h.readRepo.FindByID(ctx, q.ID)
 	if err != nil {
 		return nil, err

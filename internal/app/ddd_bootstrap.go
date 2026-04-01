@@ -21,6 +21,7 @@ import (
 	"gct/internal/session"
 	"gct/internal/shared/application"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/metrics"
 	"gct/internal/sitesetting"
 	"gct/internal/systemerror"
 	"gct/internal/translation"
@@ -57,7 +58,8 @@ type DDDBoundedContexts struct {
 }
 
 // NewDDDBoundedContexts creates all bounded contexts with their dependencies.
-func NewDDDBoundedContexts(ctx context.Context, pool *pgxpool.Pool, eventBus application.EventBus, l logger.Log, jwtCfg command.JWTConfig) (*DDDBoundedContexts, error) {
+func NewDDDBoundedContexts(ctx context.Context, pool *pgxpool.Pool, eventBus application.EventBus, l logger.Log, bm *metrics.BusinessMetrics, jwtCfg command.JWTConfig) (*DDDBoundedContexts, error) {
+	_ = bm // available for BC injection when needed
 	ffBC, err := featureflag.NewBoundedContext(ctx, pool, eventBus, l)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize feature flag BC: %w", err)

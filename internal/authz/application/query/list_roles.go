@@ -6,6 +6,7 @@ import (
 	appdto "gct/internal/authz/application"
 	"gct/internal/authz/domain"
 	shared "gct/internal/shared/domain"
+	"gct/internal/shared/infrastructure/pgxutil"
 )
 
 // ListRolesQuery holds the input for listing roles.
@@ -30,7 +31,10 @@ func NewListRolesHandler(readRepo domain.AuthzReadRepository) *ListRolesHandler 
 }
 
 // Handle executes the ListRolesQuery and returns a list of RoleView.
-func (h *ListRolesHandler) Handle(ctx context.Context, q ListRolesQuery) (*ListRolesResult, error) {
+func (h *ListRolesHandler) Handle(ctx context.Context, q ListRolesQuery) (_ *ListRolesResult, err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "ListRolesHandler.Handle")
+	defer func() { end(err) }()
+
 	views, total, err := h.readRepo.ListRoles(ctx, q.Pagination)
 	if err != nil {
 		return nil, err

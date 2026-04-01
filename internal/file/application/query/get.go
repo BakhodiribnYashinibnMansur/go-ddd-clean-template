@@ -5,6 +5,7 @@ import (
 
 	appdto "gct/internal/file/application"
 	"gct/internal/file/domain"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/google/uuid"
 )
@@ -25,7 +26,10 @@ func NewGetFileHandler(readRepo domain.FileReadRepository) *GetFileHandler {
 }
 
 // Handle executes the GetFileQuery and returns a FileView.
-func (h *GetFileHandler) Handle(ctx context.Context, q GetFileQuery) (*appdto.FileView, error) {
+func (h *GetFileHandler) Handle(ctx context.Context, q GetFileQuery) (result *appdto.FileView, err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "GetFileHandler.Handle")
+	defer func() { end(err) }()
+
 	v, err := h.readRepo.FindByID(ctx, q.ID)
 	if err != nil {
 		return nil, err

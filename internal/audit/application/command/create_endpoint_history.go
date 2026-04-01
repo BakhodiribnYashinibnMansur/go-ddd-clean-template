@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/audit/domain"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/google/uuid"
 )
@@ -41,7 +42,10 @@ func NewCreateEndpointHistoryHandler(
 
 // Handle persists the endpoint history entry.
 // Returns nil on success; propagates repository errors to the caller.
-func (h *CreateEndpointHistoryHandler) Handle(ctx context.Context, cmd CreateEndpointHistoryCommand) error {
+func (h *CreateEndpointHistoryHandler) Handle(ctx context.Context, cmd CreateEndpointHistoryCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "CreateEndpointHistoryHandler.Handle")
+	defer func() { end(err) }()
+
 	entry := domain.NewEndpointHistory(
 		cmd.UserID,
 		cmd.Endpoint,

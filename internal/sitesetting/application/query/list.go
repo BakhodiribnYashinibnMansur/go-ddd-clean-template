@@ -3,6 +3,7 @@ package query
 import (
 	"context"
 
+	"gct/internal/shared/infrastructure/pgxutil"
 	appdto "gct/internal/sitesetting/application"
 	"gct/internal/sitesetting/domain"
 )
@@ -29,15 +30,18 @@ func NewListSiteSettingsHandler(readRepo domain.SiteSettingReadRepository) *List
 }
 
 // Handle executes the ListSiteSettingsQuery and returns a list of SiteSettingView with total count.
-func (h *ListSiteSettingsHandler) Handle(ctx context.Context, q ListSiteSettingsQuery) (*ListSiteSettingsResult, error) {
+func (h *ListSiteSettingsHandler) Handle(ctx context.Context, q ListSiteSettingsQuery) (result *ListSiteSettingsResult, err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "ListSiteSettingsHandler.Handle")
+	defer func() { end(err) }()
+
 	views, total, err := h.readRepo.List(ctx, q.Filter)
 	if err != nil {
 		return nil, err
 	}
 
-	result := make([]*appdto.SiteSettingView, len(views))
+	items := make([]*appdto.SiteSettingView, len(views))
 	for i, v := range views {
-		result[i] = &appdto.SiteSettingView{
+		items[i] = &appdto.SiteSettingView{
 			ID:          v.ID,
 			Key:         v.Key,
 			Value:       v.Value,
@@ -49,7 +53,7 @@ func (h *ListSiteSettingsHandler) Handle(ctx context.Context, q ListSiteSettings
 	}
 
 	return &ListSiteSettingsResult{
-		Settings: result,
+		Settings: items,
 		Total:    total,
 	}, nil
 }

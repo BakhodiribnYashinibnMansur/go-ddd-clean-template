@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/translation/domain"
 
 	"github.com/google/uuid"
@@ -35,7 +36,10 @@ func NewDeleteTranslationHandler(
 
 // Handle deletes the translation identified by cmd.ID.
 // Returns nil on success; propagates repository errors (e.g., not found, connection failure) to the caller.
-func (h *DeleteTranslationHandler) Handle(ctx context.Context, cmd DeleteTranslationCommand) error {
+func (h *DeleteTranslationHandler) Handle(ctx context.Context, cmd DeleteTranslationCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "DeleteTranslationHandler.Handle")
+	defer func() { end(err) }()
+
 	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
 		h.logger.Errorf("failed to delete translation: %v", err)
 		return err

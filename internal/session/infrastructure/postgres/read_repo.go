@@ -7,6 +7,7 @@ import (
 	appdto "gct/internal/session/application"
 	"gct/internal/shared/domain/consts"
 	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -35,7 +36,10 @@ func NewSessionReadRepo(pool *pgxpool.Pool) *SessionReadRepo {
 }
 
 // FindByID returns a SessionView for the given session ID.
-func (r *SessionReadRepo) FindByID(ctx context.Context, id uuid.UUID) (*appdto.SessionView, error) {
+func (r *SessionReadRepo) FindByID(ctx context.Context, id uuid.UUID) (result *appdto.SessionView, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "SessionReadRepo.FindByID")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Select(readSessionColumns...).
 		From(consts.TableSession).
@@ -86,7 +90,10 @@ func (r *SessionReadRepo) FindByID(ctx context.Context, id uuid.UUID) (*appdto.S
 }
 
 // List returns a paginated list of SessionView with optional filters.
-func (r *SessionReadRepo) List(ctx context.Context, filter appdto.SessionsFilter) ([]*appdto.SessionView, int64, error) {
+func (r *SessionReadRepo) List(ctx context.Context, filter appdto.SessionsFilter) (items []*appdto.SessionView, total int64, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "SessionReadRepo.List")
+	defer func() { end(err) }()
+
 	// Build WHERE conditions.
 	conds := squirrel.And{}
 	if filter.UserID != nil {
@@ -106,7 +113,6 @@ func (r *SessionReadRepo) List(ctx context.Context, filter appdto.SessionsFilter
 		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
 	}
 
-	var total int64
 	if err = r.pool.QueryRow(ctx, countSQL, countArgs...).Scan(&total); err != nil {
 		return nil, 0, apperrors.HandlePgError(err, consts.TableSession, nil)
 	}

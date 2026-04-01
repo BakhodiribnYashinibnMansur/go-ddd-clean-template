@@ -8,6 +8,7 @@ import (
 
 	"gct/internal/shared/application"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 	jwtpkg "gct/internal/shared/infrastructure/security/jwt"
 	"gct/internal/user/domain"
 
@@ -67,7 +68,10 @@ func NewSignInHandler(
 }
 
 // Handle executes the SignInCommand and returns SignInResult.
-func (h *SignInHandler) Handle(ctx context.Context, cmd SignInCommand) (*SignInResult, error) {
+func (h *SignInHandler) Handle(ctx context.Context, cmd SignInCommand) (result *SignInResult, err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "SignInHandler.Handle")
+	defer func() { end(err) }()
+
 	// Find user by phone or email based on login format.
 	user, err := h.findUser(ctx, cmd.Login)
 	if err != nil {
@@ -118,7 +122,7 @@ func (h *SignInHandler) Handle(ctx context.Context, cmd SignInCommand) (*SignInR
 		return nil, err
 	}
 
-	result := &SignInResult{
+	result = &SignInResult{
 		UserID:       user.ID(),
 		SessionID:    session.ID(),
 		AccessToken:  accessToken,

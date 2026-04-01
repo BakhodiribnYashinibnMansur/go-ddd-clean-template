@@ -6,6 +6,7 @@ import (
 	"gct/internal/errorcode/domain"
 	"gct/internal/shared/application"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/google/uuid"
 )
@@ -47,7 +48,10 @@ func NewUpdateErrorCodeHandler(
 
 // Handle fetches the error code by ID, overwrites all mutable fields, persists, and publishes events.
 // Returns a repository error if the error code is not found or the update fails.
-func (h *UpdateErrorCodeHandler) Handle(ctx context.Context, cmd UpdateErrorCodeCommand) error {
+func (h *UpdateErrorCodeHandler) Handle(ctx context.Context, cmd UpdateErrorCodeCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "UpdateErrorCodeHandler.Handle")
+	defer func() { end(err) }()
+
 	ec, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {
 		return err

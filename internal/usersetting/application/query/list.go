@@ -4,6 +4,7 @@ import (
 	"context"
 
 	appdto "gct/internal/usersetting/application"
+	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/usersetting/domain"
 )
 
@@ -29,7 +30,10 @@ func NewListUserSettingsHandler(readRepo domain.UserSettingReadRepository) *List
 }
 
 // Handle executes the ListUserSettingsQuery and returns a list of UserSettingView with total count.
-func (h *ListUserSettingsHandler) Handle(ctx context.Context, q ListUserSettingsQuery) (*ListUserSettingsResult, error) {
+func (h *ListUserSettingsHandler) Handle(ctx context.Context, q ListUserSettingsQuery) (_ *ListUserSettingsResult, err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "ListUserSettingsHandler.Handle")
+	defer func() { end(err) }()
+
 	views, total, err := h.readRepo.List(ctx, q.Filter)
 	if err != nil {
 		return nil, err

@@ -6,6 +6,7 @@ import (
 	appdto "gct/internal/integration/application"
 	"gct/internal/integration/domain"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 )
 
 // ValidateAPIKeyQuery holds the input for validating an API key.
@@ -25,7 +26,10 @@ func NewValidateAPIKeyHandler(readRepo domain.IntegrationReadRepository, l logge
 }
 
 // Handle executes the ValidateAPIKeyQuery and returns an APIKeyView if the key is valid and active.
-func (h *ValidateAPIKeyHandler) Handle(ctx context.Context, q ValidateAPIKeyQuery) (*appdto.APIKeyView, error) {
+func (h *ValidateAPIKeyHandler) Handle(ctx context.Context, q ValidateAPIKeyQuery) (result *appdto.APIKeyView, err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "ValidateAPIKeyHandler.Handle")
+	defer func() { end(err) }()
+
 	view, err := h.readRepo.FindByAPIKey(ctx, q.APIKey)
 	if err != nil {
 		h.l.Warnw("api key validation failed", "error", err)

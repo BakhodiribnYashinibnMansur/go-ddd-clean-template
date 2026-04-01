@@ -7,6 +7,7 @@ import (
 	"gct/internal/errorcode/domain"
 	"gct/internal/shared/domain/consts"
 	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -36,7 +37,10 @@ func NewErrorCodeWriteRepo(pool *pgxpool.Pool) *ErrorCodeWriteRepo {
 }
 
 // Save inserts a new ErrorCode aggregate into the database.
-func (r *ErrorCodeWriteRepo) Save(ctx context.Context, ec *domain.ErrorCode) error {
+func (r *ErrorCodeWriteRepo) Save(ctx context.Context, ec *domain.ErrorCode) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "ErrorCodeWriteRepo.Save")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Insert(tableName).
 		Columns(writeColumns...).
@@ -66,7 +70,10 @@ func (r *ErrorCodeWriteRepo) Save(ctx context.Context, ec *domain.ErrorCode) err
 }
 
 // Update updates an existing ErrorCode aggregate in the database.
-func (r *ErrorCodeWriteRepo) Update(ctx context.Context, ec *domain.ErrorCode) error {
+func (r *ErrorCodeWriteRepo) Update(ctx context.Context, ec *domain.ErrorCode) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "ErrorCodeWriteRepo.Update")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Update(tableName).
 		Set("message", ec.Message()).
@@ -91,7 +98,10 @@ func (r *ErrorCodeWriteRepo) Update(ctx context.Context, ec *domain.ErrorCode) e
 }
 
 // FindByID retrieves an ErrorCode aggregate by its ID.
-func (r *ErrorCodeWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.ErrorCode, error) {
+func (r *ErrorCodeWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.ErrorCode, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "ErrorCodeWriteRepo.FindByID")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Select(writeColumns...).
 		From(tableName).
@@ -106,7 +116,10 @@ func (r *ErrorCodeWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (*domai
 }
 
 // Delete removes an error code by its ID.
-func (r *ErrorCodeWriteRepo) Delete(ctx context.Context, id uuid.UUID) error {
+func (r *ErrorCodeWriteRepo) Delete(ctx context.Context, id uuid.UUID) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "ErrorCodeWriteRepo.Delete")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Delete(tableName).
 		Where(squirrel.Eq{"id": id}).

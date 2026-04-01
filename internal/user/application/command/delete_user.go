@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/shared/application"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/user/domain"
 
 	"github.com/google/uuid"
@@ -39,7 +40,10 @@ func NewDeleteUserHandler(
 
 // Handle loads the user, deactivates them, sets the soft-delete timestamp, and persists the update.
 // Active sessions are not explicitly revoked here — downstream event handlers should invalidate tokens.
-func (h *DeleteUserHandler) Handle(ctx context.Context, cmd DeleteUserCommand) error {
+func (h *DeleteUserHandler) Handle(ctx context.Context, cmd DeleteUserCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "DeleteUserHandler.Handle")
+	defer func() { end(err) }()
+
 	user, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {
 		return err

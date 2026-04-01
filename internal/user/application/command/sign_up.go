@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/shared/application"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/user/domain"
 )
 
@@ -38,7 +39,10 @@ func NewSignUpHandler(
 
 // Handle executes the SignUpCommand.
 // The user is created as active but NOT approved by default.
-func (h *SignUpHandler) Handle(ctx context.Context, cmd SignUpCommand) error {
+func (h *SignUpHandler) Handle(ctx context.Context, cmd SignUpCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "SignUpHandler.Handle")
+	defer func() { end(err) }()
+
 	phone, err := domain.NewPhone(cmd.Phone)
 	if err != nil {
 		return err

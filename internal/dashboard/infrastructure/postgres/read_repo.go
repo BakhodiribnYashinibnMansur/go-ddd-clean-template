@@ -6,6 +6,7 @@ import (
 	appdto "gct/internal/dashboard/application"
 	"gct/internal/shared/domain/consts"
 	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -21,7 +22,10 @@ func NewDashboardReadRepo(pool *pgxpool.Pool) *DashboardReadRepo {
 }
 
 // GetStats returns aggregated dashboard statistics by running COUNT queries against multiple tables.
-func (r *DashboardReadRepo) GetStats(ctx context.Context) (*appdto.DashboardStatsView, error) {
+func (r *DashboardReadRepo) GetStats(ctx context.Context) (result *appdto.DashboardStatsView, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "DashboardReadRepo.GetStats")
+	defer func() { end(err) }()
+
 	view := &appdto.DashboardStatsView{}
 
 	// Total users (soft-delete aware).

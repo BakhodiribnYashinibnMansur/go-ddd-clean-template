@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/shared/domain/consts"
 	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/translation/domain"
 
 	"github.com/Masterminds/squirrel"
@@ -32,7 +33,10 @@ func NewTranslationReadRepo(pool *pgxpool.Pool) *TranslationReadRepo {
 }
 
 // FindByID returns a single TranslationView by ID.
-func (r *TranslationReadRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.TranslationView, error) {
+func (r *TranslationReadRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.TranslationView, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "TranslationReadRepo.FindByID")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Select(readColumns...).
 		From(tableName).
@@ -47,7 +51,10 @@ func (r *TranslationReadRepo) FindByID(ctx context.Context, id uuid.UUID) (*doma
 }
 
 // List returns a paginated list of TranslationView with optional filters.
-func (r *TranslationReadRepo) List(ctx context.Context, filter domain.TranslationFilter) ([]*domain.TranslationView, int64, error) {
+func (r *TranslationReadRepo) List(ctx context.Context, filter domain.TranslationFilter) (views []*domain.TranslationView, total int64, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "TranslationReadRepo.List")
+	defer func() { end(err) }()
+
 	conds := squirrel.And{}
 	conds = applyFilters(conds, filter)
 
@@ -60,7 +67,6 @@ func (r *TranslationReadRepo) List(ctx context.Context, filter domain.Translatio
 		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
 	}
 
-	var total int64
 	if err = r.pool.QueryRow(ctx, countSQL, countArgs...).Scan(&total); err != nil {
 		return nil, 0, apperrors.HandlePgError(err, tableName, nil)
 	}
@@ -91,7 +97,6 @@ func (r *TranslationReadRepo) List(ctx context.Context, filter domain.Translatio
 	}
 	defer rows.Close()
 
-	var views []*domain.TranslationView
 	for rows.Next() {
 		v, err := scanTranslationViewFromRows(rows)
 		if err != nil {

@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/ratelimit/domain"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/google/uuid"
 )
@@ -32,7 +33,10 @@ func NewDeleteRateLimitHandler(
 }
 
 // Handle executes the DeleteRateLimitCommand.
-func (h *DeleteRateLimitHandler) Handle(ctx context.Context, cmd DeleteRateLimitCommand) error {
+func (h *DeleteRateLimitHandler) Handle(ctx context.Context, cmd DeleteRateLimitCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "DeleteRateLimitHandler.Handle")
+	defer func() { end(err) }()
+
 	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
 		h.logger.Errorf("failed to delete rate limit: %v", err)
 		return err

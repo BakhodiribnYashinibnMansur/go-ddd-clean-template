@@ -6,6 +6,7 @@ import (
 
 	"gct/internal/shared/domain/consts"
 	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/usersetting/domain"
 
 	"github.com/Masterminds/squirrel"
@@ -33,7 +34,10 @@ func NewUserSettingReadRepo(pool *pgxpool.Pool) *UserSettingReadRepo {
 }
 
 // FindByID returns a single UserSettingView by its ID.
-func (r *UserSettingReadRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.UserSettingView, error) {
+func (r *UserSettingReadRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.UserSettingView, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "UserSettingReadRepo.FindByID")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Select(readColumns...).
 		From(tableName).
@@ -48,7 +52,10 @@ func (r *UserSettingReadRepo) FindByID(ctx context.Context, id uuid.UUID) (*doma
 }
 
 // List returns a paginated list of UserSettingView with optional filters.
-func (r *UserSettingReadRepo) List(ctx context.Context, filter domain.UserSettingFilter) ([]*domain.UserSettingView, int64, error) {
+func (r *UserSettingReadRepo) List(ctx context.Context, filter domain.UserSettingFilter) (items []*domain.UserSettingView, total int64, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "UserSettingReadRepo.List")
+	defer func() { end(err) }()
+
 	conds := squirrel.And{}
 	conds = applyFilters(conds, filter)
 
@@ -62,7 +69,6 @@ func (r *UserSettingReadRepo) List(ctx context.Context, filter domain.UserSettin
 		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
 	}
 
-	var total int64
 	if err = r.pool.QueryRow(ctx, countSQL, countArgs...).Scan(&total); err != nil {
 		return nil, 0, apperrors.HandlePgError(err, tableName, nil)
 	}

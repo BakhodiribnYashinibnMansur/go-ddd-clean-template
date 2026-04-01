@@ -6,6 +6,7 @@ import (
 	"gct/internal/file/domain"
 	"gct/internal/shared/application"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/google/uuid"
 )
@@ -47,7 +48,10 @@ func NewCreateFileHandler(
 
 // Handle creates a file domain entity and persists it via the repository.
 // On success, domain events (e.g., FileCreated) are published; event publish failures are logged but do not fail the operation.
-func (h *CreateFileHandler) Handle(ctx context.Context, cmd CreateFileCommand) error {
+func (h *CreateFileHandler) Handle(ctx context.Context, cmd CreateFileCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "CreateFileHandler.Handle")
+	defer func() { end(err) }()
+
 	f := domain.NewFile(cmd.Name, cmd.OriginalName, cmd.MimeType, cmd.Size, cmd.Path, cmd.URL, cmd.UploadedBy)
 
 	if err := h.repo.Save(ctx, f); err != nil {

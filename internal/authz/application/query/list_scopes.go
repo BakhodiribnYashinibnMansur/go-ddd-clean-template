@@ -6,6 +6,7 @@ import (
 	appdto "gct/internal/authz/application"
 	"gct/internal/authz/domain"
 	shared "gct/internal/shared/domain"
+	"gct/internal/shared/infrastructure/pgxutil"
 )
 
 // ListScopesQuery holds the input for listing scopes.
@@ -30,7 +31,10 @@ func NewListScopesHandler(readRepo domain.AuthzReadRepository) *ListScopesHandle
 }
 
 // Handle executes the ListScopesQuery and returns a list of ScopeView.
-func (h *ListScopesHandler) Handle(ctx context.Context, q ListScopesQuery) (*ListScopesResult, error) {
+func (h *ListScopesHandler) Handle(ctx context.Context, q ListScopesQuery) (_ *ListScopesResult, err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "ListScopesHandler.Handle")
+	defer func() { end(err) }()
+
 	views, total, err := h.readRepo.ListScopes(ctx, q.Pagination)
 	if err != nil {
 		return nil, err

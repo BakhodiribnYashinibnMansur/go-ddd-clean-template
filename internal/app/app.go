@@ -5,6 +5,7 @@ package app
 import (
 	"context"
 	"io"
+	"net/http"
 	"os"
 	"os/signal"
 	"strconv"
@@ -29,6 +30,7 @@ import (
 	redispkg "gct/internal/shared/infrastructure/db/redis"
 	"gct/internal/shared/infrastructure/eventbus"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/metrics"
 	"gct/internal/shared/infrastructure/pubsub"
 	"gct/internal/shared/infrastructure/sse"
 	jwtpkg "gct/internal/shared/infrastructure/security/jwt"
@@ -59,12 +61,38 @@ func Run(cfg *config.Config) {
 		}
 	}()
 
-	// 1. PostgreSQL
-	pg, err := postgres.New(ctx, cfg.App.Environment, cfg.Database.Postgres, l)
+	// 1. OTel Metrics
+	var metricsProvider *metrics.Provider
+	if cfg.Metrics.Enabled {
+		metricsProvider, err = metrics.NewProvider(cfg.Tracing.ServiceName)
+		if err != nil {
+			l.Errorc(ctx, "Failed to initialize metrics provider (non-critical)", "error", err)
+		} else {
+			defer metricsProvider.Shutdown(context.Background())
+		}
+	}
+
+	// 2. PostgreSQL
+	pgOpts := []postgres.Option{}
+	if cfg.Metrics.Enabled {
+		slowThreshold, parseErr := time.ParseDuration(cfg.Metrics.SlowQueryThreshold)
+		if parseErr != nil {
+			slowThreshold = 100 * time.Millisecond
+		}
+		pgOpts = append(pgOpts, postgres.WithMetricsTracer(l, slowThreshold))
+	}
+	pg, err := postgres.New(ctx, cfg.App.Environment, cfg.Database.Postgres, l, pgOpts...)
 	if err != nil {
 		l.Fatalc(ctx, "Failed to initialize PostgreSQL", "error", err)
 	}
 	defer pg.Close()
+
+	// Register DB pool metrics
+	if cfg.Metrics.Enabled {
+		if poolErr := metrics.RegisterPoolMetrics(pg.Pool, cfg.Tracing.ServiceName); poolErr != nil {
+			l.Errorc(ctx, "Failed to register DB pool metrics (non-critical)", "error", poolErr)
+		}
+	}
 
 	// 2. Redis
 	var redisclient *redis.Client
@@ -104,7 +132,13 @@ func Run(cfg *config.Config) {
 		l.Fatalw("failed to parse RSA private key for DDD", "error", err)
 	}
 
-	dddBCs, err := NewDDDBoundedContexts(ctx, pg.Pool, eventBusInstance, l, command.JWTConfig{
+	// Business Metrics
+	var businessMetrics *metrics.BusinessMetrics
+	if cfg.Metrics.Enabled {
+		businessMetrics = metrics.NewBusinessMetrics(cfg.Tracing.ServiceName)
+	}
+
+	dddBCs, err := NewDDDBoundedContexts(ctx, pg.Pool, eventBusInstance, l, businessMetrics, command.JWTConfig{
 		PrivateKey: jwtPrivateKey,
 		Issuer:     cfg.JWT.Issuer,
 		AccessTTL:  cfg.JWT.AccessTTL,
@@ -202,7 +236,7 @@ func Run(cfg *config.Config) {
 	}
 
 	// 8. HTTP Router (pure DDD)
-	handler := initRouter(cfg, dddBCs, redisclient, pg, sseHub, l)
+	handler := initRouter(cfg, dddBCs, redisclient, pg, sseHub, metricsProvider, l)
 
 	httpServer := httpserver.NewServer()
 	startServer(cfg.HTTP.Port, handler, httpServer, l)
@@ -216,7 +250,7 @@ func Run(cfg *config.Config) {
 }
 
 // initRouter configures the Gin engine with DDD middleware and routes.
-func initRouter(cfg *config.Config, bcs *DDDBoundedContexts, redisClient *redis.Client, pg *postgres.Postgres, sseHub *sse.Hub, l logger.Log) *gin.Engine {
+func initRouter(cfg *config.Config, bcs *DDDBoundedContexts, redisClient *redis.Client, pg *postgres.Postgres, sseHub *sse.Hub, metricsProvider *metrics.Provider, l logger.Log) *gin.Engine {
 	gin.SetMode(cfg.HTTP.GinMode)
 
 	if cfg.Log.ShowGin {
@@ -247,7 +281,11 @@ func initRouter(cfg *config.Config, bcs *DDDBoundedContexts, redisClient *redis.
 	sharedmw.Setup(handler, cfg, redisClient, bcMW, l)
 
 	// === Infrastructure routes (swagger, health, static) ===
-	setupInfraRoutes(handler, cfg, pg.Pool, redisClient)
+	var metricsHandler http.Handler
+	if metricsProvider != nil {
+		metricsHandler = metricsProvider.Handler()
+	}
+	setupInfraRoutes(handler, cfg, pg.Pool, redisClient, metricsHandler, nil)
 
 	// === DDD API routes ===
 	authMW := usermw.NewAuthMiddleware(bcs.User.FindSession, bcs.User.FindUserForAuth, cfg, l)

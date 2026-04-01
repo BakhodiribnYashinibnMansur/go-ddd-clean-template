@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/authz/domain"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 )
 
 // CreateScopeCommand represents an intent to register an API endpoint (path + HTTP method) as a protected scope.
@@ -34,7 +35,10 @@ func NewCreateScopeHandler(
 
 // Handle persists the scope defined by Path and Method.
 // Returns nil on success; propagates repository errors (e.g., duplicate path+method pair) to the caller.
-func (h *CreateScopeHandler) Handle(ctx context.Context, cmd CreateScopeCommand) error {
+func (h *CreateScopeHandler) Handle(ctx context.Context, cmd CreateScopeCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "CreateScopeHandler.Handle")
+	defer func() { end(err) }()
+
 	scope := domain.Scope{
 		Path:   cmd.Path,
 		Method: cmd.Method,

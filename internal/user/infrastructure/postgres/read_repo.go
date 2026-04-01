@@ -9,6 +9,7 @@ import (
 	"gct/internal/shared/domain/consts"
 	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/metadata"
+	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/user/domain"
 
 	"github.com/Masterminds/squirrel"
@@ -40,7 +41,10 @@ func NewUserReadRepo(pool *pgxpool.Pool) *UserReadRepo {
 }
 
 // FindByID returns a UserView for the given user ID.
-func (r *UserReadRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.UserView, error) {
+func (r *UserReadRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.UserView, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "UserReadRepo.FindByID")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Select(readUserColumns...).
 		From(consts.TableUsers).
@@ -93,7 +97,10 @@ func (r *UserReadRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.User
 }
 
 // List returns a paginated list of UserView with optional filters.
-func (r *UserReadRepo) List(ctx context.Context, filter domain.UsersFilter) ([]*domain.UserView, int64, error) {
+func (r *UserReadRepo) List(ctx context.Context, filter domain.UsersFilter) (items []*domain.UserView, total int64, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "UserReadRepo.List")
+	defer func() { end(err) }()
+
 	// Build WHERE conditions.
 	conds := squirrel.And{squirrel.Eq{"deleted_at": 0}}
 	if filter.Phone != nil {
@@ -119,7 +126,6 @@ func (r *UserReadRepo) List(ctx context.Context, filter domain.UsersFilter) ([]*
 		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
 	}
 
-	var total int64
 	if err = r.pool.QueryRow(ctx, countSQL, countArgs...).Scan(&total); err != nil {
 		return nil, 0, apperrors.HandlePgError(err, consts.TableUsers, nil)
 	}
@@ -154,7 +160,6 @@ func (r *UserReadRepo) List(ctx context.Context, filter domain.UsersFilter) ([]*
 	}
 	defer rows.Close()
 
-	var views []*domain.UserView
 	for rows.Next() {
 		var (
 			uid        uuid.UUID
@@ -182,7 +187,7 @@ func (r *UserReadRepo) List(ctx context.Context, filter domain.UsersFilter) ([]*
 			return nil, 0, err
 		}
 
-		views = append(views, &domain.UserView{
+		items = append(items, &domain.UserView{
 			ID:         uid,
 			Phone:      phone,
 			Email:      email,
@@ -194,11 +199,14 @@ func (r *UserReadRepo) List(ctx context.Context, filter domain.UsersFilter) ([]*
 		})
 	}
 
-	return views, total, nil
+	return items, total, nil
 }
 
 // FindSessionByID returns an AuthSession for the given session ID.
-func (r *UserReadRepo) FindSessionByID(ctx context.Context, id uuid.UUID) (*shared.AuthSession, error) {
+func (r *UserReadRepo) FindSessionByID(ctx context.Context, id uuid.UUID) (result *shared.AuthSession, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "UserReadRepo.FindSessionByID")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Select("id", "user_id", "device_id", "refresh_token_hash", "expires_at", "revoked", "last_activity").
 		From(consts.TableSession).
@@ -223,7 +231,10 @@ func (r *UserReadRepo) FindSessionByID(ctx context.Context, id uuid.UUID) (*shar
 }
 
 // FindUserForAuth returns an AuthUser with minimal columns for auth middleware.
-func (r *UserReadRepo) FindUserForAuth(ctx context.Context, id uuid.UUID) (*shared.AuthUser, error) {
+func (r *UserReadRepo) FindUserForAuth(ctx context.Context, id uuid.UUID) (result *shared.AuthUser, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "UserReadRepo.FindUserForAuth")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Select("id", "role_id", "active", "is_approved").
 		From(consts.TableUsers).

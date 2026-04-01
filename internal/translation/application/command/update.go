@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/shared/application"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/translation/domain"
 
 	"github.com/google/uuid"
@@ -43,7 +44,10 @@ func NewUpdateTranslationHandler(
 
 // Handle loads the translation by ID, applies the partial update, and persists the result.
 // Returns not-found or repository errors to the caller; authorization is the caller's responsibility.
-func (h *UpdateTranslationHandler) Handle(ctx context.Context, cmd UpdateTranslationCommand) error {
+func (h *UpdateTranslationHandler) Handle(ctx context.Context, cmd UpdateTranslationCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "UpdateTranslationHandler.Handle")
+	defer func() { end(err) }()
+
 	t, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {
 		return err

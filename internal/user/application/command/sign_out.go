@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/shared/application"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/user/domain"
 
 	"github.com/google/uuid"
@@ -37,7 +38,10 @@ func NewSignOutHandler(
 }
 
 // Handle executes the SignOutCommand.
-func (h *SignOutHandler) Handle(ctx context.Context, cmd SignOutCommand) error {
+func (h *SignOutHandler) Handle(ctx context.Context, cmd SignOutCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "SignOutHandler.Handle")
+	defer func() { end(err) }()
+
 	user, err := h.repo.FindByID(ctx, cmd.UserID)
 	if err != nil {
 		return err

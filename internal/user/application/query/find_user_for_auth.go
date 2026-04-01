@@ -4,6 +4,7 @@ import (
 	"context"
 
 	shared "gct/internal/shared/domain"
+	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/user/domain"
 
 	"github.com/google/uuid"
@@ -25,6 +26,9 @@ func NewFindUserForAuthHandler(readRepo domain.UserReadRepository) *FindUserForA
 }
 
 // Handle executes the FindUserForAuthQuery and returns an AuthUser.
-func (h *FindUserForAuthHandler) Handle(ctx context.Context, q FindUserForAuthQuery) (*shared.AuthUser, error) {
+func (h *FindUserForAuthHandler) Handle(ctx context.Context, q FindUserForAuthQuery) (_ *shared.AuthUser, err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "FindUserForAuthHandler.Handle")
+	defer func() { end(err) }()
+
 	return h.readRepo.FindUserForAuth(ctx, q.UserID)
 }

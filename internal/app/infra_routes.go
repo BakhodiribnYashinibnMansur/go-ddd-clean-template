@@ -2,9 +2,10 @@ package app
 
 import (
 	"bytes"
+	"context"
 	"html/template"
 	"net/http"
-	"strings"
+	"time"
 
 	"gct/config"
 	docs "gct/docs/swagger"
@@ -12,20 +13,17 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
+	miniogo "github.com/minio/minio-go/v7"
 	"github.com/redis/go-redis/v9"
 	swaggerfiles "github.com/swaggo/files"
 	ginswagger "github.com/swaggo/gin-swagger"
-	ginprometheus "github.com/zsais/go-gin-prometheus"
 )
 
 // setupInfraRoutes registers infrastructure endpoints (metrics, docs, health, static).
-func setupInfraRoutes(handler *gin.Engine, cfg *config.Config, pool *pgxpool.Pool, redisClient *redis.Client) {
-	// Prometheus metrics
-	if cfg.Middleware.Metrics && cfg.Metrics.Enabled {
-		subsystem := strings.ReplaceAll(cfg.App.Name, "-", "_")
-		subsystem = strings.ReplaceAll(subsystem, " ", "_")
-		prometheus := ginprometheus.NewPrometheus(subsystem)
-		prometheus.Use(handler)
+func setupInfraRoutes(handler *gin.Engine, cfg *config.Config, pool *pgxpool.Pool, redisClient *redis.Client, metricsHandler http.Handler, minioClient *miniogo.Client) {
+	// Prometheus metrics via OTel exporter
+	if cfg.Middleware.Metrics && cfg.Metrics.Enabled && metricsHandler != nil {
+		handler.GET("/metrics", gin.WrapH(metricsHandler))
 	}
 
 	// Swagger
@@ -43,17 +41,44 @@ func setupInfraRoutes(handler *gin.Engine, cfg *config.Config, pool *pgxpool.Poo
 	if cfg.Middleware.HealthCheck {
 		handler.GET("/health/live", func(c *gin.Context) { c.Status(http.StatusOK) })
 		handler.GET("/health/ready", func(c *gin.Context) {
+			checks := make(map[string]string)
+			healthy := true
+
+			// PostgreSQL
 			if err := pool.Ping(c.Request.Context()); err != nil {
-				c.JSON(http.StatusServiceUnavailable, gin.H{"status": "not ready", "error": err.Error()})
-				return
+				checks["postgres"] = err.Error()
+				healthy = false
+			} else {
+				checks["postgres"] = "ok"
 			}
+
+			// Redis
 			if redisClient != nil {
 				if err := redisClient.Ping(c.Request.Context()).Err(); err != nil {
-					c.JSON(http.StatusServiceUnavailable, gin.H{"status": "not ready", "error": "redis: " + err.Error()})
-					return
+					checks["redis"] = err.Error()
+					healthy = false
+				} else {
+					checks["redis"] = "ok"
 				}
 			}
-			c.JSON(http.StatusOK, gin.H{"status": "ready"})
+
+			// MinIO
+			if minioClient != nil && cfg.Minio.Enabled {
+				checkCtx, cancel := context.WithTimeout(c.Request.Context(), 3*time.Second)
+				defer cancel()
+				if _, err := minioClient.BucketExists(checkCtx, cfg.Minio.Bucket); err != nil {
+					checks["minio"] = err.Error()
+					healthy = false
+				} else {
+					checks["minio"] = "ok"
+				}
+			}
+
+			if !healthy {
+				c.JSON(http.StatusServiceUnavailable, gin.H{"status": "not ready", "checks": checks})
+				return
+			}
+			c.JSON(http.StatusOK, gin.H{"status": "ready", "checks": checks})
 		})
 		handler.GET("/healthz", func(c *gin.Context) { c.Status(http.StatusOK) })
 		handler.GET("/ping", func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{"message": "pong"}) })

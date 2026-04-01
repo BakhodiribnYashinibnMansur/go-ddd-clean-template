@@ -7,6 +7,7 @@ import (
 	"gct/internal/announcement/domain"
 	"gct/internal/shared/domain/consts"
 	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -34,7 +35,10 @@ func NewAnnouncementReadRepo(pool *pgxpool.Pool) *AnnouncementReadRepo {
 }
 
 // FindByID returns a single AnnouncementView by ID.
-func (r *AnnouncementReadRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.AnnouncementView, error) {
+func (r *AnnouncementReadRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.AnnouncementView, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "AnnouncementReadRepo.FindByID")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Select(readColumns...).
 		From(tableName).
@@ -49,7 +53,10 @@ func (r *AnnouncementReadRepo) FindByID(ctx context.Context, id uuid.UUID) (*dom
 }
 
 // List returns a paginated list of AnnouncementView with optional filters.
-func (r *AnnouncementReadRepo) List(ctx context.Context, filter domain.AnnouncementFilter) ([]*domain.AnnouncementView, int64, error) {
+func (r *AnnouncementReadRepo) List(ctx context.Context, filter domain.AnnouncementFilter) (views []*domain.AnnouncementView, total int64, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "AnnouncementReadRepo.List")
+	defer func() { end(err) }()
+
 	conds := squirrel.And{}
 	conds = applyFilters(conds, filter)
 
@@ -62,7 +69,6 @@ func (r *AnnouncementReadRepo) List(ctx context.Context, filter domain.Announcem
 		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
 	}
 
-	var total int64
 	if err = r.pool.QueryRow(ctx, countSQL, countArgs...).Scan(&total); err != nil {
 		return nil, 0, apperrors.HandlePgError(err, tableName, nil)
 	}
@@ -93,7 +99,6 @@ func (r *AnnouncementReadRepo) List(ctx context.Context, filter domain.Announcem
 	}
 	defer rows.Close()
 
-	var views []*domain.AnnouncementView
 	for rows.Next() {
 		v, err := scanAnnouncementViewFromRows(rows)
 		if err != nil {

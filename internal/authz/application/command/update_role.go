@@ -6,6 +6,7 @@ import (
 	"gct/internal/authz/domain"
 	"gct/internal/shared/application"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/google/uuid"
 )
@@ -41,7 +42,10 @@ func NewUpdateRoleHandler(
 
 // Handle fetches the role by ID, applies non-nil field updates, persists, and publishes events.
 // Returns a repository error if the role is not found or the update fails.
-func (h *UpdateRoleHandler) Handle(ctx context.Context, cmd UpdateRoleCommand) error {
+func (h *UpdateRoleHandler) Handle(ctx context.Context, cmd UpdateRoleCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "UpdateRoleHandler.Handle")
+	defer func() { end(err) }()
+
 	role, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {
 		return err

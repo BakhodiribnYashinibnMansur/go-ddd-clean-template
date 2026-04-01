@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/shared/application"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/user/domain"
 
 	"github.com/google/uuid"
@@ -37,7 +38,10 @@ func NewChangeRoleHandler(
 }
 
 // Handle executes the ChangeRoleCommand.
-func (h *ChangeRoleHandler) Handle(ctx context.Context, cmd ChangeRoleCommand) error {
+func (h *ChangeRoleHandler) Handle(ctx context.Context, cmd ChangeRoleCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "ChangeRoleHandler.Handle")
+	defer func() { end(err) }()
+
 	user, err := h.repo.FindByID(ctx, cmd.UserID)
 	if err != nil {
 		return err

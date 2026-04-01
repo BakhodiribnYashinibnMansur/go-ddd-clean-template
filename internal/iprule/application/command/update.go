@@ -7,6 +7,7 @@ import (
 	"gct/internal/iprule/domain"
 	"gct/internal/shared/application"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/google/uuid"
 )
@@ -45,7 +46,10 @@ func NewUpdateIPRuleHandler(
 
 // Handle fetches the IP rule by ID, applies the patch via domain logic, and persists the result.
 // Returns a repository error if the rule is not found. Event publish failures are logged but non-fatal.
-func (h *UpdateIPRuleHandler) Handle(ctx context.Context, cmd UpdateIPRuleCommand) error {
+func (h *UpdateIPRuleHandler) Handle(ctx context.Context, cmd UpdateIPRuleCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "UpdateIPRuleHandler.Handle")
+	defer func() { end(err) }()
+
 	r, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {
 		return err

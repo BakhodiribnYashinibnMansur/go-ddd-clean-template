@@ -3,6 +3,7 @@ package query
 import (
 	"context"
 
+	"gct/internal/shared/infrastructure/pgxutil"
 	appdto "gct/internal/translation/application"
 	"gct/internal/translation/domain"
 
@@ -25,7 +26,10 @@ func NewGetTranslationHandler(readRepo domain.TranslationReadRepository) *GetTra
 }
 
 // Handle executes the GetTranslationQuery and returns a TranslationView.
-func (h *GetTranslationHandler) Handle(ctx context.Context, q GetTranslationQuery) (*appdto.TranslationView, error) {
+func (h *GetTranslationHandler) Handle(ctx context.Context, q GetTranslationQuery) (result *appdto.TranslationView, err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "GetTranslationHandler.Handle")
+	defer func() { end(err) }()
+
 	v, err := h.readRepo.FindByID(ctx, q.ID)
 	if err != nil {
 		return nil, err

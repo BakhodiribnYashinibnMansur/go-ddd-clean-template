@@ -5,6 +5,7 @@ import (
 
 	appdto "gct/internal/iprule/application"
 	"gct/internal/iprule/domain"
+	"gct/internal/shared/infrastructure/pgxutil"
 )
 
 // ListIPRulesQuery holds the input for listing IP rules.
@@ -29,15 +30,18 @@ func NewListIPRulesHandler(readRepo domain.IPRuleReadRepository) *ListIPRulesHan
 }
 
 // Handle executes the ListIPRulesQuery and returns a list of IPRuleView with total count.
-func (h *ListIPRulesHandler) Handle(ctx context.Context, q ListIPRulesQuery) (*ListIPRulesResult, error) {
+func (h *ListIPRulesHandler) Handle(ctx context.Context, q ListIPRulesQuery) (result *ListIPRulesResult, err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "ListIPRulesHandler.Handle")
+	defer func() { end(err) }()
+
 	views, total, err := h.readRepo.List(ctx, q.Filter)
 	if err != nil {
 		return nil, err
 	}
 
-	result := make([]*appdto.IPRuleView, len(views))
+	items := make([]*appdto.IPRuleView, len(views))
 	for i, v := range views {
-		result[i] = &appdto.IPRuleView{
+		items[i] = &appdto.IPRuleView{
 			ID:        v.ID,
 			IPAddress: v.IPAddress,
 			Action:    v.Action,
@@ -49,7 +53,7 @@ func (h *ListIPRulesHandler) Handle(ctx context.Context, q ListIPRulesQuery) (*L
 	}
 
 	return &ListIPRulesResult{
-		IPRules: result,
+		IPRules: items,
 		Total:   total,
 	}, nil
 }

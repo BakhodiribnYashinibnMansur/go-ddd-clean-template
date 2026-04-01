@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/shared/application"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/user/domain"
 
 	"github.com/google/uuid"
@@ -45,7 +46,10 @@ func NewCreateUserHandler(
 
 // Handle validates inputs through domain value objects, constructs the User aggregate, and persists it.
 // Returns domain validation errors (invalid phone, weak password) or repository errors (duplicate phone/email).
-func (h *CreateUserHandler) Handle(ctx context.Context, cmd CreateUserCommand) error {
+func (h *CreateUserHandler) Handle(ctx context.Context, cmd CreateUserCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "CreateUserHandler.Handle")
+	defer func() { end(err) }()
+
 	phone, err := domain.NewPhone(cmd.Phone)
 	if err != nil {
 		return err

@@ -7,6 +7,7 @@ import (
 	"gct/internal/shared/domain/consts"
 	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/metadata"
+	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/systemerror/domain"
 
 	"github.com/Masterminds/squirrel"
@@ -38,7 +39,10 @@ func NewSystemErrorReadRepo(pool *pgxpool.Pool) *SystemErrorReadRepo {
 }
 
 // FindByID returns a SystemErrorView for the given ID.
-func (r *SystemErrorReadRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.SystemErrorView, error) {
+func (r *SystemErrorReadRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.SystemErrorView, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "SystemErrorReadRepo.FindByID")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Select(readColumns...).
 		From(tableName).
@@ -64,7 +68,10 @@ func (r *SystemErrorReadRepo) FindByID(ctx context.Context, id uuid.UUID) (*doma
 }
 
 // List returns a paginated list of SystemErrorView with optional filters.
-func (r *SystemErrorReadRepo) List(ctx context.Context, filter domain.SystemErrorFilter) ([]*domain.SystemErrorView, int64, error) {
+func (r *SystemErrorReadRepo) List(ctx context.Context, filter domain.SystemErrorFilter) (items []*domain.SystemErrorView, total int64, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "SystemErrorReadRepo.List")
+	defer func() { end(err) }()
+
 	conds := squirrel.And{}
 	conds = applyFilters(conds, filter)
 
@@ -78,7 +85,6 @@ func (r *SystemErrorReadRepo) List(ctx context.Context, filter domain.SystemErro
 		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
 	}
 
-	var total int64
 	if err = r.pool.QueryRow(ctx, countSQL, countArgs...).Scan(&total); err != nil {
 		return nil, 0, apperrors.HandlePgError(err, tableName, nil)
 	}

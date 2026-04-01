@@ -6,6 +6,7 @@ import (
 
 	"gct/internal/shared/domain/consts"
 	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/usersetting/domain"
 
 	"github.com/Masterminds/squirrel"
@@ -35,7 +36,10 @@ func NewUserSettingWriteRepo(pool *pgxpool.Pool) *UserSettingWriteRepo {
 }
 
 // Upsert inserts or updates a UserSetting aggregate in the database.
-func (r *UserSettingWriteRepo) Upsert(ctx context.Context, us *domain.UserSetting) error {
+func (r *UserSettingWriteRepo) Upsert(ctx context.Context, us *domain.UserSetting) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "UserSettingWriteRepo.Upsert")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Insert(tableName).
 		Columns(writeColumns...).
@@ -61,7 +65,10 @@ func (r *UserSettingWriteRepo) Upsert(ctx context.Context, us *domain.UserSettin
 }
 
 // FindByUserIDAndKey retrieves a UserSetting aggregate by user ID and key.
-func (r *UserSettingWriteRepo) FindByUserIDAndKey(ctx context.Context, userID uuid.UUID, key string) (*domain.UserSetting, error) {
+func (r *UserSettingWriteRepo) FindByUserIDAndKey(ctx context.Context, userID uuid.UUID, key string) (result *domain.UserSetting, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "UserSettingWriteRepo.FindByUserIDAndKey")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Select(writeColumns...).
 		From(tableName).
@@ -76,7 +83,10 @@ func (r *UserSettingWriteRepo) FindByUserIDAndKey(ctx context.Context, userID uu
 }
 
 // Delete removes a user setting by its ID.
-func (r *UserSettingWriteRepo) Delete(ctx context.Context, id uuid.UUID) error {
+func (r *UserSettingWriteRepo) Delete(ctx context.Context, id uuid.UUID) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "UserSettingWriteRepo.Delete")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Delete(tableName).
 		Where(squirrel.Eq{"id": id}).

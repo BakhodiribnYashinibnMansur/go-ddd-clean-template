@@ -8,6 +8,7 @@ import (
 	"gct/internal/shared/domain/consts"
 	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/metadata"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -38,7 +39,10 @@ func NewIntegrationReadRepo(pool *pgxpool.Pool) *IntegrationReadRepo {
 }
 
 // FindByID returns an IntegrationView for the given ID.
-func (r *IntegrationReadRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.IntegrationView, error) {
+func (r *IntegrationReadRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.IntegrationView, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "IntegrationReadRepo.FindByID")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Select(readColumns...).
 		From(tableName).
@@ -64,7 +68,10 @@ func (r *IntegrationReadRepo) FindByID(ctx context.Context, id uuid.UUID) (*doma
 }
 
 // List returns a paginated list of IntegrationView with optional filters.
-func (r *IntegrationReadRepo) List(ctx context.Context, filter domain.IntegrationFilter) ([]*domain.IntegrationView, int64, error) {
+func (r *IntegrationReadRepo) List(ctx context.Context, filter domain.IntegrationFilter) (items []*domain.IntegrationView, total int64, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "IntegrationReadRepo.List")
+	defer func() { end(err) }()
+
 	conds := squirrel.And{}
 	if filter.Search != nil {
 		conds = append(conds, squirrel.ILike{"name": "%" + *filter.Search + "%"})
@@ -83,7 +90,6 @@ func (r *IntegrationReadRepo) List(ctx context.Context, filter domain.Integratio
 		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
 	}
 
-	var total int64
 	if err = r.pool.QueryRow(ctx, countSQL, countArgs...).Scan(&total); err != nil {
 		return nil, 0, apperrors.HandlePgError(err, tableName, nil)
 	}
@@ -203,7 +209,10 @@ func scanIntegrationViewFromRows(rows pgx.Rows) (*domain.IntegrationView, error)
 }
 
 // FindByAPIKey returns an IntegrationAPIKeyView for the given API key string.
-func (r *IntegrationReadRepo) FindByAPIKey(ctx context.Context, apiKey string) (*domain.IntegrationAPIKeyView, error) {
+func (r *IntegrationReadRepo) FindByAPIKey(ctx context.Context, apiKey string) (result *domain.IntegrationAPIKeyView, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "IntegrationReadRepo.FindByAPIKey")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Select("id", "integration_id", "key", "is_active").
 		From(tableAPIKeys).

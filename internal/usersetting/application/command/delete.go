@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/usersetting/domain"
 
 	"github.com/google/uuid"
@@ -32,7 +33,10 @@ func NewDeleteUserSettingHandler(
 }
 
 // Handle executes the DeleteUserSettingCommand.
-func (h *DeleteUserSettingHandler) Handle(ctx context.Context, cmd DeleteUserSettingCommand) error {
+func (h *DeleteUserSettingHandler) Handle(ctx context.Context, cmd DeleteUserSettingCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "DeleteUserSettingHandler.Handle")
+	defer func() { end(err) }()
+
 	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
 		h.logger.Errorf("failed to delete user setting: %v", err)
 		return err

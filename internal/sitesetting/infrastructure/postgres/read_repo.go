@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/shared/domain/consts"
 	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/sitesetting/domain"
 
 	"github.com/Masterminds/squirrel"
@@ -32,7 +33,10 @@ func NewSiteSettingReadRepo(pool *pgxpool.Pool) *SiteSettingReadRepo {
 }
 
 // FindByID returns a single SiteSettingView by ID.
-func (r *SiteSettingReadRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.SiteSettingView, error) {
+func (r *SiteSettingReadRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.SiteSettingView, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "SiteSettingReadRepo.FindByID")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Select(readColumns...).
 		From(tableName).
@@ -47,7 +51,10 @@ func (r *SiteSettingReadRepo) FindByID(ctx context.Context, id uuid.UUID) (*doma
 }
 
 // List returns a paginated list of SiteSettingView with optional filters.
-func (r *SiteSettingReadRepo) List(ctx context.Context, filter domain.SiteSettingFilter) ([]*domain.SiteSettingView, int64, error) {
+func (r *SiteSettingReadRepo) List(ctx context.Context, filter domain.SiteSettingFilter) (views []*domain.SiteSettingView, total int64, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "SiteSettingReadRepo.List")
+	defer func() { end(err) }()
+
 	conds := squirrel.And{}
 	conds = applyFilters(conds, filter)
 
@@ -60,7 +67,6 @@ func (r *SiteSettingReadRepo) List(ctx context.Context, filter domain.SiteSettin
 		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
 	}
 
-	var total int64
 	if err = r.pool.QueryRow(ctx, countSQL, countArgs...).Scan(&total); err != nil {
 		return nil, 0, apperrors.HandlePgError(err, tableName, nil)
 	}
@@ -91,7 +97,6 @@ func (r *SiteSettingReadRepo) List(ctx context.Context, filter domain.SiteSettin
 	}
 	defer rows.Close()
 
-	var views []*domain.SiteSettingView
 	for rows.Next() {
 		v, err := scanSiteSettingViewFromRows(rows)
 		if err != nil {

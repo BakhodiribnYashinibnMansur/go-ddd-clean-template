@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/authz/domain"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/google/uuid"
 )
@@ -35,7 +36,10 @@ func NewDeletePermissionHandler(
 
 // Handle deletes the permission identified by cmd.ID.
 // Returns nil on success; propagates repository errors (e.g., not found, FK violation) to the caller.
-func (h *DeletePermissionHandler) Handle(ctx context.Context, cmd DeletePermissionCommand) error {
+func (h *DeletePermissionHandler) Handle(ctx context.Context, cmd DeletePermissionCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "DeletePermissionHandler.Handle")
+	defer func() { end(err) }()
+
 	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
 		h.logger.Errorf("failed to delete permission: %v", err)
 		return err

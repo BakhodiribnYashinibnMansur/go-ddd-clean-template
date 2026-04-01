@@ -3,6 +3,7 @@ package query
 import (
 	"context"
 
+	"gct/internal/shared/infrastructure/pgxutil"
 	appdto "gct/internal/translation/application"
 	"gct/internal/translation/domain"
 )
@@ -29,15 +30,18 @@ func NewListTranslationsHandler(readRepo domain.TranslationReadRepository) *List
 }
 
 // Handle executes the ListTranslationsQuery and returns a list of TranslationView with total count.
-func (h *ListTranslationsHandler) Handle(ctx context.Context, q ListTranslationsQuery) (*ListTranslationsResult, error) {
+func (h *ListTranslationsHandler) Handle(ctx context.Context, q ListTranslationsQuery) (result *ListTranslationsResult, err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "ListTranslationsHandler.Handle")
+	defer func() { end(err) }()
+
 	views, total, err := h.readRepo.List(ctx, q.Filter)
 	if err != nil {
 		return nil, err
 	}
 
-	result := make([]*appdto.TranslationView, len(views))
+	items := make([]*appdto.TranslationView, len(views))
 	for i, v := range views {
-		result[i] = &appdto.TranslationView{
+		items[i] = &appdto.TranslationView{
 			ID:        v.ID,
 			Key:       v.Key,
 			Language:  v.Language,
@@ -49,7 +53,7 @@ func (h *ListTranslationsHandler) Handle(ctx context.Context, q ListTranslations
 	}
 
 	return &ListTranslationsResult{
-		Translations: result,
+		Translations: items,
 		Total:        total,
 	}, nil
 }

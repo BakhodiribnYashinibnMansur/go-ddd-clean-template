@@ -6,6 +6,7 @@ import (
 
 	"gct/internal/shared/domain/consts"
 	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/translation/domain"
 
 	"github.com/Masterminds/squirrel"
@@ -35,7 +36,10 @@ func NewTranslationWriteRepo(pool *pgxpool.Pool) *TranslationWriteRepo {
 }
 
 // Save inserts a new Translation aggregate into the database.
-func (r *TranslationWriteRepo) Save(ctx context.Context, t *domain.Translation) error {
+func (r *TranslationWriteRepo) Save(ctx context.Context, t *domain.Translation) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "TranslationWriteRepo.Save")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Insert(tableName).
 		Columns(writeColumns...).
@@ -56,7 +60,10 @@ func (r *TranslationWriteRepo) Save(ctx context.Context, t *domain.Translation) 
 }
 
 // FindByID retrieves a Translation aggregate by its ID.
-func (r *TranslationWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Translation, error) {
+func (r *TranslationWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.Translation, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "TranslationWriteRepo.FindByID")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Select(writeColumns...).
 		From(tableName).
@@ -71,7 +78,10 @@ func (r *TranslationWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (*dom
 }
 
 // Update updates an existing Translation aggregate in the database.
-func (r *TranslationWriteRepo) Update(ctx context.Context, t *domain.Translation) error {
+func (r *TranslationWriteRepo) Update(ctx context.Context, t *domain.Translation) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "TranslationWriteRepo.Update")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Update(tableName).
 		Set("entity_type", t.Key()).
@@ -93,7 +103,10 @@ func (r *TranslationWriteRepo) Update(ctx context.Context, t *domain.Translation
 }
 
 // Delete removes a Translation by its ID.
-func (r *TranslationWriteRepo) Delete(ctx context.Context, id uuid.UUID) error {
+func (r *TranslationWriteRepo) Delete(ctx context.Context, id uuid.UUID) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "TranslationWriteRepo.Delete")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Delete(tableName).
 		Where(squirrel.Eq{"id": id}).
@@ -110,7 +123,10 @@ func (r *TranslationWriteRepo) Delete(ctx context.Context, id uuid.UUID) error {
 }
 
 // List retrieves a paginated list of Translation aggregates with optional filters.
-func (r *TranslationWriteRepo) List(ctx context.Context, filter domain.TranslationFilter) ([]*domain.Translation, int64, error) {
+func (r *TranslationWriteRepo) List(ctx context.Context, filter domain.TranslationFilter) (results []*domain.Translation, total int64, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "TranslationWriteRepo.List")
+	defer func() { end(err) }()
+
 	conds := squirrel.And{}
 	conds = applyFilters(conds, filter)
 
@@ -123,7 +139,6 @@ func (r *TranslationWriteRepo) List(ctx context.Context, filter domain.Translati
 		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
 	}
 
-	var total int64
 	if err = r.pool.QueryRow(ctx, countSQL, countArgs...).Scan(&total); err != nil {
 		return nil, 0, apperrors.HandlePgError(err, tableName, nil)
 	}
@@ -154,7 +169,6 @@ func (r *TranslationWriteRepo) List(ctx context.Context, filter domain.Translati
 	}
 	defer rows.Close()
 
-	var results []*domain.Translation
 	for rows.Next() {
 		t, err := scanTranslationFromRows(rows)
 		if err != nil {

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"gct/internal/shared/infrastructure/logger"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/tracelog"
 )
@@ -70,6 +72,14 @@ func WithStatementTimeout(d time.Duration) Option {
 			cfg.ConnConfig.RuntimeParams = make(map[string]string)
 		}
 		cfg.ConnConfig.RuntimeParams["statement_timeout"] = fmt.Sprintf("%dms", d.Milliseconds())
+	}
+}
+
+// WithMetricsTracer wraps the existing pgx tracer with a composite tracer
+// that records query duration metrics and logs slow queries.
+func WithMetricsTracer(l logger.Log, threshold time.Duration) Option {
+	return func(cfg *pgxpool.Config) {
+		cfg.ConnConfig.Tracer = NewMetricsTracer(cfg.ConnConfig.Tracer, l, threshold)
 	}
 }
 

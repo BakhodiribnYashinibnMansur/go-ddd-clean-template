@@ -8,6 +8,7 @@ import (
 	shared "gct/internal/shared/domain"
 	"gct/internal/shared/domain/consts"
 	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -37,7 +38,10 @@ func NewAnnouncementWriteRepo(pool *pgxpool.Pool) *AnnouncementWriteRepo {
 }
 
 // Save inserts a new Announcement aggregate into the database.
-func (r *AnnouncementWriteRepo) Save(ctx context.Context, a *domain.Announcement) error {
+func (r *AnnouncementWriteRepo) Save(ctx context.Context, a *domain.Announcement) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "AnnouncementWriteRepo.Save")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Insert(tableName).
 		Columns(writeColumns...).
@@ -64,7 +68,10 @@ func (r *AnnouncementWriteRepo) Save(ctx context.Context, a *domain.Announcement
 }
 
 // FindByID retrieves an Announcement aggregate by its ID.
-func (r *AnnouncementWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Announcement, error) {
+func (r *AnnouncementWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.Announcement, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "AnnouncementWriteRepo.FindByID")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Select(writeColumns...).
 		From(tableName).
@@ -79,7 +86,10 @@ func (r *AnnouncementWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (*do
 }
 
 // Update updates an existing Announcement aggregate in the database.
-func (r *AnnouncementWriteRepo) Update(ctx context.Context, a *domain.Announcement) error {
+func (r *AnnouncementWriteRepo) Update(ctx context.Context, a *domain.Announcement) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "AnnouncementWriteRepo.Update")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Update(tableName).
 		Set("title", a.Title().Uz).
@@ -103,7 +113,10 @@ func (r *AnnouncementWriteRepo) Update(ctx context.Context, a *domain.Announceme
 }
 
 // Delete removes an Announcement by its ID.
-func (r *AnnouncementWriteRepo) Delete(ctx context.Context, id uuid.UUID) error {
+func (r *AnnouncementWriteRepo) Delete(ctx context.Context, id uuid.UUID) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "AnnouncementWriteRepo.Delete")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Delete(tableName).
 		Where(squirrel.Eq{"id": id}).
@@ -120,7 +133,10 @@ func (r *AnnouncementWriteRepo) Delete(ctx context.Context, id uuid.UUID) error 
 }
 
 // List retrieves a paginated list of Announcement aggregates with optional filters.
-func (r *AnnouncementWriteRepo) List(ctx context.Context, filter domain.AnnouncementFilter) ([]*domain.Announcement, int64, error) {
+func (r *AnnouncementWriteRepo) List(ctx context.Context, filter domain.AnnouncementFilter) (results []*domain.Announcement, total int64, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "AnnouncementWriteRepo.List")
+	defer func() { end(err) }()
+
 	conds := squirrel.And{}
 	conds = applyFilters(conds, filter)
 
@@ -133,7 +149,6 @@ func (r *AnnouncementWriteRepo) List(ctx context.Context, filter domain.Announce
 		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
 	}
 
-	var total int64
 	if err = r.pool.QueryRow(ctx, countSQL, countArgs...).Scan(&total); err != nil {
 		return nil, 0, apperrors.HandlePgError(err, tableName, nil)
 	}
@@ -164,7 +179,6 @@ func (r *AnnouncementWriteRepo) List(ctx context.Context, filter domain.Announce
 	}
 	defer rows.Close()
 
-	var results []*domain.Announcement
 	for rows.Next() {
 		a, err := scanAnnouncementFromRows(rows)
 		if err != nil {

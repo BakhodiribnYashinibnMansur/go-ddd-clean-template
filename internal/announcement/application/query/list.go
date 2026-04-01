@@ -6,6 +6,7 @@ import (
 	appdto "gct/internal/announcement/application"
 	"gct/internal/announcement/domain"
 	shared "gct/internal/shared/domain"
+	"gct/internal/shared/infrastructure/pgxutil"
 )
 
 // ListAnnouncementsQuery holds the input for listing announcements.
@@ -30,19 +31,22 @@ func NewListAnnouncementsHandler(readRepo domain.AnnouncementReadRepository) *Li
 }
 
 // Handle executes the ListAnnouncementsQuery and returns a list of AnnouncementView with total count.
-func (h *ListAnnouncementsHandler) Handle(ctx context.Context, q ListAnnouncementsQuery) (*ListAnnouncementsResult, error) {
+func (h *ListAnnouncementsHandler) Handle(ctx context.Context, q ListAnnouncementsQuery) (result *ListAnnouncementsResult, err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "ListAnnouncementsHandler.Handle")
+	defer func() { end(err) }()
+
 	views, total, err := h.readRepo.List(ctx, q.Filter)
 	if err != nil {
 		return nil, err
 	}
 
-	result := make([]*appdto.AnnouncementView, len(views))
+	items := make([]*appdto.AnnouncementView, len(views))
 	for i, v := range views {
-		result[i] = toAppView(v)
+		items[i] = toAppView(v)
 	}
 
 	return &ListAnnouncementsResult{
-		Announcements: result,
+		Announcements: items,
 		Total:         total,
 	}, nil
 }

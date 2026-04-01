@@ -3,6 +3,7 @@ package query
 import (
 	"context"
 
+	"gct/internal/shared/infrastructure/pgxutil"
 	appdto "gct/internal/systemerror/application"
 	"gct/internal/systemerror/domain"
 )
@@ -29,7 +30,10 @@ func NewListSystemErrorsHandler(readRepo domain.SystemErrorReadRepository) *List
 }
 
 // Handle executes the ListSystemErrorsQuery and returns a list of SystemErrorView with total count.
-func (h *ListSystemErrorsHandler) Handle(ctx context.Context, q ListSystemErrorsQuery) (*ListSystemErrorsResult, error) {
+func (h *ListSystemErrorsHandler) Handle(ctx context.Context, q ListSystemErrorsQuery) (_ *ListSystemErrorsResult, err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "ListSystemErrorsHandler.Handle")
+	defer func() { end(err) }()
+
 	views, total, err := h.readRepo.List(ctx, q.Filter)
 	if err != nil {
 		return nil, err

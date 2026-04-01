@@ -4,6 +4,7 @@ import (
 	"context"
 
 	appdto "gct/internal/usersetting/application"
+	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/usersetting/domain"
 
 	"github.com/google/uuid"
@@ -25,7 +26,10 @@ func NewGetUserSettingHandler(readRepo domain.UserSettingReadRepository) *GetUse
 }
 
 // Handle executes the GetUserSettingQuery and returns a UserSettingView.
-func (h *GetUserSettingHandler) Handle(ctx context.Context, q GetUserSettingQuery) (*appdto.UserSettingView, error) {
+func (h *GetUserSettingHandler) Handle(ctx context.Context, q GetUserSettingQuery) (result *appdto.UserSettingView, err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "GetUserSettingHandler.Handle")
+	defer func() { end(err) }()
+
 	v, err := h.readRepo.FindByID(ctx, q.ID)
 	if err != nil {
 		return nil, err

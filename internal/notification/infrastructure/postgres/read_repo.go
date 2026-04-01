@@ -7,6 +7,7 @@ import (
 	"gct/internal/notification/domain"
 	"gct/internal/shared/domain/consts"
 	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -33,7 +34,10 @@ func NewNotificationReadRepo(pool *pgxpool.Pool) *NotificationReadRepo {
 }
 
 // FindByID returns a NotificationView for the given ID.
-func (r *NotificationReadRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.NotificationView, error) {
+func (r *NotificationReadRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.NotificationView, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "NotificationReadRepo.FindByID")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Select(readColumns...).
 		From(tableName).
@@ -48,7 +52,10 @@ func (r *NotificationReadRepo) FindByID(ctx context.Context, id uuid.UUID) (*dom
 }
 
 // List returns a paginated list of NotificationView with optional filters.
-func (r *NotificationReadRepo) List(ctx context.Context, filter domain.NotificationFilter) ([]*domain.NotificationView, int64, error) {
+func (r *NotificationReadRepo) List(ctx context.Context, filter domain.NotificationFilter) (items []*domain.NotificationView, total int64, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "NotificationReadRepo.List")
+	defer func() { end(err) }()
+
 	conds := squirrel.And{}
 	if filter.Type != nil {
 		conds = append(conds, squirrel.Eq{"type": *filter.Type})
@@ -64,7 +71,6 @@ func (r *NotificationReadRepo) List(ctx context.Context, filter domain.Notificat
 		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
 	}
 
-	var total int64
 	if err = r.pool.QueryRow(ctx, countSQL, countArgs...).Scan(&total); err != nil {
 		return nil, 0, apperrors.HandlePgError(err, tableName, nil)
 	}
@@ -96,16 +102,15 @@ func (r *NotificationReadRepo) List(ctx context.Context, filter domain.Notificat
 	}
 	defer rows.Close()
 
-	var views []*domain.NotificationView
 	for rows.Next() {
 		v, err := scanNotificationViewFromRows(rows)
 		if err != nil {
 			return nil, 0, apperrors.HandlePgError(err, tableName, nil)
 		}
-		views = append(views, v)
+		items = append(items, v)
 	}
 
-	return views, total, nil
+	return items, total, nil
 }
 
 func scanNotificationView(row pgx.Row) (*domain.NotificationView, error) {

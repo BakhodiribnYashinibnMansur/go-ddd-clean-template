@@ -7,6 +7,7 @@ import (
 	"gct/internal/featureflag/domain"
 	"gct/internal/shared/application"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/google/uuid"
 )
@@ -51,7 +52,10 @@ func NewCreateRuleGroupHandler(
 }
 
 // Handle creates a new rule group with conditions for the given flag.
-func (h *CreateRuleGroupHandler) Handle(ctx context.Context, cmd CreateRuleGroupCommand) error {
+func (h *CreateRuleGroupHandler) Handle(ctx context.Context, cmd CreateRuleGroupCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "CreateRuleGroupHandler.Handle")
+	defer func() { end(err) }()
+
 	// Verify the flag exists.
 	if _, err := h.flagRepo.FindByID(ctx, cmd.FlagID); err != nil {
 		return err

@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/shared/application"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/sitesetting/domain"
 
 	"github.com/google/uuid"
@@ -43,7 +44,10 @@ func NewUpdateSiteSettingHandler(
 
 // Handle loads the setting by ID, applies the partial update, and persists the result.
 // Returns not-found or repository errors to the caller; authorization is the caller's responsibility.
-func (h *UpdateSiteSettingHandler) Handle(ctx context.Context, cmd UpdateSiteSettingCommand) error {
+func (h *UpdateSiteSettingHandler) Handle(ctx context.Context, cmd UpdateSiteSettingCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "UpdateSiteSettingHandler.Handle")
+	defer func() { end(err) }()
+
 	s, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {
 		return err

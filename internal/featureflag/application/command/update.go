@@ -6,6 +6,7 @@ import (
 	"gct/internal/featureflag/domain"
 	"gct/internal/shared/application"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/google/uuid"
 )
@@ -43,7 +44,10 @@ func NewUpdateHandler(
 }
 
 // Handle fetches the flag by ID, applies non-nil field updates, persists, and publishes events.
-func (h *UpdateHandler) Handle(ctx context.Context, cmd UpdateCommand) error {
+func (h *UpdateHandler) Handle(ctx context.Context, cmd UpdateCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "UpdateHandler.Handle")
+	defer func() { end(err) }()
+
 	ff, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {
 		return err

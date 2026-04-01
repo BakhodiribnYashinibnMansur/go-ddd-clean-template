@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/shared/application"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/systemerror/domain"
 
 	"github.com/google/uuid"
@@ -40,7 +41,10 @@ func NewResolveErrorHandler(
 
 // Handle loads the system error, marks it resolved, persists the update, and publishes domain events.
 // Returns not-found or repository errors; event bus failures are logged but do not fail the operation.
-func (h *ResolveErrorHandler) Handle(ctx context.Context, cmd ResolveErrorCommand) error {
+func (h *ResolveErrorHandler) Handle(ctx context.Context, cmd ResolveErrorCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "ResolveErrorHandler.Handle")
+	defer func() { end(err) }()
+
 	se, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {
 		return err

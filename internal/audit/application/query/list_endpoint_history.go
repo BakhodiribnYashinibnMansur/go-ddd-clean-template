@@ -5,6 +5,7 @@ import (
 
 	appdto "gct/internal/audit/application"
 	"gct/internal/audit/domain"
+	"gct/internal/shared/infrastructure/pgxutil"
 )
 
 // ListEndpointHistoryQuery holds the input for listing endpoint history with filtering.
@@ -29,7 +30,10 @@ func NewListEndpointHistoryHandler(readRepo domain.AuditReadRepository) *ListEnd
 }
 
 // Handle executes the ListEndpointHistoryQuery and returns a list of EndpointHistoryView with total count.
-func (h *ListEndpointHistoryHandler) Handle(ctx context.Context, q ListEndpointHistoryQuery) (*ListEndpointHistoryResult, error) {
+func (h *ListEndpointHistoryHandler) Handle(ctx context.Context, q ListEndpointHistoryQuery) (_ *ListEndpointHistoryResult, err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "ListEndpointHistoryHandler.Handle")
+	defer func() { end(err) }()
+
 	views, total, err := h.readRepo.ListEndpointHistory(ctx, q.Filter)
 	if err != nil {
 		return nil, err

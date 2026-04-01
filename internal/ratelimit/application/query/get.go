@@ -5,6 +5,7 @@ import (
 
 	appdto "gct/internal/ratelimit/application"
 	"gct/internal/ratelimit/domain"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/google/uuid"
 )
@@ -25,7 +26,10 @@ func NewGetRateLimitHandler(readRepo domain.RateLimitReadRepository) *GetRateLim
 }
 
 // Handle executes the GetRateLimitQuery and returns a RateLimitView.
-func (h *GetRateLimitHandler) Handle(ctx context.Context, q GetRateLimitQuery) (*appdto.RateLimitView, error) {
+func (h *GetRateLimitHandler) Handle(ctx context.Context, q GetRateLimitQuery) (result *appdto.RateLimitView, err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "GetRateLimitHandler.Handle")
+	defer func() { end(err) }()
+
 	v, err := h.readRepo.FindByID(ctx, q.ID)
 	if err != nil {
 		return nil, err

@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/shared/application"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/systemerror/domain"
 
 	"github.com/google/uuid"
@@ -50,7 +51,10 @@ func NewCreateSystemErrorHandler(
 
 // Handle constructs a SystemError aggregate from the command, enriches it with optional context fields,
 // persists it, and publishes domain events. Returns only repository-level errors.
-func (h *CreateSystemErrorHandler) Handle(ctx context.Context, cmd CreateSystemErrorCommand) error {
+func (h *CreateSystemErrorHandler) Handle(ctx context.Context, cmd CreateSystemErrorCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "CreateSystemErrorHandler.Handle")
+	defer func() { end(err) }()
+
 	se := domain.NewSystemError(cmd.Code, cmd.Message, cmd.Severity)
 
 	if cmd.StackTrace != nil {

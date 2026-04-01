@@ -6,6 +6,7 @@ import (
 	"gct/internal/integration/domain"
 	"gct/internal/shared/application"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/google/uuid"
 )
@@ -40,7 +41,10 @@ func NewDeleteHandler(
 
 // Handle performs the deletion of the integration identified by cmd.ID.
 // Returns nil on success; propagates repository errors (e.g., not found, connection failure) to the caller.
-func (h *DeleteHandler) Handle(ctx context.Context, cmd DeleteCommand) error {
+func (h *DeleteHandler) Handle(ctx context.Context, cmd DeleteCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "DeleteHandler.Handle")
+	defer func() { end(err) }()
+
 	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
 		h.logger.Errorf("failed to delete integration: %v", err)
 		return err

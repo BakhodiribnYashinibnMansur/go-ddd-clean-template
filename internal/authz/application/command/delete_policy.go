@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/authz/domain"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/google/uuid"
 )
@@ -35,7 +36,10 @@ func NewDeletePolicyHandler(
 
 // Handle deletes the policy identified by cmd.ID.
 // Returns nil on success; propagates repository errors (e.g., not found) to the caller.
-func (h *DeletePolicyHandler) Handle(ctx context.Context, cmd DeletePolicyCommand) error {
+func (h *DeletePolicyHandler) Handle(ctx context.Context, cmd DeletePolicyCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "DeletePolicyHandler.Handle")
+	defer func() { end(err) }()
+
 	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
 		h.logger.Errorf("failed to delete policy: %v", err)
 		return err

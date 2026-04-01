@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/shared/application"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/usersetting/domain"
 
 	"github.com/google/uuid"
@@ -38,7 +39,10 @@ func NewUpsertUserSettingHandler(
 }
 
 // Handle executes the UpsertUserSettingCommand.
-func (h *UpsertUserSettingHandler) Handle(ctx context.Context, cmd UpsertUserSettingCommand) error {
+func (h *UpsertUserSettingHandler) Handle(ctx context.Context, cmd UpsertUserSettingCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "UpsertUserSettingHandler.Handle")
+	defer func() { end(err) }()
+
 	// Try to find existing setting by user+key.
 	existing, _ := h.repo.FindByUserIDAndKey(ctx, cmd.UserID, cmd.Key)
 

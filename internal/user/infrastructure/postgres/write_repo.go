@@ -64,7 +64,10 @@ func NewUserWriteRepo(pool *pgxpool.Pool) *UserWriteRepo {
 }
 
 // Save inserts a new User aggregate (and its sessions) into the database.
-func (r *UserWriteRepo) Save(ctx context.Context, user *domain.User) error {
+func (r *UserWriteRepo) Save(ctx context.Context, user *domain.User) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "UserWriteRepo.Save")
+	defer func() { end(err) }()
+
 	return pgxutil.WithTx(ctx, r.pool, func(tx pgx.Tx) error {
 		var emailVal *string
 		if user.Email() != nil {
@@ -152,7 +155,10 @@ func (r *UserWriteRepo) insertSession(ctx context.Context, tx pgx.Tx, s *domain.
 }
 
 // FindByID retrieves a User aggregate by ID, including its sessions.
-func (r *UserWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.User, error) {
+func (r *UserWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.User, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "UserWriteRepo.FindByID")
+	defer func() { end(err) }()
+
 	// Fetch user row.
 	sql, args, err := r.builder.
 		Select(userColumns...).
@@ -202,7 +208,10 @@ func (r *UserWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Use
 }
 
 // Update updates the User aggregate in the database.
-func (r *UserWriteRepo) Update(ctx context.Context, user *domain.User) error {
+func (r *UserWriteRepo) Update(ctx context.Context, user *domain.User) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "UserWriteRepo.Update")
+	defer func() { end(err) }()
+
 	return pgxutil.WithTx(ctx, r.pool, func(tx pgx.Tx) error {
 		var emailVal *string
 		if user.Email() != nil {
@@ -268,7 +277,10 @@ func (r *UserWriteRepo) Update(ctx context.Context, user *domain.User) error {
 }
 
 // Delete performs a soft delete on the user by setting deleted_at to the current unix timestamp.
-func (r *UserWriteRepo) Delete(ctx context.Context, id uuid.UUID) error {
+func (r *UserWriteRepo) Delete(ctx context.Context, id uuid.UUID) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "UserWriteRepo.Delete")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Update(usersTable).
 		Set("deleted_at", squirrel.Expr("EXTRACT(EPOCH FROM NOW())::bigint")).
@@ -285,7 +297,10 @@ func (r *UserWriteRepo) Delete(ctx context.Context, id uuid.UUID) error {
 }
 
 // List retrieves a paginated list of users (without sessions).
-func (r *UserWriteRepo) List(ctx context.Context, filter shared.Pagination) ([]*domain.User, int64, error) {
+func (r *UserWriteRepo) List(ctx context.Context, filter shared.Pagination) (items []*domain.User, total int64, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "UserWriteRepo.List")
+	defer func() { end(err) }()
+
 	// Count total.
 	countSQL, countArgs, err := r.builder.
 		Select("COUNT(*)").
@@ -296,7 +311,6 @@ func (r *UserWriteRepo) List(ctx context.Context, filter shared.Pagination) ([]*
 		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
 	}
 
-	var total int64
 	if err = r.pool.QueryRow(ctx, countSQL, countArgs...).Scan(&total); err != nil {
 		return nil, 0, apperrors.HandlePgError(err, usersTable, nil)
 	}
@@ -354,7 +368,10 @@ func (r *UserWriteRepo) List(ctx context.Context, filter shared.Pagination) ([]*
 }
 
 // FindByPhone finds a user by phone number.
-func (r *UserWriteRepo) FindByPhone(ctx context.Context, phone domain.Phone) (*domain.User, error) {
+func (r *UserWriteRepo) FindByPhone(ctx context.Context, phone domain.Phone) (result *domain.User, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "UserWriteRepo.FindByPhone")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Select(userColumns...).
 		From(usersTable).
@@ -400,7 +417,10 @@ func (r *UserWriteRepo) FindByPhone(ctx context.Context, phone domain.Phone) (*d
 }
 
 // FindByEmail finds a user by email address.
-func (r *UserWriteRepo) FindByEmail(ctx context.Context, email domain.Email) (*domain.User, error) {
+func (r *UserWriteRepo) FindByEmail(ctx context.Context, email domain.Email) (result *domain.User, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "UserWriteRepo.FindByEmail")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Select(userColumns...).
 		From(usersTable).
@@ -479,9 +499,12 @@ func (r *UserWriteRepo) findSessionsByUserID(ctx context.Context, userID uuid.UU
 }
 
 // FindDefaultRoleID returns the ID of the "user" role (the default role for self-registration).
-func (r *UserWriteRepo) FindDefaultRoleID(ctx context.Context) (uuid.UUID, error) {
+func (r *UserWriteRepo) FindDefaultRoleID(ctx context.Context) (result uuid.UUID, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "UserWriteRepo.FindDefaultRoleID")
+	defer func() { end(err) }()
+
 	var id uuid.UUID
-	err := r.pool.QueryRow(ctx, "SELECT id FROM role WHERE name = 'user' LIMIT 1").Scan(&id)
+	err = r.pool.QueryRow(ctx, "SELECT id FROM role WHERE name = 'user' LIMIT 1").Scan(&id)
 	if err != nil {
 		return uuid.Nil, apperrors.HandlePgError(err, "role", nil)
 	}

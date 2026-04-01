@@ -5,6 +5,7 @@ import (
 
 	appdto "gct/internal/metric/application"
 	"gct/internal/metric/domain"
+	"gct/internal/shared/infrastructure/pgxutil"
 )
 
 // ListMetricsQuery holds the input for listing function metrics with filtering.
@@ -29,7 +30,10 @@ func NewListMetricsHandler(readRepo domain.MetricReadRepository) *ListMetricsHan
 }
 
 // Handle executes the ListMetricsQuery and returns a list of MetricView with total count.
-func (h *ListMetricsHandler) Handle(ctx context.Context, q ListMetricsQuery) (*ListMetricsResult, error) {
+func (h *ListMetricsHandler) Handle(ctx context.Context, q ListMetricsQuery) (_ *ListMetricsResult, err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "ListMetricsHandler.Handle")
+	defer func() { end(err) }()
+
 	views, total, err := h.readRepo.List(ctx, q.Filter)
 	if err != nil {
 		return nil, err

@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/shared/application"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/user/domain"
 
 	"github.com/google/uuid"
@@ -36,7 +37,10 @@ func NewRevokeAllSessionsHandler(
 }
 
 // Handle executes the RevokeAllSessionsCommand.
-func (h *RevokeAllSessionsHandler) Handle(ctx context.Context, cmd RevokeAllSessionsCommand) error {
+func (h *RevokeAllSessionsHandler) Handle(ctx context.Context, cmd RevokeAllSessionsCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "RevokeAllSessionsHandler.Handle")
+	defer func() { end(err) }()
+
 	user, err := h.repo.FindByID(ctx, cmd.UserID)
 	if err != nil {
 		return err

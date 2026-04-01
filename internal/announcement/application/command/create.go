@@ -8,6 +8,7 @@ import (
 	"gct/internal/shared/application"
 	shared "gct/internal/shared/domain"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 )
 
 // CreateAnnouncementCommand represents an intent to create a new system announcement.
@@ -44,7 +45,10 @@ func NewCreateAnnouncementHandler(
 
 // Handle persists a new announcement and publishes its domain events.
 // Returns nil on success; propagates repository errors to the caller.
-func (h *CreateAnnouncementHandler) Handle(ctx context.Context, cmd CreateAnnouncementCommand) error {
+func (h *CreateAnnouncementHandler) Handle(ctx context.Context, cmd CreateAnnouncementCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "CreateAnnouncementHandler.Handle")
+	defer func() { end(err) }()
+
 	a := domain.NewAnnouncement(cmd.Title, cmd.Content, cmd.Priority, cmd.StartDate, cmd.EndDate)
 
 	if err := h.repo.Save(ctx, a); err != nil {

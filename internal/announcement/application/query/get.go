@@ -5,6 +5,7 @@ import (
 
 	appdto "gct/internal/announcement/application"
 	"gct/internal/announcement/domain"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/google/uuid"
 )
@@ -25,7 +26,10 @@ func NewGetAnnouncementHandler(readRepo domain.AnnouncementReadRepository) *GetA
 }
 
 // Handle executes the GetAnnouncementQuery and returns an AnnouncementView.
-func (h *GetAnnouncementHandler) Handle(ctx context.Context, q GetAnnouncementQuery) (*appdto.AnnouncementView, error) {
+func (h *GetAnnouncementHandler) Handle(ctx context.Context, q GetAnnouncementQuery) (result *appdto.AnnouncementView, err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "GetAnnouncementHandler.Handle")
+	defer func() { end(err) }()
+
 	v, err := h.readRepo.FindByID(ctx, q.ID)
 	if err != nil {
 		return nil, err

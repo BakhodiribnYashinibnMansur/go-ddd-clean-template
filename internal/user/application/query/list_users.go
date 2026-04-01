@@ -3,6 +3,7 @@ package query
 import (
 	"context"
 
+	"gct/internal/shared/infrastructure/pgxutil"
 	appdto "gct/internal/user/application"
 	"gct/internal/user/domain"
 )
@@ -29,7 +30,10 @@ func NewListUsersHandler(readRepo domain.UserReadRepository) *ListUsersHandler {
 }
 
 // Handle executes the ListUsersQuery and returns a list of UserView with total count.
-func (h *ListUsersHandler) Handle(ctx context.Context, q ListUsersQuery) (*ListUsersResult, error) {
+func (h *ListUsersHandler) Handle(ctx context.Context, q ListUsersQuery) (_ *ListUsersResult, err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "ListUsersHandler.Handle")
+	defer func() { end(err) }()
+
 	views, total, err := h.readRepo.List(ctx, q.Filter)
 	if err != nil {
 		return nil, err

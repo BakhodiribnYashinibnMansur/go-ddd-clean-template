@@ -7,6 +7,7 @@ import (
 	"gct/internal/metric/domain"
 	"gct/internal/shared/domain/consts"
 	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -35,7 +36,10 @@ func NewMetricWriteRepo(pool *pgxpool.Pool) *MetricWriteRepo {
 }
 
 // Save inserts a new FunctionMetric aggregate into the database.
-func (r *MetricWriteRepo) Save(ctx context.Context, fm *domain.FunctionMetric) error {
+func (r *MetricWriteRepo) Save(ctx context.Context, fm *domain.FunctionMetric) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "MetricWriteRepo.Save")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Insert(tableName).
 		Columns(writeColumns...).
@@ -60,7 +64,10 @@ func (r *MetricWriteRepo) Save(ctx context.Context, fm *domain.FunctionMetric) e
 }
 
 // List retrieves a paginated list of FunctionMetric aggregates with optional filters.
-func (r *MetricWriteRepo) List(ctx context.Context, filter domain.MetricFilter) ([]*domain.FunctionMetric, int64, error) {
+func (r *MetricWriteRepo) List(ctx context.Context, filter domain.MetricFilter) (items []*domain.FunctionMetric, total int64, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "MetricWriteRepo.List")
+	defer func() { end(err) }()
+
 	conds := squirrel.And{}
 	conds = applyFilters(conds, filter)
 
@@ -74,7 +81,6 @@ func (r *MetricWriteRepo) List(ctx context.Context, filter domain.MetricFilter) 
 		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
 	}
 
-	var total int64
 	if err = r.pool.QueryRow(ctx, countSQL, countArgs...).Scan(&total); err != nil {
 		return nil, 0, apperrors.HandlePgError(err, tableName, nil)
 	}

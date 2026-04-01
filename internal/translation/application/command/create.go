@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/shared/application"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/translation/domain"
 )
 
@@ -40,7 +41,10 @@ func NewCreateTranslationHandler(
 
 // Handle persists the new translation and publishes resulting domain events.
 // Returns repository errors (e.g., duplicate key+language, connection failure) directly to the caller.
-func (h *CreateTranslationHandler) Handle(ctx context.Context, cmd CreateTranslationCommand) error {
+func (h *CreateTranslationHandler) Handle(ctx context.Context, cmd CreateTranslationCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "CreateTranslationHandler.Handle")
+	defer func() { end(err) }()
+
 	t := domain.NewTranslation(cmd.Key, cmd.Language, cmd.Value, cmd.Group)
 
 	if err := h.repo.Save(ctx, t); err != nil {

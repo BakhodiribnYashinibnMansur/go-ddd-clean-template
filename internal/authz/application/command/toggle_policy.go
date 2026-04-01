@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/authz/domain"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/google/uuid"
 )
@@ -36,7 +37,10 @@ func NewTogglePolicyHandler(
 
 // Handle fetches the policy, inverts its active state, and persists the change.
 // Returns a repository error if the policy is not found or the update fails.
-func (h *TogglePolicyHandler) Handle(ctx context.Context, cmd TogglePolicyCommand) error {
+func (h *TogglePolicyHandler) Handle(ctx context.Context, cmd TogglePolicyCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "TogglePolicyHandler.Handle")
+	defer func() { end(err) }()
+
 	policy, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {
 		return err

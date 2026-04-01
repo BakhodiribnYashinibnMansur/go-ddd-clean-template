@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/authz/domain"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/google/uuid"
 )
@@ -38,7 +39,10 @@ func NewUpdatePolicyHandler(
 
 // Handle fetches the policy by ID, applies non-nil field updates, and persists the changes.
 // Returns a repository error if the policy is not found or the update fails.
-func (h *UpdatePolicyHandler) Handle(ctx context.Context, cmd UpdatePolicyCommand) error {
+func (h *UpdatePolicyHandler) Handle(ctx context.Context, cmd UpdatePolicyCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "UpdatePolicyHandler.Handle")
+	defer func() { end(err) }()
+
 	policy, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {
 		return err

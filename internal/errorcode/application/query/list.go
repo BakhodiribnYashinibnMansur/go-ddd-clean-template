@@ -5,6 +5,7 @@ import (
 
 	appdto "gct/internal/errorcode/application"
 	"gct/internal/errorcode/domain"
+	"gct/internal/shared/infrastructure/pgxutil"
 )
 
 // ListErrorCodesQuery holds the input for listing error codes with filtering.
@@ -29,7 +30,10 @@ func NewListErrorCodesHandler(readRepo domain.ErrorCodeReadRepository) *ListErro
 }
 
 // Handle executes the ListErrorCodesQuery and returns a list of ErrorCodeView with total count.
-func (h *ListErrorCodesHandler) Handle(ctx context.Context, q ListErrorCodesQuery) (*ListErrorCodesResult, error) {
+func (h *ListErrorCodesHandler) Handle(ctx context.Context, q ListErrorCodesQuery) (_ *ListErrorCodesResult, err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "ListErrorCodesHandler.Handle")
+	defer func() { end(err) }()
+
 	views, total, err := h.readRepo.List(ctx, q.Filter)
 	if err != nil {
 		return nil, err

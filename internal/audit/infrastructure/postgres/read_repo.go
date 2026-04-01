@@ -9,6 +9,7 @@ import (
 	"gct/internal/shared/domain/consts"
 	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/metadata"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -45,7 +46,10 @@ func NewAuditReadRepo(pool *pgxpool.Pool) *AuditReadRepo {
 }
 
 // ListAuditLogs returns a paginated list of audit log views with optional filters.
-func (r *AuditReadRepo) ListAuditLogs(ctx context.Context, filter domain.AuditLogFilter) ([]*domain.AuditLogView, int64, error) {
+func (r *AuditReadRepo) ListAuditLogs(ctx context.Context, filter domain.AuditLogFilter) (items []*domain.AuditLogView, total int64, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "AuditReadRepo.ListAuditLogs")
+	defer func() { end(err) }()
+
 	conds := squirrel.And{}
 
 	if filter.UserID != nil {
@@ -81,7 +85,6 @@ func (r *AuditReadRepo) ListAuditLogs(ctx context.Context, filter domain.AuditLo
 		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
 	}
 
-	var total int64
 	if err = r.pool.QueryRow(ctx, countSQL, countArgs...).Scan(&total); err != nil {
 		return nil, 0, apperrors.HandlePgError(err, consts.TableAuditLog, nil)
 	}
@@ -178,7 +181,10 @@ func (r *AuditReadRepo) ListAuditLogs(ctx context.Context, filter domain.AuditLo
 }
 
 // ListEndpointHistory returns a paginated list of endpoint history views with optional filters.
-func (r *AuditReadRepo) ListEndpointHistory(ctx context.Context, filter domain.EndpointHistoryFilter) ([]*domain.EndpointHistoryView, int64, error) {
+func (r *AuditReadRepo) ListEndpointHistory(ctx context.Context, filter domain.EndpointHistoryFilter) (items []*domain.EndpointHistoryView, total int64, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "AuditReadRepo.ListEndpointHistory")
+	defer func() { end(err) }()
+
 	conds := squirrel.And{}
 
 	if filter.UserID != nil {
@@ -211,7 +217,6 @@ func (r *AuditReadRepo) ListEndpointHistory(ctx context.Context, filter domain.E
 		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
 	}
 
-	var total int64
 	if err = r.pool.QueryRow(ctx, countSQL, countArgs...).Scan(&total); err != nil {
 		return nil, 0, apperrors.HandlePgError(err, consts.TableEndpointHistory, nil)
 	}

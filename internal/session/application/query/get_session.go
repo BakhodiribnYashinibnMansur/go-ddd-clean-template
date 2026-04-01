@@ -5,6 +5,7 @@ import (
 
 	appdto "gct/internal/session/application"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/google/uuid"
 )
@@ -26,7 +27,10 @@ func NewGetSessionHandler(repo SessionReadRepository, l logger.Log) *GetSessionH
 }
 
 // Handle executes the GetSessionQuery and returns a SessionView.
-func (h *GetSessionHandler) Handle(ctx context.Context, q GetSessionQuery) (*appdto.SessionView, error) {
+func (h *GetSessionHandler) Handle(ctx context.Context, q GetSessionQuery) (_ *appdto.SessionView, err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "GetSessionHandler.Handle")
+	defer func() { end(err) }()
+
 	view, err := h.repo.FindByID(ctx, q.ID)
 	if err != nil {
 		h.l.Errorc(ctx, "session.query.GetSession failed", "session_id", q.ID, "error", err)

@@ -6,6 +6,7 @@ import (
 
 	"gct/internal/shared/application"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/user/domain"
 
 	"github.com/google/uuid"
@@ -44,7 +45,10 @@ func NewBulkActionHandler(
 }
 
 // Handle executes the BulkActionCommand.
-func (h *BulkActionHandler) Handle(ctx context.Context, cmd BulkActionCommand) error {
+func (h *BulkActionHandler) Handle(ctx context.Context, cmd BulkActionCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "BulkActionHandler.Handle")
+	defer func() { end(err) }()
+
 	for _, id := range cmd.IDs {
 		user, err := h.repo.FindByID(ctx, id)
 		if err != nil {

@@ -6,6 +6,7 @@ import (
 	"gct/internal/integration/domain"
 	"gct/internal/shared/application"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 )
 
 // CreateCommand represents an intent to register a new third-party integration.
@@ -43,7 +44,10 @@ func NewCreateHandler(
 
 // Handle persists the new integration and publishes domain events.
 // Event publish failures are logged but do not roll back the save — eventual consistency is acceptable here.
-func (h *CreateHandler) Handle(ctx context.Context, cmd CreateCommand) error {
+func (h *CreateHandler) Handle(ctx context.Context, cmd CreateCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "CreateHandler.Handle")
+	defer func() { end(err) }()
+
 	i := domain.NewIntegration(cmd.Name, cmd.Type, cmd.APIKey, cmd.WebhookURL, cmd.Enabled, cmd.Config)
 
 	if err := h.repo.Save(ctx, i); err != nil {

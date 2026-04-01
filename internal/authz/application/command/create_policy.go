@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/authz/domain"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/google/uuid"
 )
@@ -38,7 +39,10 @@ func NewCreatePolicyHandler(
 
 // Handle creates a policy with the specified effect and priority, optionally attaches conditions, and persists it.
 // Returns nil on success; propagates repository errors to the caller.
-func (h *CreatePolicyHandler) Handle(ctx context.Context, cmd CreatePolicyCommand) error {
+func (h *CreatePolicyHandler) Handle(ctx context.Context, cmd CreatePolicyCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "CreatePolicyHandler.Handle")
+	defer func() { end(err) }()
+
 	policy := domain.NewPolicy(cmd.PermissionID, cmd.Effect)
 	policy.SetPriority(cmd.Priority)
 	if cmd.Conditions != nil {

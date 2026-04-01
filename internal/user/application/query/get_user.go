@@ -3,6 +3,7 @@ package query
 import (
 	"context"
 
+	"gct/internal/shared/infrastructure/pgxutil"
 	appdto "gct/internal/user/application"
 	"gct/internal/user/domain"
 
@@ -25,7 +26,10 @@ func NewGetUserHandler(readRepo domain.UserReadRepository) *GetUserHandler {
 }
 
 // Handle executes the GetUserQuery and returns a UserView.
-func (h *GetUserHandler) Handle(ctx context.Context, q GetUserQuery) (*appdto.UserView, error) {
+func (h *GetUserHandler) Handle(ctx context.Context, q GetUserQuery) (_ *appdto.UserView, err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "GetUserHandler.Handle")
+	defer func() { end(err) }()
+
 	view, err := h.readRepo.FindByID(ctx, q.ID)
 	if err != nil {
 		return nil, err

@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/dataexport/domain"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/google/uuid"
 )
@@ -35,7 +36,10 @@ func NewDeleteDataExportHandler(
 
 // Handle deletes the data export record identified by cmd.ID.
 // Returns nil on success; propagates repository errors (e.g., not found) to the caller.
-func (h *DeleteDataExportHandler) Handle(ctx context.Context, cmd DeleteDataExportCommand) error {
+func (h *DeleteDataExportHandler) Handle(ctx context.Context, cmd DeleteDataExportCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "DeleteDataExportHandler.Handle")
+	defer func() { end(err) }()
+
 	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
 		h.logger.Errorf("failed to delete data export: %v", err)
 		return err

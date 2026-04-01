@@ -7,6 +7,7 @@ import (
 	"gct/internal/notification/domain"
 	"gct/internal/shared/domain/consts"
 	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -35,7 +36,10 @@ func NewNotificationWriteRepo(pool *pgxpool.Pool) *NotificationWriteRepo {
 }
 
 // Save inserts a new Notification aggregate into the database.
-func (r *NotificationWriteRepo) Save(ctx context.Context, n *domain.Notification) error {
+func (r *NotificationWriteRepo) Save(ctx context.Context, n *domain.Notification) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "NotificationWriteRepo.Save")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Insert(tableName).
 		Columns(writeColumns...).
@@ -62,7 +66,10 @@ func (r *NotificationWriteRepo) Save(ctx context.Context, n *domain.Notification
 }
 
 // FindByID retrieves a Notification aggregate by ID.
-func (r *NotificationWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Notification, error) {
+func (r *NotificationWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.Notification, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "NotificationWriteRepo.FindByID")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Select(writeColumns...).
 		From(tableName).
@@ -77,7 +84,10 @@ func (r *NotificationWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (*do
 }
 
 // Update updates a Notification aggregate in the database.
-func (r *NotificationWriteRepo) Update(ctx context.Context, n *domain.Notification) error {
+func (r *NotificationWriteRepo) Update(ctx context.Context, n *domain.Notification) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "NotificationWriteRepo.Update")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Update(tableName).
 		Set("is_active", false).
@@ -95,7 +105,10 @@ func (r *NotificationWriteRepo) Update(ctx context.Context, n *domain.Notificati
 }
 
 // Delete removes a Notification by ID.
-func (r *NotificationWriteRepo) Delete(ctx context.Context, id uuid.UUID) error {
+func (r *NotificationWriteRepo) Delete(ctx context.Context, id uuid.UUID) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "NotificationWriteRepo.Delete")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Delete(tableName).
 		Where(squirrel.Eq{"id": id}).

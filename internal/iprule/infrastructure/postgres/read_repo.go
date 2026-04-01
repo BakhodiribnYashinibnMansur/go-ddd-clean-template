@@ -6,6 +6,7 @@ import (
 	"gct/internal/iprule/domain"
 	"gct/internal/shared/domain/consts"
 	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -32,7 +33,10 @@ func NewIPRuleReadRepo(pool *pgxpool.Pool) *IPRuleReadRepo {
 }
 
 // FindByID returns a single IPRuleView by ID.
-func (r *IPRuleReadRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.IPRuleView, error) {
+func (r *IPRuleReadRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.IPRuleView, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "IPRuleReadRepo.FindByID")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Select(readColumns...).
 		From(tableName).
@@ -47,7 +51,10 @@ func (r *IPRuleReadRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.IP
 }
 
 // List returns a paginated list of IPRuleView with optional filters.
-func (r *IPRuleReadRepo) List(ctx context.Context, filter domain.IPRuleFilter) ([]*domain.IPRuleView, int64, error) {
+func (r *IPRuleReadRepo) List(ctx context.Context, filter domain.IPRuleFilter) (views []*domain.IPRuleView, total int64, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "IPRuleReadRepo.List")
+	defer func() { end(err) }()
+
 	conds := squirrel.And{}
 	conds = applyFilters(conds, filter)
 
@@ -60,7 +67,6 @@ func (r *IPRuleReadRepo) List(ctx context.Context, filter domain.IPRuleFilter) (
 		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
 	}
 
-	var total int64
 	if err = r.pool.QueryRow(ctx, countSQL, countArgs...).Scan(&total); err != nil {
 		return nil, 0, apperrors.HandlePgError(err, tableName, nil)
 	}
@@ -91,7 +97,6 @@ func (r *IPRuleReadRepo) List(ctx context.Context, filter domain.IPRuleFilter) (
 	}
 	defer rows.Close()
 
-	var views []*domain.IPRuleView
 	for rows.Next() {
 		v, err := scanIPRuleViewFromRows(rows)
 		if err != nil {

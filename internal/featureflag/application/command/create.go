@@ -6,6 +6,7 @@ import (
 	"gct/internal/featureflag/domain"
 	"gct/internal/shared/application"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 )
 
 // CreateCommand represents an intent to register a new feature flag.
@@ -40,7 +41,10 @@ func NewCreateHandler(
 }
 
 // Handle persists a new feature flag and publishes its domain events.
-func (h *CreateHandler) Handle(ctx context.Context, cmd CreateCommand) error {
+func (h *CreateHandler) Handle(ctx context.Context, cmd CreateCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "CreateHandler.Handle")
+	defer func() { end(err) }()
+
 	ff := domain.NewFeatureFlag(cmd.Name, cmd.Key, cmd.Description, cmd.FlagType, cmd.DefaultValue, cmd.RolloutPercentage)
 
 	if cmd.IsActive {

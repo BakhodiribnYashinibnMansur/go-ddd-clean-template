@@ -7,6 +7,7 @@ import (
 	"gct/internal/featureflag/domain"
 	"gct/internal/shared/application"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/google/uuid"
 )
@@ -41,7 +42,10 @@ func NewUpdateRuleGroupHandler(
 }
 
 // Handle fetches the rule group, applies updates, and persists.
-func (h *UpdateRuleGroupHandler) Handle(ctx context.Context, cmd UpdateRuleGroupCommand) error {
+func (h *UpdateRuleGroupHandler) Handle(ctx context.Context, cmd UpdateRuleGroupCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "UpdateRuleGroupHandler.Handle")
+	defer func() { end(err) }()
+
 	rg, err := h.rgRepo.FindByID(ctx, cmd.ID)
 	if err != nil {
 		return err

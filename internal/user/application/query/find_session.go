@@ -4,6 +4,7 @@ import (
 	"context"
 
 	shared "gct/internal/shared/domain"
+	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/user/domain"
 
 	"github.com/google/uuid"
@@ -25,6 +26,9 @@ func NewFindSessionHandler(readRepo domain.UserReadRepository) *FindSessionHandl
 }
 
 // Handle executes the FindSessionQuery and returns an AuthSession.
-func (h *FindSessionHandler) Handle(ctx context.Context, q FindSessionQuery) (*shared.AuthSession, error) {
+func (h *FindSessionHandler) Handle(ctx context.Context, q FindSessionQuery) (_ *shared.AuthSession, err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "FindSessionHandler.Handle")
+	defer func() { end(err) }()
+
 	return h.readRepo.FindSessionByID(ctx, q.SessionID)
 }

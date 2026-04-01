@@ -39,7 +39,7 @@ func startTestServer() *httptest.Server {
 	}
 
 	bcs, err := app.NewDDDBoundedContexts(
-		context.Background(), setup.TestPG.Pool, eventBus, l, command.JWTConfig{
+		context.Background(), setup.TestPG.Pool, eventBus, l, nil, command.JWTConfig{
 			PrivateKey: jwtPrivateKey,
 			Issuer:     setup.TestCfg.JWT.Issuer,
 			AccessTTL:  setup.TestCfg.JWT.AccessTTL,

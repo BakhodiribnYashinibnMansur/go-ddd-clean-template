@@ -6,6 +6,7 @@ import (
 
 	"gct/internal/shared/domain/consts"
 	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/sitesetting/domain"
 
 	"github.com/Masterminds/squirrel"
@@ -35,7 +36,10 @@ func NewSiteSettingWriteRepo(pool *pgxpool.Pool) *SiteSettingWriteRepo {
 }
 
 // Save inserts a new SiteSetting aggregate into the database.
-func (r *SiteSettingWriteRepo) Save(ctx context.Context, s *domain.SiteSetting) error {
+func (r *SiteSettingWriteRepo) Save(ctx context.Context, s *domain.SiteSetting) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "SiteSettingWriteRepo.Save")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Insert(tableName).
 		Columns(writeColumns...).
@@ -56,7 +60,10 @@ func (r *SiteSettingWriteRepo) Save(ctx context.Context, s *domain.SiteSetting) 
 }
 
 // FindByID retrieves a SiteSetting aggregate by its ID.
-func (r *SiteSettingWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.SiteSetting, error) {
+func (r *SiteSettingWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.SiteSetting, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "SiteSettingWriteRepo.FindByID")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Select(writeColumns...).
 		From(tableName).
@@ -71,7 +78,10 @@ func (r *SiteSettingWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (*dom
 }
 
 // Update updates an existing SiteSetting aggregate in the database.
-func (r *SiteSettingWriteRepo) Update(ctx context.Context, s *domain.SiteSetting) error {
+func (r *SiteSettingWriteRepo) Update(ctx context.Context, s *domain.SiteSetting) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "SiteSettingWriteRepo.Update")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Update(tableName).
 		Set("key", s.Key()).
@@ -93,7 +103,10 @@ func (r *SiteSettingWriteRepo) Update(ctx context.Context, s *domain.SiteSetting
 }
 
 // Delete removes a SiteSetting by its ID.
-func (r *SiteSettingWriteRepo) Delete(ctx context.Context, id uuid.UUID) error {
+func (r *SiteSettingWriteRepo) Delete(ctx context.Context, id uuid.UUID) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "SiteSettingWriteRepo.Delete")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Delete(tableName).
 		Where(squirrel.Eq{"id": id}).
@@ -110,7 +123,10 @@ func (r *SiteSettingWriteRepo) Delete(ctx context.Context, id uuid.UUID) error {
 }
 
 // List retrieves a paginated list of SiteSetting aggregates with optional filters.
-func (r *SiteSettingWriteRepo) List(ctx context.Context, filter domain.SiteSettingFilter) ([]*domain.SiteSetting, int64, error) {
+func (r *SiteSettingWriteRepo) List(ctx context.Context, filter domain.SiteSettingFilter) (results []*domain.SiteSetting, total int64, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "SiteSettingWriteRepo.List")
+	defer func() { end(err) }()
+
 	conds := squirrel.And{}
 	conds = applyFilters(conds, filter)
 
@@ -123,7 +139,6 @@ func (r *SiteSettingWriteRepo) List(ctx context.Context, filter domain.SiteSetti
 		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
 	}
 
-	var total int64
 	if err = r.pool.QueryRow(ctx, countSQL, countArgs...).Scan(&total); err != nil {
 		return nil, 0, apperrors.HandlePgError(err, tableName, nil)
 	}
@@ -154,7 +169,6 @@ func (r *SiteSettingWriteRepo) List(ctx context.Context, filter domain.SiteSetti
 	}
 	defer rows.Close()
 
-	var results []*domain.SiteSetting
 	for rows.Next() {
 		s, err := scanSiteSettingFromRows(rows)
 		if err != nil {

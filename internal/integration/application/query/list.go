@@ -5,6 +5,7 @@ import (
 
 	appdto "gct/internal/integration/application"
 	"gct/internal/integration/domain"
+	"gct/internal/shared/infrastructure/pgxutil"
 )
 
 // ListQuery holds the input for listing integrations with filtering.
@@ -29,7 +30,10 @@ func NewListHandler(readRepo domain.IntegrationReadRepository) *ListHandler {
 }
 
 // Handle executes the ListQuery and returns a list of IntegrationView with total count.
-func (h *ListHandler) Handle(ctx context.Context, q ListQuery) (*ListResult, error) {
+func (h *ListHandler) Handle(ctx context.Context, q ListQuery) (_ *ListResult, err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "ListHandler.Handle")
+	defer func() { end(err) }()
+
 	views, total, err := h.readRepo.List(ctx, q.Filter)
 	if err != nil {
 		return nil, err

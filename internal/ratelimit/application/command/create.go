@@ -6,6 +6,7 @@ import (
 	"gct/internal/ratelimit/domain"
 	"gct/internal/shared/application"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 )
 
 // CreateRateLimitCommand holds the input for creating a new rate limit.
@@ -38,7 +39,10 @@ func NewCreateRateLimitHandler(
 }
 
 // Handle executes the CreateRateLimitCommand.
-func (h *CreateRateLimitHandler) Handle(ctx context.Context, cmd CreateRateLimitCommand) error {
+func (h *CreateRateLimitHandler) Handle(ctx context.Context, cmd CreateRateLimitCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "CreateRateLimitHandler.Handle")
+	defer func() { end(err) }()
+
 	rl := domain.NewRateLimit(cmd.Name, cmd.Rule, cmd.RequestsPerWindow, cmd.WindowDuration, cmd.Enabled)
 
 	if err := h.repo.Save(ctx, rl); err != nil {

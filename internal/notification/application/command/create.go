@@ -6,6 +6,7 @@ import (
 	"gct/internal/notification/domain"
 	"gct/internal/shared/application"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/google/uuid"
 )
@@ -39,7 +40,10 @@ func NewCreateHandler(
 }
 
 // Handle executes the CreateCommand.
-func (h *CreateHandler) Handle(ctx context.Context, cmd CreateCommand) error {
+func (h *CreateHandler) Handle(ctx context.Context, cmd CreateCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "CreateHandler.Handle")
+	defer func() { end(err) }()
+
 	n := domain.NewNotification(cmd.UserID, cmd.Title, cmd.Message, cmd.Type)
 
 	if err := h.repo.Save(ctx, n); err != nil {

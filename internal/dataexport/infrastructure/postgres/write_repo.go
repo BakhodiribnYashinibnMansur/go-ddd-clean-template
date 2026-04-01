@@ -7,6 +7,7 @@ import (
 	"gct/internal/dataexport/domain"
 	"gct/internal/shared/domain/consts"
 	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -36,7 +37,10 @@ func NewDataExportWriteRepo(pool *pgxpool.Pool) *DataExportWriteRepo {
 }
 
 // Save inserts a new DataExport aggregate into the database.
-func (r *DataExportWriteRepo) Save(ctx context.Context, de *domain.DataExport) error {
+func (r *DataExportWriteRepo) Save(ctx context.Context, de *domain.DataExport) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "DataExportWriteRepo.Save")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Insert(tableName).
 		Columns(writeColumns...).
@@ -62,7 +66,10 @@ func (r *DataExportWriteRepo) Save(ctx context.Context, de *domain.DataExport) e
 }
 
 // Update updates an existing DataExport aggregate in the database.
-func (r *DataExportWriteRepo) Update(ctx context.Context, de *domain.DataExport) error {
+func (r *DataExportWriteRepo) Update(ctx context.Context, de *domain.DataExport) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "DataExportWriteRepo.Update")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Update(tableName).
 		Set("status", de.Status()).
@@ -81,7 +88,10 @@ func (r *DataExportWriteRepo) Update(ctx context.Context, de *domain.DataExport)
 }
 
 // FindByID retrieves a DataExport aggregate by its ID.
-func (r *DataExportWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.DataExport, error) {
+func (r *DataExportWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.DataExport, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "DataExportWriteRepo.FindByID")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Select(writeColumns...).
 		From(tableName).
@@ -96,7 +106,10 @@ func (r *DataExportWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (*doma
 }
 
 // Delete removes a data export by its ID.
-func (r *DataExportWriteRepo) Delete(ctx context.Context, id uuid.UUID) error {
+func (r *DataExportWriteRepo) Delete(ctx context.Context, id uuid.UUID) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "DataExportWriteRepo.Delete")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Delete(tableName).
 		Where(squirrel.Eq{"id": id}).

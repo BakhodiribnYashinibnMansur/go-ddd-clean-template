@@ -5,6 +5,7 @@ import (
 
 	appdto "gct/internal/session/application"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 )
 
 // ListSessionsQuery holds the input for listing sessions with filtering.
@@ -30,7 +31,10 @@ func NewListSessionsHandler(repo SessionReadRepository, l logger.Log) *ListSessi
 }
 
 // Handle executes the ListSessionsQuery and returns a list of SessionView with total count.
-func (h *ListSessionsHandler) Handle(ctx context.Context, q ListSessionsQuery) (*ListSessionsResult, error) {
+func (h *ListSessionsHandler) Handle(ctx context.Context, q ListSessionsQuery) (_ *ListSessionsResult, err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "ListSessionsHandler.Handle")
+	defer func() { end(err) }()
+
 	views, total, err := h.repo.List(ctx, q.Filter)
 	if err != nil {
 		h.l.Errorc(ctx, "session.query.ListSessions failed", "error", err)

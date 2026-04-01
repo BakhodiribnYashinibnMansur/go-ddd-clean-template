@@ -5,6 +5,7 @@ import (
 
 	appdto "gct/internal/authz/application"
 	"gct/internal/authz/domain"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/google/uuid"
 )
@@ -25,7 +26,10 @@ func NewGetRoleHandler(readRepo domain.AuthzReadRepository) *GetRoleHandler {
 }
 
 // Handle executes the GetRoleQuery and returns a RoleView.
-func (h *GetRoleHandler) Handle(ctx context.Context, q GetRoleQuery) (*appdto.RoleView, error) {
+func (h *GetRoleHandler) Handle(ctx context.Context, q GetRoleQuery) (_ *appdto.RoleView, err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "GetRoleHandler.Handle")
+	defer func() { end(err) }()
+
 	view, err := h.readRepo.GetRole(ctx, q.ID)
 	if err != nil {
 		return nil, err

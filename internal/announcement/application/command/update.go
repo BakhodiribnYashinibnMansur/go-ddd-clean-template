@@ -8,6 +8,7 @@ import (
 	"gct/internal/shared/application"
 	shared "gct/internal/shared/domain"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/google/uuid"
 )
@@ -48,7 +49,10 @@ func NewUpdateAnnouncementHandler(
 
 // Handle fetches the announcement by ID, applies field-level changes, optionally publishes it, then persists.
 // Returns a repository error if the announcement is not found or the update fails.
-func (h *UpdateAnnouncementHandler) Handle(ctx context.Context, cmd UpdateAnnouncementCommand) error {
+func (h *UpdateAnnouncementHandler) Handle(ctx context.Context, cmd UpdateAnnouncementCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "UpdateAnnouncementHandler.Handle")
+	defer func() { end(err) }()
+
 	a, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {
 		return err

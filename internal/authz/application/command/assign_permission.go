@@ -6,6 +6,7 @@ import (
 	"gct/internal/authz/domain"
 	"gct/internal/shared/application"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/google/uuid"
 )
@@ -41,7 +42,10 @@ func NewAssignPermissionHandler(
 
 // Handle creates the role-permission binding and publishes a PermissionGranted domain event.
 // Returns nil on success; propagates repository errors (e.g., duplicate assignment, invalid FK) to the caller.
-func (h *AssignPermissionHandler) Handle(ctx context.Context, cmd AssignPermissionCommand) error {
+func (h *AssignPermissionHandler) Handle(ctx context.Context, cmd AssignPermissionCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "AssignPermissionHandler.Handle")
+	defer func() { end(err) }()
+
 	if err := h.rolePermRepo.Assign(ctx, cmd.RoleID, cmd.PermissionID); err != nil {
 		h.logger.Errorf("failed to assign permission to role: %v", err)
 		return err

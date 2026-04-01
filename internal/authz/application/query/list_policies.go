@@ -6,6 +6,7 @@ import (
 	appdto "gct/internal/authz/application"
 	"gct/internal/authz/domain"
 	shared "gct/internal/shared/domain"
+	"gct/internal/shared/infrastructure/pgxutil"
 )
 
 // ListPoliciesQuery holds the input for listing policies.
@@ -30,7 +31,10 @@ func NewListPoliciesHandler(readRepo domain.AuthzReadRepository) *ListPoliciesHa
 }
 
 // Handle executes the ListPoliciesQuery and returns a list of PolicyView.
-func (h *ListPoliciesHandler) Handle(ctx context.Context, q ListPoliciesQuery) (*ListPoliciesResult, error) {
+func (h *ListPoliciesHandler) Handle(ctx context.Context, q ListPoliciesQuery) (_ *ListPoliciesResult, err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "ListPoliciesHandler.Handle")
+	defer func() { end(err) }()
+
 	views, total, err := h.readRepo.ListPolicies(ctx, q.Pagination)
 	if err != nil {
 		return nil, err

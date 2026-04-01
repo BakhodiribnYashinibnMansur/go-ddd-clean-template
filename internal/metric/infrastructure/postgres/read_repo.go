@@ -7,6 +7,7 @@ import (
 	"gct/internal/metric/domain"
 	"gct/internal/shared/domain/consts"
 	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -33,7 +34,10 @@ func NewMetricReadRepo(pool *pgxpool.Pool) *MetricReadRepo {
 }
 
 // List returns a paginated list of MetricView with optional filters.
-func (r *MetricReadRepo) List(ctx context.Context, filter domain.MetricFilter) ([]*domain.MetricView, int64, error) {
+func (r *MetricReadRepo) List(ctx context.Context, filter domain.MetricFilter) (items []*domain.MetricView, total int64, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "MetricReadRepo.List")
+	defer func() { end(err) }()
+
 	conds := squirrel.And{}
 	conds = applyFilters(conds, filter)
 
@@ -47,7 +51,6 @@ func (r *MetricReadRepo) List(ctx context.Context, filter domain.MetricFilter) (
 		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
 	}
 
-	var total int64
 	if err = r.pool.QueryRow(ctx, countSQL, countArgs...).Scan(&total); err != nil {
 		return nil, 0, apperrors.HandlePgError(err, tableName, nil)
 	}

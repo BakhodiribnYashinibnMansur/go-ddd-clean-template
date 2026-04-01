@@ -3,6 +3,7 @@ package query
 import (
 	"context"
 
+	"gct/internal/shared/infrastructure/pgxutil"
 	appdto "gct/internal/sitesetting/application"
 	"gct/internal/sitesetting/domain"
 
@@ -25,7 +26,10 @@ func NewGetSiteSettingHandler(readRepo domain.SiteSettingReadRepository) *GetSit
 }
 
 // Handle executes the GetSiteSettingQuery and returns a SiteSettingView.
-func (h *GetSiteSettingHandler) Handle(ctx context.Context, q GetSiteSettingQuery) (*appdto.SiteSettingView, error) {
+func (h *GetSiteSettingHandler) Handle(ctx context.Context, q GetSiteSettingQuery) (result *appdto.SiteSettingView, err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "GetSiteSettingHandler.Handle")
+	defer func() { end(err) }()
+
 	v, err := h.readRepo.FindByID(ctx, q.ID)
 	if err != nil {
 		return nil, err

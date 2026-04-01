@@ -7,6 +7,7 @@ import (
 	"gct/internal/shared/domain/consts"
 	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/metadata"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -42,7 +43,10 @@ func NewAuditLogWriteRepo(pool *pgxpool.Pool) *AuditLogWriteRepo {
 }
 
 // Save inserts a new audit log entry. Audit logs are immutable.
-func (r *AuditLogWriteRepo) Save(ctx context.Context, auditLog *domain.AuditLog) error {
+func (r *AuditLogWriteRepo) Save(ctx context.Context, auditLog *domain.AuditLog) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "AuditLogWriteRepo.Save")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Insert(consts.TableAuditLog).
 		Columns(auditLogColumns...).
@@ -90,7 +94,10 @@ func NewEndpointHistoryWriteRepo(pool *pgxpool.Pool) *EndpointHistoryWriteRepo {
 }
 
 // Save inserts a new endpoint history entry. Endpoint history entries are immutable.
-func (r *EndpointHistoryWriteRepo) Save(ctx context.Context, entry *domain.EndpointHistory) error {
+func (r *EndpointHistoryWriteRepo) Save(ctx context.Context, entry *domain.EndpointHistory) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "EndpointHistoryWriteRepo.Save")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Insert(consts.TableEndpointHistory).
 		Columns(endpointHistoryColumns...).

@@ -5,6 +5,7 @@ import (
 
 	appdto "gct/internal/audit/application"
 	"gct/internal/audit/domain"
+	"gct/internal/shared/infrastructure/pgxutil"
 )
 
 // ListAuditLogsQuery holds the input for listing audit logs with filtering.
@@ -29,7 +30,10 @@ func NewListAuditLogsHandler(readRepo domain.AuditReadRepository) *ListAuditLogs
 }
 
 // Handle executes the ListAuditLogsQuery and returns a list of AuditLogView with total count.
-func (h *ListAuditLogsHandler) Handle(ctx context.Context, q ListAuditLogsQuery) (*ListAuditLogsResult, error) {
+func (h *ListAuditLogsHandler) Handle(ctx context.Context, q ListAuditLogsQuery) (_ *ListAuditLogsResult, err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "ListAuditLogsHandler.Handle")
+	defer func() { end(err) }()
+
 	views, total, err := h.readRepo.ListAuditLogs(ctx, q.Filter)
 	if err != nil {
 		return nil, err

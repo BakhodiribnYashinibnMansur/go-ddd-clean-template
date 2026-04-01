@@ -10,6 +10,7 @@ import (
 	shared "gct/internal/shared/domain"
 	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/metadata"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -33,7 +34,10 @@ func NewAuthzReadRepo(pool *pgxpool.Pool) *AuthzReadRepo {
 }
 
 // GetRole returns a RoleView for the given role ID.
-func (r *AuthzReadRepo) GetRole(ctx context.Context, id uuid.UUID) (*domain.RoleView, error) {
+func (r *AuthzReadRepo) GetRole(ctx context.Context, id uuid.UUID) (result *domain.RoleView, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "AuthzReadRepo.GetRole")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Select("id", "name", "description").
 		From(consts.TableRole).
@@ -53,7 +57,10 @@ func (r *AuthzReadRepo) GetRole(ctx context.Context, id uuid.UUID) (*domain.Role
 }
 
 // ListRoles returns a paginated list of RoleView.
-func (r *AuthzReadRepo) ListRoles(ctx context.Context, pagination shared.Pagination) ([]*domain.RoleView, int64, error) {
+func (r *AuthzReadRepo) ListRoles(ctx context.Context, pagination shared.Pagination) (items []*domain.RoleView, total int64, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "AuthzReadRepo.ListRoles")
+	defer func() { end(err) }()
+
 	countSQL, countArgs, err := r.builder.
 		Select("COUNT(*)").
 		From(consts.TableRole).
@@ -62,7 +69,6 @@ func (r *AuthzReadRepo) ListRoles(ctx context.Context, pagination shared.Paginat
 		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
 	}
 
-	var total int64
 	if err = r.pool.QueryRow(ctx, countSQL, countArgs...).Scan(&total); err != nil {
 		return nil, 0, apperrors.HandlePgError(err, consts.TableRole, nil)
 	}
@@ -105,7 +111,10 @@ func (r *AuthzReadRepo) ListRoles(ctx context.Context, pagination shared.Paginat
 }
 
 // GetPermission returns a PermissionView for the given permission ID.
-func (r *AuthzReadRepo) GetPermission(ctx context.Context, id uuid.UUID) (*domain.PermissionView, error) {
+func (r *AuthzReadRepo) GetPermission(ctx context.Context, id uuid.UUID) (result *domain.PermissionView, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "AuthzReadRepo.GetPermission")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Select("id", "parent_id", "name", "description").
 		From(consts.TablePermission).
@@ -125,7 +134,10 @@ func (r *AuthzReadRepo) GetPermission(ctx context.Context, id uuid.UUID) (*domai
 }
 
 // ListPermissions returns a paginated list of PermissionView.
-func (r *AuthzReadRepo) ListPermissions(ctx context.Context, pagination shared.Pagination) ([]*domain.PermissionView, int64, error) {
+func (r *AuthzReadRepo) ListPermissions(ctx context.Context, pagination shared.Pagination) (items []*domain.PermissionView, total int64, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "AuthzReadRepo.ListPermissions")
+	defer func() { end(err) }()
+
 	countSQL, countArgs, err := r.builder.
 		Select("COUNT(*)").
 		From(consts.TablePermission).
@@ -134,7 +146,6 @@ func (r *AuthzReadRepo) ListPermissions(ctx context.Context, pagination shared.P
 		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
 	}
 
-	var total int64
 	if err = r.pool.QueryRow(ctx, countSQL, countArgs...).Scan(&total); err != nil {
 		return nil, 0, apperrors.HandlePgError(err, consts.TablePermission, nil)
 	}
@@ -177,7 +188,10 @@ func (r *AuthzReadRepo) ListPermissions(ctx context.Context, pagination shared.P
 }
 
 // ListPolicies returns a paginated list of PolicyView.
-func (r *AuthzReadRepo) ListPolicies(ctx context.Context, pagination shared.Pagination) ([]*domain.PolicyView, int64, error) {
+func (r *AuthzReadRepo) ListPolicies(ctx context.Context, pagination shared.Pagination) (items []*domain.PolicyView, total int64, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "AuthzReadRepo.ListPolicies")
+	defer func() { end(err) }()
+
 	countSQL, countArgs, err := r.builder.
 		Select("COUNT(*)").
 		From(consts.TablePolicy).
@@ -186,7 +200,6 @@ func (r *AuthzReadRepo) ListPolicies(ctx context.Context, pagination shared.Pagi
 		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
 	}
 
-	var total int64
 	if err = r.pool.QueryRow(ctx, countSQL, countArgs...).Scan(&total); err != nil {
 		return nil, 0, apperrors.HandlePgError(err, consts.TablePolicy, nil)
 	}
@@ -237,7 +250,10 @@ func (r *AuthzReadRepo) ListPolicies(ctx context.Context, pagination shared.Pagi
 }
 
 // ListScopes returns a paginated list of ScopeView.
-func (r *AuthzReadRepo) ListScopes(ctx context.Context, pagination shared.Pagination) ([]*domain.ScopeView, int64, error) {
+func (r *AuthzReadRepo) ListScopes(ctx context.Context, pagination shared.Pagination) (items []*domain.ScopeView, total int64, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "AuthzReadRepo.ListScopes")
+	defer func() { end(err) }()
+
 	countSQL, countArgs, err := r.builder.
 		Select("COUNT(*)").
 		From(consts.TableScope).
@@ -246,7 +262,6 @@ func (r *AuthzReadRepo) ListScopes(ctx context.Context, pagination shared.Pagina
 		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
 	}
 
-	var total int64
 	if err = r.pool.QueryRow(ctx, countSQL, countArgs...).Scan(&total); err != nil {
 		return nil, 0, apperrors.HandlePgError(err, consts.TableScope, nil)
 	}
@@ -292,7 +307,10 @@ func (r *AuthzReadRepo) ListScopes(ctx context.Context, pagination shared.Pagina
 // Super-admin roles bypass all checks. For other roles the method walks the
 // role → permission → scope chain looking for a matching scope entry, then evaluates
 // any ABAC policies bound to the matched permissions.
-func (r *AuthzReadRepo) CheckAccess(ctx context.Context, roleID uuid.UUID, path, method string, evalCtx domain.EvaluationContext) (bool, error) {
+func (r *AuthzReadRepo) CheckAccess(ctx context.Context, roleID uuid.UUID, path, method string, evalCtx domain.EvaluationContext) (result bool, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "AuthzReadRepo.CheckAccess")
+	defer func() { end(err) }()
+
 	// Single query: fetch role name together with every scope reachable through
 	// the role_permission + permission_scope join chain, plus the permission ID.
 	sql, args, err := r.builder.
@@ -393,7 +411,10 @@ func (r *AuthzReadRepo) CheckAccess(ctx context.Context, roleID uuid.UUID, path,
 }
 
 // FindPoliciesByPermissionIDs returns all policies bound to any of the given permission IDs.
-func (r *AuthzReadRepo) FindPoliciesByPermissionIDs(ctx context.Context, permissionIDs []uuid.UUID) ([]*domain.Policy, error) {
+func (r *AuthzReadRepo) FindPoliciesByPermissionIDs(ctx context.Context, permissionIDs []uuid.UUID) (result []*domain.Policy, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "AuthzReadRepo.FindPoliciesByPermissionIDs")
+	defer func() { end(err) }()
+
 	if len(permissionIDs) == 0 {
 		return nil, nil
 	}

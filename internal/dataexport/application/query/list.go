@@ -5,6 +5,7 @@ import (
 
 	appdto "gct/internal/dataexport/application"
 	"gct/internal/dataexport/domain"
+	"gct/internal/shared/infrastructure/pgxutil"
 )
 
 // ListDataExportsQuery holds the input for listing data exports with filtering.
@@ -29,7 +30,10 @@ func NewListDataExportsHandler(readRepo domain.DataExportReadRepository) *ListDa
 }
 
 // Handle executes the ListDataExportsQuery and returns a list of DataExportView with total count.
-func (h *ListDataExportsHandler) Handle(ctx context.Context, q ListDataExportsQuery) (*ListDataExportsResult, error) {
+func (h *ListDataExportsHandler) Handle(ctx context.Context, q ListDataExportsQuery) (_ *ListDataExportsResult, err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "ListDataExportsHandler.Handle")
+	defer func() { end(err) }()
+
 	views, total, err := h.readRepo.List(ctx, q.Filter)
 	if err != nil {
 		return nil, err

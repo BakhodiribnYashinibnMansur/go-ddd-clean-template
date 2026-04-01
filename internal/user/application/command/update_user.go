@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/shared/application"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/user/domain"
 
 	"github.com/google/uuid"
@@ -43,7 +44,10 @@ func NewUpdateUserHandler(
 
 // Handle loads the user, merges changed fields with existing data, reconstructs the aggregate, and persists it.
 // Calls Touch() to update the modification timestamp. Returns domain or repository errors to the caller.
-func (h *UpdateUserHandler) Handle(ctx context.Context, cmd UpdateUserCommand) error {
+func (h *UpdateUserHandler) Handle(ctx context.Context, cmd UpdateUserCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "UpdateUserHandler.Handle")
+	defer func() { end(err) }()
+
 	user, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {
 		return err

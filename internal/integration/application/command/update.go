@@ -6,6 +6,7 @@ import (
 	"gct/internal/integration/domain"
 	"gct/internal/shared/application"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/google/uuid"
 )
@@ -46,7 +47,10 @@ func NewUpdateHandler(
 
 // Handle fetches the integration by ID, applies the patch via domain logic, and persists the result.
 // Returns a repository error if the integration is not found. Event publish failures are logged but non-fatal.
-func (h *UpdateHandler) Handle(ctx context.Context, cmd UpdateCommand) error {
+func (h *UpdateHandler) Handle(ctx context.Context, cmd UpdateCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "UpdateHandler.Handle")
+	defer func() { end(err) }()
+
 	i, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {
 		return err

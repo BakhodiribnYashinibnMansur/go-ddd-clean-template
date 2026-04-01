@@ -5,6 +5,7 @@ import (
 
 	appdto "gct/internal/errorcode/application"
 	"gct/internal/errorcode/domain"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/google/uuid"
 )
@@ -25,7 +26,10 @@ func NewGetErrorCodeHandler(readRepo domain.ErrorCodeReadRepository) *GetErrorCo
 }
 
 // Handle executes the GetErrorCodeQuery and returns an ErrorCodeView.
-func (h *GetErrorCodeHandler) Handle(ctx context.Context, q GetErrorCodeQuery) (*appdto.ErrorCodeView, error) {
+func (h *GetErrorCodeHandler) Handle(ctx context.Context, q GetErrorCodeQuery) (result *appdto.ErrorCodeView, err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "GetErrorCodeHandler.Handle")
+	defer func() { end(err) }()
+
 	v, err := h.readRepo.FindByID(ctx, q.ID)
 	if err != nil {
 		return nil, err

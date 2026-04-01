@@ -6,6 +6,7 @@ import (
 	"gct/internal/dataexport/domain"
 	"gct/internal/shared/application"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/google/uuid"
 )
@@ -42,7 +43,10 @@ func NewCreateDataExportHandler(
 
 // Handle persists a new data export record in pending state and publishes domain events.
 // Returns nil on success; propagates repository errors to the caller.
-func (h *CreateDataExportHandler) Handle(ctx context.Context, cmd CreateDataExportCommand) error {
+func (h *CreateDataExportHandler) Handle(ctx context.Context, cmd CreateDataExportCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "CreateDataExportHandler.Handle")
+	defer func() { end(err) }()
+
 	de := domain.NewDataExport(cmd.UserID, cmd.DataType, cmd.Format)
 
 	if err := h.repo.Save(ctx, de); err != nil {

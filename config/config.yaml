@@ -12,6 +12,7 @@ log:
 
 metrics:
   enabled: true
+  slow_query_threshold: "100ms"
 
 swagger:
   enabled: true

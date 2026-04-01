@@ -6,6 +6,7 @@ import (
 	"gct/internal/errorcode/domain"
 	"gct/internal/shared/application"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 )
 
 // CreateErrorCodeCommand represents an intent to register a new standardized error code in the system.
@@ -45,7 +46,10 @@ func NewCreateErrorCodeHandler(
 
 // Handle persists a new error code and publishes its domain events.
 // Returns nil on success; propagates repository errors (e.g., duplicate code) to the caller.
-func (h *CreateErrorCodeHandler) Handle(ctx context.Context, cmd CreateErrorCodeCommand) error {
+func (h *CreateErrorCodeHandler) Handle(ctx context.Context, cmd CreateErrorCodeCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "CreateErrorCodeHandler.Handle")
+	defer func() { end(err) }()
+
 	ec := domain.NewErrorCode(
 		cmd.Code, cmd.Message, cmd.HTTPStatus,
 		cmd.Category, cmd.Severity,

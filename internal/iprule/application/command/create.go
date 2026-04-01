@@ -7,6 +7,7 @@ import (
 	"gct/internal/iprule/domain"
 	"gct/internal/shared/application"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 )
 
 // CreateIPRuleCommand represents an intent to add a new IP-based access control rule.
@@ -42,7 +43,10 @@ func NewCreateIPRuleHandler(
 
 // Handle creates the IP rule domain entity, persists it, and publishes domain events (e.g., IPRuleCreated).
 // Event publish failures are logged but do not fail the operation — the rule is already saved.
-func (h *CreateIPRuleHandler) Handle(ctx context.Context, cmd CreateIPRuleCommand) error {
+func (h *CreateIPRuleHandler) Handle(ctx context.Context, cmd CreateIPRuleCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "CreateIPRuleHandler.Handle")
+	defer func() { end(err) }()
+
 	r := domain.NewIPRule(cmd.IPAddress, cmd.Action, cmd.Reason, cmd.ExpiresAt)
 
 	if err := h.repo.Save(ctx, r); err != nil {

@@ -5,6 +5,7 @@ import (
 
 	appdto "gct/internal/file/application"
 	"gct/internal/file/domain"
+	"gct/internal/shared/infrastructure/pgxutil"
 )
 
 // ListFilesQuery holds the input for listing files with filtering.
@@ -29,7 +30,10 @@ func NewListFilesHandler(readRepo domain.FileReadRepository) *ListFilesHandler {
 }
 
 // Handle executes the ListFilesQuery and returns a list of FileView with total count.
-func (h *ListFilesHandler) Handle(ctx context.Context, q ListFilesQuery) (*ListFilesResult, error) {
+func (h *ListFilesHandler) Handle(ctx context.Context, q ListFilesQuery) (_ *ListFilesResult, err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "ListFilesHandler.Handle")
+	defer func() { end(err) }()
+
 	views, total, err := h.readRepo.List(ctx, q.Filter)
 	if err != nil {
 		return nil, err

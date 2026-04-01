@@ -54,7 +54,10 @@ func NewRoleWriteRepo(pool *pgxpool.Pool) *RoleWriteRepo {
 }
 
 // Save inserts a new role.
-func (r *RoleWriteRepo) Save(ctx context.Context, role *domain.Role) error {
+func (r *RoleWriteRepo) Save(ctx context.Context, role *domain.Role) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "RoleWriteRepo.Save")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Insert(roleTable).
 		Columns(roleColumns...).
@@ -77,7 +80,10 @@ func (r *RoleWriteRepo) Save(ctx context.Context, role *domain.Role) error {
 }
 
 // FindByID retrieves a role by ID.
-func (r *RoleWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Role, error) {
+func (r *RoleWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.Role, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "RoleWriteRepo.FindByID")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Select(roleColumns...).
 		From(roleTable).
@@ -92,7 +98,10 @@ func (r *RoleWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Rol
 }
 
 // Update updates an existing role.
-func (r *RoleWriteRepo) Update(ctx context.Context, role *domain.Role) error {
+func (r *RoleWriteRepo) Update(ctx context.Context, role *domain.Role) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "RoleWriteRepo.Update")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Update(roleTable).
 		Set("name", role.Name()).
@@ -111,7 +120,10 @@ func (r *RoleWriteRepo) Update(ctx context.Context, role *domain.Role) error {
 }
 
 // Delete deletes a role by ID.
-func (r *RoleWriteRepo) Delete(ctx context.Context, id uuid.UUID) error {
+func (r *RoleWriteRepo) Delete(ctx context.Context, id uuid.UUID) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "RoleWriteRepo.Delete")
+	defer func() { end(err) }()
+
 	return pgxutil.WithTx(ctx, r.pool, func(tx pgx.Tx) error {
 		// Delete role_permission entries first.
 		delRP, argsRP, err := r.builder.
@@ -141,7 +153,10 @@ func (r *RoleWriteRepo) Delete(ctx context.Context, id uuid.UUID) error {
 }
 
 // List returns a paginated list of roles.
-func (r *RoleWriteRepo) List(ctx context.Context, pagination shared.Pagination) ([]*domain.Role, int64, error) {
+func (r *RoleWriteRepo) List(ctx context.Context, pagination shared.Pagination) (items []*domain.Role, total int64, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "RoleWriteRepo.List")
+	defer func() { end(err) }()
+
 	countSQL, countArgs, err := r.builder.
 		Select("COUNT(*)").
 		From(roleTable).
@@ -150,7 +165,6 @@ func (r *RoleWriteRepo) List(ctx context.Context, pagination shared.Pagination) 
 		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
 	}
 
-	var total int64
 	if err = r.pool.QueryRow(ctx, countSQL, countArgs...).Scan(&total); err != nil {
 		return nil, 0, apperrors.HandlePgError(err, roleTable, nil)
 	}
@@ -211,7 +225,10 @@ func NewPermissionWriteRepo(pool *pgxpool.Pool) *PermissionWriteRepo {
 }
 
 // Save inserts a new permission.
-func (r *PermissionWriteRepo) Save(ctx context.Context, perm *domain.Permission) error {
+func (r *PermissionWriteRepo) Save(ctx context.Context, perm *domain.Permission) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "PermissionWriteRepo.Save")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Insert(permissionTable).
 		Columns(permissionColumns...).
@@ -235,7 +252,10 @@ func (r *PermissionWriteRepo) Save(ctx context.Context, perm *domain.Permission)
 }
 
 // FindByID retrieves a permission by ID.
-func (r *PermissionWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Permission, error) {
+func (r *PermissionWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.Permission, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "PermissionWriteRepo.FindByID")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Select(permissionColumns...).
 		From(permissionTable).
@@ -250,7 +270,10 @@ func (r *PermissionWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (*doma
 }
 
 // Update updates an existing permission.
-func (r *PermissionWriteRepo) Update(ctx context.Context, perm *domain.Permission) error {
+func (r *PermissionWriteRepo) Update(ctx context.Context, perm *domain.Permission) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "PermissionWriteRepo.Update")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Update(permissionTable).
 		Set("parent_id", perm.ParentID()).
@@ -270,7 +293,10 @@ func (r *PermissionWriteRepo) Update(ctx context.Context, perm *domain.Permissio
 }
 
 // Delete deletes a permission by ID.
-func (r *PermissionWriteRepo) Delete(ctx context.Context, id uuid.UUID) error {
+func (r *PermissionWriteRepo) Delete(ctx context.Context, id uuid.UUID) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "PermissionWriteRepo.Delete")
+	defer func() { end(err) }()
+
 	return pgxutil.WithTx(ctx, r.pool, func(tx pgx.Tx) error {
 		// Delete permission_scope entries first.
 		delPS, argsPS, err := r.builder.
@@ -312,7 +338,10 @@ func (r *PermissionWriteRepo) Delete(ctx context.Context, id uuid.UUID) error {
 }
 
 // List returns a paginated list of permissions.
-func (r *PermissionWriteRepo) List(ctx context.Context, pagination shared.Pagination) ([]*domain.Permission, int64, error) {
+func (r *PermissionWriteRepo) List(ctx context.Context, pagination shared.Pagination) (items []*domain.Permission, total int64, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "PermissionWriteRepo.List")
+	defer func() { end(err) }()
+
 	countSQL, countArgs, err := r.builder.
 		Select("COUNT(*)").
 		From(permissionTable).
@@ -321,7 +350,6 @@ func (r *PermissionWriteRepo) List(ctx context.Context, pagination shared.Pagina
 		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
 	}
 
-	var total int64
 	if err = r.pool.QueryRow(ctx, countSQL, countArgs...).Scan(&total); err != nil {
 		return nil, 0, apperrors.HandlePgError(err, permissionTable, nil)
 	}
@@ -384,7 +412,10 @@ func NewPolicyWriteRepo(pool *pgxpool.Pool) *PolicyWriteRepo {
 }
 
 // Save inserts a new policy.
-func (r *PolicyWriteRepo) Save(ctx context.Context, policy *domain.Policy) error {
+func (r *PolicyWriteRepo) Save(ctx context.Context, policy *domain.Policy) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "PolicyWriteRepo.Save")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Insert(policyTable).
 		Columns(policyColumns...).
@@ -414,7 +445,10 @@ func (r *PolicyWriteRepo) Save(ctx context.Context, policy *domain.Policy) error
 }
 
 // FindByID retrieves a policy by ID.
-func (r *PolicyWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Policy, error) {
+func (r *PolicyWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.Policy, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "PolicyWriteRepo.FindByID")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Select(policyColumns...).
 		From(policyTable).
@@ -440,7 +474,10 @@ func (r *PolicyWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.P
 }
 
 // Update updates an existing policy.
-func (r *PolicyWriteRepo) Update(ctx context.Context, policy *domain.Policy) error {
+func (r *PolicyWriteRepo) Update(ctx context.Context, policy *domain.Policy) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "PolicyWriteRepo.Update")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Update(policyTable).
 		Set("effect", string(policy.Effect())).
@@ -465,7 +502,10 @@ func (r *PolicyWriteRepo) Update(ctx context.Context, policy *domain.Policy) err
 }
 
 // Delete deletes a policy by ID.
-func (r *PolicyWriteRepo) Delete(ctx context.Context, id uuid.UUID) error {
+func (r *PolicyWriteRepo) Delete(ctx context.Context, id uuid.UUID) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "PolicyWriteRepo.Delete")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Delete(policyTable).
 		Where(squirrel.Eq{"id": id}).
@@ -486,7 +526,10 @@ func (r *PolicyWriteRepo) Delete(ctx context.Context, id uuid.UUID) error {
 }
 
 // List returns a paginated list of policies.
-func (r *PolicyWriteRepo) List(ctx context.Context, pagination shared.Pagination) ([]*domain.Policy, int64, error) {
+func (r *PolicyWriteRepo) List(ctx context.Context, pagination shared.Pagination) (items []*domain.Policy, total int64, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "PolicyWriteRepo.List")
+	defer func() { end(err) }()
+
 	countSQL, countArgs, err := r.builder.
 		Select("COUNT(*)").
 		From(policyTable).
@@ -495,7 +538,6 @@ func (r *PolicyWriteRepo) List(ctx context.Context, pagination shared.Pagination
 		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
 	}
 
-	var total int64
 	if err = r.pool.QueryRow(ctx, countSQL, countArgs...).Scan(&total); err != nil {
 		return nil, 0, apperrors.HandlePgError(err, policyTable, nil)
 	}
@@ -546,7 +588,10 @@ func (r *PolicyWriteRepo) List(ctx context.Context, pagination shared.Pagination
 }
 
 // FindByPermissionID returns all policies for a given permission ID.
-func (r *PolicyWriteRepo) FindByPermissionID(ctx context.Context, permissionID uuid.UUID) ([]*domain.Policy, error) {
+func (r *PolicyWriteRepo) FindByPermissionID(ctx context.Context, permissionID uuid.UUID) (result []*domain.Policy, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "PolicyWriteRepo.FindByPermissionID")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Select(policyColumns...).
 		From(policyTable).
@@ -601,7 +646,10 @@ func NewScopeWriteRepo(pool *pgxpool.Pool) *ScopeWriteRepo {
 }
 
 // Save inserts a new scope.
-func (r *ScopeWriteRepo) Save(ctx context.Context, scope domain.Scope) error {
+func (r *ScopeWriteRepo) Save(ctx context.Context, scope domain.Scope) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "ScopeWriteRepo.Save")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Insert(scopeTable).
 		Columns(scopeColumns...).
@@ -618,7 +666,10 @@ func (r *ScopeWriteRepo) Save(ctx context.Context, scope domain.Scope) error {
 }
 
 // Delete deletes a scope by path and method.
-func (r *ScopeWriteRepo) Delete(ctx context.Context, path, method string) error {
+func (r *ScopeWriteRepo) Delete(ctx context.Context, path, method string) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "ScopeWriteRepo.Delete")
+	defer func() { end(err) }()
+
 	return pgxutil.WithTx(ctx, r.pool, func(tx pgx.Tx) error {
 		// Delete permission_scope entries first.
 		delPS, argsPS, err := r.builder.
@@ -648,7 +699,10 @@ func (r *ScopeWriteRepo) Delete(ctx context.Context, path, method string) error 
 }
 
 // List returns a paginated list of scopes.
-func (r *ScopeWriteRepo) List(ctx context.Context, pagination shared.Pagination) ([]domain.Scope, int64, error) {
+func (r *ScopeWriteRepo) List(ctx context.Context, pagination shared.Pagination) (items []domain.Scope, total int64, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "ScopeWriteRepo.List")
+	defer func() { end(err) }()
+
 	countSQL, countArgs, err := r.builder.
 		Select("COUNT(*)").
 		From(scopeTable).
@@ -657,7 +711,6 @@ func (r *ScopeWriteRepo) List(ctx context.Context, pagination shared.Pagination)
 		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
 	}
 
-	var total int64
 	if err = r.pool.QueryRow(ctx, countSQL, countArgs...).Scan(&total); err != nil {
 		return nil, 0, apperrors.HandlePgError(err, scopeTable, nil)
 	}
@@ -718,7 +771,10 @@ func NewRolePermissionRepo(pool *pgxpool.Pool) *RolePermissionRepo {
 }
 
 // Assign inserts a role-permission association.
-func (r *RolePermissionRepo) Assign(ctx context.Context, roleID, permissionID uuid.UUID) error {
+func (r *RolePermissionRepo) Assign(ctx context.Context, roleID, permissionID uuid.UUID) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "RolePermissionRepo.Assign")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Insert(rolePermissionTable).
 		Columns("role_id", "permission_id").
@@ -735,7 +791,10 @@ func (r *RolePermissionRepo) Assign(ctx context.Context, roleID, permissionID uu
 }
 
 // Revoke removes a role-permission association.
-func (r *RolePermissionRepo) Revoke(ctx context.Context, roleID, permissionID uuid.UUID) error {
+func (r *RolePermissionRepo) Revoke(ctx context.Context, roleID, permissionID uuid.UUID) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "RolePermissionRepo.Revoke")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Delete(rolePermissionTable).
 		Where(squirrel.Eq{"role_id": roleID, "permission_id": permissionID}).
@@ -769,7 +828,10 @@ func NewPermissionScopeRepo(pool *pgxpool.Pool) *PermissionScopeRepo {
 }
 
 // Assign inserts a permission-scope association.
-func (r *PermissionScopeRepo) Assign(ctx context.Context, permissionID uuid.UUID, path, method string) error {
+func (r *PermissionScopeRepo) Assign(ctx context.Context, permissionID uuid.UUID, path, method string) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "PermissionScopeRepo.Assign")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Insert(permissionScopeTable).
 		Columns("permission_id", "path", "method").
@@ -786,7 +848,10 @@ func (r *PermissionScopeRepo) Assign(ctx context.Context, permissionID uuid.UUID
 }
 
 // Revoke removes a permission-scope association.
-func (r *PermissionScopeRepo) Revoke(ctx context.Context, permissionID uuid.UUID, path, method string) error {
+func (r *PermissionScopeRepo) Revoke(ctx context.Context, permissionID uuid.UUID, path, method string) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "PermissionScopeRepo.Revoke")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Delete(permissionScopeTable).
 		Where(squirrel.Eq{"permission_id": permissionID, "path": path, "method": method}).

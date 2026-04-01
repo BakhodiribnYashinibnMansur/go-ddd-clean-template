@@ -6,6 +6,7 @@ import (
 	"gct/internal/authz/domain"
 	"gct/internal/shared/application"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 )
 
 // CreateRoleCommand represents an intent to create a new authorization role.
@@ -38,7 +39,10 @@ func NewCreateRoleHandler(
 
 // Handle creates a new role, optionally sets its description, persists it, and publishes domain events.
 // Returns nil on success; propagates repository errors (e.g., duplicate name) to the caller.
-func (h *CreateRoleHandler) Handle(ctx context.Context, cmd CreateRoleCommand) error {
+func (h *CreateRoleHandler) Handle(ctx context.Context, cmd CreateRoleCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "CreateRoleHandler.Handle")
+	defer func() { end(err) }()
+
 	role := domain.NewRole(cmd.Name)
 	if cmd.Description != nil {
 		role.SetDescription(cmd.Description)

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/sitesetting/domain"
 
 	"github.com/google/uuid"
@@ -35,7 +36,10 @@ func NewDeleteSiteSettingHandler(
 
 // Handle deletes the site setting identified by cmd.ID.
 // Returns nil on success; propagates repository errors (e.g., not found, connection failure) to the caller.
-func (h *DeleteSiteSettingHandler) Handle(ctx context.Context, cmd DeleteSiteSettingCommand) error {
+func (h *DeleteSiteSettingHandler) Handle(ctx context.Context, cmd DeleteSiteSettingCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "DeleteSiteSettingHandler.Handle")
+	defer func() { end(err) }()
+
 	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
 		h.logger.Errorf("failed to delete site setting: %v", err)
 		return err

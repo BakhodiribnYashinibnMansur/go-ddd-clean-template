@@ -6,6 +6,7 @@ import (
 	"gct/internal/file/domain"
 	"gct/internal/shared/domain/consts"
 	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -33,7 +34,10 @@ func NewFileWriteRepo(pool *pgxpool.Pool) *FileWriteRepo {
 }
 
 // Save inserts a new File aggregate into the database.
-func (r *FileWriteRepo) Save(ctx context.Context, f *domain.File) error {
+func (r *FileWriteRepo) Save(ctx context.Context, f *domain.File) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "FileWriteRepo.Save")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Insert(tableName).
 		Columns(writeColumns...).

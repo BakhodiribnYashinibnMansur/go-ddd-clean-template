@@ -6,6 +6,7 @@ import (
 	"gct/internal/audit/domain"
 	"gct/internal/shared/application"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/google/uuid"
 )
@@ -53,7 +54,10 @@ func NewCreateAuditLogHandler(
 
 // Handle constructs the audit log aggregate from the command, persists it, and publishes domain events.
 // Returns nil on success; propagates repository errors to the caller.
-func (h *CreateAuditLogHandler) Handle(ctx context.Context, cmd CreateAuditLogCommand) error {
+func (h *CreateAuditLogHandler) Handle(ctx context.Context, cmd CreateAuditLogCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "CreateAuditLogHandler.Handle")
+	defer func() { end(err) }()
+
 	auditLog := domain.NewAuditLog(
 		cmd.UserID,
 		cmd.SessionID,

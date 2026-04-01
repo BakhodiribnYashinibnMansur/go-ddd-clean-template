@@ -6,6 +6,7 @@ import (
 	"gct/internal/metric/domain"
 	"gct/internal/shared/application"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 )
 
 // RecordMetricCommand captures a single function execution observation for performance monitoring.
@@ -39,7 +40,10 @@ func NewRecordMetricHandler(
 }
 
 // Handle executes the RecordMetricCommand.
-func (h *RecordMetricHandler) Handle(ctx context.Context, cmd RecordMetricCommand) error {
+func (h *RecordMetricHandler) Handle(ctx context.Context, cmd RecordMetricCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "RecordMetricHandler.Handle")
+	defer func() { end(err) }()
+
 	fm := domain.NewFunctionMetric(cmd.Name, cmd.LatencyMs, cmd.IsPanic, cmd.PanicError)
 
 	if err := h.repo.Save(ctx, fm); err != nil {

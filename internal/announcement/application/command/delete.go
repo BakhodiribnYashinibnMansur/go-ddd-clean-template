@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/announcement/domain"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/google/uuid"
 )
@@ -35,7 +36,10 @@ func NewDeleteAnnouncementHandler(
 
 // Handle deletes the announcement identified by cmd.ID.
 // Returns nil on success; propagates repository errors (e.g., not found, connection failure) to the caller.
-func (h *DeleteAnnouncementHandler) Handle(ctx context.Context, cmd DeleteAnnouncementCommand) error {
+func (h *DeleteAnnouncementHandler) Handle(ctx context.Context, cmd DeleteAnnouncementCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "DeleteAnnouncementHandler.Handle")
+	defer func() { end(err) }()
+
 	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
 		h.logger.Errorf("failed to delete announcement: %v", err)
 		return err

@@ -6,6 +6,7 @@ import (
 
 	appdto "gct/internal/featureflag/application"
 	"gct/internal/featureflag/domain"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/google/uuid"
 )
@@ -26,7 +27,10 @@ func NewGetHandler(readRepo domain.FeatureFlagReadRepository) *GetHandler {
 }
 
 // Handle executes the GetQuery and returns a FeatureFlagView.
-func (h *GetHandler) Handle(ctx context.Context, q GetQuery) (*appdto.FeatureFlagView, error) {
+func (h *GetHandler) Handle(ctx context.Context, q GetQuery) (result *appdto.FeatureFlagView, err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "GetHandler.Handle")
+	defer func() { end(err) }()
+
 	view, err := h.readRepo.FindByID(ctx, q.ID)
 	if err != nil {
 		return nil, err

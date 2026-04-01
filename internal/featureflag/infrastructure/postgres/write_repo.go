@@ -7,6 +7,7 @@ import (
 	"gct/internal/featureflag/domain"
 	"gct/internal/shared/domain/consts"
 	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -41,7 +42,10 @@ func NewFeatureFlagWriteRepo(pool *pgxpool.Pool) *FeatureFlagWriteRepo {
 }
 
 // Save inserts a new FeatureFlag aggregate into the database.
-func (r *FeatureFlagWriteRepo) Save(ctx context.Context, ff *domain.FeatureFlag) error {
+func (r *FeatureFlagWriteRepo) Save(ctx context.Context, ff *domain.FeatureFlag) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "FeatureFlagWriteRepo.Save")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Insert(tableName).
 		Columns(writeColumns...).
@@ -71,7 +75,10 @@ func (r *FeatureFlagWriteRepo) Save(ctx context.Context, ff *domain.FeatureFlag)
 }
 
 // FindByID retrieves a FeatureFlag aggregate by ID.
-func (r *FeatureFlagWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.FeatureFlag, error) {
+func (r *FeatureFlagWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.FeatureFlag, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "FeatureFlagWriteRepo.FindByID")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Select(selectColumns...).
 		From(tableName).
@@ -99,7 +106,10 @@ func (r *FeatureFlagWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (*dom
 }
 
 // FindByKey retrieves a FeatureFlag aggregate by its unique key.
-func (r *FeatureFlagWriteRepo) FindByKey(ctx context.Context, key string) (*domain.FeatureFlag, error) {
+func (r *FeatureFlagWriteRepo) FindByKey(ctx context.Context, key string) (result *domain.FeatureFlag, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "FeatureFlagWriteRepo.FindByKey")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Select(selectColumns...).
 		From(tableName).
@@ -127,7 +137,10 @@ func (r *FeatureFlagWriteRepo) FindByKey(ctx context.Context, key string) (*doma
 }
 
 // FindAll retrieves all non-deleted FeatureFlag aggregates.
-func (r *FeatureFlagWriteRepo) FindAll(ctx context.Context) ([]*domain.FeatureFlag, error) {
+func (r *FeatureFlagWriteRepo) FindAll(ctx context.Context) (result []*domain.FeatureFlag, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "FeatureFlagWriteRepo.FindAll")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Select(selectColumns...).
 		From(tableName).
@@ -167,7 +180,10 @@ func (r *FeatureFlagWriteRepo) FindAll(ctx context.Context) ([]*domain.FeatureFl
 }
 
 // Update updates a FeatureFlag aggregate in the database.
-func (r *FeatureFlagWriteRepo) Update(ctx context.Context, ff *domain.FeatureFlag) error {
+func (r *FeatureFlagWriteRepo) Update(ctx context.Context, ff *domain.FeatureFlag) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "FeatureFlagWriteRepo.Update")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Update(tableName).
 		Set("name", ff.Name()).
@@ -193,7 +209,10 @@ func (r *FeatureFlagWriteRepo) Update(ctx context.Context, ff *domain.FeatureFla
 }
 
 // Delete removes a FeatureFlag by ID.
-func (r *FeatureFlagWriteRepo) Delete(ctx context.Context, id uuid.UUID) error {
+func (r *FeatureFlagWriteRepo) Delete(ctx context.Context, id uuid.UUID) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "FeatureFlagWriteRepo.Delete")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Delete(tableName).
 		Where(squirrel.Eq{"id": id}).

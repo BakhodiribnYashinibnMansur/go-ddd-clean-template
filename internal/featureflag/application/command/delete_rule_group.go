@@ -6,6 +6,7 @@ import (
 	"gct/internal/featureflag/domain"
 	"gct/internal/shared/application"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/google/uuid"
 )
@@ -36,7 +37,10 @@ func NewDeleteRuleGroupHandler(
 }
 
 // Handle deletes the rule group and publishes a FlagUpdated event for the parent flag.
-func (h *DeleteRuleGroupHandler) Handle(ctx context.Context, cmd DeleteRuleGroupCommand) error {
+func (h *DeleteRuleGroupHandler) Handle(ctx context.Context, cmd DeleteRuleGroupCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "DeleteRuleGroupHandler.Handle")
+	defer func() { end(err) }()
+
 	// Find the rule group to get its flagID before deletion.
 	rg, err := h.rgRepo.FindByID(ctx, cmd.ID)
 	if err != nil {

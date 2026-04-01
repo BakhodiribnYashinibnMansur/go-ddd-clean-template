@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/errorcode/domain"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/google/uuid"
 )
@@ -35,7 +36,10 @@ func NewDeleteErrorCodeHandler(
 
 // Handle deletes the error code identified by cmd.ID.
 // Returns nil on success; propagates repository errors (e.g., not found) to the caller.
-func (h *DeleteErrorCodeHandler) Handle(ctx context.Context, cmd DeleteErrorCodeCommand) error {
+func (h *DeleteErrorCodeHandler) Handle(ctx context.Context, cmd DeleteErrorCodeCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "DeleteErrorCodeHandler.Handle")
+	defer func() { end(err) }()
+
 	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
 		h.logger.Errorf("failed to delete error code: %v", err)
 		return err

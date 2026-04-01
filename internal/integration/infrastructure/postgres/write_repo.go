@@ -8,6 +8,7 @@ import (
 	"gct/internal/shared/domain/consts"
 	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/metadata"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -38,7 +39,10 @@ func NewIntegrationWriteRepo(pool *pgxpool.Pool) *IntegrationWriteRepo {
 }
 
 // Save inserts a new Integration aggregate into the database.
-func (r *IntegrationWriteRepo) Save(ctx context.Context, i *domain.Integration) error {
+func (r *IntegrationWriteRepo) Save(ctx context.Context, i *domain.Integration) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "IntegrationWriteRepo.Save")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Insert(tableName).
 		Columns(writeColumns...).
@@ -68,7 +72,10 @@ func (r *IntegrationWriteRepo) Save(ctx context.Context, i *domain.Integration) 
 }
 
 // FindByID retrieves an Integration aggregate by ID.
-func (r *IntegrationWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Integration, error) {
+func (r *IntegrationWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.Integration, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "IntegrationWriteRepo.FindByID")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Select(writeColumns...).
 		From(tableName).
@@ -97,7 +104,10 @@ func (r *IntegrationWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (*dom
 }
 
 // Update updates an Integration aggregate in the database.
-func (r *IntegrationWriteRepo) Update(ctx context.Context, i *domain.Integration) error {
+func (r *IntegrationWriteRepo) Update(ctx context.Context, i *domain.Integration) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "IntegrationWriteRepo.Update")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Update(tableName).
 		Set("name", i.Name()).
@@ -123,7 +133,10 @@ func (r *IntegrationWriteRepo) Update(ctx context.Context, i *domain.Integration
 }
 
 // Delete removes an Integration by ID.
-func (r *IntegrationWriteRepo) Delete(ctx context.Context, id uuid.UUID) error {
+func (r *IntegrationWriteRepo) Delete(ctx context.Context, id uuid.UUID) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "IntegrationWriteRepo.Delete")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Delete(tableName).
 		Where(squirrel.Eq{"id": id}).

@@ -45,6 +45,11 @@ func Setup(handler *gin.Engine, cfg *config.Config, redisClient *redis.Client, b
 		handler.Use(otelgin.Middleware(cfg.Tracing.ServiceName))
 	}
 
+	// 3.1 OTel HTTP Metrics
+	if cfg.Middleware.Metrics && cfg.Metrics.Enabled {
+		handler.Use(OTelMetrics(cfg.Tracing.ServiceName))
+	}
+
 	// 4. Resilience (BC-specific: SystemError BC)
 	if cfg.Middleware.Recovery && bcMW != nil && bcMW.Recovery != nil {
 		handler.Use(bcMW.Recovery)

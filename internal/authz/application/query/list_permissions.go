@@ -6,6 +6,7 @@ import (
 	appdto "gct/internal/authz/application"
 	"gct/internal/authz/domain"
 	shared "gct/internal/shared/domain"
+	"gct/internal/shared/infrastructure/pgxutil"
 )
 
 // ListPermissionsQuery holds the input for listing permissions.
@@ -30,7 +31,10 @@ func NewListPermissionsHandler(readRepo domain.AuthzReadRepository) *ListPermiss
 }
 
 // Handle executes the ListPermissionsQuery and returns a list of PermissionView.
-func (h *ListPermissionsHandler) Handle(ctx context.Context, q ListPermissionsQuery) (*ListPermissionsResult, error) {
+func (h *ListPermissionsHandler) Handle(ctx context.Context, q ListPermissionsQuery) (_ *ListPermissionsResult, err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "ListPermissionsHandler.Handle")
+	defer func() { end(err) }()
+
 	views, total, err := h.readRepo.ListPermissions(ctx, q.Pagination)
 	if err != nil {
 		return nil, err

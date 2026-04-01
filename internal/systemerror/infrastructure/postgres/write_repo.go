@@ -7,6 +7,7 @@ import (
 	"gct/internal/shared/domain/consts"
 	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/metadata"
+	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/systemerror/domain"
 
 	"github.com/Masterminds/squirrel"
@@ -41,7 +42,10 @@ func NewSystemErrorWriteRepo(pool *pgxpool.Pool) *SystemErrorWriteRepo {
 }
 
 // Save inserts a new SystemError aggregate into the database.
-func (r *SystemErrorWriteRepo) Save(ctx context.Context, se *domain.SystemError) error {
+func (r *SystemErrorWriteRepo) Save(ctx context.Context, se *domain.SystemError) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "SystemErrorWriteRepo.Save")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Insert(tableName).
 		Columns(writeColumns...).
@@ -79,7 +83,10 @@ func (r *SystemErrorWriteRepo) Save(ctx context.Context, se *domain.SystemError)
 }
 
 // FindByID retrieves a SystemError aggregate by ID.
-func (r *SystemErrorWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.SystemError, error) {
+func (r *SystemErrorWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.SystemError, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "SystemErrorWriteRepo.FindByID")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Select(writeColumns...).
 		From(tableName).
@@ -105,7 +112,10 @@ func (r *SystemErrorWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (*dom
 }
 
 // Update updates the SystemError aggregate in the database.
-func (r *SystemErrorWriteRepo) Update(ctx context.Context, se *domain.SystemError) error {
+func (r *SystemErrorWriteRepo) Update(ctx context.Context, se *domain.SystemError) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "SystemErrorWriteRepo.Update")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Update(tableName).
 		Set("code", se.Code()).
@@ -139,7 +149,10 @@ func (r *SystemErrorWriteRepo) Update(ctx context.Context, se *domain.SystemErro
 }
 
 // List retrieves a paginated list of SystemError aggregates with optional filters.
-func (r *SystemErrorWriteRepo) List(ctx context.Context, filter domain.SystemErrorFilter) ([]*domain.SystemError, int64, error) {
+func (r *SystemErrorWriteRepo) List(ctx context.Context, filter domain.SystemErrorFilter) (items []*domain.SystemError, total int64, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "SystemErrorWriteRepo.List")
+	defer func() { end(err) }()
+
 	conds := squirrel.And{}
 	conds = applyFilters(conds, filter)
 
@@ -153,7 +166,6 @@ func (r *SystemErrorWriteRepo) List(ctx context.Context, filter domain.SystemErr
 		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
 	}
 
-	var total int64
 	if err = r.pool.QueryRow(ctx, countSQL, countArgs...).Scan(&total); err != nil {
 		return nil, 0, apperrors.HandlePgError(err, tableName, nil)
 	}

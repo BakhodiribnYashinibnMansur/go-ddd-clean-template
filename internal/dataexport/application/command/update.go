@@ -6,6 +6,7 @@ import (
 	"gct/internal/dataexport/domain"
 	"gct/internal/shared/application"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/google/uuid"
 )
@@ -44,7 +45,10 @@ func NewUpdateDataExportHandler(
 
 // Handle fetches the export by ID, applies the status transition, persists, and publishes lifecycle events.
 // Returns a repository error if the export is not found or the update fails.
-func (h *UpdateDataExportHandler) Handle(ctx context.Context, cmd UpdateDataExportCommand) error {
+func (h *UpdateDataExportHandler) Handle(ctx context.Context, cmd UpdateDataExportCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "UpdateDataExportHandler.Handle")
+	defer func() { end(err) }()
+
 	de, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {
 		return err

@@ -7,6 +7,7 @@ import (
 	"gct/internal/iprule/domain"
 	"gct/internal/shared/domain/consts"
 	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -35,7 +36,10 @@ func NewIPRuleWriteRepo(pool *pgxpool.Pool) *IPRuleWriteRepo {
 }
 
 // Save inserts a new IPRule aggregate into the database.
-func (r *IPRuleWriteRepo) Save(ctx context.Context, rule *domain.IPRule) error {
+func (r *IPRuleWriteRepo) Save(ctx context.Context, rule *domain.IPRule) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "IPRuleWriteRepo.Save")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Insert(tableName).
 		Columns(writeColumns...).
@@ -56,7 +60,10 @@ func (r *IPRuleWriteRepo) Save(ctx context.Context, rule *domain.IPRule) error {
 }
 
 // FindByID retrieves an IPRule aggregate by its ID.
-func (r *IPRuleWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.IPRule, error) {
+func (r *IPRuleWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.IPRule, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "IPRuleWriteRepo.FindByID")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Select(writeColumns...).
 		From(tableName).
@@ -71,7 +78,10 @@ func (r *IPRuleWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.I
 }
 
 // Update updates an existing IPRule aggregate in the database.
-func (r *IPRuleWriteRepo) Update(ctx context.Context, rule *domain.IPRule) error {
+func (r *IPRuleWriteRepo) Update(ctx context.Context, rule *domain.IPRule) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "IPRuleWriteRepo.Update")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Update(tableName).
 		Set("ip_address", rule.IPAddress()).
@@ -92,7 +102,10 @@ func (r *IPRuleWriteRepo) Update(ctx context.Context, rule *domain.IPRule) error
 }
 
 // Delete removes an IPRule by its ID.
-func (r *IPRuleWriteRepo) Delete(ctx context.Context, id uuid.UUID) error {
+func (r *IPRuleWriteRepo) Delete(ctx context.Context, id uuid.UUID) (err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "IPRuleWriteRepo.Delete")
+	defer func() { end(err) }()
+
 	sql, args, err := r.builder.
 		Delete(tableName).
 		Where(squirrel.Eq{"id": id}).
@@ -109,7 +122,10 @@ func (r *IPRuleWriteRepo) Delete(ctx context.Context, id uuid.UUID) error {
 }
 
 // List retrieves a paginated list of IPRule aggregates with optional filters.
-func (r *IPRuleWriteRepo) List(ctx context.Context, filter domain.IPRuleFilter) ([]*domain.IPRule, int64, error) {
+func (r *IPRuleWriteRepo) List(ctx context.Context, filter domain.IPRuleFilter) (results []*domain.IPRule, total int64, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "IPRuleWriteRepo.List")
+	defer func() { end(err) }()
+
 	conds := squirrel.And{}
 	conds = applyFilters(conds, filter)
 
@@ -122,7 +138,6 @@ func (r *IPRuleWriteRepo) List(ctx context.Context, filter domain.IPRuleFilter) 
 		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
 	}
 
-	var total int64
 	if err = r.pool.QueryRow(ctx, countSQL, countArgs...).Scan(&total); err != nil {
 		return nil, 0, apperrors.HandlePgError(err, tableName, nil)
 	}
@@ -153,7 +168,6 @@ func (r *IPRuleWriteRepo) List(ctx context.Context, filter domain.IPRuleFilter) 
 	}
 	defer rows.Close()
 
-	var results []*domain.IPRule
 	for rows.Next() {
 		rule, err := scanIPRuleFromRows(rows)
 		if err != nil {

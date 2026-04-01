@@ -6,6 +6,7 @@ import (
 	"gct/internal/authz/domain"
 	"gct/internal/shared/application"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/pgxutil"
 
 	"github.com/google/uuid"
 )
@@ -39,7 +40,10 @@ func NewDeleteRoleHandler(
 
 // Handle deletes the role and publishes a RoleDeleted domain event.
 // Returns nil on success; propagates repository errors (e.g., not found, FK constraint) to the caller.
-func (h *DeleteRoleHandler) Handle(ctx context.Context, cmd DeleteRoleCommand) error {
+func (h *DeleteRoleHandler) Handle(ctx context.Context, cmd DeleteRoleCommand) (err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "DeleteRoleHandler.Handle")
+	defer func() { end(err) }()
+
 	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
 		h.logger.Errorf("failed to delete role: %v", err)
 		return err

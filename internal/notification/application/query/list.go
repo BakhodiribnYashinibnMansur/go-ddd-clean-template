@@ -5,6 +5,7 @@ import (
 
 	appdto "gct/internal/notification/application"
 	"gct/internal/notification/domain"
+	"gct/internal/shared/infrastructure/pgxutil"
 )
 
 // ListQuery holds the input for listing notifications with filtering.
@@ -29,15 +30,18 @@ func NewListHandler(readRepo domain.NotificationReadRepository) *ListHandler {
 }
 
 // Handle executes the ListQuery and returns a list of NotificationView with total count.
-func (h *ListHandler) Handle(ctx context.Context, q ListQuery) (*ListResult, error) {
+func (h *ListHandler) Handle(ctx context.Context, q ListQuery) (result *ListResult, err error) {
+	ctx, end := pgxutil.AppSpan(ctx, "ListHandler.Handle")
+	defer func() { end(err) }()
+
 	views, total, err := h.readRepo.List(ctx, q.Filter)
 	if err != nil {
 		return nil, err
 	}
 
-	result := make([]*appdto.NotificationView, len(views))
+	items := make([]*appdto.NotificationView, len(views))
 	for i, v := range views {
-		result[i] = &appdto.NotificationView{
+		items[i] = &appdto.NotificationView{
 			ID:        v.ID,
 			UserID:    v.UserID,
 			Title:     v.Title,
@@ -49,7 +53,7 @@ func (h *ListHandler) Handle(ctx context.Context, q ListQuery) (*ListResult, err
 	}
 
 	return &ListResult{
-		Notifications: result,
+		Notifications: items,
 		Total:         total,
 	}, nil
 }
