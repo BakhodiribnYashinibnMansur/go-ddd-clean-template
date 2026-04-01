@@ -5681,7 +5681,7 @@ const docTemplate = `{
                     "example": true
                 },
                 "attributes": {
-                    "description": "JSONB used to be here, now EAV table",
+                    "description": "Key-value attributes stored in entity_metadata table",
                     "type": "object",
                     "additionalProperties": {}
                 },

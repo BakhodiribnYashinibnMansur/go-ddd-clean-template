@@ -184,7 +184,7 @@ The `system_errors` table includes:
 | `code` | VARCHAR(64) | Error code (indexed) |
 | `message` | TEXT | Error message |
 | `stack_trace` | TEXT | Stack trace at error time |
-| `metadata` | JSONB | Additional context |
+| `metadata` | — | Additional context (stored in `entity_metadata` table) |
 | `severity` | VARCHAR(16) | ERROR, FATAL, PANIC, WARN (indexed) |
 | `service_name` | VARCHAR(64) | Service that generated the error |
 | `request_id` | UUID | Associated request ID (indexed) |

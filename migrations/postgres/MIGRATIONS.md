@@ -55,7 +55,6 @@
 | phone | VARCHAR | UNIQUE |
 | password_hash | TEXT | |
 | salt | VARCHAR | |
-| attributes | JSONB | NOT NULL, default '{}' |
 | active | BOOLEAN | default TRUE |
 | is_approved | BOOLEAN | default FALSE |
 | last_seen | TIMESTAMP | |
@@ -77,7 +76,6 @@ Indexes: `idx_users_phone`, `idx_users_username`, `idx_users_deleted_at`
 | ip_address | INET | |
 | user_agent | VARCHAR(512) | |
 | fcm_token | VARCHAR(512) | |
-| data | JSONB | |
 | refresh_token_hash | VARCHAR(512) | |
 | expires_at | TIMESTAMP | NOT NULL |
 | last_activity | TIMESTAMP | NOT NULL, default NOW() |
@@ -117,7 +115,6 @@ Indexes: `idx_session_user_id`, `idx_session_device_id`, `idx_session_expires_at
 | effect | policy_effect | NOT NULL |
 | priority | INT | default 100 |
 | active | BOOLEAN | default TRUE |
-| conditions | JSONB | NOT NULL, default '{}' |
 | created_at | TIMESTAMP | default CURRENT_TIMESTAMP |
 
 Indexes: `idx_policy_permission_id`
@@ -140,7 +137,6 @@ Indexes: `idx_policy_permission_id`
 | decision | VARCHAR(16) | |
 | success | BOOLEAN | NOT NULL |
 | error_message | TEXT | |
-| metadata | JSONB | |
 | created_at | TIMESTAMP | NOT NULL, default NOW() |
 
 Indexes: `idx_audit_user_id`, `idx_audit_session_id`, `idx_audit_action`, `idx_audit_resource`, `idx_audit_created_at`, `idx_audit_decision` (partial), `idx_audit_policy_id` (partial), `idx_audit_failed_attempts` (partial: WHERE success = FALSE)
@@ -177,7 +173,6 @@ Indexes: `idx_eh_user_id`, `idx_eh_session_id`, `idx_eh_path`, `idx_eh_method`, 
 | code | VARCHAR(64) | NOT NULL |
 | message | TEXT | NOT NULL |
 | stack_trace | TEXT | |
-| metadata | JSONB | |
 | severity | VARCHAR(16) | NOT NULL, default 'ERROR' |
 | service_name | VARCHAR(64) | default 'api' |
 | request_id | UUID | |
@@ -248,7 +243,6 @@ Indexes: `idx_error_code_code`, `idx_error_code_category`
 | description | TEXT | |
 | base_url | VARCHAR(500) | NOT NULL |
 | is_active | BOOLEAN | NOT NULL, default true |
-| config | JSONB | default '{}' |
 | created_at | TIMESTAMPTZ | NOT NULL, default NOW() |
 | updated_at | TIMESTAMPTZ | NOT NULL, default NOW() |
 | deleted_at | TIMESTAMPTZ | |
@@ -272,6 +266,25 @@ Indexes: `idx_integrations_name` (partial: WHERE deleted_at IS NULL), `idx_integ
 | deleted_at | TIMESTAMPTZ | |
 
 Indexes: `idx_api_keys_integration_id` (partial), `idx_api_keys_key` (partial: WHERE deleted_at IS NULL AND is_active = true), `idx_api_keys_key_prefix` (partial)
+
+### entity_metadata
+
+Universal EAV (Entity-Attribute-Value) table that replaces all former JSONB columns (attributes, data, conditions, metadata, config, etc.).
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| id | UUID | PK, default gen_random_uuid() |
+| entity_type | VARCHAR(64) | NOT NULL |
+| entity_id | UUID | NOT NULL |
+| key | VARCHAR(128) | NOT NULL |
+| value | TEXT | NOT NULL, default '' |
+| value_type | VARCHAR(16) | NOT NULL, default 'string' |
+| created_at | TIMESTAMPTZ | NOT NULL, default NOW() |
+| updated_at | TIMESTAMPTZ | NOT NULL, default NOW() |
+
+Unique constraint: `(entity_type, entity_id, key)`
+
+Indexes: `idx_entity_metadata_lookup` (entity_type, entity_id), `idx_entity_metadata_type` (entity_type)
 
 ## Enums
 
@@ -322,6 +335,8 @@ Indexes: `idx_api_keys_integration_id` (partial), `idx_api_keys_key` (partial: W
 | `20260124235500_create_error_codes.sql` | Error codes table + enums |
 | `20260128000000_ci_seed.sql` | CI admin user seed |
 | `20260207000000_create_integrations.sql` | Integrations + API keys tables |
-| `20260207000001_fix_missing_columns.sql` | Fix missing JSONB columns |
+| `20260207000001_fix_missing_columns.sql` | Fix missing columns |
+| `20260207999999_create_entity_metadata.sql` | Create entity_metadata EAV table |
 | `20260207000002_add_trig_integration.sql` | Cache triggers for integrations |
 | `20260208000000_seed_authz.sql` | Full authz seed (scopes, permissions, roles, policies) |
+| `20260401000000_jsonb_to_eav.sql` | Migrate all JSONB columns to entity_metadata EAV table |

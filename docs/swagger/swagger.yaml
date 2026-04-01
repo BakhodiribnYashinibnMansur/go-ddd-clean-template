@@ -378,7 +378,7 @@ definitions:
         type: boolean
       attributes:
         additionalProperties: {}
-        description: JSONB used to be here, now EAV table
+        description: Key-value attributes stored in entity_metadata table
         type: object
       created_at:
         example: "2024-01-01T00:00:00Z"
