@@ -74,7 +74,7 @@ func TestCacheService_InitCache_Success(t *testing.T) {
 				Type:    "messaging",
 				APIKey:  "xoxb-key-1",
 				Enabled: true,
-				Config:  map[string]any{"channel": "#general"},
+				Config:  map[string]string{"channel": "#general"},
 			},
 			{
 				ID:      id2,
@@ -82,7 +82,7 @@ func TestCacheService_InitCache_Success(t *testing.T) {
 				Type:    "email",
 				APIKey:  "smtp-key-2",
 				Enabled: true,
-				Config:  map[string]any{"host": "smtp.example.com"},
+				Config:  map[string]string{"host": "smtp.example.com"},
 			},
 		},
 		total: 2,

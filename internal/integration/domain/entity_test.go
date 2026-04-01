@@ -7,7 +7,7 @@ import (
 )
 
 func TestNewIntegration(t *testing.T) {
-	config := map[string]any{"timeout": 30}
+	config := map[string]string{"timeout": "30"}
 	i := domain.NewIntegration("Stripe", "payment", "sk_test_123", "https://hooks.example.com", true, config)
 
 	if i.Name() != "Stripe" {
@@ -25,7 +25,7 @@ func TestNewIntegration(t *testing.T) {
 	if !i.Enabled() {
 		t.Fatal("expected enabled true")
 	}
-	if i.Config()["timeout"] != 30 {
+	if i.Config()["timeout"] != "30" {
 		t.Fatalf("expected config timeout 30, got %v", i.Config()["timeout"])
 	}
 	if len(i.Events()) != 1 {

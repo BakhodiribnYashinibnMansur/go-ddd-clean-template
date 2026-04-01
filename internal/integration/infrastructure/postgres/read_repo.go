@@ -2,12 +2,12 @@ package postgres
 
 import (
 	"context"
-	"encoding/json"
 	"time"
 
 	"gct/internal/integration/domain"
 	"gct/internal/shared/domain/consts"
 	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/metadata"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -18,20 +18,22 @@ import (
 const tableAPIKeys = consts.TableAPIKeys
 
 var readColumns = []string{
-	"id", "name", "description", "base_url", "is_active", "config", "created_at", "updated_at",
+	"id", "name", "description", "base_url", "is_active", "created_at", "updated_at",
 }
 
 // IntegrationReadRepo implements domain.IntegrationReadRepository for the CQRS read side.
 type IntegrationReadRepo struct {
-	pool    *pgxpool.Pool
-	builder squirrel.StatementBuilderType
+	pool     *pgxpool.Pool
+	builder  squirrel.StatementBuilderType
+	metadata *metadata.GenericMetadataRepo
 }
 
 // NewIntegrationReadRepo creates a new IntegrationReadRepo.
 func NewIntegrationReadRepo(pool *pgxpool.Pool) *IntegrationReadRepo {
 	return &IntegrationReadRepo{
-		pool:    pool,
-		builder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+		pool:     pool,
+		builder:  squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+		metadata: metadata.NewGenericMetadataRepo(pool),
 	}
 }
 
@@ -47,7 +49,18 @@ func (r *IntegrationReadRepo) FindByID(ctx context.Context, id uuid.UUID) (*doma
 	}
 
 	row := r.pool.QueryRow(ctx, sql, args...)
-	return scanIntegrationView(row)
+	view, err := scanIntegrationView(row)
+	if err != nil {
+		return nil, err
+	}
+
+	config, err := r.metadata.GetAll(ctx, metadata.EntityTypeIntegrationConfig, view.ID)
+	if err != nil {
+		return nil, err
+	}
+	view.Config = config
+
+	return view, nil
 }
 
 // List returns a paginated list of IntegrationView with optional filters.
@@ -111,6 +124,15 @@ func (r *IntegrationReadRepo) List(ctx context.Context, filter domain.Integratio
 		views = append(views, v)
 	}
 
+	// Load metadata for each integration.
+	for _, v := range views {
+		config, err := r.metadata.GetAll(ctx, metadata.EntityTypeIntegrationConfig, v.ID)
+		if err != nil {
+			return nil, 0, err
+		}
+		v.Config = config
+	}
+
 	return views, total, nil
 }
 
@@ -121,19 +143,13 @@ func scanIntegrationView(row pgx.Row) (*domain.IntegrationView, error) {
 		description *string
 		baseURL     string
 		isActive    bool
-		configJSON  []byte
 		createdAt   time.Time
 		updatedAt   time.Time
 	)
 
-	err := row.Scan(&id, &name, &description, &baseURL, &isActive, &configJSON, &createdAt, &updatedAt)
+	err := row.Scan(&id, &name, &description, &baseURL, &isActive, &createdAt, &updatedAt)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, map[string]any{"id": id})
-	}
-
-	var config map[string]any
-	if len(configJSON) > 0 {
-		_ = json.Unmarshal(configJSON, &config)
 	}
 
 	desc := ""
@@ -148,7 +164,6 @@ func scanIntegrationView(row pgx.Row) (*domain.IntegrationView, error) {
 		APIKey:     "",
 		WebhookURL: baseURL,
 		Enabled:    isActive,
-		Config:     config,
 		CreatedAt:  createdAt,
 		UpdatedAt:  updatedAt,
 	}, nil
@@ -161,19 +176,13 @@ func scanIntegrationViewFromRows(rows pgx.Rows) (*domain.IntegrationView, error)
 		description *string
 		baseURL     string
 		isActive    bool
-		configJSON  []byte
 		createdAt   time.Time
 		updatedAt   time.Time
 	)
 
-	err := rows.Scan(&id, &name, &description, &baseURL, &isActive, &configJSON, &createdAt, &updatedAt)
+	err := rows.Scan(&id, &name, &description, &baseURL, &isActive, &createdAt, &updatedAt)
 	if err != nil {
 		return nil, err
-	}
-
-	var config map[string]any
-	if len(configJSON) > 0 {
-		_ = json.Unmarshal(configJSON, &config)
 	}
 
 	desc := ""
@@ -188,7 +197,6 @@ func scanIntegrationViewFromRows(rows pgx.Rows) (*domain.IntegrationView, error)
 		APIKey:     "",
 		WebhookURL: baseURL,
 		Enabled:    isActive,
-		Config:     config,
 		CreatedAt:  createdAt,
 		UpdatedAt:  updatedAt,
 	}, nil

@@ -2,12 +2,12 @@ package postgres
 
 import (
 	"context"
-	"encoding/json"
 	"time"
 
 	"gct/internal/integration/domain"
 	"gct/internal/shared/domain/consts"
 	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/metadata"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -18,30 +18,27 @@ import (
 const tableName = consts.TableIntegrations
 
 var writeColumns = []string{
-	"id", "name", "description", "base_url", "is_active", "config", "created_at", "updated_at",
+	"id", "name", "description", "base_url", "is_active", "created_at", "updated_at",
 }
 
 // IntegrationWriteRepo implements domain.IntegrationRepository using PostgreSQL.
 type IntegrationWriteRepo struct {
-	pool    *pgxpool.Pool
-	builder squirrel.StatementBuilderType
+	pool     *pgxpool.Pool
+	builder  squirrel.StatementBuilderType
+	metadata *metadata.GenericMetadataRepo
 }
 
 // NewIntegrationWriteRepo creates a new IntegrationWriteRepo.
 func NewIntegrationWriteRepo(pool *pgxpool.Pool) *IntegrationWriteRepo {
 	return &IntegrationWriteRepo{
-		pool:    pool,
-		builder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+		pool:     pool,
+		builder:  squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+		metadata: metadata.NewGenericMetadataRepo(pool),
 	}
 }
 
 // Save inserts a new Integration aggregate into the database.
 func (r *IntegrationWriteRepo) Save(ctx context.Context, i *domain.Integration) error {
-	configJSON, err := json.Marshal(i.Config())
-	if err != nil {
-		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToMarshalJSON)
-	}
-
 	sql, args, err := r.builder.
 		Insert(tableName).
 		Columns(writeColumns...).
@@ -51,7 +48,6 @@ func (r *IntegrationWriteRepo) Save(ctx context.Context, i *domain.Integration) 
 			i.Type(),
 			i.WebhookURL(),
 			i.Enabled(),
-			configJSON,
 			i.CreatedAt(),
 			i.UpdatedAt(),
 		).
@@ -62,6 +58,10 @@ func (r *IntegrationWriteRepo) Save(ctx context.Context, i *domain.Integration) 
 
 	if _, err = r.pool.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
+	}
+
+	if err := r.metadata.SetMany(ctx, metadata.EntityTypeIntegrationConfig, i.ID(), i.Config()); err != nil {
+		return err
 	}
 
 	return nil
@@ -79,23 +79,31 @@ func (r *IntegrationWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (*dom
 	}
 
 	row := r.pool.QueryRow(ctx, sql, args...)
-	return scanIntegration(row)
+	entity, err := scanIntegration(row)
+	if err != nil {
+		return nil, err
+	}
+
+	config, err := r.metadata.GetAll(ctx, metadata.EntityTypeIntegrationConfig, entity.ID())
+	if err != nil {
+		return nil, err
+	}
+
+	return domain.ReconstructIntegration(
+		entity.ID(), entity.CreatedAt(), entity.UpdatedAt(), nil,
+		entity.Name(), entity.Type(), entity.APIKey(), entity.WebhookURL(),
+		entity.Enabled(), config,
+	), nil
 }
 
 // Update updates an Integration aggregate in the database.
 func (r *IntegrationWriteRepo) Update(ctx context.Context, i *domain.Integration) error {
-	configJSON, err := json.Marshal(i.Config())
-	if err != nil {
-		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToMarshalJSON)
-	}
-
 	sql, args, err := r.builder.
 		Update(tableName).
 		Set("name", i.Name()).
 		Set("description", i.Type()).
 		Set("base_url", i.WebhookURL()).
 		Set("is_active", i.Enabled()).
-		Set("config", configJSON).
 		Set("updated_at", i.UpdatedAt()).
 		Where(squirrel.Eq{"id": i.ID()}).
 		ToSql()
@@ -105,6 +113,10 @@ func (r *IntegrationWriteRepo) Update(ctx context.Context, i *domain.Integration
 
 	if _, err = r.pool.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
+	}
+
+	if err := r.metadata.SetMany(ctx, metadata.EntityTypeIntegrationConfig, i.ID(), i.Config()); err != nil {
+		return err
 	}
 
 	return nil
@@ -133,24 +145,18 @@ func (r *IntegrationWriteRepo) Delete(ctx context.Context, id uuid.UUID) error {
 
 func scanIntegration(row pgx.Row) (*domain.Integration, error) {
 	var (
-		id          uuid.UUID
-		name        string
+		id        uuid.UUID
+		name      string
 		description *string
-		baseURL     string
-		isActive    bool
-		configJSON  []byte
-		createdAt   time.Time
-		updatedAt   time.Time
+		baseURL   string
+		isActive  bool
+		createdAt time.Time
+		updatedAt time.Time
 	)
 
-	err := row.Scan(&id, &name, &description, &baseURL, &isActive, &configJSON, &createdAt, &updatedAt)
+	err := row.Scan(&id, &name, &description, &baseURL, &isActive, &createdAt, &updatedAt)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, map[string]any{"id": id})
-	}
-
-	var config map[string]any
-	if len(configJSON) > 0 {
-		_ = json.Unmarshal(configJSON, &config)
 	}
 
 	desc := ""
@@ -158,5 +164,5 @@ func scanIntegration(row pgx.Row) (*domain.Integration, error) {
 		desc = *description
 	}
 
-	return domain.ReconstructIntegration(id, createdAt, updatedAt, nil, name, desc, "", baseURL, isActive, config), nil
+	return domain.ReconstructIntegration(id, createdAt, updatedAt, nil, name, desc, "", baseURL, isActive, nil), nil
 }

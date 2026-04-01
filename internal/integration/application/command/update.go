@@ -20,7 +20,7 @@ type UpdateCommand struct {
 	APIKey     *string
 	WebhookURL *string
 	Enabled    *bool
-	Config     *map[string]any
+	Config     *map[string]string
 }
 
 // UpdateHandler applies partial modifications to an existing integration via fetch-then-update.

@@ -18,13 +18,13 @@ type Integration struct {
 	apiKey     string
 	webhookURL string
 	enabled    bool
-	config     map[string]any
+	config     map[string]string
 }
 
 // NewIntegration creates a new Integration aggregate.
-func NewIntegration(name, intType, apiKey, webhookURL string, enabled bool, config map[string]any) *Integration {
+func NewIntegration(name, intType, apiKey, webhookURL string, enabled bool, config map[string]string) *Integration {
 	if config == nil {
-		config = make(map[string]any)
+		config = make(map[string]string)
 	}
 	i := &Integration{
 		AggregateRoot: shared.NewAggregateRoot(),
@@ -46,10 +46,10 @@ func ReconstructIntegration(
 	deletedAt *time.Time,
 	name, intType, apiKey, webhookURL string,
 	enabled bool,
-	config map[string]any,
+	config map[string]string,
 ) *Integration {
 	if config == nil {
-		config = make(map[string]any)
+		config = make(map[string]string)
 	}
 	return &Integration{
 		AggregateRoot: shared.NewAggregateRootWithID(id, createdAt, updatedAt, deletedAt),
@@ -65,7 +65,7 @@ func ReconstructIntegration(
 // UpdateDetails applies a partial update using pointer-based optionality.
 // Nil pointers are skipped, allowing callers to update only the fields they provide.
 // Touch is called to advance the updatedAt timestamp for optimistic concurrency.
-func (i *Integration) UpdateDetails(name, intType, apiKey, webhookURL *string, enabled *bool, config *map[string]any) {
+func (i *Integration) UpdateDetails(name, intType, apiKey, webhookURL *string, enabled *bool, config *map[string]string) {
 	if name != nil {
 		i.name = *name
 	}
@@ -96,4 +96,4 @@ func (i *Integration) Type() string           { return i.intType }
 func (i *Integration) APIKey() string         { return i.apiKey }
 func (i *Integration) WebhookURL() string     { return i.webhookURL }
 func (i *Integration) Enabled() bool          { return i.enabled }
-func (i *Integration) Config() map[string]any { return i.config }
+func (i *Integration) Config() map[string]string { return i.config }

@@ -19,7 +19,7 @@ type CachedIntegration struct {
 	APIKey     string
 	WebhookURL string
 	Enabled    bool
-	Config     map[string]any
+	Config     map[string]string
 }
 
 // CacheService manages an in-memory cache of active integrations and API keys for fast lookup.

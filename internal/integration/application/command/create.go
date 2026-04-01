@@ -17,7 +17,7 @@ type CreateCommand struct {
 	APIKey     string
 	WebhookURL string
 	Enabled    bool
-	Config     map[string]any
+	Config     map[string]string
 }
 
 // CreateHandler orchestrates integration creation through the repository and event bus.

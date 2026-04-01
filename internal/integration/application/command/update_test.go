@@ -56,7 +56,7 @@ func TestUpdateHandler_Handle(t *testing.T) {
 }
 
 func TestUpdateHandler_PartialUpdate(t *testing.T) {
-	i := domain.NewIntegration("Name", "type", "key", "https://url.com", true, map[string]any{"k": "v"})
+	i := domain.NewIntegration("Name", "type", "key", "https://url.com", true, map[string]string{"k": "v"})
 
 	repo := &mockIntegrationRepo{
 		findFn: func(_ context.Context, _ uuid.UUID) (*domain.Integration, error) {
@@ -91,7 +91,7 @@ func TestUpdateHandler_WithConfig(t *testing.T) {
 	}
 	handler := NewUpdateHandler(repo, &mockEventBus{}, &mockLogger{})
 
-	newConfig := map[string]any{"channel": "#alerts", "priority": "high"}
+	newConfig := map[string]string{"channel": "#alerts", "priority": "high"}
 	err := handler.Handle(context.Background(), UpdateCommand{
 		ID:     i.ID(),
 		Config: &newConfig,

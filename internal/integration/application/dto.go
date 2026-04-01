@@ -14,7 +14,7 @@ type IntegrationView struct {
 	APIKey     string         `json:"api_key"`
 	WebhookURL string         `json:"webhook_url"`
 	Enabled    bool           `json:"enabled"`
-	Config     map[string]any `json:"config"`
+	Config     map[string]string `json:"config"`
 	CreatedAt  time.Time      `json:"created_at"`
 	UpdatedAt  time.Time      `json:"updated_at"`
 }

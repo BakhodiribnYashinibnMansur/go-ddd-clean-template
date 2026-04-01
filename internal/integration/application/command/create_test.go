@@ -89,7 +89,7 @@ func TestCreateHandler_Handle(t *testing.T) {
 		APIKey:     "xoxb-test-key",
 		WebhookURL: "https://hooks.slack.com/test",
 		Enabled:    true,
-		Config:     map[string]any{"channel": "#general"},
+		Config:     map[string]string{"channel": "#general"},
 	}
 
 	err := handler.Handle(context.Background(), cmd)

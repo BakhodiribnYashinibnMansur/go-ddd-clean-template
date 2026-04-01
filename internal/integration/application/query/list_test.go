@@ -13,8 +13,8 @@ import (
 func TestListHandler_Handle(t *testing.T) {
 	readRepo := &mockReadRepo{
 		views: []*domain.IntegrationView{
-			{ID: uuid.New(), Name: "Slack", Type: "messaging", APIKey: "k1", Enabled: true, Config: map[string]any{}, CreatedAt: time.Now(), UpdatedAt: time.Now()},
-			{ID: uuid.New(), Name: "SMTP", Type: "email", APIKey: "k2", Enabled: false, Config: map[string]any{}, CreatedAt: time.Now(), UpdatedAt: time.Now()},
+			{ID: uuid.New(), Name: "Slack", Type: "messaging", APIKey: "k1", Enabled: true, Config: map[string]string{}, CreatedAt: time.Now(), UpdatedAt: time.Now()},
+			{ID: uuid.New(), Name: "SMTP", Type: "email", APIKey: "k2", Enabled: false, Config: map[string]string{}, CreatedAt: time.Now(), UpdatedAt: time.Now()},
 		},
 		total: 2,
 	}
@@ -60,7 +60,7 @@ func TestListHandler_WithFilters(t *testing.T) {
 	intType := "messaging"
 	readRepo := &mockReadRepo{
 		views: []*domain.IntegrationView{
-			{ID: uuid.New(), Name: "Slack", Type: "messaging", APIKey: "k", Enabled: true, Config: map[string]any{}, CreatedAt: time.Now(), UpdatedAt: time.Now()},
+			{ID: uuid.New(), Name: "Slack", Type: "messaging", APIKey: "k", Enabled: true, Config: map[string]string{}, CreatedAt: time.Now(), UpdatedAt: time.Now()},
 		},
 		total: 1,
 	}

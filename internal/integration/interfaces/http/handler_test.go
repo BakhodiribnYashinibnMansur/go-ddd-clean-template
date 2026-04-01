@@ -162,7 +162,7 @@ func TestHandler_Create_BadRequest(t *testing.T) {
 func TestHandler_List_Success(t *testing.T) {
 	readRepo := &mockReadRepo{
 		views: []*domain.IntegrationView{
-			{ID: uuid.New(), Name: "Slack", Type: "messaging", APIKey: "k", Enabled: true, Config: map[string]any{}, CreatedAt: time.Now(), UpdatedAt: time.Now()},
+			{ID: uuid.New(), Name: "Slack", Type: "messaging", APIKey: "k", Enabled: true, Config: map[string]string{}, CreatedAt: time.Now(), UpdatedAt: time.Now()},
 		},
 		total: 1,
 	}
@@ -181,7 +181,7 @@ func TestHandler_Get_Success(t *testing.T) {
 	id := uuid.New()
 	readRepo := &mockReadRepo{
 		view: &domain.IntegrationView{
-			ID: id, Name: "Slack", Type: "messaging", APIKey: "k", Enabled: true, Config: map[string]any{}, CreatedAt: time.Now(), UpdatedAt: time.Now(),
+			ID: id, Name: "Slack", Type: "messaging", APIKey: "k", Enabled: true, Config: map[string]string{}, CreatedAt: time.Now(), UpdatedAt: time.Now(),
 		},
 	}
 	router := setupRouter(&mockRepo{}, readRepo)
