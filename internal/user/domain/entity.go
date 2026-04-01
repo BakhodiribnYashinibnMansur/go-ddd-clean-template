@@ -137,6 +137,18 @@ func (u *User) RemoveSession(sessionID uuid.UUID) error {
 	return ErrSessionNotFound
 }
 
+// RevokeSession marks a single session as revoked by ID.
+func (u *User) RevokeSession(sessionID uuid.UUID) error {
+	for i, s := range u.sessions {
+		if s.ID() == sessionID {
+			u.sessions[i].Revoke()
+			u.Touch()
+			return nil
+		}
+	}
+	return ErrSessionNotFound
+}
+
 // RevokeAllSessions marks every session as revoked without removing them from the aggregate.
 // Revoked sessions remain visible for audit purposes but fail IsActive checks.
 func (u *User) RevokeAllSessions() {

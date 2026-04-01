@@ -1,7 +1,14 @@
 package app
 
 import (
+	"context"
+
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/user"
+	"gct/internal/user/application/command"
+
+	"github.com/google/uuid"
+	miniogo "github.com/minio/minio-go/v7"
 
 	announcementhttp "gct/internal/announcement/interfaces/http"
 	audithttp "gct/internal/audit/interfaces/http"
@@ -28,8 +35,36 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// sessionRevokerAdapter bridges the session HTTP handler to the User BC's sign-out commands.
+type sessionRevokerAdapter struct {
+	userBC *user.BoundedContext
+}
+
+func (a *sessionRevokerAdapter) RevokeSession(ctx context.Context, userID, sessionID uuid.UUID) error {
+	return a.userBC.SignOut.Handle(ctx, command.SignOutCommand{
+		UserID:    userID,
+		SessionID: sessionID,
+	})
+}
+
+func (a *sessionRevokerAdapter) RevokeAllSessions(ctx context.Context, userID uuid.UUID) error {
+	return a.userBC.RevokeAll.Handle(ctx, command.RevokeAllSessionsCommand{
+		UserID: userID,
+	})
+}
+
+// RouteOptions holds optional dependencies for route registration.
+type RouteOptions struct {
+	Minio       *miniogo.Client
+	MinioBucket string
+}
+
 // RegisterDDDRoutes registers all HTTP routes for DDD bounded contexts.
-func RegisterDDDRoutes(router *gin.Engine, bcs *DDDBoundedContexts, authMW, authzMW, csrfMW gin.HandlerFunc, l logger.Log) {
+func RegisterDDDRoutes(router *gin.Engine, bcs *DDDBoundedContexts, authMW, authzMW, csrfMW gin.HandlerFunc, l logger.Log, opts ...RouteOptions) {
+	var opt RouteOptions
+	if len(opts) > 0 {
+		opt = opts[0]
+	}
 	userHandler := userhttp.NewHandler(bcs.User, l)
 	authzHandler := authzhttp.NewHandler(bcs.Authz, l)
 	sessionHandler := sessionhttp.NewHandler(bcs.Session, l)
@@ -49,6 +84,9 @@ func RegisterDDDRoutes(router *gin.Engine, bcs *DDDBoundedContexts, authMW, auth
 
 	dataExportHandler := dataexporthttp.NewHandler(bcs.DataExport, l)
 	fileHandler := filehttp.NewHandler(bcs.File, l)
+	if opt.Minio != nil {
+		fileHandler.SetMinio(opt.Minio, opt.MinioBucket)
+	}
 	userSettingHandler := usersettinghttp.NewHandler(bcs.UserSetting, l)
 	errorCodeHandler := errorcodehttp.NewHandler(bcs.ErrorCode, l)
 
@@ -116,10 +154,14 @@ func RegisterDDDRoutes(router *gin.Engine, bcs *DDDBoundedContexts, authMW, auth
 		scopes.DELETE("", authzHandler.DeleteScope)
 	}
 
+	sessionHandler.SetRevoker(&sessionRevokerAdapter{userBC: bcs.User})
+
 	sessions := protected.Group("/sessions")
 	{
 		sessions.GET("", sessionHandler.List)
 		sessions.GET("/:id", sessionHandler.Get)
+		sessions.DELETE("/:id", sessionHandler.Delete)
+		sessions.POST("/revoke-all", sessionHandler.RevokeAll)
 	}
 
 	auditLogs := protected.Group("/audit-logs")
@@ -231,6 +273,10 @@ func RegisterDDDRoutes(router *gin.Engine, bcs *DDDBoundedContexts, authMW, auth
 		files.POST("", fileHandler.Create)
 		files.GET("", fileHandler.List)
 		files.GET("/:id", fileHandler.Get)
+		files.POST("/upload/image", fileHandler.UploadImage)
+		files.POST("/upload/images", fileHandler.UploadImages)
+		files.POST("/upload/doc", fileHandler.UploadDoc)
+		files.GET("/download", fileHandler.Download)
 	}
 
 	userSettings := protected.Group("/user-settings")

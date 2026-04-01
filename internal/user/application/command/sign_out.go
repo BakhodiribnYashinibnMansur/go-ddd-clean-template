@@ -43,7 +43,7 @@ func (h *SignOutHandler) Handle(ctx context.Context, cmd SignOutCommand) error {
 		return err
 	}
 
-	if err := user.RemoveSession(cmd.SessionID); err != nil {
+	if err := user.RevokeSession(cmd.SessionID); err != nil {
 		return err
 	}
 

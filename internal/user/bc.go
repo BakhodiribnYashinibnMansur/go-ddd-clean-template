@@ -22,6 +22,7 @@ type BoundedContext struct {
 	ApproveUser *command.ApproveUserHandler
 	ChangeRole  *command.ChangeRoleHandler
 	BulkAction  *command.BulkActionHandler
+	RevokeAll   *command.RevokeAllSessionsHandler
 
 	// Queries
 	GetUser         *query.GetUserHandler
@@ -45,6 +46,7 @@ func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, l logg
 		ApproveUser: command.NewApproveUserHandler(writeRepo, eventBus, l),
 		ChangeRole:  command.NewChangeRoleHandler(writeRepo, eventBus, l),
 		BulkAction:  command.NewBulkActionHandler(writeRepo, eventBus, l),
+		RevokeAll:   command.NewRevokeAllSessionsHandler(writeRepo, eventBus, l),
 		GetUser:         query.NewGetUserHandler(readRepo),
 		ListUsers:       query.NewListUsersHandler(readRepo),
 		FindSession:     query.NewFindSessionHandler(readRepo),

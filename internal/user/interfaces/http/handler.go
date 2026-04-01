@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/user"
 	"gct/internal/user/application/command"
@@ -98,7 +99,12 @@ func (h *Handler) Get(ctx *gin.Context) {
 
 	view, err := h.bc.GetUser.Handle(ctx.Request.Context(), query.GetUserQuery{ID: id})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		code := apperrors.GetCode(err)
+		status := apperrors.MapToHTTPStatus(code)
+		if status == 0 {
+			status = http.StatusInternalServerError
+		}
+		ctx.JSON(status, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -258,7 +264,12 @@ func (h *Handler) SignUp(ctx *gin.Context) {
 		Email:    req.Email,
 	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		code := apperrors.GetCode(err)
+		status := apperrors.MapToHTTPStatus(code)
+		if status == 0 {
+			status = http.StatusInternalServerError
+		}
+		ctx.JSON(status, gin.H{"error": err.Error()})
 		return
 	}
 

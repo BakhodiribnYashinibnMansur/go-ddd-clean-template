@@ -8,5 +8,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	{
 		sessions.GET("", h.List)
 		sessions.GET("/:id", h.Get)
+		sessions.DELETE("/:id", h.Delete)
+		sessions.POST("/revoke-all", h.RevokeAll)
 	}
 }

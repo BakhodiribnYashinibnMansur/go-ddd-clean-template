@@ -17,6 +17,7 @@ import (
 	"gct/test/e2e/common/setup"
 
 	"github.com/gin-gonic/gin"
+	miniogo "github.com/minio/minio-go/v7"
 )
 
 func TestMain(m *testing.M) {
@@ -57,7 +58,13 @@ func startTestServer() *httptest.Server {
 	authzMiddleware := authzmw.NewAuthzMiddleware(bcs.Authz.CheckAccess, bcs.User.FindUserForAuth, l)
 	csrfMW := sharedmw.HybridMiddleware(l, consts.CookieCsrfToken)
 
-	app.RegisterDDDRoutes(handler, bcs, authMW.AuthClientAccess, authzMiddleware.Authz, csrfMW, l)
+	bucket := "test-bucket"
+	setup.TestMinio.MakeBucket(context.Background(), bucket, miniogo.MakeBucketOptions{})
+
+	app.RegisterDDDRoutes(handler, bcs, authMW.AuthClientAccess, authzMiddleware.Authz, csrfMW, l, app.RouteOptions{
+		Minio:       setup.TestMinio,
+		MinioBucket: bucket,
+	})
 
 	return httptest.NewServer(handler)
 }

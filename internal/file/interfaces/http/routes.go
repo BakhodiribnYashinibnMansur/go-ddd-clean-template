@@ -8,4 +8,8 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	g.POST("", h.Create)
 	g.GET("", h.List)
 	g.GET("/:id", h.Get)
+	g.POST("/upload/image", h.UploadImage)
+	g.POST("/upload/images", h.UploadImages)
+	g.POST("/upload/doc", h.UploadDoc)
+	g.GET("/download", h.Download)
 }

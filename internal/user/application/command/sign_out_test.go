@@ -46,8 +46,11 @@ func TestSignOutHandler_Handle(t *testing.T) {
 		t.Fatal("expected user to be updated")
 	}
 
-	if len(repo.updatedUser.Sessions()) != 0 {
-		t.Errorf("expected 0 sessions after sign-out, got %d", len(repo.updatedUser.Sessions()))
+	if len(repo.updatedUser.Sessions()) != 1 {
+		t.Errorf("expected 1 session after sign-out (revoked), got %d", len(repo.updatedUser.Sessions()))
+	}
+	if !repo.updatedUser.Sessions()[0].IsRevoked() {
+		t.Error("session should be revoked after sign-out")
 	}
 }
 
