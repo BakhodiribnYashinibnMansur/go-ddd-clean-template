@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"gct/internal/shared/domain/consts"
-	jwt "github.com/dgrijalva/jwt-go"
+	jwt "github.com/golang-jwt/jwt/v4"
 )
 
 // Tokens represents a pair of access and refresh tokens.

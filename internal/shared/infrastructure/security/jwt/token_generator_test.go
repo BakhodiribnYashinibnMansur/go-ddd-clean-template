@@ -8,7 +8,7 @@ import (
 
 	"gct/internal/shared/domain/consts"
 
-	gojwt "github.com/dgrijalva/jwt-go"
+	gojwt "github.com/golang-jwt/jwt/v4"
 )
 
 func testRSAKey(t *testing.T) *rsa.PrivateKey {

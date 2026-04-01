@@ -7,7 +7,7 @@ Backend/
 ├── cmd/                           # Dastur kirish nuqtalari
 │   ├── app/main.go               # Asosiy dastur
 │   ├── seeder/                   # DB seed qilish
-│   ├── keygen/                   # Kalit generatsiya
+│   ├── keygen/                   # JWT RSA kalit generatsiya
 │   └── migration/                # Migratsiya ishga tushirish
 │
 ├── config/                        # Konfiguratsiya
@@ -17,22 +17,23 @@ Backend/
 │   ├── jwt.go                    # JWT sozlamalari
 │   └── redis.go                  # Redis sozlamalari
 │
-├── migrations/postgres/           # Goose SQL migratsiyalar (~32 fayl)
+├── migrations/postgres/           # Goose SQL migratsiyalar
 │
 ├── internal/                      # Asosiy business logika
 │   ├── app/                      # Bootstrap & Wiring
 │   ├── shared/                   # Shared Kernel
-│   ├── [22 Bounded Context]      # DDD domenlar
-│   ├── domain/                   # (Legacy) domen modellari
-│   ├── usecase/                  # (Legacy) use case'lar
-│   ├── repo/                     # (Legacy) repository'lar
-│   └── controller/               # (Legacy) HTTP handlerlar
+│   └── [19 Bounded Context]      # DDD domenlar
 │
 ├── test/                          # Testlar
-├── docs/                          # Swagger/OpenAPI
+│   ├── e2e/                      # End-to-end flow testlar
+│   ├── integration/              # Integration testlar (testcontainers)
+│   ├── performance/              # Load & stress testlar
+│   └── schemathesis/             # API schema fuzzing
+│
+├── docs/swagger/                  # Generated OpenAPI specs
 ├── nginx/                         # Nginx config
-├── Dockerfile
-├── docker-compose.yml
+├── Dockerfile                     # Multi-stage (distroless)
+├── docker-compose.yml             # To'liq infra stack
 └── Makefile
 ```
 
@@ -74,37 +75,34 @@ internal/{bc_name}/
 
 ---
 
-## 22 Bounded Context ro'yxati
+## 19 Bounded Context ro'yxati
 
 ### Core Domenlar
 | BC | Vazifasi |
 |----|----------|
 | **user** | Foydalanuvchi boshqaruvi, autentifikatsiya (SignIn, SignUp, CRUD) |
 | **authz** | Avtorizatsiya — RBAC (Role, Permission, Policy, Scope) |
-| **session** | Sessiya boshqaruvi |
+| **session** | Sessiya boshqaruvi, device tracking |
 | **audit** | Audit logging |
 
 ### Feature Domenlar
 | BC | Vazifasi |
 |----|----------|
-| **announcement** | Tizim e'lonlari |
+| **announcement** | Tizim e'lonlari (ko'p tilli) |
 | **dashboard** | Dashboard ma'lumotlari agregatsiyasi |
-| **featureflag** | Feature toggle |
-| **integration** | Tashqi tizimlar integratsiyasi |
-| **notification** | Foydalanuvchi bildirishnomalari |
-| **translation** | Ko'p tilli qo'llab-quvvatlash |
-| **file** | Fayl metadata boshqaruvi |
-| **webhook** | Webhook boshqaruvi va yetkazish |
-| **emailtemplate** | Email shablon saqlash |
 | **dataexport** | Ma'lumot eksport ishlari |
-| **sitesetting** | Sayt konfiguratsiyasi |
-| **usersetting** | Foydalanuvchi sozlamalari |
-| **ratelimit** | Rate limiting qoidalari |
-| **iprule** | IP asosida kirish nazorati |
-| **job** | Background job rejalashtirish |
-| **systemerror** | Tizim xatolarini kuzatish |
 | **errorcode** | Xato kodlari boshqaruvi |
+| **featureflag** | Feature toggle |
+| **file** | Fayl metadata boshqaruvi (MinIO) |
+| **integration** | Tashqi tizimlar integratsiyasi, API kalitlar |
+| **iprule** | IP asosida kirish nazorati |
 | **metric** | Performance metrikalari |
+| **notification** | Foydalanuvchi bildirishnomalari |
+| **ratelimit** | Rate limiting qoidalari |
+| **sitesetting** | Sayt konfiguratsiyasi |
+| **systemerror** | Tizim xatolarini kuzatish (5xx) |
+| **translation** | Ko'p tilli qo'llab-quvvatlash |
+| **usersetting** | Foydalanuvchi sozlamalari |
 
 ---
 
@@ -115,29 +113,39 @@ internal/shared/
 ├── domain/                        # Umumiy value objectlar & konstantalar
 │   └── consts/
 │
-├── application/                   # Umumiy interfeyslar
-│   └── event_bus.go              # EventBus interfeysi
+├── application/                   # EventBus interfeysi, CQRS base typelar
 │
 └── infrastructure/                # Cross-cutting tashkilotlar
     ├── db/
-    │   ├── postgres/             # PostgreSQL ulanish pool
-    │   └── redis/                # Redis ulanish
+    │   ├── postgres/             # PostgreSQL ulanish pool (pgxpool) + Squirrel
+    │   ├── redis/                # Redis ulanish
+    │   └── minio/                # MinIO (S3-compatible) object storage
+    ├── security/
+    │   ├── jwt/                  # JWT (RSA) + device fingerprinting
+    │   └── csrf/                 # CSRF (HMAC-SHA256, Redis-backed)
     ├── logger/                   # Zap structured logging
-    ├── security/                 # JWT, CSRF
-    ├── server/http/              # HTTP server wrapper
-    ├── cache/                    # Cache utillar
-    ├── errorx/                   # Xato ishlov berish
-    ├── asynq/                    # Task queue (Redis-backed)
-    ├── validator/                # Input validatsiya
-    ├── tracing/                  # OpenTelemetry
+    ├── tracing/                  # OpenTelemetry + Jaeger
+    ├── metrics/                  # OpenTelemetry + Prometheus
+    ├── asynq/                    # Background job queue (Redis-backed)
+    ├── cache/                    # In-memory cache (LRU, LFU, SLRU, 2Q, FIFO, ...)
     ├── eventbus/                 # In-Memory event bus
-    ├── httpx/                    # HTTP utillar
-    ├── contextx/                 # Context utillar
-    ├── pgxutil/                  # PostgreSQL utillar
-    ├── container/                # DI container
-    ├── firebase/                 # Firebase integratsiya
-    ├── telegram/                 # Telegram bot
-    └── validation/               # Validatsiya qoidalari
+    ├── errors/                   # Typed xato kodlar, DB xato mapping, retry
+    ├── errorx/                   # HTTP xato response helper'lar
+    ├── httpx/                    # HTTP request/response utillar
+    ├── middleware/                # CORS, security headers, rate limiting
+    ├── sse/                      # Server-Sent Events
+    ├── pubsub/                   # Pub/sub messaging
+    ├── metadata/                 # Entity metadata (EAV key-value store)
+    ├── validator/                # Struct validatsiya
+    ├── validation/               # Field validatorlar (email, phone, password, UUID)
+    ├── contextx/                 # Type-safe context kalitlar
+    ├── pgxutil/                  # Transaction helper'lar (WithTx)
+    ├── ptrutil/                  # Generic pointer utillar
+    ├── useragent/                # User-Agent parser
+    ├── server/http/              # HTTP server
+    ├── container/                # Test container helper'lar (testcontainers-go)
+    ├── firebase/                 # Firebase Cloud Messaging
+    └── telegram/                 # Telegram bot
 ```
 
 ---
@@ -153,13 +161,12 @@ cmd/app/main.go
               ├── 3. PostgreSQL connection pool
               ├── 4. Redis connection
               ├── 5. Asynq task queue client
-              ├── 6. Legacy: Repositories → UseCases
-              ├── 7. DDD: NewDDDBoundedContexts()  ← 22 BC yaratish
-              ├── 8. EventBus (InMemory)
-              ├── 9. Cache invalidation service
-              ├── 10. Asynq Worker
-              ├── 11. HTTP Router (Gin) + Middleware + Routes
-              └── 12. Graceful Shutdown (SIGINT/SIGTERM)
+              ├── 6. DDD: NewDDDBoundedContexts()  ← 19 BC yaratish
+              ├── 7. EventBus (InMemory)
+              ├── 8. Cache invalidation service
+              ├── 9. Asynq Worker
+              ├── 10. HTTP Router (Gin) + Middleware + Routes
+              └── 11. Graceful Shutdown (SIGINT/SIGTERM)
 ```
 
 **Bootstrap fayllari:**
@@ -175,19 +182,19 @@ cmd/app/main.go
 |-----------|-------------|
 | Til | Go 1.25 |
 | Web Framework | Gin |
-| Database | PostgreSQL (NeonDB) |
+| Database | PostgreSQL 18 |
 | Query Builder | Squirrel |
-| Code Gen | sqlc |
-| Cache | Redis (go-redis) |
-| Task Queue | Asynq |
+| Cache | Redis 7.4 (go-redis) |
+| Task Queue | Asynq (Redis-backed) |
 | File Storage | MinIO (S3-compatible) |
-| Logging | Zap |
+| Logging | Zap (structured) |
+| Metrics | OpenTelemetry + Prometheus |
 | Tracing | OpenTelemetry + Jaeger |
 | Validation | validator/v10 |
 | API Docs | Swagger (swaggo/swag) |
-| Testing | testify, miniredis |
-| Migrations | Goose |
-| Auth | JWT + CSRF (Double-Submit Cookie) |
+| Testing | testify, testcontainers |
+| Migrations | Goose v3 |
+| Auth | JWT (RSA) + CSRF (Double-Submit Cookie) |
 
 ---
 
@@ -229,33 +236,3 @@ type BoundedContext struct {
     ListUsers   *query.ListUsersHandler
 }
 ```
-
----
-
-## Legacy vs DDD
-
-| Layer | Legacy (o'chiriladi) | DDD (yangi) |
-|-------|---------------------|-------------|
-| Entity | `internal/domain/` | `internal/{bc}/domain/` |
-| UseCase | `internal/usecase/` | `internal/{bc}/application/command\|query/` |
-| Repo | `internal/repo/` | `internal/{bc}/infrastructure/postgres/` |
-| Handler | `internal/controller/` | `internal/{bc}/interfaces/http/` |
-
-> Legacy kod hali ham mavjud va bosqichma-bosqich DDD'ga ko'chirilmoqda.
-
----
-
-## Migratsiya Holati
-
-**Bajarilgan:**
-- Shared Kernel (BaseEntity, AggregateRoot, Repository[T], CommandHandler, QueryHandler)
-- 22 Bounded Context (domain + application + infrastructure layerlar)
-- InMemoryEventBus + KafkaEventBus stub
-- DDDBoundedContexts container
-
-**Qolgan ishlar:**
-- HTTP interfaces layer (handlerlar + routelar)
-- Kafka EventBus to'liq implementatsiya
-- Cross-BC event subscribers wiring
-- Legacy kodlarni o'chirish
-- Integration/E2E testlar
