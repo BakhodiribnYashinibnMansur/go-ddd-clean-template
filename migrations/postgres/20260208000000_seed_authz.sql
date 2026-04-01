@@ -263,37 +263,49 @@ ON CONFLICT DO NOTHING;
 
 -- 6. POLICIES (ABAC Examples)
 -- Policy: Managers/HR can only manage users if they belong to the same branch.
-INSERT INTO policy (permission_id, effect, priority, active, conditions)
-SELECT p.id, 'ALLOW', 10, true, 
-'{
-    "user.relation_names_any": "$target.user.relation_names"
-}'::jsonb
+INSERT INTO policy (permission_id, effect, priority, active)
+SELECT p.id, 'ALLOW', 10, true
 FROM permission p WHERE p.name IN ('user.update', 'user.delete')
 ON CONFLICT DO NOTHING;
 
--- Policy: Auditor can see everything regardless of branch (Overriding common restrictions)
-INSERT INTO policy (permission_id, effect, priority, active, conditions)
-SELECT p.id, 'ALLOW', 100, true, 
-'{
-    "user.role_name": "auditor"
-}'::jsonb
+INSERT INTO entity_metadata (entity_type, entity_id, key, value, value_type)
+SELECT 'policy_conditions', pol.id, 'user.relation_names_any', '$target.user.relation_names', 'string'
+FROM policy pol
+JOIN permission p ON pol.permission_id = p.id
+WHERE p.name IN ('user.update', 'user.delete') AND pol.effect = 'ALLOW' AND pol.priority = 10
+ON CONFLICT DO NOTHING;
+
+-- Policy: Auditor can see everything regardless of branch
+INSERT INTO policy (permission_id, effect, priority, active)
+SELECT p.id, 'ALLOW', 100, true
 FROM permission p WHERE p.name = 'user.view'
 ON CONFLICT DO NOTHING;
 
+INSERT INTO entity_metadata (entity_type, entity_id, key, value, value_type)
+SELECT 'policy_conditions', pol.id, 'user.role_name', 'auditor', 'string'
+FROM policy pol
+JOIN permission p ON pol.permission_id = p.id
+WHERE p.name = 'user.view' AND pol.effect = 'ALLOW' AND pol.priority = 100
+ON CONFLICT DO NOTHING;
+
 -- Policy: Restrict deletions to specific IP (example)
-INSERT INTO policy (permission_id, effect, priority, active, conditions)
-SELECT p.id, 'DENY', 100, false, 
-'{
-    "env.ip_not_in": ["127.0.0.1", "192.168.1.1"]
-}'::jsonb
+INSERT INTO policy (permission_id, effect, priority, active)
+SELECT p.id, 'DENY', 100, false
 FROM permission p WHERE p.name = 'root'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO entity_metadata (entity_type, entity_id, key, value, value_type)
+SELECT 'policy_conditions', pol.id, 'env.ip_not_in', '["127.0.0.1", "192.168.1.1"]', 'json_array'
+FROM policy pol
+JOIN permission p ON pol.permission_id = p.id
+WHERE p.name = 'root' AND pol.effect = 'DENY' AND pol.priority = 100
 ON CONFLICT DO NOTHING;
 
 -- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin
-DELETE FROM policy WHERE conditions->>'user.relation_names_any' IS NOT NULL;
+DELETE FROM entity_metadata WHERE entity_type = 'policy_conditions';
 DELETE FROM role_permission WHERE role_id IN (SELECT id FROM role WHERE name IN ('manager', 'user'));
 DELETE FROM permission_scope;
 DELETE FROM permission WHERE name IN ('view_users', 'manage_users', 'view_authz', 'manage_authz', 'view_audit');

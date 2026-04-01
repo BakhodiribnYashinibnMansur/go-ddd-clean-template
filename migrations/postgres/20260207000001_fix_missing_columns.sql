@@ -1,10 +1,10 @@
 -- +goose Up
 -- +goose StatementBegin
-ALTER TABLE policy ADD COLUMN IF NOT EXISTS conditions JSONB DEFAULT '{}';
-ALTER TABLE users ADD COLUMN IF NOT EXISTS attributes JSONB NOT NULL DEFAULT '{}';
+-- JSONB columns removed: conditions and attributes now use entity_metadata (EAV).
+-- This migration is intentionally empty after the JSONB-to-EAV migration.
 -- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin
--- Rollback not safe if columns were already expected to be there
+-- No-op
 -- +goose StatementEnd
