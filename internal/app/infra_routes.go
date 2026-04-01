@@ -26,8 +26,9 @@ func setupInfraRoutes(handler *gin.Engine, cfg *config.Config, pool *pgxpool.Poo
 		handler.GET("/metrics", gin.WrapH(metricsHandler))
 	}
 
-	// Swagger
+	// Swagger & Redoc
 	setupSwaggerRoutes(handler, cfg)
+	setupRedocRoute(handler, cfg)
 
 	// Proto docs
 	if cfg.Proto.Enabled || cfg.App.IsDev() {
@@ -97,6 +98,7 @@ func setupInfraRoutes(handler *gin.Engine, cfg *config.Config, pool *pgxpool.Poo
 
 const swaggerRoute = "/docs/swagger/*any"
 const swaggerPath = "/docs/swagger/index.html"
+const redocPath = "/docs/redoc"
 const protoPath = "/docs/proto"
 const adminPath = "/admin/dashboard"
 
@@ -122,6 +124,32 @@ func setupSwaggerRoutes(handler *gin.Engine, cfg *config.Config) {
 	}
 }
 
+const redocHTML = `<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Go Clean Template API — Redoc</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>body{margin:0;padding:0}</style></head>
+<body><redoc spec-url='{{.SpecURL}}' hide-download-button></redoc>
+<script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
+</body></html>`
+
+func setupRedocRoute(handler *gin.Engine, cfg *config.Config) {
+	if cfg.Swagger.Enabled || cfg.App.IsDev() {
+		handler.GET("/docs/redoc", func(c *gin.Context) {
+			scheme := "http"
+			if c.Request.TLS != nil || httpx.GetForwardedProto(c) == "https" {
+				scheme = "https"
+			}
+			specURL := scheme + "://" + c.Request.Host + "/docs/swagger/doc.json"
+			data := struct{ SpecURL string }{SpecURL: specURL}
+			tmpl, _ := template.New("redoc").Parse(redocHTML)
+			var buf bytes.Buffer
+			_ = tmpl.Execute(&buf, data)
+			c.Data(http.StatusOK, "text/html; charset=utf-8", buf.Bytes())
+		})
+	}
+}
+
 const rootHTML = `<!DOCTYPE html>
 <html lang="en"><head><meta charset="UTF-8"><title>Go Clean Template API</title>
 <style>body{font-family:sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#030712;color:#f8fafc}
@@ -129,7 +157,7 @@ const rootHTML = `<!DOCTYPE html>
 a{color:#38bdf8;text-decoration:none;margin:0 1rem}</style></head>
 <body><div class="c"><div class="h">Go Clean Template</div>
 <p>API is running</p>
-<p><a href="{{.SwaggerURL}}">Swagger</a> | <a href="{{.ProtoURL}}">Proto</a> | <a href="{{.AdminURL}}">Admin</a></p>
+<p><a href="{{.SwaggerURL}}">Swagger</a> | <a href="{{.RedocURL}}">Redoc</a> | <a href="{{.ProtoURL}}">Proto</a> | <a href="{{.AdminURL}}">Admin</a></p>
 </div></body></html>`
 
 func setupRootPage(handler *gin.Engine, cfg *config.Config) {
@@ -139,9 +167,10 @@ func setupRootPage(handler *gin.Engine, cfg *config.Config) {
 			scheme = "https"
 		}
 		data := struct {
-			SwaggerURL, ProtoURL, AdminURL string
+			SwaggerURL, RedocURL, ProtoURL, AdminURL string
 		}{
 			SwaggerURL: scheme + "://" + c.Request.Host + swaggerPath,
+			RedocURL:   scheme + "://" + c.Request.Host + redocPath,
 			ProtoURL:   scheme + "://" + c.Request.Host + protoPath,
 			AdminURL:   scheme + "://" + c.Request.Host + adminPath,
 		}
