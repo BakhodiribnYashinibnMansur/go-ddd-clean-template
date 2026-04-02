@@ -167,3 +167,21 @@ func (l *logger) withCtx(ctx context.Context) map[string]any {
 	}
 	return fields
 }
+
+// WithPersistCore adds an additional zap core (e.g., RedisSink) to the logger
+// so that log entries are tee'd to both console/JSON output and the persist sink.
+func WithPersistCore(base Log, extra zapcore.Core) Log {
+	l, ok := base.(*logger)
+	if !ok {
+		return base
+	}
+	// Rebuild underlying zap logger with a tee core
+	baseZap := l.zap.Desugar()
+	tee := zapcore.NewTee(baseZap.Core(), extra)
+	newZap := zap.New(tee, zap.AddCaller(), zap.AddCallerSkip(1))
+
+	return &logger{
+		zap:    newZap.Sugar(),
+		ctxZap: newZap.WithOptions(zap.AddCallerSkip(1)).Sugar(),
+	}
+}

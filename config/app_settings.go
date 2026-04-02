@@ -21,10 +21,17 @@ type (
 
 	// Log -.
 	Log struct {
-		Level              string `yaml:"level"`
-		Format             string `yaml:"format" env:"LOG_FORMAT" envDefault:"console" validate:"oneof=console json"`
-		ShowGin            bool   `yaml:"show_gin" env:"LOG_SHOW_GIN" envDefault:"true"`
-		SlowOpThresholdMs  int64  `yaml:"slow_op_threshold_ms" env:"LOG_SLOW_OP_THRESHOLD_MS" envDefault:"500"`
+		Level             string `yaml:"level"`
+		Format            string `yaml:"format" env:"LOG_FORMAT" envDefault:"console" validate:"oneof=console json"`
+		ShowGin           bool   `yaml:"show_gin" env:"LOG_SHOW_GIN" envDefault:"true"`
+		SlowOpThresholdMs int64  `yaml:"slow_op_threshold_ms" env:"LOG_SLOW_OP_THRESHOLD_MS" envDefault:"500"`
+
+		// Persistence — buffer logs in Redis, flush to PostgreSQL periodically
+		PersistEnabled bool   `yaml:"persist_enabled" env:"LOG_PERSIST_ENABLED" envDefault:"false"`
+		PersistLevel   string `yaml:"persist_level" env:"LOG_PERSIST_LEVEL" envDefault:"warn" validate:"oneof=debug info warn error"`
+		RedisKey       string `yaml:"redis_key" env:"LOG_REDIS_KEY" envDefault:"app:logs"`
+		FlushInterval  int64  `yaml:"flush_interval_sec" env:"LOG_FLUSH_INTERVAL_SEC" envDefault:"60"`
+		FlushBatchSize int    `yaml:"flush_batch_size" env:"LOG_FLUSH_BATCH_SIZE" envDefault:"1000"`
 	}
 
 	// APIKeys configuration -.
