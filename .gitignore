@@ -1,6 +1,6 @@
 # Binaries and Build Artifacts
 bin/
-app
+/app
 *.exe
 *.exe~
 *.dll
@@ -25,7 +25,6 @@ vendor/
 *.swp
 *.swo
 .DS_Store
-app
 *.pem
 private_test.pem
 public_test.pem
@@ -37,7 +36,6 @@ public_test.pem
 .go-cache/
 .gopath/
 .tmp/
-.cache/
 tmp/
 .air/
 **/genproto/
