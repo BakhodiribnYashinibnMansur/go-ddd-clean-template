@@ -1,11 +1,17 @@
 package errors
 
+import "sync"
+
 // UserMessage represents a user-friendly error message with i18n support
 type UserMessage struct {
 	En string `json:"en"` // English
 	Uz string `json:"uz"` // Uzbek
 	Ru string `json:"ru"` // Russian
 }
+
+// mu protects concurrent access to userMessages and customHTTPStatuses maps.
+// These maps are read by HTTP handlers and written by EventBus subscribers.
+var mu sync.RWMutex
 
 // userMessages contains user-friendly messages for all error codes
 var userMessages = map[string]UserMessage{
@@ -237,7 +243,9 @@ var userMessages = map[string]UserMessage{
 
 // GetUserMessage returns user-friendly message for error code in specified language
 func GetUserMessage(code, lang string) string {
+	mu.RLock()
 	msg, ok := userMessages[code]
+	mu.RUnlock()
 	if !ok {
 		// Return generic message if code not found
 		return getUserMessageFallback(lang)
@@ -267,12 +275,17 @@ var customHTTPStatuses = make(map[string]int)
 
 // SetHTTPStatus updates the HTTP status for an error code
 func SetHTTPStatus(code string, status int) {
+	mu.Lock()
 	customHTTPStatuses[code] = status
+	mu.Unlock()
 }
 
 // GetHTTPStatus returns the HTTP status for an error code, or 0 if not found
 func GetHTTPStatus(code string) int {
-	if status, ok := customHTTPStatuses[code]; ok {
+	mu.RLock()
+	status, ok := customHTTPStatuses[code]
+	mu.RUnlock()
+	if ok {
 		return status
 	}
 	return 0
@@ -286,13 +299,22 @@ type ErrorDetailConfig struct {
 
 // ConfigureError updates both message and status for an error code
 func ConfigureError(code string, config ErrorDetailConfig) {
+	mu.Lock()
+	defer mu.Unlock()
 	if config.HTTPStatus != 0 {
-		SetHTTPStatus(code, config.HTTPStatus)
+		customHTTPStatuses[code] = config.HTTPStatus
 	}
-	// Only update message if it's not empty
 	if config.Message.En != "" || config.Message.Uz != "" || config.Message.Ru != "" {
-		UpdateUserMessage(code, config.Message)
+		userMessages[code] = config.Message
 	}
+}
+
+// RemoveError removes both the cached HTTP status and user message for an error code.
+func RemoveError(code string) {
+	mu.Lock()
+	delete(customHTTPStatuses, code)
+	delete(userMessages, code)
+	mu.Unlock()
 }
 
 // getUserMessageFallback returns generic error message
@@ -326,5 +348,7 @@ func GetUserMessageWithDetails(code, lang, details string) string {
 // UpdateUserMessage allows updating user message for a specific error code
 // This is useful for customizing messages at runtime
 func UpdateUserMessage(code string, msg UserMessage) {
+	mu.Lock()
 	userMessages[code] = msg
+	mu.Unlock()
 }

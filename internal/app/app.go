@@ -149,7 +149,7 @@ func Run(cfg *config.Config) {
 	}
 
 	// 4.1 Initialize Error Codes
-	initErrorCodes(ctx, dddBCs.ErrorCode, l)
+	initErrorCodes(ctx, dddBCs.ErrorCode, eventBusInstance, l)
 
 	// 5. Integration Cache
 	if err := dddBCs.Integration.Cache.InitCache(ctx); err != nil {
@@ -223,7 +223,8 @@ func Run(cfg *config.Config) {
 
 		// Internal listeners
 		ffListener := pubsub.NewFeatureFlagListener(redisclient, func() {
-			l.Infoc(ctx, "Feature flag cache invalidated via Pub/Sub")
+			dddBCs.FeatureFlag.Evaluator.Invalidate(context.Background())
+			l.Info("Feature flag cache invalidated via Pub/Sub")
 		})
 		go ffListener.Start(ctx)
 

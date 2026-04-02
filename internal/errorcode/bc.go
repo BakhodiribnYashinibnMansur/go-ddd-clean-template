@@ -30,7 +30,7 @@ func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, l logg
 	return &BoundedContext{
 		CreateErrorCode: command.NewCreateErrorCodeHandler(writeRepo, eventBus, l),
 		UpdateErrorCode: command.NewUpdateErrorCodeHandler(writeRepo, eventBus, l),
-		DeleteErrorCode: command.NewDeleteErrorCodeHandler(writeRepo, l),
+		DeleteErrorCode: command.NewDeleteErrorCodeHandler(writeRepo, eventBus, l),
 		GetErrorCode:    query.NewGetErrorCodeHandler(readRepo),
 		ListErrorCodes:  query.NewListErrorCodesHandler(readRepo),
 	}

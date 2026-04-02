@@ -44,8 +44,8 @@ func TestNewErrorCode(t *testing.T) {
 	if len(events) != 1 {
 		t.Fatalf("expected 1 event, got %d", len(events))
 	}
-	if events[0].EventName() != "errorcode.updated" {
-		t.Fatalf("expected errorcode.updated, got %s", events[0].EventName())
+	if events[0].EventName() != "errorcode.created" {
+		t.Fatalf("expected errorcode.created, got %s", events[0].EventName())
 	}
 }
 

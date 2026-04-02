@@ -106,7 +106,7 @@ func setupRouter(repo *mockRepo, readRepo *mockReadRepo) *gin.Engine {
 	bc := &errorcode.BoundedContext{
 		CreateErrorCode: command.NewCreateErrorCodeHandler(repo, eb, l),
 		UpdateErrorCode: command.NewUpdateErrorCodeHandler(repo, eb, l),
-		DeleteErrorCode: command.NewDeleteErrorCodeHandler(repo, l),
+		DeleteErrorCode: command.NewDeleteErrorCodeHandler(repo, eb, l),
 		GetErrorCode:    query.NewGetErrorCodeHandler(readRepo),
 		ListErrorCodes:  query.NewListErrorCodesHandler(readRepo),
 	}
@@ -256,14 +256,26 @@ func TestHandler_Update_BadRequest(t *testing.T) {
 }
 
 func TestHandler_Delete_Success(t *testing.T) {
-	router := setupRouter(&mockRepo{}, &mockReadRepo{})
+	ec := domain.NewErrorCode("ERR_DEL", "test", 500, "SYSTEM", "LOW", false, 0, "")
+	repo := &mockRepo{
+		findFn: func(_ context.Context, id uuid.UUID) (*domain.ErrorCode, error) {
+			if id == ec.ID() {
+				return ec, nil
+			}
+			return nil, domain.ErrErrorCodeNotFound
+		},
+	}
+	router := setupRouter(repo, &mockReadRepo{})
 
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("DELETE", "/api/v1/error-codes/"+uuid.New().String(), nil)
+	req, _ := http.NewRequest("DELETE", "/api/v1/error-codes/"+ec.ID().String(), nil)
 	router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+	if repo.deleted != ec.ID() {
+		t.Errorf("expected deleted ID %s, got %s", ec.ID(), repo.deleted)
 	}
 }
 

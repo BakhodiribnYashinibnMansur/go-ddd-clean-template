@@ -127,8 +127,8 @@ func TestCreateErrorCodeHandler_Handle(t *testing.T) {
 	if len(eb.published) == 0 {
 		t.Fatal("expected events to be published")
 	}
-	if eb.published[0].EventName() != "errorcode.updated" {
-		t.Errorf("expected errorcode.updated, got %s", eb.published[0].EventName())
+	if eb.published[0].EventName() != "errorcode.created" {
+		t.Errorf("expected errorcode.created, got %s", eb.published[0].EventName())
 	}
 }
 

@@ -24,7 +24,7 @@ type ErrorCode struct {
 	suggestion string
 }
 
-// NewErrorCode creates a new ErrorCode aggregate and raises an ErrorCodeUpdated event.
+// NewErrorCode creates a new ErrorCode aggregate and raises an ErrorCodeCreated event.
 func NewErrorCode(
 	code, message string,
 	httpStatus int,
@@ -44,7 +44,7 @@ func NewErrorCode(
 		retryAfter:    retryAfter,
 		suggestion:    suggestion,
 	}
-	ec.AddEvent(NewErrorCodeUpdated(ec.ID(), code, message))
+	ec.AddEvent(NewErrorCodeCreated(ec.ID(), code, message, httpStatus))
 	return ec
 }
 
@@ -90,7 +90,7 @@ func (ec *ErrorCode) Update(
 	ec.retryAfter = retryAfter
 	ec.suggestion = suggestion
 	ec.Touch()
-	ec.AddEvent(NewErrorCodeUpdated(ec.ID(), ec.code, message))
+	ec.AddEvent(NewErrorCodeUpdated(ec.ID(), ec.code, message, httpStatus))
 }
 
 // ---------------------------------------------------------------------------

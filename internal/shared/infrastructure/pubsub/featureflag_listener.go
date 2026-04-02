@@ -22,9 +22,11 @@ func NewFeatureFlagListener(client *redis.Client, invalidate func()) *FeatureFla
 }
 
 // Start begins listening for feature flag change signals. Blocks until ctx is cancelled.
+// Uses pattern subscribe to match all signal:featureflag.* channels
+// (e.g. signal:featureflag.created, signal:featureflag.updated, etc.).
 func (l *FeatureFlagListener) Start(ctx context.Context) {
 	sub := NewSubscriber(l.client)
-	sub.Subscribe(ctx, "signal:featureflags", func(channel, payload string) {
+	sub.PSubscribe(ctx, "signal:featureflag.*", func(channel, payload string) {
 		l.invalidate()
 	})
 }
