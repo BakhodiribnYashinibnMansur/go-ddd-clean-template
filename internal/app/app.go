@@ -4,6 +4,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -14,6 +15,7 @@ import (
 
 	"gct/config"
 	"gct/internal/shared/domain/consts"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	sharedmw "gct/internal/shared/infrastructure/middleware"
 
 	// DDD BC middleware
@@ -110,6 +112,27 @@ func Run(cfg *config.Config) {
 		l.Infoc(ctx, "Redis is disabled in configuration")
 	}
 
+	// 2b. Log Persistence — buffer in Redis, flush to PostgreSQL via COPY FROM
+	var logFlusher *logger.Flusher
+	if cfg.Log.PersistEnabled && redisclient != nil {
+		persistCfg := logger.PersistConfig{
+			Level:     cfg.Log.PersistLevel,
+			RedisKey:  cfg.Log.RedisKey,
+			BatchSize: cfg.Log.FlushBatchSize,
+			Interval:  time.Duration(cfg.Log.FlushInterval) * time.Second,
+		}
+		redisSink := logger.NewRedisSink(redisclient, persistCfg)
+		l = logger.WithPersistCore(l, redisSink)
+
+		logFlusher = logger.NewFlusher(redisclient, pg.Pool, persistCfg, l)
+		logFlusher.Start()
+		l.Infoc(ctx, "Log persistence enabled",
+			"level", cfg.Log.PersistLevel,
+			"flush_interval", cfg.Log.FlushInterval,
+		)
+	}
+	_ = logFlusher // used in shutdown below
+
 	// 3. Asynq Client
 	var asynqClient *asynq.Client
 	if cfg.Asynq.Enabled {
@@ -119,6 +142,32 @@ func Run(cfg *config.Config) {
 		l.Infoc(ctx, "Asynq client is disabled in configuration")
 	}
 	_ = asynqClient // used by asynq worker below
+
+	// Error alerter — sends CRITICAL/HIGH errors to Telegram via Asynq
+	if asynqClient != nil {
+		alerter := apperrors.NewAlerter(&asynqClientAdapter{asynqClient}, apperrors.AlerterConfig{
+			MinSeverity:    apperrors.SeverityHigh,
+			DebouncePeriod: time.Minute,
+		})
+		apperrors.SetReporter(alerter)
+
+		// Error rate monitor — alerts when error rate exceeds threshold
+		rateMonitor := apperrors.NewRateMonitor(apperrors.RateMonitorConfig{
+			Window:    time.Minute,
+			Threshold: 10,
+			OnBreach: func(code string, count int) {
+				alerter.SendError(
+					apperrors.New(apperrors.ErrInternal, "").
+						WithDetails(fmt.Sprintf("Error rate breach: %s occurred %d times in 1 minute", code, count)),
+				)
+			},
+		})
+
+		hookMgr := apperrors.GetGlobalHookManager()
+		hookMgr.AddHook(func(ctx context.Context, err *apperrors.AppError) {
+			apperrors.RateMonitorHook(rateMonitor)(err)
+		})
+	}
 
 	// 4. Event Bus — Redis Streams if Redis enabled, otherwise in-memory fallback
 	var eventBusInstance application.EventBus
@@ -250,6 +299,10 @@ func Run(cfg *config.Config) {
 	cancel()
 
 	// 9. Graceful shutdown
+	if logFlusher != nil {
+		l.Infoc(context.Background(), "Flushing remaining logs to database...")
+		logFlusher.Stop()
+	}
 	shutdownServer(httpServer, l, cfg.HTTP.ShutdownTimeout)
 }
 
@@ -291,10 +344,19 @@ func initRouter(cfg *config.Config, bcs *DDDBoundedContexts, redisClient *redis.
 	}
 	setupInfraRoutes(handler, cfg, pg.Pool, redisClient, metricsHandler, nil)
 
+	// === Health check routes ===
+	registerHealthRoutes(handler, healthDeps{
+		pgPool: pg.Pool,
+		redis:  redisClient,
+	})
+
 	// === DDD API routes ===
 	authMW := usermw.NewAuthMiddleware(bcs.User.FindSession, bcs.User.FindUserForAuth, cfg, l)
 	authzMiddleware := authzmw.NewAuthzMiddleware(bcs.Authz.CheckAccess, bcs.User.FindUserForAuth, l)
 	csrfMW := sharedmw.HybridMiddleware(l, consts.CookieCsrfToken)
+
+	// Error dashboard (admin API)
+	registerErrorDashboardRoutes(handler.Group("/api/v1"))
 
 	RegisterDDDRoutes(handler, bcs, authMW.AuthClientAccess, authzMiddleware.Authz, csrfMW, l)
 
@@ -347,4 +409,15 @@ func shutdownServer(server *httpserver.Server, l logger.Log, timeout int64) {
 	} else {
 		l.Infoc(context.Background(), "HTTP server shutdown successfully")
 	}
+}
+
+// asynqClientAdapter adapts *asynq.Client to the apperrors.TaskEnqueuer interface.
+// apperrors.TaskEnqueuer uses opts ...any for testability, while the real asynq client
+// uses opts ...asynq.Option — this adapter bridges the two.
+type asynqClientAdapter struct {
+	client *asynq.Client
+}
+
+func (a *asynqClientAdapter) EnqueueTask(ctx context.Context, taskType string, payload any, opts ...any) (any, error) {
+	return a.client.EnqueueTask(ctx, taskType, payload)
 }
