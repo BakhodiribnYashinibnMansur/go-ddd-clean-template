@@ -58,21 +58,23 @@ func TestNewErrorCodeReadRepo(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// helpers to fill 11-column scan
+// helpers to fill 13-column scan
 // ---------------------------------------------------------------------------
 
 func fillErrorCodeDest(dest []any, id uuid.UUID, now time.Time) {
 	*dest[0].(*uuid.UUID) = id
 	*dest[1].(*string) = "ERR_001"
 	*dest[2].(*string) = "something failed"
-	*dest[3].(*int) = 500
-	*dest[4].(*string) = "server"
-	*dest[5].(*string) = "critical"
-	*dest[6].(*bool) = true
-	*dest[7].(*int) = 30
-	*dest[8].(*string) = "retry later"
-	*dest[9].(*time.Time) = now
-	*dest[10].(*time.Time) = now
+	*dest[3].(*string) = "nimadir xato"
+	*dest[4].(*string) = "что-то пошло не так"
+	*dest[5].(*int) = 500
+	*dest[6].(*string) = "server"
+	*dest[7].(*string) = "critical"
+	*dest[8].(*bool) = true
+	*dest[9].(*int) = 30
+	*dest[10].(*string) = "retry later"
+	*dest[11].(*time.Time) = now
+	*dest[12].(*time.Time) = now
 }
 
 // ---------------------------------------------------------------------------

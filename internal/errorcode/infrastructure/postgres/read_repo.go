@@ -16,7 +16,7 @@ import (
 )
 
 var readColumns = []string{
-	"id", "code", "message", "http_status", "category", "severity",
+	"id", "code", "message", "message_uz", "message_ru", "http_status", "category", "severity",
 	"retryable", "retry_after", "suggestion", "created_at", "updated_at",
 }
 
@@ -131,6 +131,8 @@ func scanErrorCodeView(row pgx.Row) (*domain.ErrorCodeView, error) {
 		id         uuid.UUID
 		code       string
 		message    string
+		messageUz  string
+		messageRu  string
 		httpStatus int
 		category   string
 		severity   string
@@ -142,7 +144,7 @@ func scanErrorCodeView(row pgx.Row) (*domain.ErrorCodeView, error) {
 	)
 
 	err := row.Scan(
-		&id, &code, &message, &httpStatus, &category, &severity,
+		&id, &code, &message, &messageUz, &messageRu, &httpStatus, &category, &severity,
 		&retryable, &retryAfter, &suggestion, &createdAt, &updatedAt,
 	)
 	if err != nil {
@@ -153,6 +155,8 @@ func scanErrorCodeView(row pgx.Row) (*domain.ErrorCodeView, error) {
 		ID:         id,
 		Code:       code,
 		Message:    message,
+		MessageUz:  messageUz,
+		MessageRu:  messageRu,
 		HTTPStatus: httpStatus,
 		Category:   category,
 		Severity:   severity,
@@ -169,6 +173,8 @@ func scanErrorCodeViewFromRows(rows pgx.Rows) (*domain.ErrorCodeView, error) {
 		id         uuid.UUID
 		code       string
 		message    string
+		messageUz  string
+		messageRu  string
 		httpStatus int
 		category   string
 		severity   string
@@ -180,7 +186,7 @@ func scanErrorCodeViewFromRows(rows pgx.Rows) (*domain.ErrorCodeView, error) {
 	)
 
 	err := rows.Scan(
-		&id, &code, &message, &httpStatus, &category, &severity,
+		&id, &code, &message, &messageUz, &messageRu, &httpStatus, &category, &severity,
 		&retryable, &retryAfter, &suggestion, &createdAt, &updatedAt,
 	)
 	if err != nil {
@@ -191,6 +197,8 @@ func scanErrorCodeViewFromRows(rows pgx.Rows) (*domain.ErrorCodeView, error) {
 		ID:         id,
 		Code:       code,
 		Message:    message,
+		MessageUz:  messageUz,
+		MessageRu:  messageRu,
 		HTTPStatus: httpStatus,
 		Category:   category,
 		Severity:   severity,

@@ -11,6 +11,8 @@ type ErrorCodeView struct {
 	ID         uuid.UUID `json:"id"`
 	Code       string    `json:"code"`
 	Message    string    `json:"message"`
+	MessageUz  string    `json:"message_uz"`
+	MessageRu  string    `json:"message_ru"`
 	HTTPStatus int       `json:"http_status"`
 	Category   string    `json:"category"`
 	Severity   string    `json:"severity"`

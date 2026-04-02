@@ -17,6 +17,8 @@ import (
 type UpdateErrorCodeCommand struct {
 	ID         uuid.UUID
 	Message    string
+	MessageUz  string
+	MessageRu  string
 	HTTPStatus int
 	Category   string
 	Severity   string
@@ -58,7 +60,7 @@ func (h *UpdateErrorCodeHandler) Handle(ctx context.Context, cmd UpdateErrorCode
 	}
 
 	ec.Update(
-		cmd.Message, cmd.HTTPStatus,
+		cmd.Message, cmd.MessageUz, cmd.MessageRu, cmd.HTTPStatus,
 		cmd.Category, cmd.Severity,
 		cmd.Retryable, cmd.RetryAfter, cmd.Suggestion,
 	)

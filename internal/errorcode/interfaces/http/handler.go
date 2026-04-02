@@ -8,6 +8,8 @@ import (
 	"gct/internal/errorcode/application/command"
 	"gct/internal/errorcode/application/query"
 	"gct/internal/errorcode/domain"
+	"gct/internal/shared/infrastructure/httpx"
+	"gct/internal/shared/infrastructure/httpx/response"
 	"gct/internal/shared/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
@@ -29,12 +31,14 @@ func NewHandler(bc *errorcode.BoundedContext, l logger.Log) *Handler {
 func (h *Handler) Create(ctx *gin.Context) {
 	var req CreateRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.RespondWithError(ctx, err, http.StatusBadRequest)
 		return
 	}
 	cmd := command.CreateErrorCodeCommand{
 		Code:       req.Code,
 		Message:    req.Message,
+		MessageUz:  req.MessageUz,
+		MessageRu:  req.MessageRu,
 		HTTPStatus: req.HTTPStatus,
 		Category:   req.Category,
 		Severity:   req.Severity,
@@ -43,7 +47,7 @@ func (h *Handler) Create(ctx *gin.Context) {
 		Suggestion: req.Suggestion,
 	}
 	if err := h.bc.CreateErrorCode.Handle(ctx.Request.Context(), cmd); err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.RespondWithError(ctx, err, http.StatusInternalServerError)
 		return
 	}
 	ctx.JSON(http.StatusCreated, gin.H{"success": true})
@@ -59,7 +63,7 @@ func (h *Handler) List(ctx *gin.Context) {
 	}
 	result, err := h.bc.ListErrorCodes.Handle(ctx.Request.Context(), q)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.RespondWithError(ctx, err, http.StatusInternalServerError)
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"data": result.ErrorCodes, "total": result.Total})
@@ -69,12 +73,12 @@ func (h *Handler) List(ctx *gin.Context) {
 func (h *Handler) Get(ctx *gin.Context) {
 	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
 	result, err := h.bc.GetErrorCode.Handle(ctx.Request.Context(), query.GetErrorCodeQuery{ID: id})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.RespondWithError(ctx, err, http.StatusInternalServerError)
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"data": result})
@@ -84,17 +88,19 @@ func (h *Handler) Get(ctx *gin.Context) {
 func (h *Handler) Update(ctx *gin.Context) {
 	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
 	var req UpdateRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.RespondWithError(ctx, err, http.StatusBadRequest)
 		return
 	}
 	cmd := command.UpdateErrorCodeCommand{
 		ID:         id,
 		Message:    req.Message,
+		MessageUz:  req.MessageUz,
+		MessageRu:  req.MessageRu,
 		HTTPStatus: req.HTTPStatus,
 		Category:   req.Category,
 		Severity:   req.Severity,
@@ -103,7 +109,7 @@ func (h *Handler) Update(ctx *gin.Context) {
 		Suggestion: req.Suggestion,
 	}
 	if err := h.bc.UpdateErrorCode.Handle(ctx.Request.Context(), cmd); err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.RespondWithError(ctx, err, http.StatusInternalServerError)
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"success": true})
@@ -113,11 +119,11 @@ func (h *Handler) Update(ctx *gin.Context) {
 func (h *Handler) Delete(ctx *gin.Context) {
 	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
 	if err := h.bc.DeleteErrorCode.Handle(ctx.Request.Context(), command.DeleteErrorCodeCommand{ID: id}); err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.RespondWithError(ctx, err, http.StatusInternalServerError)
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"success": true})

@@ -16,6 +16,8 @@ type ErrorCode struct {
 	shared.AggregateRoot
 	code       string
 	message    string
+	messageUz  string
+	messageRu  string
 	httpStatus int
 	category   string
 	severity   string
@@ -48,11 +50,17 @@ func NewErrorCode(
 	return ec
 }
 
+// SetTranslations sets the Uzbek and Russian message translations.
+func (ec *ErrorCode) SetTranslations(uz, ru string) {
+	ec.messageUz = uz
+	ec.messageRu = ru
+}
+
 // ReconstructErrorCode rebuilds an ErrorCode aggregate from persisted data.
 func ReconstructErrorCode(
 	id uuid.UUID,
 	createdAt, updatedAt time.Time,
-	code, message string,
+	code, message, messageUz, messageRu string,
 	httpStatus int,
 	category, severity string,
 	retryable bool,
@@ -63,6 +71,8 @@ func ReconstructErrorCode(
 		AggregateRoot: shared.NewAggregateRootWithID(id, createdAt, updatedAt, nil),
 		code:          code,
 		message:       message,
+		messageUz:     messageUz,
+		messageRu:     messageRu,
 		httpStatus:    httpStatus,
 		category:      category,
 		severity:      severity,
@@ -75,7 +85,7 @@ func ReconstructErrorCode(
 // Update replaces all mutable fields of the error code and raises an ErrorCodeUpdated event.
 // Note: the code field itself is immutable — only metadata fields are updated.
 func (ec *ErrorCode) Update(
-	message string,
+	message, messageUz, messageRu string,
 	httpStatus int,
 	category, severity string,
 	retryable bool,
@@ -83,6 +93,8 @@ func (ec *ErrorCode) Update(
 	suggestion string,
 ) {
 	ec.message = message
+	ec.messageUz = messageUz
+	ec.messageRu = messageRu
 	ec.httpStatus = httpStatus
 	ec.category = category
 	ec.severity = severity
@@ -99,6 +111,8 @@ func (ec *ErrorCode) Update(
 
 func (ec *ErrorCode) Code() string       { return ec.code }
 func (ec *ErrorCode) Message() string    { return ec.message }
+func (ec *ErrorCode) MessageUz() string  { return ec.messageUz }
+func (ec *ErrorCode) MessageRu() string  { return ec.messageRu }
 func (ec *ErrorCode) HTTPStatus() int    { return ec.httpStatus }
 func (ec *ErrorCode) Category() string   { return ec.category }
 func (ec *ErrorCode) Severity() string   { return ec.severity }

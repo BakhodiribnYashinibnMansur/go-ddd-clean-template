@@ -45,6 +45,8 @@ func (h *ListErrorCodesHandler) Handle(ctx context.Context, q ListErrorCodesQuer
 			ID:         v.ID,
 			Code:       v.Code,
 			Message:    v.Message,
+			MessageUz:  v.MessageUz,
+			MessageRu:  v.MessageRu,
 			HTTPStatus: v.HTTPStatus,
 			Category:   v.Category,
 			Severity:   v.Severity,

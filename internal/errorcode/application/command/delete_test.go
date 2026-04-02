@@ -12,7 +12,7 @@ import (
 
 func TestDeleteErrorCodeHandler_Handle(t *testing.T) {
 	id := uuid.New()
-	ec := domain.ReconstructErrorCode(id, time.Now(), time.Now(), "ERR_TEST", "test", 500, "SYSTEM", "LOW", false, 0, "")
+	ec := domain.ReconstructErrorCode(id, time.Now(), time.Now(), "ERR_TEST", "test", "", "", 500, "SYSTEM", "LOW", false, 0, "")
 	repo := &mockErrorCodeRepo{
 		findFn: func(_ context.Context, gotID uuid.UUID) (*domain.ErrorCode, error) {
 			if gotID != id {

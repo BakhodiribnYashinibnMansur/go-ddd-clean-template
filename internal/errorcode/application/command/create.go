@@ -15,6 +15,8 @@ import (
 type CreateErrorCodeCommand struct {
 	Code       string
 	Message    string
+	MessageUz  string
+	MessageRu  string
 	HTTPStatus int
 	Category   string
 	Severity   string
@@ -55,6 +57,7 @@ func (h *CreateErrorCodeHandler) Handle(ctx context.Context, cmd CreateErrorCode
 		cmd.Category, cmd.Severity,
 		cmd.Retryable, cmd.RetryAfter, cmd.Suggestion,
 	)
+	ec.SetTranslations(cmd.MessageUz, cmd.MessageRu)
 
 	if err := h.repo.Save(ctx, ec); err != nil {
 		h.logger.Errorf("failed to save error code: %v", err)

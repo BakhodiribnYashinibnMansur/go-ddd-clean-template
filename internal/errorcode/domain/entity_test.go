@@ -55,7 +55,7 @@ func TestErrorCode_Update(t *testing.T) {
 		"SYSTEM", "MEDIUM", true, 60, "Wait and retry",
 	)
 
-	ec.Update("Too many requests", 429, "SYSTEM", "HIGH", true, 120, "Please wait 2 minutes")
+	ec.Update("Too many requests", "", "", 429, "SYSTEM", "HIGH", true, 120, "Please wait 2 minutes")
 
 	if ec.Message() != "Too many requests" {
 		t.Fatalf("expected updated message, got %s", ec.Message())
@@ -79,7 +79,7 @@ func TestReconstructErrorCode(t *testing.T) {
 
 	ec := domain.ReconstructErrorCode(
 		id, now, now,
-		"NOT_FOUND", "Resource not found", 404,
+		"NOT_FOUND", "Resource not found", "", "", 404,
 		"DATA", "LOW", false, 0, "Check the ID",
 	)
 

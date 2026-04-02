@@ -18,7 +18,7 @@ import (
 const tableName = "error_code"
 
 var writeColumns = []string{
-	"id", "code", "message", "http_status", "category", "severity",
+	"id", "code", "message", "message_uz", "message_ru", "http_status", "category", "severity",
 	"retryable", "retry_after", "suggestion", "created_at", "updated_at",
 }
 
@@ -48,6 +48,8 @@ func (r *ErrorCodeWriteRepo) Save(ctx context.Context, ec *domain.ErrorCode) (er
 			ec.ID(),
 			ec.Code(),
 			ec.Message(),
+			ec.MessageUz(),
+			ec.MessageRu(),
 			ec.HTTPStatus(),
 			ec.Category(),
 			ec.Severity(),
@@ -77,6 +79,8 @@ func (r *ErrorCodeWriteRepo) Update(ctx context.Context, ec *domain.ErrorCode) (
 	sql, args, err := r.builder.
 		Update(tableName).
 		Set("message", ec.Message()).
+		Set("message_uz", ec.MessageUz()).
+		Set("message_ru", ec.MessageRu()).
 		Set("http_status", ec.HTTPStatus()).
 		Set("category", ec.Category()).
 		Set("severity", ec.Severity()).
@@ -140,6 +144,8 @@ func scanErrorCode(row pgx.Row) (*domain.ErrorCode, error) {
 		id         uuid.UUID
 		code       string
 		message    string
+		messageUz  string
+		messageRu  string
 		httpStatus int
 		category   string
 		severity   string
@@ -151,7 +157,7 @@ func scanErrorCode(row pgx.Row) (*domain.ErrorCode, error) {
 	)
 
 	err := row.Scan(
-		&id, &code, &message, &httpStatus, &category, &severity,
+		&id, &code, &message, &messageUz, &messageRu, &httpStatus, &category, &severity,
 		&retryable, &retryAfter, &suggestion, &createdAt, &updatedAt,
 	)
 	if err != nil {
@@ -160,7 +166,7 @@ func scanErrorCode(row pgx.Row) (*domain.ErrorCode, error) {
 
 	return domain.ReconstructErrorCode(
 		id, createdAt, updatedAt,
-		code, message, httpStatus,
+		code, message, messageUz, messageRu, httpStatus,
 		category, severity, retryable,
 		retryAfter, suggestion,
 	), nil

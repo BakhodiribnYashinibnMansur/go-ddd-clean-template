@@ -36,6 +36,8 @@ func initErrorCodes(ctx context.Context, ec *errorcode.BoundedContext, eventBus 
 		apperrors.ConfigureError(c.Code, apperrors.ErrorDetailConfig{
 			Message: apperrors.UserMessage{
 				En: c.Message,
+				Uz: c.MessageUz,
+				Ru: c.MessageRu,
 			},
 			HTTPStatus: c.HTTPStatus,
 		})

@@ -39,6 +39,8 @@ func (h *GetErrorCodeHandler) Handle(ctx context.Context, q GetErrorCodeQuery) (
 		ID:         v.ID,
 		Code:       v.Code,
 		Message:    v.Message,
+		MessageUz:  v.MessageUz,
+		MessageRu:  v.MessageRu,
 		HTTPStatus: v.HTTPStatus,
 		Category:   v.Category,
 		Severity:   v.Severity,
