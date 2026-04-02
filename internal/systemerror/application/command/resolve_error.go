@@ -45,6 +45,7 @@ func NewResolveErrorHandler(
 func (h *ResolveErrorHandler) Handle(ctx context.Context, cmd ResolveErrorCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "ResolveErrorHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "ResolveError", "system_error")()
 
 	se, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {

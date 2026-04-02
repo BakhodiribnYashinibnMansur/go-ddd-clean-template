@@ -33,6 +33,7 @@ func NewGetHandler(readRepo domain.IntegrationReadRepository, l logger.Log) *Get
 func (h *GetHandler) Handle(ctx context.Context, q GetQuery) (result *appdto.IntegrationView, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "GetHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "GetIntegration", "integration")()
 
 	view, err := h.readRepo.FindByID(ctx, q.ID)
 	if err != nil {

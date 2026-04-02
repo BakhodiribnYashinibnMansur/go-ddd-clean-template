@@ -40,6 +40,7 @@ func NewDeleteAnnouncementHandler(
 func (h *DeleteAnnouncementHandler) Handle(ctx context.Context, cmd DeleteAnnouncementCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "DeleteAnnouncementHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "DeleteAnnouncement", "announcement")()
 
 	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
 		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "DeleteAnnouncement", Entity: "announcement", EntityID: cmd.ID, Err: err}.KV()...)

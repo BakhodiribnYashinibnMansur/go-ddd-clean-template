@@ -43,6 +43,7 @@ func NewCreatePolicyHandler(
 func (h *CreatePolicyHandler) Handle(ctx context.Context, cmd CreatePolicyCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "CreatePolicyHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "CreatePolicy", "policy")()
 
 	policy := domain.NewPolicy(cmd.PermissionID, cmd.Effect)
 	policy.SetPriority(cmd.Priority)

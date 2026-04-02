@@ -32,6 +32,11 @@ func Setup(handler *gin.Engine, cfg *config.Config, redisClient *redis.Client, b
 	// 1. Traceability & Logging
 	handler.Use(Logger(l))
 
+	// 1.1 Debug-level request body logging
+	if cfg.Log.IsDebug() {
+		handler.Use(DebugBody(l))
+	}
+
 	// 2. Security headers
 	if cfg.Middleware.Security {
 		handler.Use(Security())

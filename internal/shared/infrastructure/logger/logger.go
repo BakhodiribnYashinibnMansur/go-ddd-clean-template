@@ -84,11 +84,15 @@ func New(level string) Log {
 
 // NewWithFormat creates a new logger instance with the specified format.
 // format: "console" for colored human-readable output, "json" for structured JSON output.
+// The logger automatically redacts sensitive fields (password, token, api_key, etc.).
+// In JSON (production) mode, sampling is enabled to reduce log volume under high load.
 func NewWithFormat(level, format string) Log {
 	logLevel := parseLevel(level)
 
+	isJSON := strings.ToLower(format) == FormatJSON
+
 	var encoder zapcore.Encoder
-	if strings.ToLower(format) == FormatJSON {
+	if isJSON {
 		encoder = zapcore.NewJSONEncoder(jsonEncoderConfig())
 	} else {
 		encoder = zapcore.NewConsoleEncoder(consoleEncoderConfig())
@@ -99,6 +103,18 @@ func NewWithFormat(level, format string) Log {
 		zapcore.Lock(os.Stdout),
 		logLevel,
 	)
+
+	// Redact sensitive fields (password, token, api_key, etc.)
+	core = NewRedactCore(core)
+
+	// OTel metrics: count log entries by level
+	core = NewMetricsCore(core)
+
+	// In JSON/production mode, enable sampling to reduce log volume:
+	// first 100 identical messages per second pass through, then 1 in every 100.
+	if isJSON {
+		core = zapcore.NewSamplerWithOptions(core, time.Second, 100, 100)
+	}
 
 	zapLogger := zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1))
 

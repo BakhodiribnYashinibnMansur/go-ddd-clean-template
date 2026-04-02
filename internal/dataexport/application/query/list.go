@@ -37,6 +37,7 @@ func NewListDataExportsHandler(readRepo domain.DataExportReadRepository, l logge
 func (h *ListDataExportsHandler) Handle(ctx context.Context, q ListDataExportsQuery) (_ *ListDataExportsResult, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "ListDataExportsHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "ListDataExports", "data_export")()
 
 	views, total, err := h.readRepo.List(ctx, q.Filter)
 	if err != nil {

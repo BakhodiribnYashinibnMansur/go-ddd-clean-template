@@ -49,6 +49,7 @@ func NewCreateAnnouncementHandler(
 func (h *CreateAnnouncementHandler) Handle(ctx context.Context, cmd CreateAnnouncementCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "CreateAnnouncementHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "CreateAnnouncement", "announcement")()
 
 	a := domain.NewAnnouncement(cmd.Title, cmd.Content, cmd.Priority, cmd.StartDate, cmd.EndDate)
 

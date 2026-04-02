@@ -49,6 +49,7 @@ func NewUpdateDataExportHandler(
 func (h *UpdateDataExportHandler) Handle(ctx context.Context, cmd UpdateDataExportCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "UpdateDataExportHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "UpdateDataExport", "data_export")()
 
 	de, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {

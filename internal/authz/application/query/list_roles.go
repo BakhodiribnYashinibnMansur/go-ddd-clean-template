@@ -38,6 +38,7 @@ func NewListRolesHandler(readRepo domain.AuthzReadRepository, l logger.Log) *Lis
 func (h *ListRolesHandler) Handle(ctx context.Context, q ListRolesQuery) (_ *ListRolesResult, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "ListRolesHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "ListRoles", "role")()
 
 	views, total, err := h.readRepo.ListRoles(ctx, q.Pagination)
 	if err != nil {

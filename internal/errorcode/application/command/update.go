@@ -54,6 +54,7 @@ func NewUpdateErrorCodeHandler(
 func (h *UpdateErrorCodeHandler) Handle(ctx context.Context, cmd UpdateErrorCodeCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "UpdateErrorCodeHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "UpdateErrorCode", "error_code")()
 
 	ec, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {

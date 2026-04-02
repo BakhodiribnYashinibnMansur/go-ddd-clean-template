@@ -41,6 +41,7 @@ func NewApproveUserHandler(
 func (h *ApproveUserHandler) Handle(ctx context.Context, cmd ApproveUserCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "ApproveUserHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "ApproveUser", "user")()
 
 	user, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {

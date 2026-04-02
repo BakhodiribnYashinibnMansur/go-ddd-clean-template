@@ -58,6 +58,7 @@ func NewCreateAuditLogHandler(
 func (h *CreateAuditLogHandler) Handle(ctx context.Context, cmd CreateAuditLogCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "CreateAuditLogHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "CreateAuditLog", "audit_log")()
 
 	auditLog := domain.NewAuditLog(
 		cmd.UserID,

@@ -37,6 +37,7 @@ func NewListIPRulesHandler(readRepo domain.IPRuleReadRepository, l logger.Log) *
 func (h *ListIPRulesHandler) Handle(ctx context.Context, q ListIPRulesQuery) (result *ListIPRulesResult, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "ListIPRulesHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "ListIPRules", "ip_rule")()
 
 	views, total, err := h.readRepo.List(ctx, q.Filter)
 	if err != nil {

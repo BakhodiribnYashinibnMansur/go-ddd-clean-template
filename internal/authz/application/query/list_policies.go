@@ -38,6 +38,7 @@ func NewListPoliciesHandler(readRepo domain.AuthzReadRepository, l logger.Log) *
 func (h *ListPoliciesHandler) Handle(ctx context.Context, q ListPoliciesQuery) (_ *ListPoliciesResult, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "ListPoliciesHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "ListPolicies", "policy")()
 
 	views, total, err := h.readRepo.ListPolicies(ctx, q.Pagination)
 	if err != nil {

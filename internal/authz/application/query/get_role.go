@@ -33,6 +33,7 @@ func NewGetRoleHandler(readRepo domain.AuthzReadRepository, l logger.Log) *GetRo
 func (h *GetRoleHandler) Handle(ctx context.Context, q GetRoleQuery) (_ *appdto.RoleView, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "GetRoleHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "GetRole", "role")()
 
 	view, err := h.readRepo.GetRole(ctx, q.ID)
 	if err != nil {

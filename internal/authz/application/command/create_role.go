@@ -43,6 +43,7 @@ func NewCreateRoleHandler(
 func (h *CreateRoleHandler) Handle(ctx context.Context, cmd CreateRoleCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "CreateRoleHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "CreateRole", "role")()
 
 	role := domain.NewRole(cmd.Name)
 	if cmd.Description != nil {

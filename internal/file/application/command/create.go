@@ -52,6 +52,7 @@ func NewCreateFileHandler(
 func (h *CreateFileHandler) Handle(ctx context.Context, cmd CreateFileCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "CreateFileHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "CreateFile", "file")()
 
 	f := domain.NewFile(cmd.Name, cmd.OriginalName, cmd.MimeType, cmd.Size, cmd.Path, cmd.URL, cmd.UploadedBy)
 

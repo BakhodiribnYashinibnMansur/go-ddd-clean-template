@@ -46,6 +46,7 @@ func NewUpdateRuleGroupHandler(
 func (h *UpdateRuleGroupHandler) Handle(ctx context.Context, cmd UpdateRuleGroupCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "UpdateRuleGroupHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "UpdateRuleGroup", "rule_group")()
 
 	rg, err := h.rgRepo.FindByID(ctx, cmd.ID)
 	if err != nil {

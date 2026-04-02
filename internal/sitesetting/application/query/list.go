@@ -37,6 +37,7 @@ func NewListSiteSettingsHandler(readRepo domain.SiteSettingReadRepository, l log
 func (h *ListSiteSettingsHandler) Handle(ctx context.Context, q ListSiteSettingsQuery) (result *ListSiteSettingsResult, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "ListSiteSettingsHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "ListSiteSettings", "site_setting")()
 
 	views, total, err := h.readRepo.List(ctx, q.Filter)
 	if err != nil {

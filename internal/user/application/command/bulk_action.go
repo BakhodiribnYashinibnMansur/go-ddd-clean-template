@@ -48,6 +48,7 @@ func NewBulkActionHandler(
 func (h *BulkActionHandler) Handle(ctx context.Context, cmd BulkActionCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "BulkActionHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "BulkAction", "user")()
 
 	for _, id := range cmd.IDs {
 		user, err := h.repo.FindByID(ctx, id)

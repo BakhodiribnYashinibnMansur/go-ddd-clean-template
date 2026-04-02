@@ -44,6 +44,7 @@ func NewRecordMetricHandler(
 func (h *RecordMetricHandler) Handle(ctx context.Context, cmd RecordMetricCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "RecordMetricHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "RecordMetric", "metric")()
 
 	fm := domain.NewFunctionMetric(cmd.Name, cmd.LatencyMs, cmd.IsPanic, cmd.PanicError)
 

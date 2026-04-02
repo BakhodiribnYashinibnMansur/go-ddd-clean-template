@@ -33,6 +33,7 @@ func NewGetErrorCodeHandler(readRepo domain.ErrorCodeReadRepository, l logger.Lo
 func (h *GetErrorCodeHandler) Handle(ctx context.Context, q GetErrorCodeQuery) (result *appdto.ErrorCodeView, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "GetErrorCodeHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "GetErrorCode", "error_code")()
 
 	v, err := h.readRepo.FindByID(ctx, q.ID)
 	if err != nil {

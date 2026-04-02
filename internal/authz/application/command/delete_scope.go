@@ -39,6 +39,7 @@ func NewDeleteScopeHandler(
 func (h *DeleteScopeHandler) Handle(ctx context.Context, cmd DeleteScopeCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "DeleteScopeHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "DeleteScope", "scope")()
 
 	if err := h.repo.Delete(ctx, cmd.Path, cmd.Method); err != nil {
 		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteScope", Entity: "scope", Err: err}.KV()...)

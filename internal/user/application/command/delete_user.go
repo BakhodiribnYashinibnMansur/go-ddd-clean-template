@@ -44,6 +44,7 @@ func NewDeleteUserHandler(
 func (h *DeleteUserHandler) Handle(ctx context.Context, cmd DeleteUserCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "DeleteUserHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "DeleteUser", "user")()
 
 	user, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {

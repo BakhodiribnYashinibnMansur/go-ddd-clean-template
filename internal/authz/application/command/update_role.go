@@ -46,6 +46,7 @@ func NewUpdateRoleHandler(
 func (h *UpdateRoleHandler) Handle(ctx context.Context, cmd UpdateRoleCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "UpdateRoleHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "UpdateRole", "role")()
 
 	role, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {

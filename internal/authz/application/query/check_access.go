@@ -35,6 +35,7 @@ func NewCheckAccessHandler(readRepo domain.AuthzReadRepository, l logger.Log) *C
 func (h *CheckAccessHandler) Handle(ctx context.Context, q CheckAccessQuery) (allowed bool, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "CheckAccessHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "CheckAccess", "access")()
 
 	allowed, err = h.readRepo.CheckAccess(ctx, q.RoleID, q.Path, q.Method, q.EvalCtx)
 	if err != nil {

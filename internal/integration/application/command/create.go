@@ -48,6 +48,7 @@ func NewCreateHandler(
 func (h *CreateHandler) Handle(ctx context.Context, cmd CreateCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "CreateHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "CreateIntegration", "integration")()
 
 	i := domain.NewIntegration(cmd.Name, cmd.Type, cmd.APIKey, cmd.WebhookURL, cmd.Enabled, cmd.Config)
 

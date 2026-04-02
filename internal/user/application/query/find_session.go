@@ -31,6 +31,7 @@ func NewFindSessionHandler(readRepo domain.UserReadRepository, l logger.Log) *Fi
 func (h *FindSessionHandler) Handle(ctx context.Context, q FindSessionQuery) (_ *shared.AuthSession, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "FindSessionHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "FindSession", "user")()
 
 	return h.readRepo.FindSessionByID(ctx, q.SessionID)
 }

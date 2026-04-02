@@ -43,6 +43,7 @@ func NewCreateRateLimitHandler(
 func (h *CreateRateLimitHandler) Handle(ctx context.Context, cmd CreateRateLimitCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "CreateRateLimitHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "CreateRateLimit", "rate_limit")()
 
 	rl := domain.NewRateLimit(cmd.Name, cmd.Rule, cmd.RequestsPerWindow, cmd.WindowDuration, cmd.Enabled)
 

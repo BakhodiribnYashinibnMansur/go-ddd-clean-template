@@ -42,6 +42,7 @@ func NewSignOutHandler(
 func (h *SignOutHandler) Handle(ctx context.Context, cmd SignOutCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "SignOutHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "SignOut", "user")()
 
 	user, err := h.repo.FindByID(ctx, cmd.UserID)
 	if err != nil {

@@ -41,6 +41,7 @@ func NewDeleteRuleGroupHandler(
 func (h *DeleteRuleGroupHandler) Handle(ctx context.Context, cmd DeleteRuleGroupCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "DeleteRuleGroupHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "DeleteRuleGroup", "rule_group")()
 
 	// Find the rule group to get its flagID before deletion.
 	rg, err := h.rgRepo.FindByID(ctx, cmd.ID)

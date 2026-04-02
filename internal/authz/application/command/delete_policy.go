@@ -40,6 +40,7 @@ func NewDeletePolicyHandler(
 func (h *DeletePolicyHandler) Handle(ctx context.Context, cmd DeletePolicyCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "DeletePolicyHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "DeletePolicy", "policy")()
 
 	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
 		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeletePolicy", Entity: "policy", EntityID: cmd.ID, Err: err}.KV()...)

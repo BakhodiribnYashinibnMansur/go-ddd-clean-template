@@ -33,6 +33,7 @@ func NewGetRateLimitHandler(readRepo domain.RateLimitReadRepository, l logger.Lo
 func (h *GetRateLimitHandler) Handle(ctx context.Context, q GetRateLimitQuery) (result *appdto.RateLimitView, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "GetRateLimitHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "GetRateLimit", "rate_limit")()
 
 	v, err := h.readRepo.FindByID(ctx, q.ID)
 	if err != nil {

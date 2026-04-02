@@ -40,6 +40,7 @@ func NewDeleteDataExportHandler(
 func (h *DeleteDataExportHandler) Handle(ctx context.Context, cmd DeleteDataExportCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "DeleteDataExportHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "DeleteDataExport", "data_export")()
 
 	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
 		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "DeleteDataExport", Entity: "data_export", EntityID: cmd.ID, Err: err}.KV()...)

@@ -34,6 +34,7 @@ func NewGetHandler(readRepo domain.FeatureFlagReadRepository, l logger.Log) *Get
 func (h *GetHandler) Handle(ctx context.Context, q GetQuery) (result *appdto.FeatureFlagView, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "GetHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "GetFeatureFlag", "feature_flag")()
 
 	view, err := h.readRepo.FindByID(ctx, q.ID)
 	if err != nil {

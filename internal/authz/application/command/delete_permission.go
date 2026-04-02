@@ -40,6 +40,7 @@ func NewDeletePermissionHandler(
 func (h *DeletePermissionHandler) Handle(ctx context.Context, cmd DeletePermissionCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "DeletePermissionHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "DeletePermission", "permission")()
 
 	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
 		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeletePermission", Entity: "permission", EntityID: cmd.ID, Err: err}.KV()...)

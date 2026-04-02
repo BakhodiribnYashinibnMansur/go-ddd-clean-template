@@ -48,6 +48,7 @@ func NewUpdateUserHandler(
 func (h *UpdateUserHandler) Handle(ctx context.Context, cmd UpdateUserCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "UpdateUserHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "UpdateUser", "user")()
 
 	user, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {

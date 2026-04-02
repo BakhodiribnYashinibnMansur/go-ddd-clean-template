@@ -48,6 +48,7 @@ func NewUpdateSiteSettingHandler(
 func (h *UpdateSiteSettingHandler) Handle(ctx context.Context, cmd UpdateSiteSettingCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "UpdateSiteSettingHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "UpdateSiteSetting", "site_setting")()
 
 	s, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {

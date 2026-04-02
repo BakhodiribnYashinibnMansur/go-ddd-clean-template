@@ -37,6 +37,7 @@ func NewListAuditLogsHandler(readRepo domain.AuditReadRepository, l logger.Log) 
 func (h *ListAuditLogsHandler) Handle(ctx context.Context, q ListAuditLogsQuery) (_ *ListAuditLogsResult, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "ListAuditLogsHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "ListAuditLogs", "audit_log")()
 
 	views, total, err := h.readRepo.ListAuditLogs(ctx, q.Filter)
 	if err != nil {

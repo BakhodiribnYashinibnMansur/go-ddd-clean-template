@@ -47,6 +47,7 @@ func NewCreateDataExportHandler(
 func (h *CreateDataExportHandler) Handle(ctx context.Context, cmd CreateDataExportCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "CreateDataExportHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "CreateDataExport", "data_export")()
 
 	de := domain.NewDataExport(cmd.UserID, cmd.DataType, cmd.Format)
 

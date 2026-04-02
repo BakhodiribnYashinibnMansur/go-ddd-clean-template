@@ -33,6 +33,7 @@ func NewGetUserSettingHandler(readRepo domain.UserSettingReadRepository, l logge
 func (h *GetUserSettingHandler) Handle(ctx context.Context, q GetUserSettingQuery) (result *appdto.UserSettingView, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "GetUserSettingHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "GetUserSetting", "user_setting")()
 
 	v, err := h.readRepo.FindByID(ctx, q.ID)
 	if err != nil {

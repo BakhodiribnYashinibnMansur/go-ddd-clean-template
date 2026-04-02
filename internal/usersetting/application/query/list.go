@@ -37,6 +37,7 @@ func NewListUserSettingsHandler(readRepo domain.UserSettingReadRepository, l log
 func (h *ListUserSettingsHandler) Handle(ctx context.Context, q ListUserSettingsQuery) (_ *ListUserSettingsResult, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "ListUserSettingsHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "ListUserSettings", "user_setting")()
 
 	views, total, err := h.readRepo.List(ctx, q.Filter)
 	if err != nil {

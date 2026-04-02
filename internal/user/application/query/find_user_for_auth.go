@@ -31,6 +31,7 @@ func NewFindUserForAuthHandler(readRepo domain.UserReadRepository, l logger.Log)
 func (h *FindUserForAuthHandler) Handle(ctx context.Context, q FindUserForAuthQuery) (_ *shared.AuthUser, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "FindUserForAuthHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "FindUserForAuth", "user")()
 
 	return h.readRepo.FindUserForAuth(ctx, q.UserID)
 }

@@ -46,6 +46,7 @@ func NewUpdateRateLimitHandler(
 func (h *UpdateRateLimitHandler) Handle(ctx context.Context, cmd UpdateRateLimitCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "UpdateRateLimitHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "UpdateRateLimit", "rate_limit")()
 
 	rl, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {

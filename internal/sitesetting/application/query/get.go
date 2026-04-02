@@ -33,6 +33,7 @@ func NewGetSiteSettingHandler(readRepo domain.SiteSettingReadRepository, l logge
 func (h *GetSiteSettingHandler) Handle(ctx context.Context, q GetSiteSettingQuery) (result *appdto.SiteSettingView, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "GetSiteSettingHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "GetSiteSetting", "site_setting")()
 
 	v, err := h.readRepo.FindByID(ctx, q.ID)
 	if err != nil {

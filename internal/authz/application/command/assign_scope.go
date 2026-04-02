@@ -42,6 +42,7 @@ func NewAssignScopeHandler(
 func (h *AssignScopeHandler) Handle(ctx context.Context, cmd AssignScopeCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "AssignScopeHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "AssignScope", "role")()
 
 	if err := h.permScopeRepo.Assign(ctx, cmd.PermissionID, cmd.Path, cmd.Method); err != nil {
 		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "AssignScope", Entity: "role", EntityID: cmd.PermissionID, Err: err}.KV()...)

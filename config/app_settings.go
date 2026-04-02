@@ -32,6 +32,7 @@ type (
 		RedisKey       string `yaml:"redis_key" env:"LOG_REDIS_KEY" envDefault:"app:logs"`
 		FlushInterval  int64  `yaml:"flush_interval_sec" env:"LOG_FLUSH_INTERVAL_SEC" envDefault:"60"`
 		FlushBatchSize int    `yaml:"flush_batch_size" env:"LOG_FLUSH_BATCH_SIZE" envDefault:"1000"`
+		RetentionDays  int    `yaml:"retention_days" env:"LOG_RETENTION_DAYS" envDefault:"30"`
 	}
 
 	// APIKeys configuration -.

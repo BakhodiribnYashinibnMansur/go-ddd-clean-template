@@ -33,6 +33,7 @@ func NewGetFileHandler(readRepo domain.FileReadRepository, l logger.Log) *GetFil
 func (h *GetFileHandler) Handle(ctx context.Context, q GetFileQuery) (result *appdto.FileView, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "GetFileHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "GetFile", "file")()
 
 	v, err := h.readRepo.FindByID(ctx, q.ID)
 	if err != nil {

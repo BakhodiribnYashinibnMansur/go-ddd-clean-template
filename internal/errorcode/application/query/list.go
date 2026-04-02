@@ -37,6 +37,7 @@ func NewListErrorCodesHandler(readRepo domain.ErrorCodeReadRepository, l logger.
 func (h *ListErrorCodesHandler) Handle(ctx context.Context, q ListErrorCodesQuery) (_ *ListErrorCodesResult, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "ListErrorCodesHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "ListErrorCodes", "error_code")()
 
 	views, total, err := h.readRepo.List(ctx, q.Filter)
 	if err != nil {

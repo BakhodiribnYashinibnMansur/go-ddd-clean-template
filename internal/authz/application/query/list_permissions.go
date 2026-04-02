@@ -38,6 +38,7 @@ func NewListPermissionsHandler(readRepo domain.AuthzReadRepository, l logger.Log
 func (h *ListPermissionsHandler) Handle(ctx context.Context, q ListPermissionsQuery) (_ *ListPermissionsResult, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "ListPermissionsHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "ListPermissions", "permission")()
 
 	views, total, err := h.readRepo.ListPermissions(ctx, q.Pagination)
 	if err != nil {

@@ -33,6 +33,7 @@ func NewGetHandler(readRepo domain.NotificationReadRepository, l logger.Log) *Ge
 func (h *GetHandler) Handle(ctx context.Context, q GetQuery) (result *appdto.NotificationView, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "GetHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "GetNotification", "notification")()
 
 	view, err := h.readRepo.FindByID(ctx, q.ID)
 	if err != nil {

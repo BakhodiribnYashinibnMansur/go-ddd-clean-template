@@ -56,6 +56,7 @@ func NewCreateRuleGroupHandler(
 func (h *CreateRuleGroupHandler) Handle(ctx context.Context, cmd CreateRuleGroupCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "CreateRuleGroupHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "CreateRuleGroup", "rule_group")()
 
 	// Verify the flag exists.
 	if _, err := h.flagRepo.FindByID(ctx, cmd.FlagID); err != nil {

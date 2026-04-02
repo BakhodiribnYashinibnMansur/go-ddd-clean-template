@@ -50,6 +50,7 @@ func NewCreateUserHandler(
 func (h *CreateUserHandler) Handle(ctx context.Context, cmd CreateUserCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "CreateUserHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "CreateUser", "user")()
 
 	phone, err := domain.NewPhone(cmd.Phone)
 	if err != nil {

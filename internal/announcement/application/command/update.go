@@ -53,6 +53,7 @@ func NewUpdateAnnouncementHandler(
 func (h *UpdateAnnouncementHandler) Handle(ctx context.Context, cmd UpdateAnnouncementCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "UpdateAnnouncementHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "UpdateAnnouncement", "announcement")()
 
 	a, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {

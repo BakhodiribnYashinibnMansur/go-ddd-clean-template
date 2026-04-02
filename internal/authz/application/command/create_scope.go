@@ -39,6 +39,7 @@ func NewCreateScopeHandler(
 func (h *CreateScopeHandler) Handle(ctx context.Context, cmd CreateScopeCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "CreateScopeHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "CreateScope", "scope")()
 
 	scope := domain.Scope{
 		Path:   cmd.Path,

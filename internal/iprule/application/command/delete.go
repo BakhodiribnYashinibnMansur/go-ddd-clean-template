@@ -41,6 +41,7 @@ func NewDeleteIPRuleHandler(
 func (h *DeleteIPRuleHandler) Handle(ctx context.Context, cmd DeleteIPRuleCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "DeleteIPRuleHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "DeleteIPRule", "ip_rule")()
 
 	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
 		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteIPRule", Entity: "ip_rule", EntityID: cmd.ID, Err: err}.KV()...)

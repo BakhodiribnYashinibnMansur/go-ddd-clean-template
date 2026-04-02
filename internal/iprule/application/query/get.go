@@ -33,6 +33,7 @@ func NewGetIPRuleHandler(readRepo domain.IPRuleReadRepository, l logger.Log) *Ge
 func (h *GetIPRuleHandler) Handle(ctx context.Context, q GetIPRuleQuery) (result *appdto.IPRuleView, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "GetIPRuleHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "GetIPRule", "ip_rule")()
 
 	v, err := h.readRepo.FindByID(ctx, q.ID)
 	if err != nil {

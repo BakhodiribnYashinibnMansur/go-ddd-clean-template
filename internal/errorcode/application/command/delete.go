@@ -44,6 +44,7 @@ func NewDeleteErrorCodeHandler(
 func (h *DeleteErrorCodeHandler) Handle(ctx context.Context, cmd DeleteErrorCodeCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "DeleteErrorCodeHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "DeleteErrorCode", "error_code")()
 
 	ec, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {

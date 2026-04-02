@@ -55,6 +55,7 @@ func NewCreateSystemErrorHandler(
 func (h *CreateSystemErrorHandler) Handle(ctx context.Context, cmd CreateSystemErrorCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "CreateSystemErrorHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "CreateSystemError", "system_error")()
 
 	se := domain.NewSystemError(cmd.Code, cmd.Message, cmd.Severity)
 

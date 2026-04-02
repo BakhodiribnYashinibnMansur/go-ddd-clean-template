@@ -48,6 +48,7 @@ func NewUpdateHandler(
 func (h *UpdateHandler) Handle(ctx context.Context, cmd UpdateCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "UpdateHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "UpdateFeatureFlag", "feature_flag")()
 
 	ff, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {

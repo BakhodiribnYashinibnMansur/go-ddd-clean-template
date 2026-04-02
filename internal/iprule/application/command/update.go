@@ -50,6 +50,7 @@ func NewUpdateIPRuleHandler(
 func (h *UpdateIPRuleHandler) Handle(ctx context.Context, cmd UpdateIPRuleCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "UpdateIPRuleHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "UpdateIPRule", "ip_rule")()
 
 	r, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {

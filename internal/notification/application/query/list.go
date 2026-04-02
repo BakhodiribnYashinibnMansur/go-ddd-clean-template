@@ -37,6 +37,7 @@ func NewListHandler(readRepo domain.NotificationReadRepository, l logger.Log) *L
 func (h *ListHandler) Handle(ctx context.Context, q ListQuery) (result *ListResult, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "ListHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "ListNotifications", "notification")()
 
 	views, total, err := h.readRepo.List(ctx, q.Filter)
 	if err != nil {

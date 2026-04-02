@@ -33,6 +33,7 @@ func NewGetTranslationHandler(readRepo domain.TranslationReadRepository, l logge
 func (h *GetTranslationHandler) Handle(ctx context.Context, q GetTranslationQuery) (result *appdto.TranslationView, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "GetTranslationHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "GetTranslation", "translation")()
 
 	v, err := h.readRepo.FindByID(ctx, q.ID)
 	if err != nil {

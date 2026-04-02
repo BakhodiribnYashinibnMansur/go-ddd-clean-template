@@ -33,6 +33,7 @@ func NewGetSystemErrorHandler(readRepo domain.SystemErrorReadRepository, l logge
 func (h *GetSystemErrorHandler) Handle(ctx context.Context, q GetSystemErrorQuery) (_ *appdto.SystemErrorView, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "GetSystemErrorHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "GetSystemError", "system_error")()
 
 	view, err := h.readRepo.FindByID(ctx, q.ID)
 	if err != nil {

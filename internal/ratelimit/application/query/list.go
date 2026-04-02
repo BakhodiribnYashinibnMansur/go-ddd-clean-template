@@ -37,6 +37,7 @@ func NewListRateLimitsHandler(readRepo domain.RateLimitReadRepository, l logger.
 func (h *ListRateLimitsHandler) Handle(ctx context.Context, q ListRateLimitsQuery) (result *ListRateLimitsResult, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "ListRateLimitsHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "ListRateLimits", "rate_limit")()
 
 	views, total, err := h.readRepo.List(ctx, q.Filter)
 	if err != nil {

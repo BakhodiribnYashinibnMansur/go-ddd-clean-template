@@ -37,6 +37,7 @@ func NewListSystemErrorsHandler(readRepo domain.SystemErrorReadRepository, l log
 func (h *ListSystemErrorsHandler) Handle(ctx context.Context, q ListSystemErrorsQuery) (_ *ListSystemErrorsResult, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "ListSystemErrorsHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "ListSystemErrors", "system_error")()
 
 	views, total, err := h.readRepo.List(ctx, q.Filter)
 	if err != nil {

@@ -37,6 +37,7 @@ func NewListEndpointHistoryHandler(readRepo domain.AuditReadRepository, l logger
 func (h *ListEndpointHistoryHandler) Handle(ctx context.Context, q ListEndpointHistoryQuery) (_ *ListEndpointHistoryResult, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "ListEndpointHistoryHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "ListEndpointHistory", "endpoint_history")()
 
 	views, total, err := h.readRepo.ListEndpointHistory(ctx, q.Filter)
 	if err != nil {

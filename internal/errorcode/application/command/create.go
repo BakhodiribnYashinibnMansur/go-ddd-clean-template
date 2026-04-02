@@ -52,6 +52,7 @@ func NewCreateErrorCodeHandler(
 func (h *CreateErrorCodeHandler) Handle(ctx context.Context, cmd CreateErrorCodeCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "CreateErrorCodeHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "CreateErrorCode", "error_code")()
 
 	ec := domain.NewErrorCode(
 		cmd.Code, cmd.Message, cmd.HTTPStatus,

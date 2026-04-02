@@ -42,6 +42,7 @@ func NewCreatePermissionHandler(
 func (h *CreatePermissionHandler) Handle(ctx context.Context, cmd CreatePermissionCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "CreatePermissionHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "CreatePermission", "permission")()
 
 	perm := domain.NewPermission(cmd.Name, cmd.ParentID)
 	if cmd.Description != nil {

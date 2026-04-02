@@ -37,6 +37,7 @@ func NewListUsersHandler(readRepo domain.UserReadRepository, l logger.Log) *List
 func (h *ListUsersHandler) Handle(ctx context.Context, q ListUsersQuery) (_ *ListUsersResult, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "ListUsersHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "ListUsers", "user")()
 
 	views, total, err := h.readRepo.List(ctx, q.Filter)
 	if err != nil {

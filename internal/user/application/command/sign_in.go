@@ -72,6 +72,7 @@ func NewSignInHandler(
 func (h *SignInHandler) Handle(ctx context.Context, cmd SignInCommand) (result *SignInResult, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "SignInHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "SignIn", "user")()
 
 	// Find user by phone or email based on login format.
 	user, err := h.findUser(ctx, cmd.Login)

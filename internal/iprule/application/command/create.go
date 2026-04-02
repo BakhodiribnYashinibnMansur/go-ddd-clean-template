@@ -47,6 +47,7 @@ func NewCreateIPRuleHandler(
 func (h *CreateIPRuleHandler) Handle(ctx context.Context, cmd CreateIPRuleCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "CreateIPRuleHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "CreateIPRule", "ip_rule")()
 
 	r := domain.NewIPRule(cmd.IPAddress, cmd.Action, cmd.Reason, cmd.ExpiresAt)
 

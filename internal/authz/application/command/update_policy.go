@@ -43,6 +43,7 @@ func NewUpdatePolicyHandler(
 func (h *UpdatePolicyHandler) Handle(ctx context.Context, cmd UpdatePolicyCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "UpdatePolicyHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "UpdatePolicy", "policy")()
 
 	policy, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {

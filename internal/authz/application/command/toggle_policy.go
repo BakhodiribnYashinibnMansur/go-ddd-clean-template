@@ -41,6 +41,7 @@ func NewTogglePolicyHandler(
 func (h *TogglePolicyHandler) Handle(ctx context.Context, cmd TogglePolicyCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "TogglePolicyHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "TogglePolicy", "policy")()
 
 	policy, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {

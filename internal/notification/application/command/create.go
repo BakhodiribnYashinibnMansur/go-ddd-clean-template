@@ -44,6 +44,7 @@ func NewCreateHandler(
 func (h *CreateHandler) Handle(ctx context.Context, cmd CreateCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "CreateHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "CreateNotification", "notification")()
 
 	n := domain.NewNotification(cmd.UserID, cmd.Title, cmd.Message, cmd.Type)
 

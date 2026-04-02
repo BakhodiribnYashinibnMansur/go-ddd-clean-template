@@ -43,6 +43,7 @@ func NewUpsertUserSettingHandler(
 func (h *UpsertUserSettingHandler) Handle(ctx context.Context, cmd UpsertUserSettingCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "UpsertUserSettingHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "CreateUserSetting", "user_setting")()
 
 	// Try to find existing setting by user+key.
 	existing, _ := h.repo.FindByUserIDAndKey(ctx, cmd.UserID, cmd.Key)

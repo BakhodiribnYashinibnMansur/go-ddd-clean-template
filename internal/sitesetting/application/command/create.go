@@ -45,6 +45,7 @@ func NewCreateSiteSettingHandler(
 func (h *CreateSiteSettingHandler) Handle(ctx context.Context, cmd CreateSiteSettingCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "CreateSiteSettingHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "CreateSiteSetting", "site_setting")()
 
 	s := domain.NewSiteSetting(cmd.Key, cmd.Value, cmd.Type, cmd.Description)
 

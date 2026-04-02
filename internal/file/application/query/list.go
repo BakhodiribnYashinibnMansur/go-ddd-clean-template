@@ -37,6 +37,7 @@ func NewListFilesHandler(readRepo domain.FileReadRepository, l logger.Log) *List
 func (h *ListFilesHandler) Handle(ctx context.Context, q ListFilesQuery) (_ *ListFilesResult, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "ListFilesHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "ListFiles", "file")()
 
 	views, total, err := h.readRepo.List(ctx, q.Filter)
 	if err != nil {

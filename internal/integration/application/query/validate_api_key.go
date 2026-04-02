@@ -32,6 +32,7 @@ func NewValidateAPIKeyHandler(readRepo domain.IntegrationReadRepository, l logge
 func (h *ValidateAPIKeyHandler) Handle(ctx context.Context, q ValidateAPIKeyQuery) (result *appdto.APIKeyView, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "ValidateAPIKeyHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "ValidateApiKey", "integration")()
 
 	view, err := h.readRepo.FindByAPIKey(ctx, q.APIKey)
 	if err != nil {

@@ -41,6 +41,7 @@ func NewRevokeAllSessionsHandler(
 func (h *RevokeAllSessionsHandler) Handle(ctx context.Context, cmd RevokeAllSessionsCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "RevokeAllSessionsHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "RevokeAllSessions", "user")()
 
 	user, err := h.repo.FindByID(ctx, cmd.UserID)
 	if err != nil {

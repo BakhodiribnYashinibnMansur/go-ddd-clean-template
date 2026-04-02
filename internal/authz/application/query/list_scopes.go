@@ -38,6 +38,7 @@ func NewListScopesHandler(readRepo domain.AuthzReadRepository, l logger.Log) *Li
 func (h *ListScopesHandler) Handle(ctx context.Context, q ListScopesQuery) (_ *ListScopesResult, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "ListScopesHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "ListScopes", "scope")()
 
 	views, total, err := h.readRepo.ListScopes(ctx, q.Pagination)
 	if err != nil {

@@ -33,6 +33,7 @@ func NewGetAnnouncementHandler(readRepo domain.AnnouncementReadRepository, l log
 func (h *GetAnnouncementHandler) Handle(ctx context.Context, q GetAnnouncementQuery) (result *appdto.AnnouncementView, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "GetAnnouncementHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "GetAnnouncement", "announcement")()
 
 	v, err := h.readRepo.FindByID(ctx, q.ID)
 	if err != nil {

@@ -41,6 +41,7 @@ func NewDeleteHandler(
 func (h *DeleteHandler) Handle(ctx context.Context, cmd DeleteCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "DeleteHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "DeleteNotification", "notification")()
 
 	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
 		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteNotification", Entity: "notification", EntityID: cmd.ID, Err: err}.KV()...)

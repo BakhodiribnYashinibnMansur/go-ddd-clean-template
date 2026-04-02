@@ -28,6 +28,7 @@ func NewGetStatsHandler(repo DashboardReadRepository, l logger.Log) *GetStatsHan
 func (h *GetStatsHandler) Handle(ctx context.Context, _ GetStatsQuery) (_ *appdto.DashboardStatsView, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "GetStatsHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.l, ctx, "GetStats", "dashboard")()
 
 	view, err := h.repo.GetStats(ctx)
 	if err != nil {

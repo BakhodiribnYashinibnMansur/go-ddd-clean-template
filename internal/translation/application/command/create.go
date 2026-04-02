@@ -45,6 +45,7 @@ func NewCreateTranslationHandler(
 func (h *CreateTranslationHandler) Handle(ctx context.Context, cmd CreateTranslationCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "CreateTranslationHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "CreateTranslation", "translation")()
 
 	t := domain.NewTranslation(cmd.Key, cmd.Language, cmd.Value, cmd.Group)
 

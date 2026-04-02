@@ -37,6 +37,7 @@ func NewDeleteRateLimitHandler(
 func (h *DeleteRateLimitHandler) Handle(ctx context.Context, cmd DeleteRateLimitCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "DeleteRateLimitHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "DeleteRateLimit", "rate_limit")()
 
 	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
 		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteRateLimit", Entity: "rate_limit", EntityID: cmd.ID, Err: err}.KV()...)

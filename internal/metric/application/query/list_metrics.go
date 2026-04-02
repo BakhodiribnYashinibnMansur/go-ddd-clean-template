@@ -37,6 +37,7 @@ func NewListMetricsHandler(readRepo domain.MetricReadRepository, l logger.Log) *
 func (h *ListMetricsHandler) Handle(ctx context.Context, q ListMetricsQuery) (_ *ListMetricsResult, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "ListMetricsHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "ListMetrics", "metric")()
 
 	views, total, err := h.readRepo.List(ctx, q.Filter)
 	if err != nil {

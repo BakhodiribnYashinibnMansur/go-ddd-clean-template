@@ -37,6 +37,7 @@ func NewListHandler(readRepo domain.IntegrationReadRepository, l logger.Log) *Li
 func (h *ListHandler) Handle(ctx context.Context, q ListQuery) (_ *ListResult, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "ListHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "ListIntegrations", "integration")()
 
 	views, total, err := h.readRepo.List(ctx, q.Filter)
 	if err != nil {

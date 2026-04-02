@@ -46,6 +46,7 @@ func NewCreateEndpointHistoryHandler(
 func (h *CreateEndpointHistoryHandler) Handle(ctx context.Context, cmd CreateEndpointHistoryCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "CreateEndpointHistoryHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "CreateEndpointHistory", "endpoint_history")()
 
 	entry := domain.NewEndpointHistory(
 		cmd.UserID,

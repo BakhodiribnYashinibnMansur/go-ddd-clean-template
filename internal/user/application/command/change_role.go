@@ -42,6 +42,7 @@ func NewChangeRoleHandler(
 func (h *ChangeRoleHandler) Handle(ctx context.Context, cmd ChangeRoleCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "ChangeRoleHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "ChangeRole", "user")()
 
 	user, err := h.repo.FindByID(ctx, cmd.UserID)
 	if err != nil {

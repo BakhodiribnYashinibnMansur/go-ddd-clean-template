@@ -45,6 +45,7 @@ func NewCreateHandler(
 func (h *CreateHandler) Handle(ctx context.Context, cmd CreateCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "CreateHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "CreateFeatureFlag", "feature_flag")()
 
 	ff := domain.NewFeatureFlag(cmd.Name, cmd.Key, cmd.Description, cmd.FlagType, cmd.DefaultValue, cmd.RolloutPercentage)
 

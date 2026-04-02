@@ -33,6 +33,7 @@ func NewGetUserHandler(readRepo domain.UserReadRepository, l logger.Log) *GetUse
 func (h *GetUserHandler) Handle(ctx context.Context, q GetUserQuery) (_ *appdto.UserView, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "GetUserHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "GetUser", "user")()
 
 	view, err := h.readRepo.FindByID(ctx, q.ID)
 	if err != nil {

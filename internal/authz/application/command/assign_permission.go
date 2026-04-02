@@ -46,6 +46,7 @@ func NewAssignPermissionHandler(
 func (h *AssignPermissionHandler) Handle(ctx context.Context, cmd AssignPermissionCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "AssignPermissionHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "AssignPermission", "role")()
 
 	if err := h.rolePermRepo.Assign(ctx, cmd.RoleID, cmd.PermissionID); err != nil {
 		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "AssignPermission", Entity: "role", EntityID: cmd.RoleID, Err: err}.KV()...)

@@ -37,6 +37,7 @@ func NewDeleteUserSettingHandler(
 func (h *DeleteUserSettingHandler) Handle(ctx context.Context, cmd DeleteUserSettingCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "DeleteUserSettingHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "DeleteUserSetting", "user_setting")()
 
 	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
 		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteUserSetting", Entity: "user_setting", EntityID: cmd.ID, Err: err}.KV()...)

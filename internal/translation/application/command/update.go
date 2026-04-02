@@ -48,6 +48,7 @@ func NewUpdateTranslationHandler(
 func (h *UpdateTranslationHandler) Handle(ctx context.Context, cmd UpdateTranslationCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "UpdateTranslationHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "UpdateTranslation", "translation")()
 
 	t, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {

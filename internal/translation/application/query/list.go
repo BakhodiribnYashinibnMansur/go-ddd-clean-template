@@ -37,6 +37,7 @@ func NewListTranslationsHandler(readRepo domain.TranslationReadRepository, l log
 func (h *ListTranslationsHandler) Handle(ctx context.Context, q ListTranslationsQuery) (result *ListTranslationsResult, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "ListTranslationsHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "ListTranslations", "translation")()
 
 	views, total, err := h.readRepo.List(ctx, q.Filter)
 	if err != nil {

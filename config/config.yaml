@@ -16,6 +16,7 @@ log:
   redis_key: "app:logs"        # Redis list key for log buffer
   flush_interval_sec: 60       # seconds between flushes to PostgreSQL
   flush_batch_size: 1000       # max logs per flush batch
+  retention_days: 30           # auto-delete logs older than N days (0 = no cleanup)
 
 metrics:
   enabled: true

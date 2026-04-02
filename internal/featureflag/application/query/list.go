@@ -37,6 +37,7 @@ func NewListHandler(readRepo domain.FeatureFlagReadRepository, l logger.Log) *Li
 func (h *ListHandler) Handle(ctx context.Context, q ListQuery) (_ *ListResult, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "ListHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "ListFeatureFlags", "feature_flag")()
 
 	views, total, err := h.readRepo.List(ctx, q.Filter)
 	if err != nil {

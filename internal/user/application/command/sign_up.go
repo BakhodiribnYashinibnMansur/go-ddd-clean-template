@@ -43,6 +43,7 @@ func NewSignUpHandler(
 func (h *SignUpHandler) Handle(ctx context.Context, cmd SignUpCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "SignUpHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "SignUp", "user")()
 
 	phone, err := domain.NewPhone(cmd.Phone)
 	if err != nil {

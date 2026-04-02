@@ -38,6 +38,7 @@ func NewListAnnouncementsHandler(readRepo domain.AnnouncementReadRepository, l l
 func (h *ListAnnouncementsHandler) Handle(ctx context.Context, q ListAnnouncementsQuery) (result *ListAnnouncementsResult, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "ListAnnouncementsHandler.Handle")
 	defer func() { end(err) }()
+	defer logger.SlowOp(h.logger, ctx, "ListAnnouncements", "announcement")()
 
 	views, total, err := h.readRepo.List(ctx, q.Filter)
 	if err != nil {
