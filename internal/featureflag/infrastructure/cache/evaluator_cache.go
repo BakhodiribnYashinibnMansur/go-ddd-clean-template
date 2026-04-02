@@ -88,6 +88,25 @@ func (ce *CachedEvaluator) GetFloat(ctx context.Context, flagKey string, userAtt
 	return val
 }
 
+// EvalResult holds the evaluated value and the flag's type.
+type EvalResult struct {
+	Value    string
+	FlagType string
+}
+
+// EvaluateFull evaluates a flag and returns the value together with its type.
+// Returns nil when the flag does not exist.
+func (ce *CachedEvaluator) EvaluateFull(ctx context.Context, key string, userAttrs map[string]string) *EvalResult {
+	ff := ce.getFlag(ctx, key)
+	if ff == nil {
+		return nil
+	}
+	return &EvalResult{
+		Value:    ff.Evaluate(userAttrs),
+		FlagType: ff.FlagType(),
+	}
+}
+
 func (ce *CachedEvaluator) getFlag(ctx context.Context, key string) *domain.FeatureFlag {
 	if val, ok := ce.cache.Load(key); ok {
 		return val.(*domain.FeatureFlag)
