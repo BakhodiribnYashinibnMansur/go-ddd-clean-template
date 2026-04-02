@@ -116,10 +116,11 @@ func Run(cfg *config.Config) {
 	var logFlusher *logger.Flusher
 	if cfg.Log.PersistEnabled && redisclient != nil {
 		persistCfg := logger.PersistConfig{
-			Level:     cfg.Log.PersistLevel,
-			RedisKey:  cfg.Log.RedisKey,
-			BatchSize: cfg.Log.FlushBatchSize,
-			Interval:  time.Duration(cfg.Log.FlushInterval) * time.Second,
+			Level:        cfg.Log.PersistLevel,
+			RedisKey:     cfg.Log.RedisKey,
+			BatchSize:    cfg.Log.FlushBatchSize,
+			Interval:     time.Duration(cfg.Log.FlushInterval) * time.Second,
+			RetentionDay: cfg.Log.RetentionDays,
 		}
 		redisSink := logger.NewRedisSink(redisclient, persistCfg)
 		l = logger.WithPersistCore(l, redisSink)
@@ -163,10 +164,41 @@ func Run(cfg *config.Config) {
 			},
 		})
 
+		// Error correlation chain — groups errors by request_id
+		errorChain := apperrors.NewErrorChain(5 * time.Minute)
+		errorChain.StartCleanup(ctx)
+
+		// Automated error resolver
+		resolver := apperrors.NewResolver()
+		// Example: REPO_CONNECTION errors could trigger cache fallback
+		// resolver.Register(apperrors.ErrRepoConnection, func(ctx context.Context, err *apperrors.AppError) bool {
+		//     // fallback to cache logic here
+		//     return true
+		// })
+
+		// SLO tracker — 99.9% success rate target, 1 hour window
+		sloTracker := apperrors.NewSLOTracker(apperrors.SLOConfig{
+			Target: 0.999,
+			Window: time.Hour,
+			OnBudgetExhausted: func(stats apperrors.SLOStats) {
+				alerter.SendError(
+					apperrors.New(apperrors.ErrInternal, "").
+						WithDetails(fmt.Sprintf("SLO budget exhausted: %.2f%% success rate (target: %.1f%%), %d errors / %d total",
+							stats.SuccessRate*100, stats.Target*100, stats.ErrorRequests, stats.TotalRequests)),
+				)
+			},
+		})
+
+		// Register all hooks
 		hookMgr := apperrors.GetGlobalHookManager()
 		hookMgr.AddHook(func(ctx context.Context, err *apperrors.AppError) {
 			apperrors.RateMonitorHook(rateMonitor)(err)
 		})
+		hookMgr.AddHook(apperrors.ChainHook(errorChain))
+		hookMgr.AddHook(apperrors.ResolverHook(resolver))
+		hookMgr.AddHook(apperrors.SLOMiddlewareHook(sloTracker))
+
+		_, _, _ = errorChain, resolver, sloTracker // used by hooks above
 	}
 
 	// 4. Event Bus — Redis Streams if Redis enabled, otherwise in-memory fallback
@@ -345,9 +377,17 @@ func initRouter(cfg *config.Config, bcs *DDDBoundedContexts, redisClient *redis.
 	setupInfraRoutes(handler, cfg, pg.Pool, redisClient, metricsHandler, nil)
 
 	// === Health check routes ===
+	asynqAddr := ""
+	if cfg.Asynq.Enabled {
+		asynqAddr = cfg.Asynq.RedisAddr
+		if asynqAddr == "" {
+			asynqAddr = cfg.Redis.Addr()
+		}
+	}
 	registerHealthRoutes(handler, healthDeps{
-		pgPool: pg.Pool,
-		redis:  redisClient,
+		pgPool:    pg.Pool,
+		redis:     redisClient,
+		asynqAddr: asynqAddr,
 	})
 
 	// === DDD API routes ===
