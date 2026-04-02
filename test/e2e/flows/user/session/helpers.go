@@ -43,7 +43,7 @@ func startTestServer() *httptest.Server {
 	handler := gin.New()
 
 	// Global middleware (no BC middleware for tests — keep it simple)
-	sharedmw.Setup(handler, setup.TestCfg, setup.TestRedis, nil, l)
+	sharedmw.Setup(handler, setup.TestCfg, setup.TestRedis, nil, nil, l)
 
 	// DDD auth/authz middleware
 	authMW := usermw.NewAuthMiddleware(bcs.User.FindSession, bcs.User.FindUserForAuth, setup.TestCfg, l)

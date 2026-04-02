@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"gct/config"
+	"gct/internal/shared/infrastructure/metrics/latency"
 	docs "gct/docs/swagger"
 	"gct/internal/shared/infrastructure/httpx"
 
@@ -20,10 +21,17 @@ import (
 )
 
 // setupInfraRoutes registers infrastructure endpoints (metrics, docs, health, static).
-func setupInfraRoutes(handler *gin.Engine, cfg *config.Config, pool *pgxpool.Pool, redisClient *redis.Client, metricsHandler http.Handler, minioClient *miniogo.Client) {
+func setupInfraRoutes(handler *gin.Engine, cfg *config.Config, pool *pgxpool.Pool, redisClient *redis.Client, metricsHandler http.Handler, minioClient *miniogo.Client, latencyTracker *latency.Tracker) {
 	// Prometheus metrics via OTel exporter
 	if cfg.Middleware.Metrics && cfg.Metrics.Enabled && metricsHandler != nil {
 		handler.GET("/metrics", gin.WrapH(metricsHandler))
+	}
+
+	// Latency percentile stats (JSON)
+	if cfg.Metrics.LatencyEnabled && latencyTracker != nil {
+		handler.GET("/metrics/latency", func(c *gin.Context) {
+			c.JSON(http.StatusOK, latencyTracker.Stats())
+		})
 	}
 
 	// Swagger & Redoc

@@ -7,6 +7,7 @@ import (
 
 	"gct/internal/shared/domain"
 	"gct/internal/shared/infrastructure/eventbus"
+	"gct/internal/shared/infrastructure/logger"
 
 	"github.com/alicebob/miniredis/v2"
 	"github.com/redis/go-redis/v9"
@@ -23,7 +24,7 @@ func TestRedisStreamsEventBus_Publish(t *testing.T) {
 	client, _ := setupRedisClient(t)
 	defer client.Close()
 
-	bus := eventbus.NewRedisStreamsEventBus(client, 1000)
+	bus := eventbus.NewRedisStreamsEventBus(client, 1000, logger.Noop())
 
 	evt := newTestEvent("notification.sent")
 	err := bus.Publish(context.Background(), evt)
@@ -58,7 +59,7 @@ func TestRedisStreamsEventBus_LocalHandlers(t *testing.T) {
 	client, _ := setupRedisClient(t)
 	defer client.Close()
 
-	bus := eventbus.NewRedisStreamsEventBus(client, 1000)
+	bus := eventbus.NewRedisStreamsEventBus(client, 1000, logger.Noop())
 
 	var received string
 	_ = bus.Subscribe("order.placed", func(ctx context.Context, event domain.DomainEvent) error {
@@ -80,7 +81,7 @@ func TestRedisStreamsEventBus_ReadStream(t *testing.T) {
 	client, _ := setupRedisClient(t)
 	defer client.Close()
 
-	bus := eventbus.NewRedisStreamsEventBus(client, 1000)
+	bus := eventbus.NewRedisStreamsEventBus(client, 1000, logger.Noop())
 
 	// Publish 3 events
 	for i := 0; i < 3; i++ {

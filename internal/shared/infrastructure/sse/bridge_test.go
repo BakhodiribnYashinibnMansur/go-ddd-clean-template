@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/sse"
 
 	"github.com/alicebob/miniredis/v2"
@@ -18,7 +19,7 @@ func TestBridge_ForwardsStreamToHub(t *testing.T) {
 	defer client.Close()
 
 	hub := sse.NewHub(256)
-	bridge := sse.NewBridge(client, hub)
+	bridge := sse.NewBridge(client, hub, logger.Noop())
 
 	ch := hub.Register("audit")
 	defer hub.Unregister("audit", ch)

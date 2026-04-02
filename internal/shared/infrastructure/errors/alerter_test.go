@@ -28,7 +28,7 @@ func TestAlerter_SendsCriticalErrors(t *testing.T) {
 	alerter := apperrors.NewAlerter(enq, apperrors.AlerterConfig{
 		MinSeverity:    apperrors.SeverityCritical,
 		DebouncePeriod: 0,
-	})
+	}, nil, nil)
 
 	err := apperrors.New(apperrors.ErrRepoConnection, "")
 	alerter.SendError(err)
@@ -45,7 +45,7 @@ func TestAlerter_SkipsLowSeverity(t *testing.T) {
 	alerter := apperrors.NewAlerter(enq, apperrors.AlerterConfig{
 		MinSeverity:    apperrors.SeverityHigh,
 		DebouncePeriod: 0,
-	})
+	}, nil, nil)
 
 	err := apperrors.New(apperrors.ErrBadRequest, "")
 	alerter.SendError(err)
@@ -62,7 +62,7 @@ func TestAlerter_DebouncesSameCode(t *testing.T) {
 	alerter := apperrors.NewAlerter(enq, apperrors.AlerterConfig{
 		MinSeverity:    apperrors.SeverityCritical,
 		DebouncePeriod: 100 * time.Millisecond,
-	})
+	}, nil, nil)
 
 	err := apperrors.New(apperrors.ErrRepoConnection, "")
 	alerter.SendError(err)

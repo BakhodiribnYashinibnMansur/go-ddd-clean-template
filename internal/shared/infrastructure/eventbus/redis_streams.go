@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"gct/internal/shared/application"
 	"gct/internal/shared/domain"
+	"gct/internal/shared/infrastructure/logger"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -18,17 +20,20 @@ var _ application.EventBus = (*RedisStreamsEventBus)(nil)
 // RedisStreamsEventBus implements EventBus using Redis Streams for persistence
 // and Redis Pub/Sub for instant signaling.
 type RedisStreamsEventBus struct {
-	client   *redis.Client
-	maxLen   int64
-	mu       sync.RWMutex
-	handlers map[string][]application.EventHandler
+	client    *redis.Client
+	maxLen    int64
+	log       logger.Log
+	redisDown atomic.Bool
+	mu        sync.RWMutex
+	handlers  map[string][]application.EventHandler
 }
 
 // NewRedisStreamsEventBus creates a new Redis Streams-backed event bus.
-func NewRedisStreamsEventBus(client *redis.Client, maxLen int64) *RedisStreamsEventBus {
+func NewRedisStreamsEventBus(client *redis.Client, maxLen int64, log logger.Log) *RedisStreamsEventBus {
 	return &RedisStreamsEventBus{
 		client:   client,
 		maxLen:   maxLen,
+		log:      log,
 		handlers: make(map[string][]application.EventHandler),
 	}
 }
@@ -73,11 +78,20 @@ func (b *RedisStreamsEventBus) Publish(ctx context.Context, events ...domain.Dom
 			Values: map[string]any{"data": string(data)},
 		}).Result()
 		if err != nil {
-			return fmt.Errorf("xadd %s: %w", event.EventName(), err)
+			if !b.redisDown.Load() {
+				b.redisDown.Store(true)
+				b.log.Warnw("Redis down, falling back to local handlers only",
+					"event", event.EventName(), "error", err)
+			}
+		} else {
+			if b.redisDown.Load() {
+				b.redisDown.Store(false)
+				b.log.Infow("Redis recovered, resuming stream publishing",
+					"event", event.EventName())
+			}
+			// 2. PUBLISH signal (instant notification to subscribers)
+			b.client.Publish(ctx, signalChannel(event.EventName()), "new")
 		}
-
-		// 2. PUBLISH signal (instant notification to subscribers)
-		b.client.Publish(ctx, signalChannel(event.EventName()), "new")
 
 		// 3. Call local handlers (backward-compatible with InMemoryEventBus)
 		b.mu.RLock()

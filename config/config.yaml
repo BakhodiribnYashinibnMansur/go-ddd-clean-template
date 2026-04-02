@@ -21,6 +21,11 @@ log:
 metrics:
   enabled: true
   slow_query_threshold: "100ms"
+  latency_enabled: true
+  latency_p95_threshold: "200ms"
+  latency_p99_threshold: "500ms"
+  latency_window_sec: 60
+  latency_log_interval_sec: 10
 
 swagger:
   enabled: true

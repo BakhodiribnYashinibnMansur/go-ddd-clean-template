@@ -7,7 +7,14 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+
+	"gct/internal/shared/infrastructure/circuitbreaker"
+	"gct/internal/shared/infrastructure/logger"
+
+	"github.com/redis/go-redis/v9"
 )
+
+const redisWebhookPendingKey = "webhook:pending"
 
 // WebhookConfig configures a webhook notification target.
 type WebhookConfig struct {
@@ -18,22 +25,31 @@ type WebhookConfig struct {
 
 // WebhookReporter sends error alerts to a webhook URL (Slack, Discord, PagerDuty, etc).
 type WebhookReporter struct {
-	cfg    WebhookConfig
-	client *http.Client
+	cfg       WebhookConfig
+	client    *http.Client
+	webhookCB *circuitbreaker.Breaker
+	rdb       redis.Cmdable
+	log       logger.Log
 }
 
 // NewWebhookReporter creates a new webhook reporter.
-func NewWebhookReporter(cfg WebhookConfig) *WebhookReporter {
+func NewWebhookReporter(cfg WebhookConfig, rdb redis.Cmdable, log logger.Log) *WebhookReporter {
 	if cfg.Timeout <= 0 {
 		cfg.Timeout = 10 * time.Second
 	}
 	return &WebhookReporter{
 		cfg:    cfg,
 		client: &http.Client{Timeout: cfg.Timeout},
+		rdb:    rdb,
+		log:    log,
+		webhookCB: circuitbreaker.New("webhook", circuitbreaker.Config{
+			FailureThreshold: 3,
+			Timeout:          60 * time.Second,
+		}),
 	}
 }
 
-// SendError sends error details to the configured webhook.
+// SendError enqueues error details to Redis for async webhook delivery.
 func (w *WebhookReporter) SendError(err error) error {
 	var appErr *AppError
 	if !asAppError(err, &appErr) {
@@ -55,12 +71,30 @@ func (w *WebhookReporter) SendError(err error) error {
 		return fmt.Errorf("marshal webhook payload: %w", err2)
 	}
 
+	if w.rdb == nil {
+		if w.log != nil {
+			w.log.Warnw("Webhook: Redis unavailable, error dropped")
+		}
+		return nil
+	}
+
+	if pushErr := w.rdb.LPush(context.Background(), redisWebhookPendingKey, body).Err(); pushErr != nil {
+		if w.log != nil {
+			w.log.Warnw("Webhook: Redis LPUSH failed, error dropped", "error", pushErr)
+		}
+		return nil
+	}
+	return nil
+}
+
+// doPost sends a raw JSON body to the configured webhook URL.
+func (w *WebhookReporter) doPost(body []byte) error {
 	ctx, cancel := context.WithTimeout(context.Background(), w.cfg.Timeout)
 	defer cancel()
 
-	req, err2 := http.NewRequestWithContext(ctx, http.MethodPost, w.cfg.URL, bytes.NewReader(body))
-	if err2 != nil {
-		return fmt.Errorf("create webhook request: %w", err2)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, w.cfg.URL, bytes.NewReader(body))
+	if err != nil {
+		return fmt.Errorf("create webhook request: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -68,9 +102,9 @@ func (w *WebhookReporter) SendError(err error) error {
 		req.Header.Set(k, v)
 	}
 
-	resp, err2 := w.client.Do(req)
-	if err2 != nil {
-		return fmt.Errorf("send webhook: %w", err2)
+	resp, err := w.client.Do(req)
+	if err != nil {
+		return fmt.Errorf("send webhook: %w", err)
 	}
 	defer resp.Body.Close()
 

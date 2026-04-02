@@ -42,8 +42,13 @@ type (
 
 	// Metrics -.
 	Metrics struct {
-		Enabled            bool   `yaml:"enabled"`
-		SlowQueryThreshold string `yaml:"slow_query_threshold" env:"METRICS_SLOW_QUERY_THRESHOLD" envDefault:"100ms"`
+		Enabled               bool   `yaml:"enabled"`
+		SlowQueryThreshold    string `yaml:"slow_query_threshold" env:"METRICS_SLOW_QUERY_THRESHOLD" envDefault:"100ms"`
+		LatencyEnabled        bool   `yaml:"latency_enabled" env:"METRICS_LATENCY_ENABLED" envDefault:"true"`
+		LatencyP95Threshold   string `yaml:"latency_p95_threshold" env:"METRICS_LATENCY_P95_THRESHOLD" envDefault:"200ms"`
+		LatencyP99Threshold   string `yaml:"latency_p99_threshold" env:"METRICS_LATENCY_P99_THRESHOLD" envDefault:"500ms"`
+		LatencyWindowSec      int    `yaml:"latency_window_sec" env:"METRICS_LATENCY_WINDOW_SEC" envDefault:"60"`
+		LatencyLogIntervalSec int    `yaml:"latency_log_interval_sec" env:"METRICS_LATENCY_LOG_INTERVAL_SEC" envDefault:"10"`
 	}
 
 	// Swagger -.

@@ -2,10 +2,15 @@ package errors
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"sync"
 	"time"
+
+	"gct/internal/shared/infrastructure/logger"
+
+	"github.com/redis/go-redis/v9"
 )
 
 // TaskEnqueuer abstracts Asynq client for testability.
@@ -31,10 +36,12 @@ type Alerter struct {
 	cfg      AlerterConfig
 	mu       sync.Mutex
 	lastSent map[string]time.Time
+	rdb      redis.Cmdable
+	log      logger.Log
 }
 
 // NewAlerter creates a new error alerter.
-func NewAlerter(enqueuer TaskEnqueuer, cfg AlerterConfig) *Alerter {
+func NewAlerter(enqueuer TaskEnqueuer, cfg AlerterConfig, rdb redis.Cmdable, log logger.Log) *Alerter {
 	if cfg.MinSeverity == "" {
 		cfg.MinSeverity = SeverityHigh
 	}
@@ -45,6 +52,8 @@ func NewAlerter(enqueuer TaskEnqueuer, cfg AlerterConfig) *Alerter {
 		enqueuer: enqueuer,
 		cfg:      cfg,
 		lastSent: make(map[string]time.Time),
+		rdb:      rdb,
+		log:      log,
 	}
 }
 
@@ -79,7 +88,19 @@ func (a *Alerter) SendError(err error) error {
 		Text:        text,
 	}
 
-	_, _ = a.enqueuer.EnqueueTask(context.Background(), "task:send_telegram", payload)
+	_, enqErr := a.enqueuer.EnqueueTask(context.Background(), "task:send_telegram", payload)
+	if enqErr != nil {
+		if a.rdb != nil {
+			data, _ := json.Marshal(payload)
+			if pushErr := a.rdb.LPush(context.Background(), "alerter:pending", data).Err(); pushErr != nil {
+				if a.log != nil {
+					a.log.Warnw("Alerter: Redis LPUSH failed, alert dropped", "error", pushErr)
+				}
+			}
+		} else if a.log != nil {
+			a.log.Warnw("Alerter: enqueue failed and Redis unavailable, alert dropped", "error", enqErr)
+		}
+	}
 	return nil
 }
 
@@ -135,4 +156,48 @@ func (a *Alerter) StartCleanup(ctx context.Context) {
 			}
 		}
 	}()
+}
+
+// StartPendingLoop periodically re-enqueues pending alerts from Redis.
+func (a *Alerter) StartPendingLoop(ctx context.Context) {
+	if a.rdb == nil {
+		return
+	}
+	go func() {
+		ticker := time.NewTicker(30 * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				a.flushPending(ctx)
+			}
+		}
+	}()
+}
+
+func (a *Alerter) flushPending(ctx context.Context) {
+	entries, err := a.rdb.LRange(ctx, "alerter:pending", 0, 49).Result()
+	if err != nil || len(entries) == 0 {
+		return
+	}
+
+	a.rdb.LTrim(ctx, "alerter:pending", int64(len(entries)), -1)
+
+	for _, raw := range entries {
+		var payload AlertPayload
+		if err := json.Unmarshal([]byte(raw), &payload); err != nil {
+			continue
+		}
+		_, enqErr := a.enqueuer.EnqueueTask(ctx, "task:send_telegram", payload)
+		if enqErr != nil {
+			// Re-queue on failure
+			a.rdb.RPush(ctx, "alerter:pending", raw)
+			if a.log != nil {
+				a.log.Warnw("Alerter: re-enqueue failed, kept in pending", "error", enqErr)
+			}
+			return // stop on first failure
+		}
+	}
 }

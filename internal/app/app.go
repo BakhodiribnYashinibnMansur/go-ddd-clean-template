@@ -33,6 +33,7 @@ import (
 	"gct/internal/shared/infrastructure/eventbus"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/metrics"
+	"gct/internal/shared/infrastructure/metrics/latency"
 	"gct/internal/shared/infrastructure/pubsub"
 	"gct/internal/shared/infrastructure/sse"
 	jwtpkg "gct/internal/shared/infrastructure/security/jwt"
@@ -149,8 +150,9 @@ func Run(cfg *config.Config) {
 		alerter := apperrors.NewAlerter(&asynqClientAdapter{asynqClient}, apperrors.AlerterConfig{
 			MinSeverity:    apperrors.SeverityHigh,
 			DebouncePeriod: time.Minute,
-		})
+		}, redisclient, l)
 		apperrors.SetReporter(alerter)
+		alerter.StartPendingLoop(ctx)
 
 		// Error rate monitor — alerts when error rate exceeds threshold
 		rateMonitor := apperrors.NewRateMonitor(apperrors.RateMonitorConfig{
@@ -201,10 +203,44 @@ func Run(cfg *config.Config) {
 		_, _, _ = errorChain, resolver, sloTracker // used by hooks above
 	}
 
+	// Latency Percentile Tracker
+	var latencyTracker *latency.Tracker
+	var latencyReporter *latency.Reporter
+	if cfg.Metrics.LatencyEnabled {
+		p95, _ := time.ParseDuration(cfg.Metrics.LatencyP95Threshold)
+		p99, _ := time.ParseDuration(cfg.Metrics.LatencyP99Threshold)
+		if p95 == 0 {
+			p95 = 200 * time.Millisecond
+		}
+		if p99 == 0 {
+			p99 = 500 * time.Millisecond
+		}
+
+		latencyTracker = latency.NewTracker(cfg.Metrics.LatencyWindowSec)
+
+		var alertMgr *latency.AlertManager
+		if asynqClient != nil {
+			alertMgr = latency.NewAlertManager(
+				&asynqClientAdapter{asynqClient},
+				latency.AlertConfig{
+					P95Threshold: p95,
+					P99Threshold: p99,
+					Cooldown:     5 * time.Minute,
+				})
+		}
+
+		interval := time.Duration(cfg.Metrics.LatencyLogIntervalSec) * time.Second
+		if interval == 0 {
+			interval = 10 * time.Second
+		}
+		latencyReporter = latency.NewReporter(latencyTracker, alertMgr, interval, cfg.Metrics.LatencyWindowSec, l)
+		latencyReporter.Start(ctx)
+	}
+
 	// 4. Event Bus — Redis Streams if Redis enabled, otherwise in-memory fallback
 	var eventBusInstance application.EventBus
 	if redisclient != nil && cfg.SSE.Enabled {
-		eventBusInstance = eventbus.NewRedisStreamsEventBus(redisclient, cfg.SSE.StreamMaxLen)
+		eventBusInstance = eventbus.NewRedisStreamsEventBus(redisclient, cfg.SSE.StreamMaxLen, l)
 		l.Infoc(ctx, "EventBus: Redis Streams")
 	} else {
 		eventBusInstance = eventbus.NewInMemoryEventBus()
@@ -258,7 +294,7 @@ func Run(cfg *config.Config) {
 	var sseHub *sse.Hub
 	if redisclient != nil && cfg.SSE.Enabled {
 		sseHub = sse.NewHub(cfg.SSE.ClientBufferSize)
-		bridge := sse.NewBridge(redisclient, sseHub)
+		bridge := sse.NewBridge(redisclient, sseHub, l)
 
 		// SSE bridges for stream → hub
 		go bridge.Listen(ctx, "audit", "signal:audit_log.created", "stream:audit_log.created")
@@ -321,7 +357,7 @@ func Run(cfg *config.Config) {
 	}
 
 	// 8. HTTP Router (pure DDD)
-	handler := initRouter(cfg, dddBCs, redisclient, pg, sseHub, metricsProvider, l)
+	handler := initRouter(cfg, dddBCs, redisclient, pg, sseHub, metricsProvider, latencyTracker, l)
 
 	httpServer := httpserver.NewServer()
 	startServer(cfg.HTTP.Port, handler, httpServer, l)
@@ -331,6 +367,9 @@ func Run(cfg *config.Config) {
 	cancel()
 
 	// 9. Graceful shutdown
+	if latencyReporter != nil {
+		latencyReporter.Stop()
+	}
 	if logFlusher != nil {
 		l.Infoc(context.Background(), "Flushing remaining logs to database...")
 		logFlusher.Stop()
@@ -339,7 +378,7 @@ func Run(cfg *config.Config) {
 }
 
 // initRouter configures the Gin engine with DDD middleware and routes.
-func initRouter(cfg *config.Config, bcs *DDDBoundedContexts, redisClient *redis.Client, pg *postgres.Postgres, sseHub *sse.Hub, metricsProvider *metrics.Provider, l logger.Log) *gin.Engine {
+func initRouter(cfg *config.Config, bcs *DDDBoundedContexts, redisClient *redis.Client, pg *postgres.Postgres, sseHub *sse.Hub, metricsProvider *metrics.Provider, latencyTracker *latency.Tracker, l logger.Log) *gin.Engine {
 	gin.SetMode(cfg.HTTP.GinMode)
 
 	if cfg.Log.ShowGin {
@@ -367,14 +406,14 @@ func initRouter(cfg *config.Config, bcs *DDDBoundedContexts, redisClient *redis.
 	}
 
 	// === Global shared middleware ===
-	sharedmw.Setup(handler, cfg, redisClient, bcMW, l)
+	sharedmw.Setup(handler, cfg, redisClient, bcMW, latencyTracker, l)
 
 	// === Infrastructure routes (swagger, health, static) ===
 	var metricsHandler http.Handler
 	if metricsProvider != nil {
 		metricsHandler = metricsProvider.Handler()
 	}
-	setupInfraRoutes(handler, cfg, pg.Pool, redisClient, metricsHandler, nil)
+	setupInfraRoutes(handler, cfg, pg.Pool, redisClient, metricsHandler, nil, latencyTracker)
 
 	// === Health check routes ===
 	asynqAddr := ""

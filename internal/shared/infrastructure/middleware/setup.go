@@ -7,6 +7,7 @@ import (
 
 	"gct/config"
 	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/shared/infrastructure/metrics/latency"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -26,7 +27,7 @@ type BCMiddleware struct {
 
 // Setup registers the standard suite of shared middleware to the Gin engine.
 // BC-specific middleware is injected via the bcMW parameter.
-func Setup(handler *gin.Engine, cfg *config.Config, redisClient *redis.Client, bcMW *BCMiddleware, l logger.Log) {
+func Setup(handler *gin.Engine, cfg *config.Config, redisClient *redis.Client, bcMW *BCMiddleware, latencyTracker *latency.Tracker, l logger.Log) {
 	handler.HandleMethodNotAllowed = true
 
 	// 1. Traceability & Logging
@@ -53,6 +54,11 @@ func Setup(handler *gin.Engine, cfg *config.Config, redisClient *redis.Client, b
 	// 3.1 OTel HTTP Metrics
 	if cfg.Middleware.Metrics && cfg.Metrics.Enabled {
 		handler.Use(OTelMetrics(cfg.Tracing.ServiceName))
+	}
+
+	// 3.2 Latency Percentile Tracker
+	if cfg.Metrics.LatencyEnabled && latencyTracker != nil {
+		handler.Use(LatencyTracker(latencyTracker))
 	}
 
 	// 4. Resilience (BC-specific: SystemError BC)
