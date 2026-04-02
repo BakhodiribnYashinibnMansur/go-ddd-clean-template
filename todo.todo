@@ -1,0 +1,121 @@
+Latency Percentile Tracking (p95/p99):
+
+  Task 1: HDR Histogram dependency:
+    ✔ go get github.com/HdrHistogram/hdrhistogram-go@latest (go mod tidy import bo'lganda o'zi qo'shadi)
+
+  Task 2: Config fields:
+    ✔ config/app_settings_latency_test.go — test yozish
+    ✔ Test fail bo'lishini tekshirish
+    ☐ app_settings.go — Metrics struct ga 5 ta field qo'shish: LatencyEnabled, LatencyP95Threshold, LatencyP99Threshold, LatencyWindowSec, LatencyLogIntervalSec
+    ☐ config.yaml — metrics: bo'limiga latency default qiymatlarini qo'shish
+    ☐ go test ./config/ -run TestMetricsLatencyDefaults — PASS tekshirish
+    ☐ Commit: feat(config): add latency percentile tracking settings
+
+  Task 3: LatencyTracker (tracker.go):
+    ☐ tracker_test.go — TestTracker_RecordAndStats, TestTracker_Reset, TestTracker_EmptyStats, TestTracker_ConcurrentAccess
+    ☐ Test fail tekshirish
+    ☐ tracker.go — NewTracker(windowSec), Record(d), Stats(), Reset(). HDR Histogram 1µs-10s, 3 sig figs, sync.Mutex
+    ☐ go test ./internal/shared/infrastructure/metrics/latency/ — PASS tekshirish
+    ☐ Commit: feat(latency): implement HDR Histogram latency tracker
+
+  Task 4: AlertManager (alert.go):
+    ☐ alert_test.go — TestAlertManager_P95Breach, P99Breach, NoBreach, Cooldown, NilEnqueuer (mockEnqueuer + mockLogger)
+    ☐ Test fail tekshirish
+    ☐ alert.go — TaskEnqueuer interface, AlertConfig, AlertManager, Check(stats), sendAlert(), isCooledDown(). Asynq task:send_telegram
+    ☐ go test -run TestAlertManager — PASS tekshirish
+    ☐ Commit: feat(latency): implement alert manager with Telegram + cooldown
+
+  Task 5: Reporter (reporter.go):
+    ☐ reporter_test.go — TestReporter_StartsAndStops, TestReporter_ResetsAfterWindow
+    ☐ Test fail tekshirish
+    ☐ reporter.go — NewReporter(tracker, alert, interval, log), Start(ctx), Stop(). Ticker + windowTicker goroutine
+    ☐ go test -run TestReporter — PASS tekshirish
+    ☐ Commit: feat(latency): implement periodic reporter with window reset
+
+  Task 6: Gin middleware (latency_tracker.go):
+    ☐ latency_tracker_test.go — TestLatencyTrackerMiddleware_RecordsLatency, _MultipleRequests
+    ☐ Test fail tekshirish
+    ☐ latency_tracker.go — LatencyTracker(tracker) gin.HandlerFunc. c.Next() + tracker.Record(time.Since(start))
+    ☐ go test -run TestLatencyTracker — PASS tekshirish
+    ☐ Commit: feat(middleware): add latency tracker middleware
+
+  Task 7: Wire into application:
+    ☐ setup.go — Setup() ga latencyTracker *latency.Tracker parametr + middleware register
+    ☐ app.go — asynqClient dan keyin latencyTracker, AlertManager, Reporter init + Start(ctx)
+    ☐ app.go — initRouter() ga latencyTracker parametr + Setup() ga uzatish
+    ☐ infra_routes.go — setupInfraRoutes() ga latencyTracker + GET /metrics/latency endpoint
+    ☐ go build ./... — kompilatsiya tekshirish
+    ☐ Commit: feat(latency): wire tracker, reporter, and /metrics/latency endpoint
+
+  Task 8: Grafana dashboard:
+    ☐ docs/grafana/latency-dashboard.json — p50/p95/p99 timeseries, endpoint breakdown, request rate, in-flight gauge
+    ☐ Commit: docs(grafana): add latency percentile dashboard with PromQL
+
+  Task 9: Final verification:
+    ☐ go test ./internal/shared/infrastructure/metrics/latency/ -v -race
+    ☐ go test ./internal/shared/infrastructure/middleware/ -run TestLatencyTracker -v -race
+    ☐ go build ./...
+    ☐ go test ./... -count=1 — regression tekshirish
+
+Graceful Degradation — Implementation Plan:
+
+  Task 1: Firebase FCM circuit breaker:
+    ☐ firebase.go — Firebase struct ga mobileCB, webCB *circuitbreaker.Breaker field qo'shish
+    ☐ firebase.go — NewFirebase() da breaker init (threshold=3, timeout=60s)
+    ☐ fcm.go — SendNotification: MobileClient.Send va WebClient.Send ni mobileCB/webCB.ExecuteWithFallback orqali wrap qilish
+    ☐ fcm.go — SendMultiNotification: SendEachForMulticast ni CB orqali wrap qilish
+    ☐ fcm.go — SendNotifications loop fix: fail token skip, continue, oxirida fail count log
+    ☐ go build ./internal/shared/infrastructure/firebase/...
+
+  Task 2: Firebase FCM fallback buffer:
+    ☐ fcm.go — fcmFallbackEntry struct: token, title, body, data, fcm_type, timestamp
+    ☐ fcm.go — CB fallback func: entry ni Redis LIST (fcm:fallback:buffer) ga LPUSH
+    ☐ fcm.go — FCMFlusher struct: rdb, telegramClient, log, stopCh
+    ☐ fcm.go — FCMFlusher.Start(): 2min ticker, Redis dan LRANGE+LTRIM, title+body bo'yicha group
+    ☐ fcm.go — Grouped Telegram alert format: har group uchun title, recipient count, token list, data
+    ☐ fcm.go — Redis ham o'chsa: in-memory counter, recovery da simple Telegram alert
+    ☐ go build ./internal/shared/infrastructure/firebase/...
+
+  Task 3: Telegram circuit breaker + pending buffer:
+    ☐ client.go — Client struct ga telegramCB *circuitbreaker.Breaker, rdb redis.Cmdable field qo'shish
+    ☐ client.go — New() ga rdb parametr + breaker init (threshold=3, timeout=120s)
+    ☐ sender.go — SendMessage: CB.ExecuteWithFallback orqali wrap
+    ☐ sender.go — Fallback: message ni Redis LIST (telegram:pending) ga LPUSH (message_type, text, failed_at)
+    ☐ sender.go — Redis ham o'chsa: logger Warn bilan yozish
+    ☐ sender.go — TelegramFlusher struct: 30s ticker, circuit tekshirish, pending flush, recovery log
+    ☐ go build ./internal/shared/infrastructure/telegram/...
+
+  Task 4: Webhook async + circuit breaker:
+    ☐ webhook.go — WebhookReporter ga webhookCB *circuitbreaker.Breaker, rdb redis.Cmdable field qo'shish
+    ☐ webhook.go — NewWebhookReporter() ga rdb parametr + breaker init (threshold=3, timeout=60s)
+    ☐ webhook.go — SendError: payload ni Redis LIST (webhook:pending) ga LPUSH (async, hech qachon block qilmaydi)
+    ☐ webhook.go — Redis ham o'chsa: logger Warn bilan yozish
+    ☐ webhook.go — WebhookFlusher struct: 30s ticker, Redis dan o'qish, CB orqali HTTP POST, fail bo'lsa Redis da qoldirish
+    ☐ go build ./internal/shared/infrastructure/errors/...
+
+  Task 5: SSE Bridge reconnect:
+    ☐ bridge.go — Listen() ga exponential backoff reconnect loop qo'shish (1s → 2s → 4s → 8s → 16s → max 30s)
+    ☐ bridge.go — Subscribe fail / channel close → reconnect with backoff + Warn log
+    ☐ bridge.go — Reconnect success → Info log + backoff reset
+    ☐ bridge.go — XRead error → Warn log (hozir silent)
+    ☐ bridge.go — ctx.Done() → clean exit
+    ☐ go build ./internal/shared/infrastructure/sse/...
+
+  Task 6: RedisStreamsEventBus in-memory fallback:
+    ☐ redis_streams.go — redisDown atomic.Bool field qo'shish
+    ☐ redis_streams.go — Publish: XAdd fail → Warn log (1x transition), skip XADD+PUBLISH, local handler chaqirish
+    ☐ redis_streams.go — Publish: XAdd success + redisDown true → Info log (1x recovery)
+    ☐ go build ./internal/shared/infrastructure/eventbus/...
+
+  Task 7: Alerter pending buffer:
+    ☐ alerter.go — Alerter ga rdb redis.Cmdable field qo'shish
+    ☐ alerter.go — NewAlerter() ga rdb parametr
+    ☐ alerter.go — SendError: enqueue fail → Redis LIST (alerter:pending) ga saqlash
+    ☐ alerter.go — Redis ham o'chsa → logger Warn bilan yozish
+    ☐ alerter.go — StartPendingLoop(ctx): 30s ticker, pending alert larni re-enqueue
+    ☐ go build ./internal/shared/infrastructure/errors/...
+
+  Task 8: Final verification:
+    ☐ go build ./... — barcha packagelar compile
+    ☐ go test ./... -count=1 — regression tekshirish
+    ☐ go vet ./... — static analysis
