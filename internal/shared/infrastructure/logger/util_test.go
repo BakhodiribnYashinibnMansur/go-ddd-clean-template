@@ -84,24 +84,12 @@ func TestWithFields_APIVersion(t *testing.T) {
 	}
 }
 
-func TestWithFields_TraceID(t *testing.T) {
-	ctx := context.Background()
-	ctx = WithFields(ctx, map[string]any{
-		contextx.FieldTraceID: "trace-abc",
-	})
-
-	if got := contextx.GetTraceID(ctx); got != "trace-abc" {
-		t.Errorf("expected trace ID 'trace-abc', got %q", got)
-	}
-}
-
 func TestWithFields_MultipleFields(t *testing.T) {
 	ctx := context.Background()
 	ctx = WithFields(ctx, map[string]any{
 		contextx.FieldRequestID: "req-1",
 		contextx.FieldSessionID: "sess-2",
 		contextx.FieldUserRole:  "editor",
-		contextx.FieldTraceID:   "trace-3",
 	})
 
 	if got := contextx.GetRequestID(ctx); got != "req-1" {
@@ -112,9 +100,6 @@ func TestWithFields_MultipleFields(t *testing.T) {
 	}
 	if got := contextx.GetUserRole(ctx); got != "editor" {
 		t.Errorf("expected user role 'editor', got %q", got)
-	}
-	if got := contextx.GetTraceID(ctx); got != "trace-3" {
-		t.Errorf("expected trace ID 'trace-3', got %q", got)
 	}
 }
 

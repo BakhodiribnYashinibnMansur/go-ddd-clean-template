@@ -127,15 +127,6 @@ func TestAPIVersion(t *testing.T) {
 	})
 }
 
-func TestTraceID(t *testing.T) {
-	ctx := WithTraceID(context.Background(), "trace-789")
-	assert.Equal(t, "trace-789", GetTraceID(ctx))
-
-	t.Run("missing returns empty", func(t *testing.T) {
-		assert.Equal(t, "", GetTraceID(context.Background()))
-	})
-}
-
 func TestContextKeysDoNotCollide(t *testing.T) {
 	ctx := context.Background()
 	ctx = WithRequestID(ctx, "req")
@@ -145,7 +136,6 @@ func TestContextKeysDoNotCollide(t *testing.T) {
 	ctx = WithIPAddress(ctx, "127.0.0.1")
 	ctx = WithUserAgent(ctx, "ua")
 	ctx = WithAPIVersion(ctx, "v1")
-	ctx = WithTraceID(ctx, "trace")
 
 	assert.Equal(t, "req", GetRequestID(ctx))
 	assert.Equal(t, "sess", GetSessionID(ctx))
@@ -154,5 +144,4 @@ func TestContextKeysDoNotCollide(t *testing.T) {
 	assert.Equal(t, "127.0.0.1", GetIPAddress(ctx))
 	assert.Equal(t, "ua", GetUserAgent(ctx))
 	assert.Equal(t, "v1", GetAPIVersion(ctx))
-	assert.Equal(t, "trace", GetTraceID(ctx))
 }

@@ -34,8 +34,6 @@ func TestGetErrorContext_WithExistingContext(t *testing.T) {
 	expected := &ErrorContext{
 		UserID:    "user-123",
 		RequestID: "req-456",
-		TraceID:   "trace-789",
-		SpanID:    "span-abc",
 		Metadata:  map[string]any{"key": "value"},
 	}
 
@@ -48,20 +46,12 @@ func TestGetErrorContext_WithExistingContext(t *testing.T) {
 	if got.RequestID != expected.RequestID {
 		t.Errorf("expected RequestID %q, got %q", expected.RequestID, got.RequestID)
 	}
-	if got.TraceID != expected.TraceID {
-		t.Errorf("expected TraceID %q, got %q", expected.TraceID, got.TraceID)
-	}
-	if got.SpanID != expected.SpanID {
-		t.Errorf("expected SpanID %q, got %q", expected.SpanID, got.SpanID)
-	}
 }
 
 func TestGetErrorContext_FromIndividualValues(t *testing.T) {
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, ContextKeyUserID, "user-abc")
 	ctx = context.WithValue(ctx, ContextKeyRequestID, "req-def")
-	ctx = context.WithValue(ctx, ContextKeyTraceID, "trace-ghi")
-	ctx = context.WithValue(ctx, ContextKeySpanID, "span-jkl")
 
 	ec := GetErrorContext(ctx)
 
@@ -70,12 +60,6 @@ func TestGetErrorContext_FromIndividualValues(t *testing.T) {
 	}
 	if ec.RequestID != "req-def" {
 		t.Errorf("expected RequestID 'req-def', got %q", ec.RequestID)
-	}
-	if ec.TraceID != "trace-ghi" {
-		t.Errorf("expected TraceID 'trace-ghi', got %q", ec.TraceID)
-	}
-	if ec.SpanID != "span-jkl" {
-		t.Errorf("expected SpanID 'span-jkl', got %q", ec.SpanID)
 	}
 }
 
@@ -225,8 +209,6 @@ func TestAppError_WithContext(t *testing.T) {
 	ec := &ErrorContext{
 		UserID:    "user-1",
 		RequestID: "req-1",
-		TraceID:   "trace-1",
-		SpanID:    "span-1",
 		Operation: "get_user",
 		Resource:  "user",
 		IPAddress: "127.0.0.1",
@@ -243,8 +225,6 @@ func TestAppError_WithContext(t *testing.T) {
 	checks := map[string]any{
 		"user_id":    "user-1",
 		"request_id": "req-1",
-		"trace_id":   "trace-1",
-		"span_id":    "span-1",
 		"operation":  "get_user",
 		"resource":   "user",
 		"ip_address": "127.0.0.1",

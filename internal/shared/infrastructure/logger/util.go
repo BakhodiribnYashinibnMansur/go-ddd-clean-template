@@ -38,10 +38,6 @@ func WithFields(ctx context.Context, fields map[string]any) context.Context {
 			if s, ok := v.(string); ok {
 				ctx = contextx.WithAPIVersion(ctx, s)
 			}
-		case contextx.FieldTraceID:
-			if s, ok := v.(string); ok {
-				ctx = contextx.WithTraceID(ctx, s)
-			}
 		}
 	}
 
@@ -70,9 +66,6 @@ func extractFields(ctx context.Context) map[string]any {
 	}
 	if v := contextx.GetAPIVersion(ctx); v != "" {
 		fields[contextx.FieldAPIVersion] = v
-	}
-	if id := contextx.GetTraceID(ctx); id != "" {
-		fields[contextx.FieldTraceID] = id
 	}
 	return fields
 }

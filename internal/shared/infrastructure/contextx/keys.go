@@ -12,7 +12,6 @@ const (
 	FieldIPAddress  = "ip_address"
 	FieldUserAgent  = "user_agent"
 	FieldAPIVersion = "api_version"
-	FieldTraceID    = "trace_id"
 )
 
 const (
@@ -23,7 +22,6 @@ const (
 	ipAddressKey  ctxKey = FieldIPAddress
 	userAgentKey  ctxKey = FieldUserAgent
 	apiVersionKey ctxKey = FieldAPIVersion
-	traceIDKey    ctxKey = FieldTraceID
 )
 
 func WithRequestID(ctx context.Context, id string) context.Context {
@@ -88,11 +86,3 @@ func GetAPIVersion(ctx context.Context) string {
 	return v
 }
 
-func WithTraceID(ctx context.Context, id string) context.Context {
-	return context.WithValue(ctx, traceIDKey, id)
-}
-
-func GetTraceID(ctx context.Context) string {
-	id, _ := ctx.Value(traceIDKey).(string)
-	return id
-}

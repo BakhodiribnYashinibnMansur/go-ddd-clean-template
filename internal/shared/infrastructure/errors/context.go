@@ -14,10 +14,8 @@ const (
 
 // ErrorContext provides additional context for errors
 type ErrorContext struct {
-	UserID     string         `json:"user_id,omitempty"`
-	RequestID  string         `json:"request_id,omitempty"`
-	TraceID    string         `json:"trace_id,omitempty"`
-	SpanID     string         `json:"span_id,omitempty"`
+	UserID    string `json:"user_id,omitempty"`
+	RequestID string `json:"request_id,omitempty"`
 	Operation  string         `json:"operation,omitempty"`
 	Resource   string         `json:"resource,omitempty"`
 	ResourceID string         `json:"resource_id,omitempty"`
@@ -34,9 +32,7 @@ type ContextKey string
 const (
 	ContextKeyErrorContext ContextKey = "error_context"
 	ContextKeyUserID       ContextKey = "user_id"
-	ContextKeyRequestID    ContextKey = "request_id"
-	ContextKeyTraceID      ContextKey = "trace_id"
-	ContextKeySpanID       ContextKey = "span_id"
+	ContextKeyRequestID ContextKey = "request_id"
 )
 
 // GetErrorContext extracts ErrorContext from context
@@ -62,12 +58,6 @@ func GetErrorContext(ctx context.Context) *ErrorContext {
 	}
 	if reqID, ok := ctx.Value(ContextKeyRequestID).(string); ok {
 		ec.RequestID = reqID
-	}
-	if traceID, ok := ctx.Value(ContextKeyTraceID).(string); ok {
-		ec.TraceID = traceID
-	}
-	if spanID, ok := ctx.Value(ContextKeySpanID).(string); ok {
-		ec.SpanID = spanID
 	}
 
 	return ec
@@ -194,12 +184,6 @@ func (e *AppError) WithContext(ctx context.Context) *AppError {
 	}
 	if ec.RequestID != "" {
 		e.Fields["request_id"] = ec.RequestID
-	}
-	if ec.TraceID != "" {
-		e.Fields["trace_id"] = ec.TraceID
-	}
-	if ec.SpanID != "" {
-		e.Fields["span_id"] = ec.SpanID
 	}
 	if ec.Operation != "" {
 		e.Fields["operation"] = ec.Operation
