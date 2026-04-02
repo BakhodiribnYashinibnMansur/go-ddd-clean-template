@@ -13,6 +13,7 @@ import (
 	"gct/internal/featureflag/application/command"
 	"gct/internal/featureflag/application/query"
 	"gct/internal/featureflag/domain"
+	ffcache "gct/internal/featureflag/infrastructure/cache"
 	"gct/internal/shared/application"
 	shared "gct/internal/shared/domain"
 
@@ -139,6 +140,17 @@ func (m *mockLogger) Warnc(_ context.Context, _ string, _ ...any)  {}
 func (m *mockLogger) Errorc(_ context.Context, _ string, _ ...any) {}
 func (m *mockLogger) Fatalc(_ context.Context, _ string, _ ...any) {}
 
+type mockCachedEvaluator struct {
+	results map[string]*ffcache.EvalResult
+}
+
+func (m *mockCachedEvaluator) EvaluateFull(_ context.Context, key string, _ map[string]string) *ffcache.EvalResult {
+	if m.results == nil {
+		return nil
+	}
+	return m.results[key]
+}
+
 // --- Helpers ---
 
 func setupRouter(repo *mockFeatureFlagRepo, rgRepo *mockRuleGroupRepo, readRepo *mockReadRepo) *gin.Engine {
@@ -154,8 +166,10 @@ func setupRouter(repo *mockFeatureFlagRepo, rgRepo *mockRuleGroupRepo, readRepo 
 		CreateRuleGroup: command.NewCreateRuleGroupHandler(repo, rgRepo, eb, l),
 		UpdateRuleGroup: command.NewUpdateRuleGroupHandler(rgRepo, eb, l),
 		DeleteRuleGroup: command.NewDeleteRuleGroupHandler(rgRepo, eb, l),
-		GetFlag:         query.NewGetHandler(readRepo),
-		ListFlags:       query.NewListHandler(readRepo),
+		GetFlag:           query.NewGetHandler(readRepo),
+		ListFlags:         query.NewListHandler(readRepo),
+		EvaluateFlag:      query.NewEvaluateHandler(&mockCachedEvaluator{}),
+		BatchEvaluateFlag: query.NewBatchEvaluateHandler(&mockCachedEvaluator{}),
 	}
 
 	r := gin.New()
@@ -359,5 +373,129 @@ func TestHandler_UpdateRuleGroup_InvalidID(t *testing.T) {
 
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d", w.Code)
+	}
+}
+
+func setupRouterWithEvaluator(evalResults map[string]*ffcache.EvalResult) *gin.Engine {
+	gin.SetMode(gin.TestMode)
+
+	l := &mockLogger{}
+	eval := &mockCachedEvaluator{results: evalResults}
+
+	bc := &featureflag.BoundedContext{
+		CreateFlag:        command.NewCreateHandler(&mockFeatureFlagRepo{}, &mockEventBus{}, l),
+		UpdateFlag:        command.NewUpdateHandler(&mockFeatureFlagRepo{}, &mockEventBus{}, l),
+		DeleteFlag:        command.NewDeleteHandler(&mockFeatureFlagRepo{}, &mockEventBus{}, l),
+		CreateRuleGroup:   command.NewCreateRuleGroupHandler(&mockFeatureFlagRepo{}, &mockRuleGroupRepo{}, &mockEventBus{}, l),
+		UpdateRuleGroup:   command.NewUpdateRuleGroupHandler(&mockRuleGroupRepo{}, &mockEventBus{}, l),
+		DeleteRuleGroup:   command.NewDeleteRuleGroupHandler(&mockRuleGroupRepo{}, &mockEventBus{}, l),
+		GetFlag:           query.NewGetHandler(&mockReadRepo{}),
+		ListFlags:         query.NewListHandler(&mockReadRepo{}),
+		EvaluateFlag:      query.NewEvaluateHandler(eval),
+		BatchEvaluateFlag: query.NewBatchEvaluateHandler(eval),
+	}
+
+	r := gin.New()
+	h := NewHandler(bc, l)
+	api := r.Group("/api/v1")
+	h.RegisterRoutes(api)
+	return r
+}
+
+func TestHandler_Evaluate_Success(t *testing.T) {
+	router := setupRouterWithEvaluator(map[string]*ffcache.EvalResult{
+		"dark_mode": {Value: "true", FlagType: "bool"},
+	})
+
+	body := EvaluateRequest{Key: "dark_mode", UserAttrs: map[string]string{"platform": "web"}}
+	jsonBody, _ := json.Marshal(body)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/v1/feature-flags/evaluate", bytes.NewBuffer(jsonBody))
+	req.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+
+	var resp map[string]any
+	json.Unmarshal(w.Body.Bytes(), &resp)
+	if resp["key"] != "dark_mode" {
+		t.Errorf("expected key dark_mode, got %v", resp["key"])
+	}
+	if resp["value"] != "true" {
+		t.Errorf("expected value true, got %v", resp["value"])
+	}
+}
+
+func TestHandler_Evaluate_NotFound(t *testing.T) {
+	router := setupRouterWithEvaluator(nil)
+
+	body := EvaluateRequest{Key: "nonexistent", UserAttrs: nil}
+	jsonBody, _ := json.Marshal(body)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/v1/feature-flags/evaluate", bytes.NewBuffer(jsonBody))
+	req.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestHandler_Evaluate_BadRequest(t *testing.T) {
+	router := setupRouterWithEvaluator(nil)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/v1/feature-flags/evaluate", bytes.NewBufferString(`{}`))
+	req.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestHandler_BatchEvaluate_Success(t *testing.T) {
+	router := setupRouterWithEvaluator(map[string]*ffcache.EvalResult{
+		"flag_a": {Value: "true", FlagType: "bool"},
+		"flag_b": {Value: "dark", FlagType: "string"},
+	})
+
+	body := BatchEvaluateRequest{
+		Keys:      []string{"flag_a", "flag_b", "flag_missing"},
+		UserAttrs: map[string]string{"platform": "web"},
+	}
+	jsonBody, _ := json.Marshal(body)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/v1/feature-flags/evaluate/batch", bytes.NewBuffer(jsonBody))
+	req.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+
+	var resp map[string]any
+	json.Unmarshal(w.Body.Bytes(), &resp)
+	flags := resp["flags"].(map[string]any)
+	if len(flags) != 2 {
+		t.Errorf("expected 2 flags, got %d", len(flags))
+	}
+}
+
+func TestHandler_BatchEvaluate_BadRequest(t *testing.T) {
+	router := setupRouterWithEvaluator(nil)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/v1/feature-flags/evaluate/batch", bytes.NewBufferString(`{}`))
+	req.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", w.Code, w.Body.String())
 	}
 }
