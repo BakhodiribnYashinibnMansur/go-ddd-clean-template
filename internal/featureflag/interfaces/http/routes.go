@@ -15,4 +15,8 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	g.POST("/:id/rule-groups", h.CreateRuleGroup)
 	g.PATCH("/:id/rule-groups/:groupId", h.UpdateRuleGroup)
 	g.DELETE("/:id/rule-groups/:groupId", h.DeleteRuleGroup)
+
+	// Evaluate routes
+	g.POST("/evaluate", h.Evaluate)
+	g.POST("/evaluate/batch", h.BatchEvaluate)
 }

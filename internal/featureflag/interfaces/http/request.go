@@ -44,3 +44,15 @@ type ConditionRequest struct {
 	Operator  string `json:"operator" binding:"required"`
 	Value     string `json:"value" binding:"required"`
 }
+
+// EvaluateRequest represents the request body for evaluating a single feature flag.
+type EvaluateRequest struct {
+	Key       string            `json:"key" binding:"required"`
+	UserAttrs map[string]string `json:"user_attrs"`
+}
+
+// BatchEvaluateRequest represents the request body for evaluating multiple feature flags.
+type BatchEvaluateRequest struct {
+	Keys      []string          `json:"keys" binding:"required,min=1"`
+	UserAttrs map[string]string `json:"user_attrs"`
+}

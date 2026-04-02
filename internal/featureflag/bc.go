@@ -26,8 +26,10 @@ type BoundedContext struct {
 	DeleteRuleGroup *command.DeleteRuleGroupHandler
 
 	// Queries
-	GetFlag   *query.GetHandler
-	ListFlags *query.ListHandler
+	GetFlag           *query.GetHandler
+	ListFlags         *query.ListHandler
+	EvaluateFlag      *query.EvaluateHandler
+	BatchEvaluateFlag *query.BatchEvaluateHandler
 
 	// Evaluator (cached, implements domain.Evaluator)
 	Evaluator *ffcache.CachedEvaluator
@@ -64,8 +66,10 @@ func NewBoundedContext(ctx context.Context, pool *pgxpool.Pool, eventBus applica
 		CreateRuleGroup: command.NewCreateRuleGroupHandler(writeRepo, rgRepo, eventBus, l),
 		UpdateRuleGroup: command.NewUpdateRuleGroupHandler(rgRepo, eventBus, l),
 		DeleteRuleGroup: command.NewDeleteRuleGroupHandler(rgRepo, eventBus, l),
-		GetFlag:         query.NewGetHandler(readRepo),
-		ListFlags:       query.NewListHandler(readRepo),
-		Evaluator:       cachedEval,
+		GetFlag:           query.NewGetHandler(readRepo),
+		ListFlags:         query.NewListHandler(readRepo),
+		EvaluateFlag:      query.NewEvaluateHandler(cachedEval),
+		BatchEvaluateFlag: query.NewBatchEvaluateHandler(cachedEval),
+		Evaluator:         cachedEval,
 	}, nil
 }

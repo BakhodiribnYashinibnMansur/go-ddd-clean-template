@@ -210,3 +210,52 @@ func (h *Handler) DeleteRuleGroup(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, gin.H{"success": true})
 }
+
+// Evaluate evaluates a single feature flag for the given user attributes.
+func (h *Handler) Evaluate(ctx *gin.Context) {
+	var req EvaluateRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	result, err := h.bc.EvaluateFlag.Handle(ctx.Request.Context(), query.EvaluateQuery{
+		Key:       req.Key,
+		UserAttrs: req.UserAttrs,
+	})
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"key":       result.Key,
+		"value":     result.Value,
+		"flag_type": result.FlagType,
+	})
+}
+
+// BatchEvaluate evaluates multiple feature flags for the given user attributes.
+func (h *Handler) BatchEvaluate(ctx *gin.Context) {
+	var req BatchEvaluateRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	result, err := h.bc.BatchEvaluateFlag.Handle(ctx.Request.Context(), query.BatchEvaluateQuery{
+		Keys:      req.Keys,
+		UserAttrs: req.UserAttrs,
+	})
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	flags := make(map[string]gin.H, len(result.Flags))
+	for k, v := range result.Flags {
+		flags[k] = gin.H{"value": v.Value, "flag_type": v.FlagType}
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"flags": flags})
+}
