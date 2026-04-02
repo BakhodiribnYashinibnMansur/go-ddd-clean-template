@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"gct/config"
+	"gct/internal/shared/infrastructure/asynq/tasks"
 	"gct/internal/shared/infrastructure/logger"
 
 	"github.com/hibiken/asynq"
@@ -50,6 +51,22 @@ func NewWorker(cfg config.AsynqConfig, log logger.Log) *Worker {
 // RegisterHandler registers a task handler.
 func (w *Worker) RegisterHandler(taskType string, handler func(context.Context, *asynq.Task) error) {
 	w.mux.HandleFunc(taskType, handler)
+}
+
+// RegisterExternalHandlers registers all external service task handlers.
+// Nil senders are skipped — if Firebase or Telegram is not configured, their handlers are not registered.
+func (w *Worker) RegisterExternalHandlers(fcm tasks.FCMSender, tg tasks.TelegramSender) {
+	if fcm != nil {
+		fcmHandler := tasks.NewFCMHandler(fcm)
+		w.RegisterHandler(tasks.TypeSendFCM, fcmHandler.HandleSendFCM)
+		w.RegisterHandler(tasks.TypeSendFCMMulti, fcmHandler.HandleSendFCMMulti)
+		w.log.Info("📤 Registered FCM task handlers")
+	}
+	if tg != nil {
+		tgHandler := tasks.NewTelegramHandler(tg)
+		w.RegisterHandler(tasks.TypeSendTelegram, tgHandler.HandleSendTelegram)
+		w.log.Info("📤 Registered Telegram task handlers")
+	}
 }
 
 // Start starts the worker server.

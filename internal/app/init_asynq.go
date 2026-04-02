@@ -9,13 +9,14 @@ import (
 	auditcmd "gct/internal/audit/application/command"
 	"gct/internal/seeder"
 	"gct/internal/shared/infrastructure/asynq"
+	"gct/internal/shared/infrastructure/asynq/tasks"
 	"gct/internal/shared/infrastructure/logger"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	hibikenasynq "github.com/hibiken/asynq"
 )
 
-func initAsynqWorker(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, createAuditLog *auditcmd.CreateAuditLogHandler, l logger.Log) (*asynq.Worker, error) {
+func initAsynqWorker(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, createAuditLog *auditcmd.CreateAuditLogHandler, l logger.Log, fcmSender tasks.FCMSender, tgSender tasks.TelegramSender) (*asynq.Worker, error) {
 	if !cfg.Asynq.WorkerEnabled {
 		l.Infoc(ctx, "⚠️ Asynq worker is disabled via configuration")
 		return nil, nil
@@ -40,6 +41,9 @@ func initAsynqWorker(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool
 	asynqWorker.RegisterHandler(asynq.TypeImageResize, handlers.HandleImageResize)
 	asynqWorker.RegisterHandler(asynq.TypePushNotification, handlers.HandlePushNotification)
 	asynqWorker.RegisterHandler(asynq.TypeAuditLog, handlers.HandleAuditLog)
+
+	// External service task handlers (Firebase, Telegram).
+	asynqWorker.RegisterExternalHandlers(fcmSender, tgSender)
 
 	// specialized handler for on-demand database seeding.
 	s := seeder.New(pool, l, cfg)

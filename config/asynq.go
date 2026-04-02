@@ -32,6 +32,7 @@ func (a *AsynqConfig) GetDefaultQueues() map[string]int {
 	return map[string]int{
 		"critical": 6, // Highest priority
 		"default":  3, // Medium priority
+		"external": 2, // External service tasks
 		"low":      1, // Lowest priority
 	}
 }
