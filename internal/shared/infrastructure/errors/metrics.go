@@ -13,30 +13,30 @@ type ErrorMetrics struct {
 	mu sync.RWMutex
 
 	// Error counts by code
-	ErrorCounts map[string]int64
+	errorCounts map[string]int64
 
 	// Error counts by severity
-	SeverityCounts map[ErrorSeverity]int64
+	severityCounts map[ErrorSeverity]int64
 
 	// Error counts by category
-	CategoryCounts map[ErrorCategory]int64
+	categoryCounts map[ErrorCategory]int64
 
 	// Total errors
-	TotalErrors int64
+	totalErrors int64
 
 	// Last error time
-	LastErrorTime time.Time
+	lastErrorTime time.Time
 
 	// Error rate (errors per minute)
-	ErrorRate float64
+	errorRate float64
 }
 
 // NewErrorMetrics creates a new ErrorMetrics instance
 func NewErrorMetrics() *ErrorMetrics {
 	return &ErrorMetrics{
-		ErrorCounts:    make(map[string]int64),
-		SeverityCounts: make(map[ErrorSeverity]int64),
-		CategoryCounts: make(map[ErrorCategory]int64),
+		errorCounts:    make(map[string]int64),
+		severityCounts: make(map[ErrorSeverity]int64),
+		categoryCounts: make(map[ErrorCategory]int64),
 	}
 }
 
@@ -45,36 +45,43 @@ func (m *ErrorMetrics) RecordError(err *AppError) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	// Increment total
-	m.TotalErrors++
+	m.totalErrors++
+	m.errorCounts[err.Type]++
 
-	// Increment by code
-	m.ErrorCounts[err.Type]++
-
-	// Increment by severity
 	severity := err.GetSeverity()
-	m.SeverityCounts[severity]++
+	m.severityCounts[severity]++
 
-	// Increment by category
 	category := err.GetCategory()
-	m.CategoryCounts[category]++
+	m.categoryCounts[category]++
 
-	// Update last error time
-	m.LastErrorTime = time.Now()
+	m.lastErrorTime = time.Now()
 }
 
-// GetStats returns current error statistics
+// GetStats returns current error statistics as deep copies (safe for concurrent use).
 func (m *ErrorMetrics) GetStats() map[string]any {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
+	ec := make(map[string]int64, len(m.errorCounts))
+	for k, v := range m.errorCounts {
+		ec[k] = v
+	}
+	sc := make(map[ErrorSeverity]int64, len(m.severityCounts))
+	for k, v := range m.severityCounts {
+		sc[k] = v
+	}
+	cc := make(map[ErrorCategory]int64, len(m.categoryCounts))
+	for k, v := range m.categoryCounts {
+		cc[k] = v
+	}
+
 	return map[string]any{
-		"total_errors":    m.TotalErrors,
-		"error_counts":    m.ErrorCounts,
-		"severity_counts": m.SeverityCounts,
-		"category_counts": m.CategoryCounts,
-		"last_error_time": m.LastErrorTime,
-		"error_rate":      m.ErrorRate,
+		"total_errors":    m.totalErrors,
+		"error_counts":    ec,
+		"severity_counts": sc,
+		"category_counts": cc,
+		"last_error_time": m.lastErrorTime,
+		"error_rate":      m.errorRate,
 	}
 }
 
@@ -83,11 +90,11 @@ func (m *ErrorMetrics) Reset() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	m.ErrorCounts = make(map[string]int64)
-	m.SeverityCounts = make(map[ErrorSeverity]int64)
-	m.CategoryCounts = make(map[ErrorCategory]int64)
-	m.TotalErrors = 0
-	m.ErrorRate = 0
+	m.errorCounts = make(map[string]int64)
+	m.severityCounts = make(map[ErrorSeverity]int64)
+	m.categoryCounts = make(map[ErrorCategory]int64)
+	m.totalErrors = 0
+	m.errorRate = 0
 }
 
 // ErrorHook is a function that gets called when an error occurs

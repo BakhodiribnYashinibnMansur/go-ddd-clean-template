@@ -12,17 +12,17 @@ func TestNewErrorMetrics(t *testing.T) {
 	if m == nil {
 		t.Fatal("expected non-nil ErrorMetrics")
 	}
-	if m.ErrorCounts == nil {
+	if m.errorCounts == nil {
 		t.Error("expected initialized ErrorCounts map")
 	}
-	if m.SeverityCounts == nil {
+	if m.severityCounts == nil {
 		t.Error("expected initialized SeverityCounts map")
 	}
-	if m.CategoryCounts == nil {
+	if m.categoryCounts == nil {
 		t.Error("expected initialized CategoryCounts map")
 	}
-	if m.TotalErrors != 0 {
-		t.Errorf("expected TotalErrors 0, got %d", m.TotalErrors)
+	if m.totalErrors != 0 {
+		t.Errorf("expected TotalErrors 0, got %d", m.totalErrors)
 	}
 }
 
@@ -37,18 +37,18 @@ func TestErrorMetrics_RecordError(t *testing.T) {
 	m.RecordError(err2)
 	m.RecordError(err3)
 
-	if m.TotalErrors != 3 {
-		t.Errorf("expected TotalErrors 3, got %d", m.TotalErrors)
+	if m.totalErrors != 3 {
+		t.Errorf("expected TotalErrors 3, got %d", m.totalErrors)
 	}
 
-	if m.ErrorCounts[ErrBadRequest] != 2 {
-		t.Errorf("expected BAD_REQUEST count 2, got %d", m.ErrorCounts[ErrBadRequest])
+	if m.errorCounts[ErrBadRequest] != 2 {
+		t.Errorf("expected BAD_REQUEST count 2, got %d", m.errorCounts[ErrBadRequest])
 	}
-	if m.ErrorCounts[ErrNotFound] != 1 {
-		t.Errorf("expected NOT_FOUND count 1, got %d", m.ErrorCounts[ErrNotFound])
+	if m.errorCounts[ErrNotFound] != 1 {
+		t.Errorf("expected NOT_FOUND count 1, got %d", m.errorCounts[ErrNotFound])
 	}
 
-	if m.LastErrorTime.IsZero() {
+	if m.lastErrorTime.IsZero() {
 		t.Error("expected LastErrorTime to be set")
 	}
 }
@@ -67,8 +67,8 @@ func TestErrorMetrics_RecordError_Concurrent(t *testing.T) {
 	}
 	wg.Wait()
 
-	if m.TotalErrors != int64(count) {
-		t.Errorf("expected TotalErrors %d, got %d", count, m.TotalErrors)
+	if m.totalErrors != int64(count) {
+		t.Errorf("expected TotalErrors %d, got %d", count, m.totalErrors)
 	}
 }
 
@@ -107,20 +107,20 @@ func TestErrorMetrics_Reset(t *testing.T) {
 
 	m.Reset()
 
-	if m.TotalErrors != 0 {
-		t.Errorf("expected TotalErrors 0 after reset, got %d", m.TotalErrors)
+	if m.totalErrors != 0 {
+		t.Errorf("expected TotalErrors 0 after reset, got %d", m.totalErrors)
 	}
-	if len(m.ErrorCounts) != 0 {
-		t.Errorf("expected empty ErrorCounts after reset, got %d", len(m.ErrorCounts))
+	if len(m.errorCounts) != 0 {
+		t.Errorf("expected empty ErrorCounts after reset, got %d", len(m.errorCounts))
 	}
-	if len(m.SeverityCounts) != 0 {
-		t.Errorf("expected empty SeverityCounts after reset, got %d", len(m.SeverityCounts))
+	if len(m.severityCounts) != 0 {
+		t.Errorf("expected empty SeverityCounts after reset, got %d", len(m.severityCounts))
 	}
-	if len(m.CategoryCounts) != 0 {
-		t.Errorf("expected empty CategoryCounts after reset, got %d", len(m.CategoryCounts))
+	if len(m.categoryCounts) != 0 {
+		t.Errorf("expected empty CategoryCounts after reset, got %d", len(m.categoryCounts))
 	}
-	if m.ErrorRate != 0 {
-		t.Errorf("expected ErrorRate 0 after reset, got %f", m.ErrorRate)
+	if m.errorRate != 0 {
+		t.Errorf("expected ErrorRate 0 after reset, got %f", m.errorRate)
 	}
 }
 
@@ -224,12 +224,12 @@ func TestRecordErrorGlobal_RecordsMetrics(t *testing.T) {
 
 	// Get metrics before
 	metrics := GetGlobalMetrics()
-	before := metrics.TotalErrors
+	before := metrics.totalErrors
 
 	RecordErrorGlobal(ctx, appErr)
 
 	// Should have incremented
-	if metrics.TotalErrors != before+1 {
+	if metrics.totalErrors != before+1 {
 		t.Errorf("expected TotalErrors to increment by 1")
 	}
 }

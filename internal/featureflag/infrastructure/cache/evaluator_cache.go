@@ -13,9 +13,10 @@ import (
 // the FeatureFlagRepository. On startup all flags are loaded; the cache can be
 // invalidated (reloaded) via the Invalidate method.
 type CachedEvaluator struct {
-	repo  domain.FeatureFlagRepository
-	cache sync.Map
-	log   logger.Log
+	repo    domain.FeatureFlagRepository
+	cache   sync.Map
+	loadMu  sync.Mutex // serializes LoadAll to prevent interleaved clear+populate
+	log     logger.Log
 }
 
 // NewCachedEvaluator creates a CachedEvaluator and eagerly loads all flags.
@@ -27,8 +28,11 @@ func NewCachedEvaluator(ctx context.Context, repo domain.FeatureFlagRepository, 
 	return ce, nil
 }
 
-// LoadAll fetches every flag from the repository and replaces the cache.
+// LoadAll fetches every flag from the repository and atomically replaces the cache.
 func (ce *CachedEvaluator) LoadAll(ctx context.Context) error {
+	ce.loadMu.Lock()
+	defer ce.loadMu.Unlock()
+
 	flags, err := ce.repo.FindAll(ctx)
 	if err != nil {
 		return err
