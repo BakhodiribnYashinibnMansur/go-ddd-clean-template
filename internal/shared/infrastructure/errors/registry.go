@@ -304,6 +304,9 @@ func GetNumericCode(code string) string {
 	if c := getLegacyNumericCode(code); c != "" {
 		return c
 	}
+	if c := GetDomainNumericCode(code); c != "" {
+		return c
+	}
 	return "9999"
 }
 
@@ -358,9 +361,11 @@ var (
 		ErrHandlerForbidden:        CodeHandlerForbidden,
 		ErrHandlerNotFound:         CodeHandlerNotFound,
 		ErrHandlerConflict:         CodeHandlerConflict,
-		ErrHandlerTooManyRequests:  CodeHandlerTooManyRequests,
-		ErrHandlerInternal:         CodeHandlerInternal,
-		ErrHandlerUnknown:          CodeHandlerUnknown,
+		ErrHandlerTooManyRequests:    CodeHandlerTooManyRequests,
+		ErrHandlerNotImplemented:    CodeHandlerNotImplemented,
+		ErrHandlerServiceUnavailable: CodeHandlerServiceUnavailable,
+		ErrHandlerInternal:          CodeHandlerInternal,
+		ErrHandlerUnknown:           CodeHandlerUnknown,
 	}
 
 	legacyNumericCodes = map[string]string{

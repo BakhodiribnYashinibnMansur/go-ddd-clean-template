@@ -1,6 +1,8 @@
 package errors
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"runtime"
@@ -70,24 +72,54 @@ func (e *AppError) WithSuggestion(suggestion string) *AppError {
 	return e
 }
 
-// New creates new error
+// Fingerprint returns a short hash identifying this error type + location.
+// Useful for grouping identical errors.
+func (e *AppError) Fingerprint() string {
+	src := e.Type
+	if len(e.Stack) > 0 {
+		frames := runtime.CallersFrames(e.Stack[:1])
+		if f, ok := frames.Next(); ok {
+			src += f.Function
+		}
+	}
+	h := sha256.Sum256([]byte(src))
+	return hex.EncodeToString(h[:8])
+}
+
+// New creates new error. If message is empty, it is resolved from the registry.
 func New(code, message string) *AppError {
+	userMsg := getUserMessage(code)
+	if userMsg == "" && message != "" {
+		userMsg = message
+	}
+	if userMsg == "" {
+		userMsg = "An error occurred"
+	}
+
 	return &AppError{
 		Type:       code,
 		Code:       GetNumericCode(code),
 		Message:    message,
 		HTTPStatus: getHTTPStatus(code),
-		UserMsg:    getUserMessage(code),
+		UserMsg:    userMsg,
 		Severity:   GetSeverity(code),
 		Category:   GetCategory(code),
 		Stack:      captureStack(),
 	}
 }
 
-// Wrap wraps an existing error
+// Wrap wraps an existing error. If message is empty, it is resolved from the registry.
 func Wrap(err error, code, message string) *AppError {
 	if err == nil {
 		return nil
+	}
+
+	userMsg := getUserMessage(code)
+	if userMsg == "" && message != "" {
+		userMsg = message
+	}
+	if userMsg == "" {
+		userMsg = "An error occurred"
 	}
 
 	return &AppError{
@@ -95,7 +127,7 @@ func Wrap(err error, code, message string) *AppError {
 		Code:       GetNumericCode(code),
 		Message:    message,
 		HTTPStatus: getHTTPStatus(code),
-		UserMsg:    getUserMessage(code),
+		UserMsg:    userMsg,
 		Severity:   GetSeverity(code),
 		Category:   GetCategory(code),
 		Err:        err,
@@ -169,6 +201,14 @@ func getHTTPStatus(code string) int {
 	// 429 errors
 	case ErrHandlerTooManyRequests:
 		return 429
+
+	// 501 errors
+	case ErrHandlerNotImplemented:
+		return 501
+
+	// 503 errors
+	case ErrHandlerServiceUnavailable:
+		return 503
 
 	default:
 		return 500

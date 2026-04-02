@@ -1,5 +1,7 @@
 package errors
 
+import "strings"
+
 // ErrorSeverity represents the severity level of an error
 type ErrorSeverity string
 
@@ -60,6 +62,11 @@ type ErrorMetadata struct {
 
 // GetSeverity returns the severity level for an error code
 func GetSeverity(code string) ErrorSeverity {
+	// Check domain/external codes first
+	if s, ok := domainSeverities[code]; ok {
+		return s
+	}
+
 	switch code {
 	// Critical errors
 	case ErrRepoDatabase, ErrRepoConnection, ErrRepoTransaction:
@@ -84,6 +91,11 @@ func GetSeverity(code string) ErrorSeverity {
 
 // GetCategory returns the category for an error code
 func GetCategory(code string) ErrorCategory {
+	// Check domain/external codes first
+	if c, ok := domainCategories[code]; ok {
+		return c
+	}
+
 	switch code {
 	case ErrBadRequest, ErrInvalidInput, ErrValidation, ErrServiceInvalidInput, ErrServiceValidation:
 		return CategoryValidation
@@ -114,12 +126,14 @@ func GetCategory(code string) ErrorCategory {
 // GetLayer returns the layer for an error code
 func GetLayer(code string) ErrorLayer {
 	switch {
-	case code[:7] == "HANDLER" || code[:4] == "4000" || code[:4] == "5000":
+	case strings.HasPrefix(code, "HANDLER"):
 		return LayerHandler
-	case code[:7] == "SERVICE" || code[:4] == "3000":
+	case strings.HasPrefix(code, "SERVICE"):
 		return LayerService
-	case code[:4] == "REPO" || code[:4] == "2000":
+	case strings.HasPrefix(code, "REPO"):
 		return LayerRepository
+	case strings.HasPrefix(code, "EXT_"):
+		return LayerExternal
 	default:
 		return LayerSystem
 	}

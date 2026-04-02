@@ -64,10 +64,23 @@ var (
 	// Rate Limit (429) - Triggered when client exceeds allowed request thresholds.
 	ErrRateLimitExceeded = apperrors.NewHandlerError(apperrors.ErrHandlerTooManyRequests, "too many requests")
 
+	// Not Implemented (501) - Endpoint or feature is not yet available.
+	ErrNotImplemented = apperrors.NewHandlerError(apperrors.ErrHandlerNotImplemented, "not implemented")
+
+	// Service Unavailable (503) - Required backend service or dependency is not configured or reachable.
+	ErrStorageNotConfigured = apperrors.NewHandlerError(apperrors.ErrHandlerServiceUnavailable, "storage not configured")
+
 	// Internal (500) - Unhandled exceptions, infrastructure failures, or application panics.
 	ErrInternalError     = apperrors.NewHandlerError(apperrors.ErrHandlerInternal, "internal server error")
 	ErrRateLimitInternal = apperrors.NewHandlerError(apperrors.ErrHandlerInternal, "rate limiter internal error")
 	ErrPanicRecovered    = apperrors.NewHandlerError(apperrors.ErrHandlerInternal, "internal server error (panic)")
+
+	// File-related (400/404) - Errors specific to file upload/download operations.
+	ErrFileRequired      = apperrors.NewHandlerError(apperrors.ErrHandlerBadRequest, "file required")
+	ErrInvalidImage      = apperrors.NewHandlerError(apperrors.ErrHandlerBadRequest, "invalid image")
+	ErrMultipartRequired = apperrors.NewHandlerError(apperrors.ErrHandlerBadRequest, "multipart form required")
+	ErrFilePathRequired  = apperrors.NewHandlerError(apperrors.ErrHandlerBadRequest, "file-path required")
+	ErrFileNotFound      = apperrors.NewHandlerError(apperrors.ErrHandlerNotFound, "file not found")
 )
 
 const (

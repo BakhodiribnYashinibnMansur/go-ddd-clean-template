@@ -11,6 +11,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 )
 
@@ -70,6 +72,10 @@ func Logger(l logger.Log) gin.HandlerFunc {
 		ctx := c.Request.Context()
 		ctx = contextx.WithRequestID(ctx, requestID)
 		c.Request = c.Request.WithContext(ctx)
+
+		if span := trace.SpanFromContext(ctx); span.SpanContext().IsValid() {
+			span.SetAttributes(attribute.String("request_id", requestID))
+		}
 
 		path := c.Request.URL.Path
 		raw := c.Request.URL.RawQuery

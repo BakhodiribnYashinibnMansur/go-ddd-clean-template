@@ -31,6 +31,12 @@ const (
 	ErrHandlerTooManyRequests  = "HANDLER_TOO_MANY_REQUESTS"
 	CodeHandlerTooManyRequests = "4029"
 
+	ErrHandlerNotImplemented  = "HANDLER_NOT_IMPLEMENTED"
+	CodeHandlerNotImplemented = "5001"
+
+	ErrHandlerServiceUnavailable  = "HANDLER_SERVICE_UNAVAILABLE"
+	CodeHandlerServiceUnavailable = "5003"
+
 	ErrHandlerInternal  = "HANDLER_INTERNAL_ERROR"
 	CodeHandlerInternal = "5000"
 
@@ -46,9 +52,11 @@ var handlerMessages = map[string]string{
 	ErrHandlerNotFound:         "Resource not found",
 	ErrHandlerMethodNotAllowed: "Method not allowed",
 	ErrHandlerConflict:         "Resource conflict",
-	ErrHandlerTooManyRequests:  "Too many requests",
-	ErrHandlerInternal:         "Internal server error",
-	ErrHandlerUnknown:          "Unknown error",
+	ErrHandlerTooManyRequests:    "Too many requests",
+	ErrHandlerNotImplemented:    "Not implemented",
+	ErrHandlerServiceUnavailable: "Service unavailable",
+	ErrHandlerInternal:          "Internal server error",
+	ErrHandlerUnknown:           "Unknown error",
 }
 
 // NewHandlerError creates a new handler error
@@ -61,43 +69,62 @@ func WrapHandlerError(err error, code, message string) *AppError {
 	return Wrap(err, code, message)
 }
 
-// MapServiceToHandlerError maps service error to handler error
+// MapServiceToHandlerError maps service error to handler error.
+// Domain codes (6xxx) and external codes (7xxx) are preserved as-is
+// so that clients receive the specific error code. Repo/service codes
+// are translated to generic handler codes to hide infrastructure details.
 func MapServiceToHandlerError(err error) *AppError {
 	if err == nil {
 		return nil
 	}
 
-	// If it's already our AppError, check the code
 	var appErr *AppError
 	if errors.As(err, &appErr) {
+		// Domain codes (from MapDomainToServiceError) — preserve as-is.
+		// These have registered HTTP statuses in domain_codes.go.
+		if status := GetHTTPStatus(appErr.Type); status != 0 {
+			appErr.HTTPStatus = status
+			return appErr
+		}
+
+		// Service codes → handler codes (hide infra details)
 		switch appErr.Type {
-		case ErrServiceNotFound:
-			return NewHandlerError(ErrHandlerNotFound, "Resource not found").
+		case ErrServiceNotFound, ErrServiceRoleNotFound,
+			ErrServicePermissionNotFound, ErrServiceScopeNotFound,
+			ErrServiceRelationNotFound:
+			return NewHandlerError(ErrHandlerNotFound, "").
 				WithDetails(appErr.Message)
 
 		case ErrServiceInvalidInput, ErrServiceValidation:
-			return NewHandlerError(ErrHandlerBadRequest, "Invalid request").
+			return NewHandlerError(ErrHandlerBadRequest, "").
 				WithDetails(appErr.Message)
 
 		case ErrServiceUnauthorized:
-			return NewHandlerError(ErrHandlerUnauthorized, "Unauthorized").
+			return NewHandlerError(ErrHandlerUnauthorized, "").
 				WithDetails(appErr.Message)
 
-		case ErrServiceForbidden:
-			return NewHandlerError(ErrHandlerForbidden, "Forbidden").
+		case ErrServiceForbidden, ErrServicePolicyViolation:
+			return NewHandlerError(ErrHandlerForbidden, "").
 				WithDetails(appErr.Message)
 
 		case ErrServiceConflict, ErrServiceAlreadyExists:
-			return NewHandlerError(ErrHandlerConflict, "Resource conflict").
+			return NewHandlerError(ErrHandlerConflict, "").
+				WithDetails(appErr.Message)
+
+		case ErrServiceBusinessRule:
+			return NewHandlerError(ErrHandlerBadRequest, "").
+				WithDetails(appErr.Message)
+
+		case ErrServiceDependency:
+			return NewHandlerError(ErrHandlerServiceUnavailable, "").
 				WithDetails(appErr.Message)
 
 		default:
-			return WrapHandlerError(err, ErrHandlerInternal, "Internal server error")
+			return WrapHandlerError(err, ErrHandlerInternal, "")
 		}
 	}
 
-	// For non-AppError, wrap as internal error
-	return WrapHandlerError(err, ErrHandlerInternal, "Internal server error")
+	return WrapHandlerError(err, ErrHandlerInternal, "")
 }
 
 // MapToHTTPStatus maps error code to HTTP status code
@@ -130,6 +157,14 @@ func MapToHTTPStatus(code string) int {
 	// 500 errors
 	case ErrHandlerInternal, ErrServiceUnknown, ErrRepoDatabase, ErrRepoUnknown:
 		return 500
+
+	// 501 errors
+	case ErrHandlerNotImplemented:
+		return 501
+
+	// 503 errors
+	case ErrHandlerServiceUnavailable:
+		return 503
 
 	// 504 errors
 	case ErrRepoTimeout:

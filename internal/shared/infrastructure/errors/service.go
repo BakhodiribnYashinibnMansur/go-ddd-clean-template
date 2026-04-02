@@ -2,6 +2,9 @@ package errors
 
 import (
 	"errors"
+	"strings"
+
+	shared "gct/internal/shared/domain"
 )
 
 // ============================================================================
@@ -84,6 +87,63 @@ func NewServiceError(code, message string) *AppError {
 // WrapServiceError wraps an error as service error
 func WrapServiceError(err error, code, message string) *AppError {
 	return Wrap(err, code, message)
+}
+
+// MapDomainToServiceError converts a DomainError to a service-layer AppError.
+// The original domain code is preserved as the Type so that handlers/clients
+// can identify the exact business error (e.g. USER_INACTIVE, USER_WEAK_PASSWORD).
+func MapDomainToServiceError(err error) *AppError {
+	var domErr *shared.DomainError
+	if !errors.As(err, &domErr) {
+		return nil
+	}
+
+	code := domErr.Code()
+
+	return &AppError{
+		Type:       code,
+		Code:       GetNumericCode(code),
+		Message:    domErr.Error(),
+		HTTPStatus: getHTTPStatus(code),
+		UserMsg:    getUserMessage(code),
+		Severity:   GetSeverity(code),
+		Category:   GetCategory(code),
+		Err:        err,
+		Stack:      captureStack(),
+	}
+}
+
+// MapToServiceError converts any error to a service-layer AppError.
+// Handles DomainError, repo AppError, external AppError, and raw errors.
+func MapToServiceError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	// 1. DomainError → AppError preserving domain code
+	if domAppErr := MapDomainToServiceError(err); domAppErr != nil {
+		return domAppErr
+	}
+
+	// 2. Already an AppError
+	var appErr *AppError
+	if errors.As(err, &appErr) {
+		// Service/handler/external errors pass through
+		if strings.HasPrefix(appErr.Type, "SERVICE_") ||
+			strings.HasPrefix(appErr.Type, "HANDLER_") ||
+			strings.HasPrefix(appErr.Type, "EXT_") {
+			return err
+		}
+		// Repo error → map to service error
+		if strings.HasPrefix(appErr.Type, "REPO_") {
+			return MapRepoToServiceError(err)
+		}
+		// Other AppError (legacy codes) → pass through
+		return err
+	}
+
+	// 3. Raw error → unknown service error
+	return WrapServiceError(err, ErrServiceUnknown, "")
 }
 
 // MapRepoToServiceError maps repository error to service error

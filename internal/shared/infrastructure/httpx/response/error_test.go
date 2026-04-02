@@ -292,8 +292,8 @@ func TestRespondWithError_PlainError_FallbackCode(t *testing.T) {
 	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
 		t.Fatalf("failed to unmarshal: %v", err)
 	}
-	if resp.Error.Message != "something broke" {
-		t.Errorf("expected message 'something broke', got %q", resp.Error.Message)
+	if resp.Error.Message != "An unexpected error occurred." {
+		t.Errorf("expected fallback message, got %q", resp.Error.Message)
 	}
 }
 

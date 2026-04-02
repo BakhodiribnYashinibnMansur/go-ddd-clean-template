@@ -3,11 +3,14 @@ package response
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"strconv"
 	"time"
 
+	shared "gct/internal/shared/domain"
 	"gct/internal/shared/domain/consts"
 	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/contextx"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -28,10 +31,12 @@ type ErrorDetail struct {
 	Suggestion  string `example:"Please check our documentation."                             json:"suggestion,omitempty"`
 
 	// Enhanced fields
-	Severity   string `example:"MEDIUM"                                                      json:"severity,omitempty"`
-	Category   string `example:"DATA"                                                        json:"category,omitempty"`
-	Retryable  bool   `example:"false"                                                       json:"retryable,omitempty"`
-	RetryAfter int    `example:"5"                                                           json:"retry_after,omitempty"` // seconds
+	Severity    string `example:"MEDIUM"                                                      json:"severity,omitempty"`
+	Category    string `example:"DATA"                                                        json:"category,omitempty"`
+	Retryable   bool   `example:"false"                                                       json:"retryable"`
+	RetryAfter  int    `example:"5"                                                           json:"retry_after"`  // seconds
+	MaxRetries  int    `example:"3"                                                           json:"max_retries"` // max retry attempts
+	Fingerprint string `example:"a1b2c3d4e5f6g7h8"                                            json:"fingerprint,omitempty"`
 }
 
 // Error for backward compatibility
@@ -108,6 +113,16 @@ var statusSuggestions = map[int]string{
 // Response Helpers
 // ============================================================================
 
+// HandleError maps any error through the handler layer and responds with JSON.
+// This is the single entry point for all handler error responses from service calls.
+func HandleError(c *gin.Context, err error) {
+	if err == nil {
+		return
+	}
+	handlerErr := apperrors.MapServiceToHandlerError(err)
+	RespondWithError(c, handlerErr, http.StatusInternalServerError)
+}
+
 // RespondWithError sends the error response in the defined JSON format
 func RespondWithError(c *gin.Context, err error, fallbackCode int) {
 	_ = c.Error(err)
@@ -130,7 +145,9 @@ func parseErrorToResponse(c *gin.Context, err error, fallbackCode int) (int, Err
 		category    = ""
 		retryable   = false
 		retryAfter  = 0
+		maxRetries  = 0
 		suggestion  = ""
+		fingerprint = ""
 	)
 
 	// Get language from Accept-Language header
@@ -146,21 +163,28 @@ func parseErrorToResponse(c *gin.Context, err error, fallbackCode int) (int, Err
 	// Check if it's our AppError
 	var appErr *apperrors.AppError
 	if errors.As(err, &appErr) {
-		statusCode = MapToHTTPStatus(appErr.Code)
-
 		errorCode = appErr.Type
 		if errorCode == "" {
 			errorCode = appErr.Code
 		}
 
+		// Resolve HTTP status: try Type first (e.g. "FEATURE_FLAG_NOT_FOUND"), then Code (numeric)
+		if appErr.HTTPStatus != 0 {
+			statusCode = appErr.HTTPStatus
+		} else {
+			statusCode = MapToHTTPStatus(errorCode)
+		}
+
 		numericCode = appErr.Code
 		if numericCode == "" || numericCode == errorCode {
-			// If numericCode is empty or same as errorCode, try to resolve it
 			numericCode = apperrors.GetNumericCode(errorCode)
 		}
 
 		// Get user-friendly message in requested language
 		message = apperrors.GetUserMessage(errorCode, lang)
+		if message == "" {
+			message = appErr.UserMsg
+		}
 		if message == "" {
 			message = appErr.Message
 		}
@@ -169,33 +193,49 @@ func parseErrorToResponse(c *gin.Context, err error, fallbackCode int) (int, Err
 		suggestion = appErr.Suggestion
 
 		// Get metadata
-		meta := appErr.GetMetadata()
-		severity = string(meta.Severity)
-		category = string(meta.Category)
-		retryable = meta.Retryable
+		severity = string(apperrors.GetSeverity(errorCode))
+		category = string(apperrors.GetCategory(errorCode))
 
-		// Calculate retry after based on strategy
-		if retryable {
-			switch meta.RetryStrategy {
-			case apperrors.RetryStrategyImmediate:
-				retryAfter = 1
-			case apperrors.RetryStrategyLinear:
-				retryAfter = 5
-			case apperrors.RetryStrategyExponential:
-				retryAfter = 10
+		// Get retry policy from registry
+		retryPolicy := apperrors.GetRetryPolicy(errorCode)
+		retryable = retryPolicy.Retryable
+		retryAfter = retryPolicy.RetryAfter
+		maxRetries = retryPolicy.MaxRetries
+
+		fingerprint = appErr.Fingerprint()
+	} else {
+		// DomainError safety net (should not reach here if MapToServiceError is used)
+		var domErr *shared.DomainError
+		if errors.As(err, &domErr) {
+			errorCode = domErr.Code()
+			numericCode = apperrors.GetNumericCode(errorCode)
+			statusCode = apperrors.GetHTTPStatus(errorCode)
+			if statusCode == 0 && fallbackCode != 0 {
+				statusCode = fallbackCode
 			}
+			message = apperrors.GetUserMessage(errorCode, lang)
+			if message == "" {
+				message = domErr.Error()
+			}
+			severity = string(apperrors.GetSeverity(errorCode))
+			category = string(apperrors.GetCategory(errorCode))
+			retryPolicy := apperrors.GetRetryPolicy(errorCode)
+			retryable = retryPolicy.Retryable
+			retryAfter = retryPolicy.RetryAfter
+			maxRetries = retryPolicy.MaxRetries
+		} else if err != nil {
+			if fallbackCode != 0 {
+				statusCode = fallbackCode
+			}
+			numericCode = apperrors.GetNumericCode(errorCode)
 		}
-	} else if err != nil {
-		message = err.Error()
-		if fallbackCode != 0 {
-			statusCode = fallbackCode
-		}
-		// Try to resolve numeric code for ErrInternal
-		numericCode = apperrors.GetNumericCode(errorCode)
 	}
 
 	// Request ID
-	reqID := c.GetHeader(consts.HeaderXRequestID)
+	reqID := contextx.GetRequestID(c.Request.Context())
+	if reqID == "" {
+		reqID = c.GetHeader(consts.HeaderXRequestID)
+	}
 	if reqID == "" {
 		reqID = uuid.New().String()
 	}
@@ -234,6 +274,8 @@ func parseErrorToResponse(c *gin.Context, err error, fallbackCode int) (int, Err
 			Category:    category,
 			Retryable:   retryable,
 			RetryAfter:  retryAfter,
+			MaxRetries:  maxRetries,
+			Fingerprint: fingerprint,
 		},
 		RequestId:        reqID,
 		DocumentationUrl: docURL,
@@ -316,6 +358,10 @@ func mapHandlerStatus(code string) int {
 		return 409
 	case "HANDLER_TOO_MANY_REQUESTS", "4029":
 		return 429
+	case "HANDLER_NOT_IMPLEMENTED", "5001":
+		return 501
+	case "HANDLER_SERVICE_UNAVAILABLE", "5003":
+		return 503
 	default:
 		return 0
 	}
