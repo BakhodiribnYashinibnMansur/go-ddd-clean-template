@@ -21,8 +21,10 @@ type (
 
 	// Log -.
 	Log struct {
-		Level   string `yaml:"level"`
-		ShowGin bool   `yaml:"show_gin" env:"LOG_SHOW_GIN" envDefault:"true"`
+		Level              string `yaml:"level"`
+		Format             string `yaml:"format" env:"LOG_FORMAT" envDefault:"console" validate:"oneof=console json"`
+		ShowGin            bool   `yaml:"show_gin" env:"LOG_SHOW_GIN" envDefault:"true"`
+		SlowOpThresholdMs  int64  `yaml:"slow_op_threshold_ms" env:"LOG_SLOW_OP_THRESHOLD_MS" envDefault:"500"`
 	}
 
 	// APIKeys configuration -.

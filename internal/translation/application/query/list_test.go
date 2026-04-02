@@ -1,6 +1,7 @@
 package query
 
 import (
+	"gct/internal/shared/infrastructure/logger"
 	"context"
 	"testing"
 	"time"
@@ -20,7 +21,7 @@ func TestListTranslationsHandler_Handle(t *testing.T) {
 		total: 2,
 	}
 
-	handler := NewListTranslationsHandler(readRepo)
+	handler := NewListTranslationsHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListTranslationsQuery{
 		Filter: domain.TranslationFilter{Limit: 10, Offset: 0},
 	})
@@ -41,7 +42,7 @@ func TestListTranslationsHandler_Handle(t *testing.T) {
 func TestListTranslationsHandler_Empty(t *testing.T) {
 	readRepo := &mockReadRepo{views: []*domain.TranslationView{}, total: 0}
 
-	handler := NewListTranslationsHandler(readRepo)
+	handler := NewListTranslationsHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListTranslationsQuery{
 		Filter: domain.TranslationFilter{},
 	})
@@ -65,7 +66,7 @@ func TestListTranslationsHandler_WithFilters(t *testing.T) {
 		total: 1,
 	}
 
-	handler := NewListTranslationsHandler(readRepo)
+	handler := NewListTranslationsHandler(readRepo, logger.Noop())
 	lang := "en"
 	group := "auth"
 
@@ -86,7 +87,7 @@ func TestListTranslationsHandler_WithFilters(t *testing.T) {
 
 func TestListTranslationsHandler_RepoError(t *testing.T) {
 	readRepo := &errorReadRepo{err: errRepo}
-	handler := NewListTranslationsHandler(readRepo)
+	handler := NewListTranslationsHandler(readRepo, logger.Noop())
 	_, err := handler.Handle(context.Background(), ListTranslationsQuery{Filter: domain.TranslationFilter{}})
 	if err == nil {
 		t.Fatal("expected error from repo")

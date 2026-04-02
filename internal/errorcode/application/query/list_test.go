@@ -1,6 +1,7 @@
 package query
 
 import (
+	"gct/internal/shared/infrastructure/logger"
 	"context"
 	"testing"
 	"time"
@@ -19,7 +20,7 @@ func TestListErrorCodesHandler_Handle(t *testing.T) {
 		total: 2,
 	}
 
-	handler := NewListErrorCodesHandler(readRepo)
+	handler := NewListErrorCodesHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListErrorCodesQuery{
 		Filter: domain.ErrorCodeFilter{Limit: 10, Offset: 0},
 	})
@@ -40,7 +41,7 @@ func TestListErrorCodesHandler_Handle(t *testing.T) {
 func TestListErrorCodesHandler_Empty(t *testing.T) {
 	readRepo := &mockReadRepo{views: []*domain.ErrorCodeView{}, total: 0}
 
-	handler := NewListErrorCodesHandler(readRepo)
+	handler := NewListErrorCodesHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListErrorCodesQuery{
 		Filter: domain.ErrorCodeFilter{},
 	})
@@ -65,7 +66,7 @@ func TestListErrorCodesHandler_WithFilters(t *testing.T) {
 		total: 1,
 	}
 
-	handler := NewListErrorCodesHandler(readRepo)
+	handler := NewListErrorCodesHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListErrorCodesQuery{
 		Filter: domain.ErrorCodeFilter{Code: &code, Category: &category, Limit: 10},
 	})
@@ -79,7 +80,7 @@ func TestListErrorCodesHandler_WithFilters(t *testing.T) {
 
 func TestListErrorCodesHandler_RepoError(t *testing.T) {
 	readRepo := &errorReadRepo{err: errRepo}
-	handler := NewListErrorCodesHandler(readRepo)
+	handler := NewListErrorCodesHandler(readRepo, logger.Noop())
 	_, err := handler.Handle(context.Background(), ListErrorCodesQuery{Filter: domain.ErrorCodeFilter{}})
 	if err == nil {
 		t.Fatal("expected error from repo")

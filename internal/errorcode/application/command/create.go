@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/errorcode/domain"
 	"gct/internal/shared/application"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 )
@@ -60,12 +61,12 @@ func (h *CreateErrorCodeHandler) Handle(ctx context.Context, cmd CreateErrorCode
 	ec.SetTranslations(cmd.MessageUz, cmd.MessageRu)
 
 	if err := h.repo.Save(ctx, ec); err != nil {
-		h.logger.Errorf("failed to save error code: %v", err)
-		return err
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateErrorCode", Entity: "error_code", EntityID: cmd.Code, Err: err}.KV()...)
+		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, ec.Events()...); err != nil {
-		h.logger.Errorf("failed to publish events: %v", err)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "CreateErrorCode", Entity: "error_code", Err: err}.KV()...)
 	}
 
 	return nil

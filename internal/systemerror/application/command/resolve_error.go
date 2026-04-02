@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"gct/internal/shared/application"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/systemerror/domain"
@@ -47,18 +48,18 @@ func (h *ResolveErrorHandler) Handle(ctx context.Context, cmd ResolveErrorComman
 
 	se, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {
-		return err
+		return apperrors.MapToServiceError(err)
 	}
 
 	se.Resolve(cmd.ResolvedBy)
 
 	if err := h.repo.Update(ctx, se); err != nil {
-		h.logger.Errorf("failed to update system error: %v", err)
-		return err
+		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "ResolveError", Entity: "system_error", EntityID: cmd.ID, Err: err}.KV()...)
+		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, se.Events()...); err != nil {
-		h.logger.Errorf("failed to publish events: %v", err)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "ResolveError", Entity: "system_error", EntityID: cmd.ID, Err: err}.KV()...)
 	}
 
 	return nil

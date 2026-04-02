@@ -3,6 +3,9 @@ package query
 import (
 	"context"
 
+	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/logger"
+
 	appdto "gct/internal/notification/application"
 	"gct/internal/notification/domain"
 	"gct/internal/shared/infrastructure/pgxutil"
@@ -18,11 +21,12 @@ type GetQuery struct {
 // GetHandler handles the GetQuery.
 type GetHandler struct {
 	readRepo domain.NotificationReadRepository
+	logger   logger.Log
 }
 
 // NewGetHandler creates a new GetHandler.
-func NewGetHandler(readRepo domain.NotificationReadRepository) *GetHandler {
-	return &GetHandler{readRepo: readRepo}
+func NewGetHandler(readRepo domain.NotificationReadRepository, l logger.Log) *GetHandler {
+	return &GetHandler{readRepo: readRepo, logger: l}
 }
 
 // Handle executes the GetQuery and returns a NotificationView.
@@ -32,7 +36,8 @@ func (h *GetHandler) Handle(ctx context.Context, q GetQuery) (result *appdto.Not
 
 	view, err := h.readRepo.FindByID(ctx, q.ID)
 	if err != nil {
-		return nil, err
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "Get", Entity: "notification", EntityID: q.ID, Err: err}.KV()...)
+		return nil, apperrors.MapToServiceError(err)
 	}
 
 	return &appdto.NotificationView{

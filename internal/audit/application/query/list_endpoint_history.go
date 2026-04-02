@@ -3,6 +3,9 @@ package query
 import (
 	"context"
 
+	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/logger"
+
 	appdto "gct/internal/audit/application"
 	"gct/internal/audit/domain"
 	"gct/internal/shared/infrastructure/pgxutil"
@@ -22,11 +25,12 @@ type ListEndpointHistoryResult struct {
 // ListEndpointHistoryHandler handles the ListEndpointHistoryQuery.
 type ListEndpointHistoryHandler struct {
 	readRepo domain.AuditReadRepository
+	logger   logger.Log
 }
 
 // NewListEndpointHistoryHandler creates a new ListEndpointHistoryHandler.
-func NewListEndpointHistoryHandler(readRepo domain.AuditReadRepository) *ListEndpointHistoryHandler {
-	return &ListEndpointHistoryHandler{readRepo: readRepo}
+func NewListEndpointHistoryHandler(readRepo domain.AuditReadRepository, l logger.Log) *ListEndpointHistoryHandler {
+	return &ListEndpointHistoryHandler{readRepo: readRepo, logger: l}
 }
 
 // Handle executes the ListEndpointHistoryQuery and returns a list of EndpointHistoryView with total count.
@@ -36,7 +40,8 @@ func (h *ListEndpointHistoryHandler) Handle(ctx context.Context, q ListEndpointH
 
 	views, total, err := h.readRepo.ListEndpointHistory(ctx, q.Filter)
 	if err != nil {
-		return nil, err
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "ListEndpointHistory", Entity: "audit_log", Err: err}.KV()...)
+		return nil, apperrors.MapToServiceError(err)
 	}
 
 	result := make([]*appdto.EndpointHistoryView, len(views))

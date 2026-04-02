@@ -1,6 +1,7 @@
 package query
 
 import (
+	"gct/internal/shared/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
@@ -60,7 +61,7 @@ func TestGetRateLimitHandler_Handle(t *testing.T) {
 		},
 	}
 
-	handler := NewGetRateLimitHandler(readRepo)
+	handler := NewGetRateLimitHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), GetRateLimitQuery{ID: id})
 	if err != nil {
 		t.Fatalf("expected no error, got: %v", err)
@@ -84,7 +85,7 @@ func TestGetRateLimitHandler_Handle(t *testing.T) {
 
 func TestGetRateLimitHandler_NotFound(t *testing.T) {
 	readRepo := &mockReadRepo{}
-	handler := NewGetRateLimitHandler(readRepo)
+	handler := NewGetRateLimitHandler(readRepo, logger.Noop())
 	_, err := handler.Handle(context.Background(), GetRateLimitQuery{ID: uuid.New()})
 	if err == nil {
 		t.Fatal("expected error for not found")
@@ -93,7 +94,7 @@ func TestGetRateLimitHandler_NotFound(t *testing.T) {
 
 func TestGetRateLimitHandler_RepoError(t *testing.T) {
 	readRepo := &errorReadRepo{err: errRepo}
-	handler := NewGetRateLimitHandler(readRepo)
+	handler := NewGetRateLimitHandler(readRepo, logger.Noop())
 	_, err := handler.Handle(context.Background(), GetRateLimitQuery{ID: uuid.New()})
 	if err == nil {
 		t.Fatal("expected error from repo")
@@ -116,7 +117,7 @@ func TestGetRateLimitHandler_AllFieldsMapped(t *testing.T) {
 		},
 	}
 
-	handler := NewGetRateLimitHandler(readRepo)
+	handler := NewGetRateLimitHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), GetRateLimitQuery{ID: id})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)

@@ -3,6 +3,7 @@ package command
 import (
 	"context"
 
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/translation/domain"
@@ -41,8 +42,8 @@ func (h *DeleteTranslationHandler) Handle(ctx context.Context, cmd DeleteTransla
 	defer func() { end(err) }()
 
 	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
-		h.logger.Errorf("failed to delete translation: %v", err)
-		return err
+		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteTranslation", Entity: "translation", EntityID: cmd.ID, Err: err}.KV()...)
+		return apperrors.MapToServiceError(err)
 	}
 	return nil
 }

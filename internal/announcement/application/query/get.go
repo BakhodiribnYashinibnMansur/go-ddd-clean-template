@@ -3,6 +3,9 @@ package query
 import (
 	"context"
 
+	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/logger"
+
 	appdto "gct/internal/announcement/application"
 	"gct/internal/announcement/domain"
 	"gct/internal/shared/infrastructure/pgxutil"
@@ -18,11 +21,12 @@ type GetAnnouncementQuery struct {
 // GetAnnouncementHandler handles the GetAnnouncementQuery.
 type GetAnnouncementHandler struct {
 	readRepo domain.AnnouncementReadRepository
+	logger   logger.Log
 }
 
 // NewGetAnnouncementHandler creates a new GetAnnouncementHandler.
-func NewGetAnnouncementHandler(readRepo domain.AnnouncementReadRepository) *GetAnnouncementHandler {
-	return &GetAnnouncementHandler{readRepo: readRepo}
+func NewGetAnnouncementHandler(readRepo domain.AnnouncementReadRepository, l logger.Log) *GetAnnouncementHandler {
+	return &GetAnnouncementHandler{readRepo: readRepo, logger: l}
 }
 
 // Handle executes the GetAnnouncementQuery and returns an AnnouncementView.
@@ -32,7 +36,8 @@ func (h *GetAnnouncementHandler) Handle(ctx context.Context, q GetAnnouncementQu
 
 	v, err := h.readRepo.FindByID(ctx, q.ID)
 	if err != nil {
-		return nil, err
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetAnnouncement", Entity: "announcement", EntityID: q.ID, Err: err}.KV()...)
+		return nil, apperrors.MapToServiceError(err)
 	}
 
 	return toAppView(v), nil

@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/authz/domain"
 	"gct/internal/shared/application"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 
@@ -47,13 +48,13 @@ func (h *AssignPermissionHandler) Handle(ctx context.Context, cmd AssignPermissi
 	defer func() { end(err) }()
 
 	if err := h.rolePermRepo.Assign(ctx, cmd.RoleID, cmd.PermissionID); err != nil {
-		h.logger.Errorf("failed to assign permission to role: %v", err)
-		return err
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "AssignPermission", Entity: "role", EntityID: cmd.RoleID, Err: err}.KV()...)
+		return apperrors.MapToServiceError(err)
 	}
 
 	event := domain.NewPermissionGranted(cmd.RoleID, cmd.PermissionID)
 	if err := h.eventBus.Publish(ctx, event); err != nil {
-		h.logger.Errorf("failed to publish events: %v", err)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "AssignPermission", Entity: "role", EntityID: cmd.RoleID, Err: err}.KV()...)
 	}
 
 	return nil

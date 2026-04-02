@@ -3,6 +3,9 @@ package query
 import (
 	"context"
 
+	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/logger"
+
 	appdto "gct/internal/authz/application"
 	"gct/internal/authz/domain"
 	shared "gct/internal/shared/domain"
@@ -23,11 +26,12 @@ type ListPoliciesResult struct {
 // ListPoliciesHandler handles the ListPoliciesQuery.
 type ListPoliciesHandler struct {
 	readRepo domain.AuthzReadRepository
+	logger   logger.Log
 }
 
 // NewListPoliciesHandler creates a new ListPoliciesHandler.
-func NewListPoliciesHandler(readRepo domain.AuthzReadRepository) *ListPoliciesHandler {
-	return &ListPoliciesHandler{readRepo: readRepo}
+func NewListPoliciesHandler(readRepo domain.AuthzReadRepository, l logger.Log) *ListPoliciesHandler {
+	return &ListPoliciesHandler{readRepo: readRepo, logger: l}
 }
 
 // Handle executes the ListPoliciesQuery and returns a list of PolicyView.
@@ -37,7 +41,8 @@ func (h *ListPoliciesHandler) Handle(ctx context.Context, q ListPoliciesQuery) (
 
 	views, total, err := h.readRepo.ListPolicies(ctx, q.Pagination)
 	if err != nil {
-		return nil, err
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "ListPolicies", Entity: "access", Err: err}.KV()...)
+		return nil, apperrors.MapToServiceError(err)
 	}
 
 	result := make([]*appdto.PolicyView, len(views))

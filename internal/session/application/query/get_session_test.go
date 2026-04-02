@@ -1,6 +1,7 @@
 package query
 
 import (
+	"gct/internal/shared/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
@@ -85,7 +86,7 @@ func TestGetSessionHandler_Handle(t *testing.T) {
 		},
 	}
 
-	handler := NewGetSessionHandler(readRepo, &mockLogger{})
+	handler := NewGetSessionHandler(readRepo, logger.Noop())
 
 	q := GetSessionQuery{ID: sessionID}
 	result, err := handler.Handle(context.Background(), q)
@@ -121,7 +122,7 @@ func TestGetSessionHandler_Handle(t *testing.T) {
 func TestGetSessionHandler_NotFound(t *testing.T) {
 	readRepo := &mockSessionReadRepository{}
 
-	handler := NewGetSessionHandler(readRepo, &mockLogger{})
+	handler := NewGetSessionHandler(readRepo, logger.Noop())
 
 	q := GetSessionQuery{ID: uuid.New()}
 	_, err := handler.Handle(context.Background(), q)
@@ -135,7 +136,7 @@ func TestGetSessionHandler_RepoError(t *testing.T) {
 		err: errors.New("database connection failed"),
 	}
 
-	handler := NewGetSessionHandler(readRepo, &mockLogger{})
+	handler := NewGetSessionHandler(readRepo, logger.Noop())
 
 	q := GetSessionQuery{ID: uuid.New()}
 	_, err := handler.Handle(context.Background(), q)

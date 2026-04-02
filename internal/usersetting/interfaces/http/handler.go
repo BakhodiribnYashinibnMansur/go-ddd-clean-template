@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"gct/internal/shared/infrastructure/httpx"
+	"gct/internal/shared/infrastructure/httpx/response"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/usersetting"
 	"gct/internal/usersetting/application/command"
@@ -29,7 +31,7 @@ func NewHandler(bc *usersetting.BoundedContext, l logger.Log) *Handler {
 func (h *Handler) Upsert(ctx *gin.Context) {
 	var req UpsertRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.RespondWithError(ctx, err, http.StatusBadRequest)
 		return
 	}
 	cmd := command.UpsertUserSettingCommand{
@@ -38,7 +40,7 @@ func (h *Handler) Upsert(ctx *gin.Context) {
 		Value:  req.Value,
 	}
 	if err := h.bc.UpsertUserSetting.Handle(ctx.Request.Context(), cmd); err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 	ctx.JSON(http.StatusCreated, gin.H{"success": true})
@@ -54,7 +56,7 @@ func (h *Handler) List(ctx *gin.Context) {
 	}
 	result, err := h.bc.ListUserSettings.Handle(ctx.Request.Context(), q)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"data": result.Settings, "total": result.Total})
@@ -64,11 +66,11 @@ func (h *Handler) List(ctx *gin.Context) {
 func (h *Handler) Delete(ctx *gin.Context) {
 	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
 	if err := h.bc.DeleteUserSetting.Handle(ctx.Request.Context(), command.DeleteUserSettingCommand{ID: id}); err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"success": true})

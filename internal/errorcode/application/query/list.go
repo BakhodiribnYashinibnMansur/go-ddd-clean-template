@@ -3,6 +3,9 @@ package query
 import (
 	"context"
 
+	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/logger"
+
 	appdto "gct/internal/errorcode/application"
 	"gct/internal/errorcode/domain"
 	"gct/internal/shared/infrastructure/pgxutil"
@@ -22,11 +25,12 @@ type ListErrorCodesResult struct {
 // ListErrorCodesHandler handles the ListErrorCodesQuery.
 type ListErrorCodesHandler struct {
 	readRepo domain.ErrorCodeReadRepository
+	logger   logger.Log
 }
 
 // NewListErrorCodesHandler creates a new ListErrorCodesHandler.
-func NewListErrorCodesHandler(readRepo domain.ErrorCodeReadRepository) *ListErrorCodesHandler {
-	return &ListErrorCodesHandler{readRepo: readRepo}
+func NewListErrorCodesHandler(readRepo domain.ErrorCodeReadRepository, l logger.Log) *ListErrorCodesHandler {
+	return &ListErrorCodesHandler{readRepo: readRepo, logger: l}
 }
 
 // Handle executes the ListErrorCodesQuery and returns a list of ErrorCodeView with total count.
@@ -36,7 +40,8 @@ func (h *ListErrorCodesHandler) Handle(ctx context.Context, q ListErrorCodesQuer
 
 	views, total, err := h.readRepo.List(ctx, q.Filter)
 	if err != nil {
-		return nil, err
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "ListErrorCodes", Entity: "error_code", Err: err}.KV()...)
+		return nil, apperrors.MapToServiceError(err)
 	}
 
 	result := make([]*appdto.ErrorCodeView, len(views))

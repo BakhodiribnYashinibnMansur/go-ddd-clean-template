@@ -111,8 +111,8 @@ func setupRouter(repo *mockRepo, readRepo *mockReadRepo) *gin.Engine {
 		CreateIntegration: command.NewCreateHandler(repo, eb, l),
 		UpdateIntegration: command.NewUpdateHandler(repo, eb, l),
 		DeleteIntegration: command.NewDeleteHandler(repo, eb, l),
-		GetIntegration:    query.NewGetHandler(readRepo),
-		ListIntegrations:  query.NewListHandler(readRepo),
+		GetIntegration:    query.NewGetHandler(readRepo, l),
+		ListIntegrations:  query.NewListHandler(readRepo, l),
 	}
 
 	r := gin.New()

@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/featureflag/domain"
 	"gct/internal/shared/application"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 )
@@ -52,14 +53,14 @@ func (h *CreateHandler) Handle(ctx context.Context, cmd CreateCommand) (err erro
 	}
 
 	if err := h.repo.Save(ctx, ff); err != nil {
-		h.logger.Errorf("failed to save feature flag: %v", err)
-		return err
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateFeatureFlag", Entity: "feature_flag", Err: err}.KV()...)
+		return apperrors.MapToServiceError(err)
 	}
 
 	ff.AddEvent(domain.NewFlagCreated(ff.ID()))
 
 	if err := h.eventBus.Publish(ctx, ff.Events()...); err != nil {
-		h.logger.Errorf("failed to publish events: %v", err)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "CreateFeatureFlag", Entity: "feature_flag", Err: err}.KV()...)
 	}
 
 	return nil

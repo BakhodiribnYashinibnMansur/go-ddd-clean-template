@@ -1,6 +1,7 @@
 package query
 
 import (
+	"gct/internal/shared/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
@@ -71,7 +72,7 @@ func TestGetHandler_Handle(t *testing.T) {
 		},
 	}
 
-	handler := NewGetHandler(readRepo)
+	handler := NewGetHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), GetQuery{ID: flagID})
 	if err != nil {
 		t.Fatalf("expected no error, got: %v", err)
@@ -108,7 +109,7 @@ func TestGetHandler_Handle(t *testing.T) {
 
 func TestGetHandler_Handle_NotFound(t *testing.T) {
 	readRepo := &mockReadRepo{} // default returns ErrFeatureFlagNotFound
-	handler := NewGetHandler(readRepo)
+	handler := NewGetHandler(readRepo, logger.Noop())
 
 	result, err := handler.Handle(context.Background(), GetQuery{ID: uuid.New()})
 	if err == nil {
@@ -129,7 +130,7 @@ func TestGetHandler_Handle_RepoError(t *testing.T) {
 			return nil, repoErr
 		},
 	}
-	handler := NewGetHandler(readRepo)
+	handler := NewGetHandler(readRepo, logger.Noop())
 
 	result, err := handler.Handle(context.Background(), GetQuery{ID: uuid.New()})
 	if err == nil {
@@ -161,7 +162,7 @@ func TestGetHandler_Handle_EmptyRuleGroups(t *testing.T) {
 		},
 	}
 
-	handler := NewGetHandler(readRepo)
+	handler := NewGetHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), GetQuery{ID: flagID})
 	if err != nil {
 		t.Fatalf("expected no error, got: %v", err)

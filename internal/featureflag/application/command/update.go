@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/featureflag/domain"
 	"gct/internal/shared/application"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 
@@ -50,20 +51,20 @@ func (h *UpdateHandler) Handle(ctx context.Context, cmd UpdateCommand) (err erro
 
 	ff, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {
-		return err
+		return apperrors.MapToServiceError(err)
 	}
 
 	ff.UpdateDetails(cmd.Name, cmd.Key, cmd.Description, cmd.FlagType, cmd.DefaultValue, cmd.RolloutPercentage, cmd.IsActive)
 
 	if err := h.repo.Update(ctx, ff); err != nil {
-		h.logger.Errorf("failed to update feature flag: %v", err)
-		return err
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "UpdateFeatureFlag", Entity: "feature_flag", EntityID: cmd.ID, Err: err}.KV()...)
+		return apperrors.MapToServiceError(err)
 	}
 
 	ff.AddEvent(domain.NewFlagUpdated(ff.ID()))
 
 	if err := h.eventBus.Publish(ctx, ff.Events()...); err != nil {
-		h.logger.Errorf("failed to publish events: %v", err)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "UpdateFeatureFlag", Entity: "feature_flag", Err: err}.KV()...)
 	}
 
 	return nil

@@ -3,6 +3,9 @@ package query
 import (
 	"context"
 
+	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/logger"
+
 	"gct/internal/shared/infrastructure/pgxutil"
 	appdto "gct/internal/user/application"
 	"gct/internal/user/domain"
@@ -18,11 +21,12 @@ type GetUserQuery struct {
 // GetUserHandler handles the GetUserQuery.
 type GetUserHandler struct {
 	readRepo domain.UserReadRepository
+	logger   logger.Log
 }
 
 // NewGetUserHandler creates a new GetUserHandler.
-func NewGetUserHandler(readRepo domain.UserReadRepository) *GetUserHandler {
-	return &GetUserHandler{readRepo: readRepo}
+func NewGetUserHandler(readRepo domain.UserReadRepository, l logger.Log) *GetUserHandler {
+	return &GetUserHandler{readRepo: readRepo, logger: l}
 }
 
 // Handle executes the GetUserQuery and returns a UserView.
@@ -32,7 +36,8 @@ func (h *GetUserHandler) Handle(ctx context.Context, q GetUserQuery) (_ *appdto.
 
 	view, err := h.readRepo.FindByID(ctx, q.ID)
 	if err != nil {
-		return nil, err
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetUser", Entity: "user", EntityID: q.ID, Err: err}.KV()...)
+		return nil, apperrors.MapToServiceError(err)
 	}
 
 	// Map domain UserView to application UserView.

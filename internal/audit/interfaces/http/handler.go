@@ -8,6 +8,7 @@ import (
 	"gct/internal/audit/application/query"
 	"gct/internal/audit/domain"
 	shared "gct/internal/shared/domain"
+	"gct/internal/shared/infrastructure/httpx/response"
 	"gct/internal/shared/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
@@ -36,7 +37,7 @@ func (h *Handler) ListAuditLogs(ctx *gin.Context) {
 	}
 	result, err := h.bc.ListAuditLogs.Handle(ctx.Request.Context(), q)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"data": result.AuditLogs, "total": result.Total})
@@ -54,7 +55,7 @@ func (h *Handler) ListEndpointHistory(ctx *gin.Context) {
 	}
 	result, err := h.bc.ListEndpointHistory.Handle(ctx.Request.Context(), q)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"data": result.Entries, "total": result.Total})

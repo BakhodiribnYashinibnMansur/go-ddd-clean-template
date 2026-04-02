@@ -108,8 +108,8 @@ func setupRouter(repo *mockRepo, readRepo *mockReadRepo) *gin.Engine {
 		CreateSiteSetting: command.NewCreateSiteSettingHandler(repo, eb, l),
 		UpdateSiteSetting: command.NewUpdateSiteSettingHandler(repo, eb, l),
 		DeleteSiteSetting: command.NewDeleteSiteSettingHandler(repo, l),
-		GetSiteSetting:    query.NewGetSiteSettingHandler(readRepo),
-		ListSiteSettings:  query.NewListSiteSettingsHandler(readRepo),
+		GetSiteSetting:    query.NewGetSiteSettingHandler(readRepo, l),
+		ListSiteSettings:  query.NewListSiteSettingsHandler(readRepo, l),
 	}
 
 	r := gin.New()

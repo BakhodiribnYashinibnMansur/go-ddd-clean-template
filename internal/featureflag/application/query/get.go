@@ -2,6 +2,9 @@ package query
 
 import (
 	"context"
+
+	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/logger"
 	"time"
 
 	appdto "gct/internal/featureflag/application"
@@ -19,11 +22,12 @@ type GetQuery struct {
 // GetHandler handles the GetQuery.
 type GetHandler struct {
 	readRepo domain.FeatureFlagReadRepository
+	logger   logger.Log
 }
 
 // NewGetHandler creates a new GetHandler.
-func NewGetHandler(readRepo domain.FeatureFlagReadRepository) *GetHandler {
-	return &GetHandler{readRepo: readRepo}
+func NewGetHandler(readRepo domain.FeatureFlagReadRepository, l logger.Log) *GetHandler {
+	return &GetHandler{readRepo: readRepo, logger: l}
 }
 
 // Handle executes the GetQuery and returns a FeatureFlagView.
@@ -33,7 +37,8 @@ func (h *GetHandler) Handle(ctx context.Context, q GetQuery) (result *appdto.Fea
 
 	view, err := h.readRepo.FindByID(ctx, q.ID)
 	if err != nil {
-		return nil, err
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "Get", Entity: "feature_flag", EntityID: q.ID, Err: err}.KV()...)
+		return nil, apperrors.MapToServiceError(err)
 	}
 
 	return mapToAppView(view), nil

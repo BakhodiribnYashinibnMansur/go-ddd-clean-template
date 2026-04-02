@@ -3,6 +3,9 @@ package query
 import (
 	"context"
 
+	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/logger"
+
 	appdto "gct/internal/featureflag/application"
 	"gct/internal/featureflag/domain"
 	"gct/internal/shared/infrastructure/pgxutil"
@@ -22,11 +25,12 @@ type ListResult struct {
 // ListHandler handles the ListQuery.
 type ListHandler struct {
 	readRepo domain.FeatureFlagReadRepository
+	logger   logger.Log
 }
 
 // NewListHandler creates a new ListHandler.
-func NewListHandler(readRepo domain.FeatureFlagReadRepository) *ListHandler {
-	return &ListHandler{readRepo: readRepo}
+func NewListHandler(readRepo domain.FeatureFlagReadRepository, l logger.Log) *ListHandler {
+	return &ListHandler{readRepo: readRepo, logger: l}
 }
 
 // Handle executes the ListQuery and returns a list of FeatureFlagView with total count.
@@ -36,7 +40,8 @@ func (h *ListHandler) Handle(ctx context.Context, q ListQuery) (_ *ListResult, e
 
 	views, total, err := h.readRepo.List(ctx, q.Filter)
 	if err != nil {
-		return nil, err
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "List", Entity: "feature_flag", Err: err}.KV()...)
+		return nil, apperrors.MapToServiceError(err)
 	}
 
 	result := make([]*appdto.FeatureFlagView, len(views))

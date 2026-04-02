@@ -7,6 +7,7 @@ import (
 	"gct/internal/announcement/domain"
 	"gct/internal/shared/application"
 	shared "gct/internal/shared/domain"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 )
@@ -52,12 +53,12 @@ func (h *CreateAnnouncementHandler) Handle(ctx context.Context, cmd CreateAnnoun
 	a := domain.NewAnnouncement(cmd.Title, cmd.Content, cmd.Priority, cmd.StartDate, cmd.EndDate)
 
 	if err := h.repo.Save(ctx, a); err != nil {
-		h.logger.Errorf("failed to save announcement: %v", err)
-		return err
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateAnnouncement", Entity: "announcement", Err: err}.KV()...)
+		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, a.Events()...); err != nil {
-		h.logger.Errorf("failed to publish events: %v", err)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "CreateAnnouncement", Entity: "announcement", Err: err}.KV()...)
 	}
 
 	return nil

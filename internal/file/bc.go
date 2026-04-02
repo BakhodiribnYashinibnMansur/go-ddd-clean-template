@@ -27,7 +27,7 @@ func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, l logg
 
 	return &BoundedContext{
 		CreateFile: command.NewCreateFileHandler(writeRepo, eventBus, l),
-		GetFile:    query.NewGetFileHandler(readRepo),
-		ListFiles:  query.NewListFilesHandler(readRepo),
+		GetFile:    query.NewGetFileHandler(readRepo, l),
+		ListFiles:  query.NewListFilesHandler(readRepo, l),
 	}
 }

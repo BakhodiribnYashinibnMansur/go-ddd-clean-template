@@ -3,6 +3,8 @@ package query
 import (
 	"context"
 
+	apperrors "gct/internal/shared/infrastructure/errors"
+
 	appdto "gct/internal/session/application"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
@@ -38,7 +40,7 @@ func (h *ListSessionsHandler) Handle(ctx context.Context, q ListSessionsQuery) (
 	views, total, err := h.repo.List(ctx, q.Filter)
 	if err != nil {
 		h.l.Errorc(ctx, "session.query.ListSessions failed", "error", err)
-		return nil, err
+		return nil, apperrors.MapToServiceError(err)
 	}
 
 	return &ListSessionsResult{

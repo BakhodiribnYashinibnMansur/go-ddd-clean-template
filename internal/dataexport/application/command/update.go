@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/dataexport/domain"
 	"gct/internal/shared/application"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 
@@ -51,7 +52,7 @@ func (h *UpdateDataExportHandler) Handle(ctx context.Context, cmd UpdateDataExpo
 
 	de, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {
-		return err
+		return apperrors.MapToServiceError(err)
 	}
 
 	if cmd.Status != nil {
@@ -74,12 +75,12 @@ func (h *UpdateDataExportHandler) Handle(ctx context.Context, cmd UpdateDataExpo
 	}
 
 	if err := h.repo.Update(ctx, de); err != nil {
-		h.logger.Errorf("failed to update data export: %v", err)
-		return err
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "UpdateDataExport", Entity: "data_export", EntityID: cmd.ID, Err: err}.KV()...)
+		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, de.Events()...); err != nil {
-		h.logger.Errorf("failed to publish events: %v", err)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "UpdateDataExport", Entity: "data_export", EntityID: cmd.ID, Err: err}.KV()...)
 	}
 
 	return nil

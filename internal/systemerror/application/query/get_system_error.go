@@ -3,6 +3,9 @@ package query
 import (
 	"context"
 
+	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/logger"
+
 	"gct/internal/shared/infrastructure/pgxutil"
 	appdto "gct/internal/systemerror/application"
 	"gct/internal/systemerror/domain"
@@ -18,11 +21,12 @@ type GetSystemErrorQuery struct {
 // GetSystemErrorHandler handles the GetSystemErrorQuery.
 type GetSystemErrorHandler struct {
 	readRepo domain.SystemErrorReadRepository
+	logger   logger.Log
 }
 
 // NewGetSystemErrorHandler creates a new GetSystemErrorHandler.
-func NewGetSystemErrorHandler(readRepo domain.SystemErrorReadRepository) *GetSystemErrorHandler {
-	return &GetSystemErrorHandler{readRepo: readRepo}
+func NewGetSystemErrorHandler(readRepo domain.SystemErrorReadRepository, l logger.Log) *GetSystemErrorHandler {
+	return &GetSystemErrorHandler{readRepo: readRepo, logger: l}
 }
 
 // Handle executes the GetSystemErrorQuery and returns a SystemErrorView.
@@ -32,7 +36,8 @@ func (h *GetSystemErrorHandler) Handle(ctx context.Context, q GetSystemErrorQuer
 
 	view, err := h.readRepo.FindByID(ctx, q.ID)
 	if err != nil {
-		return nil, err
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetSystemError", Entity: "system_error", EntityID: q.ID, Err: err}.KV()...)
+		return nil, apperrors.MapToServiceError(err)
 	}
 
 	return &appdto.SystemErrorView{

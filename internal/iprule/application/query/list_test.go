@@ -1,6 +1,7 @@
 package query
 
 import (
+	"gct/internal/shared/infrastructure/logger"
 	"context"
 	"testing"
 	"time"
@@ -19,7 +20,7 @@ func TestListIPRulesHandler_Handle(t *testing.T) {
 		total: 2,
 	}
 
-	handler := NewListIPRulesHandler(readRepo)
+	handler := NewListIPRulesHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListIPRulesQuery{
 		Filter: domain.IPRuleFilter{Limit: 10, Offset: 0},
 	})
@@ -40,7 +41,7 @@ func TestListIPRulesHandler_Handle(t *testing.T) {
 func TestListIPRulesHandler_Empty(t *testing.T) {
 	readRepo := &mockReadRepo{views: []*domain.IPRuleView{}, total: 0}
 
-	handler := NewListIPRulesHandler(readRepo)
+	handler := NewListIPRulesHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListIPRulesQuery{
 		Filter: domain.IPRuleFilter{},
 	})
@@ -64,7 +65,7 @@ func TestListIPRulesHandler_WithFilters(t *testing.T) {
 		total: 1,
 	}
 
-	handler := NewListIPRulesHandler(readRepo)
+	handler := NewListIPRulesHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListIPRulesQuery{
 		Filter: domain.IPRuleFilter{Action: &action, Limit: 10},
 	})
@@ -78,7 +79,7 @@ func TestListIPRulesHandler_WithFilters(t *testing.T) {
 
 func TestListIPRulesHandler_RepoError(t *testing.T) {
 	readRepo := &errorReadRepo{err: errRepo}
-	handler := NewListIPRulesHandler(readRepo)
+	handler := NewListIPRulesHandler(readRepo, logger.Noop())
 	_, err := handler.Handle(context.Background(), ListIPRulesQuery{Filter: domain.IPRuleFilter{}})
 	if err == nil {
 		t.Fatal("expected error from repo")

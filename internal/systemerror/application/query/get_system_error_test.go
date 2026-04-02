@@ -1,6 +1,7 @@
 package query
 
 import (
+	"gct/internal/shared/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
@@ -56,7 +57,7 @@ func TestGetSystemErrorHandler_Handle(t *testing.T) {
 		},
 	}
 
-	handler := NewGetSystemErrorHandler(readRepo)
+	handler := NewGetSystemErrorHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), GetSystemErrorQuery{ID: id})
 	if err != nil {
 		t.Fatalf("expected no error, got: %v", err)
@@ -74,7 +75,7 @@ func TestGetSystemErrorHandler_Handle(t *testing.T) {
 
 func TestGetSystemErrorHandler_NotFound(t *testing.T) {
 	readRepo := &mockReadRepo{}
-	handler := NewGetSystemErrorHandler(readRepo)
+	handler := NewGetSystemErrorHandler(readRepo, logger.Noop())
 	_, err := handler.Handle(context.Background(), GetSystemErrorQuery{ID: uuid.New()})
 	if err == nil {
 		t.Fatal("expected error for not found")
@@ -83,7 +84,7 @@ func TestGetSystemErrorHandler_NotFound(t *testing.T) {
 
 func TestGetSystemErrorHandler_RepoError(t *testing.T) {
 	readRepo := &errorReadRepo{err: errRepo}
-	handler := NewGetSystemErrorHandler(readRepo)
+	handler := NewGetSystemErrorHandler(readRepo, logger.Noop())
 	_, err := handler.Handle(context.Background(), GetSystemErrorQuery{ID: uuid.New()})
 	if err == nil {
 		t.Fatal("expected error from repo")
@@ -123,7 +124,7 @@ func TestGetSystemErrorHandler_AllFieldsMapped(t *testing.T) {
 		},
 	}
 
-	handler := NewGetSystemErrorHandler(readRepo)
+	handler := NewGetSystemErrorHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), GetSystemErrorQuery{ID: id})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)

@@ -1,6 +1,7 @@
 package query
 
 import (
+	"gct/internal/shared/infrastructure/logger"
 	"context"
 	"testing"
 	"time"
@@ -20,7 +21,7 @@ func TestListUserSettingsHandler_Handle(t *testing.T) {
 		total: 2,
 	}
 
-	handler := NewListUserSettingsHandler(readRepo)
+	handler := NewListUserSettingsHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListUserSettingsQuery{
 		Filter: domain.UserSettingFilter{Limit: 10, Offset: 0},
 	})
@@ -41,7 +42,7 @@ func TestListUserSettingsHandler_Handle(t *testing.T) {
 func TestListUserSettingsHandler_Empty(t *testing.T) {
 	readRepo := &mockReadRepo{views: []*domain.UserSettingView{}, total: 0}
 
-	handler := NewListUserSettingsHandler(readRepo)
+	handler := NewListUserSettingsHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListUserSettingsQuery{
 		Filter: domain.UserSettingFilter{},
 	})
@@ -58,7 +59,7 @@ func TestListUserSettingsHandler_Empty(t *testing.T) {
 
 func TestListUserSettingsHandler_RepoError(t *testing.T) {
 	readRepo := &errorReadRepo{err: errRepo}
-	handler := NewListUserSettingsHandler(readRepo)
+	handler := NewListUserSettingsHandler(readRepo, logger.Noop())
 	_, err := handler.Handle(context.Background(), ListUserSettingsQuery{Filter: domain.UserSettingFilter{}})
 	if err == nil {
 		t.Fatal("expected error from repo")

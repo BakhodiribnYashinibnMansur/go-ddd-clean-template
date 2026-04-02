@@ -31,7 +31,7 @@ func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, l logg
 		CreateAnnouncement: command.NewCreateAnnouncementHandler(writeRepo, eventBus, l),
 		UpdateAnnouncement: command.NewUpdateAnnouncementHandler(writeRepo, eventBus, l),
 		DeleteAnnouncement: command.NewDeleteAnnouncementHandler(writeRepo, l),
-		GetAnnouncement:    query.NewGetAnnouncementHandler(readRepo),
-		ListAnnouncements:  query.NewListAnnouncementsHandler(readRepo),
+		GetAnnouncement:    query.NewGetAnnouncementHandler(readRepo, l),
+		ListAnnouncements:  query.NewListAnnouncementsHandler(readRepo, l),
 	}
 }

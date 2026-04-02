@@ -3,6 +3,9 @@ package query
 import (
 	"context"
 
+	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/logger"
+
 	appdto "gct/internal/ratelimit/application"
 	"gct/internal/ratelimit/domain"
 	"gct/internal/shared/infrastructure/pgxutil"
@@ -18,11 +21,12 @@ type GetRateLimitQuery struct {
 // GetRateLimitHandler handles the GetRateLimitQuery.
 type GetRateLimitHandler struct {
 	readRepo domain.RateLimitReadRepository
+	logger   logger.Log
 }
 
 // NewGetRateLimitHandler creates a new GetRateLimitHandler.
-func NewGetRateLimitHandler(readRepo domain.RateLimitReadRepository) *GetRateLimitHandler {
-	return &GetRateLimitHandler{readRepo: readRepo}
+func NewGetRateLimitHandler(readRepo domain.RateLimitReadRepository, l logger.Log) *GetRateLimitHandler {
+	return &GetRateLimitHandler{readRepo: readRepo, logger: l}
 }
 
 // Handle executes the GetRateLimitQuery and returns a RateLimitView.
@@ -32,7 +36,8 @@ func (h *GetRateLimitHandler) Handle(ctx context.Context, q GetRateLimitQuery) (
 
 	v, err := h.readRepo.FindByID(ctx, q.ID)
 	if err != nil {
-		return nil, err
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetRateLimit", Entity: "rate_limit", EntityID: q.ID, Err: err}.KV()...)
+		return nil, apperrors.MapToServiceError(err)
 	}
 
 	return &appdto.RateLimitView{

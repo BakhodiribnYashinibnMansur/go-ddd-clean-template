@@ -47,9 +47,9 @@ func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, l logg
 		ChangeRole:  command.NewChangeRoleHandler(writeRepo, eventBus, l),
 		BulkAction:  command.NewBulkActionHandler(writeRepo, eventBus, l),
 		RevokeAll:   command.NewRevokeAllSessionsHandler(writeRepo, eventBus, l),
-		GetUser:         query.NewGetUserHandler(readRepo),
-		ListUsers:       query.NewListUsersHandler(readRepo),
-		FindSession:     query.NewFindSessionHandler(readRepo),
-		FindUserForAuth: query.NewFindUserForAuthHandler(readRepo),
+		GetUser:         query.NewGetUserHandler(readRepo, l),
+		ListUsers:       query.NewListUsersHandler(readRepo, l),
+		FindSession:     query.NewFindSessionHandler(readRepo, l),
+		FindUserForAuth: query.NewFindUserForAuthHandler(readRepo, l),
 	}
 }

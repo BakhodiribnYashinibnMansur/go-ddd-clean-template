@@ -10,6 +10,8 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+const callerSeparator = " → "
+
 type logger struct {
 	zap    *zap.SugaredLogger
 	ctxZap *zap.SugaredLogger
@@ -52,9 +54,17 @@ func customTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
 	enc.AppendString(ColorGreen + Dim + "[" + t.Format(TimeFormat) + "]" + ColorReset)
 }
 
-// customCallerEncoder encodes caller with hacker-cyan and italics
+// customCallerEncoder encodes caller with file:line and short function name
 func customCallerEncoder(caller zapcore.EntryCaller, enc zapcore.PrimitiveArrayEncoder) {
-	enc.AppendString(ColorBrightCyan + Dim + Italic + "# " + caller.TrimmedPath() + ColorReset)
+	fn := caller.Function
+	if idx := strings.LastIndex(fn, "/"); idx >= 0 {
+		fn = fn[idx+1:]
+	}
+	if idx := strings.Index(fn, "."); idx >= 0 {
+		fn = fn[idx+1:]
+	}
+	fn = strings.NewReplacer("(*", "", ")", "").Replace(fn)
+	enc.AppendString(ColorBrightCyan + Dim + Italic + "# " + caller.TrimmedPath() + callerSeparator + fn + ColorReset)
 }
 
 // customDurationEncoder wraps duration encoding with blue color
@@ -62,42 +72,27 @@ func customDurationEncoder(d time.Duration, enc zapcore.PrimitiveArrayEncoder) {
 	enc.AppendString(ColorCyan + d.String() + ColorReset)
 }
 
-// New creates a new logger instance.
+const (
+	FormatConsole = "console"
+	FormatJSON    = "json"
+)
+
+// New creates a new logger instance with console format (default).
 func New(level string) Log {
-	var logLevel zapcore.Level
+	return NewWithFormat(level, FormatConsole)
+}
 
-	switch strings.ToLower(level) {
-	case LevelDebug:
-		logLevel = zapcore.DebugLevel
-	case LevelInfo:
-		logLevel = zapcore.InfoLevel
-	case LevelWarn:
-		logLevel = zapcore.WarnLevel
-	case LevelError:
-		logLevel = zapcore.ErrorLevel
-	default:
-		logLevel = zapcore.InfoLevel
+// NewWithFormat creates a new logger instance with the specified format.
+// format: "console" for colored human-readable output, "json" for structured JSON output.
+func NewWithFormat(level, format string) Log {
+	logLevel := parseLevel(level)
+
+	var encoder zapcore.Encoder
+	if strings.ToLower(format) == FormatJSON {
+		encoder = zapcore.NewJSONEncoder(jsonEncoderConfig())
+	} else {
+		encoder = zapcore.NewConsoleEncoder(consoleEncoderConfig())
 	}
-
-	encoderConfig := zapcore.EncoderConfig{
-		TimeKey:          KeyTimestamp,
-		LevelKey:         KeyLevel,
-		NameKey:          KeyLogger,
-		CallerKey:        KeyCaller,
-		MessageKey:       KeyMessage,
-		LineEnding:       zapcore.DefaultLineEnding,
-		EncodeLevel:      customColorLevelEncoder,
-		EncodeTime:       customTimeEncoder,
-		EncodeDuration:   customDurationEncoder,
-		EncodeCaller:     customCallerEncoder,
-		ConsoleSeparator: ConsoleSeparator,
-		// Colorize field keys
-		EncodeName: func(loggerName string, enc zapcore.PrimitiveArrayEncoder) {
-			enc.AppendString(ColorGray + loggerName + ColorReset)
-		},
-	}
-
-	encoder := zapcore.NewConsoleEncoder(encoderConfig)
 
 	core := zapcore.NewCore(
 		encoder,
@@ -110,6 +105,58 @@ func New(level string) Log {
 	return &logger{
 		zap:    zapLogger.Sugar(),
 		ctxZap: zapLogger.WithOptions(zap.AddCallerSkip(1)).Sugar(),
+	}
+}
+
+func parseLevel(level string) zapcore.Level {
+	switch strings.ToLower(level) {
+	case LevelDebug:
+		return zapcore.DebugLevel
+	case LevelInfo:
+		return zapcore.InfoLevel
+	case LevelWarn:
+		return zapcore.WarnLevel
+	case LevelError:
+		return zapcore.ErrorLevel
+	default:
+		return zapcore.InfoLevel
+	}
+}
+
+func consoleEncoderConfig() zapcore.EncoderConfig {
+	return zapcore.EncoderConfig{
+		TimeKey:          KeyTimestamp,
+		LevelKey:         KeyLevel,
+		NameKey:          KeyLogger,
+		CallerKey:        KeyCaller,
+		FunctionKey:      zapcore.OmitKey,
+		MessageKey:       KeyMessage,
+		LineEnding:       zapcore.DefaultLineEnding,
+		EncodeLevel:      customColorLevelEncoder,
+		EncodeTime:       customTimeEncoder,
+		EncodeDuration:   customDurationEncoder,
+		EncodeCaller:     customCallerEncoder,
+		ConsoleSeparator: ConsoleSeparator,
+		EncodeName: func(loggerName string, enc zapcore.PrimitiveArrayEncoder) {
+			enc.AppendString(ColorGray + loggerName + ColorReset)
+		},
+	}
+}
+
+func jsonEncoderConfig() zapcore.EncoderConfig {
+	return zapcore.EncoderConfig{
+		TimeKey:        KeyTimestamp,
+		LevelKey:       KeyLevel,
+		NameKey:        KeyLogger,
+		CallerKey:      KeyCaller,
+		FunctionKey:    "function",
+		MessageKey:     KeyMessage,
+		StacktraceKey:  "stacktrace",
+		LineEnding:     zapcore.DefaultLineEnding,
+		EncodeLevel:    zapcore.LowercaseLevelEncoder,
+		EncodeTime:     zapcore.ISO8601TimeEncoder,
+		EncodeDuration: zapcore.MillisDurationEncoder,
+		EncodeCaller:   zapcore.ShortCallerEncoder,
 	}
 }
 

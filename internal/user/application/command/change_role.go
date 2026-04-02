@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"gct/internal/shared/application"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/user/domain"
@@ -44,18 +45,18 @@ func (h *ChangeRoleHandler) Handle(ctx context.Context, cmd ChangeRoleCommand) (
 
 	user, err := h.repo.FindByID(ctx, cmd.UserID)
 	if err != nil {
-		return err
+		return apperrors.MapToServiceError(err)
 	}
 
 	user.ChangeRole(cmd.RoleID)
 
 	if err := h.repo.Update(ctx, user); err != nil {
-		h.logger.Errorf("failed to save role change: %v", err)
-		return err
+		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "ChangeRole", Entity: "user", EntityID: cmd.UserID, Err: err}.KV()...)
+		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, user.Events()...); err != nil {
-		h.logger.Errorf("failed to publish role change events: %v", err)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "ChangeRole", Entity: "user", EntityID: cmd.UserID, Err: err}.KV()...)
 	}
 
 	return nil

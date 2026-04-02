@@ -5,6 +5,8 @@ import (
 	"strconv"
 
 	"gct/internal/ratelimit"
+	"gct/internal/shared/infrastructure/httpx"
+	"gct/internal/shared/infrastructure/httpx/response"
 	"gct/internal/ratelimit/application/command"
 	"gct/internal/ratelimit/application/query"
 	"gct/internal/ratelimit/domain"
@@ -29,7 +31,7 @@ func NewHandler(bc *ratelimit.BoundedContext, l logger.Log) *Handler {
 func (h *Handler) Create(ctx *gin.Context) {
 	var req CreateRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.RespondWithError(ctx, err, http.StatusBadRequest)
 		return
 	}
 	cmd := command.CreateRateLimitCommand{
@@ -40,7 +42,7 @@ func (h *Handler) Create(ctx *gin.Context) {
 		Enabled:           req.Enabled,
 	}
 	if err := h.bc.CreateRateLimit.Handle(ctx.Request.Context(), cmd); err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 	ctx.JSON(http.StatusCreated, gin.H{"success": true})
@@ -56,7 +58,7 @@ func (h *Handler) List(ctx *gin.Context) {
 	}
 	result, err := h.bc.ListRateLimits.Handle(ctx.Request.Context(), q)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"data": result.RateLimits, "total": result.Total})
@@ -66,12 +68,12 @@ func (h *Handler) List(ctx *gin.Context) {
 func (h *Handler) Get(ctx *gin.Context) {
 	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
 	result, err := h.bc.GetRateLimit.Handle(ctx.Request.Context(), query.GetRateLimitQuery{ID: id})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"data": result})
@@ -81,12 +83,12 @@ func (h *Handler) Get(ctx *gin.Context) {
 func (h *Handler) Update(ctx *gin.Context) {
 	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
 	var req UpdateRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.RespondWithError(ctx, err, http.StatusBadRequest)
 		return
 	}
 	cmd := command.UpdateRateLimitCommand{
@@ -98,7 +100,7 @@ func (h *Handler) Update(ctx *gin.Context) {
 		Enabled:           req.Enabled,
 	}
 	if err := h.bc.UpdateRateLimit.Handle(ctx.Request.Context(), cmd); err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"success": true})
@@ -108,11 +110,11 @@ func (h *Handler) Update(ctx *gin.Context) {
 func (h *Handler) Delete(ctx *gin.Context) {
 	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
 	if err := h.bc.DeleteRateLimit.Handle(ctx.Request.Context(), command.DeleteRateLimitCommand{ID: id}); err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"success": true})

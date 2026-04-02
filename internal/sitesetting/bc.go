@@ -31,7 +31,7 @@ func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, l logg
 		CreateSiteSetting: command.NewCreateSiteSettingHandler(writeRepo, eventBus, l),
 		UpdateSiteSetting: command.NewUpdateSiteSettingHandler(writeRepo, eventBus, l),
 		DeleteSiteSetting: command.NewDeleteSiteSettingHandler(writeRepo, l),
-		GetSiteSetting:    query.NewGetSiteSettingHandler(readRepo),
-		ListSiteSettings:  query.NewListSiteSettingsHandler(readRepo),
+		GetSiteSetting:    query.NewGetSiteSettingHandler(readRepo, l),
+		ListSiteSettings:  query.NewListSiteSettingsHandler(readRepo, l),
 	}
 }

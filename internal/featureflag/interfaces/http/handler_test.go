@@ -166,8 +166,8 @@ func setupRouter(repo *mockFeatureFlagRepo, rgRepo *mockRuleGroupRepo, readRepo 
 		CreateRuleGroup: command.NewCreateRuleGroupHandler(repo, rgRepo, eb, l),
 		UpdateRuleGroup: command.NewUpdateRuleGroupHandler(rgRepo, eb, l),
 		DeleteRuleGroup: command.NewDeleteRuleGroupHandler(rgRepo, eb, l),
-		GetFlag:           query.NewGetHandler(readRepo),
-		ListFlags:         query.NewListHandler(readRepo),
+		GetFlag:           query.NewGetHandler(readRepo, l),
+		ListFlags:         query.NewListHandler(readRepo, l),
 		EvaluateFlag:      query.NewEvaluateHandler(&mockCachedEvaluator{}),
 		BatchEvaluateFlag: query.NewBatchEvaluateHandler(&mockCachedEvaluator{}),
 	}
@@ -389,8 +389,8 @@ func setupRouterWithEvaluator(evalResults map[string]*ffcache.EvalResult) *gin.E
 		CreateRuleGroup:   command.NewCreateRuleGroupHandler(&mockFeatureFlagRepo{}, &mockRuleGroupRepo{}, &mockEventBus{}, l),
 		UpdateRuleGroup:   command.NewUpdateRuleGroupHandler(&mockRuleGroupRepo{}, &mockEventBus{}, l),
 		DeleteRuleGroup:   command.NewDeleteRuleGroupHandler(&mockRuleGroupRepo{}, &mockEventBus{}, l),
-		GetFlag:           query.NewGetHandler(&mockReadRepo{}),
-		ListFlags:         query.NewListHandler(&mockReadRepo{}),
+		GetFlag:           query.NewGetHandler(&mockReadRepo{}, l),
+		ListFlags:         query.NewListHandler(&mockReadRepo{}, l),
 		EvaluateFlag:      query.NewEvaluateHandler(eval),
 		BatchEvaluateFlag: query.NewBatchEvaluateHandler(eval),
 	}

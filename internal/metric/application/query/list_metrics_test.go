@@ -1,6 +1,7 @@
 package query
 
 import (
+	"gct/internal/shared/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
@@ -42,7 +43,7 @@ func TestListMetricsHandler_Handle(t *testing.T) {
 		total: 2,
 	}
 
-	handler := NewListMetricsHandler(readRepo)
+	handler := NewListMetricsHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListMetricsQuery{
 		Filter: domain.MetricFilter{Limit: 10, Offset: 0},
 	})
@@ -66,7 +67,7 @@ func TestListMetricsHandler_Handle(t *testing.T) {
 func TestListMetricsHandler_Empty(t *testing.T) {
 	readRepo := &mockReadRepo{views: []*domain.MetricView{}, total: 0}
 
-	handler := NewListMetricsHandler(readRepo)
+	handler := NewListMetricsHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListMetricsQuery{
 		Filter: domain.MetricFilter{},
 	})
@@ -91,7 +92,7 @@ func TestListMetricsHandler_WithPanicError(t *testing.T) {
 		total: 1,
 	}
 
-	handler := NewListMetricsHandler(readRepo)
+	handler := NewListMetricsHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListMetricsQuery{
 		Filter: domain.MetricFilter{Limit: 10},
 	})
@@ -111,7 +112,7 @@ func TestListMetricsHandler_WithPanicError(t *testing.T) {
 
 func TestListMetricsHandler_RepoError(t *testing.T) {
 	readRepo := &errorReadRepo{err: errRepo}
-	handler := NewListMetricsHandler(readRepo)
+	handler := NewListMetricsHandler(readRepo, logger.Noop())
 	_, err := handler.Handle(context.Background(), ListMetricsQuery{Filter: domain.MetricFilter{}})
 	if err == nil {
 		t.Fatal("expected error from repo")

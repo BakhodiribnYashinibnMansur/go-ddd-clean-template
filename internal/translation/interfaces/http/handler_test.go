@@ -108,8 +108,8 @@ func setupRouter(repo *mockRepo, readRepo *mockReadRepo) *gin.Engine {
 		CreateTranslation: command.NewCreateTranslationHandler(repo, eb, l),
 		UpdateTranslation: command.NewUpdateTranslationHandler(repo, eb, l),
 		DeleteTranslation: command.NewDeleteTranslationHandler(repo, l),
-		GetTranslation:    query.NewGetTranslationHandler(readRepo),
-		ListTranslations:  query.NewListTranslationsHandler(readRepo),
+		GetTranslation:    query.NewGetTranslationHandler(readRepo, l),
+		ListTranslations:  query.NewListTranslationsHandler(readRepo, l),
 	}
 
 	r := gin.New()

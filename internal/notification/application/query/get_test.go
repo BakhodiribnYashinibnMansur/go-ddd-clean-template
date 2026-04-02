@@ -1,6 +1,7 @@
 package query
 
 import (
+	"gct/internal/shared/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
@@ -59,7 +60,7 @@ func TestGetHandler_Handle(t *testing.T) {
 		},
 	}
 
-	handler := NewGetHandler(readRepo)
+	handler := NewGetHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), GetQuery{ID: id})
 	if err != nil {
 		t.Fatalf("expected no error, got: %v", err)
@@ -80,7 +81,7 @@ func TestGetHandler_Handle(t *testing.T) {
 
 func TestGetHandler_NotFound(t *testing.T) {
 	readRepo := &mockReadRepo{}
-	handler := NewGetHandler(readRepo)
+	handler := NewGetHandler(readRepo, logger.Noop())
 	_, err := handler.Handle(context.Background(), GetQuery{ID: uuid.New()})
 	if err == nil {
 		t.Fatal("expected error for not found")
@@ -89,7 +90,7 @@ func TestGetHandler_NotFound(t *testing.T) {
 
 func TestGetHandler_RepoError(t *testing.T) {
 	readRepo := &errorReadRepo{err: errRepo}
-	handler := NewGetHandler(readRepo)
+	handler := NewGetHandler(readRepo, logger.Noop())
 	_, err := handler.Handle(context.Background(), GetQuery{ID: uuid.New()})
 	if err == nil {
 		t.Fatal("expected error from repo")
@@ -114,7 +115,7 @@ func TestGetHandler_AllFieldsMapped(t *testing.T) {
 		},
 	}
 
-	handler := NewGetHandler(readRepo)
+	handler := NewGetHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), GetQuery{ID: id})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)

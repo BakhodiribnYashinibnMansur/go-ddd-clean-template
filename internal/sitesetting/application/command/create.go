@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"gct/internal/shared/application"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/sitesetting/domain"
@@ -48,12 +49,12 @@ func (h *CreateSiteSettingHandler) Handle(ctx context.Context, cmd CreateSiteSet
 	s := domain.NewSiteSetting(cmd.Key, cmd.Value, cmd.Type, cmd.Description)
 
 	if err := h.repo.Save(ctx, s); err != nil {
-		h.logger.Errorf("failed to save site setting: %v", err)
-		return err
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateSiteSetting", Entity: "site_setting", Err: err}.KV()...)
+		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, s.Events()...); err != nil {
-		h.logger.Errorf("failed to publish events: %v", err)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "CreateSiteSetting", Entity: "site_setting", Err: err}.KV()...)
 	}
 
 	return nil

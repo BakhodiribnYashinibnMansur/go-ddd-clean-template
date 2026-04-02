@@ -1,6 +1,7 @@
 package query
 
 import (
+	"gct/internal/shared/infrastructure/logger"
 	"context"
 	"testing"
 	"time"
@@ -19,7 +20,7 @@ func TestListRateLimitsHandler_Handle(t *testing.T) {
 		total: 2,
 	}
 
-	handler := NewListRateLimitsHandler(readRepo)
+	handler := NewListRateLimitsHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListRateLimitsQuery{
 		Filter: domain.RateLimitFilter{Limit: 10, Offset: 0},
 	})
@@ -40,7 +41,7 @@ func TestListRateLimitsHandler_Handle(t *testing.T) {
 func TestListRateLimitsHandler_Empty(t *testing.T) {
 	readRepo := &mockReadRepo{views: []*domain.RateLimitView{}, total: 0}
 
-	handler := NewListRateLimitsHandler(readRepo)
+	handler := NewListRateLimitsHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListRateLimitsQuery{
 		Filter: domain.RateLimitFilter{},
 	})
@@ -65,7 +66,7 @@ func TestListRateLimitsHandler_WithFilters(t *testing.T) {
 		total: 1,
 	}
 
-	handler := NewListRateLimitsHandler(readRepo)
+	handler := NewListRateLimitsHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListRateLimitsQuery{
 		Filter: domain.RateLimitFilter{Name: &name, Enabled: &enabled, Limit: 10},
 	})
@@ -79,7 +80,7 @@ func TestListRateLimitsHandler_WithFilters(t *testing.T) {
 
 func TestListRateLimitsHandler_RepoError(t *testing.T) {
 	readRepo := &errorReadRepo{err: errRepo}
-	handler := NewListRateLimitsHandler(readRepo)
+	handler := NewListRateLimitsHandler(readRepo, logger.Noop())
 	_, err := handler.Handle(context.Background(), ListRateLimitsQuery{Filter: domain.RateLimitFilter{}})
 	if err == nil {
 		t.Fatal("expected error from repo")

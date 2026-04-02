@@ -149,8 +149,8 @@ func newBC(repo *mockUserRepo, readRepo *mockReadRepo) *user.BoundedContext {
 		ApproveUser: command.NewApproveUserHandler(repo, eb, l),
 		ChangeRole:  command.NewChangeRoleHandler(repo, eb, l),
 		BulkAction:  command.NewBulkActionHandler(repo, eb, l),
-		GetUser:     query.NewGetUserHandler(readRepo),
-		ListUsers:   query.NewListUsersHandler(readRepo),
+		GetUser:     query.NewGetUserHandler(readRepo, l),
+		ListUsers:   query.NewListUsersHandler(readRepo, l),
 	}
 }
 
@@ -286,8 +286,8 @@ func TestHandler_Get_NotFound(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/api/v1/users/"+uuid.New().String(), nil)
 	router.ServeHTTP(w, req)
 
-	if w.Code != http.StatusInternalServerError {
-		t.Fatalf("expected 500, got %d", w.Code)
+	if w.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d: %s", w.Code, w.Body.String())
 	}
 }
 
@@ -589,8 +589,8 @@ func TestHandler_Create_InvalidPhone(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	router.ServeHTTP(w, req)
 
-	if w.Code != http.StatusInternalServerError {
-		t.Fatalf("expected 500 for invalid phone, got %d", w.Code)
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for invalid phone, got %d: %s", w.Code, w.Body.String())
 	}
 }
 

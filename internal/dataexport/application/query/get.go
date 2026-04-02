@@ -3,6 +3,9 @@ package query
 import (
 	"context"
 
+	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/logger"
+
 	appdto "gct/internal/dataexport/application"
 	"gct/internal/dataexport/domain"
 	"gct/internal/shared/infrastructure/pgxutil"
@@ -18,11 +21,12 @@ type GetDataExportQuery struct {
 // GetDataExportHandler handles the GetDataExportQuery.
 type GetDataExportHandler struct {
 	readRepo domain.DataExportReadRepository
+	logger   logger.Log
 }
 
 // NewGetDataExportHandler creates a new GetDataExportHandler.
-func NewGetDataExportHandler(readRepo domain.DataExportReadRepository) *GetDataExportHandler {
-	return &GetDataExportHandler{readRepo: readRepo}
+func NewGetDataExportHandler(readRepo domain.DataExportReadRepository, l logger.Log) *GetDataExportHandler {
+	return &GetDataExportHandler{readRepo: readRepo, logger: l}
 }
 
 // Handle executes the GetDataExportQuery and returns a DataExportView.
@@ -32,7 +36,8 @@ func (h *GetDataExportHandler) Handle(ctx context.Context, q GetDataExportQuery)
 
 	v, err := h.readRepo.FindByID(ctx, q.ID)
 	if err != nil {
-		return nil, err
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetDataExport", Entity: "data_export", EntityID: q.ID, Err: err}.KV()...)
+		return nil, apperrors.MapToServiceError(err)
 	}
 
 	return &appdto.DataExportView{

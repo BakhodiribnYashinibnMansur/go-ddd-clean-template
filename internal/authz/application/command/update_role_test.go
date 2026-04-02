@@ -2,6 +2,7 @@ package command
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -98,7 +99,7 @@ func TestUpdateRoleHandler_NotFound(t *testing.T) {
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != domain.ErrRoleNotFound {
+	if !errors.Is(err, domain.ErrRoleNotFound) {
 		t.Fatalf("expected ErrRoleNotFound, got: %v", err)
 	}
 

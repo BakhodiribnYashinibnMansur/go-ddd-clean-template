@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/featureflag/domain"
 	"gct/internal/shared/application"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 
@@ -42,12 +43,12 @@ func (h *DeleteHandler) Handle(ctx context.Context, cmd DeleteCommand) (err erro
 	defer func() { end(err) }()
 
 	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
-		h.logger.Errorf("failed to delete feature flag: %v", err)
-		return err
+		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteFeatureFlag", Entity: "feature_flag", EntityID: cmd.ID, Err: err}.KV()...)
+		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, domain.NewFlagDeleted(cmd.ID)); err != nil {
-		h.logger.Errorf("failed to publish events: %v", err)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "DeleteFeatureFlag", Entity: "feature_flag", EntityID: cmd.ID, Err: err}.KV()...)
 	}
 
 	return nil

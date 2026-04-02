@@ -3,6 +3,8 @@ package query
 import (
 	"context"
 
+	apperrors "gct/internal/shared/infrastructure/errors"
+
 	"gct/internal/authz/domain"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
@@ -36,8 +38,8 @@ func (h *CheckAccessHandler) Handle(ctx context.Context, q CheckAccessQuery) (al
 
 	allowed, err = h.readRepo.CheckAccess(ctx, q.RoleID, q.Path, q.Method, q.EvalCtx)
 	if err != nil {
-		h.logger.Errorf("check access failed for role %s on %s %s: %v", q.RoleID, q.Method, q.Path, err)
-		return false, err
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "CheckAccess", Entity: "access", EntityID: q.RoleID, Err: err}.KV()...)
+		return false, apperrors.MapToServiceError(err)
 	}
 	return allowed, nil
 }

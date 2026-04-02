@@ -1,6 +1,7 @@
 package query
 
 import (
+	"gct/internal/shared/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
@@ -45,7 +46,7 @@ func TestListSessionsHandler_Handle(t *testing.T) {
 		total: 2,
 	}
 
-	handler := NewListSessionsHandler(readRepo, &mockLogger{})
+	handler := NewListSessionsHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListSessionsQuery{
 		Filter: appdto.SessionsFilter{Limit: 10, Offset: 0},
 	})
@@ -72,7 +73,7 @@ func TestListSessionsHandler_Empty(t *testing.T) {
 		total: 0,
 	}
 
-	handler := NewListSessionsHandler(readRepo, &mockLogger{})
+	handler := NewListSessionsHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListSessionsQuery{
 		Filter: appdto.SessionsFilter{},
 	})
@@ -92,7 +93,7 @@ func TestListSessionsHandler_RepoError(t *testing.T) {
 		err: errors.New("database connection failed"),
 	}
 
-	handler := NewListSessionsHandler(readRepo, &mockLogger{})
+	handler := NewListSessionsHandler(readRepo, logger.Noop())
 	_, err := handler.Handle(context.Background(), ListSessionsQuery{
 		Filter: appdto.SessionsFilter{},
 	})

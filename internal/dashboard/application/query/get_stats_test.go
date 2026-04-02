@@ -1,6 +1,7 @@
 package query
 
 import (
+	"gct/internal/shared/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
@@ -62,7 +63,7 @@ func TestGetStatsHandler_Handle(t *testing.T) {
 		},
 	}
 
-	handler := NewGetStatsHandler(repo, &mockLogger{})
+	handler := NewGetStatsHandler(repo, logger.Noop())
 
 	result, err := handler.Handle(context.Background(), GetStatsQuery{})
 	if err != nil {
@@ -102,7 +103,7 @@ func TestGetStatsHandler_RepoError(t *testing.T) {
 		err: errors.New("database connection failed"),
 	}
 
-	handler := NewGetStatsHandler(repo, &mockLogger{})
+	handler := NewGetStatsHandler(repo, logger.Noop())
 
 	_, err := handler.Handle(context.Background(), GetStatsQuery{})
 	if err == nil {

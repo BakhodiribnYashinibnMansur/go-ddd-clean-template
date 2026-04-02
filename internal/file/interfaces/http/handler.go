@@ -14,6 +14,9 @@ import (
 	"gct/internal/file/application/command"
 	"gct/internal/file/application/query"
 	"gct/internal/file/domain"
+	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/httpx"
+	"gct/internal/shared/infrastructure/httpx/response"
 	"gct/internal/shared/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
@@ -46,7 +49,7 @@ func (h *Handler) SetMinio(client *miniogo.Client, bucket string) {
 func (h *Handler) Create(ctx *gin.Context) {
 	var req CreateRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.RespondWithError(ctx, err, http.StatusBadRequest)
 		return
 	}
 	cmd := command.CreateFileCommand{
@@ -59,7 +62,7 @@ func (h *Handler) Create(ctx *gin.Context) {
 		UploadedBy:   req.UploadedBy,
 	}
 	if err := h.bc.CreateFile.Handle(ctx.Request.Context(), cmd); err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 	ctx.JSON(http.StatusCreated, gin.H{"success": true})
@@ -75,7 +78,7 @@ func (h *Handler) List(ctx *gin.Context) {
 	}
 	result, err := h.bc.ListFiles.Handle(ctx.Request.Context(), q)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"data": result.Files, "total": result.Total})
@@ -85,12 +88,12 @@ func (h *Handler) List(ctx *gin.Context) {
 func (h *Handler) Get(ctx *gin.Context) {
 	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
 	result, err := h.bc.GetFile.Handle(ctx.Request.Context(), query.GetFileQuery{ID: id})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"data": result})
@@ -99,39 +102,39 @@ func (h *Handler) Get(ctx *gin.Context) {
 // UploadImage handles POST /files/upload/image — single image upload, re-encoded as JPEG.
 func (h *Handler) UploadImage(ctx *gin.Context) {
 	if h.minio == nil {
-		ctx.JSON(http.StatusServiceUnavailable, gin.H{"error": "storage not configured"})
+		response.RespondWithError(ctx, httpx.ErrStorageNotConfigured, http.StatusServiceUnavailable)
 		return
 	}
 
 	fileHeader, err := ctx.FormFile("file")
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "file required"})
+		response.RespondWithError(ctx, httpx.ErrFileRequired, http.StatusBadRequest)
 		return
 	}
 
 	src, err := fileHeader.Open()
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.RespondWithError(ctx, err, http.StatusInternalServerError)
 		return
 	}
 	defer src.Close()
 
 	img, _, err := image.Decode(src)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid image"})
+		response.RespondWithError(ctx, httpx.ErrInvalidImage, http.StatusBadRequest)
 		return
 	}
 
 	var buf bytes.Buffer
 	if err := jpeg.Encode(&buf, img, &jpeg.Options{Quality: 85}); err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.RespondWithError(ctx, err, http.StatusInternalServerError)
 		return
 	}
 
 	objectName := uuid.New().String() + ".jpeg"
 	_, err = h.minio.PutObject(ctx.Request.Context(), h.bucket, objectName, &buf, int64(buf.Len()), miniogo.PutObjectOptions{ContentType: "image/jpeg"})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.RespondWithError(ctx, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -141,13 +144,13 @@ func (h *Handler) UploadImage(ctx *gin.Context) {
 // UploadImages handles POST /files/upload/images — multiple image upload.
 func (h *Handler) UploadImages(ctx *gin.Context) {
 	if h.minio == nil {
-		ctx.JSON(http.StatusServiceUnavailable, gin.H{"error": "storage not configured"})
+		response.RespondWithError(ctx, httpx.ErrStorageNotConfigured, http.StatusServiceUnavailable)
 		return
 	}
 
 	form, err := ctx.MultipartForm()
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "multipart form required"})
+		response.RespondWithError(ctx, httpx.ErrMultipartRequired, http.StatusBadRequest)
 		return
 	}
 
@@ -156,14 +159,14 @@ func (h *Handler) UploadImages(ctx *gin.Context) {
 	for _, fh := range files {
 		src, err := fh.Open()
 		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			response.RespondWithError(ctx, err, http.StatusInternalServerError)
 			return
 		}
 
 		img, _, err := image.Decode(src)
 		src.Close()
 		if err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid image: " + fh.Filename})
+			response.RespondWithError(ctx, apperrors.NewHandlerError(apperrors.ErrHandlerBadRequest, "invalid image: "+fh.Filename), http.StatusBadRequest)
 			return
 		}
 
@@ -173,7 +176,7 @@ func (h *Handler) UploadImages(ctx *gin.Context) {
 		objectName := uuid.New().String() + ".jpeg"
 		_, err = h.minio.PutObject(ctx.Request.Context(), h.bucket, objectName, &buf, int64(buf.Len()), miniogo.PutObjectOptions{ContentType: "image/jpeg"})
 		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			response.RespondWithError(ctx, err, http.StatusInternalServerError)
 			return
 		}
 		names = append(names, objectName)
@@ -185,19 +188,19 @@ func (h *Handler) UploadImages(ctx *gin.Context) {
 // UploadDoc handles POST /files/upload/doc — single document upload.
 func (h *Handler) UploadDoc(ctx *gin.Context) {
 	if h.minio == nil {
-		ctx.JSON(http.StatusServiceUnavailable, gin.H{"error": "storage not configured"})
+		response.RespondWithError(ctx, httpx.ErrStorageNotConfigured, http.StatusServiceUnavailable)
 		return
 	}
 
 	fileHeader, err := ctx.FormFile("file")
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "file required"})
+		response.RespondWithError(ctx, httpx.ErrFileRequired, http.StatusBadRequest)
 		return
 	}
 
 	src, err := fileHeader.Open()
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.RespondWithError(ctx, err, http.StatusInternalServerError)
 		return
 	}
 	defer src.Close()
@@ -205,7 +208,7 @@ func (h *Handler) UploadDoc(ctx *gin.Context) {
 	objectName := uuid.New().String() + filepath.Ext(fileHeader.Filename)
 	_, err = h.minio.PutObject(ctx.Request.Context(), h.bucket, objectName, src, fileHeader.Size, miniogo.PutObjectOptions{ContentType: fileHeader.Header.Get("Content-Type")})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.RespondWithError(ctx, err, http.StatusInternalServerError)
 		return
 	}
 
@@ -216,7 +219,7 @@ func (h *Handler) UploadDoc(ctx *gin.Context) {
 func (h *Handler) Download(ctx *gin.Context) {
 	filePath := ctx.Query("file-path")
 	if filePath == "" {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "file-path required"})
+		response.RespondWithError(ctx, httpx.ErrFilePathRequired, http.StatusBadRequest)
 		return
 	}
 
@@ -230,14 +233,14 @@ func (h *Handler) Download(ctx *gin.Context) {
 	if h.minio != nil {
 		obj, err := h.minio.GetObject(ctx.Request.Context(), h.bucket, filePath, miniogo.GetObjectOptions{})
 		if err != nil {
-			ctx.JSON(http.StatusNotFound, gin.H{"error": "file not found"})
+			response.RespondWithError(ctx, httpx.ErrFileNotFound, http.StatusNotFound)
 			return
 		}
 		defer obj.Close()
 
 		info, err := obj.Stat()
 		if err != nil {
-			ctx.JSON(http.StatusNotFound, gin.H{"error": "file not found"})
+			response.RespondWithError(ctx, httpx.ErrFileNotFound, http.StatusNotFound)
 			return
 		}
 
@@ -245,7 +248,7 @@ func (h *Handler) Download(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusNotFound, gin.H{"error": "file not found"})
+	response.RespondWithError(ctx, httpx.ErrFileNotFound, http.StatusNotFound)
 }
 
 // ensure imports are used

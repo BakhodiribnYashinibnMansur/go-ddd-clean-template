@@ -1,6 +1,7 @@
 package query
 
 import (
+	"gct/internal/shared/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
@@ -52,7 +53,7 @@ func TestCheckAccessHandler_Allowed(t *testing.T) {
 		},
 	}
 
-	handler := NewCheckAccessHandler(repo, &mockLogger{})
+	handler := NewCheckAccessHandler(repo, logger.Noop())
 
 	allowed, err := handler.Handle(context.Background(), CheckAccessQuery{
 		RoleID:  roleID,
@@ -77,7 +78,7 @@ func TestCheckAccessHandler_Denied(t *testing.T) {
 		},
 	}
 
-	handler := NewCheckAccessHandler(repo, &mockLogger{})
+	handler := NewCheckAccessHandler(repo, logger.Noop())
 
 	allowed, err := handler.Handle(context.Background(), CheckAccessQuery{
 		RoleID:  roleID,
@@ -102,7 +103,7 @@ func TestCheckAccessHandler_RepoError(t *testing.T) {
 		},
 	}
 
-	handler := NewCheckAccessHandler(repo, &mockLogger{})
+	handler := NewCheckAccessHandler(repo, logger.Noop())
 
 	allowed, err := handler.Handle(context.Background(), CheckAccessQuery{
 		RoleID:  uuid.New(),

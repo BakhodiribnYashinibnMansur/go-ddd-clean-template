@@ -3,6 +3,9 @@ package query
 import (
 	"context"
 
+	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/logger"
+
 	appdto "gct/internal/file/application"
 	"gct/internal/file/domain"
 	"gct/internal/shared/infrastructure/pgxutil"
@@ -22,11 +25,12 @@ type ListFilesResult struct {
 // ListFilesHandler handles the ListFilesQuery.
 type ListFilesHandler struct {
 	readRepo domain.FileReadRepository
+	logger   logger.Log
 }
 
 // NewListFilesHandler creates a new ListFilesHandler.
-func NewListFilesHandler(readRepo domain.FileReadRepository) *ListFilesHandler {
-	return &ListFilesHandler{readRepo: readRepo}
+func NewListFilesHandler(readRepo domain.FileReadRepository, l logger.Log) *ListFilesHandler {
+	return &ListFilesHandler{readRepo: readRepo, logger: l}
 }
 
 // Handle executes the ListFilesQuery and returns a list of FileView with total count.
@@ -36,7 +40,8 @@ func (h *ListFilesHandler) Handle(ctx context.Context, q ListFilesQuery) (_ *Lis
 
 	views, total, err := h.readRepo.List(ctx, q.Filter)
 	if err != nil {
-		return nil, err
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "ListFiles", Entity: "file", Err: err}.KV()...)
+		return nil, apperrors.MapToServiceError(err)
 	}
 
 	result := make([]*appdto.FileView, len(views))

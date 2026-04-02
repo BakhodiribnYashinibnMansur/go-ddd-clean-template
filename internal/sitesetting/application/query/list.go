@@ -3,6 +3,9 @@ package query
 import (
 	"context"
 
+	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/logger"
+
 	"gct/internal/shared/infrastructure/pgxutil"
 	appdto "gct/internal/sitesetting/application"
 	"gct/internal/sitesetting/domain"
@@ -22,11 +25,12 @@ type ListSiteSettingsResult struct {
 // ListSiteSettingsHandler handles the ListSiteSettingsQuery.
 type ListSiteSettingsHandler struct {
 	readRepo domain.SiteSettingReadRepository
+	logger   logger.Log
 }
 
 // NewListSiteSettingsHandler creates a new ListSiteSettingsHandler.
-func NewListSiteSettingsHandler(readRepo domain.SiteSettingReadRepository) *ListSiteSettingsHandler {
-	return &ListSiteSettingsHandler{readRepo: readRepo}
+func NewListSiteSettingsHandler(readRepo domain.SiteSettingReadRepository, l logger.Log) *ListSiteSettingsHandler {
+	return &ListSiteSettingsHandler{readRepo: readRepo, logger: l}
 }
 
 // Handle executes the ListSiteSettingsQuery and returns a list of SiteSettingView with total count.
@@ -36,7 +40,8 @@ func (h *ListSiteSettingsHandler) Handle(ctx context.Context, q ListSiteSettings
 
 	views, total, err := h.readRepo.List(ctx, q.Filter)
 	if err != nil {
-		return nil, err
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "ListSiteSettings", Entity: "site_setting", Err: err}.KV()...)
+		return nil, apperrors.MapToServiceError(err)
 	}
 
 	items := make([]*appdto.SiteSettingView, len(views))

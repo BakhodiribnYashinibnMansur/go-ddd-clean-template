@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/featureflag/domain"
 	"gct/internal/shared/application"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 
@@ -44,18 +45,18 @@ func (h *DeleteRuleGroupHandler) Handle(ctx context.Context, cmd DeleteRuleGroup
 	// Find the rule group to get its flagID before deletion.
 	rg, err := h.rgRepo.FindByID(ctx, cmd.ID)
 	if err != nil {
-		return err
+		return apperrors.MapToServiceError(err)
 	}
 
 	flagID := rg.FlagID()
 
 	if err := h.rgRepo.Delete(ctx, cmd.ID); err != nil {
-		h.logger.Errorf("failed to delete rule group: %v", err)
-		return err
+		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteRuleGroup", Entity: "rule_group", EntityID: cmd.ID, Err: err}.KV()...)
+		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, domain.NewFlagUpdated(flagID)); err != nil {
-		h.logger.Errorf("failed to publish events: %v", err)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "DeleteRuleGroup", Entity: "rule_group", EntityID: cmd.ID, Err: err}.KV()...)
 	}
 
 	return nil

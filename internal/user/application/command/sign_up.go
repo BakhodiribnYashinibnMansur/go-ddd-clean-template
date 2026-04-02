@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"gct/internal/shared/application"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/user/domain"
@@ -45,12 +46,12 @@ func (h *SignUpHandler) Handle(ctx context.Context, cmd SignUpCommand) (err erro
 
 	phone, err := domain.NewPhone(cmd.Phone)
 	if err != nil {
-		return err
+		return apperrors.MapToServiceError(err)
 	}
 
 	password, err := domain.NewPasswordFromRaw(cmd.Password)
 	if err != nil {
-		return err
+		return apperrors.MapToServiceError(err)
 	}
 
 	var opts []domain.UserOption
@@ -58,7 +59,7 @@ func (h *SignUpHandler) Handle(ctx context.Context, cmd SignUpCommand) (err erro
 	if cmd.Email != nil {
 		email, err := domain.NewEmail(*cmd.Email)
 		if err != nil {
-			return err
+			return apperrors.MapToServiceError(err)
 		}
 		opts = append(opts, domain.WithEmail(email))
 	}
@@ -76,12 +77,12 @@ func (h *SignUpHandler) Handle(ctx context.Context, cmd SignUpCommand) (err erro
 	}
 
 	if err := h.repo.Save(ctx, user); err != nil {
-		h.logger.Errorf("failed to save user during sign-up: %v", err)
-		return err
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "SignUp", Entity: "user", Err: err}.KV()...)
+		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, user.Events()...); err != nil {
-		h.logger.Errorf("failed to publish sign-up events: %v", err)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "SignUp", Entity: "user", Err: err}.KV()...)
 	}
 
 	return nil

@@ -3,6 +3,9 @@ package query
 import (
 	"context"
 
+	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/logger"
+
 	appdto "gct/internal/announcement/application"
 	"gct/internal/announcement/domain"
 	shared "gct/internal/shared/domain"
@@ -23,11 +26,12 @@ type ListAnnouncementsResult struct {
 // ListAnnouncementsHandler handles the ListAnnouncementsQuery.
 type ListAnnouncementsHandler struct {
 	readRepo domain.AnnouncementReadRepository
+	logger   logger.Log
 }
 
 // NewListAnnouncementsHandler creates a new ListAnnouncementsHandler.
-func NewListAnnouncementsHandler(readRepo domain.AnnouncementReadRepository) *ListAnnouncementsHandler {
-	return &ListAnnouncementsHandler{readRepo: readRepo}
+func NewListAnnouncementsHandler(readRepo domain.AnnouncementReadRepository, l logger.Log) *ListAnnouncementsHandler {
+	return &ListAnnouncementsHandler{readRepo: readRepo, logger: l}
 }
 
 // Handle executes the ListAnnouncementsQuery and returns a list of AnnouncementView with total count.
@@ -37,7 +41,8 @@ func (h *ListAnnouncementsHandler) Handle(ctx context.Context, q ListAnnouncemen
 
 	views, total, err := h.readRepo.List(ctx, q.Filter)
 	if err != nil {
-		return nil, err
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "ListAnnouncements", Entity: "announcement", Err: err}.KV()...)
+		return nil, apperrors.MapToServiceError(err)
 	}
 
 	items := make([]*appdto.AnnouncementView, len(views))

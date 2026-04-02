@@ -3,6 +3,9 @@ package query
 import (
 	"context"
 
+	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/logger"
+
 	appdto "gct/internal/authz/application"
 	"gct/internal/authz/domain"
 	shared "gct/internal/shared/domain"
@@ -23,11 +26,12 @@ type ListPermissionsResult struct {
 // ListPermissionsHandler handles the ListPermissionsQuery.
 type ListPermissionsHandler struct {
 	readRepo domain.AuthzReadRepository
+	logger   logger.Log
 }
 
 // NewListPermissionsHandler creates a new ListPermissionsHandler.
-func NewListPermissionsHandler(readRepo domain.AuthzReadRepository) *ListPermissionsHandler {
-	return &ListPermissionsHandler{readRepo: readRepo}
+func NewListPermissionsHandler(readRepo domain.AuthzReadRepository, l logger.Log) *ListPermissionsHandler {
+	return &ListPermissionsHandler{readRepo: readRepo, logger: l}
 }
 
 // Handle executes the ListPermissionsQuery and returns a list of PermissionView.
@@ -37,7 +41,8 @@ func (h *ListPermissionsHandler) Handle(ctx context.Context, q ListPermissionsQu
 
 	views, total, err := h.readRepo.ListPermissions(ctx, q.Pagination)
 	if err != nil {
-		return nil, err
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "ListPermissions", Entity: "access", Err: err}.KV()...)
+		return nil, apperrors.MapToServiceError(err)
 	}
 
 	result := make([]*appdto.PermissionView, len(views))

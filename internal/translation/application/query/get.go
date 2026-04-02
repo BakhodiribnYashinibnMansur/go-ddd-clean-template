@@ -3,6 +3,9 @@ package query
 import (
 	"context"
 
+	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/logger"
+
 	"gct/internal/shared/infrastructure/pgxutil"
 	appdto "gct/internal/translation/application"
 	"gct/internal/translation/domain"
@@ -18,11 +21,12 @@ type GetTranslationQuery struct {
 // GetTranslationHandler handles the GetTranslationQuery.
 type GetTranslationHandler struct {
 	readRepo domain.TranslationReadRepository
+	logger   logger.Log
 }
 
 // NewGetTranslationHandler creates a new GetTranslationHandler.
-func NewGetTranslationHandler(readRepo domain.TranslationReadRepository) *GetTranslationHandler {
-	return &GetTranslationHandler{readRepo: readRepo}
+func NewGetTranslationHandler(readRepo domain.TranslationReadRepository, l logger.Log) *GetTranslationHandler {
+	return &GetTranslationHandler{readRepo: readRepo, logger: l}
 }
 
 // Handle executes the GetTranslationQuery and returns a TranslationView.
@@ -32,7 +36,8 @@ func (h *GetTranslationHandler) Handle(ctx context.Context, q GetTranslationQuer
 
 	v, err := h.readRepo.FindByID(ctx, q.ID)
 	if err != nil {
-		return nil, err
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetTranslation", Entity: "translation", EntityID: q.ID, Err: err}.KV()...)
+		return nil, apperrors.MapToServiceError(err)
 	}
 
 	return &appdto.TranslationView{

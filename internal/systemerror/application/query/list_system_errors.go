@@ -3,6 +3,9 @@ package query
 import (
 	"context"
 
+	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/logger"
+
 	"gct/internal/shared/infrastructure/pgxutil"
 	appdto "gct/internal/systemerror/application"
 	"gct/internal/systemerror/domain"
@@ -22,11 +25,12 @@ type ListSystemErrorsResult struct {
 // ListSystemErrorsHandler handles the ListSystemErrorsQuery.
 type ListSystemErrorsHandler struct {
 	readRepo domain.SystemErrorReadRepository
+	logger   logger.Log
 }
 
 // NewListSystemErrorsHandler creates a new ListSystemErrorsHandler.
-func NewListSystemErrorsHandler(readRepo domain.SystemErrorReadRepository) *ListSystemErrorsHandler {
-	return &ListSystemErrorsHandler{readRepo: readRepo}
+func NewListSystemErrorsHandler(readRepo domain.SystemErrorReadRepository, l logger.Log) *ListSystemErrorsHandler {
+	return &ListSystemErrorsHandler{readRepo: readRepo, logger: l}
 }
 
 // Handle executes the ListSystemErrorsQuery and returns a list of SystemErrorView with total count.
@@ -36,7 +40,8 @@ func (h *ListSystemErrorsHandler) Handle(ctx context.Context, q ListSystemErrors
 
 	views, total, err := h.readRepo.List(ctx, q.Filter)
 	if err != nil {
-		return nil, err
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "ListSystemErrors", Entity: "system_error", Err: err}.KV()...)
+		return nil, apperrors.MapToServiceError(err)
 	}
 
 	result := make([]*appdto.SystemErrorView, len(views))

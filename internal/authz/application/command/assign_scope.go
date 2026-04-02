@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"gct/internal/authz/domain"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 
@@ -43,8 +44,8 @@ func (h *AssignScopeHandler) Handle(ctx context.Context, cmd AssignScopeCommand)
 	defer func() { end(err) }()
 
 	if err := h.permScopeRepo.Assign(ctx, cmd.PermissionID, cmd.Path, cmd.Method); err != nil {
-		h.logger.Errorf("failed to assign scope to permission: %v", err)
-		return err
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "AssignScope", Entity: "role", EntityID: cmd.PermissionID, Err: err}.KV()...)
+		return apperrors.MapToServiceError(err)
 	}
 
 	return nil

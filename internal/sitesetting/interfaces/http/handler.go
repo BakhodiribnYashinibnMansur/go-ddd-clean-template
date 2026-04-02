@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"gct/internal/shared/infrastructure/httpx"
+	"gct/internal/shared/infrastructure/httpx/response"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/sitesetting"
 	"gct/internal/sitesetting/application/command"
@@ -29,7 +31,7 @@ func NewHandler(bc *sitesetting.BoundedContext, l logger.Log) *Handler {
 func (h *Handler) Create(ctx *gin.Context) {
 	var req CreateRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.RespondWithError(ctx, err, http.StatusBadRequest)
 		return
 	}
 	cmd := command.CreateSiteSettingCommand{
@@ -39,7 +41,7 @@ func (h *Handler) Create(ctx *gin.Context) {
 		Description: req.Description,
 	}
 	if err := h.bc.CreateSiteSetting.Handle(ctx.Request.Context(), cmd); err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 	ctx.JSON(http.StatusCreated, gin.H{"success": true})
@@ -55,7 +57,7 @@ func (h *Handler) List(ctx *gin.Context) {
 	}
 	result, err := h.bc.ListSiteSettings.Handle(ctx.Request.Context(), q)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"data": result.Settings, "total": result.Total})
@@ -65,12 +67,12 @@ func (h *Handler) List(ctx *gin.Context) {
 func (h *Handler) Get(ctx *gin.Context) {
 	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
 	result, err := h.bc.GetSiteSetting.Handle(ctx.Request.Context(), query.GetSiteSettingQuery{ID: id})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"data": result})
@@ -80,12 +82,12 @@ func (h *Handler) Get(ctx *gin.Context) {
 func (h *Handler) Update(ctx *gin.Context) {
 	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
 	var req UpdateRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.RespondWithError(ctx, err, http.StatusBadRequest)
 		return
 	}
 	cmd := command.UpdateSiteSettingCommand{
@@ -96,7 +98,7 @@ func (h *Handler) Update(ctx *gin.Context) {
 		Description: req.Description,
 	}
 	if err := h.bc.UpdateSiteSetting.Handle(ctx.Request.Context(), cmd); err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"success": true})
@@ -106,11 +108,11 @@ func (h *Handler) Update(ctx *gin.Context) {
 func (h *Handler) Delete(ctx *gin.Context) {
 	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
 	if err := h.bc.DeleteSiteSetting.Handle(ctx.Request.Context(), command.DeleteSiteSettingCommand{ID: id}); err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"success": true})

@@ -8,6 +8,8 @@ import (
 	"gct/internal/featureflag/application/command"
 	"gct/internal/featureflag/application/query"
 	"gct/internal/featureflag/domain"
+	"gct/internal/shared/infrastructure/httpx"
+	"gct/internal/shared/infrastructure/httpx/response"
 	"gct/internal/shared/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
@@ -29,7 +31,7 @@ func NewHandler(bc *featureflag.BoundedContext, l logger.Log) *Handler {
 func (h *Handler) Create(ctx *gin.Context) {
 	var req CreateRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.RespondWithError(ctx, err, http.StatusBadRequest)
 		return
 	}
 	cmd := command.CreateCommand{
@@ -42,7 +44,7 @@ func (h *Handler) Create(ctx *gin.Context) {
 		IsActive:          req.IsActive,
 	}
 	if err := h.bc.CreateFlag.Handle(ctx.Request.Context(), cmd); err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 	ctx.JSON(http.StatusCreated, gin.H{"success": true})
@@ -58,7 +60,7 @@ func (h *Handler) List(ctx *gin.Context) {
 	}
 	result, err := h.bc.ListFlags.Handle(ctx.Request.Context(), q)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"data": result.Flags, "total": result.Total})
@@ -68,12 +70,12 @@ func (h *Handler) List(ctx *gin.Context) {
 func (h *Handler) Get(ctx *gin.Context) {
 	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
 	result, err := h.bc.GetFlag.Handle(ctx.Request.Context(), query.GetQuery{ID: id})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"data": result})
@@ -83,12 +85,12 @@ func (h *Handler) Get(ctx *gin.Context) {
 func (h *Handler) Update(ctx *gin.Context) {
 	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
 	var req UpdateRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.RespondWithError(ctx, err, http.StatusBadRequest)
 		return
 	}
 	cmd := command.UpdateCommand{
@@ -102,7 +104,7 @@ func (h *Handler) Update(ctx *gin.Context) {
 		IsActive:          req.IsActive,
 	}
 	if err := h.bc.UpdateFlag.Handle(ctx.Request.Context(), cmd); err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"success": true})
@@ -112,11 +114,11 @@ func (h *Handler) Update(ctx *gin.Context) {
 func (h *Handler) Delete(ctx *gin.Context) {
 	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
 	if err := h.bc.DeleteFlag.Handle(ctx.Request.Context(), command.DeleteCommand{ID: id}); err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"success": true})
@@ -126,12 +128,12 @@ func (h *Handler) Delete(ctx *gin.Context) {
 func (h *Handler) CreateRuleGroup(ctx *gin.Context) {
 	flagID, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
 	var req CreateRuleGroupRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.RespondWithError(ctx, err, http.StatusBadRequest)
 		return
 	}
 
@@ -152,7 +154,7 @@ func (h *Handler) CreateRuleGroup(ctx *gin.Context) {
 		Conditions: conditions,
 	}
 	if err := h.bc.CreateRuleGroup.Handle(ctx.Request.Context(), cmd); err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 	ctx.JSON(http.StatusCreated, gin.H{"success": true})
@@ -162,12 +164,12 @@ func (h *Handler) CreateRuleGroup(ctx *gin.Context) {
 func (h *Handler) UpdateRuleGroup(ctx *gin.Context) {
 	groupID, err := uuid.Parse(ctx.Param("groupId"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid groupId"})
+		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
 	var req UpdateRuleGroupRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.RespondWithError(ctx, err, http.StatusBadRequest)
 		return
 	}
 
@@ -191,7 +193,7 @@ func (h *Handler) UpdateRuleGroup(ctx *gin.Context) {
 	}
 
 	if err := h.bc.UpdateRuleGroup.Handle(ctx.Request.Context(), cmd); err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"success": true})
@@ -201,11 +203,11 @@ func (h *Handler) UpdateRuleGroup(ctx *gin.Context) {
 func (h *Handler) DeleteRuleGroup(ctx *gin.Context) {
 	groupID, err := uuid.Parse(ctx.Param("groupId"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid groupId"})
+		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
 	if err := h.bc.DeleteRuleGroup.Handle(ctx.Request.Context(), command.DeleteRuleGroupCommand{ID: groupID}); err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"success": true})
@@ -215,7 +217,7 @@ func (h *Handler) DeleteRuleGroup(ctx *gin.Context) {
 func (h *Handler) Evaluate(ctx *gin.Context) {
 	var req EvaluateRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.RespondWithError(ctx, err, http.StatusBadRequest)
 		return
 	}
 
@@ -224,7 +226,7 @@ func (h *Handler) Evaluate(ctx *gin.Context) {
 		UserAttrs: req.UserAttrs,
 	})
 	if err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 
@@ -239,7 +241,7 @@ func (h *Handler) Evaluate(ctx *gin.Context) {
 func (h *Handler) BatchEvaluate(ctx *gin.Context) {
 	var req BatchEvaluateRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.RespondWithError(ctx, err, http.StatusBadRequest)
 		return
 	}
 
@@ -248,7 +250,7 @@ func (h *Handler) BatchEvaluate(ctx *gin.Context) {
 		UserAttrs: req.UserAttrs,
 	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 

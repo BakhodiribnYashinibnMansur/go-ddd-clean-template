@@ -6,6 +6,7 @@ import (
 
 	"gct/internal/iprule/domain"
 	"gct/internal/shared/application"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 
@@ -52,18 +53,18 @@ func (h *UpdateIPRuleHandler) Handle(ctx context.Context, cmd UpdateIPRuleComman
 
 	r, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {
-		return err
+		return apperrors.MapToServiceError(err)
 	}
 
 	r.Update(cmd.IPAddress, cmd.Action, cmd.Reason, cmd.ExpiresAt)
 
 	if err := h.repo.Update(ctx, r); err != nil {
-		h.logger.Errorf("failed to update ip rule: %v", err)
-		return err
+		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "UpdateIPRule", Entity: "ip_rule", EntityID: cmd.ID, Err: err}.KV()...)
+		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, r.Events()...); err != nil {
-		h.logger.Errorf("failed to publish events: %v", err)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "UpdateIPRule", Entity: "ip_rule", EntityID: cmd.ID, Err: err}.KV()...)
 	}
 
 	return nil

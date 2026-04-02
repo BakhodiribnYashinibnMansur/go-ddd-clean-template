@@ -88,8 +88,8 @@ func setupRouter(repo *mockRepo, readRepo *mockReadRepo) *gin.Engine {
 
 	bc := &file.BoundedContext{
 		CreateFile: command.NewCreateFileHandler(repo, eb, l),
-		GetFile:    query.NewGetFileHandler(readRepo),
-		ListFiles:  query.NewListFilesHandler(readRepo),
+		GetFile:    query.NewGetFileHandler(readRepo, l),
+		ListFiles:  query.NewListFilesHandler(readRepo, l),
 	}
 
 	r := gin.New()

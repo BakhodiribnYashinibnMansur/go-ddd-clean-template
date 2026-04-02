@@ -110,8 +110,8 @@ func setupRouter(repo *mockRepo, readRepo *mockReadRepo) *gin.Engine {
 		CreateIPRule: command.NewCreateIPRuleHandler(repo, eb, l),
 		UpdateIPRule: command.NewUpdateIPRuleHandler(repo, eb, l),
 		DeleteIPRule: command.NewDeleteIPRuleHandler(repo, l),
-		GetIPRule:    query.NewGetIPRuleHandler(readRepo),
-		ListIPRules:  query.NewListIPRulesHandler(readRepo),
+		GetIPRule:    query.NewGetIPRuleHandler(readRepo, l),
+		ListIPRules:  query.NewListIPRulesHandler(readRepo, l),
 	}
 
 	r := gin.New()

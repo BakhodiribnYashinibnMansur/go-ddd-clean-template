@@ -36,8 +36,8 @@ func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, l logg
 		CreateIntegration: command.NewCreateHandler(writeRepo, eventBus, l),
 		UpdateIntegration: command.NewUpdateHandler(writeRepo, eventBus, l),
 		DeleteIntegration: command.NewDeleteHandler(writeRepo, eventBus, l),
-		GetIntegration:    query.NewGetHandler(readRepo),
-		ListIntegrations:  query.NewListHandler(readRepo),
+		GetIntegration:    query.NewGetHandler(readRepo, l),
+		ListIntegrations:  query.NewListHandler(readRepo, l),
 		ValidateAPIKey:    query.NewValidateAPIKeyHandler(readRepo, l),
 		Cache:             appl.NewCacheService(readRepo, l),
 	}

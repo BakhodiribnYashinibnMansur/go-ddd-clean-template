@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"gct/internal/audit/domain"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 
@@ -57,8 +58,8 @@ func (h *CreateEndpointHistoryHandler) Handle(ctx context.Context, cmd CreateEnd
 	)
 
 	if err := h.repo.Save(ctx, entry); err != nil {
-		h.logger.Errorf("failed to save endpoint history: %v", err)
-		return err
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateEndpointHistory", Entity: "endpoint_history", Err: err}.KV()...)
+		return apperrors.MapToServiceError(err)
 	}
 
 	return nil

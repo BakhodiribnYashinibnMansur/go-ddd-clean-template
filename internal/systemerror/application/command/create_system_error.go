@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"gct/internal/shared/application"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/systemerror/domain"
@@ -83,12 +84,12 @@ func (h *CreateSystemErrorHandler) Handle(ctx context.Context, cmd CreateSystemE
 	}
 
 	if err := h.repo.Save(ctx, se); err != nil {
-		h.logger.Errorf("failed to save system error: %v", err)
-		return err
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateSystemError", Entity: "system_error", Err: err}.KV()...)
+		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, se.Events()...); err != nil {
-		h.logger.Errorf("failed to publish events: %v", err)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "CreateSystemError", Entity: "system_error", Err: err}.KV()...)
 	}
 
 	return nil

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"gct/internal/iprule/domain"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 
@@ -42,8 +43,8 @@ func (h *DeleteIPRuleHandler) Handle(ctx context.Context, cmd DeleteIPRuleComman
 	defer func() { end(err) }()
 
 	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
-		h.logger.Errorf("failed to delete ip rule: %v", err)
-		return err
+		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteIPRule", Entity: "ip_rule", EntityID: cmd.ID, Err: err}.KV()...)
+		return apperrors.MapToServiceError(err)
 	}
 	return nil
 }

@@ -1,6 +1,7 @@
 package query
 
 import (
+	"gct/internal/shared/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
@@ -102,7 +103,7 @@ func TestGetRoleHandler_Found(t *testing.T) {
 		},
 	}
 
-	handler := NewGetRoleHandler(repo)
+	handler := NewGetRoleHandler(repo, logger.Noop())
 	result, err := handler.Handle(context.Background(), GetRoleQuery{ID: roleID})
 	if err != nil {
 		t.Fatalf("expected no error, got: %v", err)
@@ -126,7 +127,7 @@ func TestGetRoleHandler_NotFound(t *testing.T) {
 		},
 	}
 
-	handler := NewGetRoleHandler(repo)
+	handler := NewGetRoleHandler(repo, logger.Noop())
 	_, err := handler.Handle(context.Background(), GetRoleQuery{ID: uuid.New()})
 	if err == nil {
 		t.Fatal("expected error, got nil")
@@ -144,7 +145,7 @@ func TestGetRoleHandler_RepoError(t *testing.T) {
 		},
 	}
 
-	handler := NewGetRoleHandler(repo)
+	handler := NewGetRoleHandler(repo, logger.Noop())
 	_, err := handler.Handle(context.Background(), GetRoleQuery{ID: uuid.New()})
 	if err == nil {
 		t.Fatal("expected error, got nil")

@@ -1,6 +1,7 @@
 package query
 
 import (
+	"gct/internal/shared/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
@@ -63,7 +64,7 @@ func TestGetAnnouncementHandler_Handle(t *testing.T) {
 		},
 	}
 
-	handler := NewGetAnnouncementHandler(readRepo)
+	handler := NewGetAnnouncementHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), GetAnnouncementQuery{ID: id})
 	if err != nil {
 		t.Fatalf("expected no error, got: %v", err)
@@ -87,7 +88,7 @@ func TestGetAnnouncementHandler_Handle(t *testing.T) {
 
 func TestGetAnnouncementHandler_NotFound(t *testing.T) {
 	readRepo := &mockReadRepo{}
-	handler := NewGetAnnouncementHandler(readRepo)
+	handler := NewGetAnnouncementHandler(readRepo, logger.Noop())
 	_, err := handler.Handle(context.Background(), GetAnnouncementQuery{ID: uuid.New()})
 	if err == nil {
 		t.Fatal("expected error for not found")
@@ -96,7 +97,7 @@ func TestGetAnnouncementHandler_NotFound(t *testing.T) {
 
 func TestGetAnnouncementHandler_RepoError(t *testing.T) {
 	readRepo := &errorReadRepo{err: errRepo}
-	handler := NewGetAnnouncementHandler(readRepo)
+	handler := NewGetAnnouncementHandler(readRepo, logger.Noop())
 	_, err := handler.Handle(context.Background(), GetAnnouncementQuery{ID: uuid.New()})
 	if err == nil {
 		t.Fatal("expected error from repo")
@@ -125,7 +126,7 @@ func TestGetAnnouncementHandler_AllFieldsMapped(t *testing.T) {
 		},
 	}
 
-	handler := NewGetAnnouncementHandler(readRepo)
+	handler := NewGetAnnouncementHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), GetAnnouncementQuery{ID: id})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)

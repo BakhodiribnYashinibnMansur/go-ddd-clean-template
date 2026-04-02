@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/errorcode/domain"
 	"gct/internal/shared/application"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 
@@ -46,17 +47,17 @@ func (h *DeleteErrorCodeHandler) Handle(ctx context.Context, cmd DeleteErrorCode
 
 	ec, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {
-		return err
+		return apperrors.MapToServiceError(err)
 	}
 
 	if err = h.repo.Delete(ctx, cmd.ID); err != nil {
-		h.logger.Errorf("failed to delete error code: %v", err)
-		return err
+		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteErrorCode", Entity: "error_code", EntityID: cmd.ID, Err: err}.KV()...)
+		return apperrors.MapToServiceError(err)
 	}
 
 	event := domain.NewErrorCodeDeleted(cmd.ID, ec.Code())
 	if pubErr := h.eventBus.Publish(ctx, event); pubErr != nil {
-		h.logger.Errorf("failed to publish error code deleted event: %v", pubErr)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "DeleteErrorCode", Entity: "error_code", EntityID: cmd.ID, Err: pubErr}.KV()...)
 	}
 
 	return nil

@@ -6,6 +6,7 @@ import (
 
 	"gct/internal/iprule/domain"
 	"gct/internal/shared/application"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 )
@@ -50,12 +51,12 @@ func (h *CreateIPRuleHandler) Handle(ctx context.Context, cmd CreateIPRuleComman
 	r := domain.NewIPRule(cmd.IPAddress, cmd.Action, cmd.Reason, cmd.ExpiresAt)
 
 	if err := h.repo.Save(ctx, r); err != nil {
-		h.logger.Errorf("failed to save ip rule: %v", err)
-		return err
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateIPRule", Entity: "ip_rule", Err: err}.KV()...)
+		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, r.Events()...); err != nil {
-		h.logger.Errorf("failed to publish events: %v", err)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "CreateIPRule", Entity: "ip_rule", Err: err}.KV()...)
 	}
 
 	return nil

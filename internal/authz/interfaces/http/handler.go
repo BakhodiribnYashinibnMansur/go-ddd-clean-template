@@ -8,6 +8,8 @@ import (
 	"gct/internal/authz/application/command"
 	"gct/internal/authz/application/query"
 	shared "gct/internal/shared/domain"
+	"gct/internal/shared/infrastructure/httpx"
+	"gct/internal/shared/infrastructure/httpx/response"
 	"gct/internal/shared/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
@@ -31,7 +33,7 @@ func NewHandler(bc *authz.BoundedContext, l logger.Log) *Handler {
 func (h *Handler) CreateRole(ctx *gin.Context) {
 	var req CreateRoleRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.RespondWithError(ctx, err, http.StatusBadRequest)
 		return
 	}
 
@@ -40,7 +42,7 @@ func (h *Handler) CreateRole(ctx *gin.Context) {
 		Description: req.Description,
 	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 
@@ -59,7 +61,7 @@ func (h *Handler) ListRoles(ctx *gin.Context) {
 		},
 	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 
@@ -73,13 +75,13 @@ func (h *Handler) ListRoles(ctx *gin.Context) {
 func (h *Handler) GetRole(ctx *gin.Context) {
 	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid role id"})
+		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
 
 	view, err := h.bc.GetRole.Handle(ctx.Request.Context(), query.GetRoleQuery{ID: id})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 
@@ -90,13 +92,13 @@ func (h *Handler) GetRole(ctx *gin.Context) {
 func (h *Handler) UpdateRole(ctx *gin.Context) {
 	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid role id"})
+		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
 
 	var req UpdateRoleRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.RespondWithError(ctx, err, http.StatusBadRequest)
 		return
 	}
 
@@ -106,7 +108,7 @@ func (h *Handler) UpdateRole(ctx *gin.Context) {
 		Description: req.Description,
 	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 
@@ -117,13 +119,13 @@ func (h *Handler) UpdateRole(ctx *gin.Context) {
 func (h *Handler) DeleteRole(ctx *gin.Context) {
 	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid role id"})
+		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
 
 	err = h.bc.DeleteRole.Handle(ctx.Request.Context(), command.DeleteRoleCommand{ID: id})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 
@@ -136,7 +138,7 @@ func (h *Handler) DeleteRole(ctx *gin.Context) {
 func (h *Handler) CreatePermission(ctx *gin.Context) {
 	var req CreatePermissionRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.RespondWithError(ctx, err, http.StatusBadRequest)
 		return
 	}
 
@@ -146,7 +148,7 @@ func (h *Handler) CreatePermission(ctx *gin.Context) {
 		Description: req.Description,
 	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 
@@ -165,7 +167,7 @@ func (h *Handler) ListPermissions(ctx *gin.Context) {
 		},
 	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 
@@ -179,13 +181,13 @@ func (h *Handler) ListPermissions(ctx *gin.Context) {
 func (h *Handler) DeletePermission(ctx *gin.Context) {
 	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid permission id"})
+		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
 
 	err = h.bc.DeletePermission.Handle(ctx.Request.Context(), command.DeletePermissionCommand{ID: id})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 
@@ -198,7 +200,7 @@ func (h *Handler) DeletePermission(ctx *gin.Context) {
 func (h *Handler) CreatePolicy(ctx *gin.Context) {
 	var req CreatePolicyRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.RespondWithError(ctx, err, http.StatusBadRequest)
 		return
 	}
 
@@ -209,7 +211,7 @@ func (h *Handler) CreatePolicy(ctx *gin.Context) {
 		Conditions:   req.Conditions,
 	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 
@@ -228,7 +230,7 @@ func (h *Handler) ListPolicies(ctx *gin.Context) {
 		},
 	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 
@@ -242,13 +244,13 @@ func (h *Handler) ListPolicies(ctx *gin.Context) {
 func (h *Handler) UpdatePolicy(ctx *gin.Context) {
 	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid policy id"})
+		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
 
 	var req UpdatePolicyRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.RespondWithError(ctx, err, http.StatusBadRequest)
 		return
 	}
 
@@ -259,7 +261,7 @@ func (h *Handler) UpdatePolicy(ctx *gin.Context) {
 		Conditions: req.Conditions,
 	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 
@@ -270,13 +272,13 @@ func (h *Handler) UpdatePolicy(ctx *gin.Context) {
 func (h *Handler) DeletePolicy(ctx *gin.Context) {
 	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid policy id"})
+		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
 
 	err = h.bc.DeletePolicy.Handle(ctx.Request.Context(), command.DeletePolicyCommand{ID: id})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 
@@ -287,13 +289,13 @@ func (h *Handler) DeletePolicy(ctx *gin.Context) {
 func (h *Handler) TogglePolicy(ctx *gin.Context) {
 	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid policy id"})
+		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
 
 	err = h.bc.TogglePolicy.Handle(ctx.Request.Context(), command.TogglePolicyCommand{ID: id})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 
@@ -306,7 +308,7 @@ func (h *Handler) TogglePolicy(ctx *gin.Context) {
 func (h *Handler) CreateScope(ctx *gin.Context) {
 	var req CreateScopeRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.RespondWithError(ctx, err, http.StatusBadRequest)
 		return
 	}
 
@@ -315,7 +317,7 @@ func (h *Handler) CreateScope(ctx *gin.Context) {
 		Method: req.Method,
 	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 
@@ -334,7 +336,7 @@ func (h *Handler) ListScopes(ctx *gin.Context) {
 		},
 	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 
@@ -348,7 +350,7 @@ func (h *Handler) ListScopes(ctx *gin.Context) {
 func (h *Handler) DeleteScope(ctx *gin.Context) {
 	var req DeleteScopeRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.RespondWithError(ctx, err, http.StatusBadRequest)
 		return
 	}
 
@@ -357,7 +359,7 @@ func (h *Handler) DeleteScope(ctx *gin.Context) {
 		Method: req.Method,
 	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 
@@ -370,13 +372,13 @@ func (h *Handler) DeleteScope(ctx *gin.Context) {
 func (h *Handler) AssignPermission(ctx *gin.Context) {
 	roleID, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid role id"})
+		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
 
 	var req AssignPermissionRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.RespondWithError(ctx, err, http.StatusBadRequest)
 		return
 	}
 
@@ -385,7 +387,7 @@ func (h *Handler) AssignPermission(ctx *gin.Context) {
 		PermissionID: req.PermissionID,
 	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 
@@ -396,13 +398,13 @@ func (h *Handler) AssignPermission(ctx *gin.Context) {
 func (h *Handler) AssignScope(ctx *gin.Context) {
 	permID, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid permission id"})
+		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
 
 	var req AssignScopeRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.RespondWithError(ctx, err, http.StatusBadRequest)
 		return
 	}
 
@@ -412,7 +414,7 @@ func (h *Handler) AssignScope(ctx *gin.Context) {
 		Method:       req.Method,
 	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 

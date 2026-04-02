@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/dashboard"
 	"gct/internal/dashboard/application/query"
+	"gct/internal/shared/infrastructure/httpx/response"
 	"gct/internal/shared/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
@@ -25,7 +26,7 @@ func NewHandler(bc *dashboard.BoundedContext, l logger.Log) *Handler {
 func (h *Handler) GetStats(ctx *gin.Context) {
 	result, err := h.bc.GetStats.Handle(ctx.Request.Context(), query.GetStatsQuery{})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"data": result})

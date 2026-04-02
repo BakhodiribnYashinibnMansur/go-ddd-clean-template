@@ -112,7 +112,7 @@ func setupMiddleware(
 	userRepo := &mockUserReadRepository{findUserForAuthFn: findUserFn}
 
 	checkAccessHandler := access.NewCheckAccessHandler(readRepo, l)
-	findUserHandler := userquery.NewFindUserForAuthHandler(userRepo)
+	findUserHandler := userquery.NewFindUserForAuthHandler(userRepo, l)
 
 	return NewAuthzMiddleware(checkAccessHandler, findUserHandler, l)
 }

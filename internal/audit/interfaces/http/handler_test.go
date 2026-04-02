@@ -63,8 +63,8 @@ func setupRouter(readRepo *mockReadRepo) *gin.Engine {
 	l := &mockLogger{}
 
 	bc := &audit.BoundedContext{
-		ListAuditLogs:       query.NewListAuditLogsHandler(readRepo),
-		ListEndpointHistory: query.NewListEndpointHistoryHandler(readRepo),
+		ListAuditLogs:       query.NewListAuditLogsHandler(readRepo, l),
+		ListEndpointHistory: query.NewListEndpointHistoryHandler(readRepo, l),
 	}
 
 	r := gin.New()

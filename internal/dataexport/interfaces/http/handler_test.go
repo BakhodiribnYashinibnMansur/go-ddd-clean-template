@@ -107,8 +107,8 @@ func setupRouter(repo *mockRepo, readRepo *mockReadRepo) *gin.Engine {
 		CreateDataExport: command.NewCreateDataExportHandler(repo, eb, l),
 		UpdateDataExport: command.NewUpdateDataExportHandler(repo, eb, l),
 		DeleteDataExport: command.NewDeleteDataExportHandler(repo, l),
-		GetDataExport:    query.NewGetDataExportHandler(readRepo),
-		ListDataExports:  query.NewListDataExportsHandler(readRepo),
+		GetDataExport:    query.NewGetDataExportHandler(readRepo, l),
+		ListDataExports:  query.NewListDataExportsHandler(readRepo, l),
 	}
 
 	r := gin.New()

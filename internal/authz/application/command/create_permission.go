@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"gct/internal/authz/domain"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 
@@ -48,8 +49,8 @@ func (h *CreatePermissionHandler) Handle(ctx context.Context, cmd CreatePermissi
 	}
 
 	if err := h.repo.Save(ctx, perm); err != nil {
-		h.logger.Errorf("failed to save permission: %v", err)
-		return err
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreatePermission", Entity: "permission", Err: err}.KV()...)
+		return apperrors.MapToServiceError(err)
 	}
 
 	return nil

@@ -107,8 +107,8 @@ func setupRouter(repo *mockRepo, readRepo *mockReadRepo) *gin.Engine {
 		CreateErrorCode: command.NewCreateErrorCodeHandler(repo, eb, l),
 		UpdateErrorCode: command.NewUpdateErrorCodeHandler(repo, eb, l),
 		DeleteErrorCode: command.NewDeleteErrorCodeHandler(repo, eb, l),
-		GetErrorCode:    query.NewGetErrorCodeHandler(readRepo),
-		ListErrorCodes:  query.NewListErrorCodesHandler(readRepo),
+		GetErrorCode:    query.NewGetErrorCodeHandler(readRepo, l),
+		ListErrorCodes:  query.NewListErrorCodesHandler(readRepo, l),
 	}
 
 	r := gin.New()

@@ -1,6 +1,7 @@
 package query
 
 import (
+	"gct/internal/shared/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
@@ -22,7 +23,7 @@ func TestListRolesHandler_WithResults(t *testing.T) {
 		},
 	}
 
-	handler := NewListRolesHandler(repo)
+	handler := NewListRolesHandler(repo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListRolesQuery{
 		Pagination: shared.Pagination{Limit: 10, Offset: 0},
 	})
@@ -54,7 +55,7 @@ func TestListRolesHandler_Empty(t *testing.T) {
 		},
 	}
 
-	handler := NewListRolesHandler(repo)
+	handler := NewListRolesHandler(repo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListRolesQuery{
 		Pagination: shared.Pagination{Limit: 10, Offset: 0},
 	})
@@ -81,7 +82,7 @@ func TestListRolesHandler_Pagination(t *testing.T) {
 		},
 	}
 
-	handler := NewListRolesHandler(repo)
+	handler := NewListRolesHandler(repo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListRolesQuery{
 		Pagination: shared.Pagination{Limit: 5, Offset: 10},
 	})
@@ -111,7 +112,7 @@ func TestListRolesHandler_RepoError(t *testing.T) {
 		},
 	}
 
-	handler := NewListRolesHandler(repo)
+	handler := NewListRolesHandler(repo, logger.Noop())
 	_, err := handler.Handle(context.Background(), ListRolesQuery{
 		Pagination: shared.Pagination{Limit: 10, Offset: 0},
 	})

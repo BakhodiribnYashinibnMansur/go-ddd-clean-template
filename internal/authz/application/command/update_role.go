@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/authz/domain"
 	"gct/internal/shared/application"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 
@@ -48,7 +49,7 @@ func (h *UpdateRoleHandler) Handle(ctx context.Context, cmd UpdateRoleCommand) (
 
 	role, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {
-		return err
+		return apperrors.MapToServiceError(err)
 	}
 
 	if cmd.Name != nil {
@@ -59,12 +60,12 @@ func (h *UpdateRoleHandler) Handle(ctx context.Context, cmd UpdateRoleCommand) (
 	}
 
 	if err := h.repo.Update(ctx, role); err != nil {
-		h.logger.Errorf("failed to update role: %v", err)
-		return err
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "UpdateRole", Entity: "role", EntityID: cmd.ID, Err: err}.KV()...)
+		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, role.Events()...); err != nil {
-		h.logger.Errorf("failed to publish events: %v", err)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "UpdateRole", Entity: "role", EntityID: cmd.ID, Err: err}.KV()...)
 	}
 
 	return nil

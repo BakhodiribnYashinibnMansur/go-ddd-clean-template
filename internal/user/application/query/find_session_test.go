@@ -1,6 +1,7 @@
 package query
 
 import (
+	"gct/internal/shared/infrastructure/logger"
 	"context"
 	"testing"
 	"time"
@@ -28,7 +29,7 @@ func TestFindSessionHandler_Success(t *testing.T) {
 		},
 	}
 
-	handler := NewFindSessionHandler(readRepo)
+	handler := NewFindSessionHandler(readRepo, logger.Noop())
 
 	result, err := handler.Handle(context.Background(), FindSessionQuery{SessionID: sessionID})
 	if err != nil {
@@ -59,7 +60,7 @@ func TestFindSessionHandler_Success(t *testing.T) {
 func TestFindSessionHandler_NotFound(t *testing.T) {
 	readRepo := &mockUserReadRepository{}
 
-	handler := NewFindSessionHandler(readRepo)
+	handler := NewFindSessionHandler(readRepo, logger.Noop())
 
 	_, err := handler.Handle(context.Background(), FindSessionQuery{SessionID: uuid.New()})
 	if err == nil {
@@ -70,7 +71,7 @@ func TestFindSessionHandler_NotFound(t *testing.T) {
 func TestFindSessionHandler_RepoError(t *testing.T) {
 	readRepo := &errorReadRepo{err: errRepoFailure}
 
-	handler := NewFindSessionHandler(readRepo)
+	handler := NewFindSessionHandler(readRepo, logger.Noop())
 
 	_, err := handler.Handle(context.Background(), FindSessionQuery{SessionID: uuid.New()})
 	if err == nil {

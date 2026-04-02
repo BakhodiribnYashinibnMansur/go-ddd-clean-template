@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/authz/domain"
 	"gct/internal/shared/application"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 
@@ -45,13 +46,13 @@ func (h *DeleteRoleHandler) Handle(ctx context.Context, cmd DeleteRoleCommand) (
 	defer func() { end(err) }()
 
 	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
-		h.logger.Errorf("failed to delete role: %v", err)
-		return err
+		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteRole", Entity: "role", EntityID: cmd.ID, Err: err}.KV()...)
+		return apperrors.MapToServiceError(err)
 	}
 
 	event := domain.NewRoleDeleted(cmd.ID)
 	if err := h.eventBus.Publish(ctx, event); err != nil {
-		h.logger.Errorf("failed to publish events: %v", err)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "DeleteRole", Entity: "role", EntityID: cmd.ID, Err: err}.KV()...)
 	}
 
 	return nil

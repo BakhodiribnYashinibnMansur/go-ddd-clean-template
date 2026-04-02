@@ -9,6 +9,8 @@ http:
 
 log:
   level: "debug"
+  format: "console"          # "console" (colored, human-readable) or "json" (structured, for ELK/Datadog/Loki)
+  slow_op_threshold_ms: 500  # operations slower than this get a WARN log
 
 metrics:
   enabled: true

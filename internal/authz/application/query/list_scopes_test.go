@@ -1,6 +1,7 @@
 package query
 
 import (
+	"gct/internal/shared/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
@@ -20,7 +21,7 @@ func TestListScopesHandler_WithResults(t *testing.T) {
 		},
 	}
 
-	handler := NewListScopesHandler(repo)
+	handler := NewListScopesHandler(repo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListScopesQuery{
 		Pagination: shared.Pagination{Limit: 10, Offset: 0},
 	})
@@ -52,7 +53,7 @@ func TestListScopesHandler_Empty(t *testing.T) {
 		},
 	}
 
-	handler := NewListScopesHandler(repo)
+	handler := NewListScopesHandler(repo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListScopesQuery{
 		Pagination: shared.Pagination{Limit: 10, Offset: 0},
 	})
@@ -76,7 +77,7 @@ func TestListScopesHandler_RepoError(t *testing.T) {
 		},
 	}
 
-	handler := NewListScopesHandler(repo)
+	handler := NewListScopesHandler(repo, logger.Noop())
 	_, err := handler.Handle(context.Background(), ListScopesQuery{
 		Pagination: shared.Pagination{Limit: 10, Offset: 0},
 	})

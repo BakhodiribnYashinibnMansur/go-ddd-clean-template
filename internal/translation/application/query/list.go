@@ -3,6 +3,9 @@ package query
 import (
 	"context"
 
+	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/logger"
+
 	"gct/internal/shared/infrastructure/pgxutil"
 	appdto "gct/internal/translation/application"
 	"gct/internal/translation/domain"
@@ -22,11 +25,12 @@ type ListTranslationsResult struct {
 // ListTranslationsHandler handles the ListTranslationsQuery.
 type ListTranslationsHandler struct {
 	readRepo domain.TranslationReadRepository
+	logger   logger.Log
 }
 
 // NewListTranslationsHandler creates a new ListTranslationsHandler.
-func NewListTranslationsHandler(readRepo domain.TranslationReadRepository) *ListTranslationsHandler {
-	return &ListTranslationsHandler{readRepo: readRepo}
+func NewListTranslationsHandler(readRepo domain.TranslationReadRepository, l logger.Log) *ListTranslationsHandler {
+	return &ListTranslationsHandler{readRepo: readRepo, logger: l}
 }
 
 // Handle executes the ListTranslationsQuery and returns a list of TranslationView with total count.
@@ -36,7 +40,8 @@ func (h *ListTranslationsHandler) Handle(ctx context.Context, q ListTranslations
 
 	views, total, err := h.readRepo.List(ctx, q.Filter)
 	if err != nil {
-		return nil, err
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "ListTranslations", Entity: "translation", Err: err}.KV()...)
+		return nil, apperrors.MapToServiceError(err)
 	}
 
 	items := make([]*appdto.TranslationView, len(views))

@@ -3,6 +3,9 @@ package query
 import (
 	"context"
 
+	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/logger"
+
 	appdto "gct/internal/notification/application"
 	"gct/internal/notification/domain"
 	"gct/internal/shared/infrastructure/pgxutil"
@@ -22,11 +25,12 @@ type ListResult struct {
 // ListHandler handles the ListQuery.
 type ListHandler struct {
 	readRepo domain.NotificationReadRepository
+	logger   logger.Log
 }
 
 // NewListHandler creates a new ListHandler.
-func NewListHandler(readRepo domain.NotificationReadRepository) *ListHandler {
-	return &ListHandler{readRepo: readRepo}
+func NewListHandler(readRepo domain.NotificationReadRepository, l logger.Log) *ListHandler {
+	return &ListHandler{readRepo: readRepo, logger: l}
 }
 
 // Handle executes the ListQuery and returns a list of NotificationView with total count.
@@ -36,7 +40,8 @@ func (h *ListHandler) Handle(ctx context.Context, q ListQuery) (result *ListResu
 
 	views, total, err := h.readRepo.List(ctx, q.Filter)
 	if err != nil {
-		return nil, err
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "List", Entity: "notification", Err: err}.KV()...)
+		return nil, apperrors.MapToServiceError(err)
 	}
 
 	items := make([]*appdto.NotificationView, len(views))

@@ -29,7 +29,7 @@ func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, l logg
 	return &BoundedContext{
 		CreateNotification: command.NewCreateHandler(writeRepo, eventBus, l),
 		DeleteNotification: command.NewDeleteHandler(writeRepo, eventBus, l),
-		GetNotification:    query.NewGetHandler(readRepo),
-		ListNotifications:  query.NewListHandler(readRepo),
+		GetNotification:    query.NewGetHandler(readRepo, l),
+		ListNotifications:  query.NewListHandler(readRepo, l),
 	}
 }

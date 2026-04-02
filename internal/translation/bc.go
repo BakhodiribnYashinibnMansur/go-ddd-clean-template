@@ -31,7 +31,7 @@ func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, l logg
 		CreateTranslation: command.NewCreateTranslationHandler(writeRepo, eventBus, l),
 		UpdateTranslation: command.NewUpdateTranslationHandler(writeRepo, eventBus, l),
 		DeleteTranslation: command.NewDeleteTranslationHandler(writeRepo, l),
-		GetTranslation:    query.NewGetTranslationHandler(readRepo),
-		ListTranslations:  query.NewListTranslationsHandler(readRepo),
+		GetTranslation:    query.NewGetTranslationHandler(readRepo, l),
+		ListTranslations:  query.NewListTranslationsHandler(readRepo, l),
 	}
 }

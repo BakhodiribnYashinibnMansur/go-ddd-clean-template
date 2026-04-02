@@ -3,6 +3,9 @@ package query
 import (
 	"context"
 
+	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/logger"
+
 	appdto "gct/internal/errorcode/application"
 	"gct/internal/errorcode/domain"
 	"gct/internal/shared/infrastructure/pgxutil"
@@ -18,11 +21,12 @@ type GetErrorCodeQuery struct {
 // GetErrorCodeHandler handles the GetErrorCodeQuery.
 type GetErrorCodeHandler struct {
 	readRepo domain.ErrorCodeReadRepository
+	logger   logger.Log
 }
 
 // NewGetErrorCodeHandler creates a new GetErrorCodeHandler.
-func NewGetErrorCodeHandler(readRepo domain.ErrorCodeReadRepository) *GetErrorCodeHandler {
-	return &GetErrorCodeHandler{readRepo: readRepo}
+func NewGetErrorCodeHandler(readRepo domain.ErrorCodeReadRepository, l logger.Log) *GetErrorCodeHandler {
+	return &GetErrorCodeHandler{readRepo: readRepo, logger: l}
 }
 
 // Handle executes the GetErrorCodeQuery and returns an ErrorCodeView.
@@ -32,7 +36,8 @@ func (h *GetErrorCodeHandler) Handle(ctx context.Context, q GetErrorCodeQuery) (
 
 	v, err := h.readRepo.FindByID(ctx, q.ID)
 	if err != nil {
-		return nil, err
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetErrorCode", Entity: "error_code", EntityID: q.ID, Err: err}.KV()...)
+		return nil, apperrors.MapToServiceError(err)
 	}
 
 	return &appdto.ErrorCodeView{

@@ -26,6 +26,6 @@ func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, l logg
 
 	return &BoundedContext{
 		RecordMetric: command.NewRecordMetricHandler(writeRepo, eventBus, l),
-		ListMetrics:  query.NewListMetricsHandler(readRepo),
+		ListMetrics:  query.NewListMetricsHandler(readRepo, l),
 	}
 }

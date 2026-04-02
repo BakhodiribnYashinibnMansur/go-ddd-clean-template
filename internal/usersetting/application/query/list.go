@@ -3,6 +3,9 @@ package query
 import (
 	"context"
 
+	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/logger"
+
 	appdto "gct/internal/usersetting/application"
 	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/usersetting/domain"
@@ -22,11 +25,12 @@ type ListUserSettingsResult struct {
 // ListUserSettingsHandler handles the ListUserSettingsQuery.
 type ListUserSettingsHandler struct {
 	readRepo domain.UserSettingReadRepository
+	logger   logger.Log
 }
 
 // NewListUserSettingsHandler creates a new ListUserSettingsHandler.
-func NewListUserSettingsHandler(readRepo domain.UserSettingReadRepository) *ListUserSettingsHandler {
-	return &ListUserSettingsHandler{readRepo: readRepo}
+func NewListUserSettingsHandler(readRepo domain.UserSettingReadRepository, l logger.Log) *ListUserSettingsHandler {
+	return &ListUserSettingsHandler{readRepo: readRepo, logger: l}
 }
 
 // Handle executes the ListUserSettingsQuery and returns a list of UserSettingView with total count.
@@ -36,7 +40,8 @@ func (h *ListUserSettingsHandler) Handle(ctx context.Context, q ListUserSettings
 
 	views, total, err := h.readRepo.List(ctx, q.Filter)
 	if err != nil {
-		return nil, err
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "ListUserSettings", Entity: "user_setting", Err: err}.KV()...)
+		return nil, apperrors.MapToServiceError(err)
 	}
 
 	result := make([]*appdto.UserSettingView, len(views))

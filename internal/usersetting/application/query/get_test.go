@@ -1,6 +1,7 @@
 package query
 
 import (
+	"gct/internal/shared/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
@@ -59,7 +60,7 @@ func TestGetUserSettingHandler_Handle(t *testing.T) {
 		},
 	}
 
-	handler := NewGetUserSettingHandler(readRepo)
+	handler := NewGetUserSettingHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), GetUserSettingQuery{ID: id})
 	if err != nil {
 		t.Fatalf("expected no error, got: %v", err)
@@ -80,7 +81,7 @@ func TestGetUserSettingHandler_Handle(t *testing.T) {
 
 func TestGetUserSettingHandler_NotFound(t *testing.T) {
 	readRepo := &mockReadRepo{}
-	handler := NewGetUserSettingHandler(readRepo)
+	handler := NewGetUserSettingHandler(readRepo, logger.Noop())
 	_, err := handler.Handle(context.Background(), GetUserSettingQuery{ID: uuid.New()})
 	if err == nil {
 		t.Fatal("expected error for not found")
@@ -89,7 +90,7 @@ func TestGetUserSettingHandler_NotFound(t *testing.T) {
 
 func TestGetUserSettingHandler_RepoError(t *testing.T) {
 	readRepo := &errorReadRepo{err: errRepo}
-	handler := NewGetUserSettingHandler(readRepo)
+	handler := NewGetUserSettingHandler(readRepo, logger.Noop())
 	_, err := handler.Handle(context.Background(), GetUserSettingQuery{ID: uuid.New()})
 	if err == nil {
 		t.Fatal("expected error from repo")

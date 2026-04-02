@@ -1,6 +1,7 @@
 package query
 
 import (
+	"gct/internal/shared/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
@@ -62,7 +63,7 @@ func TestListAuditLogsHandler_Success(t *testing.T) {
 		auditTotal: 2,
 	}
 
-	handler := NewListAuditLogsHandler(readRepo)
+	handler := NewListAuditLogsHandler(readRepo, logger.Noop())
 
 	q := ListAuditLogsQuery{
 		Filter: domain.AuditLogFilter{},
@@ -104,7 +105,7 @@ func TestListAuditLogsHandler_Empty(t *testing.T) {
 		auditTotal: 0,
 	}
 
-	handler := NewListAuditLogsHandler(readRepo)
+	handler := NewListAuditLogsHandler(readRepo, logger.Noop())
 
 	q := ListAuditLogsQuery{
 		Filter: domain.AuditLogFilter{},
@@ -129,7 +130,7 @@ func TestListAuditLogsHandler_RepoError(t *testing.T) {
 		auditErr: errors.New("database unavailable"),
 	}
 
-	handler := NewListAuditLogsHandler(readRepo)
+	handler := NewListAuditLogsHandler(readRepo, logger.Noop())
 
 	q := ListAuditLogsQuery{
 		Filter: domain.AuditLogFilter{},
@@ -183,7 +184,7 @@ func TestListAuditLogsHandler_MapsAllFields(t *testing.T) {
 		auditTotal: 1,
 	}
 
-	handler := NewListAuditLogsHandler(readRepo)
+	handler := NewListAuditLogsHandler(readRepo, logger.Noop())
 
 	result, err := handler.Handle(context.Background(), ListAuditLogsQuery{})
 	if err != nil {
@@ -256,7 +257,7 @@ func TestListAuditLogsHandler_WithFilter(t *testing.T) {
 		auditTotal: 1,
 	}
 
-	handler := NewListAuditLogsHandler(readRepo)
+	handler := NewListAuditLogsHandler(readRepo, logger.Noop())
 
 	q := ListAuditLogsQuery{
 		Filter: domain.AuditLogFilter{

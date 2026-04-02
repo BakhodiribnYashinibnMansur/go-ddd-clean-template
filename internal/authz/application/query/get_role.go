@@ -3,6 +3,9 @@ package query
 import (
 	"context"
 
+	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/logger"
+
 	appdto "gct/internal/authz/application"
 	"gct/internal/authz/domain"
 	"gct/internal/shared/infrastructure/pgxutil"
@@ -18,11 +21,12 @@ type GetRoleQuery struct {
 // GetRoleHandler handles the GetRoleQuery.
 type GetRoleHandler struct {
 	readRepo domain.AuthzReadRepository
+	logger   logger.Log
 }
 
 // NewGetRoleHandler creates a new GetRoleHandler.
-func NewGetRoleHandler(readRepo domain.AuthzReadRepository) *GetRoleHandler {
-	return &GetRoleHandler{readRepo: readRepo}
+func NewGetRoleHandler(readRepo domain.AuthzReadRepository, l logger.Log) *GetRoleHandler {
+	return &GetRoleHandler{readRepo: readRepo, logger: l}
 }
 
 // Handle executes the GetRoleQuery and returns a RoleView.
@@ -32,7 +36,8 @@ func (h *GetRoleHandler) Handle(ctx context.Context, q GetRoleQuery) (_ *appdto.
 
 	view, err := h.readRepo.GetRole(ctx, q.ID)
 	if err != nil {
-		return nil, err
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetRole", Entity: "access", EntityID: q.ID, Err: err}.KV()...)
+		return nil, apperrors.MapToServiceError(err)
 	}
 
 	return &appdto.RoleView{

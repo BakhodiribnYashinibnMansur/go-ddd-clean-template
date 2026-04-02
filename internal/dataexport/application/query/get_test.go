@@ -1,6 +1,7 @@
 package query
 
 import (
+	"gct/internal/shared/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
@@ -60,7 +61,7 @@ func TestGetDataExportHandler_Success(t *testing.T) {
 		},
 	}
 
-	handler := NewGetDataExportHandler(readRepo)
+	handler := NewGetDataExportHandler(readRepo, logger.Noop())
 
 	result, err := handler.Handle(context.Background(), GetDataExportQuery{ID: exportID})
 	if err != nil {
@@ -85,7 +86,7 @@ func TestGetDataExportHandler_RepoError(t *testing.T) {
 		findByIDErr: errors.New("not found"),
 	}
 
-	handler := NewGetDataExportHandler(readRepo)
+	handler := NewGetDataExportHandler(readRepo, logger.Noop())
 
 	result, err := handler.Handle(context.Background(), GetDataExportQuery{ID: uuid.New()})
 	if err == nil {
@@ -118,7 +119,7 @@ func TestGetDataExportHandler_MapsAllFields(t *testing.T) {
 		},
 	}
 
-	handler := NewGetDataExportHandler(readRepo)
+	handler := NewGetDataExportHandler(readRepo, logger.Noop())
 
 	result, err := handler.Handle(context.Background(), GetDataExportQuery{ID: exportID})
 	if err != nil {

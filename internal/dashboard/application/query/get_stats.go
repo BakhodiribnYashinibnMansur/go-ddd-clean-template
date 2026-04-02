@@ -3,6 +3,8 @@ package query
 import (
 	"context"
 
+	apperrors "gct/internal/shared/infrastructure/errors"
+
 	appdto "gct/internal/dashboard/application"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
@@ -30,7 +32,7 @@ func (h *GetStatsHandler) Handle(ctx context.Context, _ GetStatsQuery) (_ *appdt
 	view, err := h.repo.GetStats(ctx)
 	if err != nil {
 		h.l.Errorc(ctx, "dashboard.query.GetStats failed", "error", err)
-		return nil, err
+		return nil, apperrors.MapToServiceError(err)
 	}
 	return view, nil
 }

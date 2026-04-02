@@ -1,6 +1,7 @@
 package query
 
 import (
+	"gct/internal/shared/infrastructure/logger"
 	"context"
 	"testing"
 
@@ -24,7 +25,7 @@ func TestListUsersHandler_Handle(t *testing.T) {
 		total: 2,
 	}
 
-	handler := NewListUsersHandler(readRepo)
+	handler := NewListUsersHandler(readRepo, logger.Noop())
 
 	result, err := handler.Handle(context.Background(), ListUsersQuery{
 		Filter: domain.UsersFilter{},
@@ -60,7 +61,7 @@ func TestListUsersHandler_Empty(t *testing.T) {
 		total: 0,
 	}
 
-	handler := NewListUsersHandler(readRepo)
+	handler := NewListUsersHandler(readRepo, logger.Noop())
 
 	result, err := handler.Handle(context.Background(), ListUsersQuery{
 		Filter: domain.UsersFilter{},
@@ -86,7 +87,7 @@ func TestListUsersHandler_WithPagination(t *testing.T) {
 		total: 5, // total is 5 but only 1 returned (limit=1)
 	}
 
-	handler := NewListUsersHandler(readRepo)
+	handler := NewListUsersHandler(readRepo, logger.Noop())
 
 	result, err := handler.Handle(context.Background(), ListUsersQuery{
 		Filter: domain.UsersFilter{
@@ -113,7 +114,7 @@ func TestListUsersHandler_WithFilters(t *testing.T) {
 		total: 1,
 	}
 
-	handler := NewListUsersHandler(readRepo)
+	handler := NewListUsersHandler(readRepo, logger.Noop())
 
 	active := true
 	approved := true
@@ -165,7 +166,7 @@ func TestListUsersHandler_AllFieldsMapped(t *testing.T) {
 		total: 1,
 	}
 
-	handler := NewListUsersHandler(readRepo)
+	handler := NewListUsersHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListUsersQuery{Filter: domain.UsersFilter{}})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -189,7 +190,7 @@ func TestListUsersHandler_AllFieldsMapped(t *testing.T) {
 func TestListUsersHandler_RepoError(t *testing.T) {
 	readRepo := &errorReadRepo{err: errRepoFailure}
 
-	handler := NewListUsersHandler(readRepo)
+	handler := NewListUsersHandler(readRepo, logger.Noop())
 	_, err := handler.Handle(context.Background(), ListUsersQuery{Filter: domain.UsersFilter{}})
 	if err == nil {
 		t.Fatal("expected error from repo")

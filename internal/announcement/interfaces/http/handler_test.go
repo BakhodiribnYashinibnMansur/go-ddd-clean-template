@@ -110,8 +110,8 @@ func setupRouter(repo *mockRepo, readRepo *mockReadRepo) *gin.Engine {
 		CreateAnnouncement: command.NewCreateAnnouncementHandler(repo, eb, l),
 		UpdateAnnouncement: command.NewUpdateAnnouncementHandler(repo, eb, l),
 		DeleteAnnouncement: command.NewDeleteAnnouncementHandler(repo, l),
-		GetAnnouncement:    query.NewGetAnnouncementHandler(readRepo),
-		ListAnnouncements:  query.NewListAnnouncementsHandler(readRepo),
+		GetAnnouncement:    query.NewGetAnnouncementHandler(readRepo, l),
+		ListAnnouncements:  query.NewListAnnouncementsHandler(readRepo, l),
 	}
 
 	r := gin.New()

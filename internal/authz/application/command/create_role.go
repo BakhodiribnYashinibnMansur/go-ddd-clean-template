@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/authz/domain"
 	"gct/internal/shared/application"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 )
@@ -49,12 +50,12 @@ func (h *CreateRoleHandler) Handle(ctx context.Context, cmd CreateRoleCommand) (
 	}
 
 	if err := h.repo.Save(ctx, role); err != nil {
-		h.logger.Errorf("failed to save role: %v", err)
-		return err
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateRole", Entity: "role", Err: err}.KV()...)
+		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, role.Events()...); err != nil {
-		h.logger.Errorf("failed to publish events: %v", err)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "CreateRole", Entity: "role", Err: err}.KV()...)
 	}
 
 	return nil

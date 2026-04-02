@@ -1,6 +1,7 @@
 package query
 
 import (
+	"gct/internal/shared/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
@@ -23,7 +24,7 @@ func TestListPermissionsHandler_WithResults(t *testing.T) {
 		},
 	}
 
-	handler := NewListPermissionsHandler(repo)
+	handler := NewListPermissionsHandler(repo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListPermissionsQuery{
 		Pagination: shared.Pagination{Limit: 10, Offset: 0},
 	})
@@ -55,7 +56,7 @@ func TestListPermissionsHandler_Empty(t *testing.T) {
 		},
 	}
 
-	handler := NewListPermissionsHandler(repo)
+	handler := NewListPermissionsHandler(repo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListPermissionsQuery{
 		Pagination: shared.Pagination{Limit: 10, Offset: 0},
 	})
@@ -79,7 +80,7 @@ func TestListPermissionsHandler_RepoError(t *testing.T) {
 		},
 	}
 
-	handler := NewListPermissionsHandler(repo)
+	handler := NewListPermissionsHandler(repo, logger.Noop())
 	_, err := handler.Handle(context.Background(), ListPermissionsQuery{
 		Pagination: shared.Pagination{Limit: 10, Offset: 0},
 	})

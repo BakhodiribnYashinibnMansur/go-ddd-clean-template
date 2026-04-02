@@ -1,6 +1,7 @@
 package query
 
 import (
+	"gct/internal/shared/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
@@ -60,7 +61,7 @@ func TestGetIPRuleHandler_Handle(t *testing.T) {
 		},
 	}
 
-	handler := NewGetIPRuleHandler(readRepo)
+	handler := NewGetIPRuleHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), GetIPRuleQuery{ID: id})
 	if err != nil {
 		t.Fatalf("expected no error, got: %v", err)
@@ -81,7 +82,7 @@ func TestGetIPRuleHandler_Handle(t *testing.T) {
 
 func TestGetIPRuleHandler_NotFound(t *testing.T) {
 	readRepo := &mockReadRepo{}
-	handler := NewGetIPRuleHandler(readRepo)
+	handler := NewGetIPRuleHandler(readRepo, logger.Noop())
 	_, err := handler.Handle(context.Background(), GetIPRuleQuery{ID: uuid.New()})
 	if err == nil {
 		t.Fatal("expected error for not found")
@@ -90,7 +91,7 @@ func TestGetIPRuleHandler_NotFound(t *testing.T) {
 
 func TestGetIPRuleHandler_RepoError(t *testing.T) {
 	readRepo := &errorReadRepo{err: errRepo}
-	handler := NewGetIPRuleHandler(readRepo)
+	handler := NewGetIPRuleHandler(readRepo, logger.Noop())
 	_, err := handler.Handle(context.Background(), GetIPRuleQuery{ID: uuid.New()})
 	if err == nil {
 		t.Fatal("expected error from repo")
@@ -112,7 +113,7 @@ func TestGetIPRuleHandler_AllFieldsMapped(t *testing.T) {
 		},
 	}
 
-	handler := NewGetIPRuleHandler(readRepo)
+	handler := NewGetIPRuleHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), GetIPRuleQuery{ID: id})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)

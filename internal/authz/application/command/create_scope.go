@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"gct/internal/authz/domain"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 )
@@ -45,8 +46,8 @@ func (h *CreateScopeHandler) Handle(ctx context.Context, cmd CreateScopeCommand)
 	}
 
 	if err := h.repo.Save(ctx, scope); err != nil {
-		h.logger.Errorf("failed to save scope: %v", err)
-		return err
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateScope", Entity: "scope", Err: err}.KV()...)
+		return apperrors.MapToServiceError(err)
 	}
 
 	return nil

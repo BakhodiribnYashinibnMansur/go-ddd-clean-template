@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/metric/domain"
 	"gct/internal/shared/application"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 )
@@ -47,12 +48,12 @@ func (h *RecordMetricHandler) Handle(ctx context.Context, cmd RecordMetricComman
 	fm := domain.NewFunctionMetric(cmd.Name, cmd.LatencyMs, cmd.IsPanic, cmd.PanicError)
 
 	if err := h.repo.Save(ctx, fm); err != nil {
-		h.logger.Errorf("failed to save function metric: %v", err)
-		return err
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "RecordMetric", Entity: "metric", Err: err}.KV()...)
+		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, fm.Events()...); err != nil {
-		h.logger.Errorf("failed to publish events: %v", err)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "RecordMetric", Entity: "metric", Err: err}.KV()...)
 	}
 
 	return nil

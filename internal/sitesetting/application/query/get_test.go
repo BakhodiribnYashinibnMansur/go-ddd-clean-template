@@ -1,6 +1,7 @@
 package query
 
 import (
+	"gct/internal/shared/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
@@ -59,7 +60,7 @@ func TestGetSiteSettingHandler_Handle(t *testing.T) {
 		},
 	}
 
-	handler := NewGetSiteSettingHandler(readRepo)
+	handler := NewGetSiteSettingHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), GetSiteSettingQuery{ID: id})
 	if err != nil {
 		t.Fatalf("expected no error, got: %v", err)
@@ -83,7 +84,7 @@ func TestGetSiteSettingHandler_Handle(t *testing.T) {
 
 func TestGetSiteSettingHandler_NotFound(t *testing.T) {
 	readRepo := &mockReadRepo{}
-	handler := NewGetSiteSettingHandler(readRepo)
+	handler := NewGetSiteSettingHandler(readRepo, logger.Noop())
 	_, err := handler.Handle(context.Background(), GetSiteSettingQuery{ID: uuid.New()})
 	if err == nil {
 		t.Fatal("expected error for not found")
@@ -92,7 +93,7 @@ func TestGetSiteSettingHandler_NotFound(t *testing.T) {
 
 func TestGetSiteSettingHandler_RepoError(t *testing.T) {
 	readRepo := &errorReadRepo{err: errRepo}
-	handler := NewGetSiteSettingHandler(readRepo)
+	handler := NewGetSiteSettingHandler(readRepo, logger.Noop())
 	_, err := handler.Handle(context.Background(), GetSiteSettingQuery{ID: uuid.New()})
 	if err == nil {
 		t.Fatal("expected error from repo")
@@ -115,7 +116,7 @@ func TestGetSiteSettingHandler_AllFieldsMapped(t *testing.T) {
 		},
 	}
 
-	handler := NewGetSiteSettingHandler(readRepo)
+	handler := NewGetSiteSettingHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), GetSiteSettingQuery{ID: id})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)

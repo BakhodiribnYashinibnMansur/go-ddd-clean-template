@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"gct/internal/authz/domain"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 
@@ -41,8 +42,8 @@ func (h *DeletePermissionHandler) Handle(ctx context.Context, cmd DeletePermissi
 	defer func() { end(err) }()
 
 	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
-		h.logger.Errorf("failed to delete permission: %v", err)
-		return err
+		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeletePermission", Entity: "permission", EntityID: cmd.ID, Err: err}.KV()...)
+		return apperrors.MapToServiceError(err)
 	}
 
 	return nil

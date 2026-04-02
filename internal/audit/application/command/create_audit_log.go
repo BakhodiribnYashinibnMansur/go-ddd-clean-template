@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/audit/domain"
 	"gct/internal/shared/application"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 
@@ -76,12 +77,12 @@ func (h *CreateAuditLogHandler) Handle(ctx context.Context, cmd CreateAuditLogCo
 	)
 
 	if err := h.repo.Save(ctx, auditLog); err != nil {
-		h.logger.Errorf("failed to save audit log: %v", err)
-		return err
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateAuditLog", Entity: "audit_log", Err: err}.KV()...)
+		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, auditLog.Events()...); err != nil {
-		h.logger.Errorf("failed to publish audit log events: %v", err)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "CreateAuditLog", Entity: "audit_log", Err: err}.KV()...)
 	}
 
 	return nil

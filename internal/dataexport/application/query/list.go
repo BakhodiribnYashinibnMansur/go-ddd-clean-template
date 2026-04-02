@@ -3,6 +3,9 @@ package query
 import (
 	"context"
 
+	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/logger"
+
 	appdto "gct/internal/dataexport/application"
 	"gct/internal/dataexport/domain"
 	"gct/internal/shared/infrastructure/pgxutil"
@@ -22,11 +25,12 @@ type ListDataExportsResult struct {
 // ListDataExportsHandler handles the ListDataExportsQuery.
 type ListDataExportsHandler struct {
 	readRepo domain.DataExportReadRepository
+	logger   logger.Log
 }
 
 // NewListDataExportsHandler creates a new ListDataExportsHandler.
-func NewListDataExportsHandler(readRepo domain.DataExportReadRepository) *ListDataExportsHandler {
-	return &ListDataExportsHandler{readRepo: readRepo}
+func NewListDataExportsHandler(readRepo domain.DataExportReadRepository, l logger.Log) *ListDataExportsHandler {
+	return &ListDataExportsHandler{readRepo: readRepo, logger: l}
 }
 
 // Handle executes the ListDataExportsQuery and returns a list of DataExportView with total count.
@@ -36,7 +40,8 @@ func (h *ListDataExportsHandler) Handle(ctx context.Context, q ListDataExportsQu
 
 	views, total, err := h.readRepo.List(ctx, q.Filter)
 	if err != nil {
-		return nil, err
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "ListDataExports", Entity: "data_export", Err: err}.KV()...)
+		return nil, apperrors.MapToServiceError(err)
 	}
 
 	result := make([]*appdto.DataExportView, len(views))

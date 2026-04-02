@@ -44,7 +44,10 @@ import (
 
 // Run initializes the entire application component stack in the correct dependency order.
 func Run(cfg *config.Config) {
-	l := logger.New(cfg.Log.Level)
+	l := logger.NewWithFormat(cfg.Log.Level, cfg.Log.Format)
+	if cfg.Log.SlowOpThresholdMs > 0 {
+		logger.SetSlowOpThreshold(time.Duration(cfg.Log.SlowOpThresholdMs) * time.Millisecond)
+	}
 	l.Infoc(context.Background(), "Application configuration loaded", zap.Any("config", cfg))
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -159,7 +162,7 @@ func Run(cfg *config.Config) {
 
 	// 6. Asynq Worker
 	if cfg.Asynq.Enabled {
-		asynqWorker, err := initAsynqWorker(ctx, cfg, pg.Pool, dddBCs.Audit.CreateAuditLog, l)
+		asynqWorker, err := initAsynqWorker(ctx, cfg, pg.Pool, dddBCs.Audit.CreateAuditLog, l, nil, nil)
 		if err != nil {
 			l.Errorc(ctx, "Failed to initialize Asynq worker", "error", err)
 		}

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"gct/internal/announcement/domain"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 
@@ -41,8 +42,8 @@ func (h *DeleteAnnouncementHandler) Handle(ctx context.Context, cmd DeleteAnnoun
 	defer func() { end(err) }()
 
 	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
-		h.logger.Errorf("failed to delete announcement: %v", err)
-		return err
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "DeleteAnnouncement", Entity: "announcement", EntityID: cmd.ID, Err: err}.KV()...)
+		return apperrors.MapToServiceError(err)
 	}
 	return nil
 }

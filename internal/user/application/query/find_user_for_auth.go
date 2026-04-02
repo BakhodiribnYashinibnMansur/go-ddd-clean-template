@@ -4,6 +4,7 @@ import (
 	"context"
 
 	shared "gct/internal/shared/domain"
+	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/user/domain"
 
@@ -18,11 +19,12 @@ type FindUserForAuthQuery struct {
 // FindUserForAuthHandler handles the FindUserForAuthQuery.
 type FindUserForAuthHandler struct {
 	readRepo domain.UserReadRepository
+	logger   logger.Log
 }
 
 // NewFindUserForAuthHandler creates a new FindUserForAuthHandler.
-func NewFindUserForAuthHandler(readRepo domain.UserReadRepository) *FindUserForAuthHandler {
-	return &FindUserForAuthHandler{readRepo: readRepo}
+func NewFindUserForAuthHandler(readRepo domain.UserReadRepository, l logger.Log) *FindUserForAuthHandler {
+	return &FindUserForAuthHandler{readRepo: readRepo, logger: l}
 }
 
 // Handle executes the FindUserForAuthQuery and returns an AuthUser.

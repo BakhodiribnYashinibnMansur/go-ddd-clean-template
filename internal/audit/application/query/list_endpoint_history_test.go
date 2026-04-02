@@ -1,6 +1,7 @@
 package query
 
 import (
+	"gct/internal/shared/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
@@ -45,7 +46,7 @@ func TestListEndpointHistoryHandler_Success(t *testing.T) {
 		endpointTotal: 2,
 	}
 
-	handler := NewListEndpointHistoryHandler(readRepo)
+	handler := NewListEndpointHistoryHandler(readRepo, logger.Noop())
 
 	q := ListEndpointHistoryQuery{
 		Filter: domain.EndpointHistoryFilter{},
@@ -83,7 +84,7 @@ func TestListEndpointHistoryHandler_Empty(t *testing.T) {
 		endpointTotal: 0,
 	}
 
-	handler := NewListEndpointHistoryHandler(readRepo)
+	handler := NewListEndpointHistoryHandler(readRepo, logger.Noop())
 
 	q := ListEndpointHistoryQuery{
 		Filter: domain.EndpointHistoryFilter{},
@@ -108,7 +109,7 @@ func TestListEndpointHistoryHandler_RepoError(t *testing.T) {
 		endpointErr: errors.New("database unavailable"),
 	}
 
-	handler := NewListEndpointHistoryHandler(readRepo)
+	handler := NewListEndpointHistoryHandler(readRepo, logger.Noop())
 
 	q := ListEndpointHistoryQuery{
 		Filter: domain.EndpointHistoryFilter{},
@@ -148,7 +149,7 @@ func TestListEndpointHistoryHandler_MapsAllFields(t *testing.T) {
 		endpointTotal: 1,
 	}
 
-	handler := NewListEndpointHistoryHandler(readRepo)
+	handler := NewListEndpointHistoryHandler(readRepo, logger.Noop())
 
 	result, err := handler.Handle(context.Background(), ListEndpointHistoryQuery{})
 	if err != nil {

@@ -104,8 +104,8 @@ func setupRouter(repo *mockRepo, readRepo *mockReadRepo) *gin.Engine {
 	bc := &systemerror.BoundedContext{
 		CreateSystemError: command.NewCreateSystemErrorHandler(repo, eb, l),
 		ResolveError:      command.NewResolveErrorHandler(repo, eb, l),
-		GetSystemError:    query.NewGetSystemErrorHandler(readRepo),
-		ListSystemErrors:  query.NewListSystemErrorsHandler(readRepo),
+		GetSystemError:    query.NewGetSystemErrorHandler(readRepo, l),
+		ListSystemErrors:  query.NewListSystemErrorsHandler(readRepo, l),
 	}
 
 	r := gin.New()

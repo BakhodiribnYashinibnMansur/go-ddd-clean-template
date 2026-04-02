@@ -1,6 +1,7 @@
 package query
 
 import (
+	"gct/internal/shared/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
@@ -38,7 +39,7 @@ func TestListHandler_Handle(t *testing.T) {
 		},
 	}
 
-	handler := NewListHandler(readRepo)
+	handler := NewListHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListQuery{
 		Filter: domain.FeatureFlagFilter{Limit: 10, Offset: 0},
 	})
@@ -70,7 +71,7 @@ func TestListHandler_Handle_Empty(t *testing.T) {
 		},
 	}
 
-	handler := NewListHandler(readRepo)
+	handler := NewListHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListQuery{})
 	if err != nil {
 		t.Fatalf("expected no error, got: %v", err)
@@ -96,7 +97,7 @@ func TestListHandler_Handle_WithFilter(t *testing.T) {
 		},
 	}
 
-	handler := NewListHandler(readRepo)
+	handler := NewListHandler(readRepo, logger.Noop())
 	search := "active"
 	enabled := true
 	result, err := handler.Handle(context.Background(), ListQuery{
@@ -136,7 +137,7 @@ func TestListHandler_Handle_RepoError(t *testing.T) {
 		},
 	}
 
-	handler := NewListHandler(readRepo)
+	handler := NewListHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListQuery{})
 	if err == nil {
 		t.Fatal("expected error, got nil")

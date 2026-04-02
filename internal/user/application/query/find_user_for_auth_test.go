@@ -1,6 +1,7 @@
 package query
 
 import (
+	"gct/internal/shared/infrastructure/logger"
 	"context"
 	"testing"
 
@@ -23,7 +24,7 @@ func TestFindUserForAuthHandler_Success(t *testing.T) {
 		},
 	}
 
-	handler := NewFindUserForAuthHandler(readRepo)
+	handler := NewFindUserForAuthHandler(readRepo, logger.Noop())
 
 	result, err := handler.Handle(context.Background(), FindUserForAuthQuery{UserID: userID})
 	if err != nil {
@@ -58,7 +59,7 @@ func TestFindUserForAuthHandler_Success(t *testing.T) {
 func TestFindUserForAuthHandler_NotFound(t *testing.T) {
 	readRepo := &mockUserReadRepository{}
 
-	handler := NewFindUserForAuthHandler(readRepo)
+	handler := NewFindUserForAuthHandler(readRepo, logger.Noop())
 
 	_, err := handler.Handle(context.Background(), FindUserForAuthQuery{UserID: uuid.New()})
 	if err == nil {
@@ -69,7 +70,7 @@ func TestFindUserForAuthHandler_NotFound(t *testing.T) {
 func TestFindUserForAuthHandler_RepoError(t *testing.T) {
 	readRepo := &errorReadRepo{err: errRepoFailure}
 
-	handler := NewFindUserForAuthHandler(readRepo)
+	handler := NewFindUserForAuthHandler(readRepo, logger.Noop())
 
 	_, err := handler.Handle(context.Background(), FindUserForAuthQuery{UserID: uuid.New()})
 	if err == nil {

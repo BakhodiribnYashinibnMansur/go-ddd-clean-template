@@ -1,6 +1,7 @@
 package query
 
 import (
+	"gct/internal/shared/infrastructure/logger"
 	"context"
 	"testing"
 	"time"
@@ -20,7 +21,7 @@ func TestListSiteSettingsHandler_Handle(t *testing.T) {
 		total: 2,
 	}
 
-	handler := NewListSiteSettingsHandler(readRepo)
+	handler := NewListSiteSettingsHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListSiteSettingsQuery{
 		Filter: domain.SiteSettingFilter{Limit: 10, Offset: 0},
 	})
@@ -41,7 +42,7 @@ func TestListSiteSettingsHandler_Handle(t *testing.T) {
 func TestListSiteSettingsHandler_Empty(t *testing.T) {
 	readRepo := &mockReadRepo{views: []*domain.SiteSettingView{}, total: 0}
 
-	handler := NewListSiteSettingsHandler(readRepo)
+	handler := NewListSiteSettingsHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListSiteSettingsQuery{
 		Filter: domain.SiteSettingFilter{},
 	})
@@ -65,7 +66,7 @@ func TestListSiteSettingsHandler_WithFilters(t *testing.T) {
 		total: 1,
 	}
 
-	handler := NewListSiteSettingsHandler(readRepo)
+	handler := NewListSiteSettingsHandler(readRepo, logger.Noop())
 	settingType := "general"
 
 	result, err := handler.Handle(context.Background(), ListSiteSettingsQuery{
@@ -84,7 +85,7 @@ func TestListSiteSettingsHandler_WithFilters(t *testing.T) {
 
 func TestListSiteSettingsHandler_RepoError(t *testing.T) {
 	readRepo := &errorReadRepo{err: errRepo}
-	handler := NewListSiteSettingsHandler(readRepo)
+	handler := NewListSiteSettingsHandler(readRepo, logger.Noop())
 	_, err := handler.Handle(context.Background(), ListSiteSettingsQuery{Filter: domain.SiteSettingFilter{}})
 	if err == nil {
 		t.Fatal("expected error from repo")

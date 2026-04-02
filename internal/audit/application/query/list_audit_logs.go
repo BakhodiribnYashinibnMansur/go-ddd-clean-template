@@ -3,6 +3,9 @@ package query
 import (
 	"context"
 
+	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/logger"
+
 	appdto "gct/internal/audit/application"
 	"gct/internal/audit/domain"
 	"gct/internal/shared/infrastructure/pgxutil"
@@ -22,11 +25,12 @@ type ListAuditLogsResult struct {
 // ListAuditLogsHandler handles the ListAuditLogsQuery.
 type ListAuditLogsHandler struct {
 	readRepo domain.AuditReadRepository
+	logger   logger.Log
 }
 
 // NewListAuditLogsHandler creates a new ListAuditLogsHandler.
-func NewListAuditLogsHandler(readRepo domain.AuditReadRepository) *ListAuditLogsHandler {
-	return &ListAuditLogsHandler{readRepo: readRepo}
+func NewListAuditLogsHandler(readRepo domain.AuditReadRepository, l logger.Log) *ListAuditLogsHandler {
+	return &ListAuditLogsHandler{readRepo: readRepo, logger: l}
 }
 
 // Handle executes the ListAuditLogsQuery and returns a list of AuditLogView with total count.
@@ -36,7 +40,8 @@ func (h *ListAuditLogsHandler) Handle(ctx context.Context, q ListAuditLogsQuery)
 
 	views, total, err := h.readRepo.ListAuditLogs(ctx, q.Filter)
 	if err != nil {
-		return nil, err
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "ListAuditLogs", Entity: "audit_log", Err: err}.KV()...)
+		return nil, apperrors.MapToServiceError(err)
 	}
 
 	result := make([]*appdto.AuditLogView, len(views))

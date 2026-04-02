@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"gct/internal/dataexport/domain"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 
@@ -41,8 +42,8 @@ func (h *DeleteDataExportHandler) Handle(ctx context.Context, cmd DeleteDataExpo
 	defer func() { end(err) }()
 
 	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
-		h.logger.Errorf("failed to delete data export: %v", err)
-		return err
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "DeleteDataExport", Entity: "data_export", EntityID: cmd.ID, Err: err}.KV()...)
+		return apperrors.MapToServiceError(err)
 	}
 	return nil
 }

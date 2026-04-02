@@ -31,7 +31,7 @@ func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, l logg
 		CreateDataExport: command.NewCreateDataExportHandler(writeRepo, eventBus, l),
 		UpdateDataExport: command.NewUpdateDataExportHandler(writeRepo, eventBus, l),
 		DeleteDataExport: command.NewDeleteDataExportHandler(writeRepo, l),
-		GetDataExport:    query.NewGetDataExportHandler(readRepo),
-		ListDataExports:  query.NewListDataExportsHandler(readRepo),
+		GetDataExport:    query.NewGetDataExportHandler(readRepo, l),
+		ListDataExports:  query.NewListDataExportsHandler(readRepo, l),
 	}
 }

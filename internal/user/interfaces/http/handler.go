@@ -4,7 +4,8 @@ import (
 	"net/http"
 	"strconv"
 
-	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/httpx"
+	"gct/internal/shared/infrastructure/httpx/response"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/user"
 	"gct/internal/user/application/command"
@@ -32,7 +33,7 @@ func NewHandler(bc *user.BoundedContext, l logger.Log) *Handler {
 func (h *Handler) Create(ctx *gin.Context) {
 	var req CreateUserRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.RespondWithError(ctx, err, http.StatusBadRequest)
 		return
 	}
 
@@ -45,7 +46,7 @@ func (h *Handler) Create(ctx *gin.Context) {
 		Attributes: req.Attributes,
 	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 
@@ -79,7 +80,7 @@ func (h *Handler) List(ctx *gin.Context) {
 		Filter: filter,
 	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 
@@ -93,18 +94,13 @@ func (h *Handler) List(ctx *gin.Context) {
 func (h *Handler) Get(ctx *gin.Context) {
 	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid user id"})
+		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
 
 	view, err := h.bc.GetUser.Handle(ctx.Request.Context(), query.GetUserQuery{ID: id})
 	if err != nil {
-		code := apperrors.GetCode(err)
-		status := apperrors.MapToHTTPStatus(code)
-		if status == 0 {
-			status = http.StatusInternalServerError
-		}
-		ctx.JSON(status, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 
@@ -115,13 +111,13 @@ func (h *Handler) Get(ctx *gin.Context) {
 func (h *Handler) Update(ctx *gin.Context) {
 	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid user id"})
+		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
 
 	var req UpdateUserRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.RespondWithError(ctx, err, http.StatusBadRequest)
 		return
 	}
 
@@ -132,7 +128,7 @@ func (h *Handler) Update(ctx *gin.Context) {
 		Attributes: req.Attributes,
 	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 
@@ -143,13 +139,13 @@ func (h *Handler) Update(ctx *gin.Context) {
 func (h *Handler) Delete(ctx *gin.Context) {
 	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid user id"})
+		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
 
 	err = h.bc.DeleteUser.Handle(ctx.Request.Context(), command.DeleteUserCommand{ID: id})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 
@@ -160,13 +156,13 @@ func (h *Handler) Delete(ctx *gin.Context) {
 func (h *Handler) Approve(ctx *gin.Context) {
 	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid user id"})
+		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
 
 	err = h.bc.ApproveUser.Handle(ctx.Request.Context(), command.ApproveUserCommand{ID: id})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 
@@ -177,13 +173,13 @@ func (h *Handler) Approve(ctx *gin.Context) {
 func (h *Handler) ChangeRole(ctx *gin.Context) {
 	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid user id"})
+		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
 
 	var req ChangeRoleRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.RespondWithError(ctx, err, http.StatusBadRequest)
 		return
 	}
 
@@ -192,7 +188,7 @@ func (h *Handler) ChangeRole(ctx *gin.Context) {
 		RoleID: req.RoleID,
 	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 
@@ -203,7 +199,7 @@ func (h *Handler) ChangeRole(ctx *gin.Context) {
 func (h *Handler) BulkAction(ctx *gin.Context) {
 	var req BulkActionRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.RespondWithError(ctx, err, http.StatusBadRequest)
 		return
 	}
 
@@ -212,7 +208,7 @@ func (h *Handler) BulkAction(ctx *gin.Context) {
 		Action: req.Action,
 	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 
@@ -223,7 +219,7 @@ func (h *Handler) BulkAction(ctx *gin.Context) {
 func (h *Handler) SignIn(ctx *gin.Context) {
 	var req SignInRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.RespondWithError(ctx, err, http.StatusBadRequest)
 		return
 	}
 
@@ -235,7 +231,7 @@ func (h *Handler) SignIn(ctx *gin.Context) {
 		UserAgent:  ctx.GetHeader("User-Agent"),
 	})
 	if err != nil {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 
@@ -253,7 +249,7 @@ func (h *Handler) SignIn(ctx *gin.Context) {
 func (h *Handler) SignUp(ctx *gin.Context) {
 	var req SignUpRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.RespondWithError(ctx, err, http.StatusBadRequest)
 		return
 	}
 
@@ -264,12 +260,7 @@ func (h *Handler) SignUp(ctx *gin.Context) {
 		Email:    req.Email,
 	})
 	if err != nil {
-		code := apperrors.GetCode(err)
-		status := apperrors.MapToHTTPStatus(code)
-		if status == 0 {
-			status = http.StatusInternalServerError
-		}
-		ctx.JSON(status, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 
@@ -280,7 +271,7 @@ func (h *Handler) SignUp(ctx *gin.Context) {
 func (h *Handler) SignOut(ctx *gin.Context) {
 	var req SignOutRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.RespondWithError(ctx, err, http.StatusBadRequest)
 		return
 	}
 
@@ -289,7 +280,7 @@ func (h *Handler) SignOut(ctx *gin.Context) {
 		SessionID: req.SessionID,
 	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 

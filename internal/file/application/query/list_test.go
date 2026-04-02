@@ -1,6 +1,7 @@
 package query
 
 import (
+	"gct/internal/shared/infrastructure/logger"
 	"context"
 	"testing"
 	"time"
@@ -20,7 +21,7 @@ func TestListFilesHandler_Handle(t *testing.T) {
 		total: 2,
 	}
 
-	handler := NewListFilesHandler(readRepo)
+	handler := NewListFilesHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListFilesQuery{
 		Filter: domain.FileFilter{Limit: 10, Offset: 0},
 	})
@@ -41,7 +42,7 @@ func TestListFilesHandler_Handle(t *testing.T) {
 func TestListFilesHandler_Empty(t *testing.T) {
 	readRepo := &mockReadRepo{views: []*domain.FileView{}, total: 0}
 
-	handler := NewListFilesHandler(readRepo)
+	handler := NewListFilesHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListFilesQuery{
 		Filter: domain.FileFilter{},
 	})
@@ -58,7 +59,7 @@ func TestListFilesHandler_Empty(t *testing.T) {
 
 func TestListFilesHandler_RepoError(t *testing.T) {
 	readRepo := &errorReadRepo{err: errRepo}
-	handler := NewListFilesHandler(readRepo)
+	handler := NewListFilesHandler(readRepo, logger.Noop())
 	_, err := handler.Handle(context.Background(), ListFilesQuery{Filter: domain.FileFilter{}})
 	if err == nil {
 		t.Fatal("expected error from repo")

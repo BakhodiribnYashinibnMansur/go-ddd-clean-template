@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/notification/domain"
 	"gct/internal/shared/application"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 
@@ -47,12 +48,12 @@ func (h *CreateHandler) Handle(ctx context.Context, cmd CreateCommand) (err erro
 	n := domain.NewNotification(cmd.UserID, cmd.Title, cmd.Message, cmd.Type)
 
 	if err := h.repo.Save(ctx, n); err != nil {
-		h.logger.Errorf("failed to save notification: %v", err)
-		return err
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateNotification", Entity: "notification", Err: err}.KV()...)
+		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, n.Events()...); err != nil {
-		h.logger.Errorf("failed to publish events: %v", err)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "CreateNotification", Entity: "notification", Err: err}.KV()...)
 	}
 
 	return nil

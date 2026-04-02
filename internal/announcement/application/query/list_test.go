@@ -1,6 +1,7 @@
 package query
 
 import (
+	"gct/internal/shared/infrastructure/logger"
 	"context"
 	"testing"
 	"time"
@@ -19,7 +20,7 @@ func TestListAnnouncementsHandler_Handle(t *testing.T) {
 		total: 2,
 	}
 
-	handler := NewListAnnouncementsHandler(readRepo)
+	handler := NewListAnnouncementsHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListAnnouncementsQuery{
 		Filter: domain.AnnouncementFilter{Limit: 10, Offset: 0},
 	})
@@ -40,7 +41,7 @@ func TestListAnnouncementsHandler_Handle(t *testing.T) {
 func TestListAnnouncementsHandler_Empty(t *testing.T) {
 	readRepo := &mockReadRepo{views: []*domain.AnnouncementView{}, total: 0}
 
-	handler := NewListAnnouncementsHandler(readRepo)
+	handler := NewListAnnouncementsHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListAnnouncementsQuery{
 		Filter: domain.AnnouncementFilter{},
 	})
@@ -64,7 +65,7 @@ func TestListAnnouncementsHandler_WithFilters(t *testing.T) {
 		total: 1,
 	}
 
-	handler := NewListAnnouncementsHandler(readRepo)
+	handler := NewListAnnouncementsHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListAnnouncementsQuery{
 		Filter: domain.AnnouncementFilter{Published: &published, Limit: 10},
 	})
@@ -78,7 +79,7 @@ func TestListAnnouncementsHandler_WithFilters(t *testing.T) {
 
 func TestListAnnouncementsHandler_RepoError(t *testing.T) {
 	readRepo := &errorReadRepo{err: errRepo}
-	handler := NewListAnnouncementsHandler(readRepo)
+	handler := NewListAnnouncementsHandler(readRepo, logger.Noop())
 	_, err := handler.Handle(context.Background(), ListAnnouncementsQuery{Filter: domain.AnnouncementFilter{}})
 	if err == nil {
 		t.Fatal("expected error from repo")

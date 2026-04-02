@@ -6,6 +6,7 @@ import (
 
 	"gct/internal/featureflag/domain"
 	"gct/internal/shared/application"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 
@@ -58,13 +59,13 @@ func (h *CreateRuleGroupHandler) Handle(ctx context.Context, cmd CreateRuleGroup
 
 	// Verify the flag exists.
 	if _, err := h.flagRepo.FindByID(ctx, cmd.FlagID); err != nil {
-		return err
+		return apperrors.MapToServiceError(err)
 	}
 
 	// Validate operators.
 	for _, c := range cmd.Conditions {
 		if !domain.IsValidOperator(c.Operator) {
-			return fmt.Errorf("%w: %s", domain.ErrInvalidOperator, c.Operator)
+			return apperrors.MapToServiceError(fmt.Errorf("%w: %s", domain.ErrInvalidOperator, c.Operator))
 		}
 	}
 
@@ -75,12 +76,12 @@ func (h *CreateRuleGroupHandler) Handle(ctx context.Context, cmd CreateRuleGroup
 	}
 
 	if err := h.rgRepo.Save(ctx, rg); err != nil {
-		h.logger.Errorf("failed to save rule group: %v", err)
-		return err
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateRuleGroup", Entity: "rule_group", EntityID: cmd.FlagID, Err: err}.KV()...)
+		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, domain.NewFlagUpdated(cmd.FlagID)); err != nil {
-		h.logger.Errorf("failed to publish events: %v", err)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "CreateRuleGroup", Entity: "rule_group", Err: err}.KV()...)
 	}
 
 	return nil

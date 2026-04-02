@@ -97,8 +97,8 @@ func setupRouter(repo *mockRepo, readRepo *mockReadRepo) *gin.Engine {
 	bc := &usersetting.BoundedContext{
 		UpsertUserSetting: command.NewUpsertUserSettingHandler(repo, eb, l),
 		DeleteUserSetting: command.NewDeleteUserSettingHandler(repo, l),
-		GetUserSetting:    query.NewGetUserSettingHandler(readRepo),
-		ListUserSettings:  query.NewListUserSettingsHandler(readRepo),
+		GetUserSetting:    query.NewGetUserSettingHandler(readRepo, l),
+		ListUserSettings:  query.NewListUserSettingsHandler(readRepo, l),
 	}
 
 	r := gin.New()

@@ -3,6 +3,9 @@ package query
 import (
 	"context"
 
+	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/logger"
+
 	"gct/internal/shared/infrastructure/pgxutil"
 	appdto "gct/internal/sitesetting/application"
 	"gct/internal/sitesetting/domain"
@@ -18,11 +21,12 @@ type GetSiteSettingQuery struct {
 // GetSiteSettingHandler handles the GetSiteSettingQuery.
 type GetSiteSettingHandler struct {
 	readRepo domain.SiteSettingReadRepository
+	logger   logger.Log
 }
 
 // NewGetSiteSettingHandler creates a new GetSiteSettingHandler.
-func NewGetSiteSettingHandler(readRepo domain.SiteSettingReadRepository) *GetSiteSettingHandler {
-	return &GetSiteSettingHandler{readRepo: readRepo}
+func NewGetSiteSettingHandler(readRepo domain.SiteSettingReadRepository, l logger.Log) *GetSiteSettingHandler {
+	return &GetSiteSettingHandler{readRepo: readRepo, logger: l}
 }
 
 // Handle executes the GetSiteSettingQuery and returns a SiteSettingView.
@@ -32,7 +36,8 @@ func (h *GetSiteSettingHandler) Handle(ctx context.Context, q GetSiteSettingQuer
 
 	v, err := h.readRepo.FindByID(ctx, q.ID)
 	if err != nil {
-		return nil, err
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetSiteSetting", Entity: "site_setting", EntityID: q.ID, Err: err}.KV()...)
+		return nil, apperrors.MapToServiceError(err)
 	}
 
 	return &appdto.SiteSettingView{

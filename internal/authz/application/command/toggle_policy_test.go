@@ -2,6 +2,7 @@ package command
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -94,7 +95,7 @@ func TestTogglePolicyHandler_NotFound(t *testing.T) {
 	cmd := TogglePolicyCommand{ID: uuid.New()}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != domain.ErrPolicyNotFound {
+	if !errors.Is(err, domain.ErrPolicyNotFound) {
 		t.Fatalf("expected ErrPolicyNotFound, got: %v", err)
 	}
 

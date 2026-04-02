@@ -1,6 +1,7 @@
 package query
 
 import (
+	"gct/internal/shared/infrastructure/logger"
 	"context"
 	"testing"
 	"time"
@@ -19,7 +20,7 @@ func TestListHandler_Handle(t *testing.T) {
 		total: 2,
 	}
 
-	handler := NewListHandler(readRepo)
+	handler := NewListHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListQuery{
 		Filter: domain.IntegrationFilter{Limit: 10, Offset: 0},
 	})
@@ -40,7 +41,7 @@ func TestListHandler_Handle(t *testing.T) {
 func TestListHandler_Empty(t *testing.T) {
 	readRepo := &mockReadRepo{views: []*domain.IntegrationView{}, total: 0}
 
-	handler := NewListHandler(readRepo)
+	handler := NewListHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListQuery{
 		Filter: domain.IntegrationFilter{},
 	})
@@ -65,7 +66,7 @@ func TestListHandler_WithFilters(t *testing.T) {
 		total: 1,
 	}
 
-	handler := NewListHandler(readRepo)
+	handler := NewListHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListQuery{
 		Filter: domain.IntegrationFilter{Type: &intType, Enabled: &enabled, Limit: 10},
 	})
@@ -79,7 +80,7 @@ func TestListHandler_WithFilters(t *testing.T) {
 
 func TestListHandler_RepoError(t *testing.T) {
 	readRepo := &errorReadRepo{err: errRepo}
-	handler := NewListHandler(readRepo)
+	handler := NewListHandler(readRepo, logger.Noop())
 	_, err := handler.Handle(context.Background(), ListQuery{Filter: domain.IntegrationFilter{}})
 	if err == nil {
 		t.Fatal("expected error from repo")

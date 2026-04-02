@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"gct/internal/authz/domain"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 
@@ -43,14 +44,14 @@ func (h *TogglePolicyHandler) Handle(ctx context.Context, cmd TogglePolicyComman
 
 	policy, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {
-		return err
+		return apperrors.MapToServiceError(err)
 	}
 
 	policy.Toggle()
 
 	if err := h.repo.Update(ctx, policy); err != nil {
-		h.logger.Errorf("failed to toggle policy: %v", err)
-		return err
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "TogglePolicy", Entity: "policy", EntityID: cmd.ID, Err: err}.KV()...)
+		return apperrors.MapToServiceError(err)
 	}
 
 	return nil

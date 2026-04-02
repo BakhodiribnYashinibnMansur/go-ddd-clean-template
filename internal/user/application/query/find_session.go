@@ -4,6 +4,7 @@ import (
 	"context"
 
 	shared "gct/internal/shared/domain"
+	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/user/domain"
 
@@ -18,11 +19,12 @@ type FindSessionQuery struct {
 // FindSessionHandler handles the FindSessionQuery.
 type FindSessionHandler struct {
 	readRepo domain.UserReadRepository
+	logger   logger.Log
 }
 
 // NewFindSessionHandler creates a new FindSessionHandler.
-func NewFindSessionHandler(readRepo domain.UserReadRepository) *FindSessionHandler {
-	return &FindSessionHandler{readRepo: readRepo}
+func NewFindSessionHandler(readRepo domain.UserReadRepository, l logger.Log) *FindSessionHandler {
+	return &FindSessionHandler{readRepo: readRepo, logger: l}
 }
 
 // Handle executes the FindSessionQuery and returns an AuthSession.

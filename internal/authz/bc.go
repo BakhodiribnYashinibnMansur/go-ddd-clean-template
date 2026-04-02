@@ -79,11 +79,11 @@ func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, l logg
 		AssignScope:      command.NewAssignScopeHandler(permScopeRepo, l),
 
 		// Queries
-		GetRole:         query.NewGetRoleHandler(readRepo),
-		ListRoles:       query.NewListRolesHandler(readRepo),
-		ListPermissions: query.NewListPermissionsHandler(readRepo),
-		ListPolicies:    query.NewListPoliciesHandler(readRepo),
-		ListScopes:      query.NewListScopesHandler(readRepo),
+		GetRole:         query.NewGetRoleHandler(readRepo, l),
+		ListRoles:       query.NewListRolesHandler(readRepo, l),
+		ListPermissions: query.NewListPermissionsHandler(readRepo, l),
+		ListPolicies:    query.NewListPoliciesHandler(readRepo, l),
+		ListScopes:      query.NewListScopesHandler(readRepo, l),
 		CheckAccess:     query.NewCheckAccessHandler(readRepo, l),
 	}
 }

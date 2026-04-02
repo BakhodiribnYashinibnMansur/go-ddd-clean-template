@@ -31,7 +31,7 @@ func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, l logg
 		CreateRateLimit: command.NewCreateRateLimitHandler(writeRepo, eventBus, l),
 		UpdateRateLimit: command.NewUpdateRateLimitHandler(writeRepo, eventBus, l),
 		DeleteRateLimit: command.NewDeleteRateLimitHandler(writeRepo, l),
-		GetRateLimit:    query.NewGetRateLimitHandler(readRepo),
-		ListRateLimits:  query.NewListRateLimitsHandler(readRepo),
+		GetRateLimit:    query.NewGetRateLimitHandler(readRepo, l),
+		ListRateLimits:  query.NewListRateLimitsHandler(readRepo, l),
 	}
 }

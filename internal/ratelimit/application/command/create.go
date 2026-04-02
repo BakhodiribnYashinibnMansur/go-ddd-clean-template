@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/ratelimit/domain"
 	"gct/internal/shared/application"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 )
@@ -46,12 +47,12 @@ func (h *CreateRateLimitHandler) Handle(ctx context.Context, cmd CreateRateLimit
 	rl := domain.NewRateLimit(cmd.Name, cmd.Rule, cmd.RequestsPerWindow, cmd.WindowDuration, cmd.Enabled)
 
 	if err := h.repo.Save(ctx, rl); err != nil {
-		h.logger.Errorf("failed to save rate limit: %v", err)
-		return err
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateRateLimit", Entity: "rate_limit", Err: err}.KV()...)
+		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, rl.Events()...); err != nil {
-		h.logger.Errorf("failed to publish events: %v", err)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "CreateRateLimit", Entity: "rate_limit", Err: err}.KV()...)
 	}
 
 	return nil

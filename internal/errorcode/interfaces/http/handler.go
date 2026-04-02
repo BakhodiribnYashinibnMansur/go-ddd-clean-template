@@ -47,7 +47,7 @@ func (h *Handler) Create(ctx *gin.Context) {
 		Suggestion: req.Suggestion,
 	}
 	if err := h.bc.CreateErrorCode.Handle(ctx.Request.Context(), cmd); err != nil {
-		response.RespondWithError(ctx, err, http.StatusInternalServerError)
+		response.HandleError(ctx, err)
 		return
 	}
 	ctx.JSON(http.StatusCreated, gin.H{"success": true})
@@ -63,7 +63,7 @@ func (h *Handler) List(ctx *gin.Context) {
 	}
 	result, err := h.bc.ListErrorCodes.Handle(ctx.Request.Context(), q)
 	if err != nil {
-		response.RespondWithError(ctx, err, http.StatusInternalServerError)
+		response.HandleError(ctx, err)
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"data": result.ErrorCodes, "total": result.Total})
@@ -78,7 +78,7 @@ func (h *Handler) Get(ctx *gin.Context) {
 	}
 	result, err := h.bc.GetErrorCode.Handle(ctx.Request.Context(), query.GetErrorCodeQuery{ID: id})
 	if err != nil {
-		response.RespondWithError(ctx, err, http.StatusInternalServerError)
+		response.HandleError(ctx, err)
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"data": result})
@@ -109,7 +109,7 @@ func (h *Handler) Update(ctx *gin.Context) {
 		Suggestion: req.Suggestion,
 	}
 	if err := h.bc.UpdateErrorCode.Handle(ctx.Request.Context(), cmd); err != nil {
-		response.RespondWithError(ctx, err, http.StatusInternalServerError)
+		response.HandleError(ctx, err)
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"success": true})
@@ -123,7 +123,7 @@ func (h *Handler) Delete(ctx *gin.Context) {
 		return
 	}
 	if err := h.bc.DeleteErrorCode.Handle(ctx.Request.Context(), command.DeleteErrorCodeCommand{ID: id}); err != nil {
-		response.RespondWithError(ctx, err, http.StatusInternalServerError)
+		response.HandleError(ctx, err)
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"success": true})

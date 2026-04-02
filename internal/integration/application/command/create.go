@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/integration/domain"
 	"gct/internal/shared/application"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 )
@@ -51,12 +52,12 @@ func (h *CreateHandler) Handle(ctx context.Context, cmd CreateCommand) (err erro
 	i := domain.NewIntegration(cmd.Name, cmd.Type, cmd.APIKey, cmd.WebhookURL, cmd.Enabled, cmd.Config)
 
 	if err := h.repo.Save(ctx, i); err != nil {
-		h.logger.Errorf("failed to save integration: %v", err)
-		return err
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateIntegration", Entity: "integration", Err: err}.KV()...)
+		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, i.Events()...); err != nil {
-		h.logger.Errorf("failed to publish events: %v", err)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "CreateIntegration", Entity: "integration", Err: err}.KV()...)
 	}
 
 	return nil

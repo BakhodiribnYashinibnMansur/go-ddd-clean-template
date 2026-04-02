@@ -1,6 +1,7 @@
 package query
 
 import (
+	"gct/internal/shared/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
@@ -39,7 +40,7 @@ func TestListDataExportsHandler_Success(t *testing.T) {
 		listTotal: 2,
 	}
 
-	handler := NewListDataExportsHandler(readRepo)
+	handler := NewListDataExportsHandler(readRepo, logger.Noop())
 
 	q := ListDataExportsQuery{
 		Filter: domain.DataExportFilter{},
@@ -77,7 +78,7 @@ func TestListDataExportsHandler_Empty(t *testing.T) {
 		listTotal: 0,
 	}
 
-	handler := NewListDataExportsHandler(readRepo)
+	handler := NewListDataExportsHandler(readRepo, logger.Noop())
 
 	q := ListDataExportsQuery{
 		Filter: domain.DataExportFilter{},
@@ -102,7 +103,7 @@ func TestListDataExportsHandler_RepoError(t *testing.T) {
 		listErr: errors.New("database unavailable"),
 	}
 
-	handler := NewListDataExportsHandler(readRepo)
+	handler := NewListDataExportsHandler(readRepo, logger.Noop())
 
 	q := ListDataExportsQuery{
 		Filter: domain.DataExportFilter{},

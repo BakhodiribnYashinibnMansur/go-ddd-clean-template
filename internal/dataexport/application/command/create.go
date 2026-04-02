@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/dataexport/domain"
 	"gct/internal/shared/application"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 
@@ -50,12 +51,12 @@ func (h *CreateDataExportHandler) Handle(ctx context.Context, cmd CreateDataExpo
 	de := domain.NewDataExport(cmd.UserID, cmd.DataType, cmd.Format)
 
 	if err := h.repo.Save(ctx, de); err != nil {
-		h.logger.Errorf("failed to save data export: %v", err)
-		return err
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateDataExport", Entity: "data_export", Err: err}.KV()...)
+		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, de.Events()...); err != nil {
-		h.logger.Errorf("failed to publish events: %v", err)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "CreateDataExport", Entity: "data_export", Err: err}.KV()...)
 	}
 
 	return nil

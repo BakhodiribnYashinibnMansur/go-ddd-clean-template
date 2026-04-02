@@ -1,6 +1,7 @@
 package query
 
 import (
+	"gct/internal/shared/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
@@ -36,7 +37,7 @@ func TestListPoliciesHandler_WithResults(t *testing.T) {
 		},
 	}
 
-	handler := NewListPoliciesHandler(repo)
+	handler := NewListPoliciesHandler(repo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListPoliciesQuery{
 		Pagination: shared.Pagination{Limit: 10, Offset: 0},
 	})
@@ -77,7 +78,7 @@ func TestListPoliciesHandler_Empty(t *testing.T) {
 		},
 	}
 
-	handler := NewListPoliciesHandler(repo)
+	handler := NewListPoliciesHandler(repo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListPoliciesQuery{
 		Pagination: shared.Pagination{Limit: 10, Offset: 0},
 	})
@@ -101,7 +102,7 @@ func TestListPoliciesHandler_RepoError(t *testing.T) {
 		},
 	}
 
-	handler := NewListPoliciesHandler(repo)
+	handler := NewListPoliciesHandler(repo, logger.Noop())
 	_, err := handler.Handle(context.Background(), ListPoliciesQuery{
 		Pagination: shared.Pagination{Limit: 10, Offset: 0},
 	})

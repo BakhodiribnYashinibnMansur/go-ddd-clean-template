@@ -2,6 +2,7 @@ package command
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -76,7 +77,7 @@ func TestUpdatePolicyHandler_NotFound(t *testing.T) {
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != domain.ErrPolicyNotFound {
+	if !errors.Is(err, domain.ErrPolicyNotFound) {
 		t.Fatalf("expected ErrPolicyNotFound, got: %v", err)
 	}
 

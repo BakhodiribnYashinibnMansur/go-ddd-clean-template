@@ -3,6 +3,9 @@ package query
 import (
 	"context"
 
+	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/logger"
+
 	appdto "gct/internal/usersetting/application"
 	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/usersetting/domain"
@@ -18,11 +21,12 @@ type GetUserSettingQuery struct {
 // GetUserSettingHandler handles the GetUserSettingQuery.
 type GetUserSettingHandler struct {
 	readRepo domain.UserSettingReadRepository
+	logger   logger.Log
 }
 
 // NewGetUserSettingHandler creates a new GetUserSettingHandler.
-func NewGetUserSettingHandler(readRepo domain.UserSettingReadRepository) *GetUserSettingHandler {
-	return &GetUserSettingHandler{readRepo: readRepo}
+func NewGetUserSettingHandler(readRepo domain.UserSettingReadRepository, l logger.Log) *GetUserSettingHandler {
+	return &GetUserSettingHandler{readRepo: readRepo, logger: l}
 }
 
 // Handle executes the GetUserSettingQuery and returns a UserSettingView.
@@ -32,7 +36,8 @@ func (h *GetUserSettingHandler) Handle(ctx context.Context, q GetUserSettingQuer
 
 	v, err := h.readRepo.FindByID(ctx, q.ID)
 	if err != nil {
-		return nil, err
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetUserSetting", Entity: "user_setting", EntityID: q.ID, Err: err}.KV()...)
+		return nil, apperrors.MapToServiceError(err)
 	}
 
 	return &appdto.UserSettingView{

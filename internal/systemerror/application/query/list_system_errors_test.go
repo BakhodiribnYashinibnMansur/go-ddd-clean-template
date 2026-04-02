@@ -1,6 +1,7 @@
 package query
 
 import (
+	"gct/internal/shared/infrastructure/logger"
 	"context"
 	"testing"
 	"time"
@@ -19,7 +20,7 @@ func TestListSystemErrorsHandler_Handle(t *testing.T) {
 		total: 2,
 	}
 
-	handler := NewListSystemErrorsHandler(readRepo)
+	handler := NewListSystemErrorsHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListSystemErrorsQuery{
 		Filter: domain.SystemErrorFilter{Limit: 10, Offset: 0},
 	})
@@ -40,7 +41,7 @@ func TestListSystemErrorsHandler_Handle(t *testing.T) {
 func TestListSystemErrorsHandler_Empty(t *testing.T) {
 	readRepo := &mockReadRepo{views: []*domain.SystemErrorView{}, total: 0}
 
-	handler := NewListSystemErrorsHandler(readRepo)
+	handler := NewListSystemErrorsHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListSystemErrorsQuery{
 		Filter: domain.SystemErrorFilter{},
 	})
@@ -63,7 +64,7 @@ func TestListSystemErrorsHandler_WithFilters(t *testing.T) {
 		total: 1,
 	}
 
-	handler := NewListSystemErrorsHandler(readRepo)
+	handler := NewListSystemErrorsHandler(readRepo, logger.Noop())
 	code := "ERR_500"
 	severity := "critical"
 	resolved := false
@@ -86,7 +87,7 @@ func TestListSystemErrorsHandler_WithFilters(t *testing.T) {
 
 func TestListSystemErrorsHandler_RepoError(t *testing.T) {
 	readRepo := &errorReadRepo{err: errRepo}
-	handler := NewListSystemErrorsHandler(readRepo)
+	handler := NewListSystemErrorsHandler(readRepo, logger.Noop())
 	_, err := handler.Handle(context.Background(), ListSystemErrorsQuery{Filter: domain.SystemErrorFilter{}})
 	if err == nil {
 		t.Fatal("expected error from repo")

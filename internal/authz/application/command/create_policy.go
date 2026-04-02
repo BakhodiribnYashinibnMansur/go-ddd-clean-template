@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"gct/internal/authz/domain"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 
@@ -50,8 +51,8 @@ func (h *CreatePolicyHandler) Handle(ctx context.Context, cmd CreatePolicyComman
 	}
 
 	if err := h.repo.Save(ctx, policy); err != nil {
-		h.logger.Errorf("failed to save policy: %v", err)
-		return err
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreatePolicy", Entity: "policy", Err: err}.KV()...)
+		return apperrors.MapToServiceError(err)
 	}
 
 	return nil

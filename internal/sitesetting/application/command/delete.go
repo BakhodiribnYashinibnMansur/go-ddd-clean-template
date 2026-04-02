@@ -3,6 +3,7 @@ package command
 import (
 	"context"
 
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/sitesetting/domain"
@@ -41,8 +42,8 @@ func (h *DeleteSiteSettingHandler) Handle(ctx context.Context, cmd DeleteSiteSet
 	defer func() { end(err) }()
 
 	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
-		h.logger.Errorf("failed to delete site setting: %v", err)
-		return err
+		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteSiteSetting", Entity: "site_setting", EntityID: cmd.ID, Err: err}.KV()...)
+		return apperrors.MapToServiceError(err)
 	}
 	return nil
 }

@@ -84,7 +84,7 @@ func setupRouter(repo *mockRepo, readRepo *mockReadRepo) *gin.Engine {
 
 	bc := &metric.BoundedContext{
 		RecordMetric: command.NewRecordMetricHandler(repo, eb, l),
-		ListMetrics:  query.NewListMetricsHandler(readRepo),
+		ListMetrics:  query.NewListMetricsHandler(readRepo, l),
 	}
 
 	r := gin.New()

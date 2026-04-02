@@ -29,7 +29,7 @@ func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, l logg
 	return &BoundedContext{
 		UpsertUserSetting: command.NewUpsertUserSettingHandler(writeRepo, eventBus, l),
 		DeleteUserSetting: command.NewDeleteUserSettingHandler(writeRepo, l),
-		GetUserSetting:    query.NewGetUserSettingHandler(readRepo),
-		ListUserSettings:  query.NewListUserSettingsHandler(readRepo),
+		GetUserSetting:    query.NewGetUserSettingHandler(readRepo, l),
+		ListUserSettings:  query.NewListUserSettingsHandler(readRepo, l),
 	}
 }

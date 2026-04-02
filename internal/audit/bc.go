@@ -30,7 +30,7 @@ func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, l logg
 	return &BoundedContext{
 		CreateAuditLog:        command.NewCreateAuditLogHandler(auditWriteRepo, eventBus, l),
 		CreateEndpointHistory: command.NewCreateEndpointHistoryHandler(endpointWriteRepo, l),
-		ListAuditLogs:         query.NewListAuditLogsHandler(readRepo),
-		ListEndpointHistory:   query.NewListEndpointHistoryHandler(readRepo),
+		ListAuditLogs:         query.NewListAuditLogsHandler(readRepo, l),
+		ListEndpointHistory:   query.NewListEndpointHistoryHandler(readRepo, l),
 	}
 }

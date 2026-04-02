@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"gct/internal/shared/application"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/user/domain"
@@ -46,19 +47,19 @@ func (h *DeleteUserHandler) Handle(ctx context.Context, cmd DeleteUserCommand) (
 
 	user, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {
-		return err
+		return apperrors.MapToServiceError(err)
 	}
 
 	user.Deactivate()
 	user.SoftDelete()
 
 	if err := h.repo.Update(ctx, user); err != nil {
-		h.logger.Errorf("failed to delete user: %v", err)
-		return err
+		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "DeleteUser", Entity: "user", EntityID: cmd.ID, Err: err}.KV()...)
+		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, user.Events()...); err != nil {
-		h.logger.Errorf("failed to publish events: %v", err)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "DeleteUser", Entity: "user", EntityID: cmd.ID, Err: err}.KV()...)
 	}
 
 	return nil

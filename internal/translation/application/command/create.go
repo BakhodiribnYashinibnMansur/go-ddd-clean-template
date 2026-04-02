@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"gct/internal/shared/application"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/translation/domain"
@@ -48,12 +49,12 @@ func (h *CreateTranslationHandler) Handle(ctx context.Context, cmd CreateTransla
 	t := domain.NewTranslation(cmd.Key, cmd.Language, cmd.Value, cmd.Group)
 
 	if err := h.repo.Save(ctx, t); err != nil {
-		h.logger.Errorf("failed to save translation: %v", err)
-		return err
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateTranslation", Entity: "translation", Err: err}.KV()...)
+		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, t.Events()...); err != nil {
-		h.logger.Errorf("failed to publish events: %v", err)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "CreateTranslation", Entity: "translation", Err: err}.KV()...)
 	}
 
 	return nil

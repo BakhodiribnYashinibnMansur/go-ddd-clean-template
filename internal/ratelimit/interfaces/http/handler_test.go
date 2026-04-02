@@ -110,8 +110,8 @@ func setupRouter(repo *mockRepo, readRepo *mockReadRepo) *gin.Engine {
 		CreateRateLimit: command.NewCreateRateLimitHandler(repo, eb, l),
 		UpdateRateLimit: command.NewUpdateRateLimitHandler(repo, eb, l),
 		DeleteRateLimit: command.NewDeleteRateLimitHandler(repo, l),
-		GetRateLimit:    query.NewGetRateLimitHandler(readRepo),
-		ListRateLimits:  query.NewListRateLimitsHandler(readRepo),
+		GetRateLimit:    query.NewGetRateLimitHandler(readRepo, l),
+		ListRateLimits:  query.NewListRateLimitsHandler(readRepo, l),
 	}
 
 	r := gin.New()

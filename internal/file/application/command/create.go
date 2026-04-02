@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/file/domain"
 	"gct/internal/shared/application"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 
@@ -55,12 +56,12 @@ func (h *CreateFileHandler) Handle(ctx context.Context, cmd CreateFileCommand) (
 	f := domain.NewFile(cmd.Name, cmd.OriginalName, cmd.MimeType, cmd.Size, cmd.Path, cmd.URL, cmd.UploadedBy)
 
 	if err := h.repo.Save(ctx, f); err != nil {
-		h.logger.Errorf("failed to save file: %v", err)
-		return err
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateFile", Entity: "file", Err: err}.KV()...)
+		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, f.Events()...); err != nil {
-		h.logger.Errorf("failed to publish events: %v", err)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "CreateFile", Entity: "file", Err: err}.KV()...)
 	}
 
 	return nil

@@ -5,6 +5,7 @@ import (
 
 	"gct/internal/ratelimit/domain"
 	"gct/internal/shared/application"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 
@@ -48,18 +49,18 @@ func (h *UpdateRateLimitHandler) Handle(ctx context.Context, cmd UpdateRateLimit
 
 	rl, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {
-		return err
+		return apperrors.MapToServiceError(err)
 	}
 
 	rl.Update(cmd.Name, cmd.Rule, cmd.RequestsPerWindow, cmd.WindowDuration, cmd.Enabled)
 
 	if err := h.repo.Update(ctx, rl); err != nil {
-		h.logger.Errorf("failed to update rate limit: %v", err)
-		return err
+		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "UpdateRateLimit", Entity: "rate_limit", EntityID: cmd.ID, Err: err}.KV()...)
+		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, rl.Events()...); err != nil {
-		h.logger.Errorf("failed to publish events: %v", err)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "UpdateRateLimit", Entity: "rate_limit", EntityID: cmd.ID, Err: err}.KV()...)
 	}
 
 	return nil

@@ -7,6 +7,7 @@ import (
 	"gct/internal/announcement/domain"
 	"gct/internal/shared/application"
 	shared "gct/internal/shared/domain"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 
@@ -55,7 +56,7 @@ func (h *UpdateAnnouncementHandler) Handle(ctx context.Context, cmd UpdateAnnoun
 
 	a, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {
-		return err
+		return apperrors.MapToServiceError(err)
 	}
 
 	a.Update(cmd.Title, cmd.Content, cmd.Priority, cmd.StartDate, cmd.EndDate)
@@ -65,12 +66,12 @@ func (h *UpdateAnnouncementHandler) Handle(ctx context.Context, cmd UpdateAnnoun
 	}
 
 	if err := h.repo.Update(ctx, a); err != nil {
-		h.logger.Errorf("failed to update announcement: %v", err)
-		return err
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "UpdateAnnouncement", Entity: "announcement", EntityID: cmd.ID, Err: err}.KV()...)
+		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, a.Events()...); err != nil {
-		h.logger.Errorf("failed to publish events: %v", err)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "UpdateAnnouncement", Entity: "announcement", Err: err}.KV()...)
 	}
 
 	return nil

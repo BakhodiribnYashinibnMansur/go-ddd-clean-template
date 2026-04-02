@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"gct/internal/shared/application"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 	jwtpkg "gct/internal/shared/infrastructure/security/jwt"
@@ -75,14 +76,14 @@ func (h *SignInHandler) Handle(ctx context.Context, cmd SignInCommand) (result *
 	// Find user by phone or email based on login format.
 	user, err := h.findUser(ctx, cmd.Login)
 	if err != nil {
-		return nil, err
+		return nil, apperrors.MapToServiceError(err)
 	}
 
 	deviceType := domain.SessionDeviceType(strings.ToUpper(cmd.DeviceType))
 
 	session, err := h.signIn.SignIn(user, cmd.Password, deviceType, cmd.IP, cmd.UserAgent)
 	if err != nil {
-		return nil, err
+		return nil, apperrors.MapToServiceError(err)
 	}
 
 	// Generate refresh token and store its hash on the session before persisting.
@@ -93,19 +94,19 @@ func (h *SignInHandler) Handle(ctx context.Context, cmd SignInCommand) (result *
 		h.jwtConfig.RefreshTTL,
 	)
 	if err != nil {
-		h.logger.Errorf("failed to generate refresh token: %v", err)
-		return nil, err
+		h.logger.Errorc(ctx, "refresh token generation failed", logger.F{Op: "SignIn", Entity: "user", Err: err}.KV()...)
+		return nil, apperrors.MapToServiceError(err)
 	}
 	session.SetRefreshTokenHash(refToken.Hashed)
 
 	// Persist user (with the updated session containing the refresh token hash).
 	if err := h.repo.Update(ctx, user); err != nil {
-		h.logger.Errorf("failed to save user after sign-in: %v", err)
-		return nil, err
+		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "SignIn", Entity: "user", Err: err}.KV()...)
+		return nil, apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, user.Events()...); err != nil {
-		h.logger.Errorf("failed to publish sign-in events: %v", err)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "SignIn", Entity: "user", Err: err}.KV()...)
 	}
 
 	// Generate access token (signed JWT).
@@ -118,8 +119,8 @@ func (h *SignInHandler) Handle(ctx context.Context, cmd SignInCommand) (result *
 		h.jwtConfig.AccessTTL,
 	)
 	if err != nil {
-		h.logger.Errorf("failed to generate access token: %v", err)
-		return nil, err
+		h.logger.Errorc(ctx, "access token generation failed", logger.F{Op: "SignIn", Entity: "user", Err: err}.KV()...)
+		return nil, apperrors.MapToServiceError(err)
 	}
 
 	result = &SignInResult{
@@ -133,18 +134,33 @@ func (h *SignInHandler) Handle(ctx context.Context, cmd SignInCommand) (result *
 }
 
 // findUser looks up a user by phone or email depending on the login format.
+// Returns ErrServiceUnauthorized when user is not found (sign-in should not reveal user existence).
 func (h *SignInHandler) findUser(ctx context.Context, login string) (*domain.User, error) {
 	if strings.Contains(login, "@") {
 		email, err := domain.NewEmail(login)
 		if err != nil {
-			return nil, err
+			return nil, apperrors.MapToServiceError(err)
 		}
-		return h.repo.FindByEmail(ctx, email)
+		user, err := h.repo.FindByEmail(ctx, email)
+		if err != nil {
+			if apperrors.Is(err, apperrors.ErrRepoNotFound) {
+				return nil, apperrors.NewServiceError(apperrors.ErrServiceUnauthorized, "")
+			}
+			return nil, apperrors.MapToServiceError(err)
+		}
+		return user, nil
 	}
 
 	phone, err := domain.NewPhone(login)
 	if err != nil {
-		return nil, err
+		return nil, apperrors.MapToServiceError(err)
 	}
-	return h.repo.FindByPhone(ctx, phone)
+	user, err := h.repo.FindByPhone(ctx, phone)
+	if err != nil {
+		if apperrors.Is(err, apperrors.ErrRepoNotFound) {
+			return nil, apperrors.NewServiceError(apperrors.ErrServiceUnauthorized, "")
+		}
+		return nil, apperrors.MapToServiceError(err)
+	}
+	return user, nil
 }

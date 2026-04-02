@@ -3,6 +3,9 @@ package query
 import (
 	"context"
 
+	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/logger"
+
 	appdto "gct/internal/metric/application"
 	"gct/internal/metric/domain"
 	"gct/internal/shared/infrastructure/pgxutil"
@@ -22,11 +25,12 @@ type ListMetricsResult struct {
 // ListMetricsHandler handles the ListMetricsQuery.
 type ListMetricsHandler struct {
 	readRepo domain.MetricReadRepository
+	logger   logger.Log
 }
 
 // NewListMetricsHandler creates a new ListMetricsHandler.
-func NewListMetricsHandler(readRepo domain.MetricReadRepository) *ListMetricsHandler {
-	return &ListMetricsHandler{readRepo: readRepo}
+func NewListMetricsHandler(readRepo domain.MetricReadRepository, l logger.Log) *ListMetricsHandler {
+	return &ListMetricsHandler{readRepo: readRepo, logger: l}
 }
 
 // Handle executes the ListMetricsQuery and returns a list of MetricView with total count.
@@ -36,7 +40,8 @@ func (h *ListMetricsHandler) Handle(ctx context.Context, q ListMetricsQuery) (_ 
 
 	views, total, err := h.readRepo.List(ctx, q.Filter)
 	if err != nil {
-		return nil, err
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "ListMetrics", Entity: "metric", Err: err}.KV()...)
+		return nil, apperrors.MapToServiceError(err)
 	}
 
 	result := make([]*appdto.MetricView, len(views))

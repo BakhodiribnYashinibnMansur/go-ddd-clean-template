@@ -3,6 +3,9 @@ package query
 import (
 	"context"
 
+	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/logger"
+
 	appdto "gct/internal/file/application"
 	"gct/internal/file/domain"
 	"gct/internal/shared/infrastructure/pgxutil"
@@ -18,11 +21,12 @@ type GetFileQuery struct {
 // GetFileHandler handles the GetFileQuery.
 type GetFileHandler struct {
 	readRepo domain.FileReadRepository
+	logger   logger.Log
 }
 
 // NewGetFileHandler creates a new GetFileHandler.
-func NewGetFileHandler(readRepo domain.FileReadRepository) *GetFileHandler {
-	return &GetFileHandler{readRepo: readRepo}
+func NewGetFileHandler(readRepo domain.FileReadRepository, l logger.Log) *GetFileHandler {
+	return &GetFileHandler{readRepo: readRepo, logger: l}
 }
 
 // Handle executes the GetFileQuery and returns a FileView.
@@ -32,7 +36,8 @@ func (h *GetFileHandler) Handle(ctx context.Context, q GetFileQuery) (result *ap
 
 	v, err := h.readRepo.FindByID(ctx, q.ID)
 	if err != nil {
-		return nil, err
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetFile", Entity: "file", EntityID: q.ID, Err: err}.KV()...)
+		return nil, apperrors.MapToServiceError(err)
 	}
 
 	return &appdto.FileView{

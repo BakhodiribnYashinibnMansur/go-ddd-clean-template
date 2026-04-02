@@ -3,6 +3,8 @@ package query
 import (
 	"context"
 
+	apperrors "gct/internal/shared/infrastructure/errors"
+
 	appdto "gct/internal/integration/application"
 	"gct/internal/integration/domain"
 	"gct/internal/shared/infrastructure/logger"
@@ -17,6 +19,7 @@ type ValidateAPIKeyQuery struct {
 // ValidateAPIKeyHandler handles the ValidateAPIKeyQuery.
 type ValidateAPIKeyHandler struct {
 	readRepo domain.IntegrationReadRepository
+	logger   logger.Log
 	l        logger.Log
 }
 
@@ -33,7 +36,7 @@ func (h *ValidateAPIKeyHandler) Handle(ctx context.Context, q ValidateAPIKeyQuer
 	view, err := h.readRepo.FindByAPIKey(ctx, q.APIKey)
 	if err != nil {
 		h.l.Warnw("api key validation failed", "error", err)
-		return nil, err
+		return nil, apperrors.MapToServiceError(err)
 	}
 
 	if !view.Active {

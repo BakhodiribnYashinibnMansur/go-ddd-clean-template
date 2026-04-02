@@ -29,7 +29,7 @@ func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, l logg
 	return &BoundedContext{
 		CreateSystemError: command.NewCreateSystemErrorHandler(writeRepo, eventBus, l),
 		ResolveError:      command.NewResolveErrorHandler(writeRepo, eventBus, l),
-		GetSystemError:    query.NewGetSystemErrorHandler(readRepo),
-		ListSystemErrors:  query.NewListSystemErrorsHandler(readRepo),
+		GetSystemError:    query.NewGetSystemErrorHandler(readRepo, l),
+		ListSystemErrors:  query.NewListSystemErrorsHandler(readRepo, l),
 	}
 }

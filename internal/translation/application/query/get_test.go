@@ -1,6 +1,7 @@
 package query
 
 import (
+	"gct/internal/shared/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
@@ -59,7 +60,7 @@ func TestGetTranslationHandler_Handle(t *testing.T) {
 		},
 	}
 
-	handler := NewGetTranslationHandler(readRepo)
+	handler := NewGetTranslationHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), GetTranslationQuery{ID: id})
 	if err != nil {
 		t.Fatalf("expected no error, got: %v", err)
@@ -83,7 +84,7 @@ func TestGetTranslationHandler_Handle(t *testing.T) {
 
 func TestGetTranslationHandler_NotFound(t *testing.T) {
 	readRepo := &mockReadRepo{}
-	handler := NewGetTranslationHandler(readRepo)
+	handler := NewGetTranslationHandler(readRepo, logger.Noop())
 	_, err := handler.Handle(context.Background(), GetTranslationQuery{ID: uuid.New()})
 	if err == nil {
 		t.Fatal("expected error for not found")
@@ -92,7 +93,7 @@ func TestGetTranslationHandler_NotFound(t *testing.T) {
 
 func TestGetTranslationHandler_RepoError(t *testing.T) {
 	readRepo := &errorReadRepo{err: errRepo}
-	handler := NewGetTranslationHandler(readRepo)
+	handler := NewGetTranslationHandler(readRepo, logger.Noop())
 	_, err := handler.Handle(context.Background(), GetTranslationQuery{ID: uuid.New()})
 	if err == nil {
 		t.Fatal("expected error from repo")
@@ -115,7 +116,7 @@ func TestGetTranslationHandler_AllFieldsMapped(t *testing.T) {
 		},
 	}
 
-	handler := NewGetTranslationHandler(readRepo)
+	handler := NewGetTranslationHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), GetTranslationQuery{ID: id})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)

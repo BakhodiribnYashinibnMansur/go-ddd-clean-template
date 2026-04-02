@@ -1,6 +1,7 @@
 package query
 
 import (
+	"gct/internal/shared/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
@@ -86,7 +87,7 @@ func TestGetUserHandler_Handle(t *testing.T) {
 		},
 	}
 
-	handler := NewGetUserHandler(readRepo)
+	handler := NewGetUserHandler(readRepo, logger.Noop())
 
 	q := GetUserQuery{ID: userID}
 	result, err := handler.Handle(context.Background(), q)
@@ -122,7 +123,7 @@ func TestGetUserHandler_Handle(t *testing.T) {
 func TestGetUserHandler_NotFound(t *testing.T) {
 	readRepo := &mockUserReadRepository{}
 
-	handler := NewGetUserHandler(readRepo)
+	handler := NewGetUserHandler(readRepo, logger.Noop())
 
 	q := GetUserQuery{ID: uuid.New()}
 	_, err := handler.Handle(context.Background(), q)
@@ -151,7 +152,7 @@ func TestGetUserHandler_AllFieldsMapped(t *testing.T) {
 		},
 	}
 
-	handler := NewGetUserHandler(readRepo)
+	handler := NewGetUserHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), GetUserQuery{ID: userID})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -179,7 +180,7 @@ func TestGetUserHandler_NilOptionalFields(t *testing.T) {
 		},
 	}
 
-	handler := NewGetUserHandler(readRepo)
+	handler := NewGetUserHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), GetUserQuery{ID: userID})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -202,7 +203,7 @@ func TestGetUserHandler_NilOptionalFields(t *testing.T) {
 func TestGetUserHandler_RepoError(t *testing.T) {
 	readRepo := &errorReadRepo{err: errRepoFailure}
 
-	handler := NewGetUserHandler(readRepo)
+	handler := NewGetUserHandler(readRepo, logger.Noop())
 	_, err := handler.Handle(context.Background(), GetUserQuery{ID: uuid.New()})
 	if err == nil {
 		t.Fatal("expected error from repo")

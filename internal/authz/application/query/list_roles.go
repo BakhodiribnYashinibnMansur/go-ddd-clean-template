@@ -3,6 +3,9 @@ package query
 import (
 	"context"
 
+	apperrors "gct/internal/shared/infrastructure/errors"
+	"gct/internal/shared/infrastructure/logger"
+
 	appdto "gct/internal/authz/application"
 	"gct/internal/authz/domain"
 	shared "gct/internal/shared/domain"
@@ -23,11 +26,12 @@ type ListRolesResult struct {
 // ListRolesHandler handles the ListRolesQuery.
 type ListRolesHandler struct {
 	readRepo domain.AuthzReadRepository
+	logger   logger.Log
 }
 
 // NewListRolesHandler creates a new ListRolesHandler.
-func NewListRolesHandler(readRepo domain.AuthzReadRepository) *ListRolesHandler {
-	return &ListRolesHandler{readRepo: readRepo}
+func NewListRolesHandler(readRepo domain.AuthzReadRepository, l logger.Log) *ListRolesHandler {
+	return &ListRolesHandler{readRepo: readRepo, logger: l}
 }
 
 // Handle executes the ListRolesQuery and returns a list of RoleView.
@@ -37,7 +41,8 @@ func (h *ListRolesHandler) Handle(ctx context.Context, q ListRolesQuery) (_ *Lis
 
 	views, total, err := h.readRepo.ListRoles(ctx, q.Pagination)
 	if err != nil {
-		return nil, err
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "ListRoles", Entity: "access", Err: err}.KV()...)
+		return nil, apperrors.MapToServiceError(err)
 	}
 
 	result := make([]*appdto.RoleView, len(views))

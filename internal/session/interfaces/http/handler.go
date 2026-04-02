@@ -9,6 +9,8 @@ import (
 	appdto "gct/internal/session/application"
 	"gct/internal/session/application/query"
 	"gct/internal/shared/domain/consts"
+	"gct/internal/shared/infrastructure/httpx"
+	"gct/internal/shared/infrastructure/httpx/response"
 	"gct/internal/shared/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
@@ -51,7 +53,7 @@ func (h *Handler) List(ctx *gin.Context) {
 	if userIDStr := ctx.Query("user_id"); userIDStr != "" {
 		uid, err := uuid.Parse(userIDStr)
 		if err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid user_id"})
+			response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 			return
 		}
 		filter.UserID = &uid
@@ -61,7 +63,7 @@ func (h *Handler) List(ctx *gin.Context) {
 		Filter: filter,
 	})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 
@@ -75,13 +77,13 @@ func (h *Handler) List(ctx *gin.Context) {
 func (h *Handler) Get(ctx *gin.Context) {
 	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid session id"})
+		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
 
 	view, err := h.bc.GetSession.Handle(ctx.Request.Context(), query.GetSessionQuery{ID: id})
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 
@@ -91,29 +93,29 @@ func (h *Handler) Get(ctx *gin.Context) {
 // Delete handles DELETE /sessions/:id.
 func (h *Handler) Delete(ctx *gin.Context) {
 	if h.revoker == nil {
-		ctx.JSON(http.StatusNotImplemented, gin.H{"error": "not implemented"})
+		response.RespondWithError(ctx, httpx.ErrNotImplemented, http.StatusNotImplemented)
 		return
 	}
 
 	sessionID, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid session id"})
+		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
 
 	userIDStr, exists := ctx.Get(consts.CtxUserID)
 	if !exists {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "not authenticated"})
+		response.RespondWithError(ctx, httpx.ErrUnAuth, http.StatusUnauthorized)
 		return
 	}
 	userID, err := uuid.Parse(userIDStr.(string))
 	if err != nil {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "invalid user context"})
+		response.RespondWithError(ctx, httpx.ErrUserIdNotFound, http.StatusUnauthorized)
 		return
 	}
 
 	if err := h.revoker.RevokeSession(ctx.Request.Context(), userID, sessionID); err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 
@@ -123,23 +125,23 @@ func (h *Handler) Delete(ctx *gin.Context) {
 // RevokeAll handles POST /sessions/revoke-all.
 func (h *Handler) RevokeAll(ctx *gin.Context) {
 	if h.revoker == nil {
-		ctx.JSON(http.StatusNotImplemented, gin.H{"error": "not implemented"})
+		response.RespondWithError(ctx, httpx.ErrNotImplemented, http.StatusNotImplemented)
 		return
 	}
 
 	userIDStr, exists := ctx.Get(consts.CtxUserID)
 	if !exists {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "not authenticated"})
+		response.RespondWithError(ctx, httpx.ErrUnAuth, http.StatusUnauthorized)
 		return
 	}
 	userID, err := uuid.Parse(userIDStr.(string))
 	if err != nil {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "invalid user context"})
+		response.RespondWithError(ctx, httpx.ErrUserIdNotFound, http.StatusUnauthorized)
 		return
 	}
 
 	if err := h.revoker.RevokeAllSessions(ctx.Request.Context(), userID); err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.HandleError(ctx, err)
 		return
 	}
 

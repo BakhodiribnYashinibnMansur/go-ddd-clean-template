@@ -1,6 +1,7 @@
 package query
 
 import (
+	"gct/internal/shared/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
@@ -22,7 +23,7 @@ func TestValidateAPIKeyHandler_Success(t *testing.T) {
 			Active:        true,
 		},
 	}
-	l := &mockLogger{}
+	l := logger.Noop()
 
 	handler := NewValidateAPIKeyHandler(readRepo, l)
 
@@ -51,7 +52,7 @@ func TestValidateAPIKeyHandler_Success(t *testing.T) {
 
 func TestValidateAPIKeyHandler_KeyNotFound(t *testing.T) {
 	readRepo := &mockReadRepo{} // FindByAPIKey returns ErrIntegrationNotFound by default
-	l := &mockLogger{}
+	l := logger.Noop()
 
 	handler := NewValidateAPIKeyHandler(readRepo, l)
 
@@ -75,7 +76,7 @@ func TestValidateAPIKeyHandler_Inactive(t *testing.T) {
 			Active:        false,
 		},
 	}
-	l := &mockLogger{}
+	l := logger.Noop()
 
 	handler := NewValidateAPIKeyHandler(readRepo, l)
 
@@ -96,7 +97,7 @@ func TestValidateAPIKeyHandler_Inactive(t *testing.T) {
 func TestValidateAPIKeyHandler_RepoError(t *testing.T) {
 	repoErr := errors.New("database unavailable")
 	readRepo := &errorReadRepo{err: repoErr}
-	l := &mockLogger{}
+	l := logger.Noop()
 
 	handler := NewValidateAPIKeyHandler(readRepo, l)
 

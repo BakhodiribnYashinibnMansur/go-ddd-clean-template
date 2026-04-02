@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"gct/internal/shared/application"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/usersetting/domain"
@@ -55,12 +56,12 @@ func (h *UpsertUserSettingHandler) Handle(ctx context.Context, cmd UpsertUserSet
 	}
 
 	if err := h.repo.Upsert(ctx, us); err != nil {
-		h.logger.Errorf("failed to upsert user setting: %v", err)
-		return err
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateUserSetting", Entity: "user_setting", Err: err}.KV()...)
+		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, us.Events()...); err != nil {
-		h.logger.Errorf("failed to publish events: %v", err)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "CreateUserSetting", Entity: "user_setting", Err: err}.KV()...)
 	}
 
 	return nil

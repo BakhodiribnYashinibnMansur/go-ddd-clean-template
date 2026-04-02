@@ -3,6 +3,8 @@ package query
 import (
 	"context"
 
+	apperrors "gct/internal/shared/infrastructure/errors"
+
 	appdto "gct/internal/session/application"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
@@ -34,7 +36,7 @@ func (h *GetSessionHandler) Handle(ctx context.Context, q GetSessionQuery) (_ *a
 	view, err := h.repo.FindByID(ctx, q.ID)
 	if err != nil {
 		h.l.Errorc(ctx, "session.query.GetSession failed", "session_id", q.ID, "error", err)
-		return nil, err
+		return nil, apperrors.MapToServiceError(err)
 	}
 	return view, nil
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"gct/internal/shared/application"
+	apperrors "gct/internal/shared/infrastructure/errors"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/pgxutil"
 	"gct/internal/sitesetting/domain"
@@ -50,18 +51,18 @@ func (h *UpdateSiteSettingHandler) Handle(ctx context.Context, cmd UpdateSiteSet
 
 	s, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {
-		return err
+		return apperrors.MapToServiceError(err)
 	}
 
 	s.Update(cmd.Key, cmd.Value, cmd.Type, cmd.Description)
 
 	if err := h.repo.Update(ctx, s); err != nil {
-		h.logger.Errorf("failed to update site setting: %v", err)
-		return err
+		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "UpdateSiteSetting", Entity: "site_setting", EntityID: cmd.ID, Err: err}.KV()...)
+		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, s.Events()...); err != nil {
-		h.logger.Errorf("failed to publish events: %v", err)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "UpdateSiteSetting", Entity: "site_setting", EntityID: cmd.ID, Err: err}.KV()...)
 	}
 
 	return nil

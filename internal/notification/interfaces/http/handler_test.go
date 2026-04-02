@@ -98,8 +98,8 @@ func setupRouter(repo *mockRepo, readRepo *mockReadRepo) *gin.Engine {
 	bc := &notification.BoundedContext{
 		CreateNotification: command.NewCreateHandler(repo, eb, l),
 		DeleteNotification: command.NewDeleteHandler(repo, eb, l),
-		GetNotification:    query.NewGetHandler(readRepo),
-		ListNotifications:  query.NewListHandler(readRepo),
+		GetNotification:    query.NewGetHandler(readRepo, l),
+		ListNotifications:  query.NewListHandler(readRepo, l),
 	}
 
 	r := gin.New()

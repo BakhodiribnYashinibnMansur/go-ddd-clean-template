@@ -265,11 +265,11 @@ func newBC(
 		AssignScope:      command.NewAssignScopeHandler(permScopeRepo, l),
 
 		// Queries
-		GetRole:         query.NewGetRoleHandler(readRepo),
-		ListRoles:       query.NewListRolesHandler(readRepo),
-		ListPermissions: query.NewListPermissionsHandler(readRepo),
-		ListPolicies:    query.NewListPoliciesHandler(readRepo),
-		ListScopes:      query.NewListScopesHandler(readRepo),
+		GetRole:         query.NewGetRoleHandler(readRepo, l),
+		ListRoles:       query.NewListRolesHandler(readRepo, l),
+		ListPermissions: query.NewListPermissionsHandler(readRepo, l),
+		ListPolicies:    query.NewListPoliciesHandler(readRepo, l),
+		ListScopes:      query.NewListScopesHandler(readRepo, l),
 	}
 }
 
@@ -484,8 +484,8 @@ func TestHandler_GetRole_NotFound(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/api/v1/roles/"+uuid.New().String(), nil)
 	router.ServeHTTP(w, req)
 
-	if w.Code != http.StatusInternalServerError {
-		t.Fatalf("expected 500, got %d", w.Code)
+	if w.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d", w.Code)
 	}
 }
 
