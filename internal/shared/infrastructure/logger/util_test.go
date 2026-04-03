@@ -7,153 +7,243 @@ import (
 	"gct/internal/shared/infrastructure/contextx"
 )
 
-func TestWithFields_RequestID(t *testing.T) {
-	ctx := context.Background()
-	ctx = WithFields(ctx, map[string]any{
-		contextx.FieldRequestID: "req-123",
-	})
+func TestExtractFields(t *testing.T) {
+	t.Helper()
 
-	if got := contextx.GetRequestID(ctx); got != "req-123" {
-		t.Errorf("expected request ID 'req-123', got %q", got)
+	tests := []struct {
+		name       string
+		buildCtx   func() context.Context
+		wantKeys   []string
+		wantValues map[string]any
+	}{
+		{
+			name: "all context values set",
+			buildCtx: func() context.Context {
+				ctx := context.Background()
+				ctx = contextx.WithRequestID(ctx, "req-1")
+				ctx = contextx.WithSessionID(ctx, "sess-1")
+				ctx = contextx.WithUserID(ctx, "user-1")
+				ctx = contextx.WithUserRole(ctx, "admin")
+				ctx = contextx.WithIPAddress(ctx, "10.0.0.1")
+				ctx = contextx.WithUserAgent(ctx, "TestAgent/1.0")
+				ctx = contextx.WithAPIVersion(ctx, "v2")
+				return ctx
+			},
+			wantKeys: []string{
+				contextx.FieldRequestID, contextx.FieldSessionID,
+				contextx.FieldUserID, contextx.FieldUserRole,
+				contextx.FieldIPAddress, contextx.FieldUserAgent,
+				contextx.FieldAPIVersion,
+			},
+			wantValues: map[string]any{
+				contextx.FieldRequestID:  "req-1",
+				contextx.FieldSessionID:  "sess-1",
+				contextx.FieldUserID:     "user-1",
+				contextx.FieldUserRole:   "admin",
+				contextx.FieldIPAddress:  "10.0.0.1",
+				contextx.FieldUserAgent:  "TestAgent/1.0",
+				contextx.FieldAPIVersion: "v2",
+			},
+		},
+		{
+			name: "empty context",
+			buildCtx: func() context.Context {
+				return context.Background()
+			},
+			wantKeys:   nil,
+			wantValues: map[string]any{},
+		},
+		{
+			name: "partial context - only request_id and user_role",
+			buildCtx: func() context.Context {
+				ctx := context.Background()
+				ctx = contextx.WithRequestID(ctx, "req-partial")
+				ctx = contextx.WithUserRole(ctx, "viewer")
+				return ctx
+			},
+			wantKeys: []string{contextx.FieldRequestID, contextx.FieldUserRole},
+			wantValues: map[string]any{
+				contextx.FieldRequestID: "req-partial",
+				contextx.FieldUserRole:  "viewer",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Helper()
+
+			ctx := tt.buildCtx()
+			fields := extractFields(ctx)
+
+			if tt.wantKeys == nil {
+				if len(fields) != 0 {
+					t.Fatalf("expected empty fields, got %v", fields)
+				}
+				return
+			}
+
+			if len(fields) != len(tt.wantKeys) {
+				t.Fatalf("field count = %d, want %d; fields: %v", len(fields), len(tt.wantKeys), fields)
+			}
+
+			for _, key := range tt.wantKeys {
+				got, ok := fields[key]
+				if !ok {
+					t.Errorf("missing key %q", key)
+					continue
+				}
+				want := tt.wantValues[key]
+				if got != want {
+					t.Errorf("key %q: got %v, want %v", key, got, want)
+				}
+			}
+		})
 	}
 }
 
-func TestWithFields_SessionID(t *testing.T) {
-	ctx := context.Background()
-	ctx = WithFields(ctx, map[string]any{
-		contextx.FieldSessionID: "sess-456",
-	})
+func TestMergeFields(t *testing.T) {
+	t.Helper()
 
-	if got := contextx.GetSessionID(ctx); got != "sess-456" {
-		t.Errorf("expected session ID 'sess-456', got %q", got)
+	tests := []struct {
+		name          string
+		fields        map[string]any
+		keysAndValues []any
+		wantLen       int
+		checkMetaData bool
+	}{
+		{
+			name:          "empty fields map returns keysAndValues as-is",
+			fields:        map[string]any{},
+			keysAndValues: []any{"key1", "val1"},
+			wantLen:       2,
+			checkMetaData: false,
+		},
+		{
+			name:          "nil fields map returns keysAndValues as-is",
+			fields:        nil,
+			keysAndValues: []any{"key1", "val1"},
+			wantLen:       2,
+			checkMetaData: false,
+		},
+		{
+			name:          "non-empty fields appends meta_data",
+			fields:        map[string]any{"request_id": "req-1"},
+			keysAndValues: []any{"op", "test"},
+			wantLen:       3, // "op", "test", zap.Any("meta_data", ...) as single Field element
+			checkMetaData: false,
+		},
+		{
+			name:          "non-empty fields with empty keysAndValues",
+			fields:        map[string]any{"user_id": "u1"},
+			keysAndValues: nil,
+			wantLen:       1, // zap.Any("meta_data", ...) as single Field element
+			checkMetaData: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Helper()
+
+			got := mergeFields(tt.fields, tt.keysAndValues...)
+
+			if len(got) != tt.wantLen {
+				t.Fatalf("len = %d, want %d; got: %v", len(got), tt.wantLen, got)
+			}
+
+			if tt.checkMetaData {
+				metaKey, ok := got[len(got)-2].(string)
+				if !ok || metaKey != "meta_data" {
+					t.Errorf("expected 'meta_data' key, got %v", got[len(got)-2])
+				}
+			}
+		})
 	}
 }
 
-func TestWithFields_UserID(t *testing.T) {
-	ctx := context.Background()
-	ctx = WithFields(ctx, map[string]any{
-		contextx.FieldUserID: "user-789",
-	})
+func TestWithFields(t *testing.T) {
+	t.Helper()
 
-	if got := contextx.GetUserID(ctx); got != "user-789" {
-		t.Errorf("expected user ID 'user-789', got %v", got)
+	tests := []struct {
+		name   string
+		fields map[string]any
+		check  func(t *testing.T, ctx context.Context)
+	}{
+		{
+			name: "sets all supported field types",
+			fields: map[string]any{
+				contextx.FieldRequestID:  "req-wf",
+				contextx.FieldSessionID:  "sess-wf",
+				contextx.FieldUserID:     "uid-wf",
+				contextx.FieldUserRole:   "editor",
+				contextx.FieldIPAddress:  "192.168.1.1",
+				contextx.FieldUserAgent:  "Mozilla/5.0",
+				contextx.FieldAPIVersion: "v3",
+			},
+			check: func(t *testing.T, ctx context.Context) {
+				t.Helper()
+				utilAssertEqual(t, "request_id", contextx.GetRequestID(ctx), "req-wf")
+				utilAssertEqual(t, "session_id", contextx.GetSessionID(ctx), "sess-wf")
+				if contextx.GetUserID(ctx) != "uid-wf" {
+					t.Errorf("user_id: got %v, want %v", contextx.GetUserID(ctx), "uid-wf")
+				}
+				utilAssertEqual(t, "user_role", contextx.GetUserRole(ctx), "editor")
+				utilAssertEqual(t, "ip_address", contextx.GetIPAddress(ctx), "192.168.1.1")
+				utilAssertEqual(t, "user_agent", contextx.GetUserAgent(ctx), "Mozilla/5.0")
+				utilAssertEqual(t, "api_version", contextx.GetAPIVersion(ctx), "v3")
+			},
+		},
+		{
+			name: "ignores unknown keys",
+			fields: map[string]any{
+				"unknown_field":         "ignored",
+				"another_unknown":       123,
+				contextx.FieldRequestID: "req-ok",
+			},
+			check: func(t *testing.T, ctx context.Context) {
+				t.Helper()
+				utilAssertEqual(t, "request_id", contextx.GetRequestID(ctx), "req-ok")
+			},
+		},
+		{
+			name:   "empty fields map",
+			fields: map[string]any{},
+			check: func(t *testing.T, ctx context.Context) {
+				t.Helper()
+				if contextx.GetRequestID(ctx) != "" {
+					t.Error("expected empty request_id")
+				}
+			},
+		},
+		{
+			name: "wrong type for string field is ignored",
+			fields: map[string]any{
+				contextx.FieldRequestID: 12345,
+			},
+			check: func(t *testing.T, ctx context.Context) {
+				t.Helper()
+				if got := contextx.GetRequestID(ctx); got != "" {
+					t.Errorf("expected empty request_id for wrong type, got %q", got)
+				}
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Helper()
+
+			ctx := context.Background()
+			ctx = WithFields(ctx, tt.fields)
+			tt.check(t, ctx)
+		})
 	}
 }
 
-func TestWithFields_UserRole(t *testing.T) {
-	ctx := context.Background()
-	ctx = WithFields(ctx, map[string]any{
-		contextx.FieldUserRole: "admin",
-	})
-
-	if got := contextx.GetUserRole(ctx); got != "admin" {
-		t.Errorf("expected user role 'admin', got %q", got)
-	}
-}
-
-func TestWithFields_IPAddress(t *testing.T) {
-	ctx := context.Background()
-	ctx = WithFields(ctx, map[string]any{
-		contextx.FieldIPAddress: "192.168.1.1",
-	})
-
-	if got := contextx.GetIPAddress(ctx); got != "192.168.1.1" {
-		t.Errorf("expected IP '192.168.1.1', got %q", got)
-	}
-}
-
-func TestWithFields_UserAgent(t *testing.T) {
-	ctx := context.Background()
-	ctx = WithFields(ctx, map[string]any{
-		contextx.FieldUserAgent: "TestAgent/1.0",
-	})
-
-	if got := contextx.GetUserAgent(ctx); got != "TestAgent/1.0" {
-		t.Errorf("expected user agent 'TestAgent/1.0', got %q", got)
-	}
-}
-
-func TestWithFields_APIVersion(t *testing.T) {
-	ctx := context.Background()
-	ctx = WithFields(ctx, map[string]any{
-		contextx.FieldAPIVersion: "v2",
-	})
-
-	if got := contextx.GetAPIVersion(ctx); got != "v2" {
-		t.Errorf("expected API version 'v2', got %q", got)
-	}
-}
-
-func TestWithFields_MultipleFields(t *testing.T) {
-	ctx := context.Background()
-	ctx = WithFields(ctx, map[string]any{
-		contextx.FieldRequestID: "req-1",
-		contextx.FieldSessionID: "sess-2",
-		contextx.FieldUserRole:  "editor",
-	})
-
-	if got := contextx.GetRequestID(ctx); got != "req-1" {
-		t.Errorf("expected request ID 'req-1', got %q", got)
-	}
-	if got := contextx.GetSessionID(ctx); got != "sess-2" {
-		t.Errorf("expected session ID 'sess-2', got %q", got)
-	}
-	if got := contextx.GetUserRole(ctx); got != "editor" {
-		t.Errorf("expected user role 'editor', got %q", got)
-	}
-}
-
-func TestWithFields_IgnoresWrongType(t *testing.T) {
-	ctx := context.Background()
-	// Pass an int instead of string for RequestID - should be ignored
-	ctx = WithFields(ctx, map[string]any{
-		contextx.FieldRequestID: 12345,
-	})
-
-	if got := contextx.GetRequestID(ctx); got != "" {
-		t.Errorf("expected empty request ID for wrong type, got %q", got)
-	}
-}
-
-func TestExtractFields_Empty(t *testing.T) {
-	ctx := context.Background()
-	fields := extractFields(ctx)
-	if len(fields) != 0 {
-		t.Errorf("expected 0 fields for empty context, got %d", len(fields))
-	}
-}
-
-func TestExtractFields_WithValues(t *testing.T) {
-	ctx := context.Background()
-	ctx = contextx.WithRequestID(ctx, "req-1")
-	ctx = contextx.WithSessionID(ctx, "sess-2")
-	ctx = contextx.WithUserRole(ctx, "admin")
-
-	fields := extractFields(ctx)
-	if fields[contextx.FieldRequestID] != "req-1" {
-		t.Errorf("expected request_id 'req-1', got %v", fields[contextx.FieldRequestID])
-	}
-	if fields[contextx.FieldSessionID] != "sess-2" {
-		t.Errorf("expected session_id 'sess-2', got %v", fields[contextx.FieldSessionID])
-	}
-	if fields[contextx.FieldUserRole] != "admin" {
-		t.Errorf("expected user_role 'admin', got %v", fields[contextx.FieldUserRole])
-	}
-}
-
-func TestMergeFields_Empty(t *testing.T) {
-	fields := map[string]any{}
-	result := mergeFields(fields, "key1", "val1")
-	if len(result) != 2 {
-		t.Errorf("expected 2 elements, got %d", len(result))
-	}
-}
-
-func TestMergeFields_WithFields(t *testing.T) {
-	fields := map[string]any{"request_id": "req-1"}
-	result := mergeFields(fields, "key1", "val1")
-	// Should have key1, val1, and the zap.Field for meta_data (single element from zap.Any)
-	if len(result) < 3 {
-		t.Errorf("expected at least 3 elements (key1, val1, meta_data zap.Field), got %d", len(result))
+func utilAssertEqual(t *testing.T, field, got, want string) {
+	t.Helper()
+	if got != want {
+		t.Errorf("%s: got %q, want %q", field, got, want)
 	}
 }

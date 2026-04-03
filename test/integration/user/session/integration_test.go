@@ -40,7 +40,7 @@ func TestIntegration_ListAndGetSessions(t *testing.T) {
 	eb := eventbus.NewInMemoryEventBus()
 
 	userBC := user.NewBoundedContext(setup.TestPG.Pool, eb, l, newTestJWTConfig(t))
-	sessionBC := session.NewBoundedContext(setup.TestPG.Pool, l)
+	sessionBC := session.NewBoundedContext(setup.TestPG.Pool, eb, l)
 	ctx := context.Background()
 
 	// Create and approve user

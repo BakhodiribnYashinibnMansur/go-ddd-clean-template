@@ -41,6 +41,11 @@ func (r *DataExportWriteRepo) Save(ctx context.Context, de *domain.DataExport) (
 	ctx, end := pgxutil.RepoSpan(ctx, "DataExportWriteRepo.Save")
 	defer func() { end(err) }()
 
+	fileURL := ""
+	if de.FileURL() != nil {
+		fileURL = *de.FileURL()
+	}
+
 	sql, args, err := r.builder.
 		Insert(tableName).
 		Columns(writeColumns...).
@@ -48,7 +53,7 @@ func (r *DataExportWriteRepo) Save(ctx context.Context, de *domain.DataExport) (
 			de.ID(),
 			de.DataType(),
 			de.Status(),
-			de.FileURL(),
+			fileURL,
 			de.UserID(),
 			de.CreatedAt(),
 			nil,
@@ -70,10 +75,15 @@ func (r *DataExportWriteRepo) Update(ctx context.Context, de *domain.DataExport)
 	ctx, end := pgxutil.RepoSpan(ctx, "DataExportWriteRepo.Update")
 	defer func() { end(err) }()
 
+	updateFileURL := ""
+	if de.FileURL() != nil {
+		updateFileURL = *de.FileURL()
+	}
+
 	sql, args, err := r.builder.
 		Update(tableName).
 		Set("status", de.Status()).
-		Set("file_url", de.FileURL()).
+		Set("file_url", updateFileURL).
 		Where(squirrel.Eq{"id": de.ID()}).
 		ToSql()
 	if err != nil {

@@ -248,3 +248,44 @@ func TestHandler_Resolve_InvalidID(t *testing.T) {
 		t.Fatalf("expected 400, got %d", w.Code)
 	}
 }
+
+func TestHandler_Get_NotFound(t *testing.T) {
+	// readRepo has no view set, so FindByID returns ErrSystemErrorNotFound
+	router := setupRouter(&mockRepo{}, &mockReadRepo{})
+
+	id := uuid.New()
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/api/v1/system-errors/"+id.String(), nil)
+	router.ServeHTTP(w, req)
+
+	if w.Code == http.StatusOK {
+		t.Fatalf("expected non-200 for missing system error, got %d", w.Code)
+	}
+}
+
+func TestHandler_Create_InvalidJSON(t *testing.T) {
+	router := setupRouter(&mockRepo{}, &mockReadRepo{})
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/v1/system-errors", bytes.NewBufferString(`not json at all`))
+	req.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for invalid JSON, got %d", w.Code)
+	}
+}
+
+func TestHandler_Resolve_InvalidJSON(t *testing.T) {
+	router := setupRouter(&mockRepo{}, &mockReadRepo{})
+
+	id := uuid.New()
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/v1/system-errors/"+id.String()+"/resolve", bytes.NewBufferString(`not json`))
+	req.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for invalid JSON on resolve, got %d", w.Code)
+	}
+}

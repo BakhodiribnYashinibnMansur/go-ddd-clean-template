@@ -2,6 +2,7 @@ package http
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -18,12 +19,16 @@ import (
 // --- Mocks ---
 
 type mockReadRepo struct {
-	view  *appdto.SessionView
-	views []*appdto.SessionView
-	total int64
+	view    *appdto.SessionView
+	views   []*appdto.SessionView
+	total   int64
+	findErr error
 }
 
 func (m *mockReadRepo) FindByID(_ context.Context, id uuid.UUID) (*appdto.SessionView, error) {
+	if m.findErr != nil {
+		return nil, m.findErr
+	}
 	if m.view != nil && m.view.ID == id {
 		return m.view, nil
 	}
@@ -176,5 +181,50 @@ func TestHandler_List_InvalidUserID(t *testing.T) {
 
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d", w.Code)
+	}
+}
+
+func TestHandler_Get_NotFound(t *testing.T) {
+	readRepo := &mockReadRepo{
+		findErr: errors.New("session not found"),
+	}
+	router := setupRouter(readRepo)
+
+	id := uuid.New()
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/api/v1/sessions/"+id.String(), nil)
+	router.ServeHTTP(w, req)
+
+	if w.Code == http.StatusOK {
+		t.Fatalf("expected non-200 when session not found, got %d", w.Code)
+	}
+}
+
+func TestHandler_Get_InvalidUUID(t *testing.T) {
+	router := setupRouter(&mockReadRepo{})
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/api/v1/sessions/not-a-uuid", nil)
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestHandler_List_DefaultPagination(t *testing.T) {
+	readRepo := &mockReadRepo{
+		views: []*appdto.SessionView{},
+		total: 0,
+	}
+	router := setupRouter(readRepo)
+
+	w := httptest.NewRecorder()
+	// No query params — should use default pagination and return 200
+	req, _ := http.NewRequest("GET", "/api/v1/sessions", nil)
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
 	}
 }

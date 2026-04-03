@@ -148,3 +148,45 @@ func TestHandler_List_Success(t *testing.T) {
 		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
 	}
 }
+
+func TestHandler_Create_InvalidJSON(t *testing.T) {
+	router := setupRouter(&mockRepo{}, &mockReadRepo{})
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/v1/metrics", bytes.NewBufferString(`{invalid json`))
+	req.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestHandler_List_DefaultPagination(t *testing.T) {
+	readRepo := &mockReadRepo{
+		views: []*domain.MetricView{},
+		total: 0,
+	}
+	router := setupRouter(&mockRepo{}, readRepo)
+
+	w := httptest.NewRecorder()
+	// No query params — should use default pagination and return 200
+	req, _ := http.NewRequest("GET", "/api/v1/metrics", nil)
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestHandler_List_InvalidLimit(t *testing.T) {
+	router := setupRouter(&mockRepo{}, &mockReadRepo{})
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/api/v1/metrics?limit=abc", nil)
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", w.Code, w.Body.String())
+	}
+}

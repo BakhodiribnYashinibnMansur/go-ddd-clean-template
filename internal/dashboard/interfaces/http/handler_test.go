@@ -2,6 +2,7 @@ package http
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -17,9 +18,13 @@ import (
 
 type mockReadRepo struct {
 	stats *appdto.DashboardStatsView
+	err   error
 }
 
 func (m *mockReadRepo) GetStats(_ context.Context) (*appdto.DashboardStatsView, error) {
+	if m.err != nil {
+		return nil, m.err
+	}
 	return m.stats, nil
 }
 
@@ -101,5 +106,20 @@ func TestHandler_GetStats_EmptyStats(t *testing.T) {
 
 	if w.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestHandler_GetStats_RepoError(t *testing.T) {
+	readRepo := &mockReadRepo{
+		err: errors.New("database connection lost"),
+	}
+	router := setupRouter(readRepo)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/api/v1/dashboard/stats", nil)
+	router.ServeHTTP(w, req)
+
+	if w.Code == http.StatusOK {
+		t.Fatalf("expected non-200 when repo returns error, got %d", w.Code)
 	}
 }

@@ -499,3 +499,100 @@ func TestHandler_BatchEvaluate_BadRequest(t *testing.T) {
 		t.Fatalf("expected 400, got %d: %s", w.Code, w.Body.String())
 	}
 }
+
+// --- Additional error-path, parsing, and pagination tests ---
+
+func TestHandler_GetFlag_NotFound(t *testing.T) {
+	// mockReadRepo with no view set returns ErrFeatureFlagNotFound
+	readRepo := &mockReadRepo{}
+	router := setupRouter(&mockFeatureFlagRepo{}, &mockRuleGroupRepo{}, readRepo)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/api/v1/feature-flags/"+uuid.New().String(), nil)
+	router.ServeHTTP(w, req)
+
+	if w.Code == http.StatusOK {
+		t.Fatalf("expected non-200 for not-found flag, got %d", w.Code)
+	}
+}
+
+func TestHandler_ListFlags_DefaultPagination(t *testing.T) {
+	readRepo := &mockReadRepo{
+		views: []*domain.FeatureFlagView{},
+		total: 0,
+	}
+	router := setupRouter(&mockFeatureFlagRepo{}, &mockRuleGroupRepo{}, readRepo)
+
+	// No query params — should use default pagination and succeed
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/api/v1/feature-flags", nil)
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200 for default pagination, got %d: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestHandler_CreateFlag_EmptyBody(t *testing.T) {
+	router := setupRouter(&mockFeatureFlagRepo{}, &mockRuleGroupRepo{}, &mockReadRepo{})
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/v1/feature-flags", bytes.NewBufferString(``))
+	req.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for empty body, got %d: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestHandler_CreateFlag_InvalidJSON(t *testing.T) {
+	router := setupRouter(&mockFeatureFlagRepo{}, &mockRuleGroupRepo{}, &mockReadRepo{})
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/v1/feature-flags", bytes.NewBufferString(`{invalid json`))
+	req.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for invalid JSON, got %d: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestHandler_DeleteFlag_InvalidUUID(t *testing.T) {
+	router := setupRouter(&mockFeatureFlagRepo{}, &mockRuleGroupRepo{}, &mockReadRepo{})
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("DELETE", "/api/v1/feature-flags/not-a-uuid", nil)
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for invalid UUID, got %d: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestHandler_Evaluate_EmptyBody(t *testing.T) {
+	router := setupRouterWithEvaluator(nil)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/v1/feature-flags/evaluate", bytes.NewBufferString(``))
+	req.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for empty evaluate body, got %d: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestHandler_BatchEvaluate_EmptyBody(t *testing.T) {
+	router := setupRouterWithEvaluator(nil)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/v1/feature-flags/evaluate/batch", bytes.NewBufferString(``))
+	req.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for empty batch body, got %d: %s", w.Code, w.Body.String())
+	}
+}
