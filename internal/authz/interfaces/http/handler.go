@@ -2,12 +2,10 @@ package http
 
 import (
 	"net/http"
-	"strconv"
 
 	"gct/internal/authz"
 	"gct/internal/authz/application/command"
 	"gct/internal/authz/application/query"
-	shared "gct/internal/shared/domain"
 	"gct/internal/shared/infrastructure/httpx"
 	"gct/internal/shared/infrastructure/httpx/response"
 	"gct/internal/shared/infrastructure/logger"
@@ -51,14 +49,14 @@ func (h *Handler) CreateRole(ctx *gin.Context) {
 
 // ListRoles handles GET /roles.
 func (h *Handler) ListRoles(ctx *gin.Context) {
-	limit, _ := strconv.ParseInt(ctx.DefaultQuery("limit", "10"), 10, 64)
-	offset, _ := strconv.ParseInt(ctx.DefaultQuery("offset", "0"), 10, 64)
+	pg, err := httpx.GetPagination(ctx)
+	if err != nil {
+		response.RespondWithError(ctx, httpx.ErrParamIsInvalid, http.StatusBadRequest)
+		return
+	}
 
 	result, err := h.bc.ListRoles.Handle(ctx.Request.Context(), query.ListRolesQuery{
-		Pagination: shared.Pagination{
-			Limit:  limit,
-			Offset: offset,
-		},
+		Pagination: pg,
 	})
 	if err != nil {
 		response.HandleError(ctx, err)
@@ -157,14 +155,14 @@ func (h *Handler) CreatePermission(ctx *gin.Context) {
 
 // ListPermissions handles GET /permissions.
 func (h *Handler) ListPermissions(ctx *gin.Context) {
-	limit, _ := strconv.ParseInt(ctx.DefaultQuery("limit", "10"), 10, 64)
-	offset, _ := strconv.ParseInt(ctx.DefaultQuery("offset", "0"), 10, 64)
+	pg, err := httpx.GetPagination(ctx)
+	if err != nil {
+		response.RespondWithError(ctx, httpx.ErrParamIsInvalid, http.StatusBadRequest)
+		return
+	}
 
 	result, err := h.bc.ListPermissions.Handle(ctx.Request.Context(), query.ListPermissionsQuery{
-		Pagination: shared.Pagination{
-			Limit:  limit,
-			Offset: offset,
-		},
+		Pagination: pg,
 	})
 	if err != nil {
 		response.HandleError(ctx, err)
@@ -220,14 +218,14 @@ func (h *Handler) CreatePolicy(ctx *gin.Context) {
 
 // ListPolicies handles GET /policies.
 func (h *Handler) ListPolicies(ctx *gin.Context) {
-	limit, _ := strconv.ParseInt(ctx.DefaultQuery("limit", "10"), 10, 64)
-	offset, _ := strconv.ParseInt(ctx.DefaultQuery("offset", "0"), 10, 64)
+	pg, err := httpx.GetPagination(ctx)
+	if err != nil {
+		response.RespondWithError(ctx, httpx.ErrParamIsInvalid, http.StatusBadRequest)
+		return
+	}
 
 	result, err := h.bc.ListPolicies.Handle(ctx.Request.Context(), query.ListPoliciesQuery{
-		Pagination: shared.Pagination{
-			Limit:  limit,
-			Offset: offset,
-		},
+		Pagination: pg,
 	})
 	if err != nil {
 		response.HandleError(ctx, err)
@@ -326,14 +324,14 @@ func (h *Handler) CreateScope(ctx *gin.Context) {
 
 // ListScopes handles GET /scopes.
 func (h *Handler) ListScopes(ctx *gin.Context) {
-	limit, _ := strconv.ParseInt(ctx.DefaultQuery("limit", "10"), 10, 64)
-	offset, _ := strconv.ParseInt(ctx.DefaultQuery("offset", "0"), 10, 64)
+	pg, err := httpx.GetPagination(ctx)
+	if err != nil {
+		response.RespondWithError(ctx, httpx.ErrParamIsInvalid, http.StatusBadRequest)
+		return
+	}
 
 	result, err := h.bc.ListScopes.Handle(ctx.Request.Context(), query.ListScopesQuery{
-		Pagination: shared.Pagination{
-			Limit:  limit,
-			Offset: offset,
-		},
+		Pagination: pg,
 	})
 	if err != nil {
 		response.HandleError(ctx, err)

@@ -2,7 +2,6 @@ package http
 
 import (
 	"net/http"
-	"strconv"
 
 	"gct/internal/session"
 	"gct/internal/session/application/command"
@@ -30,12 +29,15 @@ func NewHandler(bc *session.BoundedContext, l logger.Log) *Handler {
 
 // List handles GET /sessions.
 func (h *Handler) List(ctx *gin.Context) {
-	limit, _ := strconv.ParseInt(ctx.DefaultQuery("limit", "10"), 10, 64)
-	offset, _ := strconv.ParseInt(ctx.DefaultQuery("offset", "0"), 10, 64)
+	pg, err := httpx.GetPagination(ctx)
+	if err != nil {
+		response.RespondWithError(ctx, httpx.ErrParamIsInvalid, http.StatusBadRequest)
+		return
+	}
 
 	filter := appdto.SessionsFilter{
-		Limit:  limit,
-		Offset: offset,
+		Limit:  pg.Limit,
+		Offset: pg.Offset,
 	}
 
 	if userIDStr := ctx.Query("user_id"); userIDStr != "" {

@@ -8,8 +8,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
-
 	"gct/internal/file"
 	"gct/internal/file/application/command"
 	"gct/internal/file/application/query"
@@ -70,11 +68,14 @@ func (h *Handler) Create(ctx *gin.Context) {
 
 // List returns a paginated list of files.
 func (h *Handler) List(ctx *gin.Context) {
-	limit, _ := strconv.ParseInt(ctx.DefaultQuery("limit", "10"), 10, 64)
-	offset, _ := strconv.ParseInt(ctx.DefaultQuery("offset", "0"), 10, 64)
+	pg, err := httpx.GetPagination(ctx)
+	if err != nil {
+		response.RespondWithError(ctx, httpx.ErrParamIsInvalid, http.StatusBadRequest)
+		return
+	}
 
 	q := query.ListFilesQuery{
-		Filter: domain.FileFilter{Limit: limit, Offset: offset},
+		Filter: domain.FileFilter{Limit: pg.Limit, Offset: pg.Offset},
 	}
 	result, err := h.bc.ListFiles.Handle(ctx.Request.Context(), q)
 	if err != nil {

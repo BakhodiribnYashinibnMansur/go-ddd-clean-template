@@ -2,7 +2,6 @@ package http
 
 import (
 	"net/http"
-	"strconv"
 
 	"gct/internal/errorcode"
 	"gct/internal/errorcode/application/command"
@@ -55,11 +54,14 @@ func (h *Handler) Create(ctx *gin.Context) {
 
 // List returns a paginated list of error codes.
 func (h *Handler) List(ctx *gin.Context) {
-	limit, _ := strconv.ParseInt(ctx.DefaultQuery("limit", "10"), 10, 64)
-	offset, _ := strconv.ParseInt(ctx.DefaultQuery("offset", "0"), 10, 64)
+	pg, err := httpx.GetPagination(ctx)
+	if err != nil {
+		response.RespondWithError(ctx, httpx.ErrParamIsInvalid, http.StatusBadRequest)
+		return
+	}
 
 	q := query.ListErrorCodesQuery{
-		Filter: domain.ErrorCodeFilter{Limit: limit, Offset: offset},
+		Filter: domain.ErrorCodeFilter{Limit: pg.Limit, Offset: pg.Offset},
 	}
 	result, err := h.bc.ListErrorCodes.Handle(ctx.Request.Context(), q)
 	if err != nil {

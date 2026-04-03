@@ -2,7 +2,6 @@ package http
 
 import (
 	"net/http"
-	"strconv"
 
 	"gct/internal/shared/infrastructure/httpx"
 	"gct/internal/shared/infrastructure/httpx/response"
@@ -11,8 +10,6 @@ import (
 	"gct/internal/user/application/command"
 	"gct/internal/user/application/query"
 	userdomain "gct/internal/user/domain"
-
-	shared "gct/internal/shared/domain"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -55,14 +52,14 @@ func (h *Handler) Create(ctx *gin.Context) {
 
 // List handles GET /users.
 func (h *Handler) List(ctx *gin.Context) {
-	limit, _ := strconv.ParseInt(ctx.DefaultQuery("limit", "10"), 10, 64)
-	offset, _ := strconv.ParseInt(ctx.DefaultQuery("offset", "0"), 10, 64)
+	pg, err := httpx.GetPagination(ctx)
+	if err != nil {
+		response.RespondWithError(ctx, httpx.ErrParamIsInvalid, http.StatusBadRequest)
+		return
+	}
 
 	filter := userdomain.UsersFilter{
-		Pagination: &shared.Pagination{
-			Limit:  limit,
-			Offset: offset,
-		},
+		Pagination: &pg,
 	}
 
 	if phone := ctx.Query("phone"); phone != "" {

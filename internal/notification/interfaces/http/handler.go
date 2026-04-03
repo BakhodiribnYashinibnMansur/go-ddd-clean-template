@@ -2,7 +2,6 @@ package http
 
 import (
 	"net/http"
-	"strconv"
 
 	"gct/internal/notification"
 	"gct/internal/shared/infrastructure/httpx"
@@ -49,11 +48,14 @@ func (h *Handler) Create(ctx *gin.Context) {
 
 // List returns a paginated list of notifications.
 func (h *Handler) List(ctx *gin.Context) {
-	limit, _ := strconv.ParseInt(ctx.DefaultQuery("limit", "10"), 10, 64)
-	offset, _ := strconv.ParseInt(ctx.DefaultQuery("offset", "0"), 10, 64)
+	pg, err := httpx.GetPagination(ctx)
+	if err != nil {
+		response.RespondWithError(ctx, httpx.ErrParamIsInvalid, http.StatusBadRequest)
+		return
+	}
 
 	q := query.ListQuery{
-		Filter: domain.NotificationFilter{Limit: limit, Offset: offset},
+		Filter: domain.NotificationFilter{Limit: pg.Limit, Offset: pg.Offset},
 	}
 	result, err := h.bc.ListNotifications.Handle(ctx.Request.Context(), q)
 	if err != nil {
