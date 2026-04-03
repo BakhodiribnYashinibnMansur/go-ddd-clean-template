@@ -1,13 +1,8 @@
 package app
 
 import (
-	"context"
-
 	"gct/internal/shared/infrastructure/logger"
-	"gct/internal/user"
-	"gct/internal/user/application/command"
 
-	"github.com/google/uuid"
 	miniogo "github.com/minio/minio-go/v7"
 
 	announcementhttp "gct/internal/announcement/interfaces/http"
@@ -34,24 +29,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 )
-
-// sessionRevokerAdapter bridges the session HTTP handler to the User BC's sign-out commands.
-type sessionRevokerAdapter struct {
-	userBC *user.BoundedContext
-}
-
-func (a *sessionRevokerAdapter) RevokeSession(ctx context.Context, userID, sessionID uuid.UUID) error {
-	return a.userBC.SignOut.Handle(ctx, command.SignOutCommand{
-		UserID:    userID,
-		SessionID: sessionID,
-	})
-}
-
-func (a *sessionRevokerAdapter) RevokeAllSessions(ctx context.Context, userID uuid.UUID) error {
-	return a.userBC.RevokeAll.Handle(ctx, command.RevokeAllSessionsCommand{
-		UserID: userID,
-	})
-}
 
 // RouteOptions holds optional dependencies for route registration.
 type RouteOptions struct {
@@ -153,8 +130,6 @@ func RegisterDDDRoutes(router *gin.Engine, bcs *DDDBoundedContexts, authMW, auth
 		scopes.GET("", authzHandler.ListScopes)
 		scopes.DELETE("", authzHandler.DeleteScope)
 	}
-
-	sessionHandler.SetRevoker(&sessionRevokerAdapter{userBC: bcs.User})
 
 	sessions := protected.Group("/sessions")
 	{

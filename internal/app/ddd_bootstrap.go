@@ -86,8 +86,7 @@ func NewDDDBoundedContexts(ctx context.Context, pool *pgxpool.Pool, eventBus app
 		UserSetting:  usersetting.NewBoundedContext(pool, eventBus, l),
 		ErrorCode:    errorcode.NewBoundedContext(pool, eventBus, l),
 
-		// Read-only BCs — no eventBus
-		Session:   session.NewBoundedContext(pool, l),
+		Session:   session.NewBoundedContext(pool, eventBus, l),
 		Dashboard: dashboard.NewBoundedContext(pool, l),
 	}, nil
 }

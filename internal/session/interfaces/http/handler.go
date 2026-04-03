@@ -1,11 +1,11 @@
 package http
 
 import (
-	"context"
 	"net/http"
 	"strconv"
 
 	"gct/internal/session"
+	"gct/internal/session/application/command"
 	appdto "gct/internal/session/application"
 	"gct/internal/session/application/query"
 	"gct/internal/shared/domain/consts"
@@ -17,27 +17,15 @@ import (
 	"github.com/google/uuid"
 )
 
-// SessionRevoker abstracts the ability to revoke/delete sessions (provided by User BC).
-type SessionRevoker interface {
-	RevokeSession(ctx context.Context, userID, sessionID uuid.UUID) error
-	RevokeAllSessions(ctx context.Context, userID uuid.UUID) error
-}
-
 // Handler holds dependencies for Session HTTP handlers.
 type Handler struct {
-	bc      *session.BoundedContext
-	revoker SessionRevoker
-	l       logger.Log
+	bc *session.BoundedContext
+	l  logger.Log
 }
 
 // NewHandler creates a new Session HTTP handler.
 func NewHandler(bc *session.BoundedContext, l logger.Log) *Handler {
 	return &Handler{bc: bc, l: l}
-}
-
-// SetRevoker sets the session revoker (called after User BC is available).
-func (h *Handler) SetRevoker(r SessionRevoker) {
-	h.revoker = r
 }
 
 // List handles GET /sessions.
@@ -92,11 +80,6 @@ func (h *Handler) Get(ctx *gin.Context) {
 
 // Delete handles DELETE /sessions/:id.
 func (h *Handler) Delete(ctx *gin.Context) {
-	if h.revoker == nil {
-		response.RespondWithError(ctx, httpx.ErrNotImplemented, http.StatusNotImplemented)
-		return
-	}
-
 	sessionID, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
@@ -114,7 +97,10 @@ func (h *Handler) Delete(ctx *gin.Context) {
 		return
 	}
 
-	if err := h.revoker.RevokeSession(ctx.Request.Context(), userID, sessionID); err != nil {
+	if err := h.bc.RevokeSession.Handle(ctx.Request.Context(), command.RevokeSessionCommand{
+		UserID:    userID,
+		SessionID: sessionID,
+	}); err != nil {
 		response.HandleError(ctx, err)
 		return
 	}
@@ -124,11 +110,6 @@ func (h *Handler) Delete(ctx *gin.Context) {
 
 // RevokeAll handles POST /sessions/revoke-all.
 func (h *Handler) RevokeAll(ctx *gin.Context) {
-	if h.revoker == nil {
-		response.RespondWithError(ctx, httpx.ErrNotImplemented, http.StatusNotImplemented)
-		return
-	}
-
 	userIDStr, exists := ctx.Get(consts.CtxUserID)
 	if !exists {
 		response.RespondWithError(ctx, httpx.ErrUnAuth, http.StatusUnauthorized)
@@ -140,7 +121,9 @@ func (h *Handler) RevokeAll(ctx *gin.Context) {
 		return
 	}
 
-	if err := h.revoker.RevokeAllSessions(ctx.Request.Context(), userID); err != nil {
+	if err := h.bc.RevokeAllSessions.Handle(ctx.Request.Context(), command.RevokeAllSessionsCommand{
+		UserID: userID,
+	}); err != nil {
 		response.HandleError(ctx, err)
 		return
 	}
