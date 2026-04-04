@@ -75,6 +75,10 @@ linter-golangci: ### check by golangci linter
 	golangci-lint run
 .PHONY: linter-golangci
 
+arch-check: ### verify bounded context & DDD architecture rules
+	go test -v -count=1 ./test/arch/...
+.PHONY: arch-check
+
 linter-hadolint: ### check by hadolint linter
 	git ls-files --exclude='Dockerfile*' --ignored | xargs hadolint
 .PHONY: linter-hadolint
@@ -187,7 +191,7 @@ sqlc-postgres: ### generate type-safe Go code from PostgreSQL queries
 sqlc: sqlc-postgres ### generate all SQLC code
 .PHONY: sqlc
 
-pre-commit: swag mock format linter-golangci test ### run pre-commit checks
+pre-commit: swag mock format linter-golangci arch-check test ### run pre-commit checks
 .PHONY: pre-commit
 
 test-e2e: ### run e2e-test

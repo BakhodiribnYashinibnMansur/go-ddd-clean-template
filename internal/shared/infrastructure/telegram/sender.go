@@ -1,7 +1,6 @@
 package telegram
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -38,17 +37,10 @@ func (c *Client) doSend(msgType MessageType, text string) error {
 		body["message_thread_id"] = topicID
 	}
 
-	jsonBody, err := json.Marshal(body)
+	resp, _, err := c.http.PostJSON(context.Background(), url, "SendMessage", body)
 	if err != nil {
 		return err
 	}
-
-	resp, err := c.client.Post(url, ContentTypeJSON, bytes.NewBuffer(jsonBody))
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("%w: status code %d", ErrTelegramAPI, resp.StatusCode)
 	}

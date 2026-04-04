@@ -120,8 +120,8 @@ linters:
     - paralleltest        # Detects missing usage of t.Parallel() method in your Go test
     - testableexamples    # Checks if examples are testable (have an expected output)
     - tparallel           # Detects inappropriate usage of t.Parallel() method
-  disable:
-    # - depguard       # Import restrictions too strict for project structure
+    - depguard            # Enforces bounded context isolation and DDD layering
+  disable: []
     # - godot          # Comment punctuation not critical
     # - nlreturn       # Newline before return not always needed
     # - wsl            # Whitespace rules too strict
@@ -139,15 +139,118 @@ linters:
       threshold: 100
     depguard:
       rules:
+        # ============================================================
+        # GLOBAL - forbidden dependencies across the whole codebase
+        # ============================================================
         main:
           list-mode: lax
           files:
             - $all
-          allow:
-            - $gostd
           deny:
             - pkg: "github.com/pkg/errors"
               desc: "use standard library errors package"
+        # ============================================================
+        # DOMAIN LAYER - pure business logic
+        # Can depend on: stdlib + gct/internal/shared/domain only
+        # Must NOT depend on: application, infrastructure, interfaces,
+        # web frameworks, ORMs, DB drivers, or any other BC's layers
+        # ============================================================
+        domain-layer:
+          list-mode: lax
+          files:
+            - "**/internal/*/domain/**/*.go"
+            - "**/internal/*/domain/*.go"
+            - "!$test"
+          deny:
+            - pkg: "gct/internal/*/application"
+              desc: "DDD violation: domain layer must not depend on application layer"
+            - pkg: "gct/internal/*/infrastructure"
+              desc: "DDD violation: domain layer must not depend on infrastructure layer"
+            - pkg: "gct/internal/*/interfaces"
+              desc: "DDD violation: domain layer must not depend on interfaces (transport) layer"
+            - pkg: "github.com/labstack/echo"
+              desc: "domain layer must not depend on HTTP/web frameworks"
+            - pkg: "gorm.io/gorm"
+              desc: "domain layer must not depend on ORM"
+            - pkg: "github.com/jackc/pgx"
+              desc: "domain layer must not depend on DB driver"
+            - pkg: "github.com/redis/go-redis"
+              desc: "domain layer must not depend on infrastructure clients"
+            - pkg: "github.com/minio/minio-go"
+              desc: "domain layer must not depend on infrastructure clients"
+            - pkg: "github.com/golang-jwt/jwt"
+              desc: "domain layer must not depend on transport/security libraries"
+        # ============================================================
+        # APPLICATION LAYER - use cases / orchestration
+        # Can depend on: own domain, shared, stdlib
+        # Must NOT depend on: infrastructure, interfaces, web frameworks
+        # ============================================================
+        application-layer:
+          list-mode: lax
+          files:
+            - "**/internal/*/application/**/*.go"
+            - "**/internal/*/application/*.go"
+            - "!$test"
+          deny:
+            - pkg: "gct/internal/*/infrastructure"
+              desc: "DDD violation: application layer must not depend on infrastructure layer (depend on interfaces defined in domain/application instead)"
+            - pkg: "gct/internal/*/interfaces"
+              desc: "DDD violation: application layer must not depend on interfaces (transport) layer"
+            - pkg: "github.com/labstack/echo"
+              desc: "application layer must not depend on HTTP/web frameworks"
+            - pkg: "gorm.io/gorm"
+              desc: "application layer must not depend on ORM directly"
+        # ============================================================
+        # INTERFACES LAYER (transport: HTTP/gRPC/CLI handlers)
+        # Can depend on: own application, own domain, shared
+        # Must NOT depend on: infrastructure (use DI via application)
+        # ============================================================
+        interfaces-layer:
+          list-mode: lax
+          files:
+            - "**/internal/*/interfaces/**/*.go"
+            - "**/internal/*/interfaces/*.go"
+            - "!$test"
+          deny:
+            - pkg: "gct/internal/*/infrastructure"
+              desc: "DDD violation: interfaces (transport) layer must not depend on infrastructure layer directly"
+            - pkg: "gorm.io/gorm"
+              desc: "interfaces layer must not depend on ORM directly"
+            - pkg: "github.com/jackc/pgx"
+              desc: "interfaces layer must not depend on DB driver directly"
+        # ============================================================
+        # CROSS-BOUNDED-CONTEXT ISOLATION
+        # A bounded context MUST NOT import from another BC's internals.
+        # Cross-BC communication must go through gct/internal/shared
+        # (shared kernel) or via events / integration layer.
+        # ============================================================
+        # Each BC is allowed to import: own packages + gct/internal/shared
+        # All OTHER BCs are denied. Cross-BC communication must go via
+        # shared kernel (gct/internal/shared) or integration events.
+        bc-announcement-isolation:
+          list-mode: lax
+          files: ["**/internal/announcement/**/*.go"]
+          deny:
+            - {pkg: "gct/internal/app", desc: "cross-BC import forbidden: use gct/internal/shared"}
+            - {pkg: "gct/internal/audit", desc: "cross-BC import forbidden: use gct/internal/shared"}
+            - {pkg: "gct/internal/authz", desc: "cross-BC import forbidden: use gct/internal/shared"}
+            - {pkg: "gct/internal/dashboard", desc: "cross-BC import forbidden: use gct/internal/shared"}
+            - {pkg: "gct/internal/dataexport", desc: "cross-BC import forbidden: use gct/internal/shared"}
+            - {pkg: "gct/internal/errorcode", desc: "cross-BC import forbidden: use gct/internal/shared"}
+            - {pkg: "gct/internal/featureflag", desc: "cross-BC import forbidden: use gct/internal/shared"}
+            - {pkg: "gct/internal/file", desc: "cross-BC import forbidden: use gct/internal/shared"}
+            - {pkg: "gct/internal/integration", desc: "cross-BC import forbidden: use gct/internal/shared"}
+            - {pkg: "gct/internal/iprule", desc: "cross-BC import forbidden: use gct/internal/shared"}
+            - {pkg: "gct/internal/metric", desc: "cross-BC import forbidden: use gct/internal/shared"}
+            - {pkg: "gct/internal/notification", desc: "cross-BC import forbidden: use gct/internal/shared"}
+            - {pkg: "gct/internal/ratelimit", desc: "cross-BC import forbidden: use gct/internal/shared"}
+            - {pkg: "gct/internal/seeder", desc: "cross-BC import forbidden: use gct/internal/shared"}
+            - {pkg: "gct/internal/session", desc: "cross-BC import forbidden: use gct/internal/shared"}
+            - {pkg: "gct/internal/sitesetting", desc: "cross-BC import forbidden: use gct/internal/shared"}
+            - {pkg: "gct/internal/systemerror", desc: "cross-BC import forbidden: use gct/internal/shared"}
+            - {pkg: "gct/internal/translation", desc: "cross-BC import forbidden: use gct/internal/shared"}
+            - {pkg: "gct/internal/user", desc: "cross-BC import forbidden: use gct/internal/shared"}
+            - {pkg: "gct/internal/usersetting", desc: "cross-BC import forbidden: use gct/internal/shared"}
     dogsled:
       max-blank-identifiers: 3
     errcheck:

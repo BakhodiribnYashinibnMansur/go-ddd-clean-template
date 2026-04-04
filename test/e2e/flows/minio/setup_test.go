@@ -52,7 +52,7 @@ func startTestServer() *httptest.Server {
 
 	handler := gin.New()
 
-	sharedmw.Setup(handler, setup.TestCfg, setup.TestRedis, nil, nil, l)
+	sharedmw.Setup(handler, setup.TestCfg, setup.TestRedis, nil, nil, nil, l)
 
 	authMW := usermw.NewAuthMiddleware(bcs.User.FindSession, bcs.User.FindUserForAuth, setup.TestCfg, l)
 	authzMiddleware := authzmw.NewAuthzMiddleware(bcs.Authz.CheckAccess, bcs.User.FindUserForAuth, l)

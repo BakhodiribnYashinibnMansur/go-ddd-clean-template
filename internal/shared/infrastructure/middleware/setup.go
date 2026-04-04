@@ -4,10 +4,12 @@ package middleware
 
 import (
 	"net/http"
+	"time"
 
 	"gct/config"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/metrics/latency"
+	"gct/internal/shared/infrastructure/reqlog"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -27,13 +29,18 @@ type BCMiddleware struct {
 
 // Setup registers the standard suite of shared middleware to the Gin engine.
 // BC-specific middleware is injected via the bcMW parameter.
-func Setup(handler *gin.Engine, cfg *config.Config, redisClient *redis.Client, bcMW *BCMiddleware, latencyTracker *latency.Tracker, l logger.Log) {
+func Setup(handler *gin.Engine, cfg *config.Config, redisClient *redis.Client, bcMW *BCMiddleware, latencyTracker *latency.Tracker, reqLogSink reqlog.Sink, l logger.Log) {
 	handler.HandleMethodNotAllowed = true
 
 	// 1. Traceability & Logging
 	handler.Use(Logger(l))
 
-	// 1.1 Debug-level request body logging
+	// 1.1 Error body capture — logs request body on 4xx/5xx responses
+	// so operators can see what the client sent when a request fails.
+	// Cheap on the happy path: reads body once but only emits on errors.
+	handler.Use(ErrorBody(l))
+
+	// 1.2 Debug-level request body logging (every request, dev only)
 	if cfg.Log.IsDebug() {
 		handler.Use(DebugBody(l))
 	}
@@ -98,6 +105,22 @@ func Setup(handler *gin.Engine, cfg *config.Config, redisClient *redis.Client, b
 	// 9. Rate Limiting
 	if cfg.Middleware.RateLimiter && redisClient != nil {
 		handler.Use(RateLimiter(cfg.Limiter, redisClient, l))
+	}
+
+	// 9.1 Incoming request/response logging — persisted to http_request_logs.
+	// Placed AFTER rate-limit so abusive traffic is rejected before we buffer
+	// its bodies, and AFTER auth-related middleware once user context is set.
+	// Errors and slow requests are always persisted; successful requests are
+	// sampled per ReqLogSuccessSampleRate to bound log volume.
+	if reqLogSink != nil && cfg.Log.ReqLogEnabled {
+		handler.Use(reqlog.Middleware(reqLogSink, reqlog.Config{
+			MaxBodyBytes:      cfg.Log.ReqLogMaxBodyBytes,
+			SuccessSampleRate: cfg.Log.ReqLogSuccessSampleRate,
+			SlowThreshold:     time.Duration(cfg.Log.ReqLogSlowThresholdMs) * time.Millisecond,
+			SkipPaths:         cfg.Log.ReqLogSkipPaths,
+			SkipPrefixes:      cfg.Log.ReqLogSkipPrefixes,
+			BodySuppressPaths: cfg.Log.ReqLogBodySuppressPaths,
+		}))
 	}
 
 	// 10. Audit (BC-specific: Audit BC)

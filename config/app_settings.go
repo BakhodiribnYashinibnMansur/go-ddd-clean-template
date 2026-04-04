@@ -33,6 +33,15 @@ type (
 		FlushInterval  int64  `yaml:"flush_interval_sec" env:"LOG_FLUSH_INTERVAL_SEC" envDefault:"60"`
 		FlushBatchSize int    `yaml:"flush_batch_size" env:"LOG_FLUSH_BATCH_SIZE" envDefault:"1000"`
 		RetentionDays  int    `yaml:"retention_days" env:"LOG_RETENTION_DAYS" envDefault:"30"`
+
+		// ReqLog — incoming HTTP request/response logging (http_request_logs table)
+		ReqLogEnabled           bool     `yaml:"req_log_enabled" env:"REQLOG_ENABLED" envDefault:"true"`
+		ReqLogMaxBodyBytes      int      `yaml:"req_log_max_body_bytes" env:"REQLOG_MAX_BODY_BYTES" envDefault:"8192"`
+		ReqLogSuccessSampleRate float64  `yaml:"req_log_success_sample_rate" env:"REQLOG_SUCCESS_SAMPLE_RATE" envDefault:"0.05" validate:"min=0,max=1"`
+		ReqLogSlowThresholdMs   int      `yaml:"req_log_slow_threshold_ms" env:"REQLOG_SLOW_THRESHOLD_MS" envDefault:"500"`
+		ReqLogSkipPaths         []string `yaml:"req_log_skip_paths" env:"REQLOG_SKIP_PATHS" envSeparator:"," envDefault:"/health,/health/ready,/health/live,/metrics,/favicon.ico"`
+		ReqLogSkipPrefixes      []string `yaml:"req_log_skip_prefixes" env:"REQLOG_SKIP_PREFIXES" envSeparator:"," envDefault:"/swagger/,/static/,/assets/"`
+		ReqLogBodySuppressPaths []string `yaml:"req_log_body_suppress_paths" env:"REQLOG_BODY_SUPPRESS_PATHS" envSeparator:"," envDefault:"/api/v1/auth/login,/api/v1/auth/register,/api/v1/auth/reset-password,/api/v1/otp/verify"`
 	}
 
 	// APIKeys configuration -.

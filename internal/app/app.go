@@ -31,10 +31,12 @@ import (
 	"gct/internal/shared/infrastructure/db/postgres"
 	redispkg "gct/internal/shared/infrastructure/db/redis"
 	"gct/internal/shared/infrastructure/eventbus"
+	"gct/internal/shared/infrastructure/httpclient"
 	"gct/internal/shared/infrastructure/logger"
 	"gct/internal/shared/infrastructure/metrics"
 	"gct/internal/shared/infrastructure/metrics/latency"
 	"gct/internal/shared/infrastructure/pubsub"
+	"gct/internal/shared/infrastructure/reqlog"
 	"gct/internal/shared/infrastructure/sse"
 	jwtpkg "gct/internal/shared/infrastructure/security/jwt"
 	httpserver "gct/internal/shared/infrastructure/server/http"
@@ -134,6 +136,48 @@ func Run(cfg *config.Config) {
 		)
 	}
 	_ = logFlusher // used in shutdown below
+
+	// 2c. External API Log Persistence — same buffer-then-flush pattern, writes
+	// to external_api_logs. Consumers obtain apiLogSink via injection to log
+	// failed 3rd-party HTTP calls with full request/response context.
+	var apiLogSink httpclient.Sink = httpclient.NoopSink{}
+	var apiLogRedisSink *httpclient.RedisSink
+	var apiLogFlusher *httpclient.Flusher
+	if cfg.Log.PersistEnabled && redisclient != nil {
+		apiLogRedisSink = httpclient.NewRedisSink(redisclient, httpclient.DefaultRedisKey)
+		apiLogSink = apiLogRedisSink
+		apiLogFlusher = httpclient.NewFlusher(redisclient, pg.Pool, httpclient.FlusherConfig{
+			RedisKey:     httpclient.DefaultRedisKey,
+			BatchSize:    cfg.Log.FlushBatchSize,
+			Interval:     time.Duration(cfg.Log.FlushInterval) * time.Second,
+			RetentionDay: cfg.Log.RetentionDays,
+		}, l)
+		apiLogFlusher.Start()
+		l.Infoc(ctx, "External API log persistence enabled",
+			"flush_interval", cfg.Log.FlushInterval,
+		)
+	}
+	_ = apiLogSink // injected into downstream HTTP clients as they're wired up
+
+	// 2d. Incoming HTTP request/response logging — captures every request
+	// processed by the Gin engine and persists it to http_request_logs.
+	var reqLogSink reqlog.Sink = reqlog.NoopSink{}
+	var reqLogRedisSink *reqlog.RedisSink
+	var reqLogFlusher *reqlog.Flusher
+	if cfg.Log.PersistEnabled && redisclient != nil {
+		reqLogRedisSink = reqlog.NewRedisSink(redisclient, reqlog.DefaultRedisKey)
+		reqLogSink = reqLogRedisSink
+		reqLogFlusher = reqlog.NewFlusher(redisclient, pg.Pool, reqlog.FlusherConfig{
+			RedisKey:     reqlog.DefaultRedisKey,
+			BatchSize:    cfg.Log.FlushBatchSize,
+			Interval:     time.Duration(cfg.Log.FlushInterval) * time.Second,
+			RetentionDay: cfg.Log.RetentionDays,
+		}, l)
+		reqLogFlusher.Start()
+		l.Infoc(ctx, "Incoming request log persistence enabled",
+			"flush_interval", cfg.Log.FlushInterval,
+		)
+	}
 
 	// 3. Asynq Client
 	var asynqClient *asynq.Client
@@ -357,7 +401,7 @@ func Run(cfg *config.Config) {
 	}
 
 	// 8. HTTP Router (pure DDD)
-	handler := initRouter(cfg, dddBCs, redisclient, pg, sseHub, metricsProvider, latencyTracker, l)
+	handler := initRouter(cfg, dddBCs, redisclient, pg, sseHub, metricsProvider, latencyTracker, reqLogSink, l)
 
 	httpServer := httpserver.NewServer()
 	startServer(cfg.HTTP.Port, handler, httpServer, l)
@@ -374,11 +418,27 @@ func Run(cfg *config.Config) {
 		l.Infoc(context.Background(), "Flushing remaining logs to database...")
 		logFlusher.Stop()
 	}
+	// Drain in-memory sinks first so any buffered entries reach Redis, then
+	// stop the flushers so they pop those entries and COPY FROM to PostgreSQL.
+	if apiLogRedisSink != nil {
+		apiLogRedisSink.Stop()
+	}
+	if reqLogRedisSink != nil {
+		reqLogRedisSink.Stop()
+	}
+	if apiLogFlusher != nil {
+		l.Infoc(context.Background(), "Flushing remaining external API logs to database...")
+		apiLogFlusher.Stop()
+	}
+	if reqLogFlusher != nil {
+		l.Infoc(context.Background(), "Flushing remaining incoming request logs to database...")
+		reqLogFlusher.Stop()
+	}
 	shutdownServer(httpServer, l, cfg.HTTP.ShutdownTimeout)
 }
 
 // initRouter configures the Gin engine with DDD middleware and routes.
-func initRouter(cfg *config.Config, bcs *DDDBoundedContexts, redisClient *redis.Client, pg *postgres.Postgres, sseHub *sse.Hub, metricsProvider *metrics.Provider, latencyTracker *latency.Tracker, l logger.Log) *gin.Engine {
+func initRouter(cfg *config.Config, bcs *DDDBoundedContexts, redisClient *redis.Client, pg *postgres.Postgres, sseHub *sse.Hub, metricsProvider *metrics.Provider, latencyTracker *latency.Tracker, reqLogSink reqlog.Sink, l logger.Log) *gin.Engine {
 	gin.SetMode(cfg.HTTP.GinMode)
 
 	if cfg.Log.ShowGin {
@@ -406,7 +466,7 @@ func initRouter(cfg *config.Config, bcs *DDDBoundedContexts, redisClient *redis.
 	}
 
 	// === Global shared middleware ===
-	sharedmw.Setup(handler, cfg, redisClient, bcMW, latencyTracker, l)
+	sharedmw.Setup(handler, cfg, redisClient, bcMW, latencyTracker, reqLogSink, l)
 
 	// === Infrastructure routes (swagger, health, static) ===
 	var metricsHandler http.Handler

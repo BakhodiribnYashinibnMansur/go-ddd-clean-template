@@ -68,3 +68,11 @@ func isSensitive(key string) bool {
 	lower := strings.ToLower(key)
 	return sensitiveKeys[lower]
 }
+
+// IsSensitiveKey reports whether a field name matches the configured
+// sensitive-keys set (password, token, secret, etc.). Exposed for callers
+// (e.g. middleware) that need to redact values inside structured payloads
+// such as JSON request bodies.
+func IsSensitiveKey(key string) bool {
+	return isSensitive(key)
+}
