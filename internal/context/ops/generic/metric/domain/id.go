@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"database/sql/driver"
+	"encoding/json"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -32,3 +34,37 @@ func (id MetricID) String() string { return uuid.UUID(id).String() }
 
 // IsZero reports whether the MetricID is the zero value.
 func (id MetricID) IsZero() bool { return uuid.UUID(id) == uuid.Nil }
+
+// MarshalJSON serializes the MetricID as a canonical UUID string.
+func (id MetricID) MarshalJSON() ([]byte, error) {
+	return json.Marshal(id.String())
+}
+
+// UnmarshalJSON parses a MetricID from a JSON UUID string.
+func (id *MetricID) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+	parsed, err := ParseMetricID(s)
+	if err != nil {
+		return err
+	}
+	*id = parsed
+	return nil
+}
+
+// Value implements driver.Valuer for SQL driver interop.
+func (id MetricID) Value() (driver.Value, error) {
+	return uuid.UUID(id).Value()
+}
+
+// Scan implements sql.Scanner for SQL driver interop.
+func (id *MetricID) Scan(src any) error {
+	var u uuid.UUID
+	if err := u.Scan(src); err != nil {
+		return err
+	}
+	*id = MetricID(u)
+	return nil
+}

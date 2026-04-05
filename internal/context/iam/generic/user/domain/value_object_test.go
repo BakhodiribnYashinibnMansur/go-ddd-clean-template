@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	domain "gct/internal/context/iam/generic/user/domain"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -192,8 +193,8 @@ func TestNewPhone_TableDriven(t *testing.T) {
 		{"too short", "+12345", true},
 		{"only plus", "+", true},
 		{"plus and spaces", "+       ", true},
-		{"exactly 8 chars valid", "+1234567", false},    // 8 chars including + — passes min check
-		{"7 chars with plus", "+123456", true},           // 7 chars — too short
+		{"exactly 8 chars valid", "+1234567", false}, // 8 chars including + — passes min check
+		{"7 chars with plus", "+123456", true},       // 7 chars — too short
 	}
 
 	for _, tt := range tests {
@@ -234,9 +235,9 @@ func TestNewEmail_TableDriven(t *testing.T) {
 		{"valid plus tag", "user+tag@example.com", false},
 		{"empty", "", true},
 		{"no at", "userexample.com", true},
-		{"only at", "@", false},       // has @ so passes basic check
-		{"just at", "a@b", false},     // has @ so passes basic check
-		{"spaces only", "   ", true},  // trimmed to empty
+		{"only at", "@", false},      // has @ so passes basic check
+		{"just at", "a@b", false},    // has @ so passes basic check
+		{"spaces only", "   ", true}, // trimmed to empty
 	}
 
 	for _, tt := range tests {

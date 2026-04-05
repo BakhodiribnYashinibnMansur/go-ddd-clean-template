@@ -71,11 +71,13 @@ func (rg *RuleGroup) UpdateDetails(name, variation *string, priority *int) {
 	rg.updatedAt = time.Now()
 }
 
-func (rg *RuleGroup) ID() uuid.UUID         { return rg.id }
-func (rg *RuleGroup) FlagID() uuid.UUID      { return rg.flagID }
-func (rg *RuleGroup) Name() string           { return rg.name }
-func (rg *RuleGroup) Variation() string      { return rg.variation }
-func (rg *RuleGroup) Priority() int          { return rg.priority }
-func (rg *RuleGroup) Conditions() []Condition { return rg.conditions }
-func (rg *RuleGroup) CreatedAt() time.Time   { return rg.createdAt }
-func (rg *RuleGroup) UpdatedAt() time.Time   { return rg.updatedAt }
+func (rg *RuleGroup) ID() uuid.UUID              { return rg.id }
+func (rg *RuleGroup) TypedID() RuleGroupID       { return RuleGroupID(rg.id) }
+func (rg *RuleGroup) FlagID() uuid.UUID          { return rg.flagID }
+func (rg *RuleGroup) TypedFlagID() FeatureFlagID { return FeatureFlagID(rg.flagID) }
+func (rg *RuleGroup) Name() string               { return rg.name }
+func (rg *RuleGroup) Variation() string          { return rg.variation }
+func (rg *RuleGroup) Priority() int              { return rg.priority }
+func (rg *RuleGroup) Conditions() []Condition    { return rg.conditions }
+func (rg *RuleGroup) CreatedAt() time.Time       { return rg.createdAt }
+func (rg *RuleGroup) UpdatedAt() time.Time       { return rg.updatedAt }

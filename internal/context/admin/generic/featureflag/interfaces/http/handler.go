@@ -70,7 +70,7 @@ func (h *Handler) List(ctx *gin.Context) {
 
 // Get returns a single feature flag by ID.
 func (h *Handler) Get(ctx *gin.Context) {
-	id, err := uuid.Parse(ctx.Param("id"))
+	id, err := domain.ParseFeatureFlagID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
@@ -85,7 +85,7 @@ func (h *Handler) Get(ctx *gin.Context) {
 
 // Update updates a feature flag.
 func (h *Handler) Update(ctx *gin.Context) {
-	id, err := uuid.Parse(ctx.Param("id"))
+	id, err := domain.ParseFeatureFlagID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
@@ -96,7 +96,7 @@ func (h *Handler) Update(ctx *gin.Context) {
 		return
 	}
 	cmd := command.UpdateCommand{
-		ID:                domain.FeatureFlagID(id),
+		ID:                id,
 		Name:              req.Name,
 		Key:               req.Key,
 		Description:       req.Description,
@@ -114,12 +114,12 @@ func (h *Handler) Update(ctx *gin.Context) {
 
 // Delete deletes a feature flag.
 func (h *Handler) Delete(ctx *gin.Context) {
-	id, err := uuid.Parse(ctx.Param("id"))
+	id, err := domain.ParseFeatureFlagID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
-	if err := h.bc.DeleteFlag.Handle(ctx.Request.Context(), command.DeleteCommand{ID: domain.FeatureFlagID(id)}); err != nil {
+	if err := h.bc.DeleteFlag.Handle(ctx.Request.Context(), command.DeleteCommand{ID: id}); err != nil {
 		response.HandleError(ctx, err)
 		return
 	}
@@ -128,7 +128,7 @@ func (h *Handler) Delete(ctx *gin.Context) {
 
 // CreateRuleGroup adds a rule group to a feature flag.
 func (h *Handler) CreateRuleGroup(ctx *gin.Context) {
-	flagID, err := uuid.Parse(ctx.Param("id"))
+	flagID, err := domain.ParseFeatureFlagID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return

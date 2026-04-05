@@ -17,7 +17,7 @@ func TestDeleteIPRuleHandler_Handle(t *testing.T) {
 	id := domain.NewIPRuleID()
 	err := handler.Handle(context.Background(), DeleteIPRuleCommand{ID: id})
 	require.NoError(t, err)
-	if repo.deleted != id.UUID() {
+	if repo.deleted != id {
 		t.Errorf("expected deleted ID %s, got %s", id, repo.deleted)
 	}
 }

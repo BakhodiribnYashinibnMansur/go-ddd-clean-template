@@ -209,7 +209,7 @@ func (h *Handler) CreatePolicy(ctx *gin.Context) {
 	}
 
 	err := h.bc.CreatePolicy.Handle(ctx.Request.Context(), command.CreatePolicyCommand{
-		PermissionID: domain.PermissionID(req.PermissionID),
+		PermissionID: req.PermissionID,
 		Effect:       req.Effect,
 		Priority:     req.Priority,
 		Conditions:   req.Conditions,
@@ -388,7 +388,7 @@ func (h *Handler) AssignPermission(ctx *gin.Context) {
 
 	err = h.bc.AssignPermission.Handle(ctx.Request.Context(), command.AssignPermissionCommand{
 		RoleID:       domain.RoleID(roleID),
-		PermissionID: domain.PermissionID(req.PermissionID),
+		PermissionID: req.PermissionID,
 	})
 	if err != nil {
 		response.HandleError(ctx, err)

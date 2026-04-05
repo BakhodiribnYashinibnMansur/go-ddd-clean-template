@@ -98,14 +98,14 @@ func (r *DataExportWriteRepo) Update(ctx context.Context, de *domain.DataExport)
 }
 
 // FindByID retrieves a DataExport aggregate by its ID.
-func (r *DataExportWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.DataExport, err error) {
+func (r *DataExportWriteRepo) FindByID(ctx context.Context, id domain.DataExportID) (result *domain.DataExport, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "DataExportWriteRepo.FindByID")
 	defer func() { end(err) }()
 
 	sql, args, err := r.builder.
 		Select(writeColumns...).
 		From(tableName).
-		Where(squirrel.Eq{"id": id}).
+		Where(squirrel.Eq{"id": id.UUID()}).
 		ToSql()
 	if err != nil {
 		return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
@@ -116,13 +116,13 @@ func (r *DataExportWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (resul
 }
 
 // Delete removes a data export by its ID.
-func (r *DataExportWriteRepo) Delete(ctx context.Context, id uuid.UUID) (err error) {
+func (r *DataExportWriteRepo) Delete(ctx context.Context, id domain.DataExportID) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "DataExportWriteRepo.Delete")
 	defer func() { end(err) }()
 
 	sql, args, err := r.builder.
 		Delete(tableName).
-		Where(squirrel.Eq{"id": id}).
+		Where(squirrel.Eq{"id": id.UUID()}).
 		ToSql()
 	if err != nil {
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildDelete)

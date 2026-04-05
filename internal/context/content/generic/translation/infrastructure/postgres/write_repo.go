@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
+	"gct/internal/context/content/generic/translation/domain"
 	"gct/internal/kernel/consts"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/pgxutil"
-	"gct/internal/context/content/generic/translation/domain"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -60,14 +60,14 @@ func (r *TranslationWriteRepo) Save(ctx context.Context, t *domain.Translation) 
 }
 
 // FindByID retrieves a Translation aggregate by its ID.
-func (r *TranslationWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.Translation, err error) {
+func (r *TranslationWriteRepo) FindByID(ctx context.Context, id domain.TranslationID) (result *domain.Translation, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "TranslationWriteRepo.FindByID")
 	defer func() { end(err) }()
 
 	sql, args, err := r.builder.
 		Select(writeColumns...).
 		From(tableName).
-		Where(squirrel.Eq{"id": id}).
+		Where(squirrel.Eq{"id": id.UUID()}).
 		ToSql()
 	if err != nil {
 		return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
@@ -103,13 +103,13 @@ func (r *TranslationWriteRepo) Update(ctx context.Context, t *domain.Translation
 }
 
 // Delete removes a Translation by its ID.
-func (r *TranslationWriteRepo) Delete(ctx context.Context, id uuid.UUID) (err error) {
+func (r *TranslationWriteRepo) Delete(ctx context.Context, id domain.TranslationID) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "TranslationWriteRepo.Delete")
 	defer func() { end(err) }()
 
 	sql, args, err := r.builder.
 		Delete(tableName).
-		Where(squirrel.Eq{"id": id}).
+		Where(squirrel.Eq{"id": id.UUID()}).
 		ToSql()
 	if err != nil {
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildDelete)

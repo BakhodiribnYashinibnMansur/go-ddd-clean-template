@@ -26,7 +26,7 @@ func NewErrorCodeCreated(id uuid.UUID, code, message string, httpStatus int) Err
 	}
 }
 
-func (e ErrorCodeCreated) EventName() string     { return "errorcode.created" }
+func (e ErrorCodeCreated) EventName() string      { return "errorcode.created" }
 func (e ErrorCodeCreated) OccurredAt() time.Time  { return e.occurredAt }
 func (e ErrorCodeCreated) AggregateID() uuid.UUID { return e.aggregateID }
 
@@ -50,7 +50,7 @@ func NewErrorCodeUpdated(id uuid.UUID, code, message string, httpStatus int) Err
 	}
 }
 
-func (e ErrorCodeUpdated) EventName() string     { return "errorcode.updated" }
+func (e ErrorCodeUpdated) EventName() string      { return "errorcode.updated" }
 func (e ErrorCodeUpdated) OccurredAt() time.Time  { return e.occurredAt }
 func (e ErrorCodeUpdated) AggregateID() uuid.UUID { return e.aggregateID }
 
@@ -70,6 +70,6 @@ func NewErrorCodeDeleted(id uuid.UUID, code string) ErrorCodeDeleted {
 	}
 }
 
-func (e ErrorCodeDeleted) EventName() string     { return "errorcode.deleted" }
+func (e ErrorCodeDeleted) EventName() string      { return "errorcode.deleted" }
 func (e ErrorCodeDeleted) OccurredAt() time.Time  { return e.occurredAt }
 func (e ErrorCodeDeleted) AggregateID() uuid.UUID { return e.aggregateID }

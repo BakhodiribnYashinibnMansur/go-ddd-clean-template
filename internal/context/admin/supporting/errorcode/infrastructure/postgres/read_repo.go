@@ -35,14 +35,14 @@ func NewErrorCodeReadRepo(pool *pgxpool.Pool) *ErrorCodeReadRepo {
 }
 
 // FindByID returns a single ErrorCodeView by its ID.
-func (r *ErrorCodeReadRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.ErrorCodeView, err error) {
+func (r *ErrorCodeReadRepo) FindByID(ctx context.Context, id domain.ErrorCodeID) (result *domain.ErrorCodeView, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "ErrorCodeReadRepo.FindByID")
 	defer func() { end(err) }()
 
 	sql, args, err := r.builder.
 		Select(readColumns...).
 		From(tableName).
-		Where(squirrel.Eq{"id": id}).
+		Where(squirrel.Eq{"id": id.UUID()}).
 		ToSql()
 	if err != nil {
 		return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
@@ -152,7 +152,7 @@ func scanErrorCodeView(row pgx.Row) (*domain.ErrorCodeView, error) {
 	}
 
 	return &domain.ErrorCodeView{
-		ID:         id,
+		ID:         domain.ErrorCodeID(id),
 		Code:       code,
 		Message:    message,
 		MessageUz:  messageUz,
@@ -194,7 +194,7 @@ func scanErrorCodeViewFromRows(rows pgx.Rows) (*domain.ErrorCodeView, error) {
 	}
 
 	return &domain.ErrorCodeView{
-		ID:         id,
+		ID:         domain.ErrorCodeID(id),
 		Code:       code,
 		Message:    message,
 		MessageUz:  messageUz,

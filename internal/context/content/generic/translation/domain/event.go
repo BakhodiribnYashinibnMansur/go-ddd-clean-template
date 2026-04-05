@@ -21,5 +21,5 @@ func NewTranslationUpdated(id uuid.UUID) TranslationUpdated {
 }
 
 func (e TranslationUpdated) EventName() string      { return "translation.updated" }
-func (e TranslationUpdated) OccurredAt() time.Time   { return e.occurredAt }
-func (e TranslationUpdated) AggregateID() uuid.UUID  { return e.aggregateID }
+func (e TranslationUpdated) OccurredAt() time.Time  { return e.occurredAt }
+func (e TranslationUpdated) AggregateID() uuid.UUID { return e.aggregateID }

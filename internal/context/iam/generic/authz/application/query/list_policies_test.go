@@ -1,27 +1,26 @@
 package query
 
 import (
-	"gct/internal/kernel/infrastructure/logger"
 	"context"
 	"errors"
+	"gct/internal/kernel/infrastructure/logger"
 	"testing"
 
 	"gct/internal/context/iam/generic/authz/domain"
 	shared "gct/internal/kernel/domain"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
 func TestListPoliciesHandler_WithResults(t *testing.T) {
 	t.Parallel()
 
-	permID := uuid.New()
+	permID := domain.NewPermissionID()
 	repo := &mockAuthzReadRepository{
 		listPoliciesFn: func(_ context.Context, _ shared.Pagination) ([]*domain.PolicyView, int64, error) {
 			return []*domain.PolicyView{
 				{
-					ID:           uuid.New(),
+					ID:           domain.NewPolicyID(),
 					PermissionID: permID,
 					Effect:       "ALLOW",
 					Priority:     10,
@@ -29,7 +28,7 @@ func TestListPoliciesHandler_WithResults(t *testing.T) {
 					Conditions:   map[string]any{"ip_range": "10.0.0.0/8"},
 				},
 				{
-					ID:           uuid.New(),
+					ID:           domain.NewPolicyID(),
 					PermissionID: permID,
 					Effect:       "DENY",
 					Priority:     20,

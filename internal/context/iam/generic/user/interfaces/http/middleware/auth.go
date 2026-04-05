@@ -4,11 +4,12 @@ package middleware
 
 import (
 	"crypto/rsa"
+	"time"
 
 	"gct/config"
+	"gct/internal/context/iam/generic/user/application/query"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/security/jwt"
-	"gct/internal/context/iam/generic/user/application/query"
 )
 
 // AuthMiddleware manages identity verification for HTTP requests.
@@ -20,19 +21,32 @@ type AuthMiddleware struct {
 	cfg             *config.Config
 	l               logger.Log
 	pubKey          *rsa.PublicKey
+	refreshHasher   *jwt.RefreshHasher
+	audience        string
+	leeway          time.Duration
 }
 
 // NewAuthMiddleware initializes a new authentication middleware instance.
-// It pre-parses the RSA public key once at startup for performance.
+// It pre-parses the RSA public key and constructs the refresh hasher once
+// at startup, failing fast on misconfiguration.
 func NewAuthMiddleware(
 	findSession *query.FindSessionHandler,
 	findUserForAuth *query.FindUserForAuthHandler,
 	cfg *config.Config,
 	l logger.Log,
 ) *AuthMiddleware {
-	pubKey, err := jwt.ParseRSAPublicKey(cfg.JWT.PublicKey)
+	pubKey, err := jwt.ParseRSAPublicKey([]byte(cfg.JWT.PublicKey))
 	if err != nil {
 		l.Fatalw("AuthMiddleware - NewAuthMiddleware - ParseRSAPublicKey", "error", err)
+	}
+
+	pepper, err := cfg.JWT.DecodeRefreshPepper()
+	if err != nil {
+		l.Fatalw("AuthMiddleware - NewAuthMiddleware - DecodeRefreshPepper", "error", err)
+	}
+	hasher, err := jwt.NewRefreshHasher(pepper)
+	if err != nil {
+		l.Fatalw("AuthMiddleware - NewAuthMiddleware - NewRefreshHasher", "error", err)
 	}
 
 	return &AuthMiddleware{
@@ -41,5 +55,8 @@ func NewAuthMiddleware(
 		cfg:             cfg,
 		l:               l,
 		pubKey:          pubKey,
+		refreshHasher:   hasher,
+		audience:        cfg.JWT.Audience,
+		leeway:          cfg.JWT.Leeway,
 	}
 }

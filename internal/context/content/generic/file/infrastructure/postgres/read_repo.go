@@ -35,14 +35,14 @@ func NewFileReadRepo(pool *pgxpool.Pool) *FileReadRepo {
 }
 
 // FindByID returns a single FileView by its ID.
-func (r *FileReadRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.FileView, err error) {
+func (r *FileReadRepo) FindByID(ctx context.Context, id domain.FileID) (result *domain.FileView, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "FileReadRepo.FindByID")
 	defer func() { end(err) }()
 
 	sql, args, err := r.builder.
 		Select(readColumns...).
 		From(tableName).
-		Where(squirrel.Eq{"id": id}).
+		Where(squirrel.Eq{"id": id.UUID()}).
 		ToSql()
 	if err != nil {
 		return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
@@ -125,7 +125,7 @@ func applyFilters(conds squirrel.And, filter domain.FileFilter) squirrel.And {
 
 func scanFileView(row pgx.Row) (*domain.FileView, error) {
 	var (
-		id           uuid.UUID
+		rawID        uuid.UUID
 		name         string
 		originalName string
 		mimeType     string
@@ -136,13 +136,13 @@ func scanFileView(row pgx.Row) (*domain.FileView, error) {
 		createdAt    time.Time
 	)
 
-	err := row.Scan(&id, &name, &originalName, &mimeType, &size, &path, &url, &uploadedBy, &createdAt)
+	err := row.Scan(&rawID, &name, &originalName, &mimeType, &size, &path, &url, &uploadedBy, &createdAt)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 
 	return &domain.FileView{
-		ID:           id,
+		ID:           domain.FileID(rawID),
 		Name:         name,
 		OriginalName: originalName,
 		MimeType:     mimeType,
@@ -156,7 +156,7 @@ func scanFileView(row pgx.Row) (*domain.FileView, error) {
 
 func scanFileViewFromRows(rows pgx.Rows) (*domain.FileView, error) {
 	var (
-		id           uuid.UUID
+		rawID        uuid.UUID
 		name         string
 		originalName string
 		mimeType     string
@@ -167,13 +167,13 @@ func scanFileViewFromRows(rows pgx.Rows) (*domain.FileView, error) {
 		createdAt    time.Time
 	)
 
-	err := rows.Scan(&id, &name, &originalName, &mimeType, &size, &path, &url, &uploadedBy, &createdAt)
+	err := rows.Scan(&rawID, &name, &originalName, &mimeType, &size, &path, &url, &uploadedBy, &createdAt)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 
 	return &domain.FileView{
-		ID:           id,
+		ID:           domain.FileID(rawID),
 		Name:         name,
 		OriginalName: originalName,
 		MimeType:     mimeType,

@@ -25,15 +25,15 @@ import (
 type mockRepo struct {
 	saved   *domain.Integration
 	updated *domain.Integration
-	deleted uuid.UUID
-	findFn  func(ctx context.Context, id uuid.UUID) (*domain.Integration, error)
+	deleted domain.IntegrationID
+	findFn  func(ctx context.Context, id domain.IntegrationID) (*domain.Integration, error)
 }
 
 func (m *mockRepo) Save(_ context.Context, e *domain.Integration) error {
 	m.saved = e
 	return nil
 }
-func (m *mockRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Integration, error) {
+func (m *mockRepo) FindByID(ctx context.Context, id domain.IntegrationID) (*domain.Integration, error) {
 	if m.findFn != nil {
 		return m.findFn(ctx, id)
 	}
@@ -43,7 +43,7 @@ func (m *mockRepo) Update(_ context.Context, e *domain.Integration) error {
 	m.updated = e
 	return nil
 }
-func (m *mockRepo) Delete(_ context.Context, id uuid.UUID) error {
+func (m *mockRepo) Delete(_ context.Context, id domain.IntegrationID) error {
 	m.deleted = id
 	return nil
 }
@@ -54,7 +54,7 @@ type mockReadRepo struct {
 	total int64
 }
 
-func (m *mockReadRepo) FindByID(_ context.Context, id uuid.UUID) (*domain.IntegrationView, error) {
+func (m *mockReadRepo) FindByID(_ context.Context, id domain.IntegrationID) (*domain.IntegrationView, error) {
 	if m.view != nil && m.view.ID == id {
 		return m.view, nil
 	}
@@ -78,26 +78,26 @@ func (m *mockEventBus) Subscribe(_ string, _ application.EventHandler) error { r
 
 type mockLogger struct{}
 
-func (m *mockLogger) Debug(args ...any)                                          {}
-func (m *mockLogger) Debugf(template string, args ...any)                        {}
-func (m *mockLogger) Debugw(msg string, keysAndValues ...any)                    {}
-func (m *mockLogger) Info(args ...any)                                           {}
-func (m *mockLogger) Infof(template string, args ...any)                         {}
-func (m *mockLogger) Infow(msg string, keysAndValues ...any)                     {}
-func (m *mockLogger) Warn(args ...any)                                           {}
-func (m *mockLogger) Warnf(template string, args ...any)                         {}
-func (m *mockLogger) Warnw(msg string, keysAndValues ...any)                     {}
-func (m *mockLogger) Error(args ...any)                                          {}
-func (m *mockLogger) Errorf(template string, args ...any)                        {}
-func (m *mockLogger) Errorw(msg string, keysAndValues ...any)                    {}
-func (m *mockLogger) Fatal(args ...any)                                          {}
-func (m *mockLogger) Fatalf(template string, args ...any)                        {}
-func (m *mockLogger) Fatalw(msg string, keysAndValues ...any)                    {}
-func (m *mockLogger) Debugc(_ context.Context, _ string, _ ...any)               {}
-func (m *mockLogger) Infoc(_ context.Context, _ string, _ ...any)                {}
-func (m *mockLogger) Warnc(_ context.Context, _ string, _ ...any)                {}
-func (m *mockLogger) Errorc(_ context.Context, _ string, _ ...any)               {}
-func (m *mockLogger) Fatalc(_ context.Context, _ string, _ ...any)               {}
+func (m *mockLogger) Debug(args ...any)                            {}
+func (m *mockLogger) Debugf(template string, args ...any)          {}
+func (m *mockLogger) Debugw(msg string, keysAndValues ...any)      {}
+func (m *mockLogger) Info(args ...any)                             {}
+func (m *mockLogger) Infof(template string, args ...any)           {}
+func (m *mockLogger) Infow(msg string, keysAndValues ...any)       {}
+func (m *mockLogger) Warn(args ...any)                             {}
+func (m *mockLogger) Warnf(template string, args ...any)           {}
+func (m *mockLogger) Warnw(msg string, keysAndValues ...any)       {}
+func (m *mockLogger) Error(args ...any)                            {}
+func (m *mockLogger) Errorf(template string, args ...any)          {}
+func (m *mockLogger) Errorw(msg string, keysAndValues ...any)      {}
+func (m *mockLogger) Fatal(args ...any)                            {}
+func (m *mockLogger) Fatalf(template string, args ...any)          {}
+func (m *mockLogger) Fatalw(msg string, keysAndValues ...any)      {}
+func (m *mockLogger) Debugc(_ context.Context, _ string, _ ...any) {}
+func (m *mockLogger) Infoc(_ context.Context, _ string, _ ...any)  {}
+func (m *mockLogger) Warnc(_ context.Context, _ string, _ ...any)  {}
+func (m *mockLogger) Errorc(_ context.Context, _ string, _ ...any) {}
+func (m *mockLogger) Fatalc(_ context.Context, _ string, _ ...any) {}
 
 // --- Helpers ---
 
@@ -168,7 +168,7 @@ func TestHandler_List_Success(t *testing.T) {
 
 	readRepo := &mockReadRepo{
 		views: []*domain.IntegrationView{
-			{ID: uuid.New(), Name: "Slack", Type: "messaging", APIKey: "k", Enabled: true, Config: map[string]string{}, CreatedAt: time.Now(), UpdatedAt: time.Now()},
+			{ID: domain.NewIntegrationID(), Name: "Slack", Type: "messaging", APIKey: "k", Enabled: true, Config: map[string]string{}, CreatedAt: time.Now(), UpdatedAt: time.Now()},
 		},
 		total: 1,
 	}
@@ -186,7 +186,7 @@ func TestHandler_List_Success(t *testing.T) {
 func TestHandler_Get_Success(t *testing.T) {
 	t.Parallel()
 
-	id := uuid.New()
+	id := domain.NewIntegrationID()
 	readRepo := &mockReadRepo{
 		view: &domain.IntegrationView{
 			ID: id, Name: "Slack", Type: "messaging", APIKey: "k", Enabled: true, Config: map[string]string{}, CreatedAt: time.Now(), UpdatedAt: time.Now(),
@@ -222,8 +222,8 @@ func TestHandler_Update_Success(t *testing.T) {
 
 	i, _ := domain.NewIntegration("Slack", "messaging", "key", "https://url.com", true, nil)
 	repo := &mockRepo{
-		findFn: func(_ context.Context, id uuid.UUID) (*domain.Integration, error) {
-			if id == i.ID() {
+		findFn: func(_ context.Context, id domain.IntegrationID) (*domain.Integration, error) {
+			if id == i.TypedID() {
 				return i, nil
 			}
 			return nil, domain.ErrIntegrationNotFound
@@ -292,7 +292,7 @@ func TestHandler_Get_NotFound(t *testing.T) {
 	// readRepo has no view set, so FindByID returns ErrIntegrationNotFound
 	router := setupRouter(&mockRepo{}, &mockReadRepo{})
 
-	id := uuid.New()
+	id := domain.NewIntegrationID()
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/api/v1/integrations/"+id.String(), nil)
 	router.ServeHTTP(w, req)

@@ -3,11 +3,11 @@ package command
 import (
 	"context"
 
+	"gct/internal/context/content/generic/translation/domain"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
-	"gct/internal/context/content/generic/translation/domain"
 )
 
 // UpdateTranslationCommand represents a partial update to an existing translation record.
@@ -48,7 +48,7 @@ func (h *UpdateTranslationHandler) Handle(ctx context.Context, cmd UpdateTransla
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "UpdateTranslation", "translation")()
 
-	t, err := h.repo.FindByID(ctx, cmd.ID.UUID())
+	t, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {
 		return apperrors.MapToServiceError(err)
 	}
@@ -56,12 +56,12 @@ func (h *UpdateTranslationHandler) Handle(ctx context.Context, cmd UpdateTransla
 	t.Update(cmd.Key, cmd.Language, cmd.Value, cmd.Group)
 
 	if err := h.repo.Update(ctx, t); err != nil {
-		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "UpdateTranslation", Entity: "translation", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
+		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "UpdateTranslation", Entity: "translation", EntityID: cmd.ID, Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, t.Events()...); err != nil {
-		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "UpdateTranslation", Entity: "translation", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "UpdateTranslation", Entity: "translation", EntityID: cmd.ID, Err: err}.KV()...)
 	}
 
 	return nil

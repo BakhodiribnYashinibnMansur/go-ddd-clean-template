@@ -158,7 +158,7 @@ func (r *AuditReadRepo) ListAuditLogs(ctx context.Context, filter domain.AuditLo
 		}
 
 		views = append(views, &domain.AuditLogView{
-			ID:           id,
+			ID:           domain.AuditLogID(id),
 			UserID:       userID,
 			SessionID:    sessionID,
 			Action:       domain.AuditAction(action),
@@ -278,7 +278,7 @@ func (r *AuditReadRepo) ListEndpointHistory(ctx context.Context, filter domain.E
 		}
 
 		views = append(views, &domain.EndpointHistoryView{
-			ID:         id,
+			ID:         domain.EndpointHistoryID(id),
 			UserID:     userID,
 			Endpoint:   endpoint,
 			Method:     method,

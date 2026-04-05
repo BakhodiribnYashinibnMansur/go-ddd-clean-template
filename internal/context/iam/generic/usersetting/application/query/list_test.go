@@ -1,8 +1,8 @@
 package query
 
 import (
-	"gct/internal/kernel/infrastructure/logger"
 	"context"
+	"gct/internal/kernel/infrastructure/logger"
 	"testing"
 	"time"
 
@@ -18,8 +18,8 @@ func TestListUserSettingsHandler_Handle(t *testing.T) {
 	now := time.Now()
 	readRepo := &mockReadRepo{
 		views: []*domain.UserSettingView{
-			{ID: uuid.New(), UserID: uuid.New(), Key: "theme", Value: "dark", CreatedAt: now, UpdatedAt: now},
-			{ID: uuid.New(), UserID: uuid.New(), Key: "locale", Value: "en", CreatedAt: now, UpdatedAt: now},
+			{ID: domain.NewUserSettingID(), UserID: uuid.New(), Key: "theme", Value: "dark", CreatedAt: now, UpdatedAt: now},
+			{ID: domain.NewUserSettingID(), UserID: uuid.New(), Key: "locale", Value: "en", CreatedAt: now, UpdatedAt: now},
 		},
 		total: 2,
 	}

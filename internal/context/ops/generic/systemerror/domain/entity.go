@@ -112,6 +112,7 @@ func (se *SystemError) SetMethod(m *string) { se.method = m }
 // Getters
 // ---------------------------------------------------------------------------
 
+func (se *SystemError) TypedID() SystemErrorID { return SystemErrorID(se.ID()) }
 func (se *SystemError) Code() string          { return se.code }
 func (se *SystemError) Message() string       { return se.message }
 func (se *SystemError) StackTrace() *string   { return se.stackTrace }

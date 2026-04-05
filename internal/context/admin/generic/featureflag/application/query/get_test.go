@@ -1,9 +1,9 @@
 package query
 
 import (
-	"gct/internal/kernel/infrastructure/logger"
 	"context"
 	"errors"
+	"gct/internal/kernel/infrastructure/logger"
 	"testing"
 	"time"
 
@@ -16,11 +16,11 @@ import (
 // --- Mocks ---
 
 type mockReadRepo struct {
-	findByIDFn func(ctx context.Context, id uuid.UUID) (*domain.FeatureFlagView, error)
+	findByIDFn func(ctx context.Context, id domain.FeatureFlagID) (*domain.FeatureFlagView, error)
 	listFn     func(ctx context.Context, filter domain.FeatureFlagFilter) ([]*domain.FeatureFlagView, int64, error)
 }
 
-func (m *mockReadRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.FeatureFlagView, error) {
+func (m *mockReadRepo) FindByID(ctx context.Context, id domain.FeatureFlagID) (*domain.FeatureFlagView, error) {
 	if m.findByIDFn != nil {
 		return m.findByIDFn(ctx, id)
 	}
@@ -39,11 +39,11 @@ func (m *mockReadRepo) List(ctx context.Context, filter domain.FeatureFlagFilter
 func TestGetHandler_Handle(t *testing.T) {
 	t.Parallel()
 
-	flagID := uuid.New()
+	flagID := domain.NewFeatureFlagID()
 	now := time.Now().Format(time.RFC3339)
 
 	readRepo := &mockReadRepo{
-		findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.FeatureFlagView, error) {
+		findByIDFn: func(_ context.Context, id domain.FeatureFlagID) (*domain.FeatureFlagView, error) {
 			if id == flagID {
 				return &domain.FeatureFlagView{
 					ID:                flagID,
@@ -56,7 +56,7 @@ func TestGetHandler_Handle(t *testing.T) {
 					IsActive:          true,
 					RuleGroups: []domain.RuleGroupView{
 						{
-							ID:        uuid.New(),
+							ID:        domain.NewRuleGroupID(),
 							Name:      "beta",
 							Variation: "true",
 							Priority:  1,
@@ -114,7 +114,7 @@ func TestGetHandler_Handle_NotFound(t *testing.T) {
 	readRepo := &mockReadRepo{} // default returns ErrFeatureFlagNotFound
 	handler := NewGetHandler(readRepo, logger.Noop())
 
-	result, err := handler.Handle(context.Background(), GetQuery{ID: uuid.New()})
+	result, err := handler.Handle(context.Background(), GetQuery{ID: domain.NewFeatureFlagID()})
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
@@ -131,13 +131,13 @@ func TestGetHandler_Handle_RepoError(t *testing.T) {
 
 	repoErr := errors.New("db connection failed")
 	readRepo := &mockReadRepo{
-		findByIDFn: func(_ context.Context, _ uuid.UUID) (*domain.FeatureFlagView, error) {
+		findByIDFn: func(_ context.Context, _ domain.FeatureFlagID) (*domain.FeatureFlagView, error) {
 			return nil, repoErr
 		},
 	}
 	handler := NewGetHandler(readRepo, logger.Noop())
 
-	result, err := handler.Handle(context.Background(), GetQuery{ID: uuid.New()})
+	result, err := handler.Handle(context.Background(), GetQuery{ID: domain.NewFeatureFlagID()})
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
@@ -152,11 +152,11 @@ func TestGetHandler_Handle_RepoError(t *testing.T) {
 func TestGetHandler_Handle_EmptyRuleGroups(t *testing.T) {
 	t.Parallel()
 
-	flagID := uuid.New()
+	flagID := domain.NewFeatureFlagID()
 	now := time.Now().Format(time.RFC3339)
 
 	readRepo := &mockReadRepo{
-		findByIDFn: func(_ context.Context, _ uuid.UUID) (*domain.FeatureFlagView, error) {
+		findByIDFn: func(_ context.Context, _ domain.FeatureFlagID) (*domain.FeatureFlagView, error) {
 			return &domain.FeatureFlagView{
 				ID:         flagID,
 				Name:       "simple-flag",

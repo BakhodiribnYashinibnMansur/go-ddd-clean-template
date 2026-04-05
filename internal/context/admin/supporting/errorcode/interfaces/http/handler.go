@@ -12,7 +12,6 @@ import (
 	"gct/internal/kernel/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 // Handler provides HTTP endpoints for the ErrorCode bounded context.
@@ -73,12 +72,12 @@ func (h *Handler) List(ctx *gin.Context) {
 
 // Get returns a single error code by ID.
 func (h *Handler) Get(ctx *gin.Context) {
-	id, err := uuid.Parse(ctx.Param("id"))
+	id, err := domain.ParseErrorCodeID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
-	result, err := h.bc.GetErrorCode.Handle(ctx.Request.Context(), query.GetErrorCodeQuery{ID: domain.ErrorCodeID(id)})
+	result, err := h.bc.GetErrorCode.Handle(ctx.Request.Context(), query.GetErrorCodeQuery{ID: id})
 	if err != nil {
 		response.HandleError(ctx, err)
 		return
@@ -88,7 +87,7 @@ func (h *Handler) Get(ctx *gin.Context) {
 
 // Update updates an error code.
 func (h *Handler) Update(ctx *gin.Context) {
-	id, err := uuid.Parse(ctx.Param("id"))
+	id, err := domain.ParseErrorCodeID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
@@ -99,7 +98,7 @@ func (h *Handler) Update(ctx *gin.Context) {
 		return
 	}
 	cmd := command.UpdateErrorCodeCommand{
-		ID:         domain.ErrorCodeID(id),
+		ID:         id,
 		Message:    req.Message,
 		MessageUz:  req.MessageUz,
 		MessageRu:  req.MessageRu,
@@ -119,12 +118,12 @@ func (h *Handler) Update(ctx *gin.Context) {
 
 // Delete deletes an error code.
 func (h *Handler) Delete(ctx *gin.Context) {
-	id, err := uuid.Parse(ctx.Param("id"))
+	id, err := domain.ParseErrorCodeID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
-	if err := h.bc.DeleteErrorCode.Handle(ctx.Request.Context(), command.DeleteErrorCodeCommand{ID: domain.ErrorCodeID(id)}); err != nil {
+	if err := h.bc.DeleteErrorCode.Handle(ctx.Request.Context(), command.DeleteErrorCodeCommand{ID: id}); err != nil {
 		response.HandleError(ctx, err)
 		return
 	}

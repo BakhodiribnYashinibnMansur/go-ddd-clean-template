@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+
 	// pgproto3 not needed
 
 	"github.com/Masterminds/squirrel"
@@ -29,15 +30,15 @@ type mockRows struct {
 	scanFunc func(dest ...any) error
 }
 
-func (m *mockRows) Scan(dest ...any) error                        { return m.scanFunc(dest...) }
-func (m *mockRows) Close()                                        {}
-func (m *mockRows) Err() error                                    { return nil }
-func (m *mockRows) CommandTag() pgconn.CommandTag                 { return pgconn.CommandTag{} }
+func (m *mockRows) Scan(dest ...any) error                       { return m.scanFunc(dest...) }
+func (m *mockRows) Close()                                       {}
+func (m *mockRows) Err() error                                   { return nil }
+func (m *mockRows) CommandTag() pgconn.CommandTag                { return pgconn.CommandTag{} }
 func (m *mockRows) FieldDescriptions() []pgconn.FieldDescription { return nil }
-func (m *mockRows) Next() bool                                    { return false }
-func (m *mockRows) Values() ([]any, error)                        { return nil, nil }
-func (m *mockRows) RawValues() [][]byte                           { return nil }
-func (m *mockRows) Conn() *pgx.Conn                               { return nil }
+func (m *mockRows) Next() bool                                   { return false }
+func (m *mockRows) Values() ([]any, error)                       { return nil, nil }
+func (m *mockRows) RawValues() [][]byte                          { return nil }
+func (m *mockRows) Conn() *pgx.Conn                              { return nil }
 
 // ---------------------------------------------------------------------------
 // helpers — 6 columns: id, user_id, key, value, created_at, updated_at
@@ -75,12 +76,12 @@ func TestNewUserSettingReadRepo(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestScanUserSettingView_Success(t *testing.T) {
-	id := uuid.New()
+	id := domain.NewUserSettingID()
 	userID := uuid.New()
 	now := time.Now().Truncate(time.Microsecond)
 
 	row := &mockRow{scanFunc: func(dest ...any) error {
-		fillUserSettingDest(dest, id, userID, now)
+		fillUserSettingDest(dest, id.UUID(), userID, now)
 		return nil
 	}}
 
@@ -118,12 +119,12 @@ func TestScanUserSettingView_Error(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestScanUserSettingViewFromRows_Success(t *testing.T) {
-	id := uuid.New()
+	id := domain.NewUserSettingID()
 	userID := uuid.New()
 	now := time.Now().Truncate(time.Microsecond)
 
 	rows := &mockRows{scanFunc: func(dest ...any) error {
-		fillUserSettingDest(dest, id, userID, now)
+		fillUserSettingDest(dest, id.UUID(), userID, now)
 		return nil
 	}}
 
@@ -149,12 +150,12 @@ func TestScanUserSettingViewFromRows_Error(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestScanUserSetting_Success(t *testing.T) {
-	id := uuid.New()
+	id := domain.NewUserSettingID()
 	userID := uuid.New()
 	now := time.Now().Truncate(time.Microsecond)
 
 	row := &mockRow{scanFunc: func(dest ...any) error {
-		fillUserSettingDest(dest, id, userID, now)
+		fillUserSettingDest(dest, id.UUID(), userID, now)
 		return nil
 	}}
 
@@ -162,7 +163,7 @@ func TestScanUserSetting_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if us.ID() != id {
+	if us.TypedID() != id {
 		t.Errorf("ID = %v, want %v", us.ID(), id)
 	}
 	if us.UserID() != userID {

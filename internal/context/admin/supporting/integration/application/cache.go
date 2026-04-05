@@ -8,13 +8,11 @@ import (
 	"gct/internal/context/admin/supporting/integration/domain"
 	"gct/internal/kernel/consts"
 	"gct/internal/kernel/infrastructure/logger"
-
-	"github.com/google/uuid"
 )
 
 // CachedIntegration holds an in-memory snapshot of an active integration.
 type CachedIntegration struct {
-	ID         uuid.UUID
+	ID         domain.IntegrationID
 	Name       string
 	Type       string
 	APIKey     string
@@ -29,7 +27,7 @@ type CacheService struct {
 	logger   logger.Log
 
 	mu           sync.RWMutex
-	integrations map[uuid.UUID]*CachedIntegration
+	integrations map[domain.IntegrationID]*CachedIntegration
 	apiKeys      map[string]*CachedIntegration // keyed by API key string
 }
 
@@ -38,7 +36,7 @@ func NewCacheService(readRepo domain.IntegrationReadRepository, l logger.Log) *C
 	return &CacheService{
 		readRepo:     readRepo,
 		logger:       l,
-		integrations: make(map[uuid.UUID]*CachedIntegration),
+		integrations: make(map[domain.IntegrationID]*CachedIntegration),
 		apiKeys:      make(map[string]*CachedIntegration),
 	}
 }
@@ -59,7 +57,7 @@ func (s *CacheService) InitCache(ctx context.Context) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.integrations = make(map[uuid.UUID]*CachedIntegration, len(views))
+	s.integrations = make(map[domain.IntegrationID]*CachedIntegration, len(views))
 	s.apiKeys = make(map[string]*CachedIntegration, len(views))
 
 	for _, v := range views {
@@ -103,7 +101,7 @@ func (s *CacheService) FindByAPIKey(key string) (*CachedIntegration, bool) {
 }
 
 // FindByID returns a cached integration by ID.
-func (s *CacheService) FindByID(id uuid.UUID) (*CachedIntegration, bool) {
+func (s *CacheService) FindByID(id domain.IntegrationID) (*CachedIntegration, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	ci, ok := s.integrations[id]

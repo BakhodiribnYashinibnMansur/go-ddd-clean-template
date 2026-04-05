@@ -178,16 +178,16 @@ func TestFeatureFlag_Evaluate_MultipleRuleGroups_AND(t *testing.T) {
 func TestFeatureFlag_ReconstructWithRuleGroups(t *testing.T) {
 	t.Parallel()
 
-	id := uuid.New()
+	id := domain.NewFeatureFlagID()
 	now := time.Now()
 
-	rg := domain.ReconstructRuleGroup(uuid.New(), id, "beta", "true", 1, now, now, []domain.Condition{
+	rg := domain.ReconstructRuleGroup(uuid.New(), id.UUID(), "beta", "true", 1, now, now, []domain.Condition{
 		domain.ReconstructCondition(uuid.New(), uuid.New(), "country", "eq", "US"),
 	})
 
-	ff := domain.ReconstructFeatureFlag(id, now, now, nil, "test", "test_flag", "desc", "bool", "false", 50, true, []*domain.RuleGroup{rg})
+	ff := domain.ReconstructFeatureFlag(id.UUID(), now, now, nil, "test", "test_flag", "desc", "bool", "false", 50, true, []*domain.RuleGroup{rg})
 
-	if ff.ID() != id {
+	if ff.TypedID() != id {
 		t.Fatal("expected matching ID")
 	}
 	if ff.Key() != "test_flag" {

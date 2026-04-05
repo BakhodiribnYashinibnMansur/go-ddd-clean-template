@@ -35,14 +35,14 @@ func NewDataExportReadRepo(pool *pgxpool.Pool) *DataExportReadRepo {
 }
 
 // FindByID returns a single DataExportView by its ID.
-func (r *DataExportReadRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.DataExportView, err error) {
+func (r *DataExportReadRepo) FindByID(ctx context.Context, id domain.DataExportID) (result *domain.DataExportView, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "DataExportReadRepo.FindByID")
 	defer func() { end(err) }()
 
 	sql, args, err := r.builder.
 		Select(readColumns...).
 		From(tableName).
-		Where(squirrel.Eq{"id": id}).
+		Where(squirrel.Eq{"id": id.UUID()}).
 		ToSql()
 	if err != nil {
 		return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
@@ -155,7 +155,7 @@ func scanDataExportView(row pgx.Row) (*domain.DataExportView, error) {
 	}
 
 	return &domain.DataExportView{
-		ID:        id,
+		ID:        domain.DataExportID(id),
 		UserID:    userID,
 		DataType:  dataType,
 		Format:    "",
@@ -196,7 +196,7 @@ func scanDataExportViewFromRows(rows pgx.Rows) (*domain.DataExportView, error) {
 	}
 
 	return &domain.DataExportView{
-		ID:        id,
+		ID:        domain.DataExportID(id),
 		UserID:    userID,
 		DataType:  dataType,
 		Format:    "",

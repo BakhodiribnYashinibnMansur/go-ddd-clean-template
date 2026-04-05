@@ -5,20 +5,18 @@ import (
 	"time"
 
 	domain "gct/internal/context/ops/generic/metric/domain"
-
-	"github.com/google/uuid"
 )
 
 func TestNewFunctionMetricRecorded(t *testing.T) {
-	id := uuid.New()
+	id := domain.NewMetricID()
 	before := time.Now()
 
-	event := domain.NewFunctionMetricRecorded(id, "UserService.Create", 150.5, false)
+	event := domain.NewFunctionMetricRecorded(id.UUID(), "UserService.Create", 150.5, false)
 
 	if event.EventName() != "metric.recorded" {
 		t.Fatalf("expected metric.recorded, got %s", event.EventName())
 	}
-	if event.AggregateID() != id {
+	if event.AggregateID() != id.UUID() {
 		t.Fatalf("expected aggregate ID %s, got %s", id, event.AggregateID())
 	}
 	if event.Name != "UserService.Create" {
@@ -36,9 +34,9 @@ func TestNewFunctionMetricRecorded(t *testing.T) {
 }
 
 func TestNewFunctionMetricRecorded_WithPanic(t *testing.T) {
-	id := uuid.New()
+	id := domain.NewMetricID()
 
-	event := domain.NewFunctionMetricRecorded(id, "Handler.Process", 0.5, true)
+	event := domain.NewFunctionMetricRecorded(id.UUID(), "Handler.Process", 0.5, true)
 
 	if !event.IsPanic {
 		t.Fatal("expected isPanic true")

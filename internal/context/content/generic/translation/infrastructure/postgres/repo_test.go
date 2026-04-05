@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+
 	// pgproto3 not needed
 
 	"github.com/Masterminds/squirrel"
@@ -29,15 +30,15 @@ type mockRows struct {
 	scanFunc func(dest ...any) error
 }
 
-func (m *mockRows) Scan(dest ...any) error                        { return m.scanFunc(dest...) }
-func (m *mockRows) Close()                                        {}
-func (m *mockRows) Err() error                                    { return nil }
-func (m *mockRows) CommandTag() pgconn.CommandTag                 { return pgconn.CommandTag{} }
+func (m *mockRows) Scan(dest ...any) error                       { return m.scanFunc(dest...) }
+func (m *mockRows) Close()                                       {}
+func (m *mockRows) Err() error                                   { return nil }
+func (m *mockRows) CommandTag() pgconn.CommandTag                { return pgconn.CommandTag{} }
 func (m *mockRows) FieldDescriptions() []pgconn.FieldDescription { return nil }
-func (m *mockRows) Next() bool                                    { return false }
-func (m *mockRows) Values() ([]any, error)                        { return nil, nil }
-func (m *mockRows) RawValues() [][]byte                           { return nil }
-func (m *mockRows) Conn() *pgx.Conn                               { return nil }
+func (m *mockRows) Next() bool                                   { return false }
+func (m *mockRows) Values() ([]any, error)                       { return nil, nil }
+func (m *mockRows) RawValues() [][]byte                          { return nil }
+func (m *mockRows) Conn() *pgx.Conn                              { return nil }
 
 // ---------------------------------------------------------------------------
 // Constructor tests
@@ -62,12 +63,12 @@ func TestNewTranslationReadRepo(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestScanTranslationView_Success(t *testing.T) {
-	id := uuid.New()
+	id := domain.NewTranslationID()
 	now := time.Now().Truncate(time.Microsecond)
 
 	// read_repo scanTranslationView scans: &v.ID, &v.Key, &v.Language, &v.Value, &v.Group, &v.CreatedAt, &v.UpdatedAt
 	row := &mockRow{scanFunc: func(dest ...any) error {
-		*dest[0].(*uuid.UUID) = id
+		*dest[0].(*uuid.UUID) = id.UUID()
 		*dest[1].(*string) = "greeting"
 		*dest[2].(*string) = "en"
 		*dest[3].(*string) = "Hello"
@@ -81,7 +82,7 @@ func TestScanTranslationView_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if v.ID != id {
+	if v.ID != domain.TranslationID(id) {
 		t.Errorf("ID = %v, want %v", v.ID, id)
 	}
 	if v.Key != "greeting" {
@@ -111,11 +112,11 @@ func TestScanTranslationView_Error(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestScanTranslationViewFromRows_Success(t *testing.T) {
-	id := uuid.New()
+	id := domain.NewTranslationID()
 	now := time.Now().Truncate(time.Microsecond)
 
 	rows := &mockRows{scanFunc: func(dest ...any) error {
-		*dest[0].(*uuid.UUID) = id
+		*dest[0].(*uuid.UUID) = id.UUID()
 		*dest[1].(*string) = "k"
 		*dest[2].(*string) = "uz"
 		*dest[3].(*string) = "v"
@@ -129,7 +130,7 @@ func TestScanTranslationViewFromRows_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if v.ID != id {
+	if v.ID != domain.TranslationID(id) {
 		t.Errorf("ID = %v, want %v", v.ID, id)
 	}
 }
@@ -148,12 +149,12 @@ func TestScanTranslationViewFromRows_Error(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestScanTranslation_Success(t *testing.T) {
-	id := uuid.New()
+	id := domain.NewTranslationID()
 	entityID := uuid.New()
 	now := time.Now().Truncate(time.Microsecond)
 
 	row := &mockRow{scanFunc: func(dest ...any) error {
-		*dest[0].(*uuid.UUID) = id
+		*dest[0].(*uuid.UUID) = id.UUID()
 		*dest[1].(*string) = "entity_key"
 		*dest[2].(*uuid.UUID) = entityID
 		*dest[3].(*string) = "en"
@@ -167,7 +168,7 @@ func TestScanTranslation_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if tr.ID() != id {
+	if tr.TypedID() != id {
 		t.Errorf("ID = %v, want %v", tr.ID(), id)
 	}
 	if tr.Key() != "entity_key" {
@@ -197,12 +198,12 @@ func TestScanTranslation_Error(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestScanTranslationFromRows_Success(t *testing.T) {
-	id := uuid.New()
+	id := domain.NewTranslationID()
 	entityID := uuid.New()
 	now := time.Now().Truncate(time.Microsecond)
 
 	rows := &mockRows{scanFunc: func(dest ...any) error {
-		*dest[0].(*uuid.UUID) = id
+		*dest[0].(*uuid.UUID) = id.UUID()
 		*dest[1].(*string) = "k"
 		*dest[2].(*uuid.UUID) = entityID
 		*dest[3].(*string) = "ru"
@@ -216,7 +217,7 @@ func TestScanTranslationFromRows_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if tr.ID() != id {
+	if tr.TypedID() != id {
 		t.Errorf("ID = %v, want %v", tr.ID(), id)
 	}
 }

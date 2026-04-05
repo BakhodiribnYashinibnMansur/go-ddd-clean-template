@@ -3,11 +3,11 @@ package command
 import (
 	"context"
 
+	"gct/internal/context/admin/supporting/sitesetting/domain"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
-	"gct/internal/context/admin/supporting/sitesetting/domain"
 )
 
 // UpdateSiteSettingCommand represents a partial update to an existing site setting.
@@ -48,7 +48,7 @@ func (h *UpdateSiteSettingHandler) Handle(ctx context.Context, cmd UpdateSiteSet
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "UpdateSiteSetting", "site_setting")()
 
-	s, err := h.repo.FindByID(ctx, cmd.ID.UUID())
+	s, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {
 		return apperrors.MapToServiceError(err)
 	}
@@ -56,12 +56,12 @@ func (h *UpdateSiteSettingHandler) Handle(ctx context.Context, cmd UpdateSiteSet
 	s.Update(cmd.Key, cmd.Value, cmd.Type, cmd.Description)
 
 	if err := h.repo.Update(ctx, s); err != nil {
-		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "UpdateSiteSetting", Entity: "site_setting", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
+		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "UpdateSiteSetting", Entity: "site_setting", EntityID: cmd.ID.String(), Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, s.Events()...); err != nil {
-		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "UpdateSiteSetting", Entity: "site_setting", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "UpdateSiteSetting", Entity: "site_setting", EntityID: cmd.ID.String(), Err: err}.KV()...)
 	}
 
 	return nil

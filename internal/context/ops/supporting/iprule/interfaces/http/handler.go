@@ -12,7 +12,6 @@ import (
 	"gct/internal/kernel/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 // Handler provides HTTP endpoints for the IPRule bounded context.
@@ -67,12 +66,12 @@ func (h *Handler) List(ctx *gin.Context) {
 
 // Get returns a single IP rule by ID.
 func (h *Handler) Get(ctx *gin.Context) {
-	id, err := uuid.Parse(ctx.Param("id"))
+	id, err := domain.ParseIPRuleID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
-	result, err := h.bc.GetIPRule.Handle(ctx.Request.Context(), query.GetIPRuleQuery{ID: domain.IPRuleID(id)})
+	result, err := h.bc.GetIPRule.Handle(ctx.Request.Context(), query.GetIPRuleQuery{ID: id})
 	if err != nil {
 		response.HandleError(ctx, err)
 		return
@@ -82,7 +81,7 @@ func (h *Handler) Get(ctx *gin.Context) {
 
 // Update updates an IP rule.
 func (h *Handler) Update(ctx *gin.Context) {
-	id, err := uuid.Parse(ctx.Param("id"))
+	id, err := domain.ParseIPRuleID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
@@ -93,7 +92,7 @@ func (h *Handler) Update(ctx *gin.Context) {
 		return
 	}
 	cmd := command.UpdateIPRuleCommand{
-		ID:        domain.IPRuleID(id),
+		ID:        id,
 		IPAddress: req.IPAddress,
 		Action:    req.Action,
 		Reason:    req.Reason,
@@ -108,12 +107,12 @@ func (h *Handler) Update(ctx *gin.Context) {
 
 // Delete deletes an IP rule.
 func (h *Handler) Delete(ctx *gin.Context) {
-	id, err := uuid.Parse(ctx.Param("id"))
+	id, err := domain.ParseIPRuleID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
-	if err := h.bc.DeleteIPRule.Handle(ctx.Request.Context(), command.DeleteIPRuleCommand{ID: domain.IPRuleID(id)}); err != nil {
+	if err := h.bc.DeleteIPRule.Handle(ctx.Request.Context(), command.DeleteIPRuleCommand{ID: id}); err != nil {
 		response.HandleError(ctx, err)
 		return
 	}

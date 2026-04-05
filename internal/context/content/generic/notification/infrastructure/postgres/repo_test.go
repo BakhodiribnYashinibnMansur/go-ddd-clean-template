@@ -85,7 +85,7 @@ func TestScanNotificationView_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if v.ID != id {
+	if v.ID.UUID() != id {
 		t.Errorf("ID = %v, want %v", v.ID, id)
 	}
 	if v.Title != "New Feature" {
@@ -127,7 +127,7 @@ func TestScanNotificationViewFromRows_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if v.ID != id {
+	if v.ID.UUID() != id {
 		t.Errorf("ID = %v, want %v", v.ID, id)
 	}
 }

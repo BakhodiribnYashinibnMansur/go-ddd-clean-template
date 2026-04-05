@@ -9,7 +9,6 @@ import (
 	"gct/internal/context/ops/generic/systemerror/application/command"
 	"gct/internal/context/ops/generic/systemerror/domain"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -24,7 +23,7 @@ func (m *mockSystemErrorRepo) Save(_ context.Context, se *domain.SystemError) er
 	return nil
 }
 
-func (m *mockSystemErrorRepo) FindByID(_ context.Context, _ uuid.UUID) (*domain.SystemError, error) {
+func (m *mockSystemErrorRepo) FindByID(_ context.Context, _ domain.SystemErrorID) (*domain.SystemError, error) {
 	return nil, nil
 }
 

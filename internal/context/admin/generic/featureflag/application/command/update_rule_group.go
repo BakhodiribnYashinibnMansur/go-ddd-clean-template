@@ -46,7 +46,7 @@ func (h *UpdateRuleGroupHandler) Handle(ctx context.Context, cmd UpdateRuleGroup
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "UpdateRuleGroup", "rule_group")()
 
-	rg, err := h.rgRepo.FindByID(ctx, cmd.ID.UUID())
+	rg, err := h.rgRepo.FindByID(ctx, cmd.ID)
 	if err != nil {
 		return apperrors.MapToServiceError(err)
 	}
@@ -74,7 +74,7 @@ func (h *UpdateRuleGroupHandler) Handle(ctx context.Context, cmd UpdateRuleGroup
 	}
 
 	if err := h.rgRepo.Update(ctx, rg); err != nil {
-		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "UpdateRuleGroup", Entity: "rule_group", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "UpdateRuleGroup", Entity: "rule_group", EntityID: cmd.ID, Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 

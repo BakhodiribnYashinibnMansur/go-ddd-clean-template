@@ -20,27 +20,27 @@ type NotificationFilter struct {
 // NotificationView is a read-model projection optimized for query responses.
 // ReadAt being nil indicates an unread notification in the UI layer.
 type NotificationView struct {
-	ID        uuid.UUID  `json:"id"`
-	UserID    uuid.UUID  `json:"user_id"`
-	Title     string     `json:"title"`
-	Message   string     `json:"message"`
-	Type      string     `json:"type"`
-	ReadAt    *time.Time `json:"read_at,omitempty"`
-	CreatedAt time.Time  `json:"created_at"`
+	ID        NotificationID `json:"id"`
+	UserID    uuid.UUID      `json:"user_id"`
+	Title     string         `json:"title"`
+	Message   string         `json:"message"`
+	Type      string         `json:"type"`
+	ReadAt    *time.Time     `json:"read_at,omitempty"`
+	CreatedAt time.Time      `json:"created_at"`
 }
 
 // NotificationRepository is the write-side repository for the Notification aggregate.
 // Update is used primarily for the MarkAsRead state transition.
 type NotificationRepository interface {
 	Save(ctx context.Context, entity *Notification) error
-	FindByID(ctx context.Context, id uuid.UUID) (*Notification, error)
+	FindByID(ctx context.Context, id NotificationID) (*Notification, error)
 	Update(ctx context.Context, entity *Notification) error
-	Delete(ctx context.Context, id uuid.UUID) error
+	Delete(ctx context.Context, id NotificationID) error
 }
 
 // NotificationReadRepository is the read-side repository returning projected views.
 // Implementations must return ErrNotificationNotFound when FindByID yields no result.
 type NotificationReadRepository interface {
-	FindByID(ctx context.Context, id uuid.UUID) (*NotificationView, error)
+	FindByID(ctx context.Context, id NotificationID) (*NotificationView, error)
 	List(ctx context.Context, filter NotificationFilter) ([]*NotificationView, int64, error)
 }

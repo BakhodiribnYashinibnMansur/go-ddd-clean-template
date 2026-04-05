@@ -48,7 +48,7 @@ func (h *UpdateHandler) Handle(ctx context.Context, cmd UpdateCommand) (err erro
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "UpdateFeatureFlag", "feature_flag")()
 
-	ff, err := h.repo.FindByID(ctx, cmd.ID.UUID())
+	ff, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {
 		return apperrors.MapToServiceError(err)
 	}
@@ -56,7 +56,7 @@ func (h *UpdateHandler) Handle(ctx context.Context, cmd UpdateCommand) (err erro
 	ff.UpdateDetails(cmd.Name, cmd.Key, cmd.Description, cmd.FlagType, cmd.DefaultValue, cmd.RolloutPercentage, cmd.IsActive)
 
 	if err := h.repo.Update(ctx, ff); err != nil {
-		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "UpdateFeatureFlag", Entity: "feature_flag", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "UpdateFeatureFlag", Entity: "feature_flag", EntityID: cmd.ID, Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 

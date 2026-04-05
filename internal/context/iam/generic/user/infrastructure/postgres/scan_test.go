@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"gct/internal/context/iam/generic/user/domain"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -32,7 +34,7 @@ func (m *userScanMockRows) FieldDescriptions() []pgconn.FieldDescription { retur
 func (m *userScanMockRows) Next() bool                                   { return false }
 func (m *userScanMockRows) Values() ([]any, error)                       { return nil, nil }
 func (m *userScanMockRows) RawValues() [][]byte                          { return nil }
-func (m *userScanMockRows) Conn() *pgx.Conn                             { return nil }
+func (m *userScanMockRows) Conn() *pgx.Conn                              { return nil }
 
 // ---------------------------------------------------------------------------
 // scanUser tests
@@ -198,7 +200,7 @@ func TestScanUserFromRows_Error(t *testing.T) {
 
 func TestScanSessionFromRows_Success(t *testing.T) {
 	id := uuid.New()
-	userID := uuid.New()
+	userID := domain.NewUserID()
 	now := time.Now()
 	deviceID := "dev-123"
 	deviceName := "iPhone"
@@ -211,7 +213,7 @@ func TestScanSessionFromRows_Success(t *testing.T) {
 		scanFunc: func(dest ...any) error {
 			// columns: id, user_id, device_id, device_name, device_type, ip_address::text, user_agent, refresh_token_hash, expires_at, last_activity, revoked, created_at, updated_at
 			*dest[0].(*uuid.UUID) = id
-			*dest[1].(*uuid.UUID) = userID
+			*dest[1].(*uuid.UUID) = userID.UUID()
 			*dest[2].(**string) = &deviceID
 			*dest[3].(**string) = &deviceName
 			*dest[4].(**string) = &deviceType
@@ -237,7 +239,7 @@ func TestScanSessionFromRows_Success(t *testing.T) {
 	if session.ID() != id {
 		t.Fatalf("expected ID %v, got %v", id, session.ID())
 	}
-	if session.UserID() != userID {
+	if session.UserID() != userID.UUID() {
 		t.Fatalf("expected userID %v, got %v", userID, session.UserID())
 	}
 	if session.DeviceID() != deviceID {
@@ -259,13 +261,13 @@ func TestScanSessionFromRows_Success(t *testing.T) {
 
 func TestScanSessionFromRows_NilOptionalFields(t *testing.T) {
 	id := uuid.New()
-	userID := uuid.New()
+	userID := domain.NewUserID()
 	now := time.Now()
 
 	rows := &userScanMockRows{
 		scanFunc: func(dest ...any) error {
 			*dest[0].(*uuid.UUID) = id
-			*dest[1].(*uuid.UUID) = userID
+			*dest[1].(*uuid.UUID) = userID.UUID()
 			*dest[2].(**string) = nil
 			*dest[3].(**string) = nil
 			*dest[4].(**string) = nil

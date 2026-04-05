@@ -42,20 +42,20 @@ func (h *DeleteRuleGroupHandler) Handle(ctx context.Context, cmd DeleteRuleGroup
 	defer logger.SlowOp(h.logger, ctx, "DeleteRuleGroup", "rule_group")()
 
 	// Find the rule group to get its flagID before deletion.
-	rg, err := h.rgRepo.FindByID(ctx, cmd.ID.UUID())
+	rg, err := h.rgRepo.FindByID(ctx, cmd.ID)
 	if err != nil {
 		return apperrors.MapToServiceError(err)
 	}
 
 	flagID := rg.FlagID()
 
-	if err := h.rgRepo.Delete(ctx, cmd.ID.UUID()); err != nil {
-		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteRuleGroup", Entity: "rule_group", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
+	if err := h.rgRepo.Delete(ctx, cmd.ID); err != nil {
+		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteRuleGroup", Entity: "rule_group", EntityID: cmd.ID, Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, domain.NewFlagUpdated(flagID)); err != nil {
-		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "DeleteRuleGroup", Entity: "rule_group", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "DeleteRuleGroup", Entity: "rule_group", EntityID: cmd.ID, Err: err}.KV()...)
 	}
 
 	return nil

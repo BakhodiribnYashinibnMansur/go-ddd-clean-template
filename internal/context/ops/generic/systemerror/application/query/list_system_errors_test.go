@@ -8,7 +8,6 @@ import (
 
 	"gct/internal/context/ops/generic/systemerror/domain"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -17,8 +16,8 @@ func TestListSystemErrorsHandler_Handle(t *testing.T) {
 
 	readRepo := &mockReadRepo{
 		views: []*domain.SystemErrorView{
-			{ID: uuid.New(), Code: "ERR_1", Severity: "high", CreatedAt: time.Now()},
-			{ID: uuid.New(), Code: "ERR_2", Severity: "low", CreatedAt: time.Now()},
+			{ID: domain.NewSystemErrorID(), Code: "ERR_1", Severity: "high", CreatedAt: time.Now()},
+			{ID: domain.NewSystemErrorID(), Code: "ERR_2", Severity: "low", CreatedAt: time.Now()},
 		},
 		total: 2,
 	}
@@ -62,7 +61,7 @@ func TestListSystemErrorsHandler_WithFilters(t *testing.T) {
 
 	readRepo := &mockReadRepo{
 		views: []*domain.SystemErrorView{
-			{ID: uuid.New(), Code: "ERR_500", Severity: "critical", IsResolved: false, CreatedAt: time.Now()},
+			{ID: domain.NewSystemErrorID(), Code: "ERR_500", Severity: "critical", IsResolved: false, CreatedAt: time.Now()},
 		},
 		total: 1,
 	}

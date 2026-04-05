@@ -1,15 +1,14 @@
 package query
 
 import (
-	"gct/internal/kernel/infrastructure/logger"
 	"context"
 	"errors"
+	"gct/internal/kernel/infrastructure/logger"
 	"testing"
 	"time"
 
 	"gct/internal/context/admin/generic/featureflag/domain"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -18,7 +17,7 @@ func TestListHandler_Handle(t *testing.T) {
 
 	now := time.Now().Format(time.RFC3339)
 	flag1 := &domain.FeatureFlagView{
-		ID:        uuid.New(),
+		ID:        domain.NewFeatureFlagID(),
 		Name:      "flag-1",
 		Key:       "flag_1",
 		FlagType:  "bool",
@@ -27,7 +26,7 @@ func TestListHandler_Handle(t *testing.T) {
 		UpdatedAt: now,
 	}
 	flag2 := &domain.FeatureFlagView{
-		ID:        uuid.New(),
+		ID:        domain.NewFeatureFlagID(),
 		Name:      "flag-2",
 		Key:       "flag_2",
 		FlagType:  "string",
@@ -95,7 +94,7 @@ func TestListHandler_Handle_WithFilter(t *testing.T) {
 		listFn: func(_ context.Context, filter domain.FeatureFlagFilter) ([]*domain.FeatureFlagView, int64, error) {
 			capturedFilter = filter
 			return []*domain.FeatureFlagView{
-				{ID: uuid.New(), Name: "active-flag", Key: "active", FlagType: "bool", IsActive: true, CreatedAt: now, UpdatedAt: now},
+				{ID: domain.NewFeatureFlagID(), Name: "active-flag", Key: "active", FlagType: "bool", IsActive: true, CreatedAt: now, UpdatedAt: now},
 			}, 1, nil
 		},
 	}

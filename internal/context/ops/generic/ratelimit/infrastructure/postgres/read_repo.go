@@ -34,14 +34,14 @@ func NewRateLimitReadRepo(pool *pgxpool.Pool) *RateLimitReadRepo {
 }
 
 // FindByID returns a single RateLimitView by ID.
-func (r *RateLimitReadRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.RateLimitView, err error) {
+func (r *RateLimitReadRepo) FindByID(ctx context.Context, id domain.RateLimitID) (result *domain.RateLimitView, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "RateLimitReadRepo.FindByID")
 	defer func() { end(err) }()
 
 	sql, args, err := r.builder.
 		Select(readColumns...).
 		From(tableName).
-		Where(squirrel.Eq{"id": id}).
+		Where(squirrel.Eq{"id": id.UUID()}).
 		ToSql()
 	if err != nil {
 		return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
@@ -110,19 +110,27 @@ func (r *RateLimitReadRepo) List(ctx context.Context, filter domain.RateLimitFil
 }
 
 func scanRateLimitView(row pgx.Row) (*domain.RateLimitView, error) {
-	var v domain.RateLimitView
-	err := row.Scan(&v.ID, &v.Name, &v.Rule, &v.RequestsPerWindow, &v.WindowDuration, &v.Enabled, &v.CreatedAt, &v.UpdatedAt)
+	var (
+		v     domain.RateLimitView
+		rawID uuid.UUID
+	)
+	err := row.Scan(&rawID, &v.Name, &v.Rule, &v.RequestsPerWindow, &v.WindowDuration, &v.Enabled, &v.CreatedAt, &v.UpdatedAt)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
+	v.ID = domain.RateLimitID(rawID)
 	return &v, nil
 }
 
 func scanRateLimitViewFromRows(rows pgx.Rows) (*domain.RateLimitView, error) {
-	var v domain.RateLimitView
-	err := rows.Scan(&v.ID, &v.Name, &v.Rule, &v.RequestsPerWindow, &v.WindowDuration, &v.Enabled, &v.CreatedAt, &v.UpdatedAt)
+	var (
+		v     domain.RateLimitView
+		rawID uuid.UUID
+	)
+	err := rows.Scan(&rawID, &v.Name, &v.Rule, &v.RequestsPerWindow, &v.WindowDuration, &v.Enabled, &v.CreatedAt, &v.UpdatedAt)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
+	v.ID = domain.RateLimitID(rawID)
 	return &v, nil
 }

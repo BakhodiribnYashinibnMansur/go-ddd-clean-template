@@ -41,7 +41,7 @@ func (h *ApproveUserHandler) Handle(ctx context.Context, cmd ApproveUserCommand)
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "ApproveUser", "user")()
 
-	user, err := h.repo.FindByID(ctx, cmd.ID.UUID())
+	user, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {
 		return apperrors.MapToServiceError(err)
 	}
@@ -49,12 +49,12 @@ func (h *ApproveUserHandler) Handle(ctx context.Context, cmd ApproveUserCommand)
 	user.Approve()
 
 	if err := h.repo.Update(ctx, user); err != nil {
-		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "ApproveUser", Entity: "user", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
+		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "ApproveUser", Entity: "user", EntityID: cmd.ID, Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, user.Events()...); err != nil {
-		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "ApproveUser", Entity: "user", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "ApproveUser", Entity: "user", EntityID: cmd.ID, Err: err}.KV()...)
 	}
 
 	return nil

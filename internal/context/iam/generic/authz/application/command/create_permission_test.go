@@ -16,9 +16,9 @@ import (
 type mockPermissionRepository struct {
 	savedPerm   *domain.Permission
 	updatedPerm *domain.Permission
-	findByIDFn  func(ctx context.Context, id uuid.UUID) (*domain.Permission, error)
+	findByIDFn  func(ctx context.Context, id domain.PermissionID) (*domain.Permission, error)
 	saveFn      func(ctx context.Context, perm *domain.Permission) error
-	deleteFn    func(ctx context.Context, id uuid.UUID) error
+	deleteFn    func(ctx context.Context, id domain.PermissionID) error
 }
 
 func (m *mockPermissionRepository) Save(ctx context.Context, perm *domain.Permission) error {
@@ -29,7 +29,7 @@ func (m *mockPermissionRepository) Save(ctx context.Context, perm *domain.Permis
 	return nil
 }
 
-func (m *mockPermissionRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain.Permission, error) {
+func (m *mockPermissionRepository) FindByID(ctx context.Context, id domain.PermissionID) (*domain.Permission, error) {
 	if m.findByIDFn != nil {
 		return m.findByIDFn(ctx, id)
 	}
@@ -41,7 +41,7 @@ func (m *mockPermissionRepository) Update(ctx context.Context, perm *domain.Perm
 	return nil
 }
 
-func (m *mockPermissionRepository) Delete(ctx context.Context, id uuid.UUID) error {
+func (m *mockPermissionRepository) Delete(ctx context.Context, id domain.PermissionID) error {
 	if m.deleteFn != nil {
 		return m.deleteFn(ctx, id)
 	}

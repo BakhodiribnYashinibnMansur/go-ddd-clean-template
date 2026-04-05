@@ -8,7 +8,6 @@ import (
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -17,7 +16,7 @@ import (
 type mockRoleRepository struct {
 	savedRole   *domain.Role
 	updatedRole *domain.Role
-	findByIDFn  func(ctx context.Context, id uuid.UUID) (*domain.Role, error)
+	findByIDFn  func(ctx context.Context, id domain.RoleID) (*domain.Role, error)
 }
 
 func (m *mockRoleRepository) Save(ctx context.Context, role *domain.Role) error {
@@ -25,7 +24,7 @@ func (m *mockRoleRepository) Save(ctx context.Context, role *domain.Role) error 
 	return nil
 }
 
-func (m *mockRoleRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain.Role, error) {
+func (m *mockRoleRepository) FindByID(ctx context.Context, id domain.RoleID) (*domain.Role, error) {
 	if m.findByIDFn != nil {
 		return m.findByIDFn(ctx, id)
 	}
@@ -37,7 +36,7 @@ func (m *mockRoleRepository) Update(ctx context.Context, role *domain.Role) erro
 	return nil
 }
 
-func (m *mockRoleRepository) Delete(ctx context.Context, id uuid.UUID) error {
+func (m *mockRoleRepository) Delete(ctx context.Context, id domain.RoleID) error {
 	return nil
 }
 

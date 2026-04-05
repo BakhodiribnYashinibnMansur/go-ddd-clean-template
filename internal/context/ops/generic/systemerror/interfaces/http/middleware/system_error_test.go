@@ -15,7 +15,6 @@ import (
 	"gct/internal/context/ops/generic/systemerror/domain"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 // --- Mock Logger ---
@@ -69,7 +68,7 @@ func (m *mockSystemErrorRepo) Save(ctx context.Context, entity *domain.SystemErr
 	return m.saveErr
 }
 
-func (m *mockSystemErrorRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.SystemError, error) {
+func (m *mockSystemErrorRepo) FindByID(ctx context.Context, id domain.SystemErrorID) (*domain.SystemError, error) {
 	return nil, nil
 }
 

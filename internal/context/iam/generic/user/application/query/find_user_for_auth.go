@@ -32,7 +32,7 @@ func (h *FindUserForAuthHandler) Handle(ctx context.Context, q FindUserForAuthQu
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "FindUserForAuth", "user")()
 
-	user, err := h.readRepo.FindUserForAuth(ctx, q.UserID.UUID())
+	user, err := h.readRepo.FindUserForAuth(ctx, q.UserID)
 	if err != nil {
 		return nil, fmt.Errorf("find_user_for_auth: read repo: %w", err)
 	}

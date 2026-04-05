@@ -5,8 +5,6 @@ import (
 	"time"
 
 	domain "gct/internal/context/content/generic/translation/domain"
-
-	"github.com/google/uuid"
 )
 
 func TestNewTranslation(t *testing.T) {
@@ -52,12 +50,12 @@ func TestTranslation_Update(t *testing.T) {
 func TestReconstructTranslation(t *testing.T) {
 	t.Parallel()
 
-	id := uuid.New()
+	id := domain.NewTranslationID()
 	now := time.Now()
 
-	tr := domain.ReconstructTranslation(id, now, now, "key1", "uz", "Salom", "greetings")
+	tr := domain.ReconstructTranslation(id.UUID(), now, now, "key1", "uz", "Salom", "greetings")
 
-	if tr.ID() != id {
+	if tr.TypedID() != id {
 		t.Fatal("ID mismatch")
 	}
 	if tr.Key() != "key1" {

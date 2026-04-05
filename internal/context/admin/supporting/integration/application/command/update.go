@@ -51,7 +51,7 @@ func (h *UpdateHandler) Handle(ctx context.Context, cmd UpdateCommand) (err erro
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "UpdateIntegration", "integration")()
 
-	i, err := h.repo.FindByID(ctx, cmd.ID.UUID())
+	i, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {
 		return apperrors.MapToServiceError(err)
 	}
@@ -59,12 +59,12 @@ func (h *UpdateHandler) Handle(ctx context.Context, cmd UpdateCommand) (err erro
 	i.UpdateDetails(cmd.Name, cmd.Type, cmd.APIKey, cmd.WebhookURL, cmd.Enabled, cmd.Config)
 
 	if err := h.repo.Update(ctx, i); err != nil {
-		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "UpdateIntegration", Entity: "integration", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
+		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "UpdateIntegration", Entity: "integration", EntityID: cmd.ID, Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, i.Events()...); err != nil {
-		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "UpdateIntegration", Entity: "integration", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "UpdateIntegration", Entity: "integration", EntityID: cmd.ID, Err: err}.KV()...)
 	}
 
 	return nil

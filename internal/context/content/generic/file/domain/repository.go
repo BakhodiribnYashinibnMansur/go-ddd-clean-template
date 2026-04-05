@@ -25,7 +25,7 @@ type FileRepository interface {
 // FileView is a read-model projection optimized for query responses.
 // It is decoupled from the File aggregate to allow the read side to evolve independently.
 type FileView struct {
-	ID           uuid.UUID  `json:"id"`
+	ID           FileID     `json:"id"`
 	Name         string     `json:"name"`
 	OriginalName string     `json:"original_name"`
 	MimeType     string     `json:"mime_type"`
@@ -40,6 +40,6 @@ type FileView struct {
 // Implementations must return ErrFileNotFound when FindByID yields no result.
 // List returns matching views plus the total count for pagination.
 type FileReadRepository interface {
-	FindByID(ctx context.Context, id uuid.UUID) (*FileView, error)
+	FindByID(ctx context.Context, id FileID) (*FileView, error)
 	List(ctx context.Context, filter FileFilter) ([]*FileView, int64, error)
 }

@@ -108,3 +108,6 @@ func (p *Policy) SetConditions(conditions map[string]any) {
 	p.conditions = conditions
 	p.Touch()
 }
+
+// TypedID returns the aggregate's typed identifier.
+func (p *Policy) TypedID() PolicyID { return PolicyID(p.ID()) }

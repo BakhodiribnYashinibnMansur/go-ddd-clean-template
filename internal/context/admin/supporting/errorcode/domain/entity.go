@@ -109,13 +109,14 @@ func (ec *ErrorCode) Update(
 // Getters
 // ---------------------------------------------------------------------------
 
-func (ec *ErrorCode) Code() string       { return ec.code }
-func (ec *ErrorCode) Message() string    { return ec.message }
-func (ec *ErrorCode) MessageUz() string  { return ec.messageUz }
-func (ec *ErrorCode) MessageRu() string  { return ec.messageRu }
-func (ec *ErrorCode) HTTPStatus() int    { return ec.httpStatus }
-func (ec *ErrorCode) Category() string   { return ec.category }
-func (ec *ErrorCode) Severity() string   { return ec.severity }
-func (ec *ErrorCode) Retryable() bool    { return ec.retryable }
-func (ec *ErrorCode) RetryAfter() int    { return ec.retryAfter }
-func (ec *ErrorCode) Suggestion() string { return ec.suggestion }
+func (ec *ErrorCode) TypedID() ErrorCodeID { return ErrorCodeID(ec.ID()) }
+func (ec *ErrorCode) Code() string         { return ec.code }
+func (ec *ErrorCode) Message() string      { return ec.message }
+func (ec *ErrorCode) MessageUz() string    { return ec.messageUz }
+func (ec *ErrorCode) MessageRu() string    { return ec.messageRu }
+func (ec *ErrorCode) HTTPStatus() int      { return ec.httpStatus }
+func (ec *ErrorCode) Category() string     { return ec.category }
+func (ec *ErrorCode) Severity() string     { return ec.severity }
+func (ec *ErrorCode) Retryable() bool      { return ec.retryable }
+func (ec *ErrorCode) RetryAfter() int      { return ec.retryAfter }
+func (ec *ErrorCode) Suggestion() string   { return ec.suggestion }

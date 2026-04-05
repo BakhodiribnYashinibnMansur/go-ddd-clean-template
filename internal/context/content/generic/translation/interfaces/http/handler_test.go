@@ -9,12 +9,12 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/kernel/application"
-	shared "gct/internal/kernel/domain"
 	"gct/internal/context/content/generic/translation"
 	"gct/internal/context/content/generic/translation/application/command"
 	"gct/internal/context/content/generic/translation/application/query"
 	"gct/internal/context/content/generic/translation/domain"
+	"gct/internal/kernel/application"
+	shared "gct/internal/kernel/domain"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -25,14 +25,14 @@ import (
 type mockRepo struct {
 	saved   *domain.Translation
 	updated *domain.Translation
-	findFn  func(ctx context.Context, id uuid.UUID) (*domain.Translation, error)
+	findFn  func(ctx context.Context, id domain.TranslationID) (*domain.Translation, error)
 }
 
 func (m *mockRepo) Save(_ context.Context, e *domain.Translation) error {
 	m.saved = e
 	return nil
 }
-func (m *mockRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Translation, error) {
+func (m *mockRepo) FindByID(ctx context.Context, id domain.TranslationID) (*domain.Translation, error) {
 	if m.findFn != nil {
 		return m.findFn(ctx, id)
 	}
@@ -42,7 +42,7 @@ func (m *mockRepo) Update(_ context.Context, e *domain.Translation) error {
 	m.updated = e
 	return nil
 }
-func (m *mockRepo) Delete(_ context.Context, _ uuid.UUID) error {
+func (m *mockRepo) Delete(_ context.Context, _ domain.TranslationID) error {
 	return nil
 }
 func (m *mockRepo) List(_ context.Context, _ domain.TranslationFilter) ([]*domain.Translation, int64, error) {
@@ -55,7 +55,7 @@ type mockReadRepo struct {
 	total int64
 }
 
-func (m *mockReadRepo) FindByID(_ context.Context, id uuid.UUID) (*domain.TranslationView, error) {
+func (m *mockReadRepo) FindByID(_ context.Context, id domain.TranslationID) (*domain.TranslationView, error) {
 	if m.view != nil && m.view.ID == id {
 		return m.view, nil
 	}
@@ -75,26 +75,26 @@ func (m *mockEventBus) Subscribe(_ string, _ application.EventHandler) error { r
 
 type mockLogger struct{}
 
-func (m *mockLogger) Debug(args ...any)                                          {}
-func (m *mockLogger) Debugf(template string, args ...any)                        {}
-func (m *mockLogger) Debugw(msg string, keysAndValues ...any)                    {}
-func (m *mockLogger) Info(args ...any)                                           {}
-func (m *mockLogger) Infof(template string, args ...any)                         {}
-func (m *mockLogger) Infow(msg string, keysAndValues ...any)                     {}
-func (m *mockLogger) Warn(args ...any)                                           {}
-func (m *mockLogger) Warnf(template string, args ...any)                         {}
-func (m *mockLogger) Warnw(msg string, keysAndValues ...any)                     {}
-func (m *mockLogger) Error(args ...any)                                          {}
-func (m *mockLogger) Errorf(template string, args ...any)                        {}
-func (m *mockLogger) Errorw(msg string, keysAndValues ...any)                    {}
-func (m *mockLogger) Fatal(args ...any)                                          {}
-func (m *mockLogger) Fatalf(template string, args ...any)                        {}
-func (m *mockLogger) Fatalw(msg string, keysAndValues ...any)                    {}
-func (m *mockLogger) Debugc(_ context.Context, _ string, _ ...any)               {}
-func (m *mockLogger) Infoc(_ context.Context, _ string, _ ...any)                {}
-func (m *mockLogger) Warnc(_ context.Context, _ string, _ ...any)                {}
-func (m *mockLogger) Errorc(_ context.Context, _ string, _ ...any)               {}
-func (m *mockLogger) Fatalc(_ context.Context, _ string, _ ...any)               {}
+func (m *mockLogger) Debug(args ...any)                            {}
+func (m *mockLogger) Debugf(template string, args ...any)          {}
+func (m *mockLogger) Debugw(msg string, keysAndValues ...any)      {}
+func (m *mockLogger) Info(args ...any)                             {}
+func (m *mockLogger) Infof(template string, args ...any)           {}
+func (m *mockLogger) Infow(msg string, keysAndValues ...any)       {}
+func (m *mockLogger) Warn(args ...any)                             {}
+func (m *mockLogger) Warnf(template string, args ...any)           {}
+func (m *mockLogger) Warnw(msg string, keysAndValues ...any)       {}
+func (m *mockLogger) Error(args ...any)                            {}
+func (m *mockLogger) Errorf(template string, args ...any)          {}
+func (m *mockLogger) Errorw(msg string, keysAndValues ...any)      {}
+func (m *mockLogger) Fatal(args ...any)                            {}
+func (m *mockLogger) Fatalf(template string, args ...any)          {}
+func (m *mockLogger) Fatalw(msg string, keysAndValues ...any)      {}
+func (m *mockLogger) Debugc(_ context.Context, _ string, _ ...any) {}
+func (m *mockLogger) Infoc(_ context.Context, _ string, _ ...any)  {}
+func (m *mockLogger) Warnc(_ context.Context, _ string, _ ...any)  {}
+func (m *mockLogger) Errorc(_ context.Context, _ string, _ ...any) {}
+func (m *mockLogger) Fatalc(_ context.Context, _ string, _ ...any) {}
 
 // --- Helpers ---
 
@@ -162,7 +162,7 @@ func TestHandler_List_Success(t *testing.T) {
 	now := time.Now()
 	readRepo := &mockReadRepo{
 		views: []*domain.TranslationView{
-			{ID: uuid.New(), Key: "k1", Language: "en", Value: "v1", Group: "g1", CreatedAt: now, UpdatedAt: now},
+			{ID: domain.NewTranslationID(), Key: "k1", Language: "en", Value: "v1", Group: "g1", CreatedAt: now, UpdatedAt: now},
 		},
 		total: 1,
 	}
@@ -180,7 +180,7 @@ func TestHandler_List_Success(t *testing.T) {
 func TestHandler_Get_Success(t *testing.T) {
 	t.Parallel()
 
-	id := uuid.New()
+	id := domain.NewTranslationID()
 	now := time.Now()
 	readRepo := &mockReadRepo{
 		view: &domain.TranslationView{ID: id, Key: "k", Language: "en", Value: "v", Group: "g", CreatedAt: now, UpdatedAt: now},
@@ -215,8 +215,8 @@ func TestHandler_Update_Success(t *testing.T) {
 
 	tr := domain.NewTranslation("old", "en", "old_val", "g")
 	repo := &mockRepo{
-		findFn: func(_ context.Context, id uuid.UUID) (*domain.Translation, error) {
-			if id == tr.ID() {
+		findFn: func(_ context.Context, id domain.TranslationID) (*domain.Translation, error) {
+			if id == tr.TypedID() {
 				return tr, nil
 			}
 			return nil, domain.ErrTranslationNotFound

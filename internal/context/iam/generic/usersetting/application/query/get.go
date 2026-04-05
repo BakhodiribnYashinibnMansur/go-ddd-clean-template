@@ -7,8 +7,8 @@ import (
 	"gct/internal/kernel/infrastructure/logger"
 
 	appdto "gct/internal/context/iam/generic/usersetting/application"
-	"gct/internal/kernel/infrastructure/pgxutil"
 	"gct/internal/context/iam/generic/usersetting/domain"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // GetUserSettingQuery holds the input for getting a single user setting.
@@ -33,9 +33,9 @@ func (h *GetUserSettingHandler) Handle(ctx context.Context, q GetUserSettingQuer
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "GetUserSetting", "user_setting")()
 
-	v, err := h.readRepo.FindByID(ctx, q.ID.UUID())
+	v, err := h.readRepo.FindByID(ctx, q.ID)
 	if err != nil {
-		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetUserSetting", Entity: "user_setting", EntityID: q.ID.UUID(), Err: err}.KV()...)
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetUserSetting", Entity: "user_setting", EntityID: q.ID, Err: err}.KV()...)
 		return nil, apperrors.MapToServiceError(err)
 	}
 

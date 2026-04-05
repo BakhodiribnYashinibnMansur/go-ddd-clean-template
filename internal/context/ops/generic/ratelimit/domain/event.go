@@ -21,5 +21,5 @@ func NewRateLimitChanged(id uuid.UUID) RateLimitChanged {
 }
 
 func (e RateLimitChanged) EventName() string      { return "ratelimit.changed" }
-func (e RateLimitChanged) OccurredAt() time.Time   { return e.occurredAt }
-func (e RateLimitChanged) AggregateID() uuid.UUID  { return e.aggregateID }
+func (e RateLimitChanged) OccurredAt() time.Time  { return e.occurredAt }
+func (e RateLimitChanged) AggregateID() uuid.UUID { return e.aggregateID }

@@ -6,9 +6,9 @@ import (
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 
-	"gct/internal/kernel/infrastructure/pgxutil"
 	appdto "gct/internal/context/content/generic/translation/application"
 	"gct/internal/context/content/generic/translation/domain"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // ListTranslationsQuery holds the input for listing translations.

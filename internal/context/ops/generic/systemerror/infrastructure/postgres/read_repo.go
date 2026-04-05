@@ -39,14 +39,14 @@ func NewSystemErrorReadRepo(pool *pgxpool.Pool) *SystemErrorReadRepo {
 }
 
 // FindByID returns a SystemErrorView for the given ID.
-func (r *SystemErrorReadRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.SystemErrorView, err error) {
+func (r *SystemErrorReadRepo) FindByID(ctx context.Context, id domain.SystemErrorID) (result *domain.SystemErrorView, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "SystemErrorReadRepo.FindByID")
 	defer func() { end(err) }()
 
 	sql, args, err := r.builder.
 		Select(readColumns...).
 		From(tableName).
-		Where(squirrel.Eq{"id": id}).
+		Where(squirrel.Eq{"id": id.UUID()}).
 		ToSql()
 	if err != nil {
 		return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
@@ -58,7 +58,7 @@ func (r *SystemErrorReadRepo) FindByID(ctx context.Context, id uuid.UUID) (resul
 		return nil, err
 	}
 
-	meta, err := r.metadata.GetAll(ctx, metadata.EntityTypeSystemErrorMeta, v.ID)
+	meta, err := r.metadata.GetAll(ctx, metadata.EntityTypeSystemErrorMeta, v.ID.UUID())
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +122,7 @@ func (r *SystemErrorReadRepo) List(ctx context.Context, filter domain.SystemErro
 		if err != nil {
 			return nil, 0, apperrors.HandlePgError(err, tableName, nil)
 		}
-		meta, err := r.metadata.GetAll(ctx, metadata.EntityTypeSystemErrorMeta, v.ID)
+		meta, err := r.metadata.GetAll(ctx, metadata.EntityTypeSystemErrorMeta, v.ID.UUID())
 		if err != nil {
 			return nil, 0, err
 		}
@@ -171,7 +171,7 @@ func scanViewFields(s rowScanner) (*domain.SystemErrorView, error) {
 	}
 
 	return &domain.SystemErrorView{
-		ID:          id,
+		ID:          domain.SystemErrorID(id),
 		Code:        code,
 		Message:     message,
 		StackTrace:  stackTrace,

@@ -1,14 +1,13 @@
 package query
 
 import (
-	"gct/internal/kernel/infrastructure/logger"
 	"context"
+	"gct/internal/kernel/infrastructure/logger"
 	"testing"
 	"time"
 
 	"gct/internal/context/admin/supporting/errorcode/domain"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -17,8 +16,8 @@ func TestListErrorCodesHandler_Handle(t *testing.T) {
 
 	readRepo := &mockReadRepo{
 		views: []*domain.ErrorCodeView{
-			{ID: uuid.New(), Code: "ERR_1", Message: "m1", HTTPStatus: 400, Category: "c", Severity: "low", CreatedAt: time.Now(), UpdatedAt: time.Now()},
-			{ID: uuid.New(), Code: "ERR_2", Message: "m2", HTTPStatus: 500, Category: "c", Severity: "high", CreatedAt: time.Now(), UpdatedAt: time.Now()},
+			{ID: domain.NewErrorCodeID(), Code: "ERR_1", Message: "m1", HTTPStatus: 400, Category: "c", Severity: "low", CreatedAt: time.Now(), UpdatedAt: time.Now()},
+			{ID: domain.NewErrorCodeID(), Code: "ERR_2", Message: "m2", HTTPStatus: 500, Category: "c", Severity: "high", CreatedAt: time.Now(), UpdatedAt: time.Now()},
 		},
 		total: 2,
 	}
@@ -64,7 +63,7 @@ func TestListErrorCodesHandler_WithFilters(t *testing.T) {
 	category := "auth"
 	readRepo := &mockReadRepo{
 		views: []*domain.ErrorCodeView{
-			{ID: uuid.New(), Code: "AUTH_001", Category: "auth", Severity: "high", HTTPStatus: 401, CreatedAt: time.Now(), UpdatedAt: time.Now()},
+			{ID: domain.NewErrorCodeID(), Code: "AUTH_001", Category: "auth", Severity: "high", HTTPStatus: 401, CreatedAt: time.Now(), UpdatedAt: time.Now()},
 		},
 		total: 1,
 	}

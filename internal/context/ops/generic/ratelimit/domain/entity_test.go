@@ -5,8 +5,6 @@ import (
 	"time"
 
 	domain "gct/internal/context/ops/generic/ratelimit/domain"
-
-	"github.com/google/uuid"
 )
 
 func TestNewRateLimit(t *testing.T) {
@@ -55,12 +53,12 @@ func TestRateLimit_Update(t *testing.T) {
 func TestReconstructRateLimit(t *testing.T) {
 	t.Parallel()
 
-	id := uuid.New()
+	id := domain.NewRateLimitID()
 	now := time.Now()
 
-	rl := domain.ReconstructRateLimit(id, now, now, "test", "/test", 50, 30, false)
+	rl := domain.ReconstructRateLimit(id.UUID(), now, now, "test", "/test", 50, 30, false)
 
-	if rl.ID() != id {
+	if rl.TypedID() != id {
 		t.Fatal("ID mismatch")
 	}
 	if rl.Name() != "test" {

@@ -50,7 +50,7 @@ func (h *UpdateIPRuleHandler) Handle(ctx context.Context, cmd UpdateIPRuleComman
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "UpdateIPRule", "ip_rule")()
 
-	r, err := h.repo.FindByID(ctx, cmd.ID.UUID())
+	r, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {
 		return apperrors.MapToServiceError(err)
 	}
@@ -58,12 +58,12 @@ func (h *UpdateIPRuleHandler) Handle(ctx context.Context, cmd UpdateIPRuleComman
 	r.Update(cmd.IPAddress, cmd.Action, cmd.Reason, cmd.ExpiresAt)
 
 	if err := h.repo.Update(ctx, r); err != nil {
-		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "UpdateIPRule", Entity: "ip_rule", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
+		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "UpdateIPRule", Entity: "ip_rule", EntityID: cmd.ID.String(), Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, r.Events()...); err != nil {
-		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "UpdateIPRule", Entity: "ip_rule", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "UpdateIPRule", Entity: "ip_rule", EntityID: cmd.ID.String(), Err: err}.KV()...)
 	}
 
 	return nil

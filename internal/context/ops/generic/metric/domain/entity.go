@@ -54,6 +54,7 @@ func ReconstructFunctionMetric(
 // Getters
 // ---------------------------------------------------------------------------
 
+func (fm *FunctionMetric) TypedID() MetricID   { return MetricID(fm.ID()) }
 func (fm *FunctionMetric) Name() string        { return fm.name }
 func (fm *FunctionMetric) LatencyMs() float64  { return fm.latencyMs }
 func (fm *FunctionMetric) IsPanic() bool       { return fm.isPanic }

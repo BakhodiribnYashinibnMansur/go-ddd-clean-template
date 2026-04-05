@@ -6,9 +6,9 @@ import (
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 
-	"gct/internal/kernel/infrastructure/pgxutil"
 	appdto "gct/internal/context/admin/supporting/sitesetting/application"
 	"gct/internal/context/admin/supporting/sitesetting/domain"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // GetSiteSettingQuery holds the input for getting a single site setting.
@@ -33,9 +33,9 @@ func (h *GetSiteSettingHandler) Handle(ctx context.Context, q GetSiteSettingQuer
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "GetSiteSetting", "site_setting")()
 
-	v, err := h.readRepo.FindByID(ctx, q.ID.UUID())
+	v, err := h.readRepo.FindByID(ctx, q.ID)
 	if err != nil {
-		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetSiteSetting", Entity: "site_setting", EntityID: q.ID.UUID(), Err: err}.KV()...)
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetSiteSetting", Entity: "site_setting", EntityID: q.ID.String(), Err: err}.KV()...)
 		return nil, apperrors.MapToServiceError(err)
 	}
 

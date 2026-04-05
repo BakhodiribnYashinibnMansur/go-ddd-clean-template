@@ -93,3 +93,6 @@ func (p *Permission) RemoveScope(path, method string) error {
 	}
 	return ErrScopeNotFound
 }
+
+// TypedID returns the aggregate's typed identifier.
+func (p *Permission) TypedID() PermissionID { return PermissionID(p.ID()) }

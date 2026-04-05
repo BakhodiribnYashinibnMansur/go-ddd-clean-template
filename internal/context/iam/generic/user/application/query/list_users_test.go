@@ -1,12 +1,12 @@
 package query
 
 import (
-	"gct/internal/kernel/infrastructure/logger"
 	"context"
+	"gct/internal/kernel/infrastructure/logger"
 	"testing"
 
-	shared "gct/internal/kernel/domain"
 	"gct/internal/context/iam/generic/user/domain"
+	shared "gct/internal/kernel/domain"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -15,8 +15,8 @@ import (
 func TestListUsersHandler_Handle(t *testing.T) {
 	t.Parallel()
 
-	id1 := uuid.New()
-	id2 := uuid.New()
+	id1 := domain.NewUserID()
+	id2 := domain.NewUserID()
 	phone1 := "+998901111111"
 	phone2 := "+998902222222"
 
@@ -85,7 +85,7 @@ func TestListUsersHandler_WithPagination(t *testing.T) {
 
 	readRepo := &mockUserReadRepository{
 		views: []*domain.UserView{
-			{ID: uuid.New(), Phone: "+998901111111", Active: true},
+			{ID: domain.NewUserID(), Phone: "+998901111111", Active: true},
 		},
 		total: 5, // total is 5 but only 1 returned (limit=1)
 	}
@@ -110,7 +110,7 @@ func TestListUsersHandler_WithPagination(t *testing.T) {
 func TestListUsersHandler_WithFilters(t *testing.T) {
 	t.Parallel()
 
-	activeUser := &domain.UserView{ID: uuid.New(), Phone: "+998901111111", Active: true, IsApproved: true}
+	activeUser := &domain.UserView{ID: domain.NewUserID(), Phone: "+998901111111", Active: true, IsApproved: true}
 
 	readRepo := &mockUserReadRepository{
 		views: []*domain.UserView{activeUser},
@@ -156,7 +156,7 @@ func TestListUsersHandler_AllFieldsMapped(t *testing.T) {
 	readRepo := &mockUserReadRepository{
 		views: []*domain.UserView{
 			{
-				ID:         uuid.New(),
+				ID:         domain.NewUserID(),
 				Phone:      "+998901234567",
 				Email:      &email,
 				Username:   &username,

@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
+	"gct/internal/context/iam/generic/usersetting/domain"
 	"gct/internal/kernel/consts"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/pgxutil"
-	"gct/internal/context/iam/generic/usersetting/domain"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -34,14 +34,14 @@ func NewUserSettingReadRepo(pool *pgxpool.Pool) *UserSettingReadRepo {
 }
 
 // FindByID returns a single UserSettingView by its ID.
-func (r *UserSettingReadRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.UserSettingView, err error) {
+func (r *UserSettingReadRepo) FindByID(ctx context.Context, id domain.UserSettingID) (result *domain.UserSettingView, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "UserSettingReadRepo.FindByID")
 	defer func() { end(err) }()
 
 	sql, args, err := r.builder.
 		Select(readColumns...).
 		From(tableName).
-		Where(squirrel.Eq{"id": id}).
+		Where(squirrel.Eq{"id": id.UUID()}).
 		ToSql()
 	if err != nil {
 		return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
@@ -138,7 +138,7 @@ func scanUserSettingView(row pgx.Row) (*domain.UserSettingView, error) {
 	}
 
 	return &domain.UserSettingView{
-		ID:        id,
+		ID:        domain.UserSettingID(id),
 		UserID:    userID,
 		Key:       key,
 		Value:     value,
@@ -163,7 +163,7 @@ func scanUserSettingViewFromRows(rows pgx.Rows) (*domain.UserSettingView, error)
 	}
 
 	return &domain.UserSettingView{
-		ID:        id,
+		ID:        domain.UserSettingID(id),
 		UserID:    userID,
 		Key:       key,
 		Value:     value,

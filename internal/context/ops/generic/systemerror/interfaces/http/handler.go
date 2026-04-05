@@ -12,7 +12,6 @@ import (
 	"gct/internal/context/ops/generic/systemerror/domain"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 // Handler provides HTTP endpoints for the SystemError bounded context.
@@ -74,12 +73,12 @@ func (h *Handler) List(ctx *gin.Context) {
 
 // Get returns a single system error by ID.
 func (h *Handler) Get(ctx *gin.Context) {
-	id, err := uuid.Parse(ctx.Param("id"))
+	id, err := domain.ParseSystemErrorID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
-	result, err := h.bc.GetSystemError.Handle(ctx.Request.Context(), query.GetSystemErrorQuery{ID: domain.SystemErrorID(id)})
+	result, err := h.bc.GetSystemError.Handle(ctx.Request.Context(), query.GetSystemErrorQuery{ID: id})
 	if err != nil {
 		response.HandleError(ctx, err)
 		return
@@ -89,7 +88,7 @@ func (h *Handler) Get(ctx *gin.Context) {
 
 // Resolve marks a system error as resolved.
 func (h *Handler) Resolve(ctx *gin.Context) {
-	id, err := uuid.Parse(ctx.Param("id"))
+	id, err := domain.ParseSystemErrorID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
@@ -100,7 +99,7 @@ func (h *Handler) Resolve(ctx *gin.Context) {
 		return
 	}
 	cmd := command.ResolveErrorCommand{
-		ID:         domain.SystemErrorID(id),
+		ID:         id,
 		ResolvedBy: req.ResolvedBy,
 	}
 	if err := h.bc.ResolveError.Handle(ctx.Request.Context(), cmd); err != nil {

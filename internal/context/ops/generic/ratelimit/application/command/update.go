@@ -46,7 +46,7 @@ func (h *UpdateRateLimitHandler) Handle(ctx context.Context, cmd UpdateRateLimit
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "UpdateRateLimit", "rate_limit")()
 
-	rl, err := h.repo.FindByID(ctx, cmd.ID.UUID())
+	rl, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {
 		return apperrors.MapToServiceError(err)
 	}
@@ -54,12 +54,12 @@ func (h *UpdateRateLimitHandler) Handle(ctx context.Context, cmd UpdateRateLimit
 	rl.Update(cmd.Name, cmd.Rule, cmd.RequestsPerWindow, cmd.WindowDuration, cmd.Enabled)
 
 	if err := h.repo.Update(ctx, rl); err != nil {
-		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "UpdateRateLimit", Entity: "rate_limit", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
+		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "UpdateRateLimit", Entity: "rate_limit", EntityID: cmd.ID, Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, rl.Events()...); err != nil {
-		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "UpdateRateLimit", Entity: "rate_limit", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "UpdateRateLimit", Entity: "rate_limit", EntityID: cmd.ID, Err: err}.KV()...)
 	}
 
 	return nil

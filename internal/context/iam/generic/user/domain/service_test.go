@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	domain "gct/internal/context/iam/generic/user/domain"
+
 	"github.com/stretchr/testify/require"
 )
 

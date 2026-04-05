@@ -49,10 +49,9 @@ func (h *BulkActionHandler) Handle(ctx context.Context, cmd BulkActionCommand) (
 	defer logger.SlowOp(h.logger, ctx, "BulkAction", "user")()
 
 	for _, id := range cmd.IDs {
-		uid := id.UUID()
-		user, err := h.repo.FindByID(ctx, uid)
+		user, err := h.repo.FindByID(ctx, id)
 		if err != nil {
-			h.logger.Warnc(ctx, "bulk action: user find failed", logger.F{Op: "BulkAction", Entity: "user", EntityID: uid, Err: err}.KV()...)
+			h.logger.Warnc(ctx, "bulk action: user find failed", logger.F{Op: "BulkAction", Entity: "user", EntityID: id.String(), Err: err}.KV()...)
 			continue
 		}
 
@@ -69,12 +68,12 @@ func (h *BulkActionHandler) Handle(ctx context.Context, cmd BulkActionCommand) (
 		}
 
 		if err := h.repo.Update(ctx, user); err != nil {
-			h.logger.Errorc(ctx, "bulk action: repository update failed", logger.F{Op: "BulkAction", Entity: "user", EntityID: uid, Err: err}.KV()...)
+			h.logger.Errorc(ctx, "bulk action: repository update failed", logger.F{Op: "BulkAction", Entity: "user", EntityID: id.String(), Err: err}.KV()...)
 			continue
 		}
 
 		if err := h.eventBus.Publish(ctx, user.Events()...); err != nil {
-			h.logger.Warnc(ctx, "bulk action: event publish failed", logger.F{Op: "BulkAction", Entity: "user", EntityID: uid, Err: err}.KV()...)
+			h.logger.Warnc(ctx, "bulk action: event publish failed", logger.F{Op: "BulkAction", Entity: "user", EntityID: id.String(), Err: err}.KV()...)
 		}
 	}
 

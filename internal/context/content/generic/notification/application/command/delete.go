@@ -41,8 +41,8 @@ func (h *DeleteHandler) Handle(ctx context.Context, cmd DeleteCommand) (err erro
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "DeleteNotification", "notification")()
 
-	if err := h.repo.Delete(ctx, cmd.ID.UUID()); err != nil {
-		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteNotification", Entity: "notification", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
+	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
+		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteNotification", Entity: "notification", EntityID: cmd.ID.String(), Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 

@@ -11,8 +11,8 @@ import (
 	access "gct/internal/context/iam/generic/authz/application/query"
 	"gct/internal/context/iam/generic/authz/domain"
 	"gct/internal/contract/ports"
-	shared "gct/internal/kernel/domain"
 	"gct/internal/kernel/consts"
+	shared "gct/internal/kernel/domain"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -24,38 +24,38 @@ import (
 
 type mockLogger struct{}
 
-func (m *mockLogger) Debug(args ...any)                                                {}
-func (m *mockLogger) Debugf(template string, args ...any)                              {}
-func (m *mockLogger) Debugw(msg string, keysAndValues ...any)                          {}
-func (m *mockLogger) Info(args ...any)                                                 {}
-func (m *mockLogger) Infof(template string, args ...any)                               {}
-func (m *mockLogger) Infow(msg string, keysAndValues ...any)                           {}
-func (m *mockLogger) Warn(args ...any)                                                 {}
-func (m *mockLogger) Warnf(template string, args ...any)                               {}
-func (m *mockLogger) Warnw(msg string, keysAndValues ...any)                           {}
-func (m *mockLogger) Error(args ...any)                                                {}
-func (m *mockLogger) Errorf(template string, args ...any)                              {}
-func (m *mockLogger) Errorw(msg string, keysAndValues ...any)                          {}
-func (m *mockLogger) Fatal(args ...any)                                                {}
-func (m *mockLogger) Fatalf(template string, args ...any)                              {}
-func (m *mockLogger) Fatalw(msg string, keysAndValues ...any)                          {}
-func (m *mockLogger) Debugc(_ context.Context, _ string, _ ...any)                     {}
-func (m *mockLogger) Infoc(_ context.Context, _ string, _ ...any)                      {}
-func (m *mockLogger) Warnc(_ context.Context, _ string, _ ...any)                      {}
-func (m *mockLogger) Errorc(_ context.Context, _ string, _ ...any)                     {}
-func (m *mockLogger) Fatalc(_ context.Context, _ string, _ ...any)                     {}
+func (m *mockLogger) Debug(args ...any)                            {}
+func (m *mockLogger) Debugf(template string, args ...any)          {}
+func (m *mockLogger) Debugw(msg string, keysAndValues ...any)      {}
+func (m *mockLogger) Info(args ...any)                             {}
+func (m *mockLogger) Infof(template string, args ...any)           {}
+func (m *mockLogger) Infow(msg string, keysAndValues ...any)       {}
+func (m *mockLogger) Warn(args ...any)                             {}
+func (m *mockLogger) Warnf(template string, args ...any)           {}
+func (m *mockLogger) Warnw(msg string, keysAndValues ...any)       {}
+func (m *mockLogger) Error(args ...any)                            {}
+func (m *mockLogger) Errorf(template string, args ...any)          {}
+func (m *mockLogger) Errorw(msg string, keysAndValues ...any)      {}
+func (m *mockLogger) Fatal(args ...any)                            {}
+func (m *mockLogger) Fatalf(template string, args ...any)          {}
+func (m *mockLogger) Fatalw(msg string, keysAndValues ...any)      {}
+func (m *mockLogger) Debugc(_ context.Context, _ string, _ ...any) {}
+func (m *mockLogger) Infoc(_ context.Context, _ string, _ ...any)  {}
+func (m *mockLogger) Warnc(_ context.Context, _ string, _ ...any)  {}
+func (m *mockLogger) Errorc(_ context.Context, _ string, _ ...any) {}
+func (m *mockLogger) Fatalc(_ context.Context, _ string, _ ...any) {}
 
 type mockAuthzReadRepository struct {
-	checkAccessFn func(ctx context.Context, roleID uuid.UUID, path, method string, evalCtx domain.EvaluationContext) (bool, error)
+	checkAccessFn func(ctx context.Context, roleID domain.RoleID, path, method string, evalCtx domain.EvaluationContext) (bool, error)
 }
 
-func (m *mockAuthzReadRepository) GetRole(context.Context, uuid.UUID) (*domain.RoleView, error) {
+func (m *mockAuthzReadRepository) GetRole(context.Context, domain.RoleID) (*domain.RoleView, error) {
 	return nil, nil
 }
 func (m *mockAuthzReadRepository) ListRoles(context.Context, shared.Pagination) ([]*domain.RoleView, int64, error) {
 	return nil, 0, nil
 }
-func (m *mockAuthzReadRepository) GetPermission(context.Context, uuid.UUID) (*domain.PermissionView, error) {
+func (m *mockAuthzReadRepository) GetPermission(context.Context, domain.PermissionID) (*domain.PermissionView, error) {
 	return nil, nil
 }
 func (m *mockAuthzReadRepository) ListPermissions(context.Context, shared.Pagination) ([]*domain.PermissionView, int64, error) {
@@ -67,14 +67,14 @@ func (m *mockAuthzReadRepository) ListPolicies(context.Context, shared.Paginatio
 func (m *mockAuthzReadRepository) ListScopes(context.Context, shared.Pagination) ([]*domain.ScopeView, int64, error) {
 	return nil, 0, nil
 }
-func (m *mockAuthzReadRepository) CheckAccess(ctx context.Context, roleID uuid.UUID, path, method string, evalCtx domain.EvaluationContext) (bool, error) {
+func (m *mockAuthzReadRepository) CheckAccess(ctx context.Context, roleID domain.RoleID, path, method string, evalCtx domain.EvaluationContext) (bool, error) {
 	if m.checkAccessFn != nil {
 		return m.checkAccessFn(ctx, roleID, path, method, evalCtx)
 	}
 	return false, nil
 }
 
-func (m *mockAuthzReadRepository) FindPoliciesByPermissionIDs(_ context.Context, _ []uuid.UUID) ([]*domain.Policy, error) {
+func (m *mockAuthzReadRepository) FindPoliciesByPermissionIDs(_ context.Context, _ []domain.PermissionID) ([]*domain.Policy, error) {
 	return nil, nil
 }
 
@@ -98,7 +98,7 @@ var _ ports.AuthUserLookup = (*fakeAuthUserLookup)(nil)
 // ---------------------------------------------------------------------------
 
 func setupMiddleware(
-	checkAccessFn func(ctx context.Context, roleID uuid.UUID, path, method string, evalCtx domain.EvaluationContext) (bool, error),
+	checkAccessFn func(ctx context.Context, roleID domain.RoleID, path, method string, evalCtx domain.EvaluationContext) (bool, error),
 	findUserFn func(ctx context.Context, userID uuid.UUID) (*shared.AuthUser, error),
 ) *AuthzMiddleware {
 	l := &mockLogger{}
@@ -217,16 +217,17 @@ func TestAuthzMiddleware_AccessAllowed(t *testing.T) {
 	t.Parallel()
 
 	session := validSession()
-	roleID := uuid.New()
+	roleID := domain.NewRoleID()
+	rawRoleID := roleID.UUID()
 
 	mw := setupMiddleware(
-		func(_ context.Context, _ uuid.UUID, _ string, _ string, _ domain.EvaluationContext) (bool, error) {
+		func(_ context.Context, _ domain.RoleID, _ string, _ string, _ domain.EvaluationContext) (bool, error) {
 			return true, nil
 		},
 		func(_ context.Context, userID uuid.UUID) (*shared.AuthUser, error) {
 			return &shared.AuthUser{
 				ID:     userID,
-				RoleID: &roleID,
+				RoleID: &rawRoleID,
 				Active: true,
 			}, nil
 		},
@@ -245,16 +246,17 @@ func TestAuthzMiddleware_AccessDenied(t *testing.T) {
 	t.Parallel()
 
 	session := validSession()
-	roleID := uuid.New()
+	roleID := domain.NewRoleID()
+	rawRoleID := roleID.UUID()
 
 	mw := setupMiddleware(
-		func(_ context.Context, _ uuid.UUID, _ string, _ string, _ domain.EvaluationContext) (bool, error) {
+		func(_ context.Context, _ domain.RoleID, _ string, _ string, _ domain.EvaluationContext) (bool, error) {
 			return false, nil
 		},
 		func(_ context.Context, userID uuid.UUID) (*shared.AuthUser, error) {
 			return &shared.AuthUser{
 				ID:     userID,
-				RoleID: &roleID,
+				RoleID: &rawRoleID,
 				Active: true,
 			}, nil
 		},
@@ -273,16 +275,17 @@ func TestAuthzMiddleware_CheckAccessError(t *testing.T) {
 	t.Parallel()
 
 	session := validSession()
-	roleID := uuid.New()
+	roleID := domain.NewRoleID()
+	rawRoleID := roleID.UUID()
 
 	mw := setupMiddleware(
-		func(_ context.Context, _ uuid.UUID, _ string, _ string, _ domain.EvaluationContext) (bool, error) {
+		func(_ context.Context, _ domain.RoleID, _ string, _ string, _ domain.EvaluationContext) (bool, error) {
 			return false, errors.New("db connection error")
 		},
 		func(_ context.Context, userID uuid.UUID) (*shared.AuthUser, error) {
 			return &shared.AuthUser{
 				ID:     userID,
-				RoleID: &roleID,
+				RoleID: &rawRoleID,
 				Active: true,
 			}, nil
 		},
@@ -301,13 +304,14 @@ func TestAuthzMiddleware_CorrectRoleIDPassedToCheckAccess(t *testing.T) {
 	t.Parallel()
 
 	session := validSession()
-	roleID := uuid.New()
-	var capturedRoleID uuid.UUID
+	roleID := domain.NewRoleID()
+	rawRoleID := roleID.UUID()
+	var capturedRoleID domain.RoleID
 	var capturedPath string
 	var capturedMethod string
 
 	mw := setupMiddleware(
-		func(_ context.Context, rID uuid.UUID, path string, method string, _ domain.EvaluationContext) (bool, error) {
+		func(_ context.Context, rID domain.RoleID, path string, method string, _ domain.EvaluationContext) (bool, error) {
 			capturedRoleID = rID
 			capturedPath = path
 			capturedMethod = method
@@ -316,7 +320,7 @@ func TestAuthzMiddleware_CorrectRoleIDPassedToCheckAccess(t *testing.T) {
 		func(_ context.Context, userID uuid.UUID) (*shared.AuthUser, error) {
 			return &shared.AuthUser{
 				ID:     userID,
-				RoleID: &roleID,
+				RoleID: &rawRoleID,
 				Active: true,
 			}, nil
 		},
@@ -364,7 +368,8 @@ func TestAuthzMiddleware_DifferentHTTPMethods(t *testing.T) {
 	t.Parallel()
 
 	session := validSession()
-	roleID := uuid.New()
+	roleID := domain.NewRoleID()
+	rawRoleID := roleID.UUID()
 
 	methods := []string{"GET", "POST", "PUT", "PATCH", "DELETE"}
 
@@ -374,14 +379,14 @@ func TestAuthzMiddleware_DifferentHTTPMethods(t *testing.T) {
 			var capturedMethod string
 
 			mw := setupMiddleware(
-				func(_ context.Context, _ uuid.UUID, _ string, m string, _ domain.EvaluationContext) (bool, error) {
+				func(_ context.Context, _ domain.RoleID, _ string, m string, _ domain.EvaluationContext) (bool, error) {
 					capturedMethod = m
 					return true, nil
 				},
 				func(_ context.Context, userID uuid.UUID) (*shared.AuthUser, error) {
 					return &shared.AuthUser{
 						ID:     userID,
-						RoleID: &roleID,
+						RoleID: &rawRoleID,
 						Active: true,
 					}, nil
 				},
@@ -405,7 +410,8 @@ func TestAuthzMiddleware_AbortsPipelineOnDenied(t *testing.T) {
 	t.Parallel()
 
 	session := validSession()
-	roleID := uuid.New()
+	roleID := domain.NewRoleID()
+	rawRoleID := roleID.UUID()
 	handlerCalled := false
 
 	gin.SetMode(gin.TestMode)
@@ -417,13 +423,13 @@ func TestAuthzMiddleware_AbortsPipelineOnDenied(t *testing.T) {
 	})
 
 	mw := setupMiddleware(
-		func(_ context.Context, _ uuid.UUID, _ string, _ string, _ domain.EvaluationContext) (bool, error) {
+		func(_ context.Context, _ domain.RoleID, _ string, _ string, _ domain.EvaluationContext) (bool, error) {
 			return false, nil
 		},
 		func(_ context.Context, userID uuid.UUID) (*shared.AuthUser, error) {
 			return &shared.AuthUser{
 				ID:     userID,
-				RoleID: &roleID,
+				RoleID: &rawRoleID,
 				Active: true,
 			}, nil
 		},
@@ -451,7 +457,8 @@ func TestAuthzMiddleware_AllowsPipelineOnGranted(t *testing.T) {
 	t.Parallel()
 
 	session := validSession()
-	roleID := uuid.New()
+	roleID := domain.NewRoleID()
+	rawRoleID := roleID.UUID()
 	handlerCalled := false
 
 	gin.SetMode(gin.TestMode)
@@ -463,13 +470,13 @@ func TestAuthzMiddleware_AllowsPipelineOnGranted(t *testing.T) {
 	})
 
 	mw := setupMiddleware(
-		func(_ context.Context, _ uuid.UUID, _ string, _ string, _ domain.EvaluationContext) (bool, error) {
+		func(_ context.Context, _ domain.RoleID, _ string, _ string, _ domain.EvaluationContext) (bool, error) {
 			return true, nil
 		},
 		func(_ context.Context, userID uuid.UUID) (*shared.AuthUser, error) {
 			return &shared.AuthUser{
 				ID:     userID,
-				RoleID: &roleID,
+				RoleID: &rawRoleID,
 				Active: true,
 			}, nil
 		},

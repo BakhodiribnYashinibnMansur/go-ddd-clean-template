@@ -21,7 +21,7 @@ type mockReadRepo struct {
 	total int64
 }
 
-func (m *mockReadRepo) FindByID(_ context.Context, id uuid.UUID) (*domain.SystemErrorView, error) {
+func (m *mockReadRepo) FindByID(_ context.Context, id domain.SystemErrorID) (*domain.SystemErrorView, error) {
 	if m.view != nil && m.view.ID == id {
 		return m.view, nil
 	}
@@ -34,7 +34,7 @@ func (m *mockReadRepo) List(_ context.Context, _ domain.SystemErrorFilter) ([]*d
 
 type errorReadRepo struct{ err error }
 
-func (m *errorReadRepo) FindByID(_ context.Context, _ uuid.UUID) (*domain.SystemErrorView, error) {
+func (m *errorReadRepo) FindByID(_ context.Context, _ domain.SystemErrorID) (*domain.SystemErrorView, error) {
 	return nil, m.err
 }
 
@@ -49,7 +49,7 @@ var errRepo = errors.New("repo failure")
 func TestGetSystemErrorHandler_Handle(t *testing.T) {
 	t.Parallel()
 
-	id := uuid.New()
+	id := domain.NewSystemErrorID()
 	readRepo := &mockReadRepo{
 		view: &domain.SystemErrorView{
 			ID:       id,
@@ -61,7 +61,7 @@ func TestGetSystemErrorHandler_Handle(t *testing.T) {
 	}
 
 	handler := NewGetSystemErrorHandler(readRepo, logger.Noop())
-	result, err := handler.Handle(context.Background(), GetSystemErrorQuery{ID: domain.SystemErrorID(id)})
+	result, err := handler.Handle(context.Background(), GetSystemErrorQuery{ID: id})
 	require.NoError(t, err)
 	if result == nil {
 		t.Fatal("expected result")
@@ -99,7 +99,7 @@ func TestGetSystemErrorHandler_RepoError(t *testing.T) {
 func TestGetSystemErrorHandler_AllFieldsMapped(t *testing.T) {
 	t.Parallel()
 
-	id := uuid.New()
+	id := domain.NewSystemErrorID()
 	stack := "trace"
 	svc := "api"
 	reqID := uuid.New()
@@ -132,7 +132,7 @@ func TestGetSystemErrorHandler_AllFieldsMapped(t *testing.T) {
 	}
 
 	handler := NewGetSystemErrorHandler(readRepo, logger.Noop())
-	result, err := handler.Handle(context.Background(), GetSystemErrorQuery{ID: domain.SystemErrorID(id)})
+	result, err := handler.Handle(context.Background(), GetSystemErrorQuery{ID: id})
 	require.NoError(t, err)
 	if result.StackTrace == nil || *result.StackTrace != "trace" {
 		t.Error("stack trace not mapped")

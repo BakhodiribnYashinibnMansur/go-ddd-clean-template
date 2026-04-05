@@ -4,18 +4,18 @@ import "github.com/google/uuid"
 
 // CreateUserRequest is the request DTO for creating a user.
 type CreateUserRequest struct {
-	Phone      string         `json:"phone" binding:"required"`
-	Password   string         `json:"password" binding:"required"`
-	Email      *string        `json:"email,omitempty"`
-	Username   *string        `json:"username,omitempty"`
-	RoleID     *uuid.UUID     `json:"role_id,omitempty"`
+	Phone      string            `json:"phone" binding:"required"`
+	Password   string            `json:"password" binding:"required"`
+	Email      *string           `json:"email,omitempty"`
+	Username   *string           `json:"username,omitempty"`
+	RoleID     *uuid.UUID        `json:"role_id,omitempty"`
 	Attributes map[string]string `json:"attributes,omitempty"`
 }
 
 // UpdateUserRequest is the request DTO for updating a user.
 type UpdateUserRequest struct {
-	Email      *string        `json:"email,omitempty"`
-	Username   *string        `json:"username,omitempty"`
+	Email      *string           `json:"email,omitempty"`
+	Username   *string           `json:"username,omitempty"`
 	Attributes map[string]string `json:"attributes,omitempty"`
 }
 

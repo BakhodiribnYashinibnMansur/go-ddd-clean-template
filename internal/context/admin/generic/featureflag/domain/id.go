@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"database/sql/driver"
+	"encoding/json"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -58,3 +60,37 @@ func (id RuleGroupID) String() string { return uuid.UUID(id).String() }
 
 // IsZero reports whether the RuleGroupID is the zero value.
 func (id RuleGroupID) IsZero() bool { return uuid.UUID(id) == uuid.Nil }
+
+// MarshalJSON serializes the FeatureFlagID as a canonical UUID string.
+func (id FeatureFlagID) MarshalJSON() ([]byte, error) {
+	return json.Marshal(id.String())
+}
+
+// UnmarshalJSON parses a FeatureFlagID from a JSON UUID string.
+func (id *FeatureFlagID) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+	parsed, err := ParseFeatureFlagID(s)
+	if err != nil {
+		return err
+	}
+	*id = parsed
+	return nil
+}
+
+// Value implements driver.Valuer for SQL driver interop.
+func (id FeatureFlagID) Value() (driver.Value, error) {
+	return uuid.UUID(id).Value()
+}
+
+// Scan implements sql.Scanner for SQL driver interop.
+func (id *FeatureFlagID) Scan(src any) error {
+	var u uuid.UUID
+	if err := u.Scan(src); err != nil {
+		return err
+	}
+	*id = FeatureFlagID(u)
+	return nil
+}

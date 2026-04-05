@@ -6,7 +6,6 @@ import (
 
 	"gct/internal/context/iam/generic/authz/domain"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -19,7 +18,7 @@ func TestDeleteRoleHandler_Success(t *testing.T) {
 
 	handler := NewDeleteRoleHandler(repo, eventBus, log)
 
-	roleID := uuid.New()
+	roleID := domain.NewRoleID()
 	cmd := DeleteRoleCommand{ID: domain.RoleID(roleID)}
 
 	err := handler.Handle(context.Background(), cmd)
@@ -33,7 +32,7 @@ func TestDeleteRoleHandler_Success(t *testing.T) {
 		t.Errorf("expected event authz.role_deleted, got %s", eventBus.publishedEvents[0].EventName())
 	}
 
-	if eventBus.publishedEvents[0].AggregateID() != roleID {
+	if eventBus.publishedEvents[0].AggregateID() != roleID.UUID() {
 		t.Errorf("expected aggregate ID %s, got %s", roleID, eventBus.publishedEvents[0].AggregateID())
 	}
 }

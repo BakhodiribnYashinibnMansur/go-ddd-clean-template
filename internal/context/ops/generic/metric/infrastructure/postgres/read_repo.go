@@ -110,7 +110,7 @@ func scanMetricView(rows pgx.Rows) (*domain.MetricView, error) {
 	}
 
 	return &domain.MetricView{
-		ID:         id,
+		ID:         domain.MetricID(id),
 		Name:       name,
 		LatencyMs:  latencyMs,
 		IsPanic:    isPanic,

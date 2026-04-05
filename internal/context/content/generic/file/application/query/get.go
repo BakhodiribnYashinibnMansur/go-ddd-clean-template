@@ -33,9 +33,9 @@ func (h *GetFileHandler) Handle(ctx context.Context, q GetFileQuery) (result *ap
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "GetFile", "file")()
 
-	v, err := h.readRepo.FindByID(ctx, q.ID.UUID())
+	v, err := h.readRepo.FindByID(ctx, q.ID)
 	if err != nil {
-		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetFile", Entity: "file", EntityID: q.ID.UUID(), Err: err}.KV()...)
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetFile", Entity: "file", EntityID: q.ID.String(), Err: err}.KV()...)
 		return nil, apperrors.MapToServiceError(err)
 	}
 

@@ -28,15 +28,16 @@ func TestUserCreated(t *testing.T) {
 func TestUserSignedIn(t *testing.T) {
 	t.Parallel()
 
-	uid, sid := uuid.New(), uuid.New()
-	e := domain.NewUserSignedIn(uid, sid, "1.2.3.4")
+	uid := domain.NewUserID()
+	sid := domain.NewSessionID()
+	e := domain.NewUserSignedIn(uid.UUID(), sid.UUID(), "1.2.3.4")
 	if e.EventName() != "user.signed_in" {
 		t.Fatalf("expected user.signed_in, got %s", e.EventName())
 	}
-	if e.AggregateID() != uid {
+	if e.AggregateID() != uid.UUID() {
 		t.Fatal("aggregate ID mismatch")
 	}
-	if e.SessionID != sid {
+	if e.SessionID != sid.UUID() {
 		t.Fatal("session ID mismatch")
 	}
 }
@@ -77,10 +78,10 @@ func TestUserApproved(t *testing.T) {
 func TestRoleChanged(t *testing.T) {
 	t.Parallel()
 
-	uid := uuid.New()
+	uid := domain.NewUserID()
 	oldRole := uuid.New()
 	newRole := uuid.New()
-	e := domain.NewRoleChanged(uid, &oldRole, newRole)
+	e := domain.NewRoleChanged(uid.UUID(), &oldRole, newRole)
 	if e.EventName() != "user.role_changed" {
 		t.Fatalf("expected user.role_changed, got %s", e.EventName())
 	}

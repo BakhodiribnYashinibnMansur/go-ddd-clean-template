@@ -37,7 +37,7 @@ type mockReadRepo struct {
 	total int64
 }
 
-func (m *mockReadRepo) FindByID(_ context.Context, id uuid.UUID) (*domain.FileView, error) {
+func (m *mockReadRepo) FindByID(_ context.Context, id domain.FileID) (*domain.FileView, error) {
 	if m.view != nil && m.view.ID == id {
 		return m.view, nil
 	}
@@ -148,7 +148,7 @@ func TestHandler_List_Success(t *testing.T) {
 
 	readRepo := &mockReadRepo{
 		views: []*domain.FileView{
-			{ID: uuid.New(), Name: "file1.png", MimeType: "image/png", Size: 100, CreatedAt: time.Now()},
+			{ID: domain.NewFileID(), Name: "file1.png", MimeType: "image/png", Size: 100, CreatedAt: time.Now()},
 		},
 		total: 1,
 	}
@@ -166,7 +166,7 @@ func TestHandler_List_Success(t *testing.T) {
 func TestHandler_Get_Success(t *testing.T) {
 	t.Parallel()
 
-	id := uuid.New()
+	id := domain.NewFileID()
 	readRepo := &mockReadRepo{
 		view: &domain.FileView{ID: id, Name: "doc.pdf", MimeType: "application/pdf", Size: 2048, CreatedAt: time.Now()},
 	}

@@ -64,10 +64,11 @@ func ReconstructFile(
 // Getters
 // ---------------------------------------------------------------------------
 
-func (f *File) Name() string         { return f.name }
-func (f *File) OriginalName() string { return f.originalName }
-func (f *File) MimeType() string     { return f.mimeType }
-func (f *File) Size() int64          { return f.size }
-func (f *File) Path() string         { return f.path }
-func (f *File) URL() string          { return f.url }
+func (f *File) TypedID() FileID        { return FileID(f.ID()) }
+func (f *File) Name() string           { return f.name }
+func (f *File) OriginalName() string   { return f.originalName }
+func (f *File) MimeType() string       { return f.mimeType }
+func (f *File) Size() int64            { return f.size }
+func (f *File) Path() string           { return f.path }
+func (f *File) URL() string            { return f.url }
 func (f *File) UploadedBy() *uuid.UUID { return f.uploadedBy }

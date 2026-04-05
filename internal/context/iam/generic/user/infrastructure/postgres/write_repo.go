@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"time"
 
+	"gct/internal/context/iam/generic/user/domain"
 	"gct/internal/kernel/consts"
 	shared "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/metadata"
 	"gct/internal/kernel/infrastructure/pgxutil"
-	"gct/internal/context/iam/generic/user/domain"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -155,7 +155,7 @@ func (r *UserWriteRepo) insertSession(ctx context.Context, tx pgx.Tx, s *domain.
 }
 
 // FindByID retrieves a User aggregate by ID, including its sessions.
-func (r *UserWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.User, err error) {
+func (r *UserWriteRepo) FindByID(ctx context.Context, id domain.UserID) (result *domain.User, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "UserWriteRepo.FindByID")
 	defer func() { end(err) }()
 
@@ -163,7 +163,7 @@ func (r *UserWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (result *dom
 	sql, args, err := r.builder.
 		Select(userColumns...).
 		From(usersTable).
-		Where(squirrel.Eq{"id": id}).
+		Where(squirrel.Eq{"id": id.UUID()}).
 		Where(squirrel.Eq{"deleted_at": 0}).
 		ToSql()
 	if err != nil {
@@ -281,14 +281,14 @@ func (r *UserWriteRepo) upsertSessions(ctx context.Context, tx pgx.Tx, sessions 
 }
 
 // Delete performs a soft delete on the user by setting deleted_at to the current unix timestamp.
-func (r *UserWriteRepo) Delete(ctx context.Context, id uuid.UUID) (err error) {
+func (r *UserWriteRepo) Delete(ctx context.Context, id domain.UserID) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "UserWriteRepo.Delete")
 	defer func() { end(err) }()
 
 	sql, args, err := r.builder.
 		Update(usersTable).
 		Set("deleted_at", squirrel.Expr("EXTRACT(EPOCH FROM NOW())::bigint")).
-		Where(squirrel.Eq{"id": id}).
+		Where(squirrel.Eq{"id": id.UUID()}).
 		ToSql()
 	if err != nil {
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildDelete)

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"gct/internal/context/admin/supporting/integration/domain"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -17,7 +18,7 @@ func TestDeleteHandler_Handle(t *testing.T) {
 	id := domain.NewIntegrationID()
 	err := handler.Handle(context.Background(), DeleteCommand{ID: id})
 	require.NoError(t, err)
-	if repo.deleted != id.UUID() {
+	if repo.deleted != id {
 		t.Errorf("expected deleted ID %s, got %s", id, repo.deleted)
 	}
 }

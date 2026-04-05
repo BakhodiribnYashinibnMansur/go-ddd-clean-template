@@ -1,9 +1,9 @@
 package query
 
 import (
-	"gct/internal/kernel/infrastructure/logger"
 	"context"
 	"errors"
+	"gct/internal/kernel/infrastructure/logger"
 	"testing"
 	"time"
 
@@ -22,7 +22,7 @@ func TestListDataExportsHandler_Success(t *testing.T) {
 	readRepo := &mockDataExportReadRepository{
 		listViews: []*domain.DataExportView{
 			{
-				ID:        uuid.New(),
+				ID:        domain.NewDataExportID(),
 				UserID:    userID,
 				DataType:  "users",
 				Format:    "csv",
@@ -31,7 +31,7 @@ func TestListDataExportsHandler_Success(t *testing.T) {
 				UpdatedAt: now,
 			},
 			{
-				ID:        uuid.New(),
+				ID:        domain.NewDataExportID(),
 				UserID:    userID,
 				DataType:  "audit_logs",
 				Format:    "json",

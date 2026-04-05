@@ -12,7 +12,6 @@ import (
 	"gct/internal/kernel/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 // Handler provides HTTP endpoints for the Integration bounded context.
@@ -69,12 +68,12 @@ func (h *Handler) List(ctx *gin.Context) {
 
 // Get returns a single integration by ID.
 func (h *Handler) Get(ctx *gin.Context) {
-	id, err := uuid.Parse(ctx.Param("id"))
+	id, err := domain.ParseIntegrationID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
-	result, err := h.bc.GetIntegration.Handle(ctx.Request.Context(), query.GetQuery{ID: domain.IntegrationID(id)})
+	result, err := h.bc.GetIntegration.Handle(ctx.Request.Context(), query.GetQuery{ID: id})
 	if err != nil {
 		response.HandleError(ctx, err)
 		return
@@ -84,7 +83,7 @@ func (h *Handler) Get(ctx *gin.Context) {
 
 // Update updates an integration.
 func (h *Handler) Update(ctx *gin.Context) {
-	id, err := uuid.Parse(ctx.Param("id"))
+	id, err := domain.ParseIntegrationID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
@@ -95,7 +94,7 @@ func (h *Handler) Update(ctx *gin.Context) {
 		return
 	}
 	cmd := command.UpdateCommand{
-		ID:         domain.IntegrationID(id),
+		ID:         id,
 		Name:       req.Name,
 		Type:       req.Type,
 		APIKey:     req.APIKey,
@@ -112,12 +111,12 @@ func (h *Handler) Update(ctx *gin.Context) {
 
 // Delete deletes an integration.
 func (h *Handler) Delete(ctx *gin.Context) {
-	id, err := uuid.Parse(ctx.Param("id"))
+	id, err := domain.ParseIntegrationID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
-	if err := h.bc.DeleteIntegration.Handle(ctx.Request.Context(), command.DeleteCommand{ID: domain.IntegrationID(id)}); err != nil {
+	if err := h.bc.DeleteIntegration.Handle(ctx.Request.Context(), command.DeleteCommand{ID: id}); err != nil {
 		response.HandleError(ctx, err)
 		return
 	}

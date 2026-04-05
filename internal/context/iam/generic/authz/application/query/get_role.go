@@ -33,9 +33,9 @@ func (h *GetRoleHandler) Handle(ctx context.Context, q GetRoleQuery) (_ *appdto.
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "GetRole", "role")()
 
-	view, err := h.readRepo.GetRole(ctx, q.ID.UUID())
+	view, err := h.readRepo.GetRole(ctx, q.ID)
 	if err != nil {
-		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetRole", Entity: "access", EntityID: q.ID.UUID(), Err: err}.KV()...)
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetRole", Entity: "access", EntityID: q.ID, Err: err}.KV()...)
 		return nil, apperrors.MapToServiceError(err)
 	}
 

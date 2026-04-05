@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
+	"gct/internal/context/iam/generic/usersetting/domain"
 	"gct/internal/kernel/consts"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/pgxutil"
-	"gct/internal/context/iam/generic/usersetting/domain"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -83,13 +83,13 @@ func (r *UserSettingWriteRepo) FindByUserIDAndKey(ctx context.Context, userID uu
 }
 
 // Delete removes a user setting by its ID.
-func (r *UserSettingWriteRepo) Delete(ctx context.Context, id uuid.UUID) (err error) {
+func (r *UserSettingWriteRepo) Delete(ctx context.Context, id domain.UserSettingID) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "UserSettingWriteRepo.Delete")
 	defer func() { end(err) }()
 
 	sql, args, err := r.builder.
 		Delete(tableName).
-		Where(squirrel.Eq{"id": id}).
+		Where(squirrel.Eq{"id": id.UUID()}).
 		ToSql()
 	if err != nil {
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildDelete)

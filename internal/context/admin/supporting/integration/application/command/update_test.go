@@ -6,7 +6,6 @@ import (
 
 	"gct/internal/context/admin/supporting/integration/domain"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -16,8 +15,8 @@ func TestUpdateHandler_Handle(t *testing.T) {
 	i, _ := domain.NewIntegration("Slack", "messaging", "old-key", "https://old.com", true, nil)
 
 	repo := &mockIntegrationRepo{
-		findFn: func(_ context.Context, id uuid.UUID) (*domain.Integration, error) {
-			if id == i.ID() {
+		findFn: func(_ context.Context, id domain.IntegrationID) (*domain.Integration, error) {
+			if id == i.TypedID() {
 				return i, nil
 			}
 			return nil, domain.ErrIntegrationNotFound
@@ -62,7 +61,7 @@ func TestUpdateHandler_PartialUpdate(t *testing.T) {
 	i, _ := domain.NewIntegration("Name", "type", "key", "https://url.com", true, map[string]string{"k": "v"})
 
 	repo := &mockIntegrationRepo{
-		findFn: func(_ context.Context, _ uuid.UUID) (*domain.Integration, error) {
+		findFn: func(_ context.Context, _ domain.IntegrationID) (*domain.Integration, error) {
 			return i, nil
 		},
 	}
@@ -88,7 +87,7 @@ func TestUpdateHandler_WithConfig(t *testing.T) {
 	i, _ := domain.NewIntegration("Name", "type", "key", "url", true, nil)
 
 	repo := &mockIntegrationRepo{
-		findFn: func(_ context.Context, _ uuid.UUID) (*domain.Integration, error) {
+		findFn: func(_ context.Context, _ domain.IntegrationID) (*domain.Integration, error) {
 			return i, nil
 		},
 	}

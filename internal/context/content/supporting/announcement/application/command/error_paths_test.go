@@ -7,8 +7,6 @@ import (
 
 	"gct/internal/context/content/supporting/announcement/domain"
 	shared "gct/internal/kernel/domain"
-
-	"github.com/google/uuid"
 )
 
 // --- Error mocks ---
@@ -21,14 +19,14 @@ type errorAnnouncementRepo struct {
 	saveErr   error
 	updateErr error
 	deleteErr error
-	findFn    func(ctx context.Context, id uuid.UUID) (*domain.Announcement, error)
+	findFn    func(ctx context.Context, id domain.AnnouncementID) (*domain.Announcement, error)
 }
 
 func (m *errorAnnouncementRepo) Save(_ context.Context, _ *domain.Announcement) error {
 	return m.saveErr
 }
 
-func (m *errorAnnouncementRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Announcement, error) {
+func (m *errorAnnouncementRepo) FindByID(ctx context.Context, id domain.AnnouncementID) (*domain.Announcement, error) {
 	if m.findFn != nil {
 		return m.findFn(ctx, id)
 	}
@@ -39,7 +37,7 @@ func (m *errorAnnouncementRepo) Update(_ context.Context, _ *domain.Announcement
 	return m.updateErr
 }
 
-func (m *errorAnnouncementRepo) Delete(_ context.Context, _ uuid.UUID) error {
+func (m *errorAnnouncementRepo) Delete(_ context.Context, _ domain.AnnouncementID) error {
 	return m.deleteErr
 }
 
@@ -74,7 +72,7 @@ func TestUpdateAnnouncementHandler_RepoUpdateError(t *testing.T) {
 	)
 
 	repo := &errorAnnouncementRepo{
-		findFn:    func(_ context.Context, _ uuid.UUID) (*domain.Announcement, error) { return a, nil },
+		findFn:    func(_ context.Context, _ domain.AnnouncementID) (*domain.Announcement, error) { return a, nil },
 		updateErr: errRepoUpdate,
 	}
 	handler := NewUpdateAnnouncementHandler(repo, &mockEventBus{}, &mockLogger{})

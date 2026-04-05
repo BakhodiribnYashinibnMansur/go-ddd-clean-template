@@ -60,12 +60,12 @@ func NewBoundedContext(ctx context.Context, pool *pgxpool.Pool, eventBus applica
 	}
 
 	return &BoundedContext{
-		CreateFlag:      command.NewCreateHandler(writeRepo, eventBus, l),
-		UpdateFlag:      command.NewUpdateHandler(writeRepo, eventBus, l),
-		DeleteFlag:      command.NewDeleteHandler(writeRepo, eventBus, l),
-		CreateRuleGroup: command.NewCreateRuleGroupHandler(writeRepo, rgRepo, eventBus, l),
-		UpdateRuleGroup: command.NewUpdateRuleGroupHandler(rgRepo, eventBus, l),
-		DeleteRuleGroup: command.NewDeleteRuleGroupHandler(rgRepo, eventBus, l),
+		CreateFlag:        command.NewCreateHandler(writeRepo, eventBus, l),
+		UpdateFlag:        command.NewUpdateHandler(writeRepo, eventBus, l),
+		DeleteFlag:        command.NewDeleteHandler(writeRepo, eventBus, l),
+		CreateRuleGroup:   command.NewCreateRuleGroupHandler(writeRepo, rgRepo, eventBus, l),
+		UpdateRuleGroup:   command.NewUpdateRuleGroupHandler(rgRepo, eventBus, l),
+		DeleteRuleGroup:   command.NewDeleteRuleGroupHandler(rgRepo, eventBus, l),
 		GetFlag:           query.NewGetHandler(readRepo, l),
 		ListFlags:         query.NewListHandler(readRepo, l),
 		EvaluateFlag:      query.NewEvaluateHandler(cachedEval),

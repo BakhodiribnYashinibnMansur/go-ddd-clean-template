@@ -16,8 +16,8 @@ func TestUpdateErrorCodeHandler_Handle(t *testing.T) {
 	ec := domain.NewErrorCode("AUTH_001", "old msg", 401, "auth", "high", false, 0, "old suggestion")
 
 	repo := &mockErrorCodeRepo{
-		findFn: func(_ context.Context, id uuid.UUID) (*domain.ErrorCode, error) {
-			if id == ec.ID() {
+		findFn: func(_ context.Context, id domain.ErrorCodeID) (*domain.ErrorCode, error) {
+			if id == ec.TypedID() {
 				return ec, nil
 			}
 			return nil, domain.ErrErrorCodeNotFound

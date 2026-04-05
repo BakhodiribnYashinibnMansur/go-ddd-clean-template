@@ -8,7 +8,6 @@ import (
 
 	"gct/internal/context/ops/supporting/iprule/domain"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -17,8 +16,8 @@ func TestListIPRulesHandler_Handle(t *testing.T) {
 
 	readRepo := &mockReadRepo{
 		views: []*domain.IPRuleView{
-			{ID: uuid.New(), IPAddress: "1.1.1.1", Action: "DENY", Reason: "r1", CreatedAt: time.Now(), UpdatedAt: time.Now()},
-			{ID: uuid.New(), IPAddress: "2.2.2.2", Action: "ALLOW", Reason: "r2", CreatedAt: time.Now(), UpdatedAt: time.Now()},
+			{ID: domain.NewIPRuleID(), IPAddress: "1.1.1.1", Action: "DENY", Reason: "r1", CreatedAt: time.Now(), UpdatedAt: time.Now()},
+			{ID: domain.NewIPRuleID(), IPAddress: "2.2.2.2", Action: "ALLOW", Reason: "r2", CreatedAt: time.Now(), UpdatedAt: time.Now()},
 		},
 		total: 2,
 	}
@@ -63,7 +62,7 @@ func TestListIPRulesHandler_WithFilters(t *testing.T) {
 	action := "DENY"
 	readRepo := &mockReadRepo{
 		views: []*domain.IPRuleView{
-			{ID: uuid.New(), IPAddress: "3.3.3.3", Action: "DENY", Reason: "blocked", CreatedAt: time.Now(), UpdatedAt: time.Now()},
+			{ID: domain.NewIPRuleID(), IPAddress: "3.3.3.3", Action: "DENY", Reason: "blocked", CreatedAt: time.Now(), UpdatedAt: time.Now()},
 		},
 		total: 1,
 	}

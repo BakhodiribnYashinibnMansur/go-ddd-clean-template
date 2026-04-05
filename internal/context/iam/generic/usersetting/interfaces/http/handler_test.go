@@ -9,12 +9,12 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/kernel/application"
-	shared "gct/internal/kernel/domain"
 	"gct/internal/context/iam/generic/usersetting"
 	"gct/internal/context/iam/generic/usersetting/application/command"
 	"gct/internal/context/iam/generic/usersetting/application/query"
 	"gct/internal/context/iam/generic/usersetting/domain"
+	"gct/internal/kernel/application"
+	shared "gct/internal/kernel/domain"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -24,7 +24,7 @@ import (
 
 type mockRepo struct {
 	upserted *domain.UserSetting
-	deleted  uuid.UUID
+	deleted  domain.UserSettingID
 }
 
 func (m *mockRepo) Upsert(_ context.Context, us *domain.UserSetting) error {
@@ -34,7 +34,7 @@ func (m *mockRepo) Upsert(_ context.Context, us *domain.UserSetting) error {
 func (m *mockRepo) FindByUserIDAndKey(_ context.Context, _ uuid.UUID, _ string) (*domain.UserSetting, error) {
 	return nil, domain.ErrUserSettingNotFound
 }
-func (m *mockRepo) Delete(_ context.Context, id uuid.UUID) error {
+func (m *mockRepo) Delete(_ context.Context, id domain.UserSettingID) error {
 	m.deleted = id
 	return nil
 }
@@ -45,7 +45,7 @@ type mockReadRepo struct {
 	total int64
 }
 
-func (m *mockReadRepo) FindByID(_ context.Context, id uuid.UUID) (*domain.UserSettingView, error) {
+func (m *mockReadRepo) FindByID(_ context.Context, id domain.UserSettingID) (*domain.UserSettingView, error) {
 	if m.view != nil && m.view.ID == id {
 		return m.view, nil
 	}
@@ -65,26 +65,26 @@ func (m *mockEventBus) Subscribe(_ string, _ application.EventHandler) error { r
 
 type mockLogger struct{}
 
-func (m *mockLogger) Debug(args ...any)                                          {}
-func (m *mockLogger) Debugf(template string, args ...any)                        {}
-func (m *mockLogger) Debugw(msg string, keysAndValues ...any)                    {}
-func (m *mockLogger) Info(args ...any)                                           {}
-func (m *mockLogger) Infof(template string, args ...any)                         {}
-func (m *mockLogger) Infow(msg string, keysAndValues ...any)                     {}
-func (m *mockLogger) Warn(args ...any)                                           {}
-func (m *mockLogger) Warnf(template string, args ...any)                         {}
-func (m *mockLogger) Warnw(msg string, keysAndValues ...any)                     {}
-func (m *mockLogger) Error(args ...any)                                          {}
-func (m *mockLogger) Errorf(template string, args ...any)                        {}
-func (m *mockLogger) Errorw(msg string, keysAndValues ...any)                    {}
-func (m *mockLogger) Fatal(args ...any)                                          {}
-func (m *mockLogger) Fatalf(template string, args ...any)                        {}
-func (m *mockLogger) Fatalw(msg string, keysAndValues ...any)                    {}
-func (m *mockLogger) Debugc(_ context.Context, _ string, _ ...any)               {}
-func (m *mockLogger) Infoc(_ context.Context, _ string, _ ...any)                {}
-func (m *mockLogger) Warnc(_ context.Context, _ string, _ ...any)                {}
-func (m *mockLogger) Errorc(_ context.Context, _ string, _ ...any)               {}
-func (m *mockLogger) Fatalc(_ context.Context, _ string, _ ...any)               {}
+func (m *mockLogger) Debug(args ...any)                            {}
+func (m *mockLogger) Debugf(template string, args ...any)          {}
+func (m *mockLogger) Debugw(msg string, keysAndValues ...any)      {}
+func (m *mockLogger) Info(args ...any)                             {}
+func (m *mockLogger) Infof(template string, args ...any)           {}
+func (m *mockLogger) Infow(msg string, keysAndValues ...any)       {}
+func (m *mockLogger) Warn(args ...any)                             {}
+func (m *mockLogger) Warnf(template string, args ...any)           {}
+func (m *mockLogger) Warnw(msg string, keysAndValues ...any)       {}
+func (m *mockLogger) Error(args ...any)                            {}
+func (m *mockLogger) Errorf(template string, args ...any)          {}
+func (m *mockLogger) Errorw(msg string, keysAndValues ...any)      {}
+func (m *mockLogger) Fatal(args ...any)                            {}
+func (m *mockLogger) Fatalf(template string, args ...any)          {}
+func (m *mockLogger) Fatalw(msg string, keysAndValues ...any)      {}
+func (m *mockLogger) Debugc(_ context.Context, _ string, _ ...any) {}
+func (m *mockLogger) Infoc(_ context.Context, _ string, _ ...any)  {}
+func (m *mockLogger) Warnc(_ context.Context, _ string, _ ...any)  {}
+func (m *mockLogger) Errorc(_ context.Context, _ string, _ ...any) {}
+func (m *mockLogger) Fatalc(_ context.Context, _ string, _ ...any) {}
 
 // --- Helpers ---
 
@@ -152,7 +152,7 @@ func TestHandler_List_Success(t *testing.T) {
 	now := time.Now()
 	readRepo := &mockReadRepo{
 		views: []*domain.UserSettingView{
-			{ID: uuid.New(), UserID: uuid.New(), Key: "theme", Value: "dark", CreatedAt: now, UpdatedAt: now},
+			{ID: domain.NewUserSettingID(), UserID: uuid.New(), Key: "theme", Value: "dark", CreatedAt: now, UpdatedAt: now},
 		},
 		total: 1,
 	}
@@ -173,7 +173,7 @@ func TestHandler_Delete_Success(t *testing.T) {
 	repo := &mockRepo{}
 	router := setupRouter(repo, &mockReadRepo{})
 
-	id := uuid.New()
+	id := domain.NewUserSettingID()
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("DELETE", "/api/v1/user-settings/"+id.String(), nil)
 	router.ServeHTTP(w, req)

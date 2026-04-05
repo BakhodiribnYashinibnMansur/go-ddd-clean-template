@@ -5,8 +5,6 @@ import (
 	"time"
 
 	domain "gct/internal/context/ops/generic/metric/domain"
-
-	"github.com/google/uuid"
 )
 
 func TestMetricFilter_ZeroValue(t *testing.T) {
@@ -62,7 +60,7 @@ func TestMetricFilter_WithValues(t *testing.T) {
 }
 
 func TestMetricView_Fields(t *testing.T) {
-	id := uuid.New()
+	id := domain.NewMetricID()
 	now := time.Now()
 	panicErr := "nil pointer dereference"
 

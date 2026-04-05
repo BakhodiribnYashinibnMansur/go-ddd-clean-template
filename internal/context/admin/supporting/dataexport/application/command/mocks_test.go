@@ -6,8 +6,6 @@ import (
 	"gct/internal/context/admin/supporting/dataexport/domain"
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
-
-	"github.com/google/uuid"
 )
 
 // ---------------------------------------------------------------------------
@@ -17,11 +15,11 @@ import (
 type mockWriteRepo struct {
 	savedEntity   *domain.DataExport
 	updatedEntity *domain.DataExport
-	deletedID     uuid.UUID
-	findByIDFn    func(ctx context.Context, id uuid.UUID) (*domain.DataExport, error)
+	deletedID     domain.DataExportID
+	findByIDFn    func(ctx context.Context, id domain.DataExportID) (*domain.DataExport, error)
 	saveFn        func(ctx context.Context, entity *domain.DataExport) error
 	updateFn      func(ctx context.Context, entity *domain.DataExport) error
-	deleteFn      func(ctx context.Context, id uuid.UUID) error
+	deleteFn      func(ctx context.Context, id domain.DataExportID) error
 }
 
 func (m *mockWriteRepo) Save(ctx context.Context, entity *domain.DataExport) error {
@@ -32,7 +30,7 @@ func (m *mockWriteRepo) Save(ctx context.Context, entity *domain.DataExport) err
 	return nil
 }
 
-func (m *mockWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.DataExport, error) {
+func (m *mockWriteRepo) FindByID(ctx context.Context, id domain.DataExportID) (*domain.DataExport, error) {
 	if m.findByIDFn != nil {
 		return m.findByIDFn(ctx, id)
 	}
@@ -47,7 +45,7 @@ func (m *mockWriteRepo) Update(ctx context.Context, entity *domain.DataExport) e
 	return nil
 }
 
-func (m *mockWriteRepo) Delete(ctx context.Context, id uuid.UUID) error {
+func (m *mockWriteRepo) Delete(ctx context.Context, id domain.DataExportID) error {
 	m.deletedID = id
 	if m.deleteFn != nil {
 		return m.deleteFn(ctx, id)

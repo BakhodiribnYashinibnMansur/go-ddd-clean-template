@@ -49,14 +49,14 @@ func TestListAuditLogsHandler_Success(t *testing.T) {
 	readRepo := &mockAuditReadRepository{
 		auditLogs: []*domain.AuditLogView{
 			{
-				ID:        uuid.New(),
+				ID:        domain.NewAuditLogID(),
 				UserID:    &userID,
 				Action:    domain.AuditActionLogin,
 				Success:   true,
 				CreatedAt: now,
 			},
 			{
-				ID:        uuid.New(),
+				ID:        domain.NewAuditLogID(),
 				UserID:    &userID,
 				Action:    domain.AuditActionLogout,
 				Success:   true,
@@ -168,7 +168,7 @@ func TestListAuditLogsHandler_MapsAllFields(t *testing.T) {
 	readRepo := &mockAuditReadRepository{
 		auditLogs: []*domain.AuditLogView{
 			{
-				ID:           uuid.New(),
+				ID:           domain.NewAuditLogID(),
 				UserID:       &userID,
 				SessionID:    &sessionID,
 				Action:       domain.AuditActionAccessDenied,
@@ -253,7 +253,7 @@ func TestListAuditLogsHandler_WithFilter(t *testing.T) {
 	readRepo := &mockAuditReadRepository{
 		auditLogs: []*domain.AuditLogView{
 			{
-				ID:      uuid.New(),
+				ID:      domain.NewAuditLogID(),
 				UserID:  &userID,
 				Action:  domain.AuditActionLogin,
 				Success: true,

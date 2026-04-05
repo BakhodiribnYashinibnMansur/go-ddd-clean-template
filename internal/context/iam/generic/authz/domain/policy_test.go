@@ -9,10 +9,10 @@ import (
 func TestNewPolicy(t *testing.T) {
 	t.Parallel()
 
-	permID := uuid.New()
-	policy := NewPolicy(permID, PolicyAllow)
+	permID := NewPermissionID()
+	policy := NewPolicy(permID.UUID(), PolicyAllow)
 
-	if policy.PermissionID() != permID {
+	if policy.PermissionID() != permID.UUID() {
 		t.Errorf("expected permission ID %s, got %s", permID, policy.PermissionID())
 	}
 

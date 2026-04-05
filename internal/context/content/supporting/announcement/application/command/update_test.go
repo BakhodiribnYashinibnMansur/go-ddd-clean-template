@@ -23,8 +23,8 @@ func TestUpdateAnnouncementHandler_Handle(t *testing.T) {
 	)
 
 	repo := &mockAnnouncementRepo{
-		findFn: func(_ context.Context, id uuid.UUID) (*domain.Announcement, error) {
-			if id == a.ID() {
+		findFn: func(_ context.Context, id domain.AnnouncementID) (*domain.Announcement, error) {
+			if id == a.TypedID() {
 				return a, nil
 			}
 			return nil, domain.ErrAnnouncementNotFound
@@ -64,7 +64,7 @@ func TestUpdateAnnouncementHandler_WithPublish(t *testing.T) {
 	)
 
 	repo := &mockAnnouncementRepo{
-		findFn: func(_ context.Context, id uuid.UUID) (*domain.Announcement, error) {
+		findFn: func(_ context.Context, id domain.AnnouncementID) (*domain.Announcement, error) {
 			return a, nil
 		},
 	}
@@ -108,7 +108,7 @@ func TestUpdateAnnouncementHandler_AlreadyPublished(t *testing.T) {
 	)
 
 	repo := &mockAnnouncementRepo{
-		findFn: func(_ context.Context, _ uuid.UUID) (*domain.Announcement, error) {
+		findFn: func(_ context.Context, _ domain.AnnouncementID) (*domain.Announcement, error) {
 			return a, nil
 		},
 	}

@@ -21,7 +21,7 @@ type mockReadRepo struct {
 	total int64
 }
 
-func (m *mockReadRepo) FindByID(_ context.Context, id uuid.UUID) (*domain.NotificationView, error) {
+func (m *mockReadRepo) FindByID(_ context.Context, id domain.NotificationID) (*domain.NotificationView, error) {
 	if m.view != nil && m.view.ID == id {
 		return m.view, nil
 	}
@@ -34,7 +34,7 @@ func (m *mockReadRepo) List(_ context.Context, _ domain.NotificationFilter) ([]*
 
 type errorReadRepo struct{ err error }
 
-func (m *errorReadRepo) FindByID(_ context.Context, _ uuid.UUID) (*domain.NotificationView, error) {
+func (m *errorReadRepo) FindByID(_ context.Context, _ domain.NotificationID) (*domain.NotificationView, error) {
 	return nil, m.err
 }
 
@@ -49,7 +49,7 @@ var errRepo = errors.New("repo failure")
 func TestGetHandler_Handle(t *testing.T) {
 	t.Parallel()
 
-	id := uuid.New()
+	id := domain.NewNotificationID()
 	userID := uuid.New()
 	now := time.Now()
 	readRepo := &mockReadRepo{
@@ -64,7 +64,7 @@ func TestGetHandler_Handle(t *testing.T) {
 	}
 
 	handler := NewGetHandler(readRepo, logger.Noop())
-	result, err := handler.Handle(context.Background(), GetQuery{ID: domain.NotificationID(id)})
+	result, err := handler.Handle(context.Background(), GetQuery{ID: id})
 	require.NoError(t, err)
 	if result == nil {
 		t.Fatal("expected result")
@@ -85,7 +85,7 @@ func TestGetHandler_NotFound(t *testing.T) {
 
 	readRepo := &mockReadRepo{}
 	handler := NewGetHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), GetQuery{ID: domain.NotificationID(uuid.New())})
+	_, err := handler.Handle(context.Background(), GetQuery{ID: domain.NewNotificationID()})
 	if err == nil {
 		t.Fatal("expected error for not found")
 	}
@@ -96,7 +96,7 @@ func TestGetHandler_RepoError(t *testing.T) {
 
 	readRepo := &errorReadRepo{err: errRepo}
 	handler := NewGetHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), GetQuery{ID: domain.NotificationID(uuid.New())})
+	_, err := handler.Handle(context.Background(), GetQuery{ID: domain.NewNotificationID()})
 	if err == nil {
 		t.Fatal("expected error from repo")
 	}
@@ -105,7 +105,7 @@ func TestGetHandler_RepoError(t *testing.T) {
 func TestGetHandler_AllFieldsMapped(t *testing.T) {
 	t.Parallel()
 
-	id := uuid.New()
+	id := domain.NewNotificationID()
 	userID := uuid.New()
 	now := time.Now()
 	readAt := time.Now()
@@ -123,7 +123,7 @@ func TestGetHandler_AllFieldsMapped(t *testing.T) {
 	}
 
 	handler := NewGetHandler(readRepo, logger.Noop())
-	result, err := handler.Handle(context.Background(), GetQuery{ID: domain.NotificationID(id)})
+	result, err := handler.Handle(context.Background(), GetQuery{ID: id})
 	require.NoError(t, err)
 	if result.ReadAt == nil {
 		t.Error("readAt not mapped")

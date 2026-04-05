@@ -24,18 +24,18 @@ import (
 
 type mockRepo struct {
 	saved   *domain.Notification
-	deleted uuid.UUID
+	deleted domain.NotificationID
 }
 
 func (m *mockRepo) Save(_ context.Context, n *domain.Notification) error {
 	m.saved = n
 	return nil
 }
-func (m *mockRepo) FindByID(_ context.Context, _ uuid.UUID) (*domain.Notification, error) {
+func (m *mockRepo) FindByID(_ context.Context, _ domain.NotificationID) (*domain.Notification, error) {
 	return nil, domain.ErrNotificationNotFound
 }
 func (m *mockRepo) Update(_ context.Context, _ *domain.Notification) error { return nil }
-func (m *mockRepo) Delete(_ context.Context, id uuid.UUID) error {
+func (m *mockRepo) Delete(_ context.Context, id domain.NotificationID) error {
 	m.deleted = id
 	return nil
 }
@@ -46,7 +46,7 @@ type mockReadRepo struct {
 	total int64
 }
 
-func (m *mockReadRepo) FindByID(_ context.Context, id uuid.UUID) (*domain.NotificationView, error) {
+func (m *mockReadRepo) FindByID(_ context.Context, id domain.NotificationID) (*domain.NotificationView, error) {
 	if m.view != nil && m.view.ID == id {
 		return m.view, nil
 	}
@@ -152,7 +152,7 @@ func TestHandler_List_Success(t *testing.T) {
 
 	readRepo := &mockReadRepo{
 		views: []*domain.NotificationView{
-			{ID: uuid.New(), UserID: uuid.New(), Title: "N1", Type: "INFO", CreatedAt: time.Now()},
+			{ID: domain.NewNotificationID(), UserID: uuid.New(), Title: "N1", Type: "INFO", CreatedAt: time.Now()},
 		},
 		total: 1,
 	}
@@ -170,7 +170,7 @@ func TestHandler_List_Success(t *testing.T) {
 func TestHandler_Get_Success(t *testing.T) {
 	t.Parallel()
 
-	id := uuid.New()
+	id := domain.NewNotificationID()
 	readRepo := &mockReadRepo{
 		view: &domain.NotificationView{ID: id, UserID: uuid.New(), Title: "N", Type: "INFO", CreatedAt: time.Now()},
 	}

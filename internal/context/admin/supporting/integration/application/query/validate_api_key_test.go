@@ -1,9 +1,9 @@
 package query
 
 import (
-	"gct/internal/kernel/infrastructure/logger"
 	"context"
 	"errors"
+	"gct/internal/kernel/infrastructure/logger"
 	"testing"
 
 	"gct/internal/context/admin/supporting/integration/domain"
@@ -16,7 +16,7 @@ func TestValidateAPIKeyHandler_Success(t *testing.T) {
 	t.Parallel()
 
 	keyID := uuid.New()
-	integrationID := uuid.New()
+	integrationID := domain.NewIntegrationID()
 
 	readRepo := &mockReadRepo{
 		apiKeyView: &domain.IntegrationAPIKeyView{
@@ -76,7 +76,7 @@ func TestValidateAPIKeyHandler_Inactive(t *testing.T) {
 	readRepo := &mockReadRepo{
 		apiKeyView: &domain.IntegrationAPIKeyView{
 			ID:            uuid.New(),
-			IntegrationID: uuid.New(),
+			IntegrationID: domain.NewIntegrationID(),
 			Key:           "sk-inactive-key",
 			Active:        false,
 		},

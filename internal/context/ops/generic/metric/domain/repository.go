@@ -3,8 +3,6 @@ package domain
 import (
 	"context"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 // MetricFilter carries optional filtering parameters for listing function metrics.
@@ -29,7 +27,7 @@ type MetricRepository interface {
 
 // MetricView is a read-model projection for function metrics, optimized for dashboard display.
 type MetricView struct {
-	ID         uuid.UUID `json:"id"`
+	ID         MetricID  `json:"id"`
 	Name       string    `json:"name"`
 	LatencyMs  float64   `json:"latency_ms"`
 	IsPanic    bool      `json:"is_panic"`

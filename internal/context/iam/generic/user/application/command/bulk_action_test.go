@@ -6,7 +6,6 @@ import (
 
 	"gct/internal/context/iam/generic/user/domain"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -16,7 +15,7 @@ func TestBulkActionHandler_Activate(t *testing.T) {
 	user := makeTestUser(t)
 	user.Deactivate()
 
-	repo := &bulkMockRepo{users: map[uuid.UUID]*domain.User{user.ID(): user}}
+	repo := &bulkMockRepo{users: map[domain.UserID]*domain.User{user.TypedID(): user}}
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
@@ -28,7 +27,7 @@ func TestBulkActionHandler_Activate(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	updated := repo.updatedUsers[user.ID()]
+	updated := repo.updatedUsers[user.TypedID()]
 	if updated == nil {
 		t.Fatal("expected user to be updated")
 	}
@@ -42,7 +41,7 @@ func TestBulkActionHandler_Deactivate(t *testing.T) {
 
 	user := makeTestUser(t)
 
-	repo := &bulkMockRepo{users: map[uuid.UUID]*domain.User{user.ID(): user}}
+	repo := &bulkMockRepo{users: map[domain.UserID]*domain.User{user.TypedID(): user}}
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
@@ -54,7 +53,7 @@ func TestBulkActionHandler_Deactivate(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	updated := repo.updatedUsers[user.ID()]
+	updated := repo.updatedUsers[user.TypedID()]
 	if updated == nil {
 		t.Fatal("expected user to be updated")
 	}
@@ -68,7 +67,7 @@ func TestBulkActionHandler_Delete(t *testing.T) {
 
 	user := makeTestUser(t)
 
-	repo := &bulkMockRepo{users: map[uuid.UUID]*domain.User{user.ID(): user}}
+	repo := &bulkMockRepo{users: map[domain.UserID]*domain.User{user.TypedID(): user}}
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
@@ -80,7 +79,7 @@ func TestBulkActionHandler_Delete(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	updated := repo.updatedUsers[user.ID()]
+	updated := repo.updatedUsers[user.TypedID()]
 	if updated == nil {
 		t.Fatal("expected user to be updated")
 	}
@@ -97,7 +96,7 @@ func TestBulkActionHandler_UnknownAction(t *testing.T) {
 
 	user := makeTestUser(t)
 
-	repo := &bulkMockRepo{users: map[uuid.UUID]*domain.User{user.ID(): user}}
+	repo := &bulkMockRepo{users: map[domain.UserID]*domain.User{user.TypedID(): user}}
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
@@ -118,9 +117,9 @@ func TestBulkActionHandler_MultipleUsers(t *testing.T) {
 	user1 := makeTestUser(t)
 	user2 := makeTestUser(t)
 
-	repo := &bulkMockRepo{users: map[uuid.UUID]*domain.User{
-		user1.ID(): user1,
-		user2.ID(): user2,
+	repo := &bulkMockRepo{users: map[domain.UserID]*domain.User{
+		user1.TypedID(): user1,
+		user2.TypedID(): user2,
 	}}
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
@@ -128,7 +127,7 @@ func TestBulkActionHandler_MultipleUsers(t *testing.T) {
 	handler := NewBulkActionHandler(repo, eventBus, log)
 
 	err := handler.Handle(context.Background(), BulkActionCommand{
-		IDs:    []domain.UserID{domain.UserID(user1.ID()), domain.UserID(user2.ID())},
+		IDs:    []domain.UserID{domain.UserID(user1.TypedID()), domain.UserID(user2.TypedID())},
 		Action: BulkActionDeactivate,
 	})
 	require.NoError(t, err)
@@ -143,7 +142,7 @@ func TestBulkActionHandler_SkipsMissing(t *testing.T) {
 
 	user := makeTestUser(t)
 
-	repo := &bulkMockRepo{users: map[uuid.UUID]*domain.User{user.ID(): user}}
+	repo := &bulkMockRepo{users: map[domain.UserID]*domain.User{user.TypedID(): user}}
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
@@ -163,11 +162,11 @@ func TestBulkActionHandler_SkipsMissing(t *testing.T) {
 // bulkMockRepo supports multiple users for bulk action testing.
 type bulkMockRepo struct {
 	mockUserRepository
-	users        map[uuid.UUID]*domain.User
-	updatedUsers map[uuid.UUID]*domain.User
+	users        map[domain.UserID]*domain.User
+	updatedUsers map[domain.UserID]*domain.User
 }
 
-func (m *bulkMockRepo) FindByID(_ context.Context, id uuid.UUID) (*domain.User, error) {
+func (m *bulkMockRepo) FindByID(_ context.Context, id domain.UserID) (*domain.User, error) {
 	if u, ok := m.users[id]; ok {
 		return u, nil
 	}
@@ -176,8 +175,8 @@ func (m *bulkMockRepo) FindByID(_ context.Context, id uuid.UUID) (*domain.User, 
 
 func (m *bulkMockRepo) Update(_ context.Context, entity *domain.User) error {
 	if m.updatedUsers == nil {
-		m.updatedUsers = make(map[uuid.UUID]*domain.User)
+		m.updatedUsers = make(map[domain.UserID]*domain.User)
 	}
-	m.updatedUsers[entity.ID()] = entity
+	m.updatedUsers[entity.TypedID()] = entity
 	return nil
 }

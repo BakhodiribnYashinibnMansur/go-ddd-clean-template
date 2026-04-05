@@ -1,9 +1,9 @@
 package query
 
 import (
-	"gct/internal/kernel/infrastructure/logger"
 	"context"
 	"errors"
+	"gct/internal/kernel/infrastructure/logger"
 	"testing"
 
 	"gct/internal/context/iam/generic/authz/domain"
@@ -18,17 +18,17 @@ import (
 // ---------------------------------------------------------------------------
 
 type mockAuthzReadRepository struct {
-	getRoleFn        func(ctx context.Context, id uuid.UUID) (*domain.RoleView, error)
-	listRolesFn      func(ctx context.Context, p shared.Pagination) ([]*domain.RoleView, int64, error)
-	getPermissionFn  func(ctx context.Context, id uuid.UUID) (*domain.PermissionView, error)
-	listPermsFn      func(ctx context.Context, p shared.Pagination) ([]*domain.PermissionView, int64, error)
-	listPoliciesFn   func(ctx context.Context, p shared.Pagination) ([]*domain.PolicyView, int64, error)
-	listScopesFn     func(ctx context.Context, p shared.Pagination) ([]*domain.ScopeView, int64, error)
-	checkAccessFn              func(ctx context.Context, roleID uuid.UUID, path, method string, evalCtx domain.EvaluationContext) (bool, error)
-	findPoliciesByPermIDsFn    func(ctx context.Context, permissionIDs []uuid.UUID) ([]*domain.Policy, error)
+	getRoleFn               func(ctx context.Context, id domain.RoleID) (*domain.RoleView, error)
+	listRolesFn             func(ctx context.Context, p shared.Pagination) ([]*domain.RoleView, int64, error)
+	getPermissionFn         func(ctx context.Context, id domain.PermissionID) (*domain.PermissionView, error)
+	listPermsFn             func(ctx context.Context, p shared.Pagination) ([]*domain.PermissionView, int64, error)
+	listPoliciesFn          func(ctx context.Context, p shared.Pagination) ([]*domain.PolicyView, int64, error)
+	listScopesFn            func(ctx context.Context, p shared.Pagination) ([]*domain.ScopeView, int64, error)
+	checkAccessFn           func(ctx context.Context, roleID domain.RoleID, path, method string, evalCtx domain.EvaluationContext) (bool, error)
+	findPoliciesByPermIDsFn func(ctx context.Context, permissionIDs []domain.PermissionID) ([]*domain.Policy, error)
 }
 
-func (m *mockAuthzReadRepository) GetRole(ctx context.Context, id uuid.UUID) (*domain.RoleView, error) {
+func (m *mockAuthzReadRepository) GetRole(ctx context.Context, id domain.RoleID) (*domain.RoleView, error) {
 	if m.getRoleFn != nil {
 		return m.getRoleFn(ctx, id)
 	}
@@ -42,7 +42,7 @@ func (m *mockAuthzReadRepository) ListRoles(ctx context.Context, p shared.Pagina
 	return nil, 0, nil
 }
 
-func (m *mockAuthzReadRepository) GetPermission(ctx context.Context, id uuid.UUID) (*domain.PermissionView, error) {
+func (m *mockAuthzReadRepository) GetPermission(ctx context.Context, id domain.PermissionID) (*domain.PermissionView, error) {
 	if m.getPermissionFn != nil {
 		return m.getPermissionFn(ctx, id)
 	}
@@ -70,14 +70,14 @@ func (m *mockAuthzReadRepository) ListScopes(ctx context.Context, p shared.Pagin
 	return nil, 0, nil
 }
 
-func (m *mockAuthzReadRepository) CheckAccess(ctx context.Context, roleID uuid.UUID, path, method string, evalCtx domain.EvaluationContext) (bool, error) {
+func (m *mockAuthzReadRepository) CheckAccess(ctx context.Context, roleID domain.RoleID, path, method string, evalCtx domain.EvaluationContext) (bool, error) {
 	if m.checkAccessFn != nil {
 		return m.checkAccessFn(ctx, roleID, path, method, evalCtx)
 	}
 	return false, nil
 }
 
-func (m *mockAuthzReadRepository) FindPoliciesByPermissionIDs(ctx context.Context, permissionIDs []uuid.UUID) ([]*domain.Policy, error) {
+func (m *mockAuthzReadRepository) FindPoliciesByPermissionIDs(ctx context.Context, permissionIDs []domain.PermissionID) ([]*domain.Policy, error) {
 	if m.findPoliciesByPermIDsFn != nil {
 		return m.findPoliciesByPermIDsFn(ctx, permissionIDs)
 	}
@@ -91,10 +91,10 @@ func (m *mockAuthzReadRepository) FindPoliciesByPermissionIDs(ctx context.Contex
 func TestGetRoleHandler_Found(t *testing.T) {
 	t.Parallel()
 
-	roleID := uuid.New()
+	roleID := domain.NewRoleID()
 	desc := "Admin role"
 	repo := &mockAuthzReadRepository{
-		getRoleFn: func(_ context.Context, id uuid.UUID) (*domain.RoleView, error) {
+		getRoleFn: func(_ context.Context, id domain.RoleID) (*domain.RoleView, error) {
 			if id == roleID {
 				return &domain.RoleView{
 					ID:          roleID,
@@ -125,7 +125,7 @@ func TestGetRoleHandler_NotFound(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockAuthzReadRepository{
-		getRoleFn: func(_ context.Context, _ uuid.UUID) (*domain.RoleView, error) {
+		getRoleFn: func(_ context.Context, _ domain.RoleID) (*domain.RoleView, error) {
 			return nil, domain.ErrRoleNotFound
 		},
 	}
@@ -145,7 +145,7 @@ func TestGetRoleHandler_RepoError(t *testing.T) {
 
 	repoErr := errors.New("database connection failed")
 	repo := &mockAuthzReadRepository{
-		getRoleFn: func(_ context.Context, _ uuid.UUID) (*domain.RoleView, error) {
+		getRoleFn: func(_ context.Context, _ domain.RoleID) (*domain.RoleView, error) {
 			return nil, repoErr
 		},
 	}

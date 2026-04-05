@@ -1,15 +1,14 @@
 package query
 
 import (
-	"gct/internal/kernel/infrastructure/logger"
 	"context"
 	"errors"
+	"gct/internal/kernel/infrastructure/logger"
 	"testing"
 	"time"
 
 	"gct/internal/context/admin/supporting/integration/domain"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -22,7 +21,7 @@ type mockReadRepo struct {
 	apiKeyView *domain.IntegrationAPIKeyView
 }
 
-func (m *mockReadRepo) FindByID(_ context.Context, id uuid.UUID) (*domain.IntegrationView, error) {
+func (m *mockReadRepo) FindByID(_ context.Context, id domain.IntegrationID) (*domain.IntegrationView, error) {
 	if m.view != nil && m.view.ID == id {
 		return m.view, nil
 	}
@@ -42,7 +41,7 @@ func (m *mockReadRepo) FindByAPIKey(_ context.Context, _ string) (*domain.Integr
 
 type errorReadRepo struct{ err error }
 
-func (m *errorReadRepo) FindByID(_ context.Context, _ uuid.UUID) (*domain.IntegrationView, error) {
+func (m *errorReadRepo) FindByID(_ context.Context, _ domain.IntegrationID) (*domain.IntegrationView, error) {
 	return nil, m.err
 }
 
@@ -61,7 +60,7 @@ var errRepo = errors.New("repo failure")
 func TestGetHandler_Handle(t *testing.T) {
 	t.Parallel()
 
-	id := uuid.New()
+	id := domain.NewIntegrationID()
 	now := time.Now()
 	readRepo := &mockReadRepo{
 		view: &domain.IntegrationView{
@@ -125,7 +124,7 @@ func TestGetHandler_RepoError(t *testing.T) {
 func TestGetHandler_AllFieldsMapped(t *testing.T) {
 	t.Parallel()
 
-	id := uuid.New()
+	id := domain.NewIntegrationID()
 	now := time.Now()
 	readRepo := &mockReadRepo{
 		view: &domain.IntegrationView{

@@ -4,15 +4,14 @@ import (
 	"net/http"
 
 	"gct/internal/context/ops/generic/ratelimit"
-	"gct/internal/kernel/infrastructure/httpx"
-	"gct/internal/kernel/infrastructure/httpx/response"
 	"gct/internal/context/ops/generic/ratelimit/application/command"
 	"gct/internal/context/ops/generic/ratelimit/application/query"
 	"gct/internal/context/ops/generic/ratelimit/domain"
+	"gct/internal/kernel/infrastructure/httpx"
+	"gct/internal/kernel/infrastructure/httpx/response"
 	"gct/internal/kernel/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 // Handler provides HTTP endpoints for the RateLimit bounded context.
@@ -68,12 +67,12 @@ func (h *Handler) List(ctx *gin.Context) {
 
 // Get returns a single rate limit rule by ID.
 func (h *Handler) Get(ctx *gin.Context) {
-	id, err := uuid.Parse(ctx.Param("id"))
+	id, err := domain.ParseRateLimitID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
-	result, err := h.bc.GetRateLimit.Handle(ctx.Request.Context(), query.GetRateLimitQuery{ID: domain.RateLimitID(id)})
+	result, err := h.bc.GetRateLimit.Handle(ctx.Request.Context(), query.GetRateLimitQuery{ID: id})
 	if err != nil {
 		response.HandleError(ctx, err)
 		return
@@ -83,7 +82,7 @@ func (h *Handler) Get(ctx *gin.Context) {
 
 // Update updates a rate limit rule.
 func (h *Handler) Update(ctx *gin.Context) {
-	id, err := uuid.Parse(ctx.Param("id"))
+	id, err := domain.ParseRateLimitID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
@@ -110,12 +109,12 @@ func (h *Handler) Update(ctx *gin.Context) {
 
 // Delete deletes a rate limit rule.
 func (h *Handler) Delete(ctx *gin.Context) {
-	id, err := uuid.Parse(ctx.Param("id"))
+	id, err := domain.ParseRateLimitID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
-	if err := h.bc.DeleteRateLimit.Handle(ctx.Request.Context(), command.DeleteRateLimitCommand{ID: domain.RateLimitID(id)}); err != nil {
+	if err := h.bc.DeleteRateLimit.Handle(ctx.Request.Context(), command.DeleteRateLimitCommand{ID: id}); err != nil {
 		response.HandleError(ctx, err)
 		return
 	}

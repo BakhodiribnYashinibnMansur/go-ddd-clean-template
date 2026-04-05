@@ -3,13 +3,13 @@ package middleware
 import (
 	"net/http"
 
+	"gct/internal/context/iam/generic/user/application/query"
+	userdomain "gct/internal/context/iam/generic/user/domain"
 	"gct/internal/kernel/consts"
 	"gct/internal/kernel/infrastructure/httpx"
 	"gct/internal/kernel/infrastructure/httpx/cookie"
 	"gct/internal/kernel/infrastructure/httpx/response"
 	"gct/internal/kernel/infrastructure/security/jwt"
-	"gct/internal/context/iam/generic/user/application/query"
-	userdomain "gct/internal/context/iam/generic/user/domain"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -77,8 +77,8 @@ func (m *AuthMiddleware) AuthClientRefresh(ctx *gin.Context) {
 		return
 	}
 
-	// Cryptographically verify token vs hash in DB
-	if !rt.Verify(session.RefreshTokenHash) {
+	// Cryptographically verify token vs hash in DB (constant-time HMAC compare).
+	if !m.refreshHasher.Verify(rt.Secret, rt.ID, session.RefreshTokenHash) {
 		m.l.Errorw("AuthMiddleware - AuthClientRefresh - invalid refresh token hash", "session_id", sessionID)
 		response.ControllerResponse(ctx, http.StatusUnauthorized, httpx.ErrInvalidRefreshToken, nil, false)
 		ctx.Abort()

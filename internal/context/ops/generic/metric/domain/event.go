@@ -27,5 +27,5 @@ func NewFunctionMetricRecorded(id uuid.UUID, name string, latencyMs float64, isP
 }
 
 func (e FunctionMetricRecorded) EventName() string      { return "metric.recorded" }
-func (e FunctionMetricRecorded) OccurredAt() time.Time   { return e.occurredAt }
-func (e FunctionMetricRecorded) AggregateID() uuid.UUID  { return e.aggregateID }
+func (e FunctionMetricRecorded) OccurredAt() time.Time  { return e.occurredAt }
+func (e FunctionMetricRecorded) AggregateID() uuid.UUID { return e.aggregateID }

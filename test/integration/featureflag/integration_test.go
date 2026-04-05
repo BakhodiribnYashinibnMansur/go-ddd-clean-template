@@ -213,7 +213,7 @@ func TestIntegration_RuleGroupCRUD(t *testing.T) {
 	}
 
 	// Verify via GetFlag that the rule group and conditions are returned.
-	view, err := bc.GetFlag.Handle(ctx, query.GetQuery{ID: flagID.UUID()})
+	view, err := bc.GetFlag.Handle(ctx, query.GetQuery{ID: flagID})
 	if err != nil {
 		t.Fatalf("GetFlag: %v", err)
 	}
@@ -238,7 +238,7 @@ func TestIntegration_RuleGroupCRUD(t *testing.T) {
 	}
 
 	// Verify the rule group is gone.
-	view2, err := bc.GetFlag.Handle(ctx, query.GetQuery{ID: flagID.UUID()})
+	view2, err := bc.GetFlag.Handle(ctx, query.GetQuery{ID: flagID})
 	if err != nil {
 		t.Fatalf("GetFlag after delete: %v", err)
 	}
@@ -487,7 +487,7 @@ func TestIntegration_UpdateRuleGroup(t *testing.T) {
 	}
 
 	// Get the rule group ID.
-	view, err := bc.GetFlag.Handle(ctx, query.GetQuery{ID: flagID.UUID()})
+	view, err := bc.GetFlag.Handle(ctx, query.GetQuery{ID: flagID})
 	if err != nil {
 		t.Fatalf("GetFlag: %v", err)
 	}
@@ -509,7 +509,7 @@ func TestIntegration_UpdateRuleGroup(t *testing.T) {
 	}
 
 	// Verify via GetFlag.
-	view2, err := bc.GetFlag.Handle(ctx, query.GetQuery{ID: flagID.UUID()})
+	view2, err := bc.GetFlag.Handle(ctx, query.GetQuery{ID: flagID})
 	if err != nil {
 		t.Fatalf("GetFlag after update: %v", err)
 	}

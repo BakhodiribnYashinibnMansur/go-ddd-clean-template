@@ -42,9 +42,9 @@ type User struct {
 // Use these to set nullable fields (email, username, role) without polluting the constructor signature.
 type UserOption func(*User)
 
-func WithEmail(email Email) UserOption       { return func(u *User) { u.email = &email } }
-func WithUsername(name string) UserOption     { return func(u *User) { u.username = &name } }
-func WithRoleID(id uuid.UUID) UserOption     { return func(u *User) { u.roleID = &id } }
+func WithEmail(email Email) UserOption    { return func(u *User) { u.email = &email } }
+func WithUsername(name string) UserOption { return func(u *User) { u.username = &name } }
+func WithRoleID(id uuid.UUID) UserOption  { return func(u *User) { u.roleID = &id } }
 func WithAttributes(attrs map[string]string) UserOption {
 	return func(u *User) { u.attributes = attrs }
 }
@@ -232,13 +232,14 @@ func (u *User) UpdateLastSeen() {
 // Getters
 // ---------------------------------------------------------------------------
 
-func (u *User) Phone() Phone           { return u.phone }
-func (u *User) Email() *Email          { return u.email }
-func (u *User) Username() *string      { return u.username }
-func (u *User) Password() Password     { return u.password }
-func (u *User) RoleID() *uuid.UUID     { return u.roleID }
+func (u *User) TypedID() UserID               { return UserID(u.ID()) }
+func (u *User) Phone() Phone                  { return u.phone }
+func (u *User) Email() *Email                 { return u.email }
+func (u *User) Username() *string             { return u.username }
+func (u *User) Password() Password            { return u.password }
+func (u *User) RoleID() *uuid.UUID            { return u.roleID }
 func (u *User) Attributes() map[string]string { return u.attributes }
-func (u *User) IsActive() bool         { return u.active }
-func (u *User) IsApproved() bool       { return u.isApproved }
-func (u *User) LastSeen() *time.Time   { return u.lastSeen }
-func (u *User) Sessions() []Session    { return u.sessions }
+func (u *User) IsActive() bool                { return u.active }
+func (u *User) IsApproved() bool              { return u.isApproved }
+func (u *User) LastSeen() *time.Time          { return u.lastSeen }
+func (u *User) Sessions() []Session           { return u.sessions }

@@ -56,13 +56,13 @@ func TestUserSetting_ChangeValue(t *testing.T) {
 func TestReconstructUserSetting(t *testing.T) {
 	t.Parallel()
 
-	id := uuid.New()
+	id := domain.NewUserSettingID()
 	userID := uuid.New()
 	now := time.Now()
 
-	us := domain.ReconstructUserSetting(id, now, now, userID, "timezone", "UTC")
+	us := domain.ReconstructUserSetting(id.UUID(), now, now, userID, "timezone", "UTC")
 
-	if us.ID() != id {
+	if us.TypedID() != id {
 		t.Fatal("ID mismatch")
 	}
 	if us.UserID() != userID {

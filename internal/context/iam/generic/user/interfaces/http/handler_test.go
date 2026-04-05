@@ -8,12 +8,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"gct/internal/kernel/application"
-	shared "gct/internal/kernel/domain"
 	"gct/internal/context/iam/generic/user"
 	"gct/internal/context/iam/generic/user/application/command"
 	"gct/internal/context/iam/generic/user/application/query"
 	"gct/internal/context/iam/generic/user/domain"
+	"gct/internal/kernel/application"
+	shared "gct/internal/kernel/domain"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -26,7 +26,7 @@ import (
 type mockUserRepo struct {
 	savedUser   *domain.User
 	updatedUser *domain.User
-	findByIDFn  func(ctx context.Context, id uuid.UUID) (*domain.User, error)
+	findByIDFn  func(ctx context.Context, id domain.UserID) (*domain.User, error)
 }
 
 func (m *mockUserRepo) Save(_ context.Context, entity *domain.User) error {
@@ -34,7 +34,7 @@ func (m *mockUserRepo) Save(_ context.Context, entity *domain.User) error {
 	return nil
 }
 
-func (m *mockUserRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.User, error) {
+func (m *mockUserRepo) FindByID(ctx context.Context, id domain.UserID) (*domain.User, error) {
 	if m.findByIDFn != nil {
 		return m.findByIDFn(ctx, id)
 	}
@@ -46,7 +46,7 @@ func (m *mockUserRepo) Update(_ context.Context, entity *domain.User) error {
 	return nil
 }
 
-func (m *mockUserRepo) Delete(_ context.Context, _ uuid.UUID) error { return nil }
+func (m *mockUserRepo) Delete(_ context.Context, _ domain.UserID) error { return nil }
 
 func (m *mockUserRepo) List(_ context.Context, _ shared.Pagination) ([]*domain.User, int64, error) {
 	return nil, 0, nil
@@ -77,26 +77,26 @@ func (m *mockEventBus) Subscribe(_ string, _ application.EventHandler) error { r
 
 type mockLogger struct{}
 
-func (m *mockLogger) Debug(args ...any)                                          {}
-func (m *mockLogger) Debugf(template string, args ...any)                        {}
-func (m *mockLogger) Debugw(msg string, keysAndValues ...any)                    {}
-func (m *mockLogger) Info(args ...any)                                           {}
-func (m *mockLogger) Infof(template string, args ...any)                         {}
-func (m *mockLogger) Infow(msg string, keysAndValues ...any)                     {}
-func (m *mockLogger) Warn(args ...any)                                           {}
-func (m *mockLogger) Warnf(template string, args ...any)                         {}
-func (m *mockLogger) Warnw(msg string, keysAndValues ...any)                     {}
-func (m *mockLogger) Error(args ...any)                                          {}
-func (m *mockLogger) Errorf(template string, args ...any)                        {}
-func (m *mockLogger) Errorw(msg string, keysAndValues ...any)                    {}
-func (m *mockLogger) Fatal(args ...any)                                          {}
-func (m *mockLogger) Fatalf(template string, args ...any)                        {}
-func (m *mockLogger) Fatalw(msg string, keysAndValues ...any)                    {}
-func (m *mockLogger) Debugc(_ context.Context, _ string, _ ...any)               {}
-func (m *mockLogger) Infoc(_ context.Context, _ string, _ ...any)                {}
-func (m *mockLogger) Warnc(_ context.Context, _ string, _ ...any)                {}
-func (m *mockLogger) Errorc(_ context.Context, _ string, _ ...any)               {}
-func (m *mockLogger) Fatalc(_ context.Context, _ string, _ ...any)               {}
+func (m *mockLogger) Debug(args ...any)                            {}
+func (m *mockLogger) Debugf(template string, args ...any)          {}
+func (m *mockLogger) Debugw(msg string, keysAndValues ...any)      {}
+func (m *mockLogger) Info(args ...any)                             {}
+func (m *mockLogger) Infof(template string, args ...any)           {}
+func (m *mockLogger) Infow(msg string, keysAndValues ...any)       {}
+func (m *mockLogger) Warn(args ...any)                             {}
+func (m *mockLogger) Warnf(template string, args ...any)           {}
+func (m *mockLogger) Warnw(msg string, keysAndValues ...any)       {}
+func (m *mockLogger) Error(args ...any)                            {}
+func (m *mockLogger) Errorf(template string, args ...any)          {}
+func (m *mockLogger) Errorw(msg string, keysAndValues ...any)      {}
+func (m *mockLogger) Fatal(args ...any)                            {}
+func (m *mockLogger) Fatalf(template string, args ...any)          {}
+func (m *mockLogger) Fatalw(msg string, keysAndValues ...any)      {}
+func (m *mockLogger) Debugc(_ context.Context, _ string, _ ...any) {}
+func (m *mockLogger) Infoc(_ context.Context, _ string, _ ...any)  {}
+func (m *mockLogger) Warnc(_ context.Context, _ string, _ ...any)  {}
+func (m *mockLogger) Errorc(_ context.Context, _ string, _ ...any) {}
+func (m *mockLogger) Fatalc(_ context.Context, _ string, _ ...any) {}
 
 type mockReadRepo struct {
 	view  *domain.UserView
@@ -104,7 +104,7 @@ type mockReadRepo struct {
 	total int64
 }
 
-func (m *mockReadRepo) FindByID(_ context.Context, id uuid.UUID) (*domain.UserView, error) {
+func (m *mockReadRepo) FindByID(_ context.Context, id domain.UserID) (*domain.UserView, error) {
 	if m.view != nil && m.view.ID == id {
 		return m.view, nil
 	}
@@ -115,11 +115,11 @@ func (m *mockReadRepo) List(_ context.Context, _ domain.UsersFilter) ([]*domain.
 	return m.views, m.total, nil
 }
 
-func (m *mockReadRepo) FindSessionByID(_ context.Context, _ uuid.UUID) (*shared.AuthSession, error) {
+func (m *mockReadRepo) FindSessionByID(_ context.Context, _ domain.SessionID) (*shared.AuthSession, error) {
 	return nil, domain.ErrUserNotFound
 }
 
-func (m *mockReadRepo) FindUserForAuth(_ context.Context, _ uuid.UUID) (*shared.AuthUser, error) {
+func (m *mockReadRepo) FindUserForAuth(_ context.Context, _ domain.UserID) (*shared.AuthUser, error) {
 	return nil, domain.ErrUserNotFound
 }
 
@@ -215,7 +215,7 @@ func TestHandler_List_Success(t *testing.T) {
 	repo := &mockUserRepo{}
 	readRepo := &mockReadRepo{
 		views: []*domain.UserView{
-			{ID: uuid.New(), Phone: "+998901111111", Active: true},
+			{ID: domain.NewUserID(), Phone: "+998901111111", Active: true},
 		},
 		total: 1,
 	}
@@ -248,7 +248,7 @@ func TestHandler_List_Success(t *testing.T) {
 func TestHandler_Get_Success(t *testing.T) {
 	t.Parallel()
 
-	userID := uuid.New()
+	userID := domain.NewUserID()
 	repo := &mockUserRepo{}
 	readRepo := &mockReadRepo{
 		view: &domain.UserView{
@@ -315,8 +315,8 @@ func TestHandler_Update_Success(t *testing.T) {
 	existingUser, _ := domain.NewUser(phone, pw)
 
 	repo := &mockUserRepo{
-		findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.User, error) {
-			if id == existingUser.ID() {
+		findByIDFn: func(_ context.Context, id domain.UserID) (*domain.User, error) {
+			if id == existingUser.TypedID() {
 				return existingUser, nil
 			}
 			return nil, domain.ErrUserNotFound
@@ -331,7 +331,7 @@ func TestHandler_Update_Success(t *testing.T) {
 	jsonBody, _ := json.Marshal(body)
 
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("PATCH", "/api/v1/users/"+existingUser.ID().String(), bytes.NewBuffer(jsonBody))
+	req, _ := http.NewRequest("PATCH", "/api/v1/users/"+existingUser.TypedID().String(), bytes.NewBuffer(jsonBody))
 	req.Header.Set("Content-Type", "application/json")
 	router.ServeHTTP(w, req)
 
@@ -352,8 +352,8 @@ func TestHandler_Delete_Success(t *testing.T) {
 	existingUser, _ := domain.NewUser(phone, pw)
 
 	repo := &mockUserRepo{
-		findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.User, error) {
-			if id == existingUser.ID() {
+		findByIDFn: func(_ context.Context, id domain.UserID) (*domain.User, error) {
+			if id == existingUser.TypedID() {
 				return existingUser, nil
 			}
 			return nil, domain.ErrUserNotFound
@@ -364,7 +364,7 @@ func TestHandler_Delete_Success(t *testing.T) {
 	router := setupRouter(bc)
 
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("DELETE", "/api/v1/users/"+existingUser.ID().String(), nil)
+	req, _ := http.NewRequest("DELETE", "/api/v1/users/"+existingUser.TypedID().String(), nil)
 	router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
@@ -401,8 +401,8 @@ func TestHandler_Approve_Success(t *testing.T) {
 	existingUser, _ := domain.NewUser(phone, pw)
 
 	repo := &mockUserRepo{
-		findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.User, error) {
-			if id == existingUser.ID() {
+		findByIDFn: func(_ context.Context, id domain.UserID) (*domain.User, error) {
+			if id == existingUser.TypedID() {
 				return existingUser, nil
 			}
 			return nil, domain.ErrUserNotFound
@@ -413,7 +413,7 @@ func TestHandler_Approve_Success(t *testing.T) {
 	router := setupRouter(bc)
 
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/api/v1/users/"+existingUser.ID().String()+"/approve", nil)
+	req, _ := http.NewRequest("POST", "/api/v1/users/"+existingUser.TypedID().String()+"/approve", nil)
 	router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
@@ -433,8 +433,8 @@ func TestHandler_ChangeRole_Success(t *testing.T) {
 	existingUser, _ := domain.NewUser(phone, pw)
 
 	repo := &mockUserRepo{
-		findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.User, error) {
-			if id == existingUser.ID() {
+		findByIDFn: func(_ context.Context, id domain.UserID) (*domain.User, error) {
+			if id == existingUser.TypedID() {
 				return existingUser, nil
 			}
 			return nil, domain.ErrUserNotFound
@@ -449,7 +449,7 @@ func TestHandler_ChangeRole_Success(t *testing.T) {
 	jsonBody, _ := json.Marshal(body)
 
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/api/v1/users/"+existingUser.ID().String()+"/role", bytes.NewBuffer(jsonBody))
+	req, _ := http.NewRequest("POST", "/api/v1/users/"+existingUser.TypedID().String()+"/role", bytes.NewBuffer(jsonBody))
 	req.Header.Set("Content-Type", "application/json")
 	router.ServeHTTP(w, req)
 
@@ -488,8 +488,8 @@ func TestHandler_BulkAction_Success(t *testing.T) {
 	existingUser, _ := domain.NewUser(phone, pw)
 
 	repo := &mockUserRepo{
-		findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.User, error) {
-			if id == existingUser.ID() {
+		findByIDFn: func(_ context.Context, id domain.UserID) (*domain.User, error) {
+			if id == existingUser.TypedID() {
 				return existingUser, nil
 			}
 			return nil, domain.ErrUserNotFound
@@ -783,7 +783,7 @@ func TestHandler_List_WithFilters(t *testing.T) {
 func TestHandler_ResponseFormat(t *testing.T) {
 	t.Parallel()
 
-	userID := uuid.New()
+	userID := domain.NewUserID()
 	repo := &mockUserRepo{}
 	readRepo := &mockReadRepo{
 		view: &domain.UserView{

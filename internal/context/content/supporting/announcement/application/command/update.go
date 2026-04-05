@@ -53,7 +53,7 @@ func (h *UpdateAnnouncementHandler) Handle(ctx context.Context, cmd UpdateAnnoun
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "UpdateAnnouncement", "announcement")()
 
-	a, err := h.repo.FindByID(ctx, cmd.ID.UUID())
+	a, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {
 		return apperrors.MapToServiceError(err)
 	}
@@ -65,7 +65,7 @@ func (h *UpdateAnnouncementHandler) Handle(ctx context.Context, cmd UpdateAnnoun
 	}
 
 	if err := h.repo.Update(ctx, a); err != nil {
-		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "UpdateAnnouncement", Entity: "announcement", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "UpdateAnnouncement", Entity: "announcement", EntityID: cmd.ID, Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 

@@ -6,9 +6,9 @@ import (
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 
-	"gct/internal/kernel/infrastructure/pgxutil"
 	appdto "gct/internal/context/iam/generic/user/application"
 	"gct/internal/context/iam/generic/user/domain"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // ListUsersQuery holds the input for listing users with filtering.

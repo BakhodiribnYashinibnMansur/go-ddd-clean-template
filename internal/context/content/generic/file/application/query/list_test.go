@@ -8,7 +8,6 @@ import (
 
 	"gct/internal/context/content/generic/file/domain"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -18,8 +17,8 @@ func TestListFilesHandler_Handle(t *testing.T) {
 	now := time.Now()
 	readRepo := &mockReadRepo{
 		views: []*domain.FileView{
-			{ID: uuid.New(), Name: "file1.png", OriginalName: "f1.png", MimeType: "image/png", Size: 100, CreatedAt: now},
-			{ID: uuid.New(), Name: "file2.pdf", OriginalName: "f2.pdf", MimeType: "application/pdf", Size: 200, CreatedAt: now},
+			{ID: domain.NewFileID(), Name: "file1.png", OriginalName: "f1.png", MimeType: "image/png", Size: 100, CreatedAt: now},
+			{ID: domain.NewFileID(), Name: "file2.pdf", OriginalName: "f2.pdf", MimeType: "application/pdf", Size: 200, CreatedAt: now},
 		},
 		total: 2,
 	}

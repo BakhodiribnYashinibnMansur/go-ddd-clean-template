@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"database/sql/driver"
+	"encoding/json"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -32,3 +34,37 @@ func (id RateLimitID) String() string { return uuid.UUID(id).String() }
 
 // IsZero reports whether the RateLimitID is the zero value.
 func (id RateLimitID) IsZero() bool { return uuid.UUID(id) == uuid.Nil }
+
+// MarshalJSON serializes the RateLimitID as a canonical UUID string.
+func (id RateLimitID) MarshalJSON() ([]byte, error) {
+	return json.Marshal(id.String())
+}
+
+// UnmarshalJSON parses a RateLimitID from a JSON UUID string.
+func (id *RateLimitID) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+	parsed, err := ParseRateLimitID(s)
+	if err != nil {
+		return err
+	}
+	*id = parsed
+	return nil
+}
+
+// Value implements driver.Valuer for SQL driver interop.
+func (id RateLimitID) Value() (driver.Value, error) {
+	return uuid.UUID(id).Value()
+}
+
+// Scan implements sql.Scanner for SQL driver interop.
+func (id *RateLimitID) Scan(src any) error {
+	var u uuid.UUID
+	if err := u.Scan(src); err != nil {
+		return err
+	}
+	*id = RateLimitID(u)
+	return nil
+}

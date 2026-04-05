@@ -9,7 +9,6 @@ import (
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -18,8 +17,8 @@ import (
 type mockIPRuleRepo struct {
 	saved   *domain.IPRule
 	updated *domain.IPRule
-	deleted uuid.UUID
-	findFn  func(ctx context.Context, id uuid.UUID) (*domain.IPRule, error)
+	deleted domain.IPRuleID
+	findFn  func(ctx context.Context, id domain.IPRuleID) (*domain.IPRule, error)
 }
 
 func (m *mockIPRuleRepo) Save(_ context.Context, e *domain.IPRule) error {
@@ -27,7 +26,7 @@ func (m *mockIPRuleRepo) Save(_ context.Context, e *domain.IPRule) error {
 	return nil
 }
 
-func (m *mockIPRuleRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.IPRule, error) {
+func (m *mockIPRuleRepo) FindByID(ctx context.Context, id domain.IPRuleID) (*domain.IPRule, error) {
 	if m.findFn != nil {
 		return m.findFn(ctx, id)
 	}
@@ -39,7 +38,7 @@ func (m *mockIPRuleRepo) Update(_ context.Context, e *domain.IPRule) error {
 	return nil
 }
 
-func (m *mockIPRuleRepo) Delete(_ context.Context, id uuid.UUID) error {
+func (m *mockIPRuleRepo) Delete(_ context.Context, id domain.IPRuleID) error {
 	m.deleted = id
 	return nil
 }

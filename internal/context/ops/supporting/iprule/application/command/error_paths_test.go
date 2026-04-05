@@ -6,8 +6,6 @@ import (
 	"testing"
 
 	"gct/internal/context/ops/supporting/iprule/domain"
-
-	"github.com/google/uuid"
 )
 
 // --- Error mocks ---
@@ -20,14 +18,14 @@ type errorIPRuleRepo struct {
 	saveErr   error
 	updateErr error
 	deleteErr error
-	findFn    func(ctx context.Context, id uuid.UUID) (*domain.IPRule, error)
+	findFn    func(ctx context.Context, id domain.IPRuleID) (*domain.IPRule, error)
 }
 
 func (m *errorIPRuleRepo) Save(_ context.Context, _ *domain.IPRule) error {
 	return m.saveErr
 }
 
-func (m *errorIPRuleRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.IPRule, error) {
+func (m *errorIPRuleRepo) FindByID(ctx context.Context, id domain.IPRuleID) (*domain.IPRule, error) {
 	if m.findFn != nil {
 		return m.findFn(ctx, id)
 	}
@@ -38,7 +36,7 @@ func (m *errorIPRuleRepo) Update(_ context.Context, _ *domain.IPRule) error {
 	return m.updateErr
 }
 
-func (m *errorIPRuleRepo) Delete(_ context.Context, _ uuid.UUID) error {
+func (m *errorIPRuleRepo) Delete(_ context.Context, _ domain.IPRuleID) error {
 	return m.deleteErr
 }
 
@@ -68,12 +66,12 @@ func TestUpdateIPRuleHandler_RepoUpdateError(t *testing.T) {
 	r := domain.NewIPRule("1.1.1.1", "DENY", "test", nil)
 
 	repo := &errorIPRuleRepo{
-		findFn:    func(_ context.Context, _ uuid.UUID) (*domain.IPRule, error) { return r, nil },
+		findFn:    func(_ context.Context, _ domain.IPRuleID) (*domain.IPRule, error) { return r, nil },
 		updateErr: errRepoUpdate,
 	}
 	handler := NewUpdateIPRuleHandler(repo, &mockEventBus{}, &mockLogger{})
 
-	err := handler.Handle(context.Background(), UpdateIPRuleCommand{ID: domain.IPRuleID(r.ID())})
+	err := handler.Handle(context.Background(), UpdateIPRuleCommand{ID: r.TypedID()})
 	if !errors.Is(err, errRepoUpdate) {
 		t.Fatalf("expected errRepoUpdate, got: %v", err)
 	}

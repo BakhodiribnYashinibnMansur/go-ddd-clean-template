@@ -4,15 +4,14 @@ import (
 	"net/http"
 
 	"gct/internal/context/admin/supporting/dataexport"
-	"gct/internal/kernel/infrastructure/httpx"
-	"gct/internal/kernel/infrastructure/httpx/response"
 	"gct/internal/context/admin/supporting/dataexport/application/command"
 	"gct/internal/context/admin/supporting/dataexport/application/query"
 	"gct/internal/context/admin/supporting/dataexport/domain"
+	"gct/internal/kernel/infrastructure/httpx"
+	"gct/internal/kernel/infrastructure/httpx/response"
 	"gct/internal/kernel/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 // Handler provides HTTP endpoints for the DataExport bounded context.
@@ -66,12 +65,12 @@ func (h *Handler) List(ctx *gin.Context) {
 
 // Get returns a single data export by ID.
 func (h *Handler) Get(ctx *gin.Context) {
-	id, err := uuid.Parse(ctx.Param("id"))
+	id, err := domain.ParseDataExportID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
-	result, err := h.bc.GetDataExport.Handle(ctx.Request.Context(), query.GetDataExportQuery{ID: domain.DataExportID(id)})
+	result, err := h.bc.GetDataExport.Handle(ctx.Request.Context(), query.GetDataExportQuery{ID: id})
 	if err != nil {
 		response.HandleError(ctx, err)
 		return
@@ -81,7 +80,7 @@ func (h *Handler) Get(ctx *gin.Context) {
 
 // Update updates a data export.
 func (h *Handler) Update(ctx *gin.Context) {
-	id, err := uuid.Parse(ctx.Param("id"))
+	id, err := domain.ParseDataExportID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
@@ -92,7 +91,7 @@ func (h *Handler) Update(ctx *gin.Context) {
 		return
 	}
 	cmd := command.UpdateDataExportCommand{
-		ID:      domain.DataExportID(id),
+		ID:      id,
 		Status:  req.Status,
 		FileURL: req.FileURL,
 		Error:   req.Error,
@@ -106,12 +105,12 @@ func (h *Handler) Update(ctx *gin.Context) {
 
 // Delete deletes a data export.
 func (h *Handler) Delete(ctx *gin.Context) {
-	id, err := uuid.Parse(ctx.Param("id"))
+	id, err := domain.ParseDataExportID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
-	if err := h.bc.DeleteDataExport.Handle(ctx.Request.Context(), command.DeleteDataExportCommand{ID: domain.DataExportID(id)}); err != nil {
+	if err := h.bc.DeleteDataExport.Handle(ctx.Request.Context(), command.DeleteDataExportCommand{ID: id}); err != nil {
 		response.HandleError(ctx, err)
 		return
 	}

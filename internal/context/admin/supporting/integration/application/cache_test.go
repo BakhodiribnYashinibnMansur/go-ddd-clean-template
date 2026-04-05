@@ -8,7 +8,6 @@ import (
 	"gct/internal/context/admin/supporting/integration/domain"
 	"gct/internal/kernel/consts"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -22,7 +21,7 @@ type cacheTestReadRepo struct {
 	err   error
 }
 
-func (m *cacheTestReadRepo) FindByID(_ context.Context, _ uuid.UUID) (*domain.IntegrationView, error) {
+func (m *cacheTestReadRepo) FindByID(_ context.Context, _ domain.IntegrationID) (*domain.IntegrationView, error) {
 	return nil, domain.ErrIntegrationNotFound
 }
 
@@ -67,8 +66,8 @@ func (m *cacheTestLogger) Fatalc(_ context.Context, _ string, _ ...any) {}
 func TestCacheService_InitCache_Success(t *testing.T) {
 	t.Parallel()
 
-	id1 := uuid.New()
-	id2 := uuid.New()
+	id1 := domain.NewIntegrationID()
+	id2 := domain.NewIntegrationID()
 	repo := &cacheTestReadRepo{
 		views: []*domain.IntegrationView{
 			{
@@ -147,7 +146,7 @@ func TestCacheService_InitCache_Empty(t *testing.T) {
 	err := svc.InitCache(context.Background())
 	require.NoError(t, err)
 
-	_, ok := svc.FindByID(uuid.New())
+	_, ok := svc.FindByID(domain.NewIntegrationID())
 	if ok {
 		t.Error("expected not found for random ID on empty cache")
 	}
@@ -178,7 +177,7 @@ func TestCacheService_InitCache_RepoError(t *testing.T) {
 func TestCacheService_InitCache_EmptyAPIKeySkipped(t *testing.T) {
 	t.Parallel()
 
-	id := uuid.New()
+	id := domain.NewIntegrationID()
 	repo := &cacheTestReadRepo{
 		views: []*domain.IntegrationView{
 			{
@@ -239,7 +238,7 @@ func TestCacheService_FindByID_NotFound(t *testing.T) {
 	svc := NewCacheService(repo, l)
 	_ = svc.InitCache(context.Background())
 
-	_, ok := svc.FindByID(uuid.New())
+	_, ok := svc.FindByID(domain.NewIntegrationID())
 	if ok {
 		t.Error("expected not found")
 	}
@@ -252,7 +251,7 @@ func TestCacheService_FindByID_NotFound(t *testing.T) {
 func TestCacheService_InvalidateCache_IntegrationsTable(t *testing.T) {
 	t.Parallel()
 
-	id := uuid.New()
+	id := domain.NewIntegrationID()
 	repo := &cacheTestReadRepo{
 		views: []*domain.IntegrationView{
 			{ID: id, Name: "Slack", APIKey: "key-1", Enabled: true},
@@ -278,7 +277,7 @@ func TestCacheService_InvalidateCache_IntegrationsTable(t *testing.T) {
 func TestCacheService_InvalidateCache_APIKeysTable(t *testing.T) {
 	t.Parallel()
 
-	id := uuid.New()
+	id := domain.NewIntegrationID()
 	repo := &cacheTestReadRepo{
 		views: []*domain.IntegrationView{
 			{ID: id, Name: "SMTP", APIKey: "smtp-key", Enabled: true},

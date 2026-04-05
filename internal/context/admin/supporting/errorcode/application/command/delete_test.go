@@ -7,17 +7,16 @@ import (
 
 	"gct/internal/context/admin/supporting/errorcode/domain"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
 func TestDeleteErrorCodeHandler_Handle(t *testing.T) {
 	t.Parallel()
 
-	id := uuid.New()
-	ec := domain.ReconstructErrorCode(id, time.Now(), time.Now(), "ERR_TEST", "test", "", "", 500, "SYSTEM", "LOW", false, 0, "")
+	id := domain.NewErrorCodeID()
+	ec := domain.ReconstructErrorCode(id.UUID(), time.Now(), time.Now(), "ERR_TEST", "test", "", "", 500, "SYSTEM", "LOW", false, 0, "")
 	repo := &mockErrorCodeRepo{
-		findFn: func(_ context.Context, gotID uuid.UUID) (*domain.ErrorCode, error) {
+		findFn: func(_ context.Context, gotID domain.ErrorCodeID) (*domain.ErrorCode, error) {
 			if gotID != id {
 				t.Errorf("FindByID called with wrong ID: got %s, want %s", gotID, id)
 			}

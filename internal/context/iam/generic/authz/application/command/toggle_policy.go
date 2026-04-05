@@ -41,7 +41,7 @@ func (h *TogglePolicyHandler) Handle(ctx context.Context, cmd TogglePolicyComman
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "TogglePolicy", "policy")()
 
-	policy, err := h.repo.FindByID(ctx, cmd.ID.UUID())
+	policy, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {
 		return apperrors.MapToServiceError(err)
 	}
@@ -49,7 +49,7 @@ func (h *TogglePolicyHandler) Handle(ctx context.Context, cmd TogglePolicyComman
 	policy.Toggle()
 
 	if err := h.repo.Update(ctx, policy); err != nil {
-		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "TogglePolicy", Entity: "policy", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "TogglePolicy", Entity: "policy", EntityID: cmd.ID, Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 

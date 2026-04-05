@@ -33,8 +33,8 @@ func TestUpdateUserHandler_Handle(t *testing.T) {
 
 	user := makeTestUser(t)
 	repo := &mockUserRepository{
-		findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.User, error) {
-			if id == user.ID() {
+		findByIDFn: func(_ context.Context, id domain.UserID) (*domain.User, error) {
+			if id == user.TypedID() {
 				return user, nil
 			}
 			return nil, domain.ErrUserNotFound
@@ -90,7 +90,7 @@ func TestUpdateUserHandler_InvalidEmail(t *testing.T) {
 
 	user := makeTestUser(t)
 	repo := &mockUserRepository{
-		findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.User, error) {
+		findByIDFn: func(_ context.Context, id domain.UserID) (*domain.User, error) {
 			return user, nil
 		},
 	}
@@ -116,7 +116,7 @@ func TestUpdateUserHandler_OnlyAttributes(t *testing.T) {
 
 	user := makeTestUser(t)
 	repo := &mockUserRepository{
-		findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.User, error) {
+		findByIDFn: func(_ context.Context, id domain.UserID) (*domain.User, error) {
 			return user, nil
 		},
 	}

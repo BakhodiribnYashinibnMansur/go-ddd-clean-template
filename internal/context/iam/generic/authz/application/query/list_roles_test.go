@@ -1,15 +1,14 @@
 package query
 
 import (
-	"gct/internal/kernel/infrastructure/logger"
 	"context"
 	"errors"
+	"gct/internal/kernel/infrastructure/logger"
 	"testing"
 
 	"gct/internal/context/iam/generic/authz/domain"
 	shared "gct/internal/kernel/domain"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -20,8 +19,8 @@ func TestListRolesHandler_WithResults(t *testing.T) {
 	repo := &mockAuthzReadRepository{
 		listRolesFn: func(_ context.Context, _ shared.Pagination) ([]*domain.RoleView, int64, error) {
 			return []*domain.RoleView{
-				{ID: uuid.New(), Name: "admin", Description: nil},
-				{ID: uuid.New(), Name: "editor", Description: &desc},
+				{ID: domain.NewRoleID(), Name: "admin", Description: nil},
+				{ID: domain.NewRoleID(), Name: "editor", Description: &desc},
 			}, 2, nil
 		},
 	}
@@ -80,7 +79,7 @@ func TestListRolesHandler_Pagination(t *testing.T) {
 		listRolesFn: func(_ context.Context, p shared.Pagination) ([]*domain.RoleView, int64, error) {
 			capturedPagination = p
 			return []*domain.RoleView{
-				{ID: uuid.New(), Name: "viewer"},
+				{ID: domain.NewRoleID(), Name: "viewer"},
 			}, 15, nil
 		},
 	}

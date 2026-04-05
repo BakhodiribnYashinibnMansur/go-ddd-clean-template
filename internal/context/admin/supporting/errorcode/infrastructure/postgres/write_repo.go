@@ -102,14 +102,14 @@ func (r *ErrorCodeWriteRepo) Update(ctx context.Context, ec *domain.ErrorCode) (
 }
 
 // FindByID retrieves an ErrorCode aggregate by its ID.
-func (r *ErrorCodeWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.ErrorCode, err error) {
+func (r *ErrorCodeWriteRepo) FindByID(ctx context.Context, id domain.ErrorCodeID) (result *domain.ErrorCode, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "ErrorCodeWriteRepo.FindByID")
 	defer func() { end(err) }()
 
 	sql, args, err := r.builder.
 		Select(writeColumns...).
 		From(tableName).
-		Where(squirrel.Eq{"id": id}).
+		Where(squirrel.Eq{"id": id.UUID()}).
 		ToSql()
 	if err != nil {
 		return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
@@ -120,13 +120,13 @@ func (r *ErrorCodeWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (result
 }
 
 // Delete removes an error code by its ID.
-func (r *ErrorCodeWriteRepo) Delete(ctx context.Context, id uuid.UUID) (err error) {
+func (r *ErrorCodeWriteRepo) Delete(ctx context.Context, id domain.ErrorCodeID) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "ErrorCodeWriteRepo.Delete")
 	defer func() { end(err) }()
 
 	sql, args, err := r.builder.
 		Delete(tableName).
-		Where(squirrel.Eq{"id": id}).
+		Where(squirrel.Eq{"id": id.UUID()}).
 		ToSql()
 	if err != nil {
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildDelete)

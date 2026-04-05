@@ -1,14 +1,13 @@
 package query
 
 import (
-	"gct/internal/kernel/infrastructure/logger"
 	"context"
+	"gct/internal/kernel/infrastructure/logger"
 	"testing"
 	"time"
 
 	"gct/internal/context/content/generic/translation/domain"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -18,8 +17,8 @@ func TestListTranslationsHandler_Handle(t *testing.T) {
 	now := time.Now()
 	readRepo := &mockReadRepo{
 		views: []*domain.TranslationView{
-			{ID: uuid.New(), Key: "k1", Language: "en", Value: "v1", Group: "g1", CreatedAt: now, UpdatedAt: now},
-			{ID: uuid.New(), Key: "k2", Language: "fr", Value: "v2", Group: "g2", CreatedAt: now, UpdatedAt: now},
+			{ID: domain.NewTranslationID(), Key: "k1", Language: "en", Value: "v1", Group: "g1", CreatedAt: now, UpdatedAt: now},
+			{ID: domain.NewTranslationID(), Key: "k2", Language: "fr", Value: "v2", Group: "g2", CreatedAt: now, UpdatedAt: now},
 		},
 		total: 2,
 	}
@@ -64,7 +63,7 @@ func TestListTranslationsHandler_WithFilters(t *testing.T) {
 	now := time.Now()
 	readRepo := &mockReadRepo{
 		views: []*domain.TranslationView{
-			{ID: uuid.New(), Key: "welcome", Language: "en", Value: "Welcome", Group: "auth", CreatedAt: now, UpdatedAt: now},
+			{ID: domain.NewTranslationID(), Key: "welcome", Language: "en", Value: "Welcome", Group: "auth", CreatedAt: now, UpdatedAt: now},
 		},
 		total: 1,
 	}

@@ -17,14 +17,14 @@ import (
 func TestUpdateDataExportHandler_StatusProcessing(t *testing.T) {
 	t.Parallel()
 
-	exportID := uuid.New()
+	exportID := domain.NewDataExportID()
 	existing := domain.ReconstructDataExport(
-		exportID, time.Now(), time.Now(),
+		exportID.UUID(), time.Now(), time.Now(),
 		uuid.New(), "users", "csv", domain.ExportStatusPending, nil, nil,
 	)
 
 	repo := &mockWriteRepo{
-		findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.DataExport, error) {
+		findByIDFn: func(_ context.Context, id domain.DataExportID) (*domain.DataExport, error) {
 			if id == exportID {
 				return existing, nil
 			}
@@ -54,14 +54,14 @@ func TestUpdateDataExportHandler_StatusProcessing(t *testing.T) {
 func TestUpdateDataExportHandler_StatusCompleted(t *testing.T) {
 	t.Parallel()
 
-	exportID := uuid.New()
+	exportID := domain.NewDataExportID()
 	existing := domain.ReconstructDataExport(
-		exportID, time.Now(), time.Now(),
+		exportID.UUID(), time.Now(), time.Now(),
 		uuid.New(), "users", "csv", domain.ExportStatusProcessing, nil, nil,
 	)
 
 	repo := &mockWriteRepo{
-		findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.DataExport, error) {
+		findByIDFn: func(_ context.Context, id domain.DataExportID) (*domain.DataExport, error) {
 			if id == exportID {
 				return existing, nil
 			}
@@ -96,14 +96,14 @@ func TestUpdateDataExportHandler_StatusCompleted(t *testing.T) {
 func TestUpdateDataExportHandler_StatusFailed(t *testing.T) {
 	t.Parallel()
 
-	exportID := uuid.New()
+	exportID := domain.NewDataExportID()
 	existing := domain.ReconstructDataExport(
-		exportID, time.Now(), time.Now(),
+		exportID.UUID(), time.Now(), time.Now(),
 		uuid.New(), "orders", "xlsx", domain.ExportStatusProcessing, nil, nil,
 	)
 
 	repo := &mockWriteRepo{
-		findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.DataExport, error) {
+		findByIDFn: func(_ context.Context, id domain.DataExportID) (*domain.DataExport, error) {
 			if id == exportID {
 				return existing, nil
 			}
@@ -158,15 +158,15 @@ func TestUpdateDataExportHandler_NotFound(t *testing.T) {
 func TestUpdateDataExportHandler_RepoUpdateError(t *testing.T) {
 	t.Parallel()
 
-	exportID := uuid.New()
+	exportID := domain.NewDataExportID()
 	existing := domain.ReconstructDataExport(
-		exportID, time.Now(), time.Now(),
+		exportID.UUID(), time.Now(), time.Now(),
 		uuid.New(), "users", "csv", domain.ExportStatusPending, nil, nil,
 	)
 	repoErr := errors.New("update failed")
 
 	repo := &mockWriteRepo{
-		findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.DataExport, error) {
+		findByIDFn: func(_ context.Context, id domain.DataExportID) (*domain.DataExport, error) {
 			if id == exportID {
 				return existing, nil
 			}
@@ -198,14 +198,14 @@ func TestUpdateDataExportHandler_RepoUpdateError(t *testing.T) {
 func TestUpdateDataExportHandler_NilStatus(t *testing.T) {
 	t.Parallel()
 
-	exportID := uuid.New()
+	exportID := domain.NewDataExportID()
 	existing := domain.ReconstructDataExport(
-		exportID, time.Now(), time.Now(),
+		exportID.UUID(), time.Now(), time.Now(),
 		uuid.New(), "users", "csv", domain.ExportStatusPending, nil, nil,
 	)
 
 	repo := &mockWriteRepo{
-		findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.DataExport, error) {
+		findByIDFn: func(_ context.Context, id domain.DataExportID) (*domain.DataExport, error) {
 			if id == exportID {
 				return existing, nil
 			}
@@ -228,14 +228,14 @@ func TestUpdateDataExportHandler_NilStatus(t *testing.T) {
 func TestUpdateDataExportHandler_EventBusError(t *testing.T) {
 	t.Parallel()
 
-	exportID := uuid.New()
+	exportID := domain.NewDataExportID()
 	existing := domain.ReconstructDataExport(
-		exportID, time.Now(), time.Now(),
+		exportID.UUID(), time.Now(), time.Now(),
 		uuid.New(), "users", "csv", domain.ExportStatusPending, nil, nil,
 	)
 
 	repo := &mockWriteRepo{
-		findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.DataExport, error) {
+		findByIDFn: func(_ context.Context, id domain.DataExportID) (*domain.DataExport, error) {
 			if id == exportID {
 				return existing, nil
 			}

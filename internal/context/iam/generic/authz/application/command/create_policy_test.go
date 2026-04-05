@@ -16,10 +16,10 @@ import (
 type mockPolicyRepository struct {
 	savedPolicy   *domain.Policy
 	updatedPolicy *domain.Policy
-	findByIDFn    func(ctx context.Context, id uuid.UUID) (*domain.Policy, error)
+	findByIDFn    func(ctx context.Context, id domain.PolicyID) (*domain.Policy, error)
 	saveFn        func(ctx context.Context, policy *domain.Policy) error
 	updateFn      func(ctx context.Context, policy *domain.Policy) error
-	deleteFn      func(ctx context.Context, id uuid.UUID) error
+	deleteFn      func(ctx context.Context, id domain.PolicyID) error
 }
 
 func (m *mockPolicyRepository) Save(ctx context.Context, policy *domain.Policy) error {
@@ -30,7 +30,7 @@ func (m *mockPolicyRepository) Save(ctx context.Context, policy *domain.Policy) 
 	return nil
 }
 
-func (m *mockPolicyRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain.Policy, error) {
+func (m *mockPolicyRepository) FindByID(ctx context.Context, id domain.PolicyID) (*domain.Policy, error) {
 	if m.findByIDFn != nil {
 		return m.findByIDFn(ctx, id)
 	}
@@ -45,7 +45,7 @@ func (m *mockPolicyRepository) Update(ctx context.Context, policy *domain.Policy
 	return nil
 }
 
-func (m *mockPolicyRepository) Delete(ctx context.Context, id uuid.UUID) error {
+func (m *mockPolicyRepository) Delete(ctx context.Context, id domain.PolicyID) error {
 	if m.deleteFn != nil {
 		return m.deleteFn(ctx, id)
 	}
@@ -56,7 +56,7 @@ func (m *mockPolicyRepository) List(ctx context.Context, pagination shared.Pagin
 	return nil, 0, nil
 }
 
-func (m *mockPolicyRepository) FindByPermissionID(ctx context.Context, permissionID uuid.UUID) ([]*domain.Policy, error) {
+func (m *mockPolicyRepository) FindByPermissionID(ctx context.Context, permissionID domain.PermissionID) ([]*domain.Policy, error) {
 	return nil, nil
 }
 
@@ -70,7 +70,7 @@ func TestCreatePolicyHandler_AllowEffect(t *testing.T) {
 
 	handler := NewCreatePolicyHandler(repo, log)
 
-	permID := uuid.New()
+	permID := domain.NewPermissionID()
 	cmd := CreatePolicyCommand{
 		PermissionID: domain.PermissionID(permID),
 		Effect:       domain.PolicyAllow,
@@ -92,7 +92,7 @@ func TestCreatePolicyHandler_AllowEffect(t *testing.T) {
 		t.Errorf("expected priority 10, got %d", repo.savedPolicy.Priority())
 	}
 
-	if repo.savedPolicy.PermissionID() != permID {
+	if repo.savedPolicy.PermissionID() != permID.UUID() {
 		t.Errorf("expected permission ID %s, got %s", permID, repo.savedPolicy.PermissionID())
 	}
 

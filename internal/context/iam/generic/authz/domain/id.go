@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"database/sql/driver"
+	"encoding/json"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -118,3 +120,94 @@ func (id ScopeID) String() string { return uuid.UUID(id).String() }
 
 // IsZero reports whether the ScopeID is the zero value.
 func (id ScopeID) IsZero() bool { return uuid.UUID(id) == uuid.Nil }
+
+// --- JSON and SQL driver interop for all typed IDs ---
+
+// MarshalJSON serializes as a canonical UUID string.
+func (id RoleID) MarshalJSON() ([]byte, error)       { return uuidMarshalJSON(id.UUID()) }
+func (id PermissionID) MarshalJSON() ([]byte, error) { return uuidMarshalJSON(id.UUID()) }
+func (id PolicyID) MarshalJSON() ([]byte, error)     { return uuidMarshalJSON(id.UUID()) }
+func (id ScopeID) MarshalJSON() ([]byte, error)      { return uuidMarshalJSON(id.UUID()) }
+
+// UnmarshalJSON parses from a JSON UUID string.
+func (id *RoleID) UnmarshalJSON(data []byte) error {
+	u, err := uuidUnmarshalJSON(data)
+	if err != nil {
+		return err
+	}
+	*id = RoleID(u)
+	return nil
+}
+func (id *PermissionID) UnmarshalJSON(data []byte) error {
+	u, err := uuidUnmarshalJSON(data)
+	if err != nil {
+		return err
+	}
+	*id = PermissionID(u)
+	return nil
+}
+func (id *PolicyID) UnmarshalJSON(data []byte) error {
+	u, err := uuidUnmarshalJSON(data)
+	if err != nil {
+		return err
+	}
+	*id = PolicyID(u)
+	return nil
+}
+func (id *ScopeID) UnmarshalJSON(data []byte) error {
+	u, err := uuidUnmarshalJSON(data)
+	if err != nil {
+		return err
+	}
+	*id = ScopeID(u)
+	return nil
+}
+
+// Value implements driver.Valuer.
+func (id RoleID) Value() (driver.Value, error)       { return uuid.UUID(id).Value() }
+func (id PermissionID) Value() (driver.Value, error) { return uuid.UUID(id).Value() }
+func (id PolicyID) Value() (driver.Value, error)     { return uuid.UUID(id).Value() }
+func (id ScopeID) Value() (driver.Value, error)      { return uuid.UUID(id).Value() }
+
+// Scan implements sql.Scanner.
+func (id *RoleID) Scan(src any) error {
+	var u uuid.UUID
+	if err := u.Scan(src); err != nil {
+		return err
+	}
+	*id = RoleID(u)
+	return nil
+}
+func (id *PermissionID) Scan(src any) error {
+	var u uuid.UUID
+	if err := u.Scan(src); err != nil {
+		return err
+	}
+	*id = PermissionID(u)
+	return nil
+}
+func (id *PolicyID) Scan(src any) error {
+	var u uuid.UUID
+	if err := u.Scan(src); err != nil {
+		return err
+	}
+	*id = PolicyID(u)
+	return nil
+}
+func (id *ScopeID) Scan(src any) error {
+	var u uuid.UUID
+	if err := u.Scan(src); err != nil {
+		return err
+	}
+	*id = ScopeID(u)
+	return nil
+}
+
+func uuidMarshalJSON(u uuid.UUID) ([]byte, error) { return json.Marshal(u.String()) }
+func uuidUnmarshalJSON(data []byte) (uuid.UUID, error) {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return uuid.Nil, err
+	}
+	return uuid.Parse(s)
+}

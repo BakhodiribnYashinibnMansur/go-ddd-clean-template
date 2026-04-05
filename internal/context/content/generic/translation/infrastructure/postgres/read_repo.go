@@ -3,10 +3,10 @@ package postgres
 import (
 	"context"
 
+	"gct/internal/context/content/generic/translation/domain"
 	"gct/internal/kernel/consts"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/pgxutil"
-	"gct/internal/context/content/generic/translation/domain"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -33,14 +33,14 @@ func NewTranslationReadRepo(pool *pgxpool.Pool) *TranslationReadRepo {
 }
 
 // FindByID returns a single TranslationView by ID.
-func (r *TranslationReadRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.TranslationView, err error) {
+func (r *TranslationReadRepo) FindByID(ctx context.Context, id domain.TranslationID) (result *domain.TranslationView, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "TranslationReadRepo.FindByID")
 	defer func() { end(err) }()
 
 	sql, args, err := r.builder.
 		Select(readColumns...).
 		From(tableName).
-		Where(squirrel.Eq{"id": id}).
+		Where(squirrel.Eq{"id": id.UUID()}).
 		ToSql()
 	if err != nil {
 		return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
@@ -109,19 +109,27 @@ func (r *TranslationReadRepo) List(ctx context.Context, filter domain.Translatio
 }
 
 func scanTranslationView(row pgx.Row) (*domain.TranslationView, error) {
-	var v domain.TranslationView
-	err := row.Scan(&v.ID, &v.Key, &v.Language, &v.Value, &v.Group, &v.CreatedAt, &v.UpdatedAt)
+	var (
+		v     domain.TranslationView
+		rawID uuid.UUID
+	)
+	err := row.Scan(&rawID, &v.Key, &v.Language, &v.Value, &v.Group, &v.CreatedAt, &v.UpdatedAt)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
+	v.ID = domain.TranslationID(rawID)
 	return &v, nil
 }
 
 func scanTranslationViewFromRows(rows pgx.Rows) (*domain.TranslationView, error) {
-	var v domain.TranslationView
-	err := rows.Scan(&v.ID, &v.Key, &v.Language, &v.Value, &v.Group, &v.CreatedAt, &v.UpdatedAt)
+	var (
+		v     domain.TranslationView
+		rawID uuid.UUID
+	)
+	err := rows.Scan(&rawID, &v.Key, &v.Language, &v.Value, &v.Group, &v.CreatedAt, &v.UpdatedAt)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
+	v.ID = domain.TranslationID(rawID)
 	return &v, nil
 }

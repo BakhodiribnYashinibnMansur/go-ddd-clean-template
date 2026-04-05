@@ -12,11 +12,11 @@ import (
 	"time"
 
 	"gct/config"
-	shared "gct/internal/kernel/domain"
-	"gct/internal/kernel/consts"
-	"gct/internal/kernel/infrastructure/security/jwt"
 	"gct/internal/context/iam/generic/user/application/query"
 	"gct/internal/context/iam/generic/user/domain"
+	"gct/internal/kernel/consts"
+	shared "gct/internal/kernel/domain"
+	"gct/internal/kernel/infrastructure/security/jwt"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -28,26 +28,26 @@ import (
 
 type nopLog struct{}
 
-func (nopLog) Debug(_ ...any)                                {}
-func (nopLog) Debugf(_ string, _ ...any)                     {}
-func (nopLog) Debugw(_ string, _ ...any)                     {}
-func (nopLog) Info(_ ...any)                                 {}
-func (nopLog) Infof(_ string, _ ...any)                      {}
-func (nopLog) Infow(_ string, _ ...any)                      {}
-func (nopLog) Warn(_ ...any)                                 {}
-func (nopLog) Warnf(_ string, _ ...any)                      {}
-func (nopLog) Warnw(_ string, _ ...any)                      {}
-func (nopLog) Error(_ ...any)                                {}
-func (nopLog) Errorf(_ string, _ ...any)                     {}
-func (nopLog) Errorw(_ string, _ ...any)                     {}
-func (nopLog) Fatal(_ ...any)                                {}
-func (nopLog) Fatalf(_ string, _ ...any)                     {}
-func (nopLog) Fatalw(_ string, _ ...any)                     {}
-func (nopLog) Debugc(_ context.Context, _ string, _ ...any)  {}
-func (nopLog) Infoc(_ context.Context, _ string, _ ...any)   {}
-func (nopLog) Warnc(_ context.Context, _ string, _ ...any)   {}
-func (nopLog) Errorc(_ context.Context, _ string, _ ...any)  {}
-func (nopLog) Fatalc(_ context.Context, _ string, _ ...any)  {}
+func (nopLog) Debug(_ ...any)                               {}
+func (nopLog) Debugf(_ string, _ ...any)                    {}
+func (nopLog) Debugw(_ string, _ ...any)                    {}
+func (nopLog) Info(_ ...any)                                {}
+func (nopLog) Infof(_ string, _ ...any)                     {}
+func (nopLog) Infow(_ string, _ ...any)                     {}
+func (nopLog) Warn(_ ...any)                                {}
+func (nopLog) Warnf(_ string, _ ...any)                     {}
+func (nopLog) Warnw(_ string, _ ...any)                     {}
+func (nopLog) Error(_ ...any)                               {}
+func (nopLog) Errorf(_ string, _ ...any)                    {}
+func (nopLog) Errorw(_ string, _ ...any)                    {}
+func (nopLog) Fatal(_ ...any)                               {}
+func (nopLog) Fatalf(_ string, _ ...any)                    {}
+func (nopLog) Fatalw(_ string, _ ...any)                    {}
+func (nopLog) Debugc(_ context.Context, _ string, _ ...any) {}
+func (nopLog) Infoc(_ context.Context, _ string, _ ...any)  {}
+func (nopLog) Warnc(_ context.Context, _ string, _ ...any)  {}
+func (nopLog) Errorc(_ context.Context, _ string, _ ...any) {}
+func (nopLog) Fatalc(_ context.Context, _ string, _ ...any) {}
 
 // ---------------------------------------------------------------------------
 // fakeReadRepo implements domain.UserReadRepository with controllable returns.
@@ -60,7 +60,7 @@ type fakeReadRepo struct {
 	userErr error
 }
 
-func (f *fakeReadRepo) FindByID(_ context.Context, _ uuid.UUID) (*domain.UserView, error) {
+func (f *fakeReadRepo) FindByID(_ context.Context, _ domain.UserID) (*domain.UserView, error) {
 	return nil, nil
 }
 
@@ -68,11 +68,11 @@ func (f *fakeReadRepo) List(_ context.Context, _ domain.UsersFilter) ([]*domain.
 	return nil, 0, nil
 }
 
-func (f *fakeReadRepo) FindSessionByID(_ context.Context, _ uuid.UUID) (*shared.AuthSession, error) {
+func (f *fakeReadRepo) FindSessionByID(_ context.Context, _ domain.SessionID) (*shared.AuthSession, error) {
 	return f.session, f.sessErr
 }
 
-func (f *fakeReadRepo) FindUserForAuth(_ context.Context, _ uuid.UUID) (*shared.AuthUser, error) {
+func (f *fakeReadRepo) FindUserForAuth(_ context.Context, _ domain.UserID) (*shared.AuthUser, error) {
 	return f.user, f.userErr
 }
 
@@ -112,12 +112,21 @@ func newTestMiddleware(t *testing.T, repo *fakeReadRepo, pubKey *rsa.PublicKey, 
 	findSession := query.NewFindSessionHandler(repo, l)
 	findUserForAuth := query.NewFindUserForAuthHandler(repo, l)
 
+	// Fixed 32-byte pepper for tests. The hasher copies it internally.
+	hasher, err := jwt.NewRefreshHasher([]byte("0123456789abcdef0123456789abcdef"))
+	if err != nil {
+		t.Fatalf("jwt.NewRefreshHasher: %v", err)
+	}
+
 	return &AuthMiddleware{
 		findSession:     findSession,
 		findUserForAuth: findUserForAuth,
-		cfg:             &config.Config{JWT: config.JWT{Issuer: issuer}},
+		cfg:             &config.Config{JWT: config.JWT{Issuer: issuer, Audience: "test-aud", Leeway: 30 * time.Second}},
 		l:               l,
 		pubKey:          pubKey,
+		refreshHasher:   hasher,
+		audience:        "test-aud",
+		leeway:          30 * time.Second,
 	}
 }
 
@@ -163,10 +172,10 @@ func TestParseAndValidateMetadata_ValidToken(t *testing.T) {
 	repo := &fakeReadRepo{}
 	mw := newTestMiddleware(t, repo, pubKey, issuer)
 
-	userID := uuid.New().String()
-	sessionID := uuid.New().String()
+	userID := domain.NewUserID().String()
+	sessionID := domain.NewSessionID().String()
 
-	tokenStr, err := jwt.GenerateAccessToken(userID, sessionID, issuer, "", privKey, 5*time.Minute)
+	tokenStr, err := jwt.GenerateAccessToken(userID, sessionID, issuer, "test-aud", "", privKey, 5*time.Minute)
 	if err != nil {
 		t.Fatalf("GenerateAccessToken: %v", err)
 	}
@@ -175,8 +184,8 @@ func TestParseAndValidateMetadata_ValidToken(t *testing.T) {
 	if err != nil {
 		t.Fatalf("parseAndValidateMetadata returned unexpected error: %v", err)
 	}
-	if claims.UserID != userID {
-		t.Errorf("UserID = %q, want %q", claims.UserID, userID)
+	if claims.Subject != userID {
+		t.Errorf("Subject = %q, want %q", claims.Subject, userID)
 	}
 	if claims.SessionID != sessionID {
 		t.Errorf("SessionID = %q, want %q", claims.SessionID, sessionID)
@@ -184,8 +193,8 @@ func TestParseAndValidateMetadata_ValidToken(t *testing.T) {
 	if claims.Issuer != issuer {
 		t.Errorf("Issuer = %q, want %q", claims.Issuer, issuer)
 	}
-	if claims.Type != consts.TokenAccessType {
-		t.Errorf("Type = %q, want %q", claims.Type, consts.TokenAccessType)
+	if claims.Type != jwt.TokenTypeAccess {
+		t.Errorf("Type = %q, want %q", claims.Type, jwt.TokenTypeAccess)
 	}
 }
 
@@ -212,6 +221,7 @@ func TestParseAndValidateMetadata_ExpiredToken(t *testing.T) {
 		uuid.New().String(),
 		uuid.New().String(),
 		issuer,
+		"test-aud",
 		"",
 		privKey,
 		-1*time.Hour, // negative TTL -> already expired

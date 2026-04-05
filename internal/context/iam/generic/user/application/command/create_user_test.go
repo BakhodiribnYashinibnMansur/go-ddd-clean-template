@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"gct/internal/context/iam/generic/user/domain"
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
-	"gct/internal/context/iam/generic/user/domain"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -17,7 +17,7 @@ import (
 type mockUserRepository struct {
 	savedUser   *domain.User
 	updatedUser *domain.User
-	findByIDFn  func(ctx context.Context, id uuid.UUID) (*domain.User, error)
+	findByIDFn  func(ctx context.Context, id domain.UserID) (*domain.User, error)
 }
 
 func (m *mockUserRepository) Save(ctx context.Context, entity *domain.User) error {
@@ -25,7 +25,7 @@ func (m *mockUserRepository) Save(ctx context.Context, entity *domain.User) erro
 	return nil
 }
 
-func (m *mockUserRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain.User, error) {
+func (m *mockUserRepository) FindByID(ctx context.Context, id domain.UserID) (*domain.User, error) {
 	if m.findByIDFn != nil {
 		return m.findByIDFn(ctx, id)
 	}
@@ -37,7 +37,7 @@ func (m *mockUserRepository) Update(ctx context.Context, entity *domain.User) er
 	return nil
 }
 
-func (m *mockUserRepository) Delete(ctx context.Context, id uuid.UUID) error {
+func (m *mockUserRepository) Delete(ctx context.Context, id domain.UserID) error {
 	return nil
 }
 
@@ -76,21 +76,21 @@ func (m *mockEventBus) Subscribe(eventName string, handler application.EventHand
 
 type mockLogger struct{}
 
-func (m *mockLogger) Debug(args ...any)                                          {}
-func (m *mockLogger) Debugf(template string, args ...any)                        {}
-func (m *mockLogger) Debugw(msg string, keysAndValues ...any)                    {}
-func (m *mockLogger) Info(args ...any)                                           {}
-func (m *mockLogger) Infof(template string, args ...any)                         {}
-func (m *mockLogger) Infow(msg string, keysAndValues ...any)                     {}
-func (m *mockLogger) Warn(args ...any)                                           {}
-func (m *mockLogger) Warnf(template string, args ...any)                         {}
-func (m *mockLogger) Warnw(msg string, keysAndValues ...any)                     {}
-func (m *mockLogger) Error(args ...any)                                          {}
-func (m *mockLogger) Errorf(template string, args ...any)                        {}
-func (m *mockLogger) Errorw(msg string, keysAndValues ...any)                    {}
-func (m *mockLogger) Fatal(args ...any)                                          {}
-func (m *mockLogger) Fatalf(template string, args ...any)                        {}
-func (m *mockLogger) Fatalw(msg string, keysAndValues ...any)                    {}
+func (m *mockLogger) Debug(args ...any)                                            {}
+func (m *mockLogger) Debugf(template string, args ...any)                          {}
+func (m *mockLogger) Debugw(msg string, keysAndValues ...any)                      {}
+func (m *mockLogger) Info(args ...any)                                             {}
+func (m *mockLogger) Infof(template string, args ...any)                           {}
+func (m *mockLogger) Infow(msg string, keysAndValues ...any)                       {}
+func (m *mockLogger) Warn(args ...any)                                             {}
+func (m *mockLogger) Warnf(template string, args ...any)                           {}
+func (m *mockLogger) Warnw(msg string, keysAndValues ...any)                       {}
+func (m *mockLogger) Error(args ...any)                                            {}
+func (m *mockLogger) Errorf(template string, args ...any)                          {}
+func (m *mockLogger) Errorw(msg string, keysAndValues ...any)                      {}
+func (m *mockLogger) Fatal(args ...any)                                            {}
+func (m *mockLogger) Fatalf(template string, args ...any)                          {}
+func (m *mockLogger) Fatalw(msg string, keysAndValues ...any)                      {}
 func (m *mockLogger) Debugc(ctx context.Context, msg string, keysAndValues ...any) {}
 func (m *mockLogger) Infoc(ctx context.Context, msg string, keysAndValues ...any)  {}
 func (m *mockLogger) Warnc(ctx context.Context, msg string, keysAndValues ...any)  {}

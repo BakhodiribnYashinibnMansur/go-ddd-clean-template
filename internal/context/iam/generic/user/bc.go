@@ -1,11 +1,11 @@
 package user
 
 import (
-	"gct/internal/kernel/application"
-	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/context/iam/generic/user/application/command"
 	"gct/internal/context/iam/generic/user/application/query"
 	"gct/internal/context/iam/generic/user/infrastructure/postgres"
+	"gct/internal/kernel/application"
+	"gct/internal/kernel/infrastructure/logger"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -37,16 +37,16 @@ func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, l logg
 	readRepo := postgres.NewUserReadRepo(pool)
 
 	return &BoundedContext{
-		CreateUser:  command.NewCreateUserHandler(writeRepo, eventBus, l),
-		UpdateUser:  command.NewUpdateUserHandler(writeRepo, eventBus, l),
-		DeleteUser:  command.NewDeleteUserHandler(writeRepo, eventBus, l),
-		SignIn:      command.NewSignInHandler(writeRepo, eventBus, l, jwtCfg),
-		SignUp:      command.NewSignUpHandler(writeRepo, eventBus, l),
-		SignOut:     command.NewSignOutHandler(writeRepo, eventBus, l),
-		ApproveUser: command.NewApproveUserHandler(writeRepo, eventBus, l),
-		ChangeRole:  command.NewChangeRoleHandler(writeRepo, eventBus, l),
-		BulkAction:  command.NewBulkActionHandler(writeRepo, eventBus, l),
-		RevokeAll:   command.NewRevokeAllSessionsHandler(writeRepo, eventBus, l),
+		CreateUser:      command.NewCreateUserHandler(writeRepo, eventBus, l),
+		UpdateUser:      command.NewUpdateUserHandler(writeRepo, eventBus, l),
+		DeleteUser:      command.NewDeleteUserHandler(writeRepo, eventBus, l),
+		SignIn:          command.NewSignInHandler(writeRepo, eventBus, l, jwtCfg),
+		SignUp:          command.NewSignUpHandler(writeRepo, eventBus, l),
+		SignOut:         command.NewSignOutHandler(writeRepo, eventBus, l),
+		ApproveUser:     command.NewApproveUserHandler(writeRepo, eventBus, l),
+		ChangeRole:      command.NewChangeRoleHandler(writeRepo, eventBus, l),
+		BulkAction:      command.NewBulkActionHandler(writeRepo, eventBus, l),
+		RevokeAll:       command.NewRevokeAllSessionsHandler(writeRepo, eventBus, l),
 		GetUser:         query.NewGetUserHandler(readRepo, l),
 		ListUsers:       query.NewListUsersHandler(readRepo, l),
 		FindSession:     query.NewFindSessionHandler(readRepo, l),

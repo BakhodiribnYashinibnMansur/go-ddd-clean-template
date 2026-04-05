@@ -35,9 +35,9 @@ func (h *CheckAccessHandler) Handle(ctx context.Context, q CheckAccessQuery) (al
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "CheckAccess", "access")()
 
-	allowed, err = h.readRepo.CheckAccess(ctx, q.RoleID.UUID(), q.Path, q.Method, q.EvalCtx)
+	allowed, err = h.readRepo.CheckAccess(ctx, q.RoleID, q.Path, q.Method, q.EvalCtx)
 	if err != nil {
-		h.logger.Warnc(ctx, "query failed", logger.F{Op: "CheckAccess", Entity: "access", EntityID: q.RoleID.UUID(), Err: err}.KV()...)
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "CheckAccess", Entity: "access", EntityID: q.RoleID, Err: err}.KV()...)
 		return false, apperrors.MapToServiceError(err)
 	}
 	return allowed, nil

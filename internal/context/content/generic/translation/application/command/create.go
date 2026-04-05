@@ -3,11 +3,11 @@ package command
 import (
 	"context"
 
+	"gct/internal/context/content/generic/translation/domain"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
-	"gct/internal/context/content/generic/translation/domain"
 )
 
 // CreateTranslationCommand represents an intent to add a new localized string entry.

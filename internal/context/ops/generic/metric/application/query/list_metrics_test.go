@@ -1,15 +1,14 @@
 package query
 
 import (
-	"gct/internal/kernel/infrastructure/logger"
 	"context"
 	"errors"
+	"gct/internal/kernel/infrastructure/logger"
 	"testing"
 	"time"
 
 	"gct/internal/context/ops/generic/metric/domain"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -40,8 +39,8 @@ func TestListMetricsHandler_Handle(t *testing.T) {
 	now := time.Now()
 	readRepo := &mockReadRepo{
 		views: []*domain.MetricView{
-			{ID: uuid.New(), Name: "UserService.Create", LatencyMs: 150.5, IsPanic: false, CreatedAt: now},
-			{ID: uuid.New(), Name: "AuthService.Login", LatencyMs: 300.0, IsPanic: false, CreatedAt: now},
+			{ID: domain.NewMetricID(), Name: "UserService.Create", LatencyMs: 150.5, IsPanic: false, CreatedAt: now},
+			{ID: domain.NewMetricID(), Name: "AuthService.Login", LatencyMs: 300.0, IsPanic: false, CreatedAt: now},
 		},
 		total: 2,
 	}
@@ -90,7 +89,7 @@ func TestListMetricsHandler_WithPanicError(t *testing.T) {
 	now := time.Now()
 	readRepo := &mockReadRepo{
 		views: []*domain.MetricView{
-			{ID: uuid.New(), Name: "Handler.Crash", LatencyMs: 10.0, IsPanic: true, PanicError: &panicErr, CreatedAt: now},
+			{ID: domain.NewMetricID(), Name: "Handler.Crash", LatencyMs: 10.0, IsPanic: true, PanicError: &panicErr, CreatedAt: now},
 		},
 		total: 1,
 	}

@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"errors"
+	"gct/internal/context/iam/generic/authz/domain"
 	"testing"
 	"time"
 
@@ -24,15 +25,15 @@ type authzMockRows struct {
 	scanFunc func(dest ...any) error
 }
 
-func (m *authzMockRows) Scan(dest ...any) error                          { return m.scanFunc(dest...) }
-func (m *authzMockRows) Close()                                          {}
-func (m *authzMockRows) Err() error                                      { return nil }
-func (m *authzMockRows) CommandTag() pgconn.CommandTag                   { return pgconn.CommandTag{} }
-func (m *authzMockRows) FieldDescriptions() []pgconn.FieldDescription    { return nil }
-func (m *authzMockRows) Next() bool                                      { return false }
-func (m *authzMockRows) Values() ([]any, error)                          { return nil, nil }
-func (m *authzMockRows) RawValues() [][]byte                             { return nil }
-func (m *authzMockRows) Conn() *pgx.Conn                                { return nil }
+func (m *authzMockRows) Scan(dest ...any) error                       { return m.scanFunc(dest...) }
+func (m *authzMockRows) Close()                                       {}
+func (m *authzMockRows) Err() error                                   { return nil }
+func (m *authzMockRows) CommandTag() pgconn.CommandTag                { return pgconn.CommandTag{} }
+func (m *authzMockRows) FieldDescriptions() []pgconn.FieldDescription { return nil }
+func (m *authzMockRows) Next() bool                                   { return false }
+func (m *authzMockRows) Values() ([]any, error)                       { return nil, nil }
+func (m *authzMockRows) RawValues() [][]byte                          { return nil }
+func (m *authzMockRows) Conn() *pgx.Conn                              { return nil }
 
 // ---------------------------------------------------------------------------
 // Constructor tests
@@ -331,14 +332,14 @@ func TestScanPermissionFromRows_Error(t *testing.T) {
 
 func TestScanPolicy_Success(t *testing.T) {
 	id := uuid.New()
-	permID := uuid.New()
+	permID := domain.NewPermissionID()
 	now := time.Now()
 
 	row := &authzMockRow{
 		scanFunc: func(dest ...any) error {
 			// columns: id, permission_id, effect, priority, active, created_at, updated_at
 			*dest[0].(*uuid.UUID) = id
-			*dest[1].(*uuid.UUID) = permID
+			*dest[1].(*uuid.UUID) = permID.UUID()
 			*dest[2].(*string) = "ALLOW"
 			*dest[3].(*int) = 10
 			*dest[4].(*bool) = true
@@ -355,7 +356,7 @@ func TestScanPolicy_Success(t *testing.T) {
 	if policy.ID() != id {
 		t.Fatalf("expected ID %v, got %v", id, policy.ID())
 	}
-	if policy.PermissionID() != permID {
+	if policy.PermissionID() != permID.UUID() {
 		t.Fatalf("expected PermissionID %v, got %v", permID, policy.PermissionID())
 	}
 	if policy.Effect() != "ALLOW" {
@@ -375,13 +376,13 @@ func TestScanPolicy_Success(t *testing.T) {
 
 func TestScanPolicy_EmptyConditions(t *testing.T) {
 	id := uuid.New()
-	permID := uuid.New()
+	permID := domain.NewPermissionID()
 	now := time.Now()
 
 	row := &authzMockRow{
 		scanFunc: func(dest ...any) error {
 			*dest[0].(*uuid.UUID) = id
-			*dest[1].(*uuid.UUID) = permID
+			*dest[1].(*uuid.UUID) = permID.UUID()
 			*dest[2].(*string) = "DENY"
 			*dest[3].(*int) = 0
 			*dest[4].(*bool) = false
@@ -422,13 +423,13 @@ func TestScanPolicy_Error(t *testing.T) {
 
 func TestScanPolicyFromRows_Success(t *testing.T) {
 	id := uuid.New()
-	permID := uuid.New()
+	permID := domain.NewPermissionID()
 	now := time.Now()
 
 	rows := &authzMockRows{
 		scanFunc: func(dest ...any) error {
 			*dest[0].(*uuid.UUID) = id
-			*dest[1].(*uuid.UUID) = permID
+			*dest[1].(*uuid.UUID) = permID.UUID()
 			*dest[2].(*string) = "ALLOW"
 			*dest[3].(*int) = 5
 			*dest[4].(*bool) = true
@@ -485,4 +486,3 @@ func TestToTime_WithNonTimeValue(t *testing.T) {
 		t.Fatalf("expected zero time for non-time value, got %v", result)
 	}
 }
-

@@ -27,5 +27,5 @@ func NewUserSettingChanged(id, userID uuid.UUID, key, value string) UserSettingC
 }
 
 func (e UserSettingChanged) EventName() string      { return "usersetting.changed" }
-func (e UserSettingChanged) OccurredAt() time.Time   { return e.occurredAt }
-func (e UserSettingChanged) AggregateID() uuid.UUID  { return e.aggregateID }
+func (e UserSettingChanged) OccurredAt() time.Time  { return e.occurredAt }
+func (e UserSettingChanged) AggregateID() uuid.UUID { return e.aggregateID }

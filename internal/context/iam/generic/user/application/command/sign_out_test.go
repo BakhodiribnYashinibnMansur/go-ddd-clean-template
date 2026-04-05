@@ -7,7 +7,6 @@ import (
 
 	"gct/internal/context/iam/generic/user/domain"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -23,8 +22,8 @@ func TestSignOutHandler_Handle(t *testing.T) {
 	require.NoError(t, err)
 
 	repo := &mockUserRepository{
-		findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.User, error) {
-			if id == user.ID() {
+		findByIDFn: func(_ context.Context, id domain.UserID) (*domain.User, error) {
+			if id == user.TypedID() {
 				return user, nil
 			}
 			return nil, domain.ErrUserNotFound
@@ -61,7 +60,7 @@ func TestSignOutHandler_SessionNotFound(t *testing.T) {
 	user, _ := domain.NewUser(phone, pw)
 
 	repo := &mockUserRepository{
-		findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.User, error) {
+		findByIDFn: func(_ context.Context, id domain.UserID) (*domain.User, error) {
 			return user, nil
 		},
 	}

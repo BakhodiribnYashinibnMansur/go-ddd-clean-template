@@ -1,28 +1,27 @@
 package query
 
 import (
-	"gct/internal/kernel/infrastructure/logger"
 	"context"
 	"errors"
+	"gct/internal/kernel/infrastructure/logger"
 	"testing"
 
 	"gct/internal/context/iam/generic/authz/domain"
 	shared "gct/internal/kernel/domain"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
 func TestListPermissionsHandler_WithResults(t *testing.T) {
 	t.Parallel()
 
-	parentID := uuid.New()
+	parentID := domain.NewPermissionID()
 	desc := "Read-only access"
 	repo := &mockAuthzReadRepository{
 		listPermsFn: func(_ context.Context, _ shared.Pagination) ([]*domain.PermissionView, int64, error) {
 			return []*domain.PermissionView{
-				{ID: uuid.New(), Name: "users.read", Description: &desc},
-				{ID: uuid.New(), ParentID: &parentID, Name: "users.read.self"},
+				{ID: domain.NewPermissionID(), Name: "users.read", Description: &desc},
+				{ID: domain.NewPermissionID(), ParentID: &parentID, Name: "users.read.self"},
 			}, 2, nil
 		},
 	}

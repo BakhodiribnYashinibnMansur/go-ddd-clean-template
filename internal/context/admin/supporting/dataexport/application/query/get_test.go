@@ -1,9 +1,9 @@
 package query
 
 import (
-	"gct/internal/kernel/infrastructure/logger"
 	"context"
 	"errors"
+	"gct/internal/kernel/infrastructure/logger"
 	"testing"
 	"time"
 
@@ -25,7 +25,7 @@ type mockDataExportReadRepository struct {
 	listErr      error
 }
 
-func (m *mockDataExportReadRepository) FindByID(_ context.Context, _ uuid.UUID) (*domain.DataExportView, error) {
+func (m *mockDataExportReadRepository) FindByID(_ context.Context, _ domain.DataExportID) (*domain.DataExportView, error) {
 	if m.findByIDErr != nil {
 		return nil, m.findByIDErr
 	}
@@ -46,7 +46,7 @@ func (m *mockDataExportReadRepository) List(_ context.Context, _ domain.DataExpo
 func TestGetDataExportHandler_Success(t *testing.T) {
 	t.Parallel()
 
-	exportID := uuid.New()
+	exportID := domain.NewDataExportID()
 	userID := uuid.New()
 	now := time.Now()
 	fileURL := "https://cdn.example.com/exports/data.csv"
@@ -104,7 +104,7 @@ func TestGetDataExportHandler_RepoError(t *testing.T) {
 func TestGetDataExportHandler_MapsAllFields(t *testing.T) {
 	t.Parallel()
 
-	exportID := uuid.New()
+	exportID := domain.NewDataExportID()
 	userID := uuid.New()
 	now := time.Now()
 	fileURL := "https://cdn.example.com/exports/data.json"

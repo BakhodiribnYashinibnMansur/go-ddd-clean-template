@@ -3,11 +3,11 @@ package command
 import (
 	"context"
 
+	"gct/internal/context/iam/generic/user/domain"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
-	"gct/internal/context/iam/generic/user/domain"
 
 	"github.com/google/uuid"
 )
@@ -45,7 +45,7 @@ func (h *ChangeRoleHandler) Handle(ctx context.Context, cmd ChangeRoleCommand) (
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "ChangeRole", "user")()
 
-	user, err := h.repo.FindByID(ctx, cmd.UserID.UUID())
+	user, err := h.repo.FindByID(ctx, cmd.UserID)
 	if err != nil {
 		return apperrors.MapToServiceError(err)
 	}
@@ -53,12 +53,12 @@ func (h *ChangeRoleHandler) Handle(ctx context.Context, cmd ChangeRoleCommand) (
 	user.ChangeRole(cmd.RoleID)
 
 	if err := h.repo.Update(ctx, user); err != nil {
-		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "ChangeRole", Entity: "user", EntityID: cmd.UserID.UUID(), Err: err}.KV()...)
+		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "ChangeRole", Entity: "user", EntityID: cmd.UserID, Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, user.Events()...); err != nil {
-		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "ChangeRole", Entity: "user", EntityID: cmd.UserID.UUID(), Err: err}.KV()...)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "ChangeRole", Entity: "user", EntityID: cmd.UserID, Err: err}.KV()...)
 	}
 
 	return nil

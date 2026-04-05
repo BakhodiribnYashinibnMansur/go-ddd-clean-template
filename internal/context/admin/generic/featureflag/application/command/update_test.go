@@ -14,9 +14,9 @@ import (
 func TestUpdateHandler_Handle(t *testing.T) {
 	t.Parallel()
 
-	flagID := uuid.New()
+	flagID := domain.NewFeatureFlagID()
 	flagRepo := &mockFeatureFlagRepo{
-		findFn: func(_ context.Context, id uuid.UUID) (*domain.FeatureFlag, error) {
+		findFn: func(_ context.Context, id domain.FeatureFlagID) (*domain.FeatureFlag, error) {
 			if id == flagID {
 				return newReconstructedFlag(flagID), nil
 			}
@@ -54,9 +54,9 @@ func TestUpdateHandler_Handle(t *testing.T) {
 func TestUpdateHandler_Handle_PartialUpdate(t *testing.T) {
 	t.Parallel()
 
-	flagID := uuid.New()
+	flagID := domain.NewFeatureFlagID()
 	flagRepo := &mockFeatureFlagRepo{
-		findFn: func(_ context.Context, _ uuid.UUID) (*domain.FeatureFlag, error) {
+		findFn: func(_ context.Context, _ domain.FeatureFlagID) (*domain.FeatureFlag, error) {
 			return newReconstructedFlag(flagID), nil
 		},
 	}
@@ -99,10 +99,10 @@ func TestUpdateHandler_Handle_NotFound(t *testing.T) {
 func TestUpdateHandler_Handle_UpdateRepoError(t *testing.T) {
 	t.Parallel()
 
-	flagID := uuid.New()
+	flagID := domain.NewFeatureFlagID()
 	repoErr := errors.New("update failed")
 	flagRepo := &mockFeatureFlagRepo{
-		findFn: func(_ context.Context, _ uuid.UUID) (*domain.FeatureFlag, error) {
+		findFn: func(_ context.Context, _ domain.FeatureFlagID) (*domain.FeatureFlag, error) {
 			return newReconstructedFlag(flagID), nil
 		},
 		updateFn: func(_ context.Context, _ *domain.FeatureFlag) error {
@@ -123,9 +123,9 @@ func TestUpdateHandler_Handle_UpdateRepoError(t *testing.T) {
 func TestUpdateHandler_Handle_ToggleActive(t *testing.T) {
 	t.Parallel()
 
-	flagID := uuid.New()
+	flagID := domain.NewFeatureFlagID()
 	flagRepo := &mockFeatureFlagRepo{
-		findFn: func(_ context.Context, _ uuid.UUID) (*domain.FeatureFlag, error) {
+		findFn: func(_ context.Context, _ domain.FeatureFlagID) (*domain.FeatureFlag, error) {
 			return newReconstructedFlag(flagID), nil
 		},
 	}

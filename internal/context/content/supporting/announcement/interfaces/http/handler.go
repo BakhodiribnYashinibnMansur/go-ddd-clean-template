@@ -12,7 +12,6 @@ import (
 	"gct/internal/kernel/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 // Handler provides HTTP endpoints for the Announcement bounded context.
@@ -68,12 +67,12 @@ func (h *Handler) List(ctx *gin.Context) {
 
 // Get returns a single announcement by ID.
 func (h *Handler) Get(ctx *gin.Context) {
-	id, err := uuid.Parse(ctx.Param("id"))
+	id, err := domain.ParseAnnouncementID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
-	result, err := h.bc.GetAnnouncement.Handle(ctx.Request.Context(), query.GetAnnouncementQuery{ID: domain.AnnouncementID(id)})
+	result, err := h.bc.GetAnnouncement.Handle(ctx.Request.Context(), query.GetAnnouncementQuery{ID: id})
 	if err != nil {
 		response.HandleError(ctx, err)
 		return
@@ -83,7 +82,7 @@ func (h *Handler) Get(ctx *gin.Context) {
 
 // Update updates an announcement.
 func (h *Handler) Update(ctx *gin.Context) {
-	id, err := uuid.Parse(ctx.Param("id"))
+	id, err := domain.ParseAnnouncementID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
@@ -94,7 +93,7 @@ func (h *Handler) Update(ctx *gin.Context) {
 		return
 	}
 	cmd := command.UpdateAnnouncementCommand{
-		ID:        domain.AnnouncementID(id),
+		ID:        id,
 		Title:     req.Title,
 		Content:   req.Content,
 		Priority:  req.Priority,
@@ -111,15 +110,14 @@ func (h *Handler) Update(ctx *gin.Context) {
 
 // Delete deletes an announcement.
 func (h *Handler) Delete(ctx *gin.Context) {
-	id, err := uuid.Parse(ctx.Param("id"))
+	id, err := domain.ParseAnnouncementID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
-	if err := h.bc.DeleteAnnouncement.Handle(ctx.Request.Context(), command.DeleteAnnouncementCommand{ID: domain.AnnouncementID(id)}); err != nil {
+	if err := h.bc.DeleteAnnouncement.Handle(ctx.Request.Context(), command.DeleteAnnouncementCommand{ID: id}); err != nil {
 		response.HandleError(ctx, err)
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"success": true})
 }
-

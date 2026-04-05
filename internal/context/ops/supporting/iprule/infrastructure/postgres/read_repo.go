@@ -33,14 +33,14 @@ func NewIPRuleReadRepo(pool *pgxpool.Pool) *IPRuleReadRepo {
 }
 
 // FindByID returns a single IPRuleView by ID.
-func (r *IPRuleReadRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.IPRuleView, err error) {
+func (r *IPRuleReadRepo) FindByID(ctx context.Context, id domain.IPRuleID) (result *domain.IPRuleView, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "IPRuleReadRepo.FindByID")
 	defer func() { end(err) }()
 
 	sql, args, err := r.builder.
 		Select(readColumns...).
 		From(tableName).
-		Where(squirrel.Eq{"id": id}).
+		Where(squirrel.Eq{"id": id.UUID()}).
 		ToSql()
 	if err != nil {
 		return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
@@ -111,13 +111,15 @@ func (r *IPRuleReadRepo) List(ctx context.Context, filter domain.IPRuleFilter) (
 func scanIPRuleView(row pgx.Row) (*domain.IPRuleView, error) {
 	var (
 		v        domain.IPRuleView
+		rawID    uuid.UUID
 		isActive bool
 	)
-	err := row.Scan(&v.ID, &v.IPAddress, &v.Action, &v.Reason, &isActive, &v.CreatedAt, &v.UpdatedAt)
+	err := row.Scan(&rawID, &v.IPAddress, &v.Action, &v.Reason, &isActive, &v.CreatedAt, &v.UpdatedAt)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 	_ = isActive
+	v.ID = domain.IPRuleID(rawID)
 	v.ExpiresAt = nil
 	return &v, nil
 }
@@ -125,13 +127,15 @@ func scanIPRuleView(row pgx.Row) (*domain.IPRuleView, error) {
 func scanIPRuleViewFromRows(rows pgx.Rows) (*domain.IPRuleView, error) {
 	var (
 		v        domain.IPRuleView
+		rawID    uuid.UUID
 		isActive bool
 	)
-	err := rows.Scan(&v.ID, &v.IPAddress, &v.Action, &v.Reason, &isActive, &v.CreatedAt, &v.UpdatedAt)
+	err := rows.Scan(&rawID, &v.IPAddress, &v.Action, &v.Reason, &isActive, &v.CreatedAt, &v.UpdatedAt)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 	_ = isActive
+	v.ID = domain.IPRuleID(rawID)
 	v.ExpiresAt = nil
 	return &v, nil
 }

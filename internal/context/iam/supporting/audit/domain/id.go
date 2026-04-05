@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"database/sql/driver"
+	"encoding/json"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -56,3 +58,54 @@ func (id EndpointHistoryID) String() string { return uuid.UUID(id).String() }
 
 // IsZero reports whether the EndpointHistoryID is the zero value.
 func (id EndpointHistoryID) IsZero() bool { return uuid.UUID(id) == uuid.Nil }
+
+// MarshalJSON serializes as a canonical UUID string.
+func (id AuditLogID) MarshalJSON() ([]byte, error)         { return json.Marshal(id.String()) }
+func (id EndpointHistoryID) MarshalJSON() ([]byte, error)  { return json.Marshal(id.String()) }
+
+func (id *AuditLogID) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+	u, err := uuid.Parse(s)
+	if err != nil {
+		return err
+	}
+	*id = AuditLogID(u)
+	return nil
+}
+func (id *EndpointHistoryID) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+	u, err := uuid.Parse(s)
+	if err != nil {
+		return err
+	}
+	*id = EndpointHistoryID(u)
+	return nil
+}
+
+// Value implements driver.Valuer.
+func (id AuditLogID) Value() (driver.Value, error)         { return uuid.UUID(id).Value() }
+func (id EndpointHistoryID) Value() (driver.Value, error)  { return uuid.UUID(id).Value() }
+
+// Scan implements sql.Scanner.
+func (id *AuditLogID) Scan(src any) error {
+	var u uuid.UUID
+	if err := u.Scan(src); err != nil {
+		return err
+	}
+	*id = AuditLogID(u)
+	return nil
+}
+func (id *EndpointHistoryID) Scan(src any) error {
+	var u uuid.UUID
+	if err := u.Scan(src); err != nil {
+		return err
+	}
+	*id = EndpointHistoryID(u)
+	return nil
+}

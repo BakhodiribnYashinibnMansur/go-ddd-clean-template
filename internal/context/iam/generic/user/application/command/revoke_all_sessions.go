@@ -41,7 +41,7 @@ func (h *RevokeAllSessionsHandler) Handle(ctx context.Context, cmd RevokeAllSess
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "RevokeAllSessions", "user")()
 
-	user, err := h.repo.FindByID(ctx, cmd.UserID.UUID())
+	user, err := h.repo.FindByID(ctx, cmd.UserID)
 	if err != nil {
 		return apperrors.MapToServiceError(err)
 	}
@@ -49,7 +49,7 @@ func (h *RevokeAllSessionsHandler) Handle(ctx context.Context, cmd RevokeAllSess
 	user.RevokeAllSessions()
 
 	if err := h.repo.Update(ctx, user); err != nil {
-		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "RevokeAllSessions", Entity: "user", EntityID: cmd.UserID.UUID(), Err: err}.KV()...)
+		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "RevokeAllSessions", Entity: "user", EntityID: cmd.UserID, Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 

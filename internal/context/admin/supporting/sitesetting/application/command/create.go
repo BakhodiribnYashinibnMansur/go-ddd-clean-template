@@ -3,11 +3,11 @@ package command
 import (
 	"context"
 
+	"gct/internal/context/admin/supporting/sitesetting/domain"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
-	"gct/internal/context/admin/supporting/sitesetting/domain"
 )
 
 // CreateSiteSettingCommand represents an intent to register a new site-wide configuration entry.

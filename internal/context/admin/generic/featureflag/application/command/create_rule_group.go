@@ -57,7 +57,7 @@ func (h *CreateRuleGroupHandler) Handle(ctx context.Context, cmd CreateRuleGroup
 	defer logger.SlowOp(h.logger, ctx, "CreateRuleGroup", "rule_group")()
 
 	// Verify the flag exists.
-	if _, err := h.flagRepo.FindByID(ctx, cmd.FlagID.UUID()); err != nil {
+	if _, err := h.flagRepo.FindByID(ctx, cmd.FlagID); err != nil {
 		return apperrors.MapToServiceError(err)
 	}
 
@@ -75,7 +75,7 @@ func (h *CreateRuleGroupHandler) Handle(ctx context.Context, cmd CreateRuleGroup
 	}
 
 	if err := h.rgRepo.Save(ctx, rg); err != nil {
-		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateRuleGroup", Entity: "rule_group", EntityID: cmd.FlagID.UUID(), Err: err}.KV()...)
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateRuleGroup", Entity: "rule_group", EntityID: cmd.FlagID.String(), Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 

@@ -6,8 +6,6 @@ import (
 	"testing"
 
 	"gct/internal/context/content/generic/translation/domain"
-
-	"github.com/google/uuid"
 )
 
 // errorRepo is a mock that returns configurable errors for each method.
@@ -15,14 +13,14 @@ type errorRepo struct {
 	saveErr   error
 	updateErr error
 	deleteErr error
-	findFn    func(ctx context.Context, id uuid.UUID) (*domain.Translation, error)
+	findFn    func(ctx context.Context, id domain.TranslationID) (*domain.Translation, error)
 }
 
 func (m *errorRepo) Save(_ context.Context, _ *domain.Translation) error {
 	return m.saveErr
 }
 
-func (m *errorRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Translation, error) {
+func (m *errorRepo) FindByID(ctx context.Context, id domain.TranslationID) (*domain.Translation, error) {
 	if m.findFn != nil {
 		return m.findFn(ctx, id)
 	}
@@ -33,7 +31,7 @@ func (m *errorRepo) Update(_ context.Context, _ *domain.Translation) error {
 	return m.updateErr
 }
 
-func (m *errorRepo) Delete(_ context.Context, _ uuid.UUID) error {
+func (m *errorRepo) Delete(_ context.Context, _ domain.TranslationID) error {
 	return m.deleteErr
 }
 
@@ -87,7 +85,7 @@ func TestUpdateTranslationHandler_UpdateError(t *testing.T) {
 	tr := domain.NewTranslation("k", "en", "v", "g")
 
 	repo := &errorRepo{
-		findFn:    func(_ context.Context, _ uuid.UUID) (*domain.Translation, error) { return tr, nil },
+		findFn:    func(_ context.Context, _ domain.TranslationID) (*domain.Translation, error) { return tr, nil },
 		updateErr: errUpdate,
 	}
 	eb := &mockEventBus{}

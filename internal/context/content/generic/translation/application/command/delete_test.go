@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"gct/internal/context/content/generic/translation/domain"
+
 	"github.com/stretchr/testify/require"
 )
 

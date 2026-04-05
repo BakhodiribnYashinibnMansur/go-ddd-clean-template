@@ -3,8 +3,6 @@ package domain
 import (
 	"context"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 // TranslationFilter carries optional filtering parameters. Nil fields are ignored by the repository.
@@ -20,25 +18,25 @@ type TranslationFilter struct {
 // Implementations must return ErrTranslationNotFound from FindByID when no row matches.
 type TranslationRepository interface {
 	Save(ctx context.Context, entity *Translation) error
-	FindByID(ctx context.Context, id uuid.UUID) (*Translation, error)
+	FindByID(ctx context.Context, id TranslationID) (*Translation, error)
 	Update(ctx context.Context, entity *Translation) error
-	Delete(ctx context.Context, id uuid.UUID) error
+	Delete(ctx context.Context, id TranslationID) error
 	List(ctx context.Context, filter TranslationFilter) ([]*Translation, int64, error)
 }
 
 // TranslationView is a flat read-model projection for API responses, bypassing aggregate reconstruction.
 type TranslationView struct {
-	ID        uuid.UUID `json:"id"`
-	Key       string    `json:"key"`
-	Language  string    `json:"language"`
-	Value     string    `json:"value"`
-	Group     string    `json:"group"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID        TranslationID `json:"id"`
+	Key       string        `json:"key"`
+	Language  string        `json:"language"`
+	Value     string        `json:"value"`
+	Group     string        `json:"group"`
+	CreatedAt time.Time     `json:"created_at"`
+	UpdatedAt time.Time     `json:"updated_at"`
 }
 
 // TranslationReadRepository provides read-only access optimized for listing and detail views.
 type TranslationReadRepository interface {
-	FindByID(ctx context.Context, id uuid.UUID) (*TranslationView, error)
+	FindByID(ctx context.Context, id TranslationID) (*TranslationView, error)
 	List(ctx context.Context, filter TranslationFilter) ([]*TranslationView, int64, error)
 }

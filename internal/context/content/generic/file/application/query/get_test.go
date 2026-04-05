@@ -21,7 +21,7 @@ type mockReadRepo struct {
 	total int64
 }
 
-func (m *mockReadRepo) FindByID(_ context.Context, id uuid.UUID) (*domain.FileView, error) {
+func (m *mockReadRepo) FindByID(_ context.Context, id domain.FileID) (*domain.FileView, error) {
 	if m.view != nil && m.view.ID == id {
 		return m.view, nil
 	}
@@ -34,7 +34,7 @@ func (m *mockReadRepo) List(_ context.Context, _ domain.FileFilter) ([]*domain.F
 
 type errorReadRepo struct{ err error }
 
-func (m *errorReadRepo) FindByID(_ context.Context, _ uuid.UUID) (*domain.FileView, error) {
+func (m *errorReadRepo) FindByID(_ context.Context, _ domain.FileID) (*domain.FileView, error) {
 	return nil, m.err
 }
 
@@ -49,7 +49,7 @@ var errRepo = errors.New("repo failure")
 func TestGetFileHandler_Handle(t *testing.T) {
 	t.Parallel()
 
-	id := uuid.New()
+	id := domain.NewFileID()
 	uploaderID := uuid.New()
 	now := time.Now()
 	readRepo := &mockReadRepo{
@@ -67,7 +67,7 @@ func TestGetFileHandler_Handle(t *testing.T) {
 	}
 
 	handler := NewGetFileHandler(readRepo, logger.Noop())
-	result, err := handler.Handle(context.Background(), GetFileQuery{ID: domain.FileID(id)})
+	result, err := handler.Handle(context.Background(), GetFileQuery{ID: id})
 	require.NoError(t, err)
 	if result == nil {
 		t.Fatal("expected result")
@@ -111,7 +111,7 @@ func TestGetFileHandler_RepoError(t *testing.T) {
 func TestGetFileHandler_AllFieldsMapped(t *testing.T) {
 	t.Parallel()
 
-	id := uuid.New()
+	id := domain.NewFileID()
 	uploaderID := uuid.New()
 	now := time.Now()
 
@@ -130,7 +130,7 @@ func TestGetFileHandler_AllFieldsMapped(t *testing.T) {
 	}
 
 	handler := NewGetFileHandler(readRepo, logger.Noop())
-	result, err := handler.Handle(context.Background(), GetFileQuery{ID: domain.FileID(id)})
+	result, err := handler.Handle(context.Background(), GetFileQuery{ID: id})
 	require.NoError(t, err)
 	if result.OriginalName != "annual-report.pdf" {
 		t.Errorf("expected originalName 'annual-report.pdf', got %s", result.OriginalName)

@@ -5,8 +5,6 @@ import (
 	"time"
 
 	domain "gct/internal/context/admin/supporting/sitesetting/domain"
-
-	"github.com/google/uuid"
 )
 
 func TestNewSiteSetting(t *testing.T) {
@@ -52,12 +50,12 @@ func TestSiteSetting_Update(t *testing.T) {
 func TestReconstructSiteSetting(t *testing.T) {
 	t.Parallel()
 
-	id := uuid.New()
+	id := domain.NewSiteSettingID()
 	now := time.Now()
 
-	s := domain.ReconstructSiteSetting(id, now, now, "key", "val", "string", "desc")
+	s := domain.ReconstructSiteSetting(id.UUID(), now, now, "key", "val", "string", "desc")
 
-	if s.ID() != id {
+	if s.TypedID() != id {
 		t.Fatal("ID mismatch")
 	}
 	if s.Key() != "key" {

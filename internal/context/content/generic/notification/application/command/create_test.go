@@ -17,7 +17,7 @@ import (
 
 type mockNotificationRepo struct {
 	saved   *domain.Notification
-	deleted uuid.UUID
+	deleted domain.NotificationID
 }
 
 func (m *mockNotificationRepo) Save(_ context.Context, n *domain.Notification) error {
@@ -25,7 +25,7 @@ func (m *mockNotificationRepo) Save(_ context.Context, n *domain.Notification) e
 	return nil
 }
 
-func (m *mockNotificationRepo) FindByID(_ context.Context, _ uuid.UUID) (*domain.Notification, error) {
+func (m *mockNotificationRepo) FindByID(_ context.Context, _ domain.NotificationID) (*domain.Notification, error) {
 	return nil, nil
 }
 
@@ -33,7 +33,7 @@ func (m *mockNotificationRepo) Update(_ context.Context, _ *domain.Notification)
 	return nil
 }
 
-func (m *mockNotificationRepo) Delete(_ context.Context, id uuid.UUID) error {
+func (m *mockNotificationRepo) Delete(_ context.Context, id domain.NotificationID) error {
 	m.deleted = id
 	return nil
 }

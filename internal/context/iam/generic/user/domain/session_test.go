@@ -12,13 +12,13 @@ import (
 func TestNewSession(t *testing.T) {
 	t.Parallel()
 
-	uid := uuid.New()
-	s, err := domain.NewSession(uid, domain.DeviceMobile, "10.0.0.1", "TestAgent/1.0")
+	uid := domain.NewUserID()
+	s, err := domain.NewSession(uid.UUID(), domain.DeviceMobile, "10.0.0.1", "TestAgent/1.0")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if s.UserID() != uid {
+	if s.UserID() != uid.UUID() {
 		t.Fatal("user ID mismatch")
 	}
 	if s.DeviceType() != domain.DeviceMobile {
@@ -86,18 +86,18 @@ func TestReconstructSession(t *testing.T) {
 	t.Parallel()
 
 	id := uuid.New()
-	uid := uuid.New()
+	uid := domain.NewUserID()
 	now := time.Now()
 	s := domain.ReconstructSession(
 		id, now, now, nil,
-		uid, "dev-123", "My Phone", domain.DeviceMobile,
+		uid.UUID(), "dev-123", "My Phone", domain.DeviceMobile,
 		"3.3.3.3", "Agent/2.0", "refresh_hash",
 		now.Add(7*24*time.Hour), now, false,
 	)
 	if s.ID() != id {
 		t.Fatal("ID mismatch")
 	}
-	if s.UserID() != uid {
+	if s.UserID() != uid.UUID() {
 		t.Fatal("user ID mismatch")
 	}
 	if s.DeviceName() != "My Phone" {

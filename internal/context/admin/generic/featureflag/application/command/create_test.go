@@ -10,20 +10,19 @@ import (
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
 // --- Mocks ---
 
 type mockFeatureFlagRepo struct {
-	saved   *domain.FeatureFlag
-	updated *domain.FeatureFlag
-	deleted uuid.UUID
-	findFn  func(ctx context.Context, id uuid.UUID) (*domain.FeatureFlag, error)
-	saveFn  func(ctx context.Context, e *domain.FeatureFlag) error
+	saved    *domain.FeatureFlag
+	updated  *domain.FeatureFlag
+	deleted  domain.FeatureFlagID
+	findFn   func(ctx context.Context, id domain.FeatureFlagID) (*domain.FeatureFlag, error)
+	saveFn   func(ctx context.Context, e *domain.FeatureFlag) error
 	updateFn func(ctx context.Context, e *domain.FeatureFlag) error
-	deleteFn func(ctx context.Context, id uuid.UUID) error
+	deleteFn func(ctx context.Context, id domain.FeatureFlagID) error
 }
 
 func (m *mockFeatureFlagRepo) Save(ctx context.Context, e *domain.FeatureFlag) error {
@@ -34,7 +33,7 @@ func (m *mockFeatureFlagRepo) Save(ctx context.Context, e *domain.FeatureFlag) e
 	return nil
 }
 
-func (m *mockFeatureFlagRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.FeatureFlag, error) {
+func (m *mockFeatureFlagRepo) FindByID(ctx context.Context, id domain.FeatureFlagID) (*domain.FeatureFlag, error) {
 	if m.findFn != nil {
 		return m.findFn(ctx, id)
 	}
@@ -53,7 +52,7 @@ func (m *mockFeatureFlagRepo) Update(ctx context.Context, e *domain.FeatureFlag)
 	return nil
 }
 
-func (m *mockFeatureFlagRepo) Delete(ctx context.Context, id uuid.UUID) error {
+func (m *mockFeatureFlagRepo) Delete(ctx context.Context, id domain.FeatureFlagID) error {
 	if m.deleteFn != nil {
 		return m.deleteFn(ctx, id)
 	}
@@ -68,11 +67,11 @@ func (m *mockFeatureFlagRepo) FindAll(_ context.Context) ([]*domain.FeatureFlag,
 type mockRuleGroupRepo struct {
 	saved    *domain.RuleGroup
 	updated  *domain.RuleGroup
-	deleted  uuid.UUID
-	findFn   func(ctx context.Context, id uuid.UUID) (*domain.RuleGroup, error)
+	deleted  domain.RuleGroupID
+	findFn   func(ctx context.Context, id domain.RuleGroupID) (*domain.RuleGroup, error)
 	saveFn   func(ctx context.Context, rg *domain.RuleGroup) error
 	updateFn func(ctx context.Context, rg *domain.RuleGroup) error
-	deleteFn func(ctx context.Context, id uuid.UUID) error
+	deleteFn func(ctx context.Context, id domain.RuleGroupID) error
 }
 
 func (m *mockRuleGroupRepo) Save(ctx context.Context, rg *domain.RuleGroup) error {
@@ -83,7 +82,7 @@ func (m *mockRuleGroupRepo) Save(ctx context.Context, rg *domain.RuleGroup) erro
 	return nil
 }
 
-func (m *mockRuleGroupRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.RuleGroup, error) {
+func (m *mockRuleGroupRepo) FindByID(ctx context.Context, id domain.RuleGroupID) (*domain.RuleGroup, error) {
 	if m.findFn != nil {
 		return m.findFn(ctx, id)
 	}
@@ -98,7 +97,7 @@ func (m *mockRuleGroupRepo) Update(ctx context.Context, rg *domain.RuleGroup) er
 	return nil
 }
 
-func (m *mockRuleGroupRepo) Delete(ctx context.Context, id uuid.UUID) error {
+func (m *mockRuleGroupRepo) Delete(ctx context.Context, id domain.RuleGroupID) error {
 	if m.deleteFn != nil {
 		return m.deleteFn(ctx, id)
 	}
@@ -106,15 +105,15 @@ func (m *mockRuleGroupRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-func (m *mockRuleGroupRepo) FindByFlagID(_ context.Context, _ uuid.UUID) ([]*domain.RuleGroup, error) {
+func (m *mockRuleGroupRepo) FindByFlagID(_ context.Context, _ domain.FeatureFlagID) ([]*domain.RuleGroup, error) {
 	return nil, nil
 }
 
-func (m *mockRuleGroupRepo) SaveCondition(_ context.Context, _ uuid.UUID, _ domain.Condition) error {
+func (m *mockRuleGroupRepo) SaveCondition(_ context.Context, _ domain.RuleGroupID, _ domain.Condition) error {
 	return nil
 }
 
-func (m *mockRuleGroupRepo) DeleteConditionsByRuleGroupID(_ context.Context, _ uuid.UUID) error {
+func (m *mockRuleGroupRepo) DeleteConditionsByRuleGroupID(_ context.Context, _ domain.RuleGroupID) error {
 	return nil
 }
 
@@ -131,31 +130,31 @@ func (m *mockEventBus) Subscribe(_ string, _ application.EventHandler) error { r
 
 type mockLogger struct{}
 
-func (m *mockLogger) Debug(_ ...any)                                {}
-func (m *mockLogger) Debugf(_ string, _ ...any)                     {}
-func (m *mockLogger) Debugw(_ string, _ ...any)                     {}
-func (m *mockLogger) Info(_ ...any)                                 {}
-func (m *mockLogger) Infof(_ string, _ ...any)                      {}
-func (m *mockLogger) Infow(_ string, _ ...any)                      {}
-func (m *mockLogger) Warn(_ ...any)                                 {}
-func (m *mockLogger) Warnf(_ string, _ ...any)                      {}
-func (m *mockLogger) Warnw(_ string, _ ...any)                      {}
-func (m *mockLogger) Error(_ ...any)                                {}
-func (m *mockLogger) Errorf(_ string, _ ...any)                     {}
-func (m *mockLogger) Errorw(_ string, _ ...any)                     {}
-func (m *mockLogger) Fatal(_ ...any)                                {}
-func (m *mockLogger) Fatalf(_ string, _ ...any)                     {}
-func (m *mockLogger) Fatalw(_ string, _ ...any)                     {}
-func (m *mockLogger) Debugc(_ context.Context, _ string, _ ...any)  {}
-func (m *mockLogger) Infoc(_ context.Context, _ string, _ ...any)   {}
-func (m *mockLogger) Warnc(_ context.Context, _ string, _ ...any)   {}
-func (m *mockLogger) Errorc(_ context.Context, _ string, _ ...any)  {}
-func (m *mockLogger) Fatalc(_ context.Context, _ string, _ ...any)  {}
+func (m *mockLogger) Debug(_ ...any)                               {}
+func (m *mockLogger) Debugf(_ string, _ ...any)                    {}
+func (m *mockLogger) Debugw(_ string, _ ...any)                    {}
+func (m *mockLogger) Info(_ ...any)                                {}
+func (m *mockLogger) Infof(_ string, _ ...any)                     {}
+func (m *mockLogger) Infow(_ string, _ ...any)                     {}
+func (m *mockLogger) Warn(_ ...any)                                {}
+func (m *mockLogger) Warnf(_ string, _ ...any)                     {}
+func (m *mockLogger) Warnw(_ string, _ ...any)                     {}
+func (m *mockLogger) Error(_ ...any)                               {}
+func (m *mockLogger) Errorf(_ string, _ ...any)                    {}
+func (m *mockLogger) Errorw(_ string, _ ...any)                    {}
+func (m *mockLogger) Fatal(_ ...any)                               {}
+func (m *mockLogger) Fatalf(_ string, _ ...any)                    {}
+func (m *mockLogger) Fatalw(_ string, _ ...any)                    {}
+func (m *mockLogger) Debugc(_ context.Context, _ string, _ ...any) {}
+func (m *mockLogger) Infoc(_ context.Context, _ string, _ ...any)  {}
+func (m *mockLogger) Warnc(_ context.Context, _ string, _ ...any)  {}
+func (m *mockLogger) Errorc(_ context.Context, _ string, _ ...any) {}
+func (m *mockLogger) Fatalc(_ context.Context, _ string, _ ...any) {}
 
 // helper to create a reconstructed feature flag for FindByID mocks
-func newReconstructedFlag(id uuid.UUID) *domain.FeatureFlag {
+func newReconstructedFlag(id domain.FeatureFlagID) *domain.FeatureFlag {
 	return domain.ReconstructFeatureFlag(
-		id, time.Now(), time.Now(), nil,
+		id.UUID(), time.Now(), time.Now(), nil,
 		"test-flag", "test_key", "desc", "bool", "false", 50, true, nil,
 	)
 }

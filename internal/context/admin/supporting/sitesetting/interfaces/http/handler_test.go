@@ -9,12 +9,12 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/kernel/application"
-	shared "gct/internal/kernel/domain"
 	"gct/internal/context/admin/supporting/sitesetting"
 	"gct/internal/context/admin/supporting/sitesetting/application/command"
 	"gct/internal/context/admin/supporting/sitesetting/application/query"
 	"gct/internal/context/admin/supporting/sitesetting/domain"
+	"gct/internal/kernel/application"
+	shared "gct/internal/kernel/domain"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -25,14 +25,14 @@ import (
 type mockRepo struct {
 	saved   *domain.SiteSetting
 	updated *domain.SiteSetting
-	findFn  func(ctx context.Context, id uuid.UUID) (*domain.SiteSetting, error)
+	findFn  func(ctx context.Context, id domain.SiteSettingID) (*domain.SiteSetting, error)
 }
 
 func (m *mockRepo) Save(_ context.Context, e *domain.SiteSetting) error {
 	m.saved = e
 	return nil
 }
-func (m *mockRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.SiteSetting, error) {
+func (m *mockRepo) FindByID(ctx context.Context, id domain.SiteSettingID) (*domain.SiteSetting, error) {
 	if m.findFn != nil {
 		return m.findFn(ctx, id)
 	}
@@ -42,7 +42,7 @@ func (m *mockRepo) Update(_ context.Context, e *domain.SiteSetting) error {
 	m.updated = e
 	return nil
 }
-func (m *mockRepo) Delete(_ context.Context, _ uuid.UUID) error {
+func (m *mockRepo) Delete(_ context.Context, _ domain.SiteSettingID) error {
 	return nil
 }
 func (m *mockRepo) List(_ context.Context, _ domain.SiteSettingFilter) ([]*domain.SiteSetting, int64, error) {
@@ -55,7 +55,7 @@ type mockReadRepo struct {
 	total int64
 }
 
-func (m *mockReadRepo) FindByID(_ context.Context, id uuid.UUID) (*domain.SiteSettingView, error) {
+func (m *mockReadRepo) FindByID(_ context.Context, id domain.SiteSettingID) (*domain.SiteSettingView, error) {
 	if m.view != nil && m.view.ID == id {
 		return m.view, nil
 	}
@@ -75,26 +75,26 @@ func (m *mockEventBus) Subscribe(_ string, _ application.EventHandler) error { r
 
 type mockLogger struct{}
 
-func (m *mockLogger) Debug(args ...any)                                          {}
-func (m *mockLogger) Debugf(template string, args ...any)                        {}
-func (m *mockLogger) Debugw(msg string, keysAndValues ...any)                    {}
-func (m *mockLogger) Info(args ...any)                                           {}
-func (m *mockLogger) Infof(template string, args ...any)                         {}
-func (m *mockLogger) Infow(msg string, keysAndValues ...any)                     {}
-func (m *mockLogger) Warn(args ...any)                                           {}
-func (m *mockLogger) Warnf(template string, args ...any)                         {}
-func (m *mockLogger) Warnw(msg string, keysAndValues ...any)                     {}
-func (m *mockLogger) Error(args ...any)                                          {}
-func (m *mockLogger) Errorf(template string, args ...any)                        {}
-func (m *mockLogger) Errorw(msg string, keysAndValues ...any)                    {}
-func (m *mockLogger) Fatal(args ...any)                                          {}
-func (m *mockLogger) Fatalf(template string, args ...any)                        {}
-func (m *mockLogger) Fatalw(msg string, keysAndValues ...any)                    {}
-func (m *mockLogger) Debugc(_ context.Context, _ string, _ ...any)               {}
-func (m *mockLogger) Infoc(_ context.Context, _ string, _ ...any)                {}
-func (m *mockLogger) Warnc(_ context.Context, _ string, _ ...any)                {}
-func (m *mockLogger) Errorc(_ context.Context, _ string, _ ...any)               {}
-func (m *mockLogger) Fatalc(_ context.Context, _ string, _ ...any)               {}
+func (m *mockLogger) Debug(args ...any)                            {}
+func (m *mockLogger) Debugf(template string, args ...any)          {}
+func (m *mockLogger) Debugw(msg string, keysAndValues ...any)      {}
+func (m *mockLogger) Info(args ...any)                             {}
+func (m *mockLogger) Infof(template string, args ...any)           {}
+func (m *mockLogger) Infow(msg string, keysAndValues ...any)       {}
+func (m *mockLogger) Warn(args ...any)                             {}
+func (m *mockLogger) Warnf(template string, args ...any)           {}
+func (m *mockLogger) Warnw(msg string, keysAndValues ...any)       {}
+func (m *mockLogger) Error(args ...any)                            {}
+func (m *mockLogger) Errorf(template string, args ...any)          {}
+func (m *mockLogger) Errorw(msg string, keysAndValues ...any)      {}
+func (m *mockLogger) Fatal(args ...any)                            {}
+func (m *mockLogger) Fatalf(template string, args ...any)          {}
+func (m *mockLogger) Fatalw(msg string, keysAndValues ...any)      {}
+func (m *mockLogger) Debugc(_ context.Context, _ string, _ ...any) {}
+func (m *mockLogger) Infoc(_ context.Context, _ string, _ ...any)  {}
+func (m *mockLogger) Warnc(_ context.Context, _ string, _ ...any)  {}
+func (m *mockLogger) Errorc(_ context.Context, _ string, _ ...any) {}
+func (m *mockLogger) Fatalc(_ context.Context, _ string, _ ...any) {}
 
 // --- Helpers ---
 
@@ -162,7 +162,7 @@ func TestHandler_List_Success(t *testing.T) {
 	now := time.Now()
 	readRepo := &mockReadRepo{
 		views: []*domain.SiteSettingView{
-			{ID: uuid.New(), Key: "site_name", Value: "My Site", Type: "general", CreatedAt: now, UpdatedAt: now},
+			{ID: domain.NewSiteSettingID(), Key: "site_name", Value: "My Site", Type: "general", CreatedAt: now, UpdatedAt: now},
 		},
 		total: 1,
 	}
@@ -180,7 +180,7 @@ func TestHandler_List_Success(t *testing.T) {
 func TestHandler_Get_Success(t *testing.T) {
 	t.Parallel()
 
-	id := uuid.New()
+	id := domain.NewSiteSettingID()
 	now := time.Now()
 	readRepo := &mockReadRepo{
 		view: &domain.SiteSettingView{ID: id, Key: "k", Value: "v", Type: "t", CreatedAt: now, UpdatedAt: now},
@@ -215,8 +215,8 @@ func TestHandler_Update_Success(t *testing.T) {
 
 	ss := domain.NewSiteSetting("old_key", "old_val", "general", "desc")
 	repo := &mockRepo{
-		findFn: func(_ context.Context, id uuid.UUID) (*domain.SiteSetting, error) {
-			if id == ss.ID() {
+		findFn: func(_ context.Context, id domain.SiteSettingID) (*domain.SiteSetting, error) {
+			if id == ss.TypedID() {
 				return ss, nil
 			}
 			return nil, domain.ErrSiteSettingNotFound
@@ -229,7 +229,7 @@ func TestHandler_Update_Success(t *testing.T) {
 	jsonBody, _ := json.Marshal(body)
 
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("PATCH", "/api/v1/site-settings/"+ss.ID().String(), bytes.NewBuffer(jsonBody))
+	req, _ := http.NewRequest("PATCH", "/api/v1/site-settings/"+ss.TypedID().String(), bytes.NewBuffer(jsonBody))
 	req.Header.Set("Content-Type", "application/json")
 	router.ServeHTTP(w, req)
 

@@ -58,7 +58,7 @@ type AuditReadRepository interface {
 // AuditLogView is a flat read-model DTO for audit log queries.
 // It mirrors the AuditLog aggregate fields but is safe for direct JSON serialization without domain logic.
 type AuditLogView struct {
-	ID           uuid.UUID      `json:"id"`
+	ID           AuditLogID     `json:"id"`
 	UserID       *uuid.UUID     `json:"user_id,omitempty"`
 	SessionID    *uuid.UUID     `json:"session_id,omitempty"`
 	Action       AuditAction    `json:"action"`
@@ -79,7 +79,7 @@ type AuditLogView struct {
 // EndpointHistoryView is a flat read-model DTO for endpoint history queries.
 // Latency is stored in milliseconds; StatusCode is the raw HTTP response code.
 type EndpointHistoryView struct {
-	ID         uuid.UUID  `json:"id"`
+	ID         EndpointHistoryID `json:"id"`
 	UserID     *uuid.UUID `json:"user_id,omitempty"`
 	Endpoint   string     `json:"endpoint"`
 	Method     string     `json:"method"`

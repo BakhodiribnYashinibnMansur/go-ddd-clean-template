@@ -3,10 +3,10 @@ package command
 import (
 	"context"
 
+	"gct/internal/context/content/generic/translation/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
-	"gct/internal/context/content/generic/translation/domain"
 )
 
 // DeleteTranslationCommand represents an intent to permanently remove a translation entry.
@@ -40,8 +40,8 @@ func (h *DeleteTranslationHandler) Handle(ctx context.Context, cmd DeleteTransla
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "DeleteTranslation", "translation")()
 
-	if err := h.repo.Delete(ctx, cmd.ID.UUID()); err != nil {
-		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteTranslation", Entity: "translation", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
+	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
+		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteTranslation", Entity: "translation", EntityID: cmd.ID, Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 	return nil

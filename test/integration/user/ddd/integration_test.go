@@ -312,7 +312,7 @@ func TestIntegration_SignUp_SignIn_SignOut(t *testing.T) {
 	if err != nil {
 		t.Fatalf("SignIn: %v", err)
 	}
-	if result.UserID != userID {
+	if result.UserID != userID.UUID() {
 		t.Errorf("user ID mismatch: %s vs %s", result.UserID, userID)
 	}
 

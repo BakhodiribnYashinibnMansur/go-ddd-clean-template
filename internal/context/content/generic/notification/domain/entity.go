@@ -77,7 +77,8 @@ func (n *Notification) MarkAsRead() {
 // Getters
 // ---------------------------------------------------------------------------
 
-func (n *Notification) UserID() uuid.UUID   { return n.userID }
+func (n *Notification) TypedID() NotificationID { return NotificationID(n.ID()) }
+func (n *Notification) UserID() uuid.UUID       { return n.userID }
 func (n *Notification) Title() string       { return n.title }
 func (n *Notification) Message() string     { return n.message }
 func (n *Notification) Type() string        { return n.nType }

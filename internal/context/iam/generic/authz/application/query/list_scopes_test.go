@@ -1,13 +1,14 @@
 package query
 
 import (
-	"gct/internal/kernel/infrastructure/logger"
 	"context"
 	"errors"
+	"gct/internal/kernel/infrastructure/logger"
 	"testing"
 
 	"gct/internal/context/iam/generic/authz/domain"
 	shared "gct/internal/kernel/domain"
+
 	"github.com/stretchr/testify/require"
 )
 

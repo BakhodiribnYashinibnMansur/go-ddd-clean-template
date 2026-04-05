@@ -24,7 +24,7 @@ type ConditionView struct {
 
 // RuleGroupView is a read-model DTO for a rule group with its conditions.
 type RuleGroupView struct {
-	ID         uuid.UUID       `json:"id"`
+	ID         RuleGroupID     `json:"id"`
 	Name       string          `json:"name"`
 	Variation  string          `json:"variation"`
 	Priority   int             `json:"priority"`
@@ -35,7 +35,7 @@ type RuleGroupView struct {
 
 // FeatureFlagView is a read-model DTO for feature flags.
 type FeatureFlagView struct {
-	ID                uuid.UUID       `json:"id"`
+	ID                FeatureFlagID   `json:"id"`
 	Name              string          `json:"name"`
 	Key               string          `json:"key"`
 	Description       string          `json:"description"`
@@ -51,27 +51,27 @@ type FeatureFlagView struct {
 // FeatureFlagRepository is the write-side repository for the FeatureFlag aggregate.
 type FeatureFlagRepository interface {
 	Save(ctx context.Context, entity *FeatureFlag) error
-	FindByID(ctx context.Context, id uuid.UUID) (*FeatureFlag, error)
+	FindByID(ctx context.Context, id FeatureFlagID) (*FeatureFlag, error)
 	FindByKey(ctx context.Context, key string) (*FeatureFlag, error)
 	Update(ctx context.Context, entity *FeatureFlag) error
-	Delete(ctx context.Context, id uuid.UUID) error
+	Delete(ctx context.Context, id FeatureFlagID) error
 	FindAll(ctx context.Context) ([]*FeatureFlag, error)
 }
 
 // RuleGroupRepository is the write-side repository for RuleGroup entities.
 type RuleGroupRepository interface {
 	Save(ctx context.Context, rg *RuleGroup) error
-	FindByID(ctx context.Context, id uuid.UUID) (*RuleGroup, error)
+	FindByID(ctx context.Context, id RuleGroupID) (*RuleGroup, error)
 	Update(ctx context.Context, rg *RuleGroup) error
-	Delete(ctx context.Context, id uuid.UUID) error
-	FindByFlagID(ctx context.Context, flagID uuid.UUID) ([]*RuleGroup, error)
-	SaveCondition(ctx context.Context, rgID uuid.UUID, c Condition) error
-	DeleteConditionsByRuleGroupID(ctx context.Context, rgID uuid.UUID) error
+	Delete(ctx context.Context, id RuleGroupID) error
+	FindByFlagID(ctx context.Context, flagID FeatureFlagID) ([]*RuleGroup, error)
+	SaveCondition(ctx context.Context, rgID RuleGroupID, c Condition) error
+	DeleteConditionsByRuleGroupID(ctx context.Context, rgID RuleGroupID) error
 }
 
 // FeatureFlagReadRepository is the read-side (CQRS query) repository.
 type FeatureFlagReadRepository interface {
-	FindByID(ctx context.Context, id uuid.UUID) (*FeatureFlagView, error)
+	FindByID(ctx context.Context, id FeatureFlagID) (*FeatureFlagView, error)
 	List(ctx context.Context, filter FeatureFlagFilter) ([]*FeatureFlagView, int64, error)
 }
 

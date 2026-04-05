@@ -33,9 +33,9 @@ func (h *GetAnnouncementHandler) Handle(ctx context.Context, q GetAnnouncementQu
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "GetAnnouncement", "announcement")()
 
-	v, err := h.readRepo.FindByID(ctx, q.ID.UUID())
+	v, err := h.readRepo.FindByID(ctx, q.ID)
 	if err != nil {
-		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetAnnouncement", Entity: "announcement", EntityID: q.ID.UUID(), Err: err}.KV()...)
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetAnnouncement", Entity: "announcement", EntityID: q.ID, Err: err}.KV()...)
 		return nil, apperrors.MapToServiceError(err)
 	}
 

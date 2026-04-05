@@ -33,9 +33,9 @@ func (h *GetRateLimitHandler) Handle(ctx context.Context, q GetRateLimitQuery) (
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "GetRateLimit", "rate_limit")()
 
-	v, err := h.readRepo.FindByID(ctx, q.ID.UUID())
+	v, err := h.readRepo.FindByID(ctx, q.ID)
 	if err != nil {
-		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetRateLimit", Entity: "rate_limit", EntityID: q.ID.UUID(), Err: err}.KV()...)
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetRateLimit", Entity: "rate_limit", EntityID: q.ID, Err: err}.KV()...)
 		return nil, apperrors.MapToServiceError(err)
 	}
 

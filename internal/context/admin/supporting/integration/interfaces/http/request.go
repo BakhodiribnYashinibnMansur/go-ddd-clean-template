@@ -2,11 +2,11 @@ package http
 
 // CreateRequest represents the request body for creating an integration.
 type CreateRequest struct {
-	Name       string         `json:"name" binding:"required"`
-	Type       string         `json:"type" binding:"required"`
-	APIKey     string         `json:"api_key" binding:"required"`
-	WebhookURL string         `json:"webhook_url" binding:"required"`
-	Enabled    bool           `json:"enabled"`
+	Name       string            `json:"name" binding:"required"`
+	Type       string            `json:"type" binding:"required"`
+	APIKey     string            `json:"api_key" binding:"required"`
+	WebhookURL string            `json:"webhook_url" binding:"required"`
+	Enabled    bool              `json:"enabled"`
 	Config     map[string]string `json:"config,omitempty"`
 }
 

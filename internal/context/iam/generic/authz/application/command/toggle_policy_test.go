@@ -15,16 +15,16 @@ import (
 func TestTogglePolicyHandler_ToggleActive(t *testing.T) {
 	t.Parallel()
 
-	policyID := uuid.New()
-	permID := uuid.New()
+	policyID := domain.NewPolicyID()
+	permID := domain.NewPermissionID()
 	// Start with active=true
 	existingPolicy := domain.ReconstructPolicy(
-		policyID, time.Now(), time.Now(), nil,
-		permID, domain.PolicyAllow, 1, true, nil,
+		policyID.UUID(), time.Now(), time.Now(), nil,
+		permID.UUID(), domain.PolicyAllow, 1, true, nil,
 	)
 
 	repo := &mockPolicyRepository{
-		findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.Policy, error) {
+		findByIDFn: func(_ context.Context, id domain.PolicyID) (*domain.Policy, error) {
 			if id == policyID {
 				return existingPolicy, nil
 			}
@@ -53,16 +53,16 @@ func TestTogglePolicyHandler_ToggleActive(t *testing.T) {
 func TestTogglePolicyHandler_ToggleInactiveToActive(t *testing.T) {
 	t.Parallel()
 
-	policyID := uuid.New()
-	permID := uuid.New()
+	policyID := domain.NewPolicyID()
+	permID := domain.NewPermissionID()
 	// Start with active=false
 	existingPolicy := domain.ReconstructPolicy(
-		policyID, time.Now(), time.Now(), nil,
-		permID, domain.PolicyDeny, 5, false, nil,
+		policyID.UUID(), time.Now(), time.Now(), nil,
+		permID.UUID(), domain.PolicyDeny, 5, false, nil,
 	)
 
 	repo := &mockPolicyRepository{
-		findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.Policy, error) {
+		findByIDFn: func(_ context.Context, id domain.PolicyID) (*domain.Policy, error) {
 			if id == policyID {
 				return existingPolicy, nil
 			}

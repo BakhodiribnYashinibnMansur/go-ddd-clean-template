@@ -17,8 +17,8 @@ func TestListHandler_Handle(t *testing.T) {
 
 	readRepo := &mockReadRepo{
 		views: []*domain.NotificationView{
-			{ID: uuid.New(), UserID: uuid.New(), Title: "N1", Type: "INFO", CreatedAt: time.Now()},
-			{ID: uuid.New(), UserID: uuid.New(), Title: "N2", Type: "WARNING", CreatedAt: time.Now()},
+			{ID: domain.NewNotificationID(), UserID: uuid.New(), Title: "N1", Type: "INFO", CreatedAt: time.Now()},
+			{ID: domain.NewNotificationID(), UserID: uuid.New(), Title: "N2", Type: "WARNING", CreatedAt: time.Now()},
 		},
 		total: 2,
 	}

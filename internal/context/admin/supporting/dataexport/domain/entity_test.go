@@ -85,14 +85,14 @@ func TestDataExport_Fail(t *testing.T) {
 func TestReconstructDataExport(t *testing.T) {
 	t.Parallel()
 
-	id := uuid.New()
+	id := domain.NewDataExportID()
 	userID := uuid.New()
 	now := time.Now()
 	fileURL := "https://example.com/file.csv"
 
-	de := domain.ReconstructDataExport(id, now, now, userID, "users", "csv", domain.ExportStatusCompleted, &fileURL, nil)
+	de := domain.ReconstructDataExport(id.UUID(), now, now, userID, "users", "csv", domain.ExportStatusCompleted, &fileURL, nil)
 
-	if de.ID() != id {
+	if de.TypedID() != id {
 		t.Fatal("ID mismatch")
 	}
 	if de.UserID() != userID {

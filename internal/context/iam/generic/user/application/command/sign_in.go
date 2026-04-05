@@ -6,12 +6,12 @@ import (
 	"strings"
 	"time"
 
+	"gct/internal/context/iam/generic/user/domain"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
 	jwtpkg "gct/internal/kernel/infrastructure/security/jwt"
-	"gct/internal/context/iam/generic/user/domain"
 
 	"github.com/google/uuid"
 )
@@ -37,17 +37,20 @@ type SignInResult struct {
 
 // JWTConfig holds the parameters needed for JWT token generation.
 type JWTConfig struct {
-	PrivateKey *rsa.PrivateKey
-	Issuer     string
-	AccessTTL  time.Duration
-	RefreshTTL time.Duration
+	PrivateKey    *rsa.PrivateKey
+	Issuer        string
+	Audience      string
+	KeyID         string
+	AccessTTL     time.Duration
+	RefreshTTL    time.Duration
+	RefreshHasher *jwtpkg.RefreshHasher
 }
 
 // SignInHandler handles the SignInCommand.
 type SignInHandler struct {
 	repo      domain.UserRepository
 	eventBus  application.EventBus
-	logger   commandLogger
+	logger    commandLogger
 	signIn    domain.SignInService
 	jwtConfig JWTConfig
 }
@@ -89,6 +92,7 @@ func (h *SignInHandler) Handle(ctx context.Context, cmd SignInCommand) (result *
 
 	// Generate refresh token and store its hash on the session before persisting.
 	refToken, err := jwtpkg.GenerateRefreshToken(
+		h.jwtConfig.RefreshHasher,
 		user.ID().String(),
 		session.ID().String(),
 		session.DeviceID(),
@@ -115,7 +119,8 @@ func (h *SignInHandler) Handle(ctx context.Context, cmd SignInCommand) (result *
 		user.ID().String(),
 		session.ID().String(),
 		h.jwtConfig.Issuer,
-		"", // audience
+		h.jwtConfig.Audience,
+		h.jwtConfig.KeyID,
 		h.jwtConfig.PrivateKey,
 		h.jwtConfig.AccessTTL,
 	)

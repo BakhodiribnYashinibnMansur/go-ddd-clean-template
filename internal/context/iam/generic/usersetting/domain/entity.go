@@ -57,6 +57,7 @@ func (us *UserSetting) ChangeValue(value string) {
 // Getters
 // ---------------------------------------------------------------------------
 
-func (us *UserSetting) UserID() uuid.UUID { return us.userID }
-func (us *UserSetting) Key() string       { return us.key }
-func (us *UserSetting) Value() string     { return us.value }
+func (us *UserSetting) TypedID() UserSettingID { return UserSettingID(us.ID()) }
+func (us *UserSetting) UserID() uuid.UUID      { return us.userID }
+func (us *UserSetting) Key() string            { return us.key }
+func (us *UserSetting) Value() string          { return us.value }

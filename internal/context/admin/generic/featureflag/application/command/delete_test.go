@@ -18,7 +18,7 @@ func TestDeleteHandler_Handle(t *testing.T) {
 	eb := &mockEventBus{}
 	handler := NewDeleteHandler(repo, eb, &mockLogger{})
 
-	id := uuid.New()
+	id := domain.NewFeatureFlagID()
 	err := handler.Handle(context.Background(), DeleteCommand{ID: domain.FeatureFlagID(id)})
 	require.NoError(t, err)
 
@@ -38,7 +38,7 @@ func TestDeleteHandler_Handle_RepoError(t *testing.T) {
 
 	repoErr := errors.New("delete failed")
 	repo := &mockFeatureFlagRepo{
-		deleteFn: func(_ context.Context, _ uuid.UUID) error {
+		deleteFn: func(_ context.Context, _ domain.FeatureFlagID) error {
 			return repoErr
 		},
 	}

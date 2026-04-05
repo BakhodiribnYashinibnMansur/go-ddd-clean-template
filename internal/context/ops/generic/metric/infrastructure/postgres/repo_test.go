@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+
 	// pgproto3 not needed
 
 	"github.com/Masterminds/squirrel"
@@ -29,15 +30,15 @@ type mockRows struct {
 	scanFunc func(dest ...any) error
 }
 
-func (m *mockRows) Scan(dest ...any) error                        { return m.scanFunc(dest...) }
-func (m *mockRows) Close()                                        {}
-func (m *mockRows) Err() error                                    { return nil }
-func (m *mockRows) CommandTag() pgconn.CommandTag                 { return pgconn.CommandTag{} }
+func (m *mockRows) Scan(dest ...any) error                       { return m.scanFunc(dest...) }
+func (m *mockRows) Close()                                       {}
+func (m *mockRows) Err() error                                   { return nil }
+func (m *mockRows) CommandTag() pgconn.CommandTag                { return pgconn.CommandTag{} }
 func (m *mockRows) FieldDescriptions() []pgconn.FieldDescription { return nil }
-func (m *mockRows) Next() bool                                    { return false }
-func (m *mockRows) Values() ([]any, error)                        { return nil, nil }
-func (m *mockRows) RawValues() [][]byte                           { return nil }
-func (m *mockRows) Conn() *pgx.Conn                               { return nil }
+func (m *mockRows) Next() bool                                   { return false }
+func (m *mockRows) Values() ([]any, error)                       { return nil, nil }
+func (m *mockRows) RawValues() [][]byte                          { return nil }
+func (m *mockRows) Conn() *pgx.Conn                              { return nil }
 
 // ---------------------------------------------------------------------------
 // helpers — 6 columns: id, name, latency_ms, is_panic, panic_error, created_at
@@ -76,11 +77,11 @@ func TestNewMetricReadRepo(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestScanMetricView_Success(t *testing.T) {
-	id := uuid.New()
+	id := domain.NewMetricID()
 	now := time.Now().Truncate(time.Microsecond)
 
 	rows := &mockRows{scanFunc: func(dest ...any) error {
-		fillMetricDest(dest, id, now)
+		fillMetricDest(dest, id.UUID(), now)
 		return nil
 	}}
 
@@ -118,11 +119,11 @@ func TestScanMetricView_Error(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestScanMetricFromRows_Success(t *testing.T) {
-	id := uuid.New()
+	id := domain.NewMetricID()
 	now := time.Now().Truncate(time.Microsecond)
 
 	rows := &mockRows{scanFunc: func(dest ...any) error {
-		fillMetricDest(dest, id, now)
+		fillMetricDest(dest, id.UUID(), now)
 		return nil
 	}}
 
@@ -130,7 +131,7 @@ func TestScanMetricFromRows_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if fm.ID() != id {
+	if fm.TypedID() != id {
 		t.Errorf("ID = %v, want %v", fm.ID(), id)
 	}
 	if fm.Name() != "handleRequest" {

@@ -49,7 +49,7 @@ func (h *UpdateDataExportHandler) Handle(ctx context.Context, cmd UpdateDataExpo
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "UpdateDataExport", "data_export")()
 
-	de, err := h.repo.FindByID(ctx, cmd.ID.UUID())
+	de, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {
 		return apperrors.MapToServiceError(err)
 	}
@@ -74,12 +74,12 @@ func (h *UpdateDataExportHandler) Handle(ctx context.Context, cmd UpdateDataExpo
 	}
 
 	if err := h.repo.Update(ctx, de); err != nil {
-		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "UpdateDataExport", Entity: "data_export", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "UpdateDataExport", Entity: "data_export", EntityID: cmd.ID, Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, de.Events()...); err != nil {
-		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "UpdateDataExport", Entity: "data_export", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "UpdateDataExport", Entity: "data_export", EntityID: cmd.ID, Err: err}.KV()...)
 	}
 
 	return nil

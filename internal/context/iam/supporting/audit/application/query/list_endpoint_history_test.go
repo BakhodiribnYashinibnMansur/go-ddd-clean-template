@@ -24,7 +24,7 @@ func TestListEndpointHistoryHandler_Success(t *testing.T) {
 	readRepo := &mockAuditReadRepository{
 		endpointViews: []*domain.EndpointHistoryView{
 			{
-				ID:         uuid.New(),
+				ID:         domain.NewEndpointHistoryID(),
 				UserID:     &userID,
 				Endpoint:   "/api/v1/users",
 				Method:     "GET",
@@ -35,7 +35,7 @@ func TestListEndpointHistoryHandler_Success(t *testing.T) {
 				CreatedAt:  now,
 			},
 			{
-				ID:         uuid.New(),
+				ID:         domain.NewEndpointHistoryID(),
 				UserID:     &userID,
 				Endpoint:   "/api/v1/roles",
 				Method:     "POST",
@@ -132,7 +132,7 @@ func TestListEndpointHistoryHandler_MapsAllFields(t *testing.T) {
 	t.Parallel()
 
 	userID := uuid.New()
-	entryID := uuid.New()
+	entryID := domain.NewEndpointHistoryID()
 	ip := "10.0.0.1"
 	ua := "TestAgent"
 	now := time.Now()

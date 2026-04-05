@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"gct/internal/context/admin/generic/featureflag/application/query"
+
 	"github.com/stretchr/testify/require"
 )
 

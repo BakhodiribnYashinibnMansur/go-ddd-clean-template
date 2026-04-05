@@ -6,19 +6,18 @@ import (
 
 	"gct/internal/context/iam/generic/authz/domain"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
 // --- Mock RolePermissionRepository ---
 
 type mockRolePermissionRepository struct {
-	assignedRoleID uuid.UUID
-	assignedPermID uuid.UUID
-	assignFn       func(ctx context.Context, roleID, permissionID uuid.UUID) error
+	assignedRoleID domain.RoleID
+	assignedPermID domain.PermissionID
+	assignFn       func(ctx context.Context, roleID domain.RoleID, permissionID domain.PermissionID) error
 }
 
-func (m *mockRolePermissionRepository) Assign(ctx context.Context, roleID, permissionID uuid.UUID) error {
+func (m *mockRolePermissionRepository) Assign(ctx context.Context, roleID domain.RoleID, permissionID domain.PermissionID) error {
 	if m.assignFn != nil {
 		return m.assignFn(ctx, roleID, permissionID)
 	}
@@ -27,7 +26,7 @@ func (m *mockRolePermissionRepository) Assign(ctx context.Context, roleID, permi
 	return nil
 }
 
-func (m *mockRolePermissionRepository) Revoke(ctx context.Context, roleID, permissionID uuid.UUID) error {
+func (m *mockRolePermissionRepository) Revoke(ctx context.Context, roleID domain.RoleID, permissionID domain.PermissionID) error {
 	return nil
 }
 
@@ -42,11 +41,11 @@ func TestAssignPermissionHandler_Success(t *testing.T) {
 
 	handler := NewAssignPermissionHandler(repo, eventBus, log)
 
-	roleID := uuid.New()
-	permID := uuid.New()
+	roleID := domain.NewRoleID()
+	permID := domain.NewPermissionID()
 	cmd := AssignPermissionCommand{
-		RoleID:       domain.RoleID(roleID),
-		PermissionID: domain.PermissionID(permID),
+		RoleID:       roleID,
+		PermissionID: permID,
 	}
 
 	err := handler.Handle(context.Background(), cmd)
@@ -68,7 +67,7 @@ func TestAssignPermissionHandler_Success(t *testing.T) {
 		t.Errorf("expected event authz.permission_granted, got %s", eventBus.publishedEvents[0].EventName())
 	}
 
-	if eventBus.publishedEvents[0].AggregateID() != roleID {
+	if eventBus.publishedEvents[0].AggregateID() != roleID.UUID() {
 		t.Errorf("expected aggregate ID %s, got %s", roleID, eventBus.publishedEvents[0].AggregateID())
 	}
 }

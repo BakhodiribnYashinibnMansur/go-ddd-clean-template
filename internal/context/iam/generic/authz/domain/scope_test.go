@@ -1,9 +1,8 @@
 package domain_test
 
 import (
-	"testing"
-
 	"gct/internal/context/iam/generic/authz/domain"
+	"testing"
 )
 
 func TestScope_ValueObject(t *testing.T) {

@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+
 	// pgproto3 not needed
 
 	"github.com/Masterminds/squirrel"
@@ -29,15 +30,15 @@ type mockRows struct {
 	scanFunc func(dest ...any) error
 }
 
-func (m *mockRows) Scan(dest ...any) error                        { return m.scanFunc(dest...) }
-func (m *mockRows) Close()                                        {}
-func (m *mockRows) Err() error                                    { return nil }
-func (m *mockRows) CommandTag() pgconn.CommandTag                 { return pgconn.CommandTag{} }
+func (m *mockRows) Scan(dest ...any) error                       { return m.scanFunc(dest...) }
+func (m *mockRows) Close()                                       {}
+func (m *mockRows) Err() error                                   { return nil }
+func (m *mockRows) CommandTag() pgconn.CommandTag                { return pgconn.CommandTag{} }
 func (m *mockRows) FieldDescriptions() []pgconn.FieldDescription { return nil }
-func (m *mockRows) Next() bool                                    { return false }
-func (m *mockRows) Values() ([]any, error)                        { return nil, nil }
-func (m *mockRows) RawValues() [][]byte                           { return nil }
-func (m *mockRows) Conn() *pgx.Conn                               { return nil }
+func (m *mockRows) Next() bool                                   { return false }
+func (m *mockRows) Values() ([]any, error)                       { return nil, nil }
+func (m *mockRows) RawValues() [][]byte                          { return nil }
+func (m *mockRows) Conn() *pgx.Conn                              { return nil }
 
 // ---------------------------------------------------------------------------
 // Constructor tests
@@ -62,12 +63,12 @@ func TestNewSiteSettingReadRepo(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestScanSiteSettingView_Success(t *testing.T) {
-	id := uuid.New()
+	id := domain.NewSiteSettingID()
 	now := time.Now().Truncate(time.Microsecond)
 
 	row := &mockRow{
 		scanFunc: func(dest ...any) error {
-			*dest[0].(*uuid.UUID) = id
+			*dest[0].(*uuid.UUID) = id.UUID()
 			*dest[1].(*string) = "site_name"
 			*dest[2].(*string) = "My Site"
 			*dest[3].(*string) = "general"
@@ -122,12 +123,12 @@ func TestScanSiteSettingView_Error(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestScanSiteSettingViewFromRows_Success(t *testing.T) {
-	id := uuid.New()
+	id := domain.NewSiteSettingID()
 	now := time.Now().Truncate(time.Microsecond)
 
 	rows := &mockRows{
 		scanFunc: func(dest ...any) error {
-			*dest[0].(*uuid.UUID) = id
+			*dest[0].(*uuid.UUID) = id.UUID()
 			*dest[1].(*string) = "key1"
 			*dest[2].(*string) = "val1"
 			*dest[3].(*string) = "email"
@@ -164,12 +165,12 @@ func TestScanSiteSettingViewFromRows_Error(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestScanSiteSetting_Success(t *testing.T) {
-	id := uuid.New()
+	id := domain.NewSiteSettingID()
 	now := time.Now().Truncate(time.Microsecond)
 
 	row := &mockRow{
 		scanFunc: func(dest ...any) error {
-			*dest[0].(*uuid.UUID) = id
+			*dest[0].(*uuid.UUID) = id.UUID()
 			*dest[1].(*string) = "maint_mode"
 			*dest[2].(*string) = "false"
 			*dest[3].(*string) = "general"
@@ -184,8 +185,8 @@ func TestScanSiteSetting_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if s.ID() != id {
-		t.Errorf("ID = %v, want %v", s.ID(), id)
+	if s.TypedID() != id {
+		t.Errorf("ID = %v, want %v", s.TypedID(), id)
 	}
 	if s.Key() != "maint_mode" {
 		t.Errorf("Key = %q, want %q", s.Key(), "maint_mode")
@@ -218,12 +219,12 @@ func TestScanSiteSetting_Error(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestScanSiteSettingFromRows_Success(t *testing.T) {
-	id := uuid.New()
+	id := domain.NewSiteSettingID()
 	now := time.Now().Truncate(time.Microsecond)
 
 	rows := &mockRows{
 		scanFunc: func(dest ...any) error {
-			*dest[0].(*uuid.UUID) = id
+			*dest[0].(*uuid.UUID) = id.UUID()
 			*dest[1].(*string) = "k"
 			*dest[2].(*string) = "v"
 			*dest[3].(*string) = "t"
@@ -238,8 +239,8 @@ func TestScanSiteSettingFromRows_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if s.ID() != id {
-		t.Errorf("ID = %v, want %v", s.ID(), id)
+	if s.TypedID() != id {
+		t.Errorf("ID = %v, want %v", s.TypedID(), id)
 	}
 }
 

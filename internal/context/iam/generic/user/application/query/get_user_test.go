@@ -1,13 +1,13 @@
 package query
 
 import (
-	"gct/internal/kernel/infrastructure/logger"
 	"context"
 	"errors"
+	"gct/internal/kernel/infrastructure/logger"
 	"testing"
 
-	shared "gct/internal/kernel/domain"
 	"gct/internal/context/iam/generic/user/domain"
+	shared "gct/internal/kernel/domain"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -28,7 +28,7 @@ type errorReadRepo struct {
 	err error
 }
 
-func (m *errorReadRepo) FindByID(_ context.Context, _ uuid.UUID) (*domain.UserView, error) {
+func (m *errorReadRepo) FindByID(_ context.Context, _ domain.UserID) (*domain.UserView, error) {
 	return nil, m.err
 }
 
@@ -36,17 +36,17 @@ func (m *errorReadRepo) List(_ context.Context, _ domain.UsersFilter) ([]*domain
 	return nil, 0, m.err
 }
 
-func (m *errorReadRepo) FindSessionByID(_ context.Context, _ uuid.UUID) (*shared.AuthSession, error) {
+func (m *errorReadRepo) FindSessionByID(_ context.Context, _ domain.SessionID) (*shared.AuthSession, error) {
 	return nil, m.err
 }
 
-func (m *errorReadRepo) FindUserForAuth(_ context.Context, _ uuid.UUID) (*shared.AuthUser, error) {
+func (m *errorReadRepo) FindUserForAuth(_ context.Context, _ domain.UserID) (*shared.AuthUser, error) {
 	return nil, m.err
 }
 
 var errRepoFailure = errors.New("repository failure")
 
-func (m *mockUserReadRepository) FindByID(_ context.Context, id uuid.UUID) (*domain.UserView, error) {
+func (m *mockUserReadRepository) FindByID(_ context.Context, id domain.UserID) (*domain.UserView, error) {
 	if m.view != nil && m.view.ID == id {
 		return m.view, nil
 	}
@@ -57,14 +57,14 @@ func (m *mockUserReadRepository) List(_ context.Context, _ domain.UsersFilter) (
 	return m.views, m.total, nil
 }
 
-func (m *mockUserReadRepository) FindSessionByID(_ context.Context, _ uuid.UUID) (*shared.AuthSession, error) {
+func (m *mockUserReadRepository) FindSessionByID(_ context.Context, _ domain.SessionID) (*shared.AuthSession, error) {
 	if m.session != nil {
 		return m.session, nil
 	}
 	return nil, domain.ErrUserNotFound
 }
 
-func (m *mockUserReadRepository) FindUserForAuth(_ context.Context, _ uuid.UUID) (*shared.AuthUser, error) {
+func (m *mockUserReadRepository) FindUserForAuth(_ context.Context, _ domain.UserID) (*shared.AuthUser, error) {
 	if m.authUser != nil {
 		return m.authUser, nil
 	}
@@ -76,7 +76,7 @@ func (m *mockUserReadRepository) FindUserForAuth(_ context.Context, _ uuid.UUID)
 func TestGetUserHandler_Handle(t *testing.T) {
 	t.Parallel()
 
-	userID := uuid.New()
+	userID := domain.NewUserID()
 	phone := "+998901234567"
 	email := "test@example.com"
 
@@ -138,7 +138,7 @@ func TestGetUserHandler_NotFound(t *testing.T) {
 func TestGetUserHandler_AllFieldsMapped(t *testing.T) {
 	t.Parallel()
 
-	userID := uuid.New()
+	userID := domain.NewUserID()
 	roleID := uuid.New()
 	phone := "+998901234567"
 	email := "full@example.com"
@@ -175,7 +175,7 @@ func TestGetUserHandler_AllFieldsMapped(t *testing.T) {
 func TestGetUserHandler_NilOptionalFields(t *testing.T) {
 	t.Parallel()
 
-	userID := uuid.New()
+	userID := domain.NewUserID()
 
 	readRepo := &mockUserReadRepository{
 		view: &domain.UserView{

@@ -41,8 +41,8 @@ func (h *DeleteIPRuleHandler) Handle(ctx context.Context, cmd DeleteIPRuleComman
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "DeleteIPRule", "ip_rule")()
 
-	if err := h.repo.Delete(ctx, cmd.ID.UUID()); err != nil {
-		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteIPRule", Entity: "ip_rule", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
+	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
+		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteIPRule", Entity: "ip_rule", EntityID: cmd.ID.String(), Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 	return nil

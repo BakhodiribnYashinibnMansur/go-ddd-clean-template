@@ -82,7 +82,7 @@ func TestScanFileView_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if v.ID != testID {
+	if v.ID != domain.FileID(testID) {
 		t.Errorf("expected ID %v, got %v", testID, v.ID)
 	}
 	if v.Name != "abc123.pdf" {
@@ -170,7 +170,7 @@ func TestScanFileViewFromRows_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if v.ID != testID {
+	if v.ID != domain.FileID(testID) {
 		t.Errorf("expected ID %v, got %v", testID, v.ID)
 	}
 	if v.Size != 4096 {

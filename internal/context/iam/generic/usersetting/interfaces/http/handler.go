@@ -3,16 +3,15 @@ package http
 import (
 	"net/http"
 
-	"gct/internal/kernel/infrastructure/httpx"
-	"gct/internal/kernel/infrastructure/httpx/response"
-	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/context/iam/generic/usersetting"
 	"gct/internal/context/iam/generic/usersetting/application/command"
 	"gct/internal/context/iam/generic/usersetting/application/query"
 	"gct/internal/context/iam/generic/usersetting/domain"
+	"gct/internal/kernel/infrastructure/httpx"
+	"gct/internal/kernel/infrastructure/httpx/response"
+	"gct/internal/kernel/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 // Handler provides HTTP endpoints for the UserSetting bounded context.
@@ -66,12 +65,12 @@ func (h *Handler) List(ctx *gin.Context) {
 
 // Delete deletes a user setting.
 func (h *Handler) Delete(ctx *gin.Context) {
-	id, err := uuid.Parse(ctx.Param("id"))
+	id, err := domain.ParseUserSettingID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
-	if err := h.bc.DeleteUserSetting.Handle(ctx.Request.Context(), command.DeleteUserSettingCommand{ID: domain.UserSettingID(id)}); err != nil {
+	if err := h.bc.DeleteUserSetting.Handle(ctx.Request.Context(), command.DeleteUserSettingCommand{ID: id}); err != nil {
 		response.HandleError(ctx, err)
 		return
 	}

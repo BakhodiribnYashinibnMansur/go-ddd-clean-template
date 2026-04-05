@@ -32,9 +32,9 @@ func (h *GetUserHandler) Handle(ctx context.Context, q GetUserQuery) (_ *appdto.
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "GetUser", "user")()
 
-	view, err := h.readRepo.FindByID(ctx, q.ID.UUID())
+	view, err := h.readRepo.FindByID(ctx, q.ID)
 	if err != nil {
-		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetUser", Entity: "user", EntityID: q.ID.UUID(), Err: err}.KV()...)
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetUser", Entity: "user", EntityID: q.ID, Err: err}.KV()...)
 		return nil, apperrors.MapToServiceError(err)
 	}
 

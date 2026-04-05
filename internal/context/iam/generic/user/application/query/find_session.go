@@ -32,7 +32,7 @@ func (h *FindSessionHandler) Handle(ctx context.Context, q FindSessionQuery) (_ 
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "FindSession", "user")()
 
-	session, err := h.readRepo.FindSessionByID(ctx, q.SessionID.UUID())
+	session, err := h.readRepo.FindSessionByID(ctx, q.SessionID)
 	if err != nil {
 		return nil, fmt.Errorf("find_session: read repo: %w", err)
 	}

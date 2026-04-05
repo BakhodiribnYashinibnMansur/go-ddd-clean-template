@@ -34,13 +34,13 @@ func (m *mockRepo) FindByKey(_ context.Context, key string) (*domain.FeatureFlag
 func (m *mockRepo) Save(context.Context, *domain.FeatureFlag) error {
 	panic("not implemented")
 }
-func (m *mockRepo) FindByID(context.Context, uuid.UUID) (*domain.FeatureFlag, error) {
+func (m *mockRepo) FindByID(context.Context, domain.FeatureFlagID) (*domain.FeatureFlag, error) {
 	panic("not implemented")
 }
 func (m *mockRepo) Update(context.Context, *domain.FeatureFlag) error {
 	panic("not implemented")
 }
-func (m *mockRepo) Delete(context.Context, uuid.UUID) error {
+func (m *mockRepo) Delete(context.Context, domain.FeatureFlagID) error {
 	panic("not implemented")
 }
 func (m *mockRepo) FindAll(context.Context) ([]*domain.FeatureFlag, error) {

@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"gct/internal/context/iam/generic/user/domain"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
-	"gct/internal/context/iam/generic/user/domain"
 )
 
 // SignUpCommand holds the input for user self-registration.

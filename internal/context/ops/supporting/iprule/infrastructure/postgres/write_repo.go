@@ -60,14 +60,14 @@ func (r *IPRuleWriteRepo) Save(ctx context.Context, rule *domain.IPRule) (err er
 }
 
 // FindByID retrieves an IPRule aggregate by its ID.
-func (r *IPRuleWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.IPRule, err error) {
+func (r *IPRuleWriteRepo) FindByID(ctx context.Context, id domain.IPRuleID) (result *domain.IPRule, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "IPRuleWriteRepo.FindByID")
 	defer func() { end(err) }()
 
 	sql, args, err := r.builder.
 		Select(writeColumns...).
 		From(tableName).
-		Where(squirrel.Eq{"id": id}).
+		Where(squirrel.Eq{"id": id.UUID()}).
 		ToSql()
 	if err != nil {
 		return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
@@ -102,13 +102,13 @@ func (r *IPRuleWriteRepo) Update(ctx context.Context, rule *domain.IPRule) (err 
 }
 
 // Delete removes an IPRule by its ID.
-func (r *IPRuleWriteRepo) Delete(ctx context.Context, id uuid.UUID) (err error) {
+func (r *IPRuleWriteRepo) Delete(ctx context.Context, id domain.IPRuleID) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "IPRuleWriteRepo.Delete")
 	defer func() { end(err) }()
 
 	sql, args, err := r.builder.
 		Delete(tableName).
-		Where(squirrel.Eq{"id": id}).
+		Where(squirrel.Eq{"id": id.UUID()}).
 		ToSql()
 	if err != nil {
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildDelete)

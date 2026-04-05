@@ -15,15 +15,15 @@ import (
 func TestUpdatePolicyHandler_UpdateFields(t *testing.T) {
 	t.Parallel()
 
-	policyID := uuid.New()
-	permID := uuid.New()
+	policyID := domain.NewPolicyID()
+	permID := domain.NewPermissionID()
 	existingPolicy := domain.ReconstructPolicy(
-		policyID, time.Now(), time.Now(), nil,
-		permID, domain.PolicyAllow, 1, true, nil,
+		policyID.UUID(), time.Now(), time.Now(), nil,
+		permID.UUID(), domain.PolicyAllow, 1, true, nil,
 	)
 
 	repo := &mockPolicyRepository{
-		findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.Policy, error) {
+		findByIDFn: func(_ context.Context, id domain.PolicyID) (*domain.Policy, error) {
 			if id == policyID {
 				return existingPolicy, nil
 			}

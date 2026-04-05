@@ -7,7 +7,6 @@ import (
 
 	"gct/internal/context/content/generic/translation/domain"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -17,8 +16,8 @@ func TestUpdateTranslationHandler_Handle(t *testing.T) {
 	tr := domain.NewTranslation("old_key", "en", "Old Value", "general")
 
 	repo := &mockRepo{
-		findFn: func(_ context.Context, id uuid.UUID) (*domain.Translation, error) {
-			if id == tr.ID() {
+		findFn: func(_ context.Context, id domain.TranslationID) (*domain.Translation, error) {
+			if id == tr.TypedID() {
 				return tr, nil
 			}
 			return nil, domain.ErrTranslationNotFound
@@ -91,7 +90,7 @@ func TestUpdateTranslationHandler_RepoUpdateError(t *testing.T) {
 	repoErr := errors.New("repo update failed")
 
 	errR := &errorRepo{
-		findFn:    func(_ context.Context, _ uuid.UUID) (*domain.Translation, error) { return tr, nil },
+		findFn:    func(_ context.Context, _ domain.TranslationID) (*domain.Translation, error) { return tr, nil },
 		updateErr: repoErr,
 	}
 	eb := &mockEventBus{}

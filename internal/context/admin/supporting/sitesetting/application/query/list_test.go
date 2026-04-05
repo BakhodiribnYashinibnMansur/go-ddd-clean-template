@@ -1,14 +1,13 @@
 package query
 
 import (
-	"gct/internal/kernel/infrastructure/logger"
 	"context"
+	"gct/internal/kernel/infrastructure/logger"
 	"testing"
 	"time"
 
 	"gct/internal/context/admin/supporting/sitesetting/domain"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -18,8 +17,8 @@ func TestListSiteSettingsHandler_Handle(t *testing.T) {
 	now := time.Now()
 	readRepo := &mockReadRepo{
 		views: []*domain.SiteSettingView{
-			{ID: uuid.New(), Key: "site_name", Value: "My Site", Type: "general", Description: "Name", CreatedAt: now, UpdatedAt: now},
-			{ID: uuid.New(), Key: "maintenance", Value: "false", Type: "system", Description: "Maint", CreatedAt: now, UpdatedAt: now},
+			{ID: domain.NewSiteSettingID(), Key: "site_name", Value: "My Site", Type: "general", Description: "Name", CreatedAt: now, UpdatedAt: now},
+			{ID: domain.NewSiteSettingID(), Key: "maintenance", Value: "false", Type: "system", Description: "Maint", CreatedAt: now, UpdatedAt: now},
 		},
 		total: 2,
 	}
@@ -64,7 +63,7 @@ func TestListSiteSettingsHandler_WithFilters(t *testing.T) {
 	now := time.Now()
 	readRepo := &mockReadRepo{
 		views: []*domain.SiteSettingView{
-			{ID: uuid.New(), Key: "site_name", Value: "My Site", Type: "general", CreatedAt: now, UpdatedAt: now},
+			{ID: domain.NewSiteSettingID(), Key: "site_name", Value: "My Site", Type: "general", CreatedAt: now, UpdatedAt: now},
 		},
 		total: 1,
 	}

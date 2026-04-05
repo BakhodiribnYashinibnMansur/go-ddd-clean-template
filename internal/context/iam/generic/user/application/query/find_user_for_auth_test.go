@@ -15,12 +15,12 @@ import (
 func TestFindUserForAuthHandler_Success(t *testing.T) {
 	t.Parallel()
 
-	userID := uuid.New()
+	userID := domain.NewUserID()
 	roleID := uuid.New()
 
 	readRepo := &mockUserReadRepository{
 		authUser: &shared.AuthUser{
-			ID:         userID,
+			ID:         userID.UUID(),
 			RoleID:     &roleID,
 			Active:     true,
 			IsApproved: true,
@@ -37,7 +37,7 @@ func TestFindUserForAuthHandler_Success(t *testing.T) {
 		t.Fatal("expected auth user, got nil")
 	}
 
-	if result.ID != userID {
+	if result.ID != userID.UUID() {
 		t.Errorf("expected user ID %s, got %s", userID, result.ID)
 	}
 

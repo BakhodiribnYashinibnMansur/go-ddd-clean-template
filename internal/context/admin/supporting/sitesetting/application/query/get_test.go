@@ -1,9 +1,9 @@
 package query
 
 import (
-	"gct/internal/kernel/infrastructure/logger"
 	"context"
 	"errors"
+	"gct/internal/kernel/infrastructure/logger"
 	"testing"
 	"time"
 
@@ -21,7 +21,7 @@ type mockReadRepo struct {
 	total int64
 }
 
-func (m *mockReadRepo) FindByID(_ context.Context, id uuid.UUID) (*domain.SiteSettingView, error) {
+func (m *mockReadRepo) FindByID(_ context.Context, id domain.SiteSettingID) (*domain.SiteSettingView, error) {
 	if m.view != nil && m.view.ID == id {
 		return m.view, nil
 	}
@@ -34,7 +34,7 @@ func (m *mockReadRepo) List(_ context.Context, _ domain.SiteSettingFilter) ([]*d
 
 type errorReadRepo struct{ err error }
 
-func (m *errorReadRepo) FindByID(_ context.Context, _ uuid.UUID) (*domain.SiteSettingView, error) {
+func (m *errorReadRepo) FindByID(_ context.Context, _ domain.SiteSettingID) (*domain.SiteSettingView, error) {
 	return nil, m.err
 }
 
@@ -49,7 +49,7 @@ var errRepo = errors.New("repo failure")
 func TestGetSiteSettingHandler_Handle(t *testing.T) {
 	t.Parallel()
 
-	id := uuid.New()
+	id := domain.NewSiteSettingID()
 	now := time.Now()
 	readRepo := &mockReadRepo{
 		view: &domain.SiteSettingView{
@@ -64,7 +64,7 @@ func TestGetSiteSettingHandler_Handle(t *testing.T) {
 	}
 
 	handler := NewGetSiteSettingHandler(readRepo, logger.Noop())
-	result, err := handler.Handle(context.Background(), GetSiteSettingQuery{ID: domain.SiteSettingID(id)})
+	result, err := handler.Handle(context.Background(), GetSiteSettingQuery{ID: id})
 	require.NoError(t, err)
 	if result == nil {
 		t.Fatal("expected result")
@@ -108,7 +108,7 @@ func TestGetSiteSettingHandler_RepoError(t *testing.T) {
 func TestGetSiteSettingHandler_AllFieldsMapped(t *testing.T) {
 	t.Parallel()
 
-	id := uuid.New()
+	id := domain.NewSiteSettingID()
 	now := time.Now()
 
 	readRepo := &mockReadRepo{
@@ -124,7 +124,7 @@ func TestGetSiteSettingHandler_AllFieldsMapped(t *testing.T) {
 	}
 
 	handler := NewGetSiteSettingHandler(readRepo, logger.Noop())
-	result, err := handler.Handle(context.Background(), GetSiteSettingQuery{ID: domain.SiteSettingID(id)})
+	result, err := handler.Handle(context.Background(), GetSiteSettingQuery{ID: id})
 	require.NoError(t, err)
 	if result.ID != id {
 		t.Error("ID not mapped correctly")

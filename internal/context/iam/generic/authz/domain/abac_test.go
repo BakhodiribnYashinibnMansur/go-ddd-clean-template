@@ -400,8 +400,8 @@ func TestPolicyEvaluator_ANDSemantics(t *testing.T) {
 
 	e := &PolicyEvaluator{}
 	p := newTestPolicy(PolicyAllow, 1, true, map[string]any{
-		"user.role_name":   "admin",
-		"user.department":  "engineering",
+		"user.role_name":  "admin",
+		"user.department": "engineering",
 	})
 	ctx := EvaluationContext{
 		Attrs: map[string]map[string]any{

@@ -6,6 +6,7 @@ import (
 
 	"gct/internal/context/iam/generic/usersetting/application/command"
 	"gct/internal/context/iam/generic/usersetting/domain"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -21,7 +22,7 @@ func TestDeleteUserSettingHandler_Handle(t *testing.T) {
 	err := handler.Handle(context.Background(), cmd)
 	require.NoError(t, err)
 
-	if repo.deleted != id.UUID() {
+	if repo.deleted != id {
 		t.Fatalf("expected deleted ID %s, got %s", id, repo.deleted)
 	}
 }

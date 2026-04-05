@@ -25,14 +25,14 @@ import (
 type mockRepo struct {
 	saved   *domain.SystemError
 	updated *domain.SystemError
-	findFn  func(ctx context.Context, id uuid.UUID) (*domain.SystemError, error)
+	findFn  func(ctx context.Context, id domain.SystemErrorID) (*domain.SystemError, error)
 }
 
 func (m *mockRepo) Save(_ context.Context, e *domain.SystemError) error {
 	m.saved = e
 	return nil
 }
-func (m *mockRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.SystemError, error) {
+func (m *mockRepo) FindByID(ctx context.Context, id domain.SystemErrorID) (*domain.SystemError, error) {
 	if m.findFn != nil {
 		return m.findFn(ctx, id)
 	}
@@ -52,7 +52,7 @@ type mockReadRepo struct {
 	total int64
 }
 
-func (m *mockReadRepo) FindByID(_ context.Context, id uuid.UUID) (*domain.SystemErrorView, error) {
+func (m *mockReadRepo) FindByID(_ context.Context, id domain.SystemErrorID) (*domain.SystemErrorView, error) {
 	if m.view != nil && m.view.ID == id {
 		return m.view, nil
 	}
@@ -157,7 +157,7 @@ func TestHandler_List_Success(t *testing.T) {
 
 	readRepo := &mockReadRepo{
 		views: []*domain.SystemErrorView{
-			{ID: uuid.New(), Code: "ERR_1", Severity: "high", CreatedAt: time.Now()},
+			{ID: domain.NewSystemErrorID(), Code: "ERR_1", Severity: "high", CreatedAt: time.Now()},
 		},
 		total: 1,
 	}
@@ -175,7 +175,7 @@ func TestHandler_List_Success(t *testing.T) {
 func TestHandler_Get_Success(t *testing.T) {
 	t.Parallel()
 
-	id := uuid.New()
+	id := domain.NewSystemErrorID()
 	readRepo := &mockReadRepo{
 		view: &domain.SystemErrorView{ID: id, Code: "ERR", Severity: "low", CreatedAt: time.Now()},
 	}
@@ -209,8 +209,8 @@ func TestHandler_Resolve_Success(t *testing.T) {
 
 	se := domain.NewSystemError("ERR", "test", "low")
 	repo := &mockRepo{
-		findFn: func(_ context.Context, id uuid.UUID) (*domain.SystemError, error) {
-			if id == se.ID() {
+		findFn: func(_ context.Context, id domain.SystemErrorID) (*domain.SystemError, error) {
+			if id == se.TypedID() {
 				return se, nil
 			}
 			return nil, domain.ErrSystemErrorNotFound

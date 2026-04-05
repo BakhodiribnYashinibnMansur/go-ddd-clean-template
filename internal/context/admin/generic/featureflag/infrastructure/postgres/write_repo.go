@@ -75,7 +75,7 @@ func (r *FeatureFlagWriteRepo) Save(ctx context.Context, ff *domain.FeatureFlag)
 }
 
 // FindByID retrieves a FeatureFlag aggregate by ID.
-func (r *FeatureFlagWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.FeatureFlag, err error) {
+func (r *FeatureFlagWriteRepo) FindByID(ctx context.Context, id domain.FeatureFlagID) (result *domain.FeatureFlag, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "FeatureFlagWriteRepo.FindByID")
 	defer func() { end(err) }()
 
@@ -209,13 +209,13 @@ func (r *FeatureFlagWriteRepo) Update(ctx context.Context, ff *domain.FeatureFla
 }
 
 // Delete removes a FeatureFlag by ID.
-func (r *FeatureFlagWriteRepo) Delete(ctx context.Context, id uuid.UUID) (err error) {
+func (r *FeatureFlagWriteRepo) Delete(ctx context.Context, id domain.FeatureFlagID) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "FeatureFlagWriteRepo.Delete")
 	defer func() { end(err) }()
 
 	sql, args, err := r.builder.
 		Delete(tableName).
-		Where(squirrel.Eq{"id": id}).
+		Where(squirrel.Eq{"id": id.UUID()}).
 		ToSql()
 	if err != nil {
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildDelete)

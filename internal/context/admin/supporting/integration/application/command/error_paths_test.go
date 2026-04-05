@@ -6,8 +6,6 @@ import (
 	"testing"
 
 	"gct/internal/context/admin/supporting/integration/domain"
-
-	"github.com/google/uuid"
 )
 
 // --- Error mocks ---
@@ -20,14 +18,14 @@ type errorIntegrationRepo struct {
 	saveErr   error
 	updateErr error
 	deleteErr error
-	findFn    func(ctx context.Context, id uuid.UUID) (*domain.Integration, error)
+	findFn    func(ctx context.Context, id domain.IntegrationID) (*domain.Integration, error)
 }
 
 func (m *errorIntegrationRepo) Save(_ context.Context, _ *domain.Integration) error {
 	return m.saveErr
 }
 
-func (m *errorIntegrationRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Integration, error) {
+func (m *errorIntegrationRepo) FindByID(ctx context.Context, id domain.IntegrationID) (*domain.Integration, error) {
 	if m.findFn != nil {
 		return m.findFn(ctx, id)
 	}
@@ -38,7 +36,7 @@ func (m *errorIntegrationRepo) Update(_ context.Context, _ *domain.Integration) 
 	return m.updateErr
 }
 
-func (m *errorIntegrationRepo) Delete(_ context.Context, _ uuid.UUID) error {
+func (m *errorIntegrationRepo) Delete(_ context.Context, _ domain.IntegrationID) error {
 	return m.deleteErr
 }
 
@@ -64,7 +62,7 @@ func TestUpdateHandler_RepoUpdateError(t *testing.T) {
 	i, _ := domain.NewIntegration("n", "t", "k", "u", true, nil)
 
 	repo := &errorIntegrationRepo{
-		findFn:    func(_ context.Context, _ uuid.UUID) (*domain.Integration, error) { return i, nil },
+		findFn:    func(_ context.Context, _ domain.IntegrationID) (*domain.Integration, error) { return i, nil },
 		updateErr: errRepoUpdate,
 	}
 	handler := NewUpdateHandler(repo, &mockEventBus{}, &mockLogger{})

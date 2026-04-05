@@ -40,8 +40,8 @@ func (h *DeletePolicyHandler) Handle(ctx context.Context, cmd DeletePolicyComman
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "DeletePolicy", "policy")()
 
-	if err := h.repo.Delete(ctx, cmd.ID.UUID()); err != nil {
-		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeletePolicy", Entity: "policy", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
+	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
+		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeletePolicy", Entity: "policy", EntityID: cmd.ID, Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 

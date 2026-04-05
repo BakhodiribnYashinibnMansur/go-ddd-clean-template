@@ -79,8 +79,8 @@ type sessionTestUserRepo struct {
 
 func (m *sessionTestUserRepo) Save(_ context.Context, _ *userdomain.User) error   { return nil }
 func (m *sessionTestUserRepo) Update(_ context.Context, _ *userdomain.User) error { return nil }
-func (m *sessionTestUserRepo) Delete(_ context.Context, _ uuid.UUID) error        { return nil }
-func (m *sessionTestUserRepo) FindByID(_ context.Context, id uuid.UUID) (*userdomain.User, error) {
+func (m *sessionTestUserRepo) Delete(_ context.Context, _ userdomain.UserID) error        { return nil }
+func (m *sessionTestUserRepo) FindByID(_ context.Context, id userdomain.UserID) (*userdomain.User, error) {
 	return nil, userdomain.ErrUserNotFound
 }
 func (m *sessionTestUserRepo) List(_ context.Context, _ shareddomain.Pagination) ([]*userdomain.User, int64, error) {

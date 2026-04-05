@@ -26,7 +26,7 @@ type mockFeatureFlagRepo struct {
 	saved   *domain.FeatureFlag
 	updated *domain.FeatureFlag
 	deleted bool
-	findFn  func(ctx context.Context, id uuid.UUID) (*domain.FeatureFlag, error)
+	findFn  func(ctx context.Context, id domain.FeatureFlagID) (*domain.FeatureFlag, error)
 	listFn  func(ctx context.Context, f domain.FeatureFlagFilter) ([]*domain.FeatureFlag, int64, error)
 }
 
@@ -34,7 +34,7 @@ func (m *mockFeatureFlagRepo) Save(_ context.Context, e *domain.FeatureFlag) err
 	m.saved = e
 	return nil
 }
-func (m *mockFeatureFlagRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.FeatureFlag, error) {
+func (m *mockFeatureFlagRepo) FindByID(ctx context.Context, id domain.FeatureFlagID) (*domain.FeatureFlag, error) {
 	if m.findFn != nil {
 		return m.findFn(ctx, id)
 	}
@@ -47,7 +47,7 @@ func (m *mockFeatureFlagRepo) Update(_ context.Context, e *domain.FeatureFlag) e
 	m.updated = e
 	return nil
 }
-func (m *mockFeatureFlagRepo) Delete(_ context.Context, _ uuid.UUID) error {
+func (m *mockFeatureFlagRepo) Delete(_ context.Context, _ domain.FeatureFlagID) error {
 	m.deleted = true
 	return nil
 }
@@ -59,14 +59,14 @@ type mockRuleGroupRepo struct {
 	saved   *domain.RuleGroup
 	updated *domain.RuleGroup
 	deleted bool
-	findFn  func(ctx context.Context, id uuid.UUID) (*domain.RuleGroup, error)
+	findFn  func(ctx context.Context, id domain.RuleGroupID) (*domain.RuleGroup, error)
 }
 
 func (m *mockRuleGroupRepo) Save(_ context.Context, e *domain.RuleGroup) error {
 	m.saved = e
 	return nil
 }
-func (m *mockRuleGroupRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.RuleGroup, error) {
+func (m *mockRuleGroupRepo) FindByID(ctx context.Context, id domain.RuleGroupID) (*domain.RuleGroup, error) {
 	if m.findFn != nil {
 		return m.findFn(ctx, id)
 	}
@@ -76,17 +76,17 @@ func (m *mockRuleGroupRepo) Update(_ context.Context, e *domain.RuleGroup) error
 	m.updated = e
 	return nil
 }
-func (m *mockRuleGroupRepo) Delete(_ context.Context, _ uuid.UUID) error {
+func (m *mockRuleGroupRepo) Delete(_ context.Context, _ domain.RuleGroupID) error {
 	m.deleted = true
 	return nil
 }
-func (m *mockRuleGroupRepo) FindByFlagID(_ context.Context, _ uuid.UUID) ([]*domain.RuleGroup, error) {
+func (m *mockRuleGroupRepo) FindByFlagID(_ context.Context, _ domain.FeatureFlagID) ([]*domain.RuleGroup, error) {
 	return nil, nil
 }
-func (m *mockRuleGroupRepo) SaveCondition(_ context.Context, _ uuid.UUID, _ domain.Condition) error {
+func (m *mockRuleGroupRepo) SaveCondition(_ context.Context, _ domain.RuleGroupID, _ domain.Condition) error {
 	return nil
 }
-func (m *mockRuleGroupRepo) DeleteConditionsByRuleGroupID(_ context.Context, _ uuid.UUID) error {
+func (m *mockRuleGroupRepo) DeleteConditionsByRuleGroupID(_ context.Context, _ domain.RuleGroupID) error {
 	return nil
 }
 
@@ -96,7 +96,7 @@ type mockReadRepo struct {
 	total int64
 }
 
-func (m *mockReadRepo) FindByID(_ context.Context, id uuid.UUID) (*domain.FeatureFlagView, error) {
+func (m *mockReadRepo) FindByID(_ context.Context, id domain.FeatureFlagID) (*domain.FeatureFlagView, error) {
 	if m.view != nil && m.view.ID == id {
 		return m.view, nil
 	}
@@ -159,12 +159,12 @@ func setupRouter(repo *mockFeatureFlagRepo, rgRepo *mockRuleGroupRepo, readRepo 
 	l := &mockLogger{}
 
 	bc := &featureflag.BoundedContext{
-		CreateFlag:      command.NewCreateHandler(repo, eb, l),
-		UpdateFlag:      command.NewUpdateHandler(repo, eb, l),
-		DeleteFlag:      command.NewDeleteHandler(repo, eb, l),
-		CreateRuleGroup: command.NewCreateRuleGroupHandler(repo, rgRepo, eb, l),
-		UpdateRuleGroup: command.NewUpdateRuleGroupHandler(rgRepo, eb, l),
-		DeleteRuleGroup: command.NewDeleteRuleGroupHandler(rgRepo, eb, l),
+		CreateFlag:        command.NewCreateHandler(repo, eb, l),
+		UpdateFlag:        command.NewUpdateHandler(repo, eb, l),
+		DeleteFlag:        command.NewDeleteHandler(repo, eb, l),
+		CreateRuleGroup:   command.NewCreateRuleGroupHandler(repo, rgRepo, eb, l),
+		UpdateRuleGroup:   command.NewUpdateRuleGroupHandler(rgRepo, eb, l),
+		DeleteRuleGroup:   command.NewDeleteRuleGroupHandler(rgRepo, eb, l),
 		GetFlag:           query.NewGetHandler(readRepo, l),
 		ListFlags:         query.NewListHandler(readRepo, l),
 		EvaluateFlag:      query.NewEvaluateHandler(&mockCachedEvaluator{}),
@@ -222,7 +222,7 @@ func TestHandler_List_Success(t *testing.T) {
 
 	readRepo := &mockReadRepo{
 		views: []*domain.FeatureFlagView{
-			{ID: uuid.New(), Name: "Flag 1", Key: "flag_1"},
+			{ID: domain.NewFeatureFlagID(), Name: "Flag 1", Key: "flag_1"},
 		},
 		total: 1,
 	}
@@ -240,7 +240,7 @@ func TestHandler_List_Success(t *testing.T) {
 func TestHandler_Get_Success(t *testing.T) {
 	t.Parallel()
 
-	id := uuid.New()
+	id := domain.NewFeatureFlagID()
 	readRepo := &mockReadRepo{
 		view: &domain.FeatureFlagView{ID: id, Name: "Flag", Key: "flag"},
 	}
@@ -272,11 +272,11 @@ func TestHandler_Get_InvalidID(t *testing.T) {
 func TestHandler_Delete_Success(t *testing.T) {
 	t.Parallel()
 
-	id := uuid.New()
+	id := domain.NewFeatureFlagID()
 	repo := &mockFeatureFlagRepo{
-		findFn: func(_ context.Context, fid uuid.UUID) (*domain.FeatureFlag, error) {
+		findFn: func(_ context.Context, fid domain.FeatureFlagID) (*domain.FeatureFlag, error) {
 			now := time.Now()
-			return domain.ReconstructFeatureFlag(fid, now, now, nil, "flag", "flag_key", "", "boolean", "false", 0, true, nil), nil
+			return domain.ReconstructFeatureFlag(fid.UUID(), now, now, nil, "flag", "flag_key", "", "boolean", "false", 0, true, nil), nil
 		},
 	}
 	router := setupRouter(repo, &mockRuleGroupRepo{}, &mockReadRepo{})
@@ -322,11 +322,11 @@ func TestHandler_Update_BadRequest(t *testing.T) {
 func TestHandler_CreateRuleGroup_Success(t *testing.T) {
 	t.Parallel()
 
-	flagID := uuid.New()
+	flagID := domain.NewFeatureFlagID()
 	repo := &mockFeatureFlagRepo{
-		findFn: func(_ context.Context, id uuid.UUID) (*domain.FeatureFlag, error) {
+		findFn: func(_ context.Context, id domain.FeatureFlagID) (*domain.FeatureFlag, error) {
 			now := time.Now()
-			return domain.ReconstructFeatureFlag(id, now, now, nil, "flag", "key", "", "boolean", "false", 0, true, nil), nil
+			return domain.ReconstructFeatureFlag(id.UUID(), now, now, nil, "flag", "key", "", "boolean", "false", 0, true, nil), nil
 		},
 	}
 	rgRepo := &mockRuleGroupRepo{}

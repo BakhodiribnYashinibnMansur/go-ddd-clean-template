@@ -62,14 +62,14 @@ func (r *RateLimitWriteRepo) Save(ctx context.Context, rl *domain.RateLimit) (er
 }
 
 // FindByID retrieves a RateLimit aggregate by its ID.
-func (r *RateLimitWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.RateLimit, err error) {
+func (r *RateLimitWriteRepo) FindByID(ctx context.Context, id domain.RateLimitID) (result *domain.RateLimit, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "RateLimitWriteRepo.FindByID")
 	defer func() { end(err) }()
 
 	sql, args, err := r.builder.
 		Select(writeColumns...).
 		From(tableName).
-		Where(squirrel.Eq{"id": id}).
+		Where(squirrel.Eq{"id": id.UUID()}).
 		ToSql()
 	if err != nil {
 		return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
@@ -106,13 +106,13 @@ func (r *RateLimitWriteRepo) Update(ctx context.Context, rl *domain.RateLimit) (
 }
 
 // Delete removes a RateLimit by its ID.
-func (r *RateLimitWriteRepo) Delete(ctx context.Context, id uuid.UUID) (err error) {
+func (r *RateLimitWriteRepo) Delete(ctx context.Context, id domain.RateLimitID) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "RateLimitWriteRepo.Delete")
 	defer func() { end(err) }()
 
 	sql, args, err := r.builder.
 		Delete(tableName).
-		Where(squirrel.Eq{"id": id}).
+		Where(squirrel.Eq{"id": id.UUID()}).
 		ToSql()
 	if err != nil {
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildDelete)

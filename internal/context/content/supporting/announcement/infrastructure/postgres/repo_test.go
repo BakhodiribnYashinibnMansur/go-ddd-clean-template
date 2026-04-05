@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+
 	// pgproto3 not needed
 
 	"github.com/Masterminds/squirrel"
@@ -29,15 +30,15 @@ type mockRows struct {
 	scanFunc func(dest ...any) error
 }
 
-func (m *mockRows) Scan(dest ...any) error                        { return m.scanFunc(dest...) }
-func (m *mockRows) Close()                                        {}
-func (m *mockRows) Err() error                                    { return nil }
-func (m *mockRows) CommandTag() pgconn.CommandTag                 { return pgconn.CommandTag{} }
+func (m *mockRows) Scan(dest ...any) error                       { return m.scanFunc(dest...) }
+func (m *mockRows) Close()                                       {}
+func (m *mockRows) Err() error                                   { return nil }
+func (m *mockRows) CommandTag() pgconn.CommandTag                { return pgconn.CommandTag{} }
 func (m *mockRows) FieldDescriptions() []pgconn.FieldDescription { return nil }
-func (m *mockRows) Next() bool                                    { return false }
-func (m *mockRows) Values() ([]any, error)                        { return nil, nil }
-func (m *mockRows) RawValues() [][]byte                           { return nil }
-func (m *mockRows) Conn() *pgx.Conn                               { return nil }
+func (m *mockRows) Next() bool                                   { return false }
+func (m *mockRows) Values() ([]any, error)                       { return nil, nil }
+func (m *mockRows) RawValues() [][]byte                          { return nil }
+func (m *mockRows) Conn() *pgx.Conn                              { return nil }
 
 // ---------------------------------------------------------------------------
 // helpers
@@ -80,11 +81,11 @@ func TestNewAnnouncementReadRepo(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestScanAnnouncementView_Success(t *testing.T) {
-	id := uuid.New()
+	id := domain.NewAnnouncementID()
 	now := time.Now().Truncate(time.Microsecond)
 
 	row := &mockRow{scanFunc: func(dest ...any) error {
-		fillAnnouncementDest(dest, id, now)
+		fillAnnouncementDest(dest, id.UUID(), now)
 		return nil
 	}}
 
@@ -119,11 +120,11 @@ func TestScanAnnouncementView_Error(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestScanAnnouncementViewFromRows_Success(t *testing.T) {
-	id := uuid.New()
+	id := domain.NewAnnouncementID()
 	now := time.Now().Truncate(time.Microsecond)
 
 	rows := &mockRows{scanFunc: func(dest ...any) error {
-		fillAnnouncementDest(dest, id, now)
+		fillAnnouncementDest(dest, id.UUID(), now)
 		return nil
 	}}
 
@@ -149,11 +150,11 @@ func TestScanAnnouncementViewFromRows_Error(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestScanAnnouncement_Success(t *testing.T) {
-	id := uuid.New()
+	id := domain.NewAnnouncementID()
 	now := time.Now().Truncate(time.Microsecond)
 
 	row := &mockRow{scanFunc: func(dest ...any) error {
-		fillAnnouncementDest(dest, id, now)
+		fillAnnouncementDest(dest, id.UUID(), now)
 		return nil
 	}}
 
@@ -161,7 +162,7 @@ func TestScanAnnouncement_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if a.ID() != id {
+	if a.TypedID() != id {
 		t.Errorf("ID = %v, want %v", a.ID(), id)
 	}
 	if a.Title().Uz != "Title" {
@@ -185,11 +186,11 @@ func TestScanAnnouncement_Error(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestScanAnnouncementFromRows_Success(t *testing.T) {
-	id := uuid.New()
+	id := domain.NewAnnouncementID()
 	now := time.Now().Truncate(time.Microsecond)
 
 	rows := &mockRows{scanFunc: func(dest ...any) error {
-		fillAnnouncementDest(dest, id, now)
+		fillAnnouncementDest(dest, id.UUID(), now)
 		return nil
 	}}
 
@@ -197,7 +198,7 @@ func TestScanAnnouncementFromRows_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if a.ID() != id {
+	if a.TypedID() != id {
 		t.Errorf("ID = %v, want %v", a.ID(), id)
 	}
 }

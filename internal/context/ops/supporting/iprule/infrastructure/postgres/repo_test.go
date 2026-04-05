@@ -88,7 +88,7 @@ func TestScanIPRuleView_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if v.ID != id {
+	if v.ID != domain.IPRuleID(id) {
 		t.Errorf("ID = %v, want %v", v.ID, id)
 	}
 	if v.IPAddress != "192.168.1.1" {
@@ -130,7 +130,7 @@ func TestScanIPRuleViewFromRows_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if v.ID != id {
+	if v.ID != domain.IPRuleID(id) {
 		t.Errorf("ID = %v, want %v", v.ID, id)
 	}
 }

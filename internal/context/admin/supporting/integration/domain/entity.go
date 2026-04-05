@@ -100,9 +100,10 @@ func (i *Integration) UpdateDetails(name, intType, apiKey, webhookURL *string, e
 // Getters
 // ---------------------------------------------------------------------------
 
-func (i *Integration) Name() string           { return i.name }
-func (i *Integration) Type() string           { return i.intType }
-func (i *Integration) APIKey() string         { return i.apiKey }
-func (i *Integration) WebhookURL() string     { return i.webhookURL }
-func (i *Integration) Enabled() bool          { return i.enabled }
+func (i *Integration) TypedID() IntegrationID    { return IntegrationID(i.ID()) }
+func (i *Integration) Name() string              { return i.name }
+func (i *Integration) Type() string              { return i.intType }
+func (i *Integration) APIKey() string            { return i.apiKey }
+func (i *Integration) WebhookURL() string        { return i.webhookURL }
+func (i *Integration) Enabled() bool             { return i.enabled }
 func (i *Integration) Config() map[string]string { return i.config }

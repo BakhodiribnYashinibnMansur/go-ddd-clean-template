@@ -19,7 +19,7 @@ func TestRoleID(t *testing.T) {
 		}
 		parsed, err := domain.ParseRoleID(id.String())
 		if err != nil {
-			t.Fatalf("ParseRoleID round-trip failed: %v", err)
+			t.Fatalf("domain.ParseRoleID round-trip failed: %v", err)
 		}
 		if parsed != id {
 			t.Fatalf("round-trip mismatch: got %s, want %s", parsed, id)
@@ -80,7 +80,7 @@ func TestPermissionID(t *testing.T) {
 		}
 		parsed, err := domain.ParsePermissionID(id.String())
 		if err != nil {
-			t.Fatalf("ParsePermissionID round-trip failed: %v", err)
+			t.Fatalf("domain.ParsePermissionID round-trip failed: %v", err)
 		}
 		if parsed != id {
 			t.Fatalf("round-trip mismatch: got %s, want %s", parsed, id)
@@ -141,7 +141,7 @@ func TestPolicyID(t *testing.T) {
 		}
 		parsed, err := domain.ParsePolicyID(id.String())
 		if err != nil {
-			t.Fatalf("ParsePolicyID round-trip failed: %v", err)
+			t.Fatalf("domain.ParsePolicyID round-trip failed: %v", err)
 		}
 		if parsed != id {
 			t.Fatalf("round-trip mismatch: got %s, want %s", parsed, id)
@@ -198,7 +198,7 @@ func TestScopeID(t *testing.T) {
 		}
 		parsed, err := domain.ParseScopeID(id.String())
 		if err != nil {
-			t.Fatalf("ParseScopeID round-trip failed: %v", err)
+			t.Fatalf("domain.ParseScopeID round-trip failed: %v", err)
 		}
 		if parsed != id {
 			t.Fatalf("round-trip mismatch: got %s, want %s", parsed, id)

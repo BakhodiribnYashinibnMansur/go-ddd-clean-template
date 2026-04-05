@@ -15,12 +15,12 @@ import (
 func TestDeleteRuleGroupHandler_Handle(t *testing.T) {
 	t.Parallel()
 
-	rgID := uuid.New()
-	flagID := uuid.New()
-	rg := domain.ReconstructRuleGroup(rgID, flagID, "test-rg", "true", 1, time.Now(), time.Now(), nil)
+	rgID := domain.NewRuleGroupID()
+	flagID := domain.NewFeatureFlagID()
+	rg := domain.ReconstructRuleGroup(rgID.UUID(), flagID.UUID(), "test-rg", "true", 1, time.Now(), time.Now(), nil)
 
 	rgRepo := &mockRuleGroupRepo{
-		findFn: func(_ context.Context, id uuid.UUID) (*domain.RuleGroup, error) {
+		findFn: func(_ context.Context, id domain.RuleGroupID) (*domain.RuleGroup, error) {
 			if id == rgID {
 				return rg, nil
 			}
@@ -62,16 +62,16 @@ func TestDeleteRuleGroupHandler_Handle_NotFound(t *testing.T) {
 func TestDeleteRuleGroupHandler_Handle_DeleteRepoError(t *testing.T) {
 	t.Parallel()
 
-	rgID := uuid.New()
-	flagID := uuid.New()
-	rg := domain.ReconstructRuleGroup(rgID, flagID, "test-rg", "true", 1, time.Now(), time.Now(), nil)
+	rgID := domain.NewRuleGroupID()
+	flagID := domain.NewFeatureFlagID()
+	rg := domain.ReconstructRuleGroup(rgID.UUID(), flagID.UUID(), "test-rg", "true", 1, time.Now(), time.Now(), nil)
 
 	repoErr := errors.New("delete failed")
 	rgRepo := &mockRuleGroupRepo{
-		findFn: func(_ context.Context, _ uuid.UUID) (*domain.RuleGroup, error) {
+		findFn: func(_ context.Context, _ domain.RuleGroupID) (*domain.RuleGroup, error) {
 			return rg, nil
 		},
-		deleteFn: func(_ context.Context, _ uuid.UUID) error {
+		deleteFn: func(_ context.Context, _ domain.RuleGroupID) error {
 			return repoErr
 		},
 	}

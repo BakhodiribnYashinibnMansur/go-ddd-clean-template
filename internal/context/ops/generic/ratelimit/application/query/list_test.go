@@ -1,14 +1,13 @@
 package query
 
 import (
-	"gct/internal/kernel/infrastructure/logger"
 	"context"
+	"gct/internal/kernel/infrastructure/logger"
 	"testing"
 	"time"
 
 	"gct/internal/context/ops/generic/ratelimit/domain"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -17,8 +16,8 @@ func TestListRateLimitsHandler_Handle(t *testing.T) {
 
 	readRepo := &mockReadRepo{
 		views: []*domain.RateLimitView{
-			{ID: uuid.New(), Name: "r1", Rule: "/a", RequestsPerWindow: 10, WindowDuration: 30, Enabled: true, CreatedAt: time.Now(), UpdatedAt: time.Now()},
-			{ID: uuid.New(), Name: "r2", Rule: "/b", RequestsPerWindow: 20, WindowDuration: 60, Enabled: false, CreatedAt: time.Now(), UpdatedAt: time.Now()},
+			{ID: domain.NewRateLimitID(), Name: "r1", Rule: "/a", RequestsPerWindow: 10, WindowDuration: 30, Enabled: true, CreatedAt: time.Now(), UpdatedAt: time.Now()},
+			{ID: domain.NewRateLimitID(), Name: "r2", Rule: "/b", RequestsPerWindow: 20, WindowDuration: 60, Enabled: false, CreatedAt: time.Now(), UpdatedAt: time.Now()},
 		},
 		total: 2,
 	}
@@ -64,7 +63,7 @@ func TestListRateLimitsHandler_WithFilters(t *testing.T) {
 	name := "api"
 	readRepo := &mockReadRepo{
 		views: []*domain.RateLimitView{
-			{ID: uuid.New(), Name: "api-rule", Rule: "/api", RequestsPerWindow: 100, WindowDuration: 60, Enabled: true, CreatedAt: time.Now(), UpdatedAt: time.Now()},
+			{ID: domain.NewRateLimitID(), Name: "api-rule", Rule: "/api", RequestsPerWindow: 100, WindowDuration: 60, Enabled: true, CreatedAt: time.Now(), UpdatedAt: time.Now()},
 		},
 		total: 1,
 	}

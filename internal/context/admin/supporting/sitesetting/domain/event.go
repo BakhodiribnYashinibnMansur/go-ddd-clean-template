@@ -21,5 +21,5 @@ func NewSettingUpdated(id uuid.UUID) SettingUpdated {
 }
 
 func (e SettingUpdated) EventName() string      { return "sitesetting.updated" }
-func (e SettingUpdated) OccurredAt() time.Time   { return e.occurredAt }
-func (e SettingUpdated) AggregateID() uuid.UUID  { return e.aggregateID }
+func (e SettingUpdated) OccurredAt() time.Time  { return e.occurredAt }
+func (e SettingUpdated) AggregateID() uuid.UUID { return e.aggregateID }

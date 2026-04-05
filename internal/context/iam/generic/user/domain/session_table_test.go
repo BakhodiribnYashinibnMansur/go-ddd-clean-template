@@ -28,10 +28,10 @@ func TestNewSession_TableDriven(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			userID := uuid.New()
-			s, _ := domain.NewSession(userID, tt.deviceType, tt.ip, tt.userAgent)
+			userID := domain.NewUserID()
+			s, _ := domain.NewSession(userID.UUID(), tt.deviceType, tt.ip, tt.userAgent)
 
-			if s.UserID() != userID {
+			if s.UserID() != userID.UUID() {
 				t.Errorf("expected userID %s, got %s", userID, s.UserID())
 			}
 			if s.DeviceType() != tt.deviceType {
@@ -111,8 +111,8 @@ func TestReconstructSession_TableDriven(t *testing.T) {
 func TestSession_Lifecycle(t *testing.T) {
 	t.Parallel()
 
-	userID := uuid.New()
-	s, _ := domain.NewSession(userID, domain.DeviceDesktop, "10.0.0.1", "TestAgent")
+	userID := domain.NewUserID()
+	s, _ := domain.NewSession(userID.UUID(), domain.DeviceDesktop, "10.0.0.1", "TestAgent")
 
 	// Initially active
 	if !s.IsActive() {

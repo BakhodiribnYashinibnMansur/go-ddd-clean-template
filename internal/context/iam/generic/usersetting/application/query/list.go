@@ -7,8 +7,8 @@ import (
 	"gct/internal/kernel/infrastructure/logger"
 
 	appdto "gct/internal/context/iam/generic/usersetting/application"
-	"gct/internal/kernel/infrastructure/pgxutil"
 	"gct/internal/context/iam/generic/usersetting/domain"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // ListUserSettingsQuery holds the input for listing user settings with filtering.

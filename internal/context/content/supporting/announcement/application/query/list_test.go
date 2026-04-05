@@ -1,14 +1,13 @@
 package query
 
 import (
-	"gct/internal/kernel/infrastructure/logger"
 	"context"
+	"gct/internal/kernel/infrastructure/logger"
 	"testing"
 	"time"
 
 	"gct/internal/context/content/supporting/announcement/domain"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -17,8 +16,8 @@ func TestListAnnouncementsHandler_Handle(t *testing.T) {
 
 	readRepo := &mockReadRepo{
 		views: []*domain.AnnouncementView{
-			{ID: uuid.New(), TitleEn: "A1", Priority: 1, CreatedAt: time.Now(), UpdatedAt: time.Now()},
-			{ID: uuid.New(), TitleEn: "A2", Priority: 2, CreatedAt: time.Now(), UpdatedAt: time.Now()},
+			{ID: domain.NewAnnouncementID(), TitleEn: "A1", Priority: 1, CreatedAt: time.Now(), UpdatedAt: time.Now()},
+			{ID: domain.NewAnnouncementID(), TitleEn: "A2", Priority: 2, CreatedAt: time.Now(), UpdatedAt: time.Now()},
 		},
 		total: 2,
 	}
@@ -63,7 +62,7 @@ func TestListAnnouncementsHandler_WithFilters(t *testing.T) {
 	published := true
 	readRepo := &mockReadRepo{
 		views: []*domain.AnnouncementView{
-			{ID: uuid.New(), TitleEn: "Pub", Published: true, CreatedAt: time.Now(), UpdatedAt: time.Now()},
+			{ID: domain.NewAnnouncementID(), TitleEn: "Pub", Published: true, CreatedAt: time.Now(), UpdatedAt: time.Now()},
 		},
 		total: 1,
 	}

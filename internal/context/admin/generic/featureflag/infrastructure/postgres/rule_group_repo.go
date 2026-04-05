@@ -67,14 +67,14 @@ func (r *RuleGroupWriteRepo) Save(ctx context.Context, rg *domain.RuleGroup) (er
 }
 
 // FindByID retrieves a rule group by ID with its conditions.
-func (r *RuleGroupWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.RuleGroup, err error) {
+func (r *RuleGroupWriteRepo) FindByID(ctx context.Context, id domain.RuleGroupID) (result *domain.RuleGroup, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "RuleGroupWriteRepo.FindByID")
 	defer func() { end(err) }()
 
 	sql, args, err := r.builder.
 		Select("id", "flag_id", "name", "variation", "priority", "created_at", "updated_at").
 		From(ruleGroupTable).
-		Where(squirrel.Eq{"id": id}).
+		Where(squirrel.Eq{"id": id.UUID()}).
 		ToSql()
 	if err != nil {
 		return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
@@ -125,7 +125,7 @@ func (r *RuleGroupWriteRepo) Update(ctx context.Context, rg *domain.RuleGroup) (
 	}
 
 	// Replace conditions: delete old, insert new.
-	if err := r.DeleteConditionsByRuleGroupID(ctx, rg.ID()); err != nil {
+	if err := r.DeleteConditionsByRuleGroupID(ctx, rg.TypedID()); err != nil {
 		return err
 	}
 
@@ -139,13 +139,13 @@ func (r *RuleGroupWriteRepo) Update(ctx context.Context, rg *domain.RuleGroup) (
 }
 
 // Delete removes a rule group by ID. FK cascades handle conditions.
-func (r *RuleGroupWriteRepo) Delete(ctx context.Context, id uuid.UUID) (err error) {
+func (r *RuleGroupWriteRepo) Delete(ctx context.Context, id domain.RuleGroupID) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "RuleGroupWriteRepo.Delete")
 	defer func() { end(err) }()
 
 	sql, args, err := r.builder.
 		Delete(ruleGroupTable).
-		Where(squirrel.Eq{"id": id}).
+		Where(squirrel.Eq{"id": id.UUID()}).
 		ToSql()
 	if err != nil {
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildDelete)
@@ -159,14 +159,14 @@ func (r *RuleGroupWriteRepo) Delete(ctx context.Context, id uuid.UUID) (err erro
 }
 
 // FindByFlagID retrieves all rule groups for a flag, ordered by priority.
-func (r *RuleGroupWriteRepo) FindByFlagID(ctx context.Context, flagID uuid.UUID) (result []*domain.RuleGroup, err error) {
+func (r *RuleGroupWriteRepo) FindByFlagID(ctx context.Context, flagID domain.FeatureFlagID) (result []*domain.RuleGroup, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "RuleGroupWriteRepo.FindByFlagID")
 	defer func() { end(err) }()
 
 	sql, args, err := r.builder.
 		Select("id", "flag_id", "name", "variation", "priority", "created_at", "updated_at").
 		From(ruleGroupTable).
-		Where(squirrel.Eq{"flag_id": flagID}).
+		Where(squirrel.Eq{"flag_id": flagID.UUID()}).
 		OrderBy("priority ASC").
 		ToSql()
 	if err != nil {
@@ -207,7 +207,7 @@ func (r *RuleGroupWriteRepo) FindByFlagID(ctx context.Context, flagID uuid.UUID)
 }
 
 // SaveCondition inserts a single condition for a rule group.
-func (r *RuleGroupWriteRepo) SaveCondition(ctx context.Context, rgID uuid.UUID, c domain.Condition) (err error) {
+func (r *RuleGroupWriteRepo) SaveCondition(ctx context.Context, rgID domain.RuleGroupID, c domain.Condition) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "RuleGroupWriteRepo.SaveCondition")
 	defer func() { end(err) }()
 
@@ -216,13 +216,13 @@ func (r *RuleGroupWriteRepo) SaveCondition(ctx context.Context, rgID uuid.UUID, 
 }
 
 // DeleteConditionsByRuleGroupID removes all conditions for a rule group.
-func (r *RuleGroupWriteRepo) DeleteConditionsByRuleGroupID(ctx context.Context, rgID uuid.UUID) (err error) {
+func (r *RuleGroupWriteRepo) DeleteConditionsByRuleGroupID(ctx context.Context, rgID domain.RuleGroupID) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "RuleGroupWriteRepo.DeleteConditionsByRuleGroupID")
 	defer func() { end(err) }()
 
 	sql, args, err := r.builder.
 		Delete(conditionTable).
-		Where(squirrel.Eq{"rule_group_id": rgID}).
+		Where(squirrel.Eq{"rule_group_id": rgID.UUID()}).
 		ToSql()
 	if err != nil {
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildDelete)

@@ -15,11 +15,11 @@ import (
 func TestUpdateRoleHandler_Rename(t *testing.T) {
 	t.Parallel()
 
-	roleID := uuid.New()
-	existingRole := domain.ReconstructRole(roleID, time.Now(), time.Now(), nil, "old_name", nil, nil)
+	roleID := domain.NewRoleID()
+	existingRole := domain.ReconstructRole(roleID.UUID(), time.Now(), time.Now(), nil, "old_name", nil, nil)
 
 	repo := &mockRoleRepository{
-		findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.Role, error) {
+		findByIDFn: func(_ context.Context, id domain.RoleID) (*domain.Role, error) {
 			if id == roleID {
 				return existingRole, nil
 			}
@@ -52,11 +52,11 @@ func TestUpdateRoleHandler_Rename(t *testing.T) {
 func TestUpdateRoleHandler_SetDescription(t *testing.T) {
 	t.Parallel()
 
-	roleID := uuid.New()
-	existingRole := domain.ReconstructRole(roleID, time.Now(), time.Now(), nil, "admin", nil, nil)
+	roleID := domain.NewRoleID()
+	existingRole := domain.ReconstructRole(roleID.UUID(), time.Now(), time.Now(), nil, "admin", nil, nil)
 
 	repo := &mockRoleRepository{
-		findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.Role, error) {
+		findByIDFn: func(_ context.Context, id domain.RoleID) (*domain.Role, error) {
 			if id == roleID {
 				return existingRole, nil
 			}

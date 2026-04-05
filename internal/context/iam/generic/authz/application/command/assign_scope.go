@@ -42,8 +42,8 @@ func (h *AssignScopeHandler) Handle(ctx context.Context, cmd AssignScopeCommand)
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "AssignScope", "role")()
 
-	if err := h.permScopeRepo.Assign(ctx, cmd.PermissionID.UUID(), cmd.Path, cmd.Method); err != nil {
-		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "AssignScope", Entity: "role", EntityID: cmd.PermissionID.UUID(), Err: err}.KV()...)
+	if err := h.permScopeRepo.Assign(ctx, cmd.PermissionID, cmd.Path, cmd.Method); err != nil {
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "AssignScope", Entity: "role", EntityID: cmd.PermissionID, Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 

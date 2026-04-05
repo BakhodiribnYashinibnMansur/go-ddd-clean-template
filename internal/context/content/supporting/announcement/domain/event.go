@@ -21,5 +21,5 @@ func NewAnnouncementPublished(id uuid.UUID) AnnouncementPublished {
 }
 
 func (e AnnouncementPublished) EventName() string      { return "announcement.published" }
-func (e AnnouncementPublished) OccurredAt() time.Time   { return e.occurredAt }
-func (e AnnouncementPublished) AggregateID() uuid.UUID  { return e.aggregateID }
+func (e AnnouncementPublished) OccurredAt() time.Time  { return e.occurredAt }
+func (e AnnouncementPublished) AggregateID() uuid.UUID { return e.aggregateID }

@@ -208,7 +208,7 @@ func TestScanView_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if v.ID != testID {
+	if v.ID != domain.SystemErrorID(testID) {
 		t.Errorf("expected ID %v, got %v", testID, v.ID)
 	}
 	if v.Code != "ERR_404" {

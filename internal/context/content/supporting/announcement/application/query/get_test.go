@@ -1,9 +1,9 @@
 package query
 
 import (
-	"gct/internal/kernel/infrastructure/logger"
 	"context"
 	"errors"
+	"gct/internal/kernel/infrastructure/logger"
 	"testing"
 	"time"
 
@@ -21,7 +21,7 @@ type mockReadRepo struct {
 	total int64
 }
 
-func (m *mockReadRepo) FindByID(_ context.Context, id uuid.UUID) (*domain.AnnouncementView, error) {
+func (m *mockReadRepo) FindByID(_ context.Context, id domain.AnnouncementID) (*domain.AnnouncementView, error) {
 	if m.view != nil && m.view.ID == id {
 		return m.view, nil
 	}
@@ -34,7 +34,7 @@ func (m *mockReadRepo) List(_ context.Context, _ domain.AnnouncementFilter) ([]*
 
 type errorReadRepo struct{ err error }
 
-func (m *errorReadRepo) FindByID(_ context.Context, _ uuid.UUID) (*domain.AnnouncementView, error) {
+func (m *errorReadRepo) FindByID(_ context.Context, _ domain.AnnouncementID) (*domain.AnnouncementView, error) {
 	return nil, m.err
 }
 
@@ -49,7 +49,7 @@ var errRepo = errors.New("repo failure")
 func TestGetAnnouncementHandler_Handle(t *testing.T) {
 	t.Parallel()
 
-	id := uuid.New()
+	id := domain.NewAnnouncementID()
 	now := time.Now()
 	readRepo := &mockReadRepo{
 		view: &domain.AnnouncementView{
@@ -112,7 +112,7 @@ func TestGetAnnouncementHandler_RepoError(t *testing.T) {
 func TestGetAnnouncementHandler_AllFieldsMapped(t *testing.T) {
 	t.Parallel()
 
-	id := uuid.New()
+	id := domain.NewAnnouncementID()
 	now := time.Now()
 	readRepo := &mockReadRepo{
 		view: &domain.AnnouncementView{

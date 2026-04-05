@@ -47,7 +47,7 @@ func (h *ResolveErrorHandler) Handle(ctx context.Context, cmd ResolveErrorComman
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "ResolveError", "system_error")()
 
-	se, err := h.repo.FindByID(ctx, cmd.ID.UUID())
+	se, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {
 		return apperrors.MapToServiceError(err)
 	}
@@ -55,12 +55,12 @@ func (h *ResolveErrorHandler) Handle(ctx context.Context, cmd ResolveErrorComman
 	se.Resolve(cmd.ResolvedBy)
 
 	if err := h.repo.Update(ctx, se); err != nil {
-		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "ResolveError", Entity: "system_error", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
+		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "ResolveError", Entity: "system_error", EntityID: cmd.ID.String(), Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, se.Events()...); err != nil {
-		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "ResolveError", Entity: "system_error", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "ResolveError", Entity: "system_error", EntityID: cmd.ID.String(), Err: err}.KV()...)
 	}
 
 	return nil

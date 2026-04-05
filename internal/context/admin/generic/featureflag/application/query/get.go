@@ -10,13 +10,11 @@ import (
 	appdto "gct/internal/context/admin/generic/featureflag/application"
 	"gct/internal/context/admin/generic/featureflag/domain"
 	"gct/internal/kernel/infrastructure/pgxutil"
-
-	"github.com/google/uuid"
 )
 
 // GetQuery holds the input for fetching a single feature flag.
 type GetQuery struct {
-	ID uuid.UUID
+	ID domain.FeatureFlagID
 }
 
 // GetHandler handles the GetQuery.

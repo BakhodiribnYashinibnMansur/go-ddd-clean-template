@@ -26,7 +26,7 @@ import (
 type mockRoleRepository struct {
 	savedRole   *domain.Role
 	updatedRole *domain.Role
-	findByIDFn  func(ctx context.Context, id uuid.UUID) (*domain.Role, error)
+	findByIDFn  func(ctx context.Context, id domain.RoleID) (*domain.Role, error)
 }
 
 func (m *mockRoleRepository) Save(_ context.Context, role *domain.Role) error {
@@ -34,7 +34,7 @@ func (m *mockRoleRepository) Save(_ context.Context, role *domain.Role) error {
 	return nil
 }
 
-func (m *mockRoleRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain.Role, error) {
+func (m *mockRoleRepository) FindByID(ctx context.Context, id domain.RoleID) (*domain.Role, error) {
 	if m.findByIDFn != nil {
 		return m.findByIDFn(ctx, id)
 	}
@@ -46,7 +46,7 @@ func (m *mockRoleRepository) Update(_ context.Context, role *domain.Role) error 
 	return nil
 }
 
-func (m *mockRoleRepository) Delete(_ context.Context, _ uuid.UUID) error { return nil }
+func (m *mockRoleRepository) Delete(_ context.Context, _ domain.RoleID) error { return nil }
 
 func (m *mockRoleRepository) List(_ context.Context, _ shared.Pagination) ([]*domain.Role, int64, error) {
 	return nil, 0, nil
@@ -61,7 +61,7 @@ func (m *mockPermissionRepository) Save(_ context.Context, perm *domain.Permissi
 	return nil
 }
 
-func (m *mockPermissionRepository) FindByID(_ context.Context, _ uuid.UUID) (*domain.Permission, error) {
+func (m *mockPermissionRepository) FindByID(_ context.Context, _ domain.PermissionID) (*domain.Permission, error) {
 	return nil, domain.ErrPermissionNotFound
 }
 
@@ -69,7 +69,7 @@ func (m *mockPermissionRepository) Update(_ context.Context, _ *domain.Permissio
 	return nil
 }
 
-func (m *mockPermissionRepository) Delete(_ context.Context, _ uuid.UUID) error { return nil }
+func (m *mockPermissionRepository) Delete(_ context.Context, _ domain.PermissionID) error { return nil }
 
 func (m *mockPermissionRepository) List(_ context.Context, _ shared.Pagination) ([]*domain.Permission, int64, error) {
 	return nil, 0, nil
@@ -77,7 +77,7 @@ func (m *mockPermissionRepository) List(_ context.Context, _ shared.Pagination) 
 
 type mockPolicyRepository struct {
 	savedPolicy *domain.Policy
-	findByIDFn  func(ctx context.Context, id uuid.UUID) (*domain.Policy, error)
+	findByIDFn  func(ctx context.Context, id domain.PolicyID) (*domain.Policy, error)
 }
 
 func (m *mockPolicyRepository) Save(_ context.Context, policy *domain.Policy) error {
@@ -85,7 +85,7 @@ func (m *mockPolicyRepository) Save(_ context.Context, policy *domain.Policy) er
 	return nil
 }
 
-func (m *mockPolicyRepository) FindByID(ctx context.Context, id uuid.UUID) (*domain.Policy, error) {
+func (m *mockPolicyRepository) FindByID(ctx context.Context, id domain.PolicyID) (*domain.Policy, error) {
 	if m.findByIDFn != nil {
 		return m.findByIDFn(ctx, id)
 	}
@@ -94,48 +94,52 @@ func (m *mockPolicyRepository) FindByID(ctx context.Context, id uuid.UUID) (*dom
 
 func (m *mockPolicyRepository) Update(_ context.Context, _ *domain.Policy) error { return nil }
 
-func (m *mockPolicyRepository) Delete(_ context.Context, _ uuid.UUID) error { return nil }
+func (m *mockPolicyRepository) Delete(_ context.Context, _ domain.PolicyID) error { return nil }
 
 func (m *mockPolicyRepository) List(_ context.Context, _ shared.Pagination) ([]*domain.Policy, int64, error) {
 	return nil, 0, nil
 }
 
-func (m *mockPolicyRepository) FindByPermissionID(_ context.Context, _ uuid.UUID) ([]*domain.Policy, error) {
+func (m *mockPolicyRepository) FindByPermissionID(_ context.Context, _ domain.PermissionID) ([]*domain.Policy, error) {
 	return nil, nil
 }
 
 type mockScopeRepository struct{}
 
-func (m *mockScopeRepository) Save(_ context.Context, _ domain.Scope) error  { return nil }
-func (m *mockScopeRepository) Delete(_ context.Context, _, _ string) error   { return nil }
+func (m *mockScopeRepository) Save(_ context.Context, _ domain.Scope) error { return nil }
+func (m *mockScopeRepository) Delete(_ context.Context, _, _ string) error  { return nil }
 func (m *mockScopeRepository) List(_ context.Context, _ shared.Pagination) ([]domain.Scope, int64, error) {
 	return nil, 0, nil
 }
 
 type mockRolePermissionRepository struct{}
 
-func (m *mockRolePermissionRepository) Assign(_ context.Context, _, _ uuid.UUID) error { return nil }
-func (m *mockRolePermissionRepository) Revoke(_ context.Context, _, _ uuid.UUID) error { return nil }
-
-type mockPermissionScopeRepository struct{}
-
-func (m *mockPermissionScopeRepository) Assign(_ context.Context, _ uuid.UUID, _, _ string) error {
+func (m *mockRolePermissionRepository) Assign(_ context.Context, _ domain.RoleID, _ domain.PermissionID) error {
+	return nil
+}
+func (m *mockRolePermissionRepository) Revoke(_ context.Context, _ domain.RoleID, _ domain.PermissionID) error {
 	return nil
 }
 
-func (m *mockPermissionScopeRepository) Revoke(_ context.Context, _ uuid.UUID, _, _ string) error {
+type mockPermissionScopeRepository struct{}
+
+func (m *mockPermissionScopeRepository) Assign(_ context.Context, _ domain.PermissionID, _, _ string) error {
+	return nil
+}
+
+func (m *mockPermissionScopeRepository) Revoke(_ context.Context, _ domain.PermissionID, _, _ string) error {
 	return nil
 }
 
 type mockAuthzReadRepository struct {
-	getRoleFn      func(ctx context.Context, id uuid.UUID) (*domain.RoleView, error)
+	getRoleFn      func(ctx context.Context, id domain.RoleID) (*domain.RoleView, error)
 	listRolesFn    func(ctx context.Context, p shared.Pagination) ([]*domain.RoleView, int64, error)
 	listPermsFn    func(ctx context.Context, p shared.Pagination) ([]*domain.PermissionView, int64, error)
 	listPoliciesFn func(ctx context.Context, p shared.Pagination) ([]*domain.PolicyView, int64, error)
 	listScopesFn   func(ctx context.Context, p shared.Pagination) ([]*domain.ScopeView, int64, error)
 }
 
-func (m *mockAuthzReadRepository) GetRole(ctx context.Context, id uuid.UUID) (*domain.RoleView, error) {
+func (m *mockAuthzReadRepository) GetRole(ctx context.Context, id domain.RoleID) (*domain.RoleView, error) {
 	if m.getRoleFn != nil {
 		return m.getRoleFn(ctx, id)
 	}
@@ -149,7 +153,7 @@ func (m *mockAuthzReadRepository) ListRoles(ctx context.Context, p shared.Pagina
 	return []*domain.RoleView{}, 0, nil
 }
 
-func (m *mockAuthzReadRepository) GetPermission(_ context.Context, _ uuid.UUID) (*domain.PermissionView, error) {
+func (m *mockAuthzReadRepository) GetPermission(_ context.Context, _ domain.PermissionID) (*domain.PermissionView, error) {
 	return nil, domain.ErrPermissionNotFound
 }
 
@@ -174,11 +178,11 @@ func (m *mockAuthzReadRepository) ListScopes(ctx context.Context, p shared.Pagin
 	return []*domain.ScopeView{}, 0, nil
 }
 
-func (m *mockAuthzReadRepository) CheckAccess(_ context.Context, _ uuid.UUID, _, _ string, _ domain.EvaluationContext) (bool, error) {
+func (m *mockAuthzReadRepository) CheckAccess(_ context.Context, _ domain.RoleID, _, _ string, _ domain.EvaluationContext) (bool, error) {
 	return false, nil
 }
 
-func (m *mockAuthzReadRepository) FindPoliciesByPermissionIDs(_ context.Context, _ []uuid.UUID) ([]*domain.Policy, error) {
+func (m *mockAuthzReadRepository) FindPoliciesByPermissionIDs(_ context.Context, _ []domain.PermissionID) ([]*domain.Policy, error) {
 	return nil, nil
 }
 
@@ -195,26 +199,26 @@ func (m *mockEventBus) Subscribe(_ string, _ application.EventHandler) error { r
 
 type mockLogger struct{}
 
-func (m *mockLogger) Debug(args ...any)                                          {}
-func (m *mockLogger) Debugf(template string, args ...any)                        {}
-func (m *mockLogger) Debugw(msg string, keysAndValues ...any)                    {}
-func (m *mockLogger) Info(args ...any)                                           {}
-func (m *mockLogger) Infof(template string, args ...any)                         {}
-func (m *mockLogger) Infow(msg string, keysAndValues ...any)                     {}
-func (m *mockLogger) Warn(args ...any)                                           {}
-func (m *mockLogger) Warnf(template string, args ...any)                         {}
-func (m *mockLogger) Warnw(msg string, keysAndValues ...any)                     {}
-func (m *mockLogger) Error(args ...any)                                          {}
-func (m *mockLogger) Errorf(template string, args ...any)                        {}
-func (m *mockLogger) Errorw(msg string, keysAndValues ...any)                    {}
-func (m *mockLogger) Fatal(args ...any)                                          {}
-func (m *mockLogger) Fatalf(template string, args ...any)                        {}
-func (m *mockLogger) Fatalw(msg string, keysAndValues ...any)                    {}
-func (m *mockLogger) Debugc(_ context.Context, _ string, _ ...any)               {}
-func (m *mockLogger) Infoc(_ context.Context, _ string, _ ...any)                {}
-func (m *mockLogger) Warnc(_ context.Context, _ string, _ ...any)                {}
-func (m *mockLogger) Errorc(_ context.Context, _ string, _ ...any)               {}
-func (m *mockLogger) Fatalc(_ context.Context, _ string, _ ...any)               {}
+func (m *mockLogger) Debug(args ...any)                            {}
+func (m *mockLogger) Debugf(template string, args ...any)          {}
+func (m *mockLogger) Debugw(msg string, keysAndValues ...any)      {}
+func (m *mockLogger) Info(args ...any)                             {}
+func (m *mockLogger) Infof(template string, args ...any)           {}
+func (m *mockLogger) Infow(msg string, keysAndValues ...any)       {}
+func (m *mockLogger) Warn(args ...any)                             {}
+func (m *mockLogger) Warnf(template string, args ...any)           {}
+func (m *mockLogger) Warnw(msg string, keysAndValues ...any)       {}
+func (m *mockLogger) Error(args ...any)                            {}
+func (m *mockLogger) Errorf(template string, args ...any)          {}
+func (m *mockLogger) Errorw(msg string, keysAndValues ...any)      {}
+func (m *mockLogger) Fatal(args ...any)                            {}
+func (m *mockLogger) Fatalf(template string, args ...any)          {}
+func (m *mockLogger) Fatalw(msg string, keysAndValues ...any)      {}
+func (m *mockLogger) Debugc(_ context.Context, _ string, _ ...any) {}
+func (m *mockLogger) Infoc(_ context.Context, _ string, _ ...any)  {}
+func (m *mockLogger) Warnc(_ context.Context, _ string, _ ...any)  {}
+func (m *mockLogger) Errorc(_ context.Context, _ string, _ ...any) {}
+func (m *mockLogger) Fatalc(_ context.Context, _ string, _ ...any) {}
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -390,8 +394,8 @@ func TestHandler_ListRoles_Success(t *testing.T) {
 	readRepo := &mockAuthzReadRepository{
 		listRolesFn: func(_ context.Context, _ shared.Pagination) ([]*domain.RoleView, int64, error) {
 			return []*domain.RoleView{
-				{ID: uuid.New(), Name: "admin"},
-				{ID: uuid.New(), Name: "viewer"},
+				{ID: domain.NewRoleID(), Name: "admin"},
+				{ID: domain.NewRoleID(), Name: "viewer"},
 			}, 2, nil
 		},
 	}
@@ -443,9 +447,9 @@ func TestHandler_ListRoles_DefaultPagination(t *testing.T) {
 func TestHandler_GetRole_Success(t *testing.T) {
 	t.Parallel()
 
-	roleID := uuid.New()
+	roleID := domain.NewRoleID()
 	readRepo := &mockAuthzReadRepository{
-		getRoleFn: func(_ context.Context, id uuid.UUID) (*domain.RoleView, error) {
+		getRoleFn: func(_ context.Context, id domain.RoleID) (*domain.RoleView, error) {
 			if id == roleID {
 				return &domain.RoleView{ID: roleID, Name: "admin"}, nil
 			}
@@ -491,7 +495,7 @@ func TestHandler_GetRole_NotFound(t *testing.T) {
 	t.Parallel()
 
 	readRepo := &mockAuthzReadRepository{
-		getRoleFn: func(_ context.Context, _ uuid.UUID) (*domain.RoleView, error) {
+		getRoleFn: func(_ context.Context, _ domain.RoleID) (*domain.RoleView, error) {
 			return nil, domain.ErrRoleNotFound
 		},
 	}
@@ -516,8 +520,8 @@ func TestHandler_UpdateRole_Success(t *testing.T) {
 
 	existingRole := domain.NewRole("old-name")
 	roleRepo := &mockRoleRepository{
-		findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.Role, error) {
-			if id == existingRole.ID() {
+		findByIDFn: func(_ context.Context, id domain.RoleID) (*domain.Role, error) {
+			if id == existingRole.TypedID() {
 				return existingRole, nil
 			}
 			return nil, domain.ErrRoleNotFound
@@ -642,7 +646,7 @@ func TestHandler_CreatePermission_WithParentID(t *testing.T) {
 	bc, _, _ := defaultBC()
 	router := setupRouter(bc)
 
-	parentID := uuid.New()
+	parentID := domain.NewPermissionID()
 	body := CreatePermissionRequest{Name: "users.read.self", ParentID: &parentID}
 	jsonBody, _ := json.Marshal(body)
 
@@ -666,7 +670,7 @@ func TestHandler_ListPermissions_Success(t *testing.T) {
 	readRepo := &mockAuthzReadRepository{
 		listPermsFn: func(_ context.Context, _ shared.Pagination) ([]*domain.PermissionView, int64, error) {
 			return []*domain.PermissionView{
-				{ID: uuid.New(), Name: "users.read"},
+				{ID: domain.NewPermissionID(), Name: "users.read"},
 			}, 1, nil
 		},
 	}
@@ -735,7 +739,7 @@ func TestHandler_CreatePolicy_Success(t *testing.T) {
 	bc, _, _ := defaultBC()
 	router := setupRouter(bc)
 
-	permID := uuid.New()
+	permID := domain.NewPermissionID()
 	body := map[string]any{
 		"permission_id": permID.String(),
 		"effect":        "ALLOW",
@@ -797,7 +801,7 @@ func TestHandler_ListPolicies_Success(t *testing.T) {
 	readRepo := &mockAuthzReadRepository{
 		listPoliciesFn: func(_ context.Context, _ shared.Pagination) ([]*domain.PolicyView, int64, error) {
 			return []*domain.PolicyView{
-				{ID: uuid.New(), PermissionID: uuid.New(), Effect: "ALLOW", Priority: 1, Active: true},
+				{ID: domain.NewPolicyID(), PermissionID: domain.NewPermissionID(), Effect: "ALLOW", Priority: 1, Active: true},
 			}, 1, nil
 		},
 	}
@@ -831,8 +835,8 @@ func TestHandler_UpdatePolicy_Success(t *testing.T) {
 
 	existingPolicy := domain.NewPolicy(uuid.New(), domain.PolicyAllow)
 	policyRepo := &mockPolicyRepository{
-		findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.Policy, error) {
-			if id == existingPolicy.ID() {
+		findByIDFn: func(_ context.Context, id domain.PolicyID) (*domain.Policy, error) {
+			if id == existingPolicy.TypedID() {
 				return existingPolicy, nil
 			}
 			return nil, domain.ErrPolicyNotFound
@@ -920,8 +924,8 @@ func TestHandler_TogglePolicy_Success(t *testing.T) {
 
 	existingPolicy := domain.NewPolicy(uuid.New(), domain.PolicyAllow)
 	policyRepo := &mockPolicyRepository{
-		findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.Policy, error) {
-			if id == existingPolicy.ID() {
+		findByIDFn: func(_ context.Context, id domain.PolicyID) (*domain.Policy, error) {
+			if id == existingPolicy.TypedID() {
 				return existingPolicy, nil
 			}
 			return nil, domain.ErrPolicyNotFound
@@ -1086,8 +1090,8 @@ func TestHandler_AssignPermission_Success(t *testing.T) {
 	bc, _, _ := defaultBC()
 	router := setupRouter(bc)
 
-	roleID := uuid.New()
-	permID := uuid.New()
+	roleID := domain.NewRoleID()
+	permID := domain.NewPermissionID()
 	body := AssignPermissionRequest{PermissionID: permID}
 	jsonBody, _ := json.Marshal(body)
 
@@ -1107,7 +1111,7 @@ func TestHandler_AssignPermission_InvalidRoleID(t *testing.T) {
 	bc, _, _ := defaultBC()
 	router := setupRouter(bc)
 
-	permID := uuid.New()
+	permID := domain.NewPermissionID()
 	body := AssignPermissionRequest{PermissionID: permID}
 	jsonBody, _ := json.Marshal(body)
 
@@ -1148,7 +1152,7 @@ func TestHandler_AssignScope_Success(t *testing.T) {
 	bc, _, _ := defaultBC()
 	router := setupRouter(bc)
 
-	permID := uuid.New()
+	permID := domain.NewPermissionID()
 	body := AssignScopeRequest{Path: "/api/v1/users", Method: "GET"}
 	jsonBody, _ := json.Marshal(body)
 
@@ -1208,7 +1212,7 @@ func TestHandler_ListRoles_ResponseFormat(t *testing.T) {
 	readRepo := &mockAuthzReadRepository{
 		listRolesFn: func(_ context.Context, _ shared.Pagination) ([]*domain.RoleView, int64, error) {
 			return []*domain.RoleView{
-				{ID: uuid.New(), Name: "admin"},
+				{ID: domain.NewRoleID(), Name: "admin"},
 			}, 1, nil
 		},
 	}

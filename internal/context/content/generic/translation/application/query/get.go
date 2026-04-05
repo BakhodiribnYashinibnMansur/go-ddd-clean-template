@@ -6,9 +6,9 @@ import (
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 
-	"gct/internal/kernel/infrastructure/pgxutil"
 	appdto "gct/internal/context/content/generic/translation/application"
 	"gct/internal/context/content/generic/translation/domain"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // GetTranslationQuery holds the input for getting a single translation.
@@ -33,9 +33,9 @@ func (h *GetTranslationHandler) Handle(ctx context.Context, q GetTranslationQuer
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "GetTranslation", "translation")()
 
-	v, err := h.readRepo.FindByID(ctx, q.ID.UUID())
+	v, err := h.readRepo.FindByID(ctx, q.ID)
 	if err != nil {
-		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetTranslation", Entity: "translation", EntityID: q.ID.UUID(), Err: err}.KV()...)
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetTranslation", Entity: "translation", EntityID: q.ID, Err: err}.KV()...)
 		return nil, apperrors.MapToServiceError(err)
 	}
 

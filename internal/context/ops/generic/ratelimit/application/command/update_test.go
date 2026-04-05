@@ -6,7 +6,6 @@ import (
 
 	"gct/internal/context/ops/generic/ratelimit/domain"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -16,8 +15,8 @@ func TestUpdateRateLimitHandler_Handle(t *testing.T) {
 	rl := domain.NewRateLimit("old-name", "/old", 50, 30, true)
 
 	repo := &mockRateLimitRepo{
-		findFn: func(_ context.Context, id uuid.UUID) (*domain.RateLimit, error) {
-			if id == rl.ID() {
+		findFn: func(_ context.Context, id domain.RateLimitID) (*domain.RateLimit, error) {
+			if id == rl.TypedID() {
 				return rl, nil
 			}
 			return nil, domain.ErrRateLimitNotFound
@@ -69,7 +68,7 @@ func TestUpdateRateLimitHandler_PartialUpdate(t *testing.T) {
 	rl := domain.NewRateLimit("name", "/rule", 100, 60, true)
 
 	repo := &mockRateLimitRepo{
-		findFn: func(_ context.Context, _ uuid.UUID) (*domain.RateLimit, error) {
+		findFn: func(_ context.Context, _ domain.RateLimitID) (*domain.RateLimit, error) {
 			return rl, nil
 		},
 	}

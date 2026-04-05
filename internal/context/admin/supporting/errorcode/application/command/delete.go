@@ -44,19 +44,19 @@ func (h *DeleteErrorCodeHandler) Handle(ctx context.Context, cmd DeleteErrorCode
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "DeleteErrorCode", "error_code")()
 
-	ec, err := h.repo.FindByID(ctx, cmd.ID.UUID())
+	ec, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {
 		return apperrors.MapToServiceError(err)
 	}
 
-	if err = h.repo.Delete(ctx, cmd.ID.UUID()); err != nil {
-		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteErrorCode", Entity: "error_code", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
+	if err = h.repo.Delete(ctx, cmd.ID); err != nil {
+		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteErrorCode", Entity: "error_code", EntityID: cmd.ID.String(), Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 
 	event := domain.NewErrorCodeDeleted(cmd.ID.UUID(), ec.Code())
 	if pubErr := h.eventBus.Publish(ctx, event); pubErr != nil {
-		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "DeleteErrorCode", Entity: "error_code", EntityID: cmd.ID.UUID(), Err: pubErr}.KV()...)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "DeleteErrorCode", Entity: "error_code", EntityID: cmd.ID.String(), Err: pubErr}.KV()...)
 	}
 
 	return nil

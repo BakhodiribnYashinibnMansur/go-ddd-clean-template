@@ -91,9 +91,10 @@ func (de *DataExport) StartProcessing() {
 // Getters
 // ---------------------------------------------------------------------------
 
-func (de *DataExport) UserID() uuid.UUID { return de.userID }
-func (de *DataExport) DataType() string  { return de.dataType }
-func (de *DataExport) Format() string    { return de.format }
-func (de *DataExport) Status() string    { return de.status }
-func (de *DataExport) FileURL() *string  { return de.fileURL }
-func (de *DataExport) Error() *string    { return de.errorMsg }
+func (de *DataExport) TypedID() DataExportID { return DataExportID(de.ID()) }
+func (de *DataExport) UserID() uuid.UUID     { return de.userID }
+func (de *DataExport) DataType() string      { return de.dataType }
+func (de *DataExport) Format() string        { return de.format }
+func (de *DataExport) Status() string        { return de.status }
+func (de *DataExport) FileURL() *string      { return de.fileURL }
+func (de *DataExport) Error() *string        { return de.errorMsg }

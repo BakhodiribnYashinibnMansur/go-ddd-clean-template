@@ -10,66 +10,66 @@ import (
 )
 
 func TestDomainEvents_TableDriven(t *testing.T) {
-	userID := uuid.New()
-	sessionID := uuid.New()
+	userID := domain.NewUserID()
+	sessionID := domain.NewSessionID()
 	oldRoleID := uuid.New()
 	newRoleID := uuid.New()
 
 	tests := []struct {
-		name          string
-		event         interface{ EventName() string }
-		expectedName  string
-		checkTime     bool
-		checkAggrID   bool
-		aggregateID   uuid.UUID
+		name         string
+		event        interface{ EventName() string }
+		expectedName string
+		checkTime    bool
+		checkAggrID  bool
+		aggregateID  uuid.UUID
 	}{
 		{
 			name:         "UserCreated",
-			event:        domain.NewUserCreated(userID, "+998901234567"),
+			event:        domain.NewUserCreated(userID.UUID(), "+998901234567"),
 			expectedName: "user.created",
 			checkTime:    true,
 			checkAggrID:  true,
-			aggregateID:  userID,
+			aggregateID:  userID.UUID(),
 		},
 		{
 			name:         "UserSignedIn",
-			event:        domain.NewUserSignedIn(userID, sessionID, "10.0.0.1"),
+			event:        domain.NewUserSignedIn(userID.UUID(), sessionID.UUID(), "10.0.0.1"),
 			expectedName: "user.signed_in",
 			checkTime:    true,
 			checkAggrID:  true,
-			aggregateID:  userID,
+			aggregateID:  userID.UUID(),
 		},
 		{
 			name:         "UserDeactivated",
-			event:        domain.NewUserDeactivated(userID),
+			event:        domain.NewUserDeactivated(userID.UUID()),
 			expectedName: "user.deactivated",
 			checkTime:    true,
 			checkAggrID:  true,
-			aggregateID:  userID,
+			aggregateID:  userID.UUID(),
 		},
 		{
 			name:         "PasswordChanged",
-			event:        domain.NewPasswordChanged(userID),
+			event:        domain.NewPasswordChanged(userID.UUID()),
 			expectedName: "user.password_changed",
 			checkTime:    true,
 			checkAggrID:  true,
-			aggregateID:  userID,
+			aggregateID:  userID.UUID(),
 		},
 		{
 			name:         "UserApproved",
-			event:        domain.NewUserApproved(userID),
+			event:        domain.NewUserApproved(userID.UUID()),
 			expectedName: "user.approved",
 			checkTime:    true,
 			checkAggrID:  true,
-			aggregateID:  userID,
+			aggregateID:  userID.UUID(),
 		},
 		{
 			name:         "RoleChanged",
-			event:        domain.NewRoleChanged(userID, &oldRoleID, newRoleID),
+			event:        domain.NewRoleChanged(userID.UUID(), &oldRoleID, newRoleID),
 			expectedName: "user.role_changed",
 			checkTime:    true,
 			checkAggrID:  true,
-			aggregateID:  userID,
+			aggregateID:  userID.UUID(),
 		},
 	}
 
@@ -113,11 +113,11 @@ func TestDomainEvents_TableDriven(t *testing.T) {
 func TestRoleChanged_CarriesOldAndNewRoleIDs(t *testing.T) {
 	t.Parallel()
 
-	userID := uuid.New()
+	userID := domain.NewUserID()
 	oldRole := uuid.New()
 	newRole := uuid.New()
 
-	event := domain.NewRoleChanged(userID, &oldRole, newRole)
+	event := domain.NewRoleChanged(userID.UUID(), &oldRole, newRole)
 
 	if event.OldRoleID == nil || *event.OldRoleID != oldRole {
 		t.Error("expected old role ID to be set")
@@ -140,12 +140,12 @@ func TestRoleChanged_NilOldRole(t *testing.T) {
 func TestUserSignedIn_CarriesSessionAndIP(t *testing.T) {
 	t.Parallel()
 
-	userID := uuid.New()
-	sessionID := uuid.New()
+	userID := domain.NewUserID()
+	sessionID := domain.NewSessionID()
 
-	event := domain.NewUserSignedIn(userID, sessionID, "192.168.1.1")
+	event := domain.NewUserSignedIn(userID.UUID(), sessionID.UUID(), "192.168.1.1")
 
-	if event.SessionID != sessionID {
+	if event.SessionID != sessionID.UUID() {
 		t.Errorf("expected sessionID %s, got %s", sessionID, event.SessionID)
 	}
 	if event.IPAddress != "192.168.1.1" {
@@ -156,8 +156,8 @@ func TestUserSignedIn_CarriesSessionAndIP(t *testing.T) {
 func TestUserCreated_CarriesPhone(t *testing.T) {
 	t.Parallel()
 
-	userID := uuid.New()
-	event := domain.NewUserCreated(userID, "+998901234567")
+	userID := domain.NewUserID()
+	event := domain.NewUserCreated(userID.UUID(), "+998901234567")
 
 	if event.Phone != "+998901234567" {
 		t.Errorf("expected phone +998901234567, got %s", event.Phone)

@@ -1,15 +1,14 @@
 package query
 
 import (
-	"gct/internal/kernel/infrastructure/logger"
 	"context"
 	"errors"
+	"gct/internal/kernel/infrastructure/logger"
 	"testing"
 	"time"
 
 	"gct/internal/context/content/generic/translation/domain"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -21,7 +20,7 @@ type mockReadRepo struct {
 	total int64
 }
 
-func (m *mockReadRepo) FindByID(_ context.Context, id uuid.UUID) (*domain.TranslationView, error) {
+func (m *mockReadRepo) FindByID(_ context.Context, id domain.TranslationID) (*domain.TranslationView, error) {
 	if m.view != nil && m.view.ID == id {
 		return m.view, nil
 	}
@@ -34,7 +33,7 @@ func (m *mockReadRepo) List(_ context.Context, _ domain.TranslationFilter) ([]*d
 
 type errorReadRepo struct{ err error }
 
-func (m *errorReadRepo) FindByID(_ context.Context, _ uuid.UUID) (*domain.TranslationView, error) {
+func (m *errorReadRepo) FindByID(_ context.Context, _ domain.TranslationID) (*domain.TranslationView, error) {
 	return nil, m.err
 }
 
@@ -49,7 +48,7 @@ var errRepo = errors.New("repo failure")
 func TestGetTranslationHandler_Handle(t *testing.T) {
 	t.Parallel()
 
-	id := uuid.New()
+	id := domain.NewTranslationID()
 	now := time.Now()
 	readRepo := &mockReadRepo{
 		view: &domain.TranslationView{
@@ -108,7 +107,7 @@ func TestGetTranslationHandler_RepoError(t *testing.T) {
 func TestGetTranslationHandler_AllFieldsMapped(t *testing.T) {
 	t.Parallel()
 
-	id := uuid.New()
+	id := domain.NewTranslationID()
 	now := time.Now()
 
 	readRepo := &mockReadRepo{

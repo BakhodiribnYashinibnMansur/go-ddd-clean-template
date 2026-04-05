@@ -82,8 +82,8 @@ func TestContract_Permission_RemoveScope_NotFound(t *testing.T) {
 }
 
 func TestContract_Policy_Toggle(t *testing.T) {
-	permID := uuid.New()
-	policy := NewPolicy(permID, PolicyAllow)
+	permID := NewPermissionID()
+	policy := NewPolicy(permID.UUID(), PolicyAllow)
 
 	// New policy should be active by default.
 	if !policy.IsActive() {
@@ -104,14 +104,14 @@ func TestContract_Policy_Toggle(t *testing.T) {
 }
 
 func TestContract_Policy_Effects(t *testing.T) {
-	permID := uuid.New()
+	permID := NewPermissionID()
 
-	allowPolicy := NewPolicy(permID, PolicyAllow)
+	allowPolicy := NewPolicy(permID.UUID(), PolicyAllow)
 	if allowPolicy.Effect() != PolicyAllow {
 		t.Errorf("expected effect %q, got %q", PolicyAllow, allowPolicy.Effect())
 	}
 
-	denyPolicy := NewPolicy(permID, PolicyDeny)
+	denyPolicy := NewPolicy(permID.UUID(), PolicyDeny)
 	if denyPolicy.Effect() != PolicyDeny {
 		t.Errorf("expected effect %q, got %q", PolicyDeny, denyPolicy.Effect())
 	}

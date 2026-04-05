@@ -71,6 +71,7 @@ func (r *IPRule) Update(ipAddress, action, reason *string, expiresAt *time.Time)
 // Getters
 // ---------------------------------------------------------------------------
 
+func (r *IPRule) TypedID() IPRuleID     { return IPRuleID(r.ID()) }
 func (r *IPRule) IPAddress() string     { return r.ipAddress }
 func (r *IPRule) Action() string        { return r.action }
 func (r *IPRule) Reason() string        { return r.reason }

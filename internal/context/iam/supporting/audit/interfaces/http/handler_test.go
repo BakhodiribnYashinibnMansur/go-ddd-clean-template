@@ -82,7 +82,7 @@ func TestHandler_ListAuditLogs_Success(t *testing.T) {
 	userID := uuid.New()
 	readRepo := &mockReadRepo{
 		auditLogs: []*domain.AuditLogView{
-			{ID: uuid.New(), UserID: &userID, Action: domain.AuditActionLogin, Success: true, CreatedAt: time.Now()},
+			{ID: domain.NewAuditLogID(), UserID: &userID, Action: domain.AuditActionLogin, Success: true, CreatedAt: time.Now()},
 		},
 		auditTotal: 1,
 	}
@@ -102,7 +102,7 @@ func TestHandler_ListEndpointHistory_Success(t *testing.T) {
 
 	readRepo := &mockReadRepo{
 		endpointViews: []*domain.EndpointHistoryView{
-			{ID: uuid.New(), Endpoint: "/api/v1/users", Method: "GET", StatusCode: 200, Latency: 15, CreatedAt: time.Now()},
+			{ID: domain.NewEndpointHistoryID(), Endpoint: "/api/v1/users", Method: "GET", StatusCode: 200, Latency: 15, CreatedAt: time.Now()},
 		},
 		endpointTotal: 1,
 	}
@@ -122,7 +122,7 @@ func TestHandler_ListAuditLogs_WithPagination(t *testing.T) {
 
 	readRepo := &mockReadRepo{
 		auditLogs: []*domain.AuditLogView{
-			{ID: uuid.New(), Action: domain.AuditActionLogin, Success: true, CreatedAt: time.Now()},
+			{ID: domain.NewAuditLogID(), Action: domain.AuditActionLogin, Success: true, CreatedAt: time.Now()},
 		},
 		auditTotal: 50,
 	}
@@ -142,7 +142,7 @@ func TestHandler_ListEndpointHistory_WithPagination(t *testing.T) {
 
 	readRepo := &mockReadRepo{
 		endpointViews: []*domain.EndpointHistoryView{
-			{ID: uuid.New(), Endpoint: "/api/v1/jobs", Method: "POST", StatusCode: 201, Latency: 42, CreatedAt: time.Now()},
+			{ID: domain.NewEndpointHistoryID(), Endpoint: "/api/v1/jobs", Method: "POST", StatusCode: 201, Latency: 42, CreatedAt: time.Now()},
 		},
 		endpointTotal: 100,
 	}

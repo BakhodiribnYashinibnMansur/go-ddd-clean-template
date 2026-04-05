@@ -20,14 +20,14 @@ type errorErrorCodeRepo struct {
 	saveErr   error
 	updateErr error
 	deleteErr error
-	findFn    func(ctx context.Context, id uuid.UUID) (*domain.ErrorCode, error)
+	findFn    func(ctx context.Context, id domain.ErrorCodeID) (*domain.ErrorCode, error)
 }
 
 func (m *errorErrorCodeRepo) Save(_ context.Context, _ *domain.ErrorCode) error {
 	return m.saveErr
 }
 
-func (m *errorErrorCodeRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.ErrorCode, error) {
+func (m *errorErrorCodeRepo) FindByID(ctx context.Context, id domain.ErrorCodeID) (*domain.ErrorCode, error) {
 	if m.findFn != nil {
 		return m.findFn(ctx, id)
 	}
@@ -38,7 +38,7 @@ func (m *errorErrorCodeRepo) Update(_ context.Context, _ *domain.ErrorCode) erro
 	return m.updateErr
 }
 
-func (m *errorErrorCodeRepo) Delete(_ context.Context, _ uuid.UUID) error {
+func (m *errorErrorCodeRepo) Delete(_ context.Context, _ domain.ErrorCodeID) error {
 	return m.deleteErr
 }
 
@@ -64,7 +64,7 @@ func TestUpdateErrorCodeHandler_RepoUpdateError(t *testing.T) {
 	ec := domain.NewErrorCode("ERR", "msg", 500, "c", "s", false, 0, "")
 
 	repo := &errorErrorCodeRepo{
-		findFn:    func(_ context.Context, _ uuid.UUID) (*domain.ErrorCode, error) { return ec, nil },
+		findFn:    func(_ context.Context, _ domain.ErrorCodeID) (*domain.ErrorCode, error) { return ec, nil },
 		updateErr: errRepoUpdate,
 	}
 	handler := NewUpdateErrorCodeHandler(repo, &mockEventBus{}, &mockLogger{})
@@ -82,7 +82,7 @@ func TestDeleteErrorCodeHandler_RepoError(t *testing.T) {
 
 	ec := domain.NewErrorCode("ERR_DEL", "msg", 500, "c", "s", false, 0, "")
 	repo := &errorErrorCodeRepo{
-		findFn:    func(_ context.Context, _ uuid.UUID) (*domain.ErrorCode, error) { return ec, nil },
+		findFn:    func(_ context.Context, _ domain.ErrorCodeID) (*domain.ErrorCode, error) { return ec, nil },
 		deleteErr: errRepoDelete,
 	}
 	handler := NewDeleteErrorCodeHandler(repo, &mockEventBus{}, &mockLogger{})

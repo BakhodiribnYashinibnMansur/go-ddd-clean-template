@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
+	"gct/internal/context/admin/supporting/sitesetting/domain"
 	"gct/internal/kernel/consts"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/pgxutil"
-	"gct/internal/context/admin/supporting/sitesetting/domain"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -60,14 +60,14 @@ func (r *SiteSettingWriteRepo) Save(ctx context.Context, s *domain.SiteSetting) 
 }
 
 // FindByID retrieves a SiteSetting aggregate by its ID.
-func (r *SiteSettingWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.SiteSetting, err error) {
+func (r *SiteSettingWriteRepo) FindByID(ctx context.Context, id domain.SiteSettingID) (result *domain.SiteSetting, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "SiteSettingWriteRepo.FindByID")
 	defer func() { end(err) }()
 
 	sql, args, err := r.builder.
 		Select(writeColumns...).
 		From(tableName).
-		Where(squirrel.Eq{"id": id}).
+		Where(squirrel.Eq{"id": id.UUID()}).
 		ToSql()
 	if err != nil {
 		return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
@@ -103,13 +103,13 @@ func (r *SiteSettingWriteRepo) Update(ctx context.Context, s *domain.SiteSetting
 }
 
 // Delete removes a SiteSetting by its ID.
-func (r *SiteSettingWriteRepo) Delete(ctx context.Context, id uuid.UUID) (err error) {
+func (r *SiteSettingWriteRepo) Delete(ctx context.Context, id domain.SiteSettingID) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "SiteSettingWriteRepo.Delete")
 	defer func() { end(err) }()
 
 	sql, args, err := r.builder.
 		Delete(tableName).
-		Where(squirrel.Eq{"id": id}).
+		Where(squirrel.Eq{"id": id.UUID()}).
 		ToSql()
 	if err != nil {
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildDelete)

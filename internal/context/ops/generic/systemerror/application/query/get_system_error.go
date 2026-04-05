@@ -33,9 +33,9 @@ func (h *GetSystemErrorHandler) Handle(ctx context.Context, q GetSystemErrorQuer
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "GetSystemError", "system_error")()
 
-	view, err := h.readRepo.FindByID(ctx, q.ID.UUID())
+	view, err := h.readRepo.FindByID(ctx, q.ID)
 	if err != nil {
-		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetSystemError", Entity: "system_error", EntityID: q.ID.UUID(), Err: err}.KV()...)
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetSystemError", Entity: "system_error", EntityID: q.ID.String(), Err: err}.KV()...)
 		return nil, apperrors.MapToServiceError(err)
 	}
 

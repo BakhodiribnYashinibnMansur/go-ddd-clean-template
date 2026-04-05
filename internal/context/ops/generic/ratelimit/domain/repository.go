@@ -3,8 +3,6 @@ package domain
 import (
 	"context"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 // RateLimitFilter carries optional filtering parameters for listing rate limits.
@@ -21,27 +19,27 @@ type RateLimitFilter struct {
 // for real-time rate limit evaluation, not just read-model projections.
 type RateLimitRepository interface {
 	Save(ctx context.Context, entity *RateLimit) error
-	FindByID(ctx context.Context, id uuid.UUID) (*RateLimit, error)
+	FindByID(ctx context.Context, id RateLimitID) (*RateLimit, error)
 	Update(ctx context.Context, entity *RateLimit) error
-	Delete(ctx context.Context, id uuid.UUID) error
+	Delete(ctx context.Context, id RateLimitID) error
 	List(ctx context.Context, filter RateLimitFilter) ([]*RateLimit, int64, error)
 }
 
 // RateLimitView is a read-model projection for rate limits, optimized for admin UI display.
 type RateLimitView struct {
-	ID                uuid.UUID `json:"id"`
-	Name              string    `json:"name"`
-	Rule              string    `json:"rule"`
-	RequestsPerWindow int       `json:"requests_per_window"`
-	WindowDuration    int       `json:"window_duration"`
-	Enabled           bool      `json:"enabled"`
-	CreatedAt         time.Time `json:"created_at"`
-	UpdatedAt         time.Time `json:"updated_at"`
+	ID                RateLimitID `json:"id"`
+	Name              string      `json:"name"`
+	Rule              string      `json:"rule"`
+	RequestsPerWindow int         `json:"requests_per_window"`
+	WindowDuration    int         `json:"window_duration"`
+	Enabled           bool        `json:"enabled"`
+	CreatedAt         time.Time   `json:"created_at"`
+	UpdatedAt         time.Time   `json:"updated_at"`
 }
 
 // RateLimitReadRepository is the read-side repository returning projected views.
 // Implementations must return ErrRateLimitNotFound when FindByID yields no result.
 type RateLimitReadRepository interface {
-	FindByID(ctx context.Context, id uuid.UUID) (*RateLimitView, error)
+	FindByID(ctx context.Context, id RateLimitID) (*RateLimitView, error)
 	List(ctx context.Context, filter RateLimitFilter) ([]*RateLimitView, int64, error)
 }

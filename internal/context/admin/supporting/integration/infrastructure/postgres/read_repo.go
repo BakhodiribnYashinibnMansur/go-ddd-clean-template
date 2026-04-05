@@ -39,14 +39,14 @@ func NewIntegrationReadRepo(pool *pgxpool.Pool) *IntegrationReadRepo {
 }
 
 // FindByID returns an IntegrationView for the given ID.
-func (r *IntegrationReadRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.IntegrationView, err error) {
+func (r *IntegrationReadRepo) FindByID(ctx context.Context, id domain.IntegrationID) (result *domain.IntegrationView, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "IntegrationReadRepo.FindByID")
 	defer func() { end(err) }()
 
 	sql, args, err := r.builder.
 		Select(readColumns...).
 		From(tableName).
-		Where(squirrel.Eq{"id": id}).
+		Where(squirrel.Eq{"id": id.UUID()}).
 		ToSql()
 	if err != nil {
 		return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
@@ -58,7 +58,7 @@ func (r *IntegrationReadRepo) FindByID(ctx context.Context, id uuid.UUID) (resul
 		return nil, err
 	}
 
-	config, err := r.metadata.GetAll(ctx, metadata.EntityTypeIntegrationConfig, view.ID)
+	config, err := r.metadata.GetAll(ctx, metadata.EntityTypeIntegrationConfig, view.ID.UUID())
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +132,7 @@ func (r *IntegrationReadRepo) List(ctx context.Context, filter domain.Integratio
 
 	// Load metadata for each integration.
 	for _, v := range views {
-		config, err := r.metadata.GetAll(ctx, metadata.EntityTypeIntegrationConfig, v.ID)
+		config, err := r.metadata.GetAll(ctx, metadata.EntityTypeIntegrationConfig, v.ID.UUID())
 		if err != nil {
 			return nil, 0, err
 		}
@@ -164,7 +164,7 @@ func scanIntegrationView(row pgx.Row) (*domain.IntegrationView, error) {
 	}
 
 	return &domain.IntegrationView{
-		ID:         id,
+		ID:         domain.IntegrationID(id),
 		Name:       name,
 		Type:       desc,
 		APIKey:     "",
@@ -197,7 +197,7 @@ func scanIntegrationViewFromRows(rows pgx.Rows) (*domain.IntegrationView, error)
 	}
 
 	return &domain.IntegrationView{
-		ID:         id,
+		ID:         domain.IntegrationID(id),
 		Name:       name,
 		Type:       desc,
 		APIKey:     "",

@@ -34,14 +34,14 @@ func NewAuthzReadRepo(pool *pgxpool.Pool) *AuthzReadRepo {
 }
 
 // GetRole returns a RoleView for the given role ID.
-func (r *AuthzReadRepo) GetRole(ctx context.Context, id uuid.UUID) (result *domain.RoleView, err error) {
+func (r *AuthzReadRepo) GetRole(ctx context.Context, id domain.RoleID) (result *domain.RoleView, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "AuthzReadRepo.GetRole")
 	defer func() { end(err) }()
 
 	sql, args, err := r.builder.
 		Select("id", "name", "description").
 		From(consts.TableRole).
-		Where(squirrel.Eq{"id": id}).
+		Where(squirrel.Eq{"id": id.UUID()}).
 		ToSql()
 	if err != nil {
 		return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
@@ -111,14 +111,14 @@ func (r *AuthzReadRepo) ListRoles(ctx context.Context, pagination shared.Paginat
 }
 
 // GetPermission returns a PermissionView for the given permission ID.
-func (r *AuthzReadRepo) GetPermission(ctx context.Context, id uuid.UUID) (result *domain.PermissionView, err error) {
+func (r *AuthzReadRepo) GetPermission(ctx context.Context, id domain.PermissionID) (result *domain.PermissionView, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "AuthzReadRepo.GetPermission")
 	defer func() { end(err) }()
 
 	sql, args, err := r.builder.
 		Select("id", "parent_id", "name", "description").
 		From(consts.TablePermission).
-		Where(squirrel.Eq{"id": id}).
+		Where(squirrel.Eq{"id": id.UUID()}).
 		ToSql()
 	if err != nil {
 		return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
@@ -239,7 +239,7 @@ func (r *AuthzReadRepo) ListPolicies(ctx context.Context, pagination shared.Pagi
 	}
 
 	for _, v := range views {
-		conds, err := r.metadata.GetAll(ctx, metadata.EntityTypePolicyConditions, v.ID)
+		conds, err := r.metadata.GetAll(ctx, metadata.EntityTypePolicyConditions, v.ID.UUID())
 		if err != nil {
 			return nil, 0, err
 		}
@@ -307,7 +307,7 @@ func (r *AuthzReadRepo) ListScopes(ctx context.Context, pagination shared.Pagina
 // Super-admin roles bypass all checks. For other roles the method walks the
 // role → permission → scope chain looking for a matching scope entry, then evaluates
 // any ABAC policies bound to the matched permissions.
-func (r *AuthzReadRepo) CheckAccess(ctx context.Context, roleID uuid.UUID, path, method string, evalCtx domain.EvaluationContext) (result bool, err error) {
+func (r *AuthzReadRepo) CheckAccess(ctx context.Context, roleID domain.RoleID, path, method string, evalCtx domain.EvaluationContext) (result bool, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "AuthzReadRepo.CheckAccess")
 	defer func() { end(err) }()
 
@@ -376,9 +376,9 @@ func (r *AuthzReadRepo) CheckAccess(ctx context.Context, roleID uuid.UUID, path,
 	}
 
 	// Collect permission IDs.
-	permIDs := make([]uuid.UUID, 0, len(matchedPermIDs))
+	permIDs := make([]domain.PermissionID, 0, len(matchedPermIDs))
 	for id := range matchedPermIDs {
-		permIDs = append(permIDs, id)
+		permIDs = append(permIDs, domain.PermissionID(id))
 	}
 
 	// Fetch ABAC policies for matched permissions.
@@ -411,7 +411,7 @@ func (r *AuthzReadRepo) CheckAccess(ctx context.Context, roleID uuid.UUID, path,
 }
 
 // FindPoliciesByPermissionIDs returns all policies bound to any of the given permission IDs.
-func (r *AuthzReadRepo) FindPoliciesByPermissionIDs(ctx context.Context, permissionIDs []uuid.UUID) (result []*domain.Policy, err error) {
+func (r *AuthzReadRepo) FindPoliciesByPermissionIDs(ctx context.Context, permissionIDs []domain.PermissionID) (result []*domain.Policy, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "AuthzReadRepo.FindPoliciesByPermissionIDs")
 	defer func() { end(err) }()
 

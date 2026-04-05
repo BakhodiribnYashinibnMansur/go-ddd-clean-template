@@ -136,13 +136,13 @@ func (s *Session) SetRefreshTokenHash(hash string) {
 // Getters
 // ---------------------------------------------------------------------------
 
-func (s *Session) UserID() uuid.UUID            { return s.userID }
-func (s *Session) DeviceID() string             { return s.deviceID }
-func (s *Session) DeviceName() string           { return s.deviceName }
+func (s *Session) UserID() uuid.UUID             { return s.userID }
+func (s *Session) DeviceID() string              { return s.deviceID }
+func (s *Session) DeviceName() string            { return s.deviceName }
 func (s *Session) DeviceType() SessionDeviceType { return s.deviceType }
-func (s *Session) IPAddress() shared.IPAddress  { return s.ipAddress }
-func (s *Session) UserAgent() shared.UserAgent  { return s.userAgent }
-func (s *Session) RefreshTokenHash() string     { return s.refreshTokenHash }
-func (s *Session) ExpiresAt() time.Time         { return s.expiresAt }
-func (s *Session) LastActivity() time.Time      { return s.lastActivity }
-func (s *Session) IsRevoked() bool              { return s.revoked }
+func (s *Session) IPAddress() shared.IPAddress   { return s.ipAddress }
+func (s *Session) UserAgent() shared.UserAgent   { return s.userAgent }
+func (s *Session) RefreshTokenHash() string      { return s.refreshTokenHash }
+func (s *Session) ExpiresAt() time.Time          { return s.expiresAt }
+func (s *Session) LastActivity() time.Time       { return s.lastActivity }
+func (s *Session) IsRevoked() bool               { return s.revoked }

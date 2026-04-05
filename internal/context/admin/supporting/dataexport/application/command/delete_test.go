@@ -19,7 +19,7 @@ func TestDeleteDataExportHandler_Success(t *testing.T) {
 	l := &mockLogger{}
 	h := command.NewDeleteDataExportHandler(repo, l)
 
-	exportID := uuid.New()
+	exportID := domain.NewDataExportID()
 	cmd := command.DeleteDataExportCommand{ID: domain.DataExportID(exportID)}
 
 	err := h.Handle(context.Background(), cmd)
@@ -34,7 +34,7 @@ func TestDeleteDataExportHandler_RepoError(t *testing.T) {
 
 	repoErr := errors.New("delete failed")
 	repo := &mockWriteRepo{
-		deleteFn: func(_ context.Context, _ uuid.UUID) error {
+		deleteFn: func(_ context.Context, _ domain.DataExportID) error {
 			return repoErr
 		},
 	}

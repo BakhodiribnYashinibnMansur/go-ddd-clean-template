@@ -55,7 +55,7 @@ func (m *errMockRoleRepository) Update(ctx context.Context, role *domain.Role) e
 	return m.mockRoleRepository.Update(ctx, role)
 }
 
-func (m *errMockRoleRepository) Delete(ctx context.Context, id uuid.UUID) error {
+func (m *errMockRoleRepository) Delete(ctx context.Context, id domain.RoleID) error {
 	if m.deleteErr != nil {
 		return m.deleteErr
 	}
@@ -65,12 +65,12 @@ func (m *errMockRoleRepository) Delete(ctx context.Context, id uuid.UUID) error 
 func TestUpdateRoleHandler_UpdateError(t *testing.T) {
 	t.Parallel()
 
-	roleID := uuid.New()
-	existingRole := domain.ReconstructRole(roleID, time.Now(), time.Now(), nil, "admin", nil, nil)
+	roleID := domain.NewRoleID()
+	existingRole := domain.ReconstructRole(roleID.UUID(), time.Now(), time.Now(), nil, "admin", nil, nil)
 
 	repo := &errMockRoleRepository{
 		mockRoleRepository: &mockRoleRepository{
-			findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.Role, error) {
+			findByIDFn: func(_ context.Context, id domain.RoleID) (*domain.Role, error) {
 				if id == roleID {
 					return existingRole, nil
 				}
@@ -143,7 +143,7 @@ func TestDeletePermissionHandler_DeleteError(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockPermissionRepository{
-		deleteFn: func(_ context.Context, _ uuid.UUID) error {
+		deleteFn: func(_ context.Context, _ domain.PermissionID) error {
 			return errDB
 		},
 	}
@@ -188,14 +188,14 @@ func TestCreatePolicyHandler_SaveError(t *testing.T) {
 func TestUpdatePolicyHandler_UpdateError(t *testing.T) {
 	t.Parallel()
 
-	policyID := uuid.New()
+	policyID := domain.NewPolicyID()
 	existingPolicy := domain.ReconstructPolicy(
-		policyID, time.Now(), time.Now(), nil,
+		policyID.UUID(), time.Now(), time.Now(), nil,
 		uuid.New(), domain.PolicyAllow, 1, true, nil,
 	)
 
 	repo := &mockPolicyRepository{
-		findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.Policy, error) {
+		findByIDFn: func(_ context.Context, id domain.PolicyID) (*domain.Policy, error) {
 			if id == policyID {
 				return existingPolicy, nil
 			}
@@ -222,7 +222,7 @@ func TestDeletePolicyHandler_DeleteError(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockPolicyRepository{
-		deleteFn: func(_ context.Context, _ uuid.UUID) error {
+		deleteFn: func(_ context.Context, _ domain.PolicyID) error {
 			return errDB
 		},
 	}
@@ -241,14 +241,14 @@ func TestDeletePolicyHandler_DeleteError(t *testing.T) {
 func TestTogglePolicyHandler_UpdateError(t *testing.T) {
 	t.Parallel()
 
-	policyID := uuid.New()
+	policyID := domain.NewPolicyID()
 	existingPolicy := domain.ReconstructPolicy(
-		policyID, time.Now(), time.Now(), nil,
+		policyID.UUID(), time.Now(), time.Now(), nil,
 		uuid.New(), domain.PolicyAllow, 1, true, nil,
 	)
 
 	repo := &mockPolicyRepository{
-		findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.Policy, error) {
+		findByIDFn: func(_ context.Context, id domain.PolicyID) (*domain.Policy, error) {
 			if id == policyID {
 				return existingPolicy, nil
 			}
@@ -318,7 +318,7 @@ func TestAssignPermissionHandler_AssignError(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockRolePermissionRepository{
-		assignFn: func(_ context.Context, _, _ uuid.UUID) error {
+		assignFn: func(_ context.Context, _ domain.RoleID, _ domain.PermissionID) error {
 			return errDB
 		},
 	}
@@ -346,7 +346,7 @@ func TestAssignScopeHandler_AssignError(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockPermissionScopeRepository{
-		assignFn: func(_ context.Context, _ uuid.UUID, _, _ string) error {
+		assignFn: func(_ context.Context, _ domain.PermissionID, _, _ string) error {
 			return errDB
 		},
 	}

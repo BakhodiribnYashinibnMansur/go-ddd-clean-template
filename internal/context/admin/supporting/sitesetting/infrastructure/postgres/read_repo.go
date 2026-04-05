@@ -3,10 +3,10 @@ package postgres
 import (
 	"context"
 
+	"gct/internal/context/admin/supporting/sitesetting/domain"
 	"gct/internal/kernel/consts"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/pgxutil"
-	"gct/internal/context/admin/supporting/sitesetting/domain"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -33,14 +33,14 @@ func NewSiteSettingReadRepo(pool *pgxpool.Pool) *SiteSettingReadRepo {
 }
 
 // FindByID returns a single SiteSettingView by ID.
-func (r *SiteSettingReadRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.SiteSettingView, err error) {
+func (r *SiteSettingReadRepo) FindByID(ctx context.Context, id domain.SiteSettingID) (result *domain.SiteSettingView, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "SiteSettingReadRepo.FindByID")
 	defer func() { end(err) }()
 
 	sql, args, err := r.builder.
 		Select(readColumns...).
 		From(tableName).
-		Where(squirrel.Eq{"id": id}).
+		Where(squirrel.Eq{"id": id.UUID()}).
 		ToSql()
 	if err != nil {
 		return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
@@ -109,19 +109,27 @@ func (r *SiteSettingReadRepo) List(ctx context.Context, filter domain.SiteSettin
 }
 
 func scanSiteSettingView(row pgx.Row) (*domain.SiteSettingView, error) {
-	var v domain.SiteSettingView
-	err := row.Scan(&v.ID, &v.Key, &v.Value, &v.Type, &v.Description, &v.CreatedAt, &v.UpdatedAt)
+	var (
+		v     domain.SiteSettingView
+		rawID uuid.UUID
+	)
+	err := row.Scan(&rawID, &v.Key, &v.Value, &v.Type, &v.Description, &v.CreatedAt, &v.UpdatedAt)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
+	v.ID = domain.SiteSettingID(rawID)
 	return &v, nil
 }
 
 func scanSiteSettingViewFromRows(rows pgx.Rows) (*domain.SiteSettingView, error) {
-	var v domain.SiteSettingView
-	err := rows.Scan(&v.ID, &v.Key, &v.Value, &v.Type, &v.Description, &v.CreatedAt, &v.UpdatedAt)
+	var (
+		v     domain.SiteSettingView
+		rawID uuid.UUID
+	)
+	err := rows.Scan(&rawID, &v.Key, &v.Value, &v.Type, &v.Description, &v.CreatedAt, &v.UpdatedAt)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
+	v.ID = domain.SiteSettingID(rawID)
 	return &v, nil
 }

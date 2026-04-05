@@ -83,14 +83,15 @@ func (r *SystemErrorWriteRepo) Save(ctx context.Context, se *domain.SystemError)
 }
 
 // FindByID retrieves a SystemError aggregate by ID.
-func (r *SystemErrorWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.SystemError, err error) {
+func (r *SystemErrorWriteRepo) FindByID(ctx context.Context, id domain.SystemErrorID) (result *domain.SystemError, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "SystemErrorWriteRepo.FindByID")
 	defer func() { end(err) }()
 
+	rawID := id.UUID()
 	sql, args, err := r.builder.
 		Select(writeColumns...).
 		From(tableName).
-		Where(squirrel.Eq{"id": id}).
+		Where(squirrel.Eq{"id": rawID}).
 		ToSql()
 	if err != nil {
 		return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
@@ -99,10 +100,10 @@ func (r *SystemErrorWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (resu
 	row := r.pool.QueryRow(ctx, sql, args...)
 	se, err := scanSystemError(row)
 	if err != nil {
-		return nil, apperrors.HandlePgError(err, tableName, map[string]any{"id": id})
+		return nil, apperrors.HandlePgError(err, tableName, map[string]any{"id": rawID})
 	}
 
-	meta, err := r.metadata.GetAll(ctx, metadata.EntityTypeSystemErrorMeta, id)
+	meta, err := r.metadata.GetAll(ctx, metadata.EntityTypeSystemErrorMeta, rawID)
 	if err != nil {
 		return nil, err
 	}

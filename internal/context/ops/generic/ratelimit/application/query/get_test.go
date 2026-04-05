@@ -1,15 +1,14 @@
 package query
 
 import (
-	"gct/internal/kernel/infrastructure/logger"
 	"context"
 	"errors"
+	"gct/internal/kernel/infrastructure/logger"
 	"testing"
 	"time"
 
 	"gct/internal/context/ops/generic/ratelimit/domain"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -21,7 +20,7 @@ type mockReadRepo struct {
 	total int64
 }
 
-func (m *mockReadRepo) FindByID(_ context.Context, id uuid.UUID) (*domain.RateLimitView, error) {
+func (m *mockReadRepo) FindByID(_ context.Context, id domain.RateLimitID) (*domain.RateLimitView, error) {
 	if m.view != nil && m.view.ID == id {
 		return m.view, nil
 	}
@@ -34,7 +33,7 @@ func (m *mockReadRepo) List(_ context.Context, _ domain.RateLimitFilter) ([]*dom
 
 type errorReadRepo struct{ err error }
 
-func (m *errorReadRepo) FindByID(_ context.Context, _ uuid.UUID) (*domain.RateLimitView, error) {
+func (m *errorReadRepo) FindByID(_ context.Context, _ domain.RateLimitID) (*domain.RateLimitView, error) {
 	return nil, m.err
 }
 
@@ -49,7 +48,7 @@ var errRepo = errors.New("repo failure")
 func TestGetRateLimitHandler_Handle(t *testing.T) {
 	t.Parallel()
 
-	id := uuid.New()
+	id := domain.NewRateLimitID()
 	now := time.Now()
 	readRepo := &mockReadRepo{
 		view: &domain.RateLimitView{
@@ -65,7 +64,7 @@ func TestGetRateLimitHandler_Handle(t *testing.T) {
 	}
 
 	handler := NewGetRateLimitHandler(readRepo, logger.Noop())
-	result, err := handler.Handle(context.Background(), GetRateLimitQuery{ID: domain.RateLimitID(id)})
+	result, err := handler.Handle(context.Background(), GetRateLimitQuery{ID: id})
 	require.NoError(t, err)
 	if result == nil {
 		t.Fatal("expected result")
@@ -109,7 +108,7 @@ func TestGetRateLimitHandler_RepoError(t *testing.T) {
 func TestGetRateLimitHandler_AllFieldsMapped(t *testing.T) {
 	t.Parallel()
 
-	id := uuid.New()
+	id := domain.NewRateLimitID()
 	now := time.Now()
 	readRepo := &mockReadRepo{
 		view: &domain.RateLimitView{
@@ -125,7 +124,7 @@ func TestGetRateLimitHandler_AllFieldsMapped(t *testing.T) {
 	}
 
 	handler := NewGetRateLimitHandler(readRepo, logger.Noop())
-	result, err := handler.Handle(context.Background(), GetRateLimitQuery{ID: domain.RateLimitID(id)})
+	result, err := handler.Handle(context.Background(), GetRateLimitQuery{ID: id})
 	require.NoError(t, err)
 	if result.Rule != "/auth/*" {
 		t.Errorf("expected rule /auth/*, got %s", result.Rule)

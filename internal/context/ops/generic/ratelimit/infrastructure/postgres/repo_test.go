@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+
 	// pgproto3 not needed
 
 	"github.com/Masterminds/squirrel"
@@ -29,15 +30,15 @@ type mockRows struct {
 	scanFunc func(dest ...any) error
 }
 
-func (m *mockRows) Scan(dest ...any) error                        { return m.scanFunc(dest...) }
-func (m *mockRows) Close()                                        {}
-func (m *mockRows) Err() error                                    { return nil }
-func (m *mockRows) CommandTag() pgconn.CommandTag                 { return pgconn.CommandTag{} }
+func (m *mockRows) Scan(dest ...any) error                       { return m.scanFunc(dest...) }
+func (m *mockRows) Close()                                       {}
+func (m *mockRows) Err() error                                   { return nil }
+func (m *mockRows) CommandTag() pgconn.CommandTag                { return pgconn.CommandTag{} }
 func (m *mockRows) FieldDescriptions() []pgconn.FieldDescription { return nil }
-func (m *mockRows) Next() bool                                    { return false }
-func (m *mockRows) Values() ([]any, error)                        { return nil, nil }
-func (m *mockRows) RawValues() [][]byte                           { return nil }
-func (m *mockRows) Conn() *pgx.Conn                               { return nil }
+func (m *mockRows) Next() bool                                   { return false }
+func (m *mockRows) Values() ([]any, error)                       { return nil, nil }
+func (m *mockRows) RawValues() [][]byte                          { return nil }
+func (m *mockRows) Conn() *pgx.Conn                              { return nil }
 
 // ---------------------------------------------------------------------------
 // helpers — 8 columns: id, name, path_pattern, limit_count, window_seconds, is_active, created_at, updated_at
@@ -77,11 +78,11 @@ func TestNewRateLimitReadRepo(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestScanRateLimitView_Success(t *testing.T) {
-	id := uuid.New()
+	id := domain.NewRateLimitID()
 	now := time.Now().Truncate(time.Microsecond)
 
 	row := &mockRow{scanFunc: func(dest ...any) error {
-		fillRateLimitDest(dest, id, now)
+		fillRateLimitDest(dest, id.UUID(), now)
 		return nil
 	}}
 
@@ -122,11 +123,11 @@ func TestScanRateLimitView_Error(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestScanRateLimitViewFromRows_Success(t *testing.T) {
-	id := uuid.New()
+	id := domain.NewRateLimitID()
 	now := time.Now().Truncate(time.Microsecond)
 
 	rows := &mockRows{scanFunc: func(dest ...any) error {
-		fillRateLimitDest(dest, id, now)
+		fillRateLimitDest(dest, id.UUID(), now)
 		return nil
 	}}
 
@@ -152,11 +153,11 @@ func TestScanRateLimitViewFromRows_Error(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestScanRateLimit_Success(t *testing.T) {
-	id := uuid.New()
+	id := domain.NewRateLimitID()
 	now := time.Now().Truncate(time.Microsecond)
 
 	row := &mockRow{scanFunc: func(dest ...any) error {
-		fillRateLimitDest(dest, id, now)
+		fillRateLimitDest(dest, id.UUID(), now)
 		return nil
 	}}
 
@@ -164,7 +165,7 @@ func TestScanRateLimit_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if rl.ID() != id {
+	if rl.TypedID() != id {
 		t.Errorf("ID = %v, want %v", rl.ID(), id)
 	}
 	if rl.Name() != "api-global" {
@@ -197,11 +198,11 @@ func TestScanRateLimit_Error(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestScanRateLimitFromRows_Success(t *testing.T) {
-	id := uuid.New()
+	id := domain.NewRateLimitID()
 	now := time.Now().Truncate(time.Microsecond)
 
 	rows := &mockRows{scanFunc: func(dest ...any) error {
-		fillRateLimitDest(dest, id, now)
+		fillRateLimitDest(dest, id.UUID(), now)
 		return nil
 	}}
 
@@ -209,7 +210,7 @@ func TestScanRateLimitFromRows_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if rl.ID() != id {
+	if rl.TypedID() != id {
 		t.Errorf("ID = %v, want %v", rl.ID(), id)
 	}
 }

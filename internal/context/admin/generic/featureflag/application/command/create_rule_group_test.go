@@ -14,9 +14,9 @@ import (
 func TestCreateRuleGroupHandler_Handle(t *testing.T) {
 	t.Parallel()
 
-	flagID := uuid.New()
+	flagID := domain.NewFeatureFlagID()
 	flagRepo := &mockFeatureFlagRepo{
-		findFn: func(_ context.Context, id uuid.UUID) (*domain.FeatureFlag, error) {
+		findFn: func(_ context.Context, id domain.FeatureFlagID) (*domain.FeatureFlag, error) {
 			if id == flagID {
 				return newReconstructedFlag(flagID), nil
 			}
@@ -88,9 +88,9 @@ func TestCreateRuleGroupHandler_Handle_FlagNotFound(t *testing.T) {
 func TestCreateRuleGroupHandler_Handle_InvalidOperator(t *testing.T) {
 	t.Parallel()
 
-	flagID := uuid.New()
+	flagID := domain.NewFeatureFlagID()
 	flagRepo := &mockFeatureFlagRepo{
-		findFn: func(_ context.Context, id uuid.UUID) (*domain.FeatureFlag, error) {
+		findFn: func(_ context.Context, id domain.FeatureFlagID) (*domain.FeatureFlag, error) {
 			return newReconstructedFlag(id), nil
 		},
 	}
@@ -119,9 +119,9 @@ func TestCreateRuleGroupHandler_Handle_InvalidOperator(t *testing.T) {
 func TestCreateRuleGroupHandler_Handle_RepoError(t *testing.T) {
 	t.Parallel()
 
-	flagID := uuid.New()
+	flagID := domain.NewFeatureFlagID()
 	flagRepo := &mockFeatureFlagRepo{
-		findFn: func(_ context.Context, _ uuid.UUID) (*domain.FeatureFlag, error) {
+		findFn: func(_ context.Context, _ domain.FeatureFlagID) (*domain.FeatureFlag, error) {
 			return newReconstructedFlag(flagID), nil
 		},
 	}
@@ -149,9 +149,9 @@ func TestCreateRuleGroupHandler_Handle_RepoError(t *testing.T) {
 func TestCreateRuleGroupHandler_Handle_MultipleConditions(t *testing.T) {
 	t.Parallel()
 
-	flagID := uuid.New()
+	flagID := domain.NewFeatureFlagID()
 	flagRepo := &mockFeatureFlagRepo{
-		findFn: func(_ context.Context, _ uuid.UUID) (*domain.FeatureFlag, error) {
+		findFn: func(_ context.Context, _ domain.FeatureFlagID) (*domain.FeatureFlag, error) {
 			return newReconstructedFlag(flagID), nil
 		},
 	}

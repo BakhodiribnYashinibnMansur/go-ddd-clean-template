@@ -170,11 +170,12 @@ func (ff *FeatureFlag) rolloutOnValue() string {
 // Getters
 // ---------------------------------------------------------------------------
 
-func (ff *FeatureFlag) Name() string              { return ff.name }
-func (ff *FeatureFlag) Key() string               { return ff.key }
-func (ff *FeatureFlag) Description() string       { return ff.description }
-func (ff *FeatureFlag) FlagType() string          { return ff.flagType }
-func (ff *FeatureFlag) DefaultValue() string      { return ff.defaultValue }
-func (ff *FeatureFlag) RolloutPercentage() int    { return ff.rolloutPercentage }
-func (ff *FeatureFlag) IsActive() bool            { return ff.isActive }
-func (ff *FeatureFlag) RuleGroups() []*RuleGroup  { return ff.ruleGroups }
+func (ff *FeatureFlag) TypedID() FeatureFlagID   { return FeatureFlagID(ff.ID()) }
+func (ff *FeatureFlag) Name() string             { return ff.name }
+func (ff *FeatureFlag) Key() string              { return ff.key }
+func (ff *FeatureFlag) Description() string      { return ff.description }
+func (ff *FeatureFlag) FlagType() string         { return ff.flagType }
+func (ff *FeatureFlag) DefaultValue() string     { return ff.defaultValue }
+func (ff *FeatureFlag) RolloutPercentage() int   { return ff.rolloutPercentage }
+func (ff *FeatureFlag) IsActive() bool           { return ff.isActive }
+func (ff *FeatureFlag) RuleGroups() []*RuleGroup { return ff.ruleGroups }

@@ -68,7 +68,8 @@ func (s *SiteSetting) Update(key, value, settingType, description *string) {
 // Getters
 // ---------------------------------------------------------------------------
 
-func (s *SiteSetting) Key() string         { return s.key }
-func (s *SiteSetting) Value() string       { return s.value }
-func (s *SiteSetting) Type() string        { return s.settingType }
-func (s *SiteSetting) Description() string { return s.description }
+func (s *SiteSetting) TypedID() SiteSettingID { return SiteSettingID(s.ID()) }
+func (s *SiteSetting) Key() string            { return s.key }
+func (s *SiteSetting) Value() string          { return s.value }
+func (s *SiteSetting) Type() string           { return s.settingType }
+func (s *SiteSetting) Description() string    { return s.description }

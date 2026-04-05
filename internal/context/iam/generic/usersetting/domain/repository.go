@@ -21,21 +21,21 @@ type UserSettingFilter struct {
 type UserSettingRepository interface {
 	Upsert(ctx context.Context, entity *UserSetting) error
 	FindByUserIDAndKey(ctx context.Context, userID uuid.UUID, key string) (*UserSetting, error)
-	Delete(ctx context.Context, id uuid.UUID) error
+	Delete(ctx context.Context, id UserSettingID) error
 }
 
 // UserSettingView is a flat read-model projection for API responses.
 type UserSettingView struct {
-	ID        uuid.UUID `json:"id"`
-	UserID    uuid.UUID `json:"user_id"`
-	Key       string    `json:"key"`
-	Value     string    `json:"value"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID        UserSettingID `json:"id"`
+	UserID    uuid.UUID     `json:"user_id"`
+	Key       string        `json:"key"`
+	Value     string        `json:"value"`
+	CreatedAt time.Time     `json:"created_at"`
+	UpdatedAt time.Time     `json:"updated_at"`
 }
 
 // UserSettingReadRepository provides read-only access for listing and detail views.
 type UserSettingReadRepository interface {
-	FindByID(ctx context.Context, id uuid.UUID) (*UserSettingView, error)
+	FindByID(ctx context.Context, id UserSettingID) (*UserSettingView, error)
 	List(ctx context.Context, filter UserSettingFilter) ([]*UserSettingView, int64, error)
 }

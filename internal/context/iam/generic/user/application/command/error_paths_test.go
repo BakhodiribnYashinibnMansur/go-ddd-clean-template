@@ -5,9 +5,9 @@ import (
 	"errors"
 	"testing"
 
+	"gct/internal/context/iam/generic/user/domain"
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
-	"gct/internal/context/iam/generic/user/domain"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -36,8 +36,8 @@ func (m *errorRepo) Update(_ context.Context, _ *domain.User) error {
 	return m.updateErr
 }
 
-func (m *errorRepo) FindByID(_ context.Context, id uuid.UUID) (*domain.User, error) {
-	if m.findUser != nil && m.findUser.ID() == id {
+func (m *errorRepo) FindByID(_ context.Context, id domain.UserID) (*domain.User, error) {
+	if m.findUser != nil && m.findUser.TypedID() == id {
 		return m.findUser, nil
 	}
 	return nil, domain.ErrUserNotFound

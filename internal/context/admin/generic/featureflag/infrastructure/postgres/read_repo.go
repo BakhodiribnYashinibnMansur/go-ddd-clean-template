@@ -34,7 +34,7 @@ func NewFeatureFlagReadRepo(pool *pgxpool.Pool) *FeatureFlagReadRepo {
 }
 
 // FindByID returns a FeatureFlagView for the given ID.
-func (r *FeatureFlagReadRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.FeatureFlagView, err error) {
+func (r *FeatureFlagReadRepo) FindByID(ctx context.Context, id domain.FeatureFlagID) (result *domain.FeatureFlagView, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "FeatureFlagReadRepo.FindByID")
 	defer func() { end(err) }()
 
@@ -71,7 +71,7 @@ func (r *FeatureFlagReadRepo) FindByID(ctx context.Context, id uuid.UUID) (resul
 	}
 
 	return &domain.FeatureFlagView{
-		ID:                ffID,
+		ID:                domain.FeatureFlagID(ffID),
 		Name:              name,
 		Key:               key,
 		Description:       description,
@@ -158,7 +158,7 @@ func (r *FeatureFlagReadRepo) List(ctx context.Context, filter domain.FeatureFla
 		}
 
 		views = append(views, &domain.FeatureFlagView{
-			ID:                id,
+			ID:                domain.FeatureFlagID(id),
 			Name:              name,
 			Key:               key,
 			Description:       description,
@@ -216,7 +216,7 @@ func (r *FeatureFlagReadRepo) loadRuleGroupViews(ctx context.Context, flagID uui
 		}
 
 		views = append(views, domain.RuleGroupView{
-			ID:         id,
+			ID:         domain.RuleGroupID(id),
 			Name:       name,
 			Variation:  variation,
 			Priority:   priority,

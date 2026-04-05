@@ -66,14 +66,14 @@ func (r *NotificationWriteRepo) Save(ctx context.Context, n *domain.Notification
 }
 
 // FindByID retrieves a Notification aggregate by ID.
-func (r *NotificationWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.Notification, err error) {
+func (r *NotificationWriteRepo) FindByID(ctx context.Context, id domain.NotificationID) (result *domain.Notification, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "NotificationWriteRepo.FindByID")
 	defer func() { end(err) }()
 
 	sql, args, err := r.builder.
 		Select(writeColumns...).
 		From(tableName).
-		Where(squirrel.Eq{"id": id}).
+		Where(squirrel.Eq{"id": id.UUID()}).
 		ToSql()
 	if err != nil {
 		return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
@@ -105,13 +105,13 @@ func (r *NotificationWriteRepo) Update(ctx context.Context, n *domain.Notificati
 }
 
 // Delete removes a Notification by ID.
-func (r *NotificationWriteRepo) Delete(ctx context.Context, id uuid.UUID) (err error) {
+func (r *NotificationWriteRepo) Delete(ctx context.Context, id domain.NotificationID) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "NotificationWriteRepo.Delete")
 	defer func() { end(err) }()
 
 	sql, args, err := r.builder.
 		Delete(tableName).
-		Where(squirrel.Eq{"id": id}).
+		Where(squirrel.Eq{"id": id.UUID()}).
 		ToSql()
 	if err != nil {
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildDelete)

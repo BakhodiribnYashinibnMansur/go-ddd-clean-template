@@ -40,8 +40,8 @@ func (h *DeleteAnnouncementHandler) Handle(ctx context.Context, cmd DeleteAnnoun
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "DeleteAnnouncement", "announcement")()
 
-	if err := h.repo.Delete(ctx, cmd.ID.UUID()); err != nil {
-		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "DeleteAnnouncement", Entity: "announcement", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
+	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "DeleteAnnouncement", Entity: "announcement", EntityID: cmd.ID, Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 	return nil

@@ -34,14 +34,14 @@ func NewNotificationReadRepo(pool *pgxpool.Pool) *NotificationReadRepo {
 }
 
 // FindByID returns a NotificationView for the given ID.
-func (r *NotificationReadRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.NotificationView, err error) {
+func (r *NotificationReadRepo) FindByID(ctx context.Context, id domain.NotificationID) (result *domain.NotificationView, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "NotificationReadRepo.FindByID")
 	defer func() { end(err) }()
 
 	sql, args, err := r.builder.
 		Select(readColumns...).
 		From(tableName).
-		Where(squirrel.Eq{"id": id}).
+		Where(squirrel.Eq{"id": id.UUID()}).
 		ToSql()
 	if err != nil {
 		return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
@@ -135,7 +135,7 @@ func scanNotificationView(row pgx.Row) (*domain.NotificationView, error) {
 	_ = updatedAt
 
 	return &domain.NotificationView{
-		ID:        id,
+		ID:        domain.NotificationID(id),
 		UserID:    uuid.Nil,
 		Title:     title,
 		Message:   body,
@@ -167,7 +167,7 @@ func scanNotificationViewFromRows(rows pgx.Rows) (*domain.NotificationView, erro
 	_ = updatedAt
 
 	return &domain.NotificationView{
-		ID:        id,
+		ID:        domain.NotificationID(id),
 		UserID:    uuid.Nil,
 		Title:     title,
 		Message:   body,

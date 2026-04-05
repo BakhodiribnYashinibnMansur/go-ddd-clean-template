@@ -3,11 +3,11 @@ package command
 import (
 	"context"
 
+	"gct/internal/context/iam/generic/usersetting/domain"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
-	"gct/internal/context/iam/generic/usersetting/domain"
 
 	"github.com/google/uuid"
 )

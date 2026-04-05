@@ -1,11 +1,11 @@
 package usersetting
 
 import (
-	"gct/internal/kernel/application"
-	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/context/iam/generic/usersetting/application/command"
 	"gct/internal/context/iam/generic/usersetting/application/query"
 	"gct/internal/context/iam/generic/usersetting/infrastructure/postgres"
+	"gct/internal/kernel/application"
+	"gct/internal/kernel/infrastructure/logger"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )

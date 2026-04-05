@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"database/sql/driver"
+	"encoding/json"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -33,6 +35,36 @@ func (id UserID) String() string { return uuid.UUID(id).String() }
 // IsZero reports whether the UserID is the zero value.
 func (id UserID) IsZero() bool { return uuid.UUID(id) == uuid.Nil }
 
+// MarshalJSON serializes the UserID as a canonical UUID string.
+func (id UserID) MarshalJSON() ([]byte, error) { return json.Marshal(id.String()) }
+
+// UnmarshalJSON parses a UserID from a JSON UUID string.
+func (id *UserID) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+	parsed, err := ParseUserID(s)
+	if err != nil {
+		return err
+	}
+	*id = parsed
+	return nil
+}
+
+// Value implements driver.Valuer for SQL driver interop.
+func (id UserID) Value() (driver.Value, error) { return uuid.UUID(id).Value() }
+
+// Scan implements sql.Scanner for SQL driver interop.
+func (id *UserID) Scan(src any) error {
+	var u uuid.UUID
+	if err := u.Scan(src); err != nil {
+		return err
+	}
+	*id = UserID(u)
+	return nil
+}
+
 // SessionID is the typed identifier for a Session entity owned by the User aggregate.
 type SessionID uuid.UUID
 
@@ -56,3 +88,33 @@ func (id SessionID) String() string { return uuid.UUID(id).String() }
 
 // IsZero reports whether the SessionID is the zero value.
 func (id SessionID) IsZero() bool { return uuid.UUID(id) == uuid.Nil }
+
+// MarshalJSON serializes the SessionID as a canonical UUID string.
+func (id SessionID) MarshalJSON() ([]byte, error) { return json.Marshal(id.String()) }
+
+// UnmarshalJSON parses a SessionID from a JSON UUID string.
+func (id *SessionID) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+	parsed, err := ParseSessionID(s)
+	if err != nil {
+		return err
+	}
+	*id = parsed
+	return nil
+}
+
+// Value implements driver.Valuer for SQL driver interop.
+func (id SessionID) Value() (driver.Value, error) { return uuid.UUID(id).Value() }
+
+// Scan implements sql.Scanner for SQL driver interop.
+func (id *SessionID) Scan(src any) error {
+	var u uuid.UUID
+	if err := u.Scan(src); err != nil {
+		return err
+	}
+	*id = SessionID(u)
+	return nil
+}

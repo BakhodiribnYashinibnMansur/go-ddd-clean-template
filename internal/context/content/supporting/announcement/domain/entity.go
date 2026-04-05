@@ -109,10 +109,11 @@ func (a *Announcement) Update(title *shared.Lang, content *shared.Lang, priority
 // Getters
 // ---------------------------------------------------------------------------
 
+func (a *Announcement) TypedID() AnnouncementID { return AnnouncementID(a.ID()) }
 func (a *Announcement) Title() shared.Lang      { return a.title }
-func (a *Announcement) Content() shared.Lang     { return a.content }
-func (a *Announcement) Published() bool          { return a.published }
-func (a *Announcement) PublishedAt() *time.Time  { return a.publishedAt }
-func (a *Announcement) Priority() int            { return a.priority }
-func (a *Announcement) StartDate() *time.Time    { return a.startDate }
-func (a *Announcement) EndDate() *time.Time      { return a.endDate }
+func (a *Announcement) Content() shared.Lang    { return a.content }
+func (a *Announcement) Published() bool         { return a.published }
+func (a *Announcement) PublishedAt() *time.Time { return a.publishedAt }
+func (a *Announcement) Priority() int           { return a.priority }
+func (a *Announcement) StartDate() *time.Time   { return a.startDate }
+func (a *Announcement) EndDate() *time.Time     { return a.endDate }

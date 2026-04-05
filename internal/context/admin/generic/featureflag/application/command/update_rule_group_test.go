@@ -15,12 +15,12 @@ import (
 func TestUpdateRuleGroupHandler_Handle(t *testing.T) {
 	t.Parallel()
 
-	rgID := uuid.New()
-	flagID := uuid.New()
-	rg := domain.ReconstructRuleGroup(rgID, flagID, "old-name", "false", 1, time.Now(), time.Now(), nil)
+	rgID := domain.NewRuleGroupID()
+	flagID := domain.NewFeatureFlagID()
+	rg := domain.ReconstructRuleGroup(rgID.UUID(), flagID.UUID(), "old-name", "false", 1, time.Now(), time.Now(), nil)
 
 	rgRepo := &mockRuleGroupRepo{
-		findFn: func(_ context.Context, id uuid.UUID) (*domain.RuleGroup, error) {
+		findFn: func(_ context.Context, id domain.RuleGroupID) (*domain.RuleGroup, error) {
 			if id == rgID {
 				return rg, nil
 			}
@@ -63,12 +63,12 @@ func TestUpdateRuleGroupHandler_Handle(t *testing.T) {
 func TestUpdateRuleGroupHandler_Handle_WithConditions(t *testing.T) {
 	t.Parallel()
 
-	rgID := uuid.New()
-	flagID := uuid.New()
-	rg := domain.ReconstructRuleGroup(rgID, flagID, "rg", "false", 1, time.Now(), time.Now(), nil)
+	rgID := domain.NewRuleGroupID()
+	flagID := domain.NewFeatureFlagID()
+	rg := domain.ReconstructRuleGroup(rgID.UUID(), flagID.UUID(), "rg", "false", 1, time.Now(), time.Now(), nil)
 
 	rgRepo := &mockRuleGroupRepo{
-		findFn: func(_ context.Context, _ uuid.UUID) (*domain.RuleGroup, error) {
+		findFn: func(_ context.Context, _ domain.RuleGroupID) (*domain.RuleGroup, error) {
 			return rg, nil
 		},
 	}
@@ -100,12 +100,12 @@ func TestUpdateRuleGroupHandler_Handle_WithConditions(t *testing.T) {
 func TestUpdateRuleGroupHandler_Handle_InvalidOperator(t *testing.T) {
 	t.Parallel()
 
-	rgID := uuid.New()
-	flagID := uuid.New()
-	rg := domain.ReconstructRuleGroup(rgID, flagID, "rg", "false", 1, time.Now(), time.Now(), nil)
+	rgID := domain.NewRuleGroupID()
+	flagID := domain.NewFeatureFlagID()
+	rg := domain.ReconstructRuleGroup(rgID.UUID(), flagID.UUID(), "rg", "false", 1, time.Now(), time.Now(), nil)
 
 	rgRepo := &mockRuleGroupRepo{
-		findFn: func(_ context.Context, _ uuid.UUID) (*domain.RuleGroup, error) {
+		findFn: func(_ context.Context, _ domain.RuleGroupID) (*domain.RuleGroup, error) {
 			return rg, nil
 		},
 	}
@@ -144,13 +144,13 @@ func TestUpdateRuleGroupHandler_Handle_NotFound(t *testing.T) {
 func TestUpdateRuleGroupHandler_Handle_UpdateRepoError(t *testing.T) {
 	t.Parallel()
 
-	rgID := uuid.New()
-	flagID := uuid.New()
-	rg := domain.ReconstructRuleGroup(rgID, flagID, "rg", "false", 1, time.Now(), time.Now(), nil)
+	rgID := domain.NewRuleGroupID()
+	flagID := domain.NewFeatureFlagID()
+	rg := domain.ReconstructRuleGroup(rgID.UUID(), flagID.UUID(), "rg", "false", 1, time.Now(), time.Now(), nil)
 
 	repoErr := errors.New("update failed")
 	rgRepo := &mockRuleGroupRepo{
-		findFn: func(_ context.Context, _ uuid.UUID) (*domain.RuleGroup, error) {
+		findFn: func(_ context.Context, _ domain.RuleGroupID) (*domain.RuleGroup, error) {
 			return rg, nil
 		},
 		updateFn: func(_ context.Context, _ *domain.RuleGroup) error {

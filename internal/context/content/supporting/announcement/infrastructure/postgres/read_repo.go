@@ -35,14 +35,14 @@ func NewAnnouncementReadRepo(pool *pgxpool.Pool) *AnnouncementReadRepo {
 }
 
 // FindByID returns a single AnnouncementView by ID.
-func (r *AnnouncementReadRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.AnnouncementView, err error) {
+func (r *AnnouncementReadRepo) FindByID(ctx context.Context, id domain.AnnouncementID) (result *domain.AnnouncementView, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "AnnouncementReadRepo.FindByID")
 	defer func() { end(err) }()
 
 	sql, args, err := r.builder.
 		Select(readColumns...).
 		From(tableName).
-		Where(squirrel.Eq{"id": id}).
+		Where(squirrel.Eq{"id": id.UUID()}).
 		ToSql()
 	if err != nil {
 		return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
@@ -129,8 +129,8 @@ func scanAnnouncementView(row pgx.Row) (*domain.AnnouncementView, error) {
 	}
 	_ = aType
 	return &domain.AnnouncementView{
-		ID:        id,
-		TitleUz:   title, TitleRu: title, TitleEn: title,
+		ID:      domain.AnnouncementID(id),
+		TitleUz: title, TitleRu: title, TitleEn: title,
 		ContentUz: content, ContentRu: content, ContentEn: content,
 		Published: isActive,
 		Priority:  priority,
@@ -160,8 +160,8 @@ func scanAnnouncementViewFromRows(rows pgx.Rows) (*domain.AnnouncementView, erro
 	}
 	_ = aType
 	return &domain.AnnouncementView{
-		ID:        id,
-		TitleUz:   title, TitleRu: title, TitleEn: title,
+		ID:      domain.AnnouncementID(id),
+		TitleUz: title, TitleRu: title, TitleEn: title,
 		ContentUz: content, ContentRu: content, ContentEn: content,
 		Published: isActive,
 		Priority:  priority,

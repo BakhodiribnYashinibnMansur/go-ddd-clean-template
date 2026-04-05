@@ -8,7 +8,6 @@ import (
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -17,8 +16,8 @@ import (
 type mockRateLimitRepo struct {
 	saved   *domain.RateLimit
 	updated *domain.RateLimit
-	deleted uuid.UUID
-	findFn  func(ctx context.Context, id uuid.UUID) (*domain.RateLimit, error)
+	deleted domain.RateLimitID
+	findFn  func(ctx context.Context, id domain.RateLimitID) (*domain.RateLimit, error)
 }
 
 func (m *mockRateLimitRepo) Save(_ context.Context, e *domain.RateLimit) error {
@@ -26,7 +25,7 @@ func (m *mockRateLimitRepo) Save(_ context.Context, e *domain.RateLimit) error {
 	return nil
 }
 
-func (m *mockRateLimitRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.RateLimit, error) {
+func (m *mockRateLimitRepo) FindByID(ctx context.Context, id domain.RateLimitID) (*domain.RateLimit, error) {
 	if m.findFn != nil {
 		return m.findFn(ctx, id)
 	}
@@ -38,7 +37,7 @@ func (m *mockRateLimitRepo) Update(_ context.Context, e *domain.RateLimit) error
 	return nil
 }
 
-func (m *mockRateLimitRepo) Delete(_ context.Context, id uuid.UUID) error {
+func (m *mockRateLimitRepo) Delete(_ context.Context, id domain.RateLimitID) error {
 	m.deleted = id
 	return nil
 }
@@ -60,26 +59,26 @@ func (m *mockEventBus) Subscribe(_ string, _ application.EventHandler) error { r
 
 type mockLogger struct{}
 
-func (m *mockLogger) Debug(_ ...any)                                {}
-func (m *mockLogger) Debugf(_ string, _ ...any)                     {}
-func (m *mockLogger) Debugw(_ string, _ ...any)                     {}
-func (m *mockLogger) Info(_ ...any)                                 {}
-func (m *mockLogger) Infof(_ string, _ ...any)                      {}
-func (m *mockLogger) Infow(_ string, _ ...any)                      {}
-func (m *mockLogger) Warn(_ ...any)                                 {}
-func (m *mockLogger) Warnf(_ string, _ ...any)                      {}
-func (m *mockLogger) Warnw(_ string, _ ...any)                      {}
-func (m *mockLogger) Error(_ ...any)                                {}
-func (m *mockLogger) Errorf(_ string, _ ...any)                     {}
-func (m *mockLogger) Errorw(_ string, _ ...any)                     {}
-func (m *mockLogger) Fatal(_ ...any)                                {}
-func (m *mockLogger) Fatalf(_ string, _ ...any)                     {}
-func (m *mockLogger) Fatalw(_ string, _ ...any)                     {}
-func (m *mockLogger) Debugc(_ context.Context, _ string, _ ...any)  {}
-func (m *mockLogger) Infoc(_ context.Context, _ string, _ ...any)   {}
-func (m *mockLogger) Warnc(_ context.Context, _ string, _ ...any)   {}
-func (m *mockLogger) Errorc(_ context.Context, _ string, _ ...any)  {}
-func (m *mockLogger) Fatalc(_ context.Context, _ string, _ ...any)  {}
+func (m *mockLogger) Debug(_ ...any)                               {}
+func (m *mockLogger) Debugf(_ string, _ ...any)                    {}
+func (m *mockLogger) Debugw(_ string, _ ...any)                    {}
+func (m *mockLogger) Info(_ ...any)                                {}
+func (m *mockLogger) Infof(_ string, _ ...any)                     {}
+func (m *mockLogger) Infow(_ string, _ ...any)                     {}
+func (m *mockLogger) Warn(_ ...any)                                {}
+func (m *mockLogger) Warnf(_ string, _ ...any)                     {}
+func (m *mockLogger) Warnw(_ string, _ ...any)                     {}
+func (m *mockLogger) Error(_ ...any)                               {}
+func (m *mockLogger) Errorf(_ string, _ ...any)                    {}
+func (m *mockLogger) Errorw(_ string, _ ...any)                    {}
+func (m *mockLogger) Fatal(_ ...any)                               {}
+func (m *mockLogger) Fatalf(_ string, _ ...any)                    {}
+func (m *mockLogger) Fatalw(_ string, _ ...any)                    {}
+func (m *mockLogger) Debugc(_ context.Context, _ string, _ ...any) {}
+func (m *mockLogger) Infoc(_ context.Context, _ string, _ ...any)  {}
+func (m *mockLogger) Warnc(_ context.Context, _ string, _ ...any)  {}
+func (m *mockLogger) Errorc(_ context.Context, _ string, _ ...any) {}
+func (m *mockLogger) Fatalc(_ context.Context, _ string, _ ...any) {}
 
 // --- Tests ---
 

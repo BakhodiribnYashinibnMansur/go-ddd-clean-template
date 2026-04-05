@@ -90,3 +90,6 @@ func (r *Role) RemovePermission(permID uuid.UUID) error {
 	}
 	return ErrPermissionNotFound
 }
+
+// TypedID returns the aggregate's typed identifier.
+func (r *Role) TypedID() RoleID { return RoleID(r.ID()) }

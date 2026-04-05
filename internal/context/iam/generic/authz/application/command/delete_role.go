@@ -44,14 +44,14 @@ func (h *DeleteRoleHandler) Handle(ctx context.Context, cmd DeleteRoleCommand) (
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "DeleteRole", "role")()
 
-	if err := h.repo.Delete(ctx, cmd.ID.UUID()); err != nil {
-		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteRole", Entity: "role", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
+	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
+		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteRole", Entity: "role", EntityID: cmd.ID, Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 
 	event := domain.NewRoleDeleted(cmd.ID.UUID())
 	if err := h.eventBus.Publish(ctx, event); err != nil {
-		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "DeleteRole", Entity: "role", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "DeleteRole", Entity: "role", EntityID: cmd.ID, Err: err}.KV()...)
 	}
 
 	return nil

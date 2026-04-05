@@ -19,7 +19,7 @@ import (
 type mockSystemErrorRepo struct {
 	saved   *domain.SystemError
 	updated *domain.SystemError
-	findFn  func(ctx context.Context, id uuid.UUID) (*domain.SystemError, error)
+	findFn  func(ctx context.Context, id domain.SystemErrorID) (*domain.SystemError, error)
 }
 
 func (m *mockSystemErrorRepo) Save(_ context.Context, e *domain.SystemError) error {
@@ -27,7 +27,7 @@ func (m *mockSystemErrorRepo) Save(_ context.Context, e *domain.SystemError) err
 	return nil
 }
 
-func (m *mockSystemErrorRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.SystemError, error) {
+func (m *mockSystemErrorRepo) FindByID(ctx context.Context, id domain.SystemErrorID) (*domain.SystemError, error) {
 	if m.findFn != nil {
 		return m.findFn(ctx, id)
 	}
@@ -168,8 +168,8 @@ func TestResolveErrorHandler_Handle(t *testing.T) {
 	se := domain.NewSystemError("ERR_500", "test error", "critical")
 
 	repo := &mockSystemErrorRepo{
-		findFn: func(_ context.Context, id uuid.UUID) (*domain.SystemError, error) {
-			if id == se.ID() {
+		findFn: func(_ context.Context, id domain.SystemErrorID) (*domain.SystemError, error) {
+			if id == se.TypedID() {
 				return se, nil
 			}
 			return nil, domain.ErrSystemErrorNotFound
@@ -182,7 +182,7 @@ func TestResolveErrorHandler_Handle(t *testing.T) {
 
 	resolverID := uuid.New()
 	err := handler.Handle(context.Background(), ResolveErrorCommand{
-		ID:         domain.SystemErrorID(se.ID()),
+		ID:         se.TypedID(),
 		ResolvedBy: resolverID,
 	})
 	require.NoError(t, err)
@@ -242,7 +242,7 @@ func TestResolveErrorHandler_AlreadyResolved(t *testing.T) {
 	)
 
 	repo := &mockSystemErrorRepo{
-		findFn: func(_ context.Context, id uuid.UUID) (*domain.SystemError, error) {
+		findFn: func(_ context.Context, id domain.SystemErrorID) (*domain.SystemError, error) {
 			return se, nil
 		},
 	}
@@ -253,7 +253,7 @@ func TestResolveErrorHandler_AlreadyResolved(t *testing.T) {
 
 	// Should be idempotent
 	err := handler.Handle(context.Background(), ResolveErrorCommand{
-		ID:         domain.SystemErrorID(se.ID()),
+		ID:         se.TypedID(),
 		ResolvedBy: uuid.New(),
 	})
 	require.NoError(t, err)
@@ -289,7 +289,7 @@ func TestResolveErrorHandler_RepoUpdateError(t *testing.T) {
 	se := domain.NewSystemError("ERR", "test", "low")
 
 	repo := &errorSystemErrorRepo{
-		findFn:    func(_ context.Context, _ uuid.UUID) (*domain.SystemError, error) { return se, nil },
+		findFn:    func(_ context.Context, _ domain.SystemErrorID) (*domain.SystemError, error) { return se, nil },
 		updateErr: errRepoUpdate,
 	}
 	eb := &mockEventBus{}
@@ -297,7 +297,7 @@ func TestResolveErrorHandler_RepoUpdateError(t *testing.T) {
 
 	handler := NewResolveErrorHandler(repo, eb, log)
 	err := handler.Handle(context.Background(), ResolveErrorCommand{
-		ID: domain.SystemErrorID(se.ID()), ResolvedBy: uuid.New(),
+		ID: se.TypedID(), ResolvedBy: uuid.New(),
 	})
 	if !errors.Is(err, errRepoUpdate) {
 		t.Fatalf("expected errRepoUpdate, got: %v", err)
@@ -307,14 +307,14 @@ func TestResolveErrorHandler_RepoUpdateError(t *testing.T) {
 type errorSystemErrorRepo struct {
 	saveErr   error
 	updateErr error
-	findFn    func(ctx context.Context, id uuid.UUID) (*domain.SystemError, error)
+	findFn    func(ctx context.Context, id domain.SystemErrorID) (*domain.SystemError, error)
 }
 
 func (m *errorSystemErrorRepo) Save(_ context.Context, _ *domain.SystemError) error {
 	return m.saveErr
 }
 
-func (m *errorSystemErrorRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.SystemError, error) {
+func (m *errorSystemErrorRepo) FindByID(ctx context.Context, id domain.SystemErrorID) (*domain.SystemError, error) {
 	if m.findFn != nil {
 		return m.findFn(ctx, id)
 	}

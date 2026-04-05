@@ -35,7 +35,7 @@ type mockReadRepo struct {
 	findErr    error
 }
 
-func (r *mockReadRepo) FindByID(_ context.Context, _ uuid.UUID) (*domain.IntegrationView, error) {
+func (r *mockReadRepo) FindByID(_ context.Context, _ domain.IntegrationID) (*domain.IntegrationView, error) {
 	return nil, errors.New("not implemented")
 }
 
@@ -56,26 +56,26 @@ func (r *mockReadRepo) FindByAPIKey(_ context.Context, _ string) (*domain.Integr
 
 type mockLog struct{}
 
-func (m *mockLog) Debug(_ ...any)                                {}
-func (m *mockLog) Debugf(_ string, _ ...any)                     {}
-func (m *mockLog) Debugw(_ string, _ ...any)                     {}
-func (m *mockLog) Info(_ ...any)                                 {}
-func (m *mockLog) Infof(_ string, _ ...any)                      {}
-func (m *mockLog) Infow(_ string, _ ...any)                      {}
-func (m *mockLog) Warn(_ ...any)                                 {}
-func (m *mockLog) Warnf(_ string, _ ...any)                      {}
-func (m *mockLog) Warnw(_ string, _ ...any)                      {}
-func (m *mockLog) Error(_ ...any)                                {}
-func (m *mockLog) Errorf(_ string, _ ...any)                     {}
-func (m *mockLog) Errorw(_ string, _ ...any)                     {}
-func (m *mockLog) Fatal(_ ...any)                                {}
-func (m *mockLog) Fatalf(_ string, _ ...any)                     {}
-func (m *mockLog) Fatalw(_ string, _ ...any)                     {}
-func (m *mockLog) Debugc(_ context.Context, _ string, _ ...any)  {}
-func (m *mockLog) Infoc(_ context.Context, _ string, _ ...any)   {}
-func (m *mockLog) Warnc(_ context.Context, _ string, _ ...any)   {}
-func (m *mockLog) Errorc(_ context.Context, _ string, _ ...any)  {}
-func (m *mockLog) Fatalc(_ context.Context, _ string, _ ...any)  {}
+func (m *mockLog) Debug(_ ...any)                               {}
+func (m *mockLog) Debugf(_ string, _ ...any)                    {}
+func (m *mockLog) Debugw(_ string, _ ...any)                    {}
+func (m *mockLog) Info(_ ...any)                                {}
+func (m *mockLog) Infof(_ string, _ ...any)                     {}
+func (m *mockLog) Infow(_ string, _ ...any)                     {}
+func (m *mockLog) Warn(_ ...any)                                {}
+func (m *mockLog) Warnf(_ string, _ ...any)                     {}
+func (m *mockLog) Warnw(_ string, _ ...any)                     {}
+func (m *mockLog) Error(_ ...any)                               {}
+func (m *mockLog) Errorf(_ string, _ ...any)                    {}
+func (m *mockLog) Errorw(_ string, _ ...any)                    {}
+func (m *mockLog) Fatal(_ ...any)                               {}
+func (m *mockLog) Fatalf(_ string, _ ...any)                    {}
+func (m *mockLog) Fatalw(_ string, _ ...any)                    {}
+func (m *mockLog) Debugc(_ context.Context, _ string, _ ...any) {}
+func (m *mockLog) Infoc(_ context.Context, _ string, _ ...any)  {}
+func (m *mockLog) Warnc(_ context.Context, _ string, _ ...any)  {}
+func (m *mockLog) Errorc(_ context.Context, _ string, _ ...any) {}
+func (m *mockLog) Fatalc(_ context.Context, _ string, _ ...any) {}
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -333,7 +333,7 @@ func TestSignature_InactiveAPIKey(t *testing.T) {
 	repo := &mockReadRepo{
 		apiKeyView: &domain.IntegrationAPIKeyView{
 			ID:            uuid.New(),
-			IntegrationID: uuid.New(),
+			IntegrationID: domain.NewIntegrationID(),
 			Key:           "my-key",
 			Active:        false, // inactive
 		},
@@ -366,7 +366,7 @@ func TestSignature_InactiveAPIKey(t *testing.T) {
 func TestSignature_InvalidSign(t *testing.T) {
 	t.Parallel()
 
-	integrationID := uuid.New()
+	integrationID := domain.NewIntegrationID()
 	apiKeyID := uuid.New()
 	repo := &mockReadRepo{
 		apiKeyView: &domain.IntegrationAPIKeyView{
@@ -398,7 +398,7 @@ func TestSignature_InvalidSign(t *testing.T) {
 func TestSignature_ValidRequest(t *testing.T) {
 	t.Parallel()
 
-	integrationID := uuid.New()
+	integrationID := domain.NewIntegrationID()
 	apiKeyID := uuid.New()
 	repo := &mockReadRepo{
 		apiKeyView: &domain.IntegrationAPIKeyView{
@@ -452,7 +452,7 @@ func TestSignature_ValidRequest(t *testing.T) {
 func TestSignature_DefaultExpireTime(t *testing.T) {
 	t.Parallel()
 
-	integrationID := uuid.New()
+	integrationID := domain.NewIntegrationID()
 	apiKeyID := uuid.New()
 	repo := &mockReadRepo{
 		apiKeyView: &domain.IntegrationAPIKeyView{
@@ -527,7 +527,7 @@ func TestMakeSign_DifferentInputs(t *testing.T) {
 func TestSignature_APIKeyFromQueryParam(t *testing.T) {
 	t.Parallel()
 
-	integrationID := uuid.New()
+	integrationID := domain.NewIntegrationID()
 	apiKeyID := uuid.New()
 	repo := &mockReadRepo{
 		apiKeyView: &domain.IntegrationAPIKeyView{

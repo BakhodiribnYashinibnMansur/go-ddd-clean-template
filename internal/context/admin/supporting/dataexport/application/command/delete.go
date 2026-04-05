@@ -40,8 +40,8 @@ func (h *DeleteDataExportHandler) Handle(ctx context.Context, cmd DeleteDataExpo
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "DeleteDataExport", "data_export")()
 
-	if err := h.repo.Delete(ctx, cmd.ID.UUID()); err != nil {
-		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "DeleteDataExport", Entity: "data_export", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
+	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "DeleteDataExport", Entity: "data_export", EntityID: cmd.ID, Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 	return nil

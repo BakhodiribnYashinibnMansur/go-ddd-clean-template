@@ -6,7 +6,6 @@ import (
 
 	"gct/internal/context/ops/supporting/iprule/domain"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -16,8 +15,8 @@ func TestUpdateIPRuleHandler_Handle(t *testing.T) {
 	r := domain.NewIPRule("192.168.1.1", "DENY", "bad actor", nil)
 
 	repo := &mockIPRuleRepo{
-		findFn: func(_ context.Context, id uuid.UUID) (*domain.IPRule, error) {
-			if id == r.ID() {
+		findFn: func(_ context.Context, id domain.IPRuleID) (*domain.IPRule, error) {
+			if id == r.TypedID() {
 				return r, nil
 			}
 			return nil, domain.ErrIPRuleNotFound
@@ -30,7 +29,7 @@ func TestUpdateIPRuleHandler_Handle(t *testing.T) {
 	newAction := "ALLOW"
 	newReason := "now trusted"
 	cmd := UpdateIPRuleCommand{
-		ID:        domain.IPRuleID(r.ID()),
+		ID:        r.TypedID(),
 		IPAddress: &newIP,
 		Action:    &newAction,
 		Reason:    &newReason,
@@ -58,7 +57,7 @@ func TestUpdateIPRuleHandler_PartialUpdate(t *testing.T) {
 	r := domain.NewIPRule("192.168.1.1", "DENY", "reason", nil)
 
 	repo := &mockIPRuleRepo{
-		findFn: func(_ context.Context, _ uuid.UUID) (*domain.IPRule, error) {
+		findFn: func(_ context.Context, _ domain.IPRuleID) (*domain.IPRule, error) {
 			return r, nil
 		},
 	}
@@ -66,7 +65,7 @@ func TestUpdateIPRuleHandler_PartialUpdate(t *testing.T) {
 
 	newReason := "updated reason"
 	err := handler.Handle(context.Background(), UpdateIPRuleCommand{
-		ID:     domain.IPRuleID(r.ID()),
+		ID:     r.TypedID(),
 		Reason: &newReason,
 	})
 	require.NoError(t, err)

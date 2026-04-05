@@ -5,8 +5,6 @@ import (
 	"time"
 
 	domain "gct/internal/context/admin/supporting/errorcode/domain"
-
-	"github.com/google/uuid"
 )
 
 func TestNewErrorCode(t *testing.T) {
@@ -80,16 +78,16 @@ func TestErrorCode_Update(t *testing.T) {
 func TestReconstructErrorCode(t *testing.T) {
 	t.Parallel()
 
-	id := uuid.New()
+	id := domain.NewErrorCodeID()
 	now := time.Now()
 
 	ec := domain.ReconstructErrorCode(
-		id, now, now,
+		id.UUID(), now, now,
 		"NOT_FOUND", "Resource not found", "", "", 404,
 		"DATA", "LOW", false, 0, "Check the ID",
 	)
 
-	if ec.ID() != id {
+	if ec.TypedID() != id {
 		t.Fatal("ID mismatch")
 	}
 	if ec.Code() != "NOT_FOUND" {

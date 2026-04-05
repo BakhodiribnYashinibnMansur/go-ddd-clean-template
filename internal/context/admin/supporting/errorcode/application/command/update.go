@@ -54,7 +54,7 @@ func (h *UpdateErrorCodeHandler) Handle(ctx context.Context, cmd UpdateErrorCode
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "UpdateErrorCode", "error_code")()
 
-	ec, err := h.repo.FindByID(ctx, cmd.ID.UUID())
+	ec, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {
 		return apperrors.MapToServiceError(err)
 	}
@@ -66,7 +66,7 @@ func (h *UpdateErrorCodeHandler) Handle(ctx context.Context, cmd UpdateErrorCode
 	)
 
 	if err := h.repo.Update(ctx, ec); err != nil {
-		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "UpdateErrorCode", Entity: "error_code", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "UpdateErrorCode", Entity: "error_code", EntityID: cmd.ID, Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 

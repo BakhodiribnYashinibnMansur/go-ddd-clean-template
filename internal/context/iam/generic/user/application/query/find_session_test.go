@@ -16,15 +16,15 @@ import (
 func TestFindSessionHandler_Success(t *testing.T) {
 	t.Parallel()
 
-	sessionID := uuid.New()
-	userID := uuid.New()
+	sessionID := domain.NewSessionID()
+	userID := domain.NewUserID()
 	deviceID := uuid.New()
 	now := time.Now()
 
 	readRepo := &mockUserReadRepository{
 		session: &shared.AuthSession{
-			ID:               sessionID,
-			UserID:           userID,
+			ID:               sessionID.UUID(),
+			UserID:           userID.UUID(),
 			DeviceID:         deviceID,
 			RefreshTokenHash: "hashed_token",
 			ExpiresAt:        now.Add(24 * time.Hour),
@@ -35,18 +35,18 @@ func TestFindSessionHandler_Success(t *testing.T) {
 
 	handler := NewFindSessionHandler(readRepo, logger.Noop())
 
-	result, err := handler.Handle(context.Background(), FindSessionQuery{SessionID: domain.SessionID(sessionID)})
+	result, err := handler.Handle(context.Background(), FindSessionQuery{SessionID: sessionID})
 	require.NoError(t, err)
 
 	if result == nil {
 		t.Fatal("expected session, got nil")
 	}
 
-	if result.ID != sessionID {
+	if result.ID != sessionID.UUID() {
 		t.Errorf("expected session ID %s, got %s", sessionID, result.ID)
 	}
 
-	if result.UserID != userID {
+	if result.UserID != userID.UUID() {
 		t.Errorf("expected user ID %s, got %s", userID, result.UserID)
 	}
 

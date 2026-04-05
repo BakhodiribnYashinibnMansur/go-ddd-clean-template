@@ -7,7 +7,6 @@ import (
 
 	"gct/internal/context/iam/generic/user/domain"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -40,8 +39,8 @@ func TestRevokeAllSessionsHandler_Success(t *testing.T) {
 
 	repo := &revokeTestRepo{
 		mockUserRepository: mockUserRepository{
-			findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.User, error) {
-				if id == user.ID() {
+			findByIDFn: func(_ context.Context, id domain.UserID) (*domain.User, error) {
+				if id == user.TypedID() {
 					return user, nil
 				}
 				return nil, domain.ErrUserNotFound
@@ -99,8 +98,8 @@ func TestRevokeAllSessionsHandler_UpdateError(t *testing.T) {
 	updateErr := errors.New("db write failed")
 	repo := &revokeTestRepo{
 		mockUserRepository: mockUserRepository{
-			findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.User, error) {
-				if id == user.ID() {
+			findByIDFn: func(_ context.Context, id domain.UserID) (*domain.User, error) {
+				if id == user.TypedID() {
 					return user, nil
 				}
 				return nil, domain.ErrUserNotFound
@@ -133,8 +132,8 @@ func TestRevokeAllSessionsHandler_NoSessions(t *testing.T) {
 
 	repo := &revokeTestRepo{
 		mockUserRepository: mockUserRepository{
-			findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.User, error) {
-				if id == user.ID() {
+			findByIDFn: func(_ context.Context, id domain.UserID) (*domain.User, error) {
+				if id == user.TypedID() {
 					return user, nil
 				}
 				return nil, domain.ErrUserNotFound

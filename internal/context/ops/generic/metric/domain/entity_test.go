@@ -5,8 +5,6 @@ import (
 	"time"
 
 	domain "gct/internal/context/ops/generic/metric/domain"
-
-	"github.com/google/uuid"
 )
 
 func TestNewFunctionMetric(t *testing.T) {
@@ -54,13 +52,13 @@ func TestNewFunctionMetric_WithPanic(t *testing.T) {
 func TestReconstructFunctionMetric(t *testing.T) {
 	t.Parallel()
 
-	id := uuid.New()
+	id := domain.NewMetricID()
 	createdAt := time.Now()
 	panicErr := "nil pointer"
 
-	fm := domain.ReconstructFunctionMetric(id, createdAt, "TestFunc", 42.0, true, &panicErr)
+	fm := domain.ReconstructFunctionMetric(id.UUID(), createdAt, "TestFunc", 42.0, true, &panicErr)
 
-	if fm.ID() != id {
+	if fm.TypedID() != id {
 		t.Fatal("ID mismatch")
 	}
 	if fm.Name() != "TestFunc" {

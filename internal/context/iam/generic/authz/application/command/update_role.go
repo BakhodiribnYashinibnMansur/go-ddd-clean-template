@@ -46,7 +46,7 @@ func (h *UpdateRoleHandler) Handle(ctx context.Context, cmd UpdateRoleCommand) (
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "UpdateRole", "role")()
 
-	role, err := h.repo.FindByID(ctx, cmd.ID.UUID())
+	role, err := h.repo.FindByID(ctx, cmd.ID)
 	if err != nil {
 		return apperrors.MapToServiceError(err)
 	}
@@ -59,12 +59,12 @@ func (h *UpdateRoleHandler) Handle(ctx context.Context, cmd UpdateRoleCommand) (
 	}
 
 	if err := h.repo.Update(ctx, role); err != nil {
-		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "UpdateRole", Entity: "role", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "UpdateRole", Entity: "role", EntityID: cmd.ID, Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, role.Events()...); err != nil {
-		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "UpdateRole", Entity: "role", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "UpdateRole", Entity: "role", EntityID: cmd.ID, Err: err}.KV()...)
 	}
 
 	return nil

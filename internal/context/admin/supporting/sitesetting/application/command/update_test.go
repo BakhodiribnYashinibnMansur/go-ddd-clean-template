@@ -17,8 +17,8 @@ func TestUpdateSiteSettingHandler_Handle(t *testing.T) {
 	ss := domain.NewSiteSetting("old_key", "old_value", "general", "old desc")
 
 	repo := &mockRepo{
-		findFn: func(_ context.Context, id uuid.UUID) (*domain.SiteSetting, error) {
-			if id == ss.ID() {
+		findFn: func(_ context.Context, id domain.SiteSettingID) (*domain.SiteSetting, error) {
+			if id == ss.TypedID() {
 				return ss, nil
 			}
 			return nil, domain.ErrSiteSettingNotFound
@@ -32,7 +32,7 @@ func TestUpdateSiteSettingHandler_Handle(t *testing.T) {
 	newValue := "new_value"
 	newDesc := "new desc"
 	cmd := UpdateSiteSettingCommand{
-		ID:          domain.SiteSettingID(ss.ID()),
+		ID:          domain.SiteSettingID(ss.TypedID()),
 		Value:       &newValue,
 		Description: &newDesc,
 	}
@@ -91,7 +91,7 @@ func TestUpdateSiteSettingHandler_RepoUpdateError(t *testing.T) {
 	repoErr := errors.New("repo update failed")
 
 	errR := &errorRepo{
-		findFn:    func(_ context.Context, _ uuid.UUID) (*domain.SiteSetting, error) { return ss, nil },
+		findFn:    func(_ context.Context, _ domain.SiteSettingID) (*domain.SiteSetting, error) { return ss, nil },
 		updateErr: repoErr,
 	}
 	eb := &mockEventBus{}
@@ -101,7 +101,7 @@ func TestUpdateSiteSettingHandler_RepoUpdateError(t *testing.T) {
 
 	newVal := "new"
 	err := handler.Handle(context.Background(), UpdateSiteSettingCommand{
-		ID:    domain.SiteSettingID(ss.ID()),
+		ID:    domain.SiteSettingID(ss.TypedID()),
 		Value: &newVal,
 	})
 	if !errors.Is(err, repoErr) {

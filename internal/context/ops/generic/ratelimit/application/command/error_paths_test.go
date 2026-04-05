@@ -6,8 +6,6 @@ import (
 	"testing"
 
 	"gct/internal/context/ops/generic/ratelimit/domain"
-
-	"github.com/google/uuid"
 )
 
 // --- Error mocks ---
@@ -20,14 +18,14 @@ type errorRateLimitRepo struct {
 	saveErr   error
 	updateErr error
 	deleteErr error
-	findFn    func(ctx context.Context, id uuid.UUID) (*domain.RateLimit, error)
+	findFn    func(ctx context.Context, id domain.RateLimitID) (*domain.RateLimit, error)
 }
 
 func (m *errorRateLimitRepo) Save(_ context.Context, _ *domain.RateLimit) error {
 	return m.saveErr
 }
 
-func (m *errorRateLimitRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.RateLimit, error) {
+func (m *errorRateLimitRepo) FindByID(ctx context.Context, id domain.RateLimitID) (*domain.RateLimit, error) {
 	if m.findFn != nil {
 		return m.findFn(ctx, id)
 	}
@@ -38,7 +36,7 @@ func (m *errorRateLimitRepo) Update(_ context.Context, _ *domain.RateLimit) erro
 	return m.updateErr
 }
 
-func (m *errorRateLimitRepo) Delete(_ context.Context, _ uuid.UUID) error {
+func (m *errorRateLimitRepo) Delete(_ context.Context, _ domain.RateLimitID) error {
 	return m.deleteErr
 }
 
@@ -68,7 +66,7 @@ func TestUpdateRateLimitHandler_RepoUpdateError(t *testing.T) {
 	rl := domain.NewRateLimit("n", "/r", 10, 30, true)
 
 	repo := &errorRateLimitRepo{
-		findFn:    func(_ context.Context, _ uuid.UUID) (*domain.RateLimit, error) { return rl, nil },
+		findFn:    func(_ context.Context, _ domain.RateLimitID) (*domain.RateLimit, error) { return rl, nil },
 		updateErr: errRepoUpdate,
 	}
 	handler := NewUpdateRateLimitHandler(repo, &mockEventBus{}, &mockLogger{})

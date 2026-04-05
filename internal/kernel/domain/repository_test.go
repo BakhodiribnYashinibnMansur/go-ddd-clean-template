@@ -27,7 +27,7 @@ func (m *mockRepo) List(_ context.Context, _ domain.Pagination) ([]*mockEntity, 
 }
 
 // Compile-time interface satisfaction check.
-var _ domain.Repository[mockEntity] = (*mockRepo)(nil)
+var _ domain.Repository[mockEntity, uuid.UUID] = (*mockRepo)(nil)
 
 func TestRepository_CompileTimeCheck(t *testing.T) {
 	// If this compiles, the interface is properly defined.

@@ -88,7 +88,7 @@ func TestIntegration_ListAndGetSessions(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetSession: %v", err)
 	}
-	if sess.UserID != userID {
+	if sess.UserID != userID.UUID() {
 		t.Errorf("user ID mismatch: %s vs %s", sess.UserID, userID)
 	}
 }

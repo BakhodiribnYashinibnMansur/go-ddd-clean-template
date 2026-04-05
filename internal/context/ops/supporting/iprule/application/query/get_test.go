@@ -9,7 +9,6 @@ import (
 
 	"gct/internal/context/ops/supporting/iprule/domain"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -21,7 +20,7 @@ type mockReadRepo struct {
 	total int64
 }
 
-func (m *mockReadRepo) FindByID(_ context.Context, id uuid.UUID) (*domain.IPRuleView, error) {
+func (m *mockReadRepo) FindByID(_ context.Context, id domain.IPRuleID) (*domain.IPRuleView, error) {
 	if m.view != nil && m.view.ID == id {
 		return m.view, nil
 	}
@@ -34,7 +33,7 @@ func (m *mockReadRepo) List(_ context.Context, _ domain.IPRuleFilter) ([]*domain
 
 type errorReadRepo struct{ err error }
 
-func (m *errorReadRepo) FindByID(_ context.Context, _ uuid.UUID) (*domain.IPRuleView, error) {
+func (m *errorReadRepo) FindByID(_ context.Context, _ domain.IPRuleID) (*domain.IPRuleView, error) {
 	return nil, m.err
 }
 
@@ -49,7 +48,7 @@ var errRepo = errors.New("repo failure")
 func TestGetIPRuleHandler_Handle(t *testing.T) {
 	t.Parallel()
 
-	id := uuid.New()
+	id := domain.NewIPRuleID()
 	now := time.Now()
 	expires := now.Add(24 * time.Hour)
 	readRepo := &mockReadRepo{
@@ -65,7 +64,7 @@ func TestGetIPRuleHandler_Handle(t *testing.T) {
 	}
 
 	handler := NewGetIPRuleHandler(readRepo, logger.Noop())
-	result, err := handler.Handle(context.Background(), GetIPRuleQuery{ID: domain.IPRuleID(id)})
+	result, err := handler.Handle(context.Background(), GetIPRuleQuery{ID: id})
 	require.NoError(t, err)
 	if result == nil {
 		t.Fatal("expected result")
@@ -106,7 +105,7 @@ func TestGetIPRuleHandler_RepoError(t *testing.T) {
 func TestGetIPRuleHandler_AllFieldsMapped(t *testing.T) {
 	t.Parallel()
 
-	id := uuid.New()
+	id := domain.NewIPRuleID()
 	now := time.Now()
 	readRepo := &mockReadRepo{
 		view: &domain.IPRuleView{
@@ -121,7 +120,7 @@ func TestGetIPRuleHandler_AllFieldsMapped(t *testing.T) {
 	}
 
 	handler := NewGetIPRuleHandler(readRepo, logger.Noop())
-	result, err := handler.Handle(context.Background(), GetIPRuleQuery{ID: domain.IPRuleID(id)})
+	result, err := handler.Handle(context.Background(), GetIPRuleQuery{ID: id})
 	require.NoError(t, err)
 	if result.Reason != "trusted" {
 		t.Errorf("expected reason 'trusted', got %s", result.Reason)

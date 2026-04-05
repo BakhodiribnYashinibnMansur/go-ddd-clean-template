@@ -59,10 +59,10 @@ func createApprovedUser(t *testing.T, ctx context.Context, env testEnv, phone, p
 	// Find our user by phone (in case the DB is not perfectly clean).
 	for _, u := range list.Users {
 		if u.Phone == phone {
-			if err := env.userBC.ApproveUser.Handle(ctx, usercmd.ApproveUserCommand{ID: domain.UserID(u.ID)}); err != nil {
+			if err := env.userBC.ApproveUser.Handle(ctx, usercmd.ApproveUserCommand{ID: u.ID}); err != nil {
 				t.Fatalf("ApproveUser: %v", err)
 			}
-			return u.ID
+			return u.ID.UUID()
 		}
 	}
 	t.Fatalf("created user with phone %s not found in ListUsers", phone)

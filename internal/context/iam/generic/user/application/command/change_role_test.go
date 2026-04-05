@@ -15,8 +15,8 @@ func TestChangeRoleHandler_Handle(t *testing.T) {
 
 	user := makeTestUser(t)
 	repo := &mockUserRepository{
-		findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.User, error) {
-			if id == user.ID() {
+		findByIDFn: func(_ context.Context, id domain.UserID) (*domain.User, error) {
+			if id == user.TypedID() {
 				return user, nil
 			}
 			return nil, domain.ErrUserNotFound

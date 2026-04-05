@@ -3,13 +3,13 @@ package http
 import (
 	"net/http"
 
-	"gct/internal/kernel/infrastructure/httpx"
-	"gct/internal/kernel/infrastructure/httpx/response"
-	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/context/iam/generic/user"
 	"gct/internal/context/iam/generic/user/application/command"
 	"gct/internal/context/iam/generic/user/application/query"
 	userdomain "gct/internal/context/iam/generic/user/domain"
+	"gct/internal/kernel/infrastructure/httpx"
+	"gct/internal/kernel/infrastructure/httpx/response"
+	"gct/internal/kernel/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"

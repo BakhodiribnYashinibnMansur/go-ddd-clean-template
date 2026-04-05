@@ -11,14 +11,14 @@ import (
 // UserView is a read-model DTO for API responses. Intentionally omits sensitive fields
 // (password hash, sessions) that should never leave the domain layer.
 type UserView struct {
-	ID         uuid.UUID      `json:"id"`
-	Phone      string         `json:"phone"`
-	Email      *string        `json:"email,omitempty"`
-	Username   *string        `json:"username,omitempty"`
-	RoleID     *uuid.UUID     `json:"role_id,omitempty"`
+	ID         UserID            `json:"id"`
+	Phone      string            `json:"phone"`
+	Email      *string           `json:"email,omitempty"`
+	Username   *string           `json:"username,omitempty"`
+	RoleID     *uuid.UUID        `json:"role_id,omitempty"`
 	Attributes map[string]string `json:"attributes,omitempty"`
-	Active     bool           `json:"active"`
-	IsApproved bool           `json:"is_approved"`
+	Active     bool              `json:"active"`
+	IsApproved bool              `json:"is_approved"`
 }
 
 // UsersFilter carries optional filtering and pagination parameters for listing users.
@@ -35,7 +35,7 @@ type UsersFilter struct {
 // It extends the generic Repository with phone/email lookup methods needed for sign-in and uniqueness checks.
 // FindByPhone/FindByEmail must return ErrUserNotFound when no match exists.
 type UserRepository interface {
-	shared.Repository[User]
+	shared.Repository[User, UserID]
 	FindByPhone(ctx context.Context, phone Phone) (*User, error)
 	FindByEmail(ctx context.Context, email Email) (*User, error)
 	FindDefaultRoleID(ctx context.Context) (uuid.UUID, error)
@@ -44,8 +44,8 @@ type UserRepository interface {
 // UserReadRepository provides read-only access returning lightweight UserView projections.
 // It should never be used for write operations or aggregate reconstruction.
 type UserReadRepository interface {
-	FindByID(ctx context.Context, id uuid.UUID) (*UserView, error)
+	FindByID(ctx context.Context, id UserID) (*UserView, error)
 	List(ctx context.Context, filter UsersFilter) ([]*UserView, int64, error)
-	FindSessionByID(ctx context.Context, id uuid.UUID) (*shared.AuthSession, error)
-	FindUserForAuth(ctx context.Context, id uuid.UUID) (*shared.AuthUser, error)
+	FindSessionByID(ctx context.Context, id SessionID) (*shared.AuthSession, error)
+	FindUserForAuth(ctx context.Context, id UserID) (*shared.AuthUser, error)
 }

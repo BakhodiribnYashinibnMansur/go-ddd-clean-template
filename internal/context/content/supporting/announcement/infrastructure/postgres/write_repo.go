@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"gct/internal/context/content/supporting/announcement/domain"
-	shared "gct/internal/kernel/domain"
 	"gct/internal/kernel/consts"
+	shared "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/pgxutil"
 
@@ -68,14 +68,14 @@ func (r *AnnouncementWriteRepo) Save(ctx context.Context, a *domain.Announcement
 }
 
 // FindByID retrieves an Announcement aggregate by its ID.
-func (r *AnnouncementWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.Announcement, err error) {
+func (r *AnnouncementWriteRepo) FindByID(ctx context.Context, id domain.AnnouncementID) (result *domain.Announcement, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "AnnouncementWriteRepo.FindByID")
 	defer func() { end(err) }()
 
 	sql, args, err := r.builder.
 		Select(writeColumns...).
 		From(tableName).
-		Where(squirrel.Eq{"id": id}).
+		Where(squirrel.Eq{"id": id.UUID()}).
 		ToSql()
 	if err != nil {
 		return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
@@ -113,13 +113,13 @@ func (r *AnnouncementWriteRepo) Update(ctx context.Context, a *domain.Announceme
 }
 
 // Delete removes an Announcement by its ID.
-func (r *AnnouncementWriteRepo) Delete(ctx context.Context, id uuid.UUID) (err error) {
+func (r *AnnouncementWriteRepo) Delete(ctx context.Context, id domain.AnnouncementID) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "AnnouncementWriteRepo.Delete")
 	defer func() { end(err) }()
 
 	sql, args, err := r.builder.
 		Delete(tableName).
-		Where(squirrel.Eq{"id": id}).
+		Where(squirrel.Eq{"id": id.UUID()}).
 		ToSql()
 	if err != nil {
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildDelete)

@@ -6,8 +6,6 @@ import (
 
 	domain "gct/internal/context/content/supporting/announcement/domain"
 	shared "gct/internal/kernel/domain"
-
-	"github.com/google/uuid"
 )
 
 func TestNewAnnouncement(t *testing.T) {
@@ -62,14 +60,14 @@ func TestAnnouncement_Publish(t *testing.T) {
 func TestReconstructAnnouncement(t *testing.T) {
 	t.Parallel()
 
-	id := uuid.New()
+	id := domain.NewAnnouncementID()
 	now := time.Now()
 	title := shared.Lang{Uz: "T", Ru: "T", En: "T"}
 	content := shared.Lang{Uz: "C", Ru: "C", En: "C"}
 
-	a := domain.ReconstructAnnouncement(id, now, now, title, content, true, &now, 5, nil, nil)
+	a := domain.ReconstructAnnouncement(id.UUID(), now, now, title, content, true, &now, 5, nil, nil)
 
-	if a.ID() != id {
+	if a.TypedID() != id {
 		t.Fatal("ID mismatch")
 	}
 	if !a.Published() {

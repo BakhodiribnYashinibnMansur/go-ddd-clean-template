@@ -72,14 +72,14 @@ func (r *IntegrationWriteRepo) Save(ctx context.Context, i *domain.Integration) 
 }
 
 // FindByID retrieves an Integration aggregate by ID.
-func (r *IntegrationWriteRepo) FindByID(ctx context.Context, id uuid.UUID) (result *domain.Integration, err error) {
+func (r *IntegrationWriteRepo) FindByID(ctx context.Context, id domain.IntegrationID) (result *domain.Integration, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "IntegrationWriteRepo.FindByID")
 	defer func() { end(err) }()
 
 	sql, args, err := r.builder.
 		Select(writeColumns...).
 		From(tableName).
-		Where(squirrel.Eq{"id": id}).
+		Where(squirrel.Eq{"id": id.UUID()}).
 		ToSql()
 	if err != nil {
 		return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
@@ -133,13 +133,13 @@ func (r *IntegrationWriteRepo) Update(ctx context.Context, i *domain.Integration
 }
 
 // Delete removes an Integration by ID.
-func (r *IntegrationWriteRepo) Delete(ctx context.Context, id uuid.UUID) (err error) {
+func (r *IntegrationWriteRepo) Delete(ctx context.Context, id domain.IntegrationID) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "IntegrationWriteRepo.Delete")
 	defer func() { end(err) }()
 
 	sql, args, err := r.builder.
 		Delete(tableName).
-		Where(squirrel.Eq{"id": id}).
+		Where(squirrel.Eq{"id": id.UUID()}).
 		ToSql()
 	if err != nil {
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildDelete)
@@ -158,13 +158,13 @@ func (r *IntegrationWriteRepo) Delete(ctx context.Context, id uuid.UUID) (err er
 
 func scanIntegration(row pgx.Row) (*domain.Integration, error) {
 	var (
-		id        uuid.UUID
-		name      string
+		id          uuid.UUID
+		name        string
 		description *string
-		baseURL   string
-		isActive  bool
-		createdAt time.Time
-		updatedAt time.Time
+		baseURL     string
+		isActive    bool
+		createdAt   time.Time
+		updatedAt   time.Time
 	)
 
 	err := row.Scan(&id, &name, &description, &baseURL, &isActive, &createdAt, &updatedAt)

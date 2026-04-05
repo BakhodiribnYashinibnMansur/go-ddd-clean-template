@@ -3,13 +3,13 @@ package middleware
 import (
 	"errors"
 
-	shared "gct/internal/kernel/domain"
+	"gct/internal/context/iam/generic/user/application/query"
+	userdomain "gct/internal/context/iam/generic/user/domain"
 	"gct/internal/kernel/consts"
+	shared "gct/internal/kernel/domain"
 	"gct/internal/kernel/infrastructure/httpx"
 	"gct/internal/kernel/infrastructure/httpx/cookie"
 	"gct/internal/kernel/infrastructure/security/jwt"
-	"gct/internal/context/iam/generic/user/application/query"
-	userdomain "gct/internal/context/iam/generic/user/domain"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -56,29 +56,19 @@ func (m *AuthMiddleware) validateAccessToken(ctx *gin.Context) (*shared.AuthSess
 	return session, nil
 }
 
-// parseAndValidateMetadata parses the raw JWT string and validates core claims
-// like issuer and token type.
-//
-// This method performs cryptographic signature verification using the RSA public key
-// and validates business logic claims (issuer, token type, expiration).
+// parseAndValidateMetadata performs full cryptographic and claim validation
+// of an access token. Issuer, audience, expiry, and issued-at are enforced by
+// the v5 parser options; we only need to additionally validate the custom
+// "typ" claim (done inside jwt.ParseAccessToken).
 func (m *AuthMiddleware) parseAndValidateMetadata(tokenStr string) (*jwt.AccessTokenClaims, error) {
-	metadata, err := jwt.ParseAccessToken(tokenStr, m.pubKey, m.cfg.JWT.Issuer, "")
+	metadata, err := jwt.ParseAccessToken(tokenStr, m.pubKey, m.cfg.JWT.Issuer, m.audience, m.leeway)
 	if err != nil {
 		if errors.Is(err, jwt.ErrAccessTokenExpired) {
 			return nil, httpx.ErrExpiredToken
 		}
+		// ParseAccessToken already enforces typ == TokenTypeAccess. A wrong
+		// "typ" surfaces here as ErrAccessTokenInvalid wrapping our own error.
 		return nil, httpx.ErrInvalidToken
 	}
-
-	if metadata.Issuer != m.cfg.JWT.Issuer {
-		m.l.Warnw("AuthMiddleware - parseAndValidateMetadata - Invalid issuer", "issuer", metadata.Issuer)
-		return nil, httpx.ErrInvalidIssuer
-	}
-
-	if metadata.Type != consts.TokenTypeAccess {
-		m.l.Warnw("AuthMiddleware - parseAndValidateMetadata - Invalid token type", "type", metadata.Type)
-		return nil, httpx.ErrInvalidType
-	}
-
 	return metadata, nil
 }

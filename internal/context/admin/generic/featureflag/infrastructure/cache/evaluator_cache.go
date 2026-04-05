@@ -14,10 +14,10 @@ import (
 // the FeatureFlagRepository. On startup all flags are loaded; the cache can be
 // invalidated (reloaded) via the Invalidate method.
 type CachedEvaluator struct {
-	repo    domain.FeatureFlagRepository
-	cache   sync.Map
-	loadMu  sync.Mutex // serializes LoadAll to prevent interleaved clear+populate
-	log     logger.Log
+	repo   domain.FeatureFlagRepository
+	cache  sync.Map
+	loadMu sync.Mutex // serializes LoadAll to prevent interleaved clear+populate
+	log    logger.Log
 }
 
 // NewCachedEvaluator creates a CachedEvaluator and eagerly loads all flags.

@@ -15,14 +15,14 @@ type errorRepo struct {
 	saveErr   error
 	updateErr error
 	deleteErr error
-	findFn    func(ctx context.Context, id uuid.UUID) (*domain.SiteSetting, error)
+	findFn    func(ctx context.Context, id domain.SiteSettingID) (*domain.SiteSetting, error)
 }
 
 func (m *errorRepo) Save(_ context.Context, _ *domain.SiteSetting) error {
 	return m.saveErr
 }
 
-func (m *errorRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.SiteSetting, error) {
+func (m *errorRepo) FindByID(ctx context.Context, id domain.SiteSettingID) (*domain.SiteSetting, error) {
 	if m.findFn != nil {
 		return m.findFn(ctx, id)
 	}
@@ -33,7 +33,7 @@ func (m *errorRepo) Update(_ context.Context, _ *domain.SiteSetting) error {
 	return m.updateErr
 }
 
-func (m *errorRepo) Delete(_ context.Context, _ uuid.UUID) error {
+func (m *errorRepo) Delete(_ context.Context, _ domain.SiteSettingID) error {
 	return m.deleteErr
 }
 
@@ -87,7 +87,7 @@ func TestUpdateSiteSettingHandler_UpdateError(t *testing.T) {
 	ss := domain.NewSiteSetting("k", "v", "t", "d")
 
 	repo := &errorRepo{
-		findFn:    func(_ context.Context, _ uuid.UUID) (*domain.SiteSetting, error) { return ss, nil },
+		findFn:    func(_ context.Context, _ domain.SiteSettingID) (*domain.SiteSetting, error) { return ss, nil },
 		updateErr: errUpdate,
 	}
 	eb := &mockEventBus{}
@@ -96,7 +96,7 @@ func TestUpdateSiteSettingHandler_UpdateError(t *testing.T) {
 	handler := NewUpdateSiteSettingHandler(repo, eb, log)
 	newVal := "updated"
 	err := handler.Handle(context.Background(), UpdateSiteSettingCommand{
-		ID:    domain.SiteSettingID(ss.ID()),
+		ID:    domain.SiteSettingID(ss.TypedID()),
 		Value: &newVal,
 	})
 	if !errors.Is(err, errUpdate) {

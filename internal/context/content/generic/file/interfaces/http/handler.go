@@ -88,12 +88,12 @@ func (h *Handler) List(ctx *gin.Context) {
 
 // Get returns a single file by ID.
 func (h *Handler) Get(ctx *gin.Context) {
-	id, err := uuid.Parse(ctx.Param("id"))
+	id, err := domain.ParseFileID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
-	result, err := h.bc.GetFile.Handle(ctx.Request.Context(), query.GetFileQuery{ID: domain.FileID(id)})
+	result, err := h.bc.GetFile.Handle(ctx.Request.Context(), query.GetFileQuery{ID: id})
 	if err != nil {
 		response.HandleError(ctx, err)
 		return

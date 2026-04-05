@@ -33,9 +33,9 @@ func (h *GetErrorCodeHandler) Handle(ctx context.Context, q GetErrorCodeQuery) (
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "GetErrorCode", "error_code")()
 
-	v, err := h.readRepo.FindByID(ctx, q.ID.UUID())
+	v, err := h.readRepo.FindByID(ctx, q.ID)
 	if err != nil {
-		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetErrorCode", Entity: "error_code", EntityID: q.ID.UUID(), Err: err}.KV()...)
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetErrorCode", Entity: "error_code", EntityID: q.ID, Err: err}.KV()...)
 		return nil, apperrors.MapToServiceError(err)
 	}
 

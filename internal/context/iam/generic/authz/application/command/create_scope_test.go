@@ -6,6 +6,7 @@ import (
 
 	"gct/internal/context/iam/generic/authz/domain"
 	shared "gct/internal/kernel/domain"
+
 	"github.com/stretchr/testify/require"
 )
 

@@ -41,13 +41,13 @@ func (h *DeleteHandler) Handle(ctx context.Context, cmd DeleteCommand) (err erro
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "DeleteFeatureFlag", "feature_flag")()
 
-	if err := h.repo.Delete(ctx, cmd.ID.UUID()); err != nil {
-		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteFeatureFlag", Entity: "feature_flag", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
+	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
+		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteFeatureFlag", Entity: "feature_flag", EntityID: cmd.ID, Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, domain.NewFlagDeleted(cmd.ID.UUID())); err != nil {
-		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "DeleteFeatureFlag", Entity: "feature_flag", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "DeleteFeatureFlag", Entity: "feature_flag", EntityID: cmd.ID, Err: err}.KV()...)
 	}
 
 	return nil

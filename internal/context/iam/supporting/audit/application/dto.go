@@ -3,12 +3,14 @@ package application
 import (
 	"time"
 
+	"gct/internal/context/iam/supporting/audit/domain"
+
 	"github.com/google/uuid"
 )
 
 // AuditLogView is a read-model DTO returned by query handlers.
 type AuditLogView struct {
-	ID           uuid.UUID      `json:"id"`
+	ID           domain.AuditLogID `json:"id"`
 	UserID       *uuid.UUID     `json:"user_id,omitempty"`
 	SessionID    *uuid.UUID     `json:"session_id,omitempty"`
 	Action       string         `json:"action"`
@@ -28,7 +30,7 @@ type AuditLogView struct {
 
 // EndpointHistoryView is a read-model DTO returned by query handlers.
 type EndpointHistoryView struct {
-	ID         uuid.UUID  `json:"id"`
+	ID         domain.EndpointHistoryID `json:"id"`
 	UserID     *uuid.UUID `json:"user_id,omitempty"`
 	Endpoint   string     `json:"endpoint"`
 	Method     string     `json:"method"`

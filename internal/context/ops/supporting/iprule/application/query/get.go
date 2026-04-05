@@ -33,9 +33,9 @@ func (h *GetIPRuleHandler) Handle(ctx context.Context, q GetIPRuleQuery) (result
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "GetIPRule", "ip_rule")()
 
-	v, err := h.readRepo.FindByID(ctx, q.ID.UUID())
+	v, err := h.readRepo.FindByID(ctx, q.ID)
 	if err != nil {
-		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetIPRule", Entity: "ip_rule", EntityID: q.ID.UUID(), Err: err}.KV()...)
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetIPRule", Entity: "ip_rule", EntityID: q.ID.String(), Err: err}.KV()...)
 		return nil, apperrors.MapToServiceError(err)
 	}
 

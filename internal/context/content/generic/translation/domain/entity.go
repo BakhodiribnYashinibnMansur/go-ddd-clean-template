@@ -69,7 +69,8 @@ func (t *Translation) Update(key, language, value, group *string) {
 // Getters
 // ---------------------------------------------------------------------------
 
-func (t *Translation) Key() string      { return t.key }
-func (t *Translation) Language() string  { return t.language }
-func (t *Translation) Value() string     { return t.value }
-func (t *Translation) Group() string     { return t.group }
+func (t *Translation) TypedID() TranslationID { return TranslationID(t.ID()) }
+func (t *Translation) Key() string            { return t.key }
+func (t *Translation) Language() string       { return t.language }
+func (t *Translation) Value() string          { return t.value }
+func (t *Translation) Group() string          { return t.group }

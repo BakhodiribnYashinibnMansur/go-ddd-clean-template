@@ -3,10 +3,10 @@ package command
 import (
 	"context"
 
+	"gct/internal/context/iam/generic/usersetting/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
-	"gct/internal/context/iam/generic/usersetting/domain"
 )
 
 // DeleteUserSettingCommand holds the input for deleting a user setting.
@@ -37,8 +37,8 @@ func (h *DeleteUserSettingHandler) Handle(ctx context.Context, cmd DeleteUserSet
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "DeleteUserSetting", "user_setting")()
 
-	if err := h.repo.Delete(ctx, cmd.ID.UUID()); err != nil {
-		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteUserSetting", Entity: "user_setting", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
+	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
+		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteUserSetting", Entity: "user_setting", EntityID: cmd.ID, Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 	return nil

@@ -76,8 +76,9 @@ func (r *RateLimit) Update(name, rule *string, requestsPerWindow, windowDuration
 // Getters
 // ---------------------------------------------------------------------------
 
-func (r *RateLimit) Name() string              { return r.name }
-func (r *RateLimit) Rule() string              { return r.rule }
-func (r *RateLimit) RequestsPerWindow() int    { return r.requestsPerWindow }
-func (r *RateLimit) WindowDuration() int       { return r.windowDuration }
-func (r *RateLimit) Enabled() bool             { return r.enabled }
+func (r *RateLimit) TypedID() RateLimitID   { return RateLimitID(r.ID()) }
+func (r *RateLimit) Name() string           { return r.name }
+func (r *RateLimit) Rule() string           { return r.rule }
+func (r *RateLimit) RequestsPerWindow() int { return r.requestsPerWindow }
+func (r *RateLimit) WindowDuration() int    { return r.windowDuration }
+func (r *RateLimit) Enabled() bool          { return r.enabled }
