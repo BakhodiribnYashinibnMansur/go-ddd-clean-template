@@ -1,6 +1,6 @@
 package domain
 
-import shared "gct/internal/platform/domain"
+import shared "gct/internal/kernel/domain"
 
 // Domain errors for the authz bounded context.
 // These sentinels are returned by aggregate methods and repository lookups.

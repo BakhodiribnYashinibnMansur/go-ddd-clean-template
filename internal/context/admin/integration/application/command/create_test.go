@@ -5,10 +5,11 @@ import (
 	"testing"
 
 	"gct/internal/context/admin/integration/domain"
-	"gct/internal/platform/application"
-	shared "gct/internal/platform/domain"
+	"gct/internal/kernel/application"
+	shared "gct/internal/kernel/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 // --- Mocks ---
@@ -79,6 +80,8 @@ func (m *mockLogger) Fatalc(_ context.Context, _ string, _ ...any)  {}
 // --- Tests ---
 
 func TestCreateHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockIntegrationRepo{}
 	eb := &mockEventBus{}
 	handler := NewCreateHandler(repo, eb, &mockLogger{})
@@ -93,9 +96,7 @@ func TestCreateHandler_Handle(t *testing.T) {
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.saved == nil {
 		t.Fatal("expected integration to be saved")
@@ -128,6 +129,8 @@ func TestCreateHandler_Handle(t *testing.T) {
 }
 
 func TestCreateHandler_NilConfig(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockIntegrationRepo{}
 	handler := NewCreateHandler(repo, &mockEventBus{}, &mockLogger{})
 
@@ -139,9 +142,7 @@ func TestCreateHandler_NilConfig(t *testing.T) {
 		Enabled:    false,
 		Config:     nil,
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 	if repo.saved == nil {
 		t.Fatal("expected integration to be saved")
 	}

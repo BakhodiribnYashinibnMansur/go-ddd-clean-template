@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	shared "gct/internal/platform/domain"
-	"gct/internal/platform/application"
-	"gct/internal/platform/infrastructure/logger"
+	shared "gct/internal/kernel/domain"
+	"gct/internal/kernel/application"
+	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/context/ops/systemerror/application/command"
 	"gct/internal/context/ops/systemerror/domain"
 
@@ -98,6 +98,8 @@ func newSystemErrorMiddleware(repo *mockSystemErrorRepo, l logger.Log) *SystemEr
 // --- Tests ---
 
 func TestSystemErrorMiddleware_Recovery_PanicReturns500(t *testing.T) {
+	t.Parallel()
+
 	gin.SetMode(gin.TestMode)
 
 	repo := &mockSystemErrorRepo{}
@@ -136,6 +138,8 @@ func TestSystemErrorMiddleware_Recovery_PanicReturns500(t *testing.T) {
 }
 
 func TestSystemErrorMiddleware_Recovery_NoPanic(t *testing.T) {
+	t.Parallel()
+
 	gin.SetMode(gin.TestMode)
 
 	repo := &mockSystemErrorRepo{}
@@ -167,6 +171,8 @@ func TestSystemErrorMiddleware_Recovery_NoPanic(t *testing.T) {
 }
 
 func TestSystemErrorMiddleware_Persist5xx_Saves5xxErrors(t *testing.T) {
+	t.Parallel()
+
 	gin.SetMode(gin.TestMode)
 
 	repo := &mockSystemErrorRepo{}
@@ -198,6 +204,8 @@ func TestSystemErrorMiddleware_Persist5xx_Saves5xxErrors(t *testing.T) {
 }
 
 func TestSystemErrorMiddleware_Persist5xx_Ignores200(t *testing.T) {
+	t.Parallel()
+
 	gin.SetMode(gin.TestMode)
 
 	repo := &mockSystemErrorRepo{}
@@ -229,6 +237,8 @@ func TestSystemErrorMiddleware_Persist5xx_Ignores200(t *testing.T) {
 }
 
 func TestSystemErrorMiddleware_Persist5xx_Ignores4xx(t *testing.T) {
+	t.Parallel()
+
 	gin.SetMode(gin.TestMode)
 
 	repo := &mockSystemErrorRepo{}
@@ -260,6 +270,8 @@ func TestSystemErrorMiddleware_Persist5xx_Ignores4xx(t *testing.T) {
 }
 
 func TestSystemErrorMiddleware_Persist5xx_CapturesGinErrors(t *testing.T) {
+	t.Parallel()
+
 	gin.SetMode(gin.TestMode)
 
 	repo := &mockSystemErrorRepo{}

@@ -6,7 +6,7 @@ import (
 
 	"gct/internal/context/admin/statistics"
 	"gct/internal/context/admin/statistics/application/query"
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/logger"
 	"gct/test/integration/common/setup"
 )
 

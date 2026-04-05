@@ -5,12 +5,12 @@ import (
 	"strconv"
 
 	"gct/internal/context/ops/iprule"
-	"gct/internal/platform/infrastructure/httpx"
-	"gct/internal/platform/infrastructure/httpx/response"
+	"gct/internal/kernel/infrastructure/httpx"
+	"gct/internal/kernel/infrastructure/httpx/response"
 	"gct/internal/context/ops/iprule/application/command"
 	"gct/internal/context/ops/iprule/application/query"
 	"gct/internal/context/ops/iprule/domain"
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -70,7 +70,7 @@ func (h *Handler) Get(ctx *gin.Context) {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
-	result, err := h.bc.GetIPRule.Handle(ctx.Request.Context(), query.GetIPRuleQuery{ID: id})
+	result, err := h.bc.GetIPRule.Handle(ctx.Request.Context(), query.GetIPRuleQuery{ID: domain.IPRuleID(id)})
 	if err != nil {
 		response.HandleError(ctx, err)
 		return
@@ -91,7 +91,7 @@ func (h *Handler) Update(ctx *gin.Context) {
 		return
 	}
 	cmd := command.UpdateIPRuleCommand{
-		ID:        id,
+		ID:        domain.IPRuleID(id),
 		IPAddress: req.IPAddress,
 		Action:    req.Action,
 		Reason:    req.Reason,
@@ -111,7 +111,7 @@ func (h *Handler) Delete(ctx *gin.Context) {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
-	if err := h.bc.DeleteIPRule.Handle(ctx.Request.Context(), command.DeleteIPRuleCommand{ID: id}); err != nil {
+	if err := h.bc.DeleteIPRule.Handle(ctx.Request.Context(), command.DeleteIPRuleCommand{ID: domain.IPRuleID(id)}); err != nil {
 		response.HandleError(ctx, err)
 		return
 	}

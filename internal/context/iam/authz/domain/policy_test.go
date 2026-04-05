@@ -7,6 +7,8 @@ import (
 )
 
 func TestNewPolicy(t *testing.T) {
+	t.Parallel()
+
 	permID := uuid.New()
 	policy := NewPolicy(permID, PolicyAllow)
 
@@ -28,6 +30,8 @@ func TestNewPolicy(t *testing.T) {
 }
 
 func TestPolicy_Toggle(t *testing.T) {
+	t.Parallel()
+
 	policy := NewPolicy(uuid.New(), PolicyAllow)
 
 	if !policy.IsActive() {
@@ -46,6 +50,8 @@ func TestPolicy_Toggle(t *testing.T) {
 }
 
 func TestPolicy_SetPriority(t *testing.T) {
+	t.Parallel()
+
 	policy := NewPolicy(uuid.New(), PolicyDeny)
 	policy.SetPriority(10)
 
@@ -55,6 +61,8 @@ func TestPolicy_SetPriority(t *testing.T) {
 }
 
 func TestPolicy_SetEffect(t *testing.T) {
+	t.Parallel()
+
 	policy := NewPolicy(uuid.New(), PolicyAllow)
 	policy.SetEffect(PolicyDeny)
 
@@ -64,6 +72,8 @@ func TestPolicy_SetEffect(t *testing.T) {
 }
 
 func TestPolicy_SetConditions(t *testing.T) {
+	t.Parallel()
+
 	policy := NewPolicy(uuid.New(), PolicyAllow)
 	conditions := map[string]any{"ip_range": "10.0.0.0/8"}
 	policy.SetConditions(conditions)
@@ -74,6 +84,8 @@ func TestPolicy_SetConditions(t *testing.T) {
 }
 
 func TestPolicy_SetConditions_Nil(t *testing.T) {
+	t.Parallel()
+
 	policy := NewPolicy(uuid.New(), PolicyAllow)
 	policy.SetConditions(nil)
 

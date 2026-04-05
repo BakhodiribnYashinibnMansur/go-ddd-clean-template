@@ -3,19 +3,17 @@ package query
 import (
 	"context"
 
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
 
-	"gct/internal/platform/infrastructure/pgxutil"
+	"gct/internal/kernel/infrastructure/pgxutil"
 	appdto "gct/internal/context/ops/systemerror/application"
 	"gct/internal/context/ops/systemerror/domain"
-
-	"github.com/google/uuid"
 )
 
 // GetSystemErrorQuery holds the input for fetching a single system error.
 type GetSystemErrorQuery struct {
-	ID uuid.UUID
+	ID domain.SystemErrorID
 }
 
 // GetSystemErrorHandler handles the GetSystemErrorQuery.
@@ -35,9 +33,9 @@ func (h *GetSystemErrorHandler) Handle(ctx context.Context, q GetSystemErrorQuer
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "GetSystemError", "system_error")()
 
-	view, err := h.readRepo.FindByID(ctx, q.ID)
+	view, err := h.readRepo.FindByID(ctx, q.ID.UUID())
 	if err != nil {
-		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetSystemError", Entity: "system_error", EntityID: q.ID, Err: err}.KV()...)
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetSystemError", Entity: "system_error", EntityID: q.ID.UUID(), Err: err}.KV()...)
 		return nil, apperrors.MapToServiceError(err)
 	}
 

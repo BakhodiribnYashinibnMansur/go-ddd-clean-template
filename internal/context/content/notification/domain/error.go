@@ -1,6 +1,6 @@
 package domain
 
-import shared "gct/internal/platform/domain"
+import shared "gct/internal/kernel/domain"
 
 // Domain errors for the notification bounded context.
 // Returned by repositories when the requested notification does not exist in the data store.

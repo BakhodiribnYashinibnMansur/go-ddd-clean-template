@@ -9,9 +9,12 @@ import (
 	"gct/internal/context/iam/authz/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func TestTogglePolicyHandler_ToggleActive(t *testing.T) {
+	t.Parallel()
+
 	policyID := uuid.New()
 	permID := uuid.New()
 	// Start with active=true
@@ -32,12 +35,10 @@ func TestTogglePolicyHandler_ToggleActive(t *testing.T) {
 
 	handler := NewTogglePolicyHandler(repo, log)
 
-	cmd := TogglePolicyCommand{ID: policyID}
+	cmd := TogglePolicyCommand{ID: domain.PolicyID(policyID)}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.updatedPolicy == nil {
 		t.Fatal("expected policy to be updated")
@@ -50,6 +51,8 @@ func TestTogglePolicyHandler_ToggleActive(t *testing.T) {
 }
 
 func TestTogglePolicyHandler_ToggleInactiveToActive(t *testing.T) {
+	t.Parallel()
+
 	policyID := uuid.New()
 	permID := uuid.New()
 	// Start with active=false
@@ -70,12 +73,10 @@ func TestTogglePolicyHandler_ToggleInactiveToActive(t *testing.T) {
 
 	handler := NewTogglePolicyHandler(repo, log)
 
-	cmd := TogglePolicyCommand{ID: policyID}
+	cmd := TogglePolicyCommand{ID: domain.PolicyID(policyID)}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.updatedPolicy == nil {
 		t.Fatal("expected policy to be updated")
@@ -87,12 +88,14 @@ func TestTogglePolicyHandler_ToggleInactiveToActive(t *testing.T) {
 }
 
 func TestTogglePolicyHandler_NotFound(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockPolicyRepository{} // default returns ErrPolicyNotFound
 	log := &mockLogger{}
 
 	handler := NewTogglePolicyHandler(repo, log)
 
-	cmd := TogglePolicyCommand{ID: uuid.New()}
+	cmd := TogglePolicyCommand{ID: domain.PolicyID(uuid.New())}
 
 	err := handler.Handle(context.Background(), cmd)
 	if !errors.Is(err, domain.ErrPolicyNotFound) {

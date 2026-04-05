@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	shareddomain "gct/internal/platform/domain"
+	shareddomain "gct/internal/kernel/domain"
 	"gct/test/e2e/common/setup"
 	userclient "gct/test/e2e/flows/user/client"
 

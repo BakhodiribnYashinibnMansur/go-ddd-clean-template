@@ -3,9 +3,12 @@ package command
 import (
 	"context"
 	"testing"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSignUpHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockUserRepository{}
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
@@ -22,9 +25,7 @@ func TestSignUpHandler_Handle(t *testing.T) {
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.savedUser == nil {
 		t.Fatal("expected user to be saved")
@@ -56,6 +57,8 @@ func TestSignUpHandler_Handle(t *testing.T) {
 }
 
 func TestSignUpHandler_MinimalFields(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockUserRepository{}
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
@@ -68,9 +71,7 @@ func TestSignUpHandler_MinimalFields(t *testing.T) {
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.savedUser == nil {
 		t.Fatal("expected user to be saved")
@@ -86,6 +87,8 @@ func TestSignUpHandler_MinimalFields(t *testing.T) {
 }
 
 func TestSignUpHandler_InvalidPhone(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockUserRepository{}
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
@@ -108,6 +111,8 @@ func TestSignUpHandler_InvalidPhone(t *testing.T) {
 }
 
 func TestSignUpHandler_WeakPassword(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockUserRepository{}
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}

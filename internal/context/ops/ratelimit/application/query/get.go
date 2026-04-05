@@ -3,19 +3,17 @@ package query
 import (
 	"context"
 
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
 
 	appdto "gct/internal/context/ops/ratelimit/application"
 	"gct/internal/context/ops/ratelimit/domain"
-	"gct/internal/platform/infrastructure/pgxutil"
-
-	"github.com/google/uuid"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // GetRateLimitQuery holds the input for getting a single rate limit.
 type GetRateLimitQuery struct {
-	ID uuid.UUID
+	ID domain.RateLimitID
 }
 
 // GetRateLimitHandler handles the GetRateLimitQuery.
@@ -35,9 +33,9 @@ func (h *GetRateLimitHandler) Handle(ctx context.Context, q GetRateLimitQuery) (
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "GetRateLimit", "rate_limit")()
 
-	v, err := h.readRepo.FindByID(ctx, q.ID)
+	v, err := h.readRepo.FindByID(ctx, q.ID.UUID())
 	if err != nil {
-		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetRateLimit", Entity: "rate_limit", EntityID: q.ID, Err: err}.KV()...)
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetRateLimit", Entity: "rate_limit", EntityID: q.ID.UUID(), Err: err}.KV()...)
 		return nil, apperrors.MapToServiceError(err)
 	}
 

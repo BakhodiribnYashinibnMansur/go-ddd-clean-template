@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	shared "gct/internal/platform/domain"
-	"gct/internal/platform/infrastructure/eventbus"
-	"gct/internal/platform/infrastructure/logger"
+	shared "gct/internal/kernel/domain"
+	"gct/internal/kernel/infrastructure/eventbus"
+	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/context/iam/user"
 	"gct/internal/context/iam/user/application/command"
 	"gct/internal/context/iam/user/application/query"
@@ -74,7 +74,7 @@ func TestIntegration_CreateAndGetUser(t *testing.T) {
 		t.Errorf("expected phone +998901111111, got %s", userView.Phone)
 	}
 
-	getResult, err := bc.GetUser.Handle(ctx, query.GetUserQuery{ID: userView.ID})
+	getResult, err := bc.GetUser.Handle(ctx, query.GetUserQuery{ID: domain.UserID(userView.ID)})
 	if err != nil {
 		t.Fatalf("GetUser: %v", err)
 	}
@@ -104,7 +104,7 @@ func TestIntegration_UpdateUser(t *testing.T) {
 	newEmail := "updated@example.com"
 	newName := "updateduser"
 	err = bc.UpdateUser.Handle(ctx, command.UpdateUserCommand{
-		ID:       userID,
+		ID:       domain.UserID(userID),
 		Email:    &newEmail,
 		Username: &newName,
 	})
@@ -112,7 +112,7 @@ func TestIntegration_UpdateUser(t *testing.T) {
 		t.Fatalf("UpdateUser: %v", err)
 	}
 
-	view, _ := bc.GetUser.Handle(ctx, query.GetUserQuery{ID: userID})
+	view, _ := bc.GetUser.Handle(ctx, query.GetUserQuery{ID: domain.UserID(userID)})
 	if view.Email == nil || *view.Email != "updated@example.com" {
 		t.Error("email not updated")
 	}
@@ -139,7 +139,7 @@ func TestIntegration_DeleteUser(t *testing.T) {
 	})
 	userID := list.Users[0].ID
 
-	err = bc.DeleteUser.Handle(ctx, command.DeleteUserCommand{ID: userID})
+	err = bc.DeleteUser.Handle(ctx, command.DeleteUserCommand{ID: domain.UserID(userID)})
 	if err != nil {
 		t.Fatalf("DeleteUser: %v", err)
 	}
@@ -169,7 +169,7 @@ func TestIntegration_SignUp_SignIn_SignOut(t *testing.T) {
 		Filter: domain.UsersFilter{Pagination: &shared.Pagination{Limit: 10}},
 	})
 	userID := list.Users[0].ID
-	_ = bc.ApproveUser.Handle(ctx, command.ApproveUserCommand{ID: userID})
+	_ = bc.ApproveUser.Handle(ctx, command.ApproveUserCommand{ID: domain.UserID(userID)})
 
 	result, err := bc.SignIn.Handle(ctx, command.SignInCommand{
 		Login:      "+998904444444",
@@ -219,14 +219,14 @@ func TestIntegration_ChangeRole(t *testing.T) {
 	}
 
 	err = bc.ChangeRole.Handle(ctx, command.ChangeRoleCommand{
-		UserID: userID,
+		UserID: domain.UserID(userID),
 		RoleID: newRoleID,
 	})
 	if err != nil {
 		t.Fatalf("ChangeRole: %v", err)
 	}
 
-	view, _ := bc.GetUser.Handle(ctx, query.GetUserQuery{ID: userID})
+	view, _ := bc.GetUser.Handle(ctx, query.GetUserQuery{ID: domain.UserID(userID)})
 	if view.RoleID == nil || *view.RoleID != newRoleID {
 		t.Error("role ID not updated")
 	}

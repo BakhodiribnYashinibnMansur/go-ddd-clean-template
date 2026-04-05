@@ -1,9 +1,11 @@
 package domain
 
 import (
+	"fmt"
+	"strings"
 	"time"
 
-	shared "gct/internal/platform/domain"
+	shared "gct/internal/kernel/domain"
 
 	"github.com/google/uuid"
 )
@@ -21,7 +23,20 @@ type Notification struct {
 }
 
 // NewNotification creates a new Notification aggregate and raises a NotificationSent event.
-func NewNotification(userID uuid.UUID, title, message, nType string) *Notification {
+// Returns an error if userID is zero, or if title, message, or nType is empty after trim.
+func NewNotification(userID uuid.UUID, title, message, nType string) (*Notification, error) {
+	if userID == uuid.Nil {
+		return nil, fmt.Errorf("new_notification: %s", "userID is required")
+	}
+	if strings.TrimSpace(title) == "" {
+		return nil, fmt.Errorf("new_notification: %s", "title is required")
+	}
+	if strings.TrimSpace(message) == "" {
+		return nil, fmt.Errorf("new_notification: %s", "message is required")
+	}
+	if strings.TrimSpace(nType) == "" {
+		return nil, fmt.Errorf("new_notification: %s", "type is required")
+	}
 	n := &Notification{
 		AggregateRoot: shared.NewAggregateRoot(),
 		userID:        userID,
@@ -30,7 +45,7 @@ func NewNotification(userID uuid.UUID, title, message, nType string) *Notificati
 		nType:         nType,
 	}
 	n.AddEvent(NewNotificationSent(n.ID(), userID, title))
-	return n
+	return n, nil
 }
 
 // ReconstructNotification rebuilds a Notification aggregate from persisted data. No events are raised.

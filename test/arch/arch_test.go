@@ -16,6 +16,7 @@
 package arch_test
 
 import (
+	"go/ast"
 	"go/parser"
 	"go/token"
 	"io/fs"
@@ -300,6 +301,76 @@ func TestContractsHaveNoBCDeps(t *testing.T) {
 			}
 		}
 	})
+}
+
+// TestDomainHasTypedIDs enforces that every BC which has a domain/ layer also
+// declares at least one typed ID in domain/id.go (e.g. `type UserID uuid.UUID`).
+// After the typed ID migration, every aggregate-owning BC publishes typed IDs
+// to prevent identifier mix-ups at call sites; this test stops new BCs from
+// being added without them. BCs without a domain/ directory (e.g. query-only
+// BCs) are skipped.
+func TestDomainHasTypedIDs(t *testing.T) {
+	t.Parallel()
+	root := repoRoot(t)
+	bcs := boundedContexts(t, root)
+
+	var missing []string
+	for _, bc := range bcs {
+		domainDir := filepath.Join(bc.dir(root), string(layerDomain))
+		if _, err := os.Stat(domainDir); err != nil {
+			continue // skip BCs without a domain/ directory
+		}
+		idPath := filepath.Join(domainDir, "id.go")
+		if _, err := os.Stat(idPath); err != nil {
+			missing = append(missing, bc.subdomain+"/"+bc.name+" (missing domain/id.go)")
+			continue
+		}
+		if !hasTypedIDDecl(t, idPath) {
+			missing = append(missing, bc.subdomain+"/"+bc.name+" (domain/id.go has no typed ID declaration)")
+		}
+	}
+	if len(missing) > 0 {
+		t.Errorf("BCs missing typed IDs in domain/id.go:\n  %s\n  fix: add `type XxxID uuid.UUID` in domain/id.go",
+			strings.Join(missing, "\n  "))
+	}
+}
+
+// hasTypedIDDecl reports whether path declares at least one type whose name
+// ends in "ID" and whose underlying type references uuid.UUID.
+func hasTypedIDDecl(t *testing.T, path string) bool {
+	t.Helper()
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, path, nil, parser.SkipObjectResolution)
+	if err != nil {
+		t.Fatalf("parse %s: %v", path, err)
+	}
+	for _, decl := range f.Decls {
+		gen, ok := decl.(*ast.GenDecl)
+		if !ok || gen.Tok != token.TYPE {
+			continue
+		}
+		for _, spec := range gen.Specs {
+			ts, ok := spec.(*ast.TypeSpec)
+			if !ok {
+				continue
+			}
+			if !strings.HasSuffix(ts.Name.Name, "ID") {
+				continue
+			}
+			sel, ok := ts.Type.(*ast.SelectorExpr)
+			if !ok {
+				continue
+			}
+			pkg, ok := sel.X.(*ast.Ident)
+			if !ok {
+				continue
+			}
+			if pkg.Name == "uuid" && sel.Sel.Name == "UUID" {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // TestBCsDependOnlyOnPlatformAndContracts asserts that any non-self

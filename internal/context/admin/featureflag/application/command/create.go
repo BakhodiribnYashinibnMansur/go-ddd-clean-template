@@ -2,12 +2,13 @@ package command
 
 import (
 	"context"
+	"fmt"
 
 	"gct/internal/context/admin/featureflag/domain"
-	"gct/internal/platform/application"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
-	"gct/internal/platform/infrastructure/pgxutil"
+	"gct/internal/kernel/application"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // CreateCommand represents an intent to register a new feature flag.
@@ -47,7 +48,10 @@ func (h *CreateHandler) Handle(ctx context.Context, cmd CreateCommand) (err erro
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "CreateFeatureFlag", "feature_flag")()
 
-	ff := domain.NewFeatureFlag(cmd.Name, cmd.Key, cmd.Description, cmd.FlagType, cmd.DefaultValue, cmd.RolloutPercentage)
+	ff, err := domain.NewFeatureFlag(cmd.Name, cmd.Key, cmd.Description, cmd.FlagType, cmd.DefaultValue, cmd.RolloutPercentage)
+	if err != nil {
+		return fmt.Errorf("create_feature_flag: %w", err)
+	}
 
 	if cmd.IsActive {
 		ff.Activate()

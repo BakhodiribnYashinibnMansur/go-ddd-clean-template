@@ -8,8 +8,8 @@ import (
 	"gct/internal/context/admin/featureflag/application/command"
 	"gct/internal/context/admin/featureflag/application/query"
 	"gct/internal/context/admin/featureflag/domain"
-	"gct/internal/platform/infrastructure/eventbus"
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/eventbus"
+	"gct/internal/kernel/infrastructure/logger"
 	"gct/test/integration/common/setup"
 )
 
@@ -108,7 +108,7 @@ func TestIntegration_UpdateFeatureFlag(t *testing.T) {
 	newActive := true
 	newRollout := 75
 	err = bc.UpdateFlag.Handle(ctx, command.UpdateCommand{
-		ID:                fID,
+		ID:                domain.FeatureFlagID(fID),
 		Name:              &newName,
 		IsActive:          &newActive,
 		RolloutPercentage: &newRollout,
@@ -155,7 +155,7 @@ func TestIntegration_DeleteFeatureFlag(t *testing.T) {
 	}
 	fID := list.Flags[0].ID
 
-	err = bc.DeleteFlag.Handle(ctx, command.DeleteCommand{ID: fID})
+	err = bc.DeleteFlag.Handle(ctx, command.DeleteCommand{ID: domain.FeatureFlagID(fID)})
 	if err != nil {
 		t.Fatalf("DeleteFlag: %v", err)
 	}
@@ -199,7 +199,7 @@ func TestIntegration_RuleGroupCRUD(t *testing.T) {
 
 	// Create a rule group with 2 conditions.
 	err = bc.CreateRuleGroup.Handle(ctx, command.CreateRuleGroupCommand{
-		FlagID:    flagID,
+		FlagID:    domain.FeatureFlagID(flagID),
 		Name:      "premium_users",
 		Variation: "true",
 		Priority:  1,
@@ -232,7 +232,7 @@ func TestIntegration_RuleGroupCRUD(t *testing.T) {
 	}
 
 	// Delete the rule group.
-	err = bc.DeleteRuleGroup.Handle(ctx, command.DeleteRuleGroupCommand{ID: rg.ID})
+	err = bc.DeleteRuleGroup.Handle(ctx, command.DeleteRuleGroupCommand{ID: domain.RuleGroupID(rg.ID)})
 	if err != nil {
 		t.Fatalf("DeleteRuleGroup: %v", err)
 	}
@@ -274,7 +274,7 @@ func TestIntegration_Evaluator(t *testing.T) {
 	flagID := list.Flags[0].ID
 
 	err = bc.CreateRuleGroup.Handle(ctx, command.CreateRuleGroupCommand{
-		FlagID:    flagID,
+		FlagID:    domain.FeatureFlagID(flagID),
 		Name:      "premium_rule",
 		Variation: "true",
 		Priority:  1,

@@ -5,10 +5,11 @@ import (
 	"testing"
 
 	"gct/internal/context/admin/errorcode/domain"
-	"gct/internal/platform/application"
-	shared "gct/internal/platform/domain"
+	"gct/internal/kernel/application"
+	shared "gct/internal/kernel/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 // --- Mocks ---
@@ -79,6 +80,8 @@ func (m *mockLogger) Fatalc(_ context.Context, _ string, _ ...any)  {}
 // --- Tests ---
 
 func TestCreateErrorCodeHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockErrorCodeRepo{}
 	eb := &mockEventBus{}
 	handler := NewCreateErrorCodeHandler(repo, eb, &mockLogger{})
@@ -95,9 +98,7 @@ func TestCreateErrorCodeHandler_Handle(t *testing.T) {
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.saved == nil {
 		t.Fatal("expected error code to be saved")
@@ -133,6 +134,8 @@ func TestCreateErrorCodeHandler_Handle(t *testing.T) {
 }
 
 func TestCreateErrorCodeHandler_MinimalFields(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockErrorCodeRepo{}
 	handler := NewCreateErrorCodeHandler(repo, &mockEventBus{}, &mockLogger{})
 
@@ -143,9 +146,7 @@ func TestCreateErrorCodeHandler_MinimalFields(t *testing.T) {
 		Category:   "general",
 		Severity:   "low",
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 	if repo.saved == nil {
 		t.Fatal("expected error code to be saved")
 	}

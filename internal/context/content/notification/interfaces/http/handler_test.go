@@ -13,8 +13,8 @@ import (
 	"gct/internal/context/content/notification/application/command"
 	"gct/internal/context/content/notification/application/query"
 	"gct/internal/context/content/notification/domain"
-	"gct/internal/platform/application"
-	shared "gct/internal/platform/domain"
+	"gct/internal/kernel/application"
+	shared "gct/internal/kernel/domain"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -112,6 +112,8 @@ func setupRouter(repo *mockRepo, readRepo *mockReadRepo) *gin.Engine {
 // --- Tests ---
 
 func TestHandler_Create_Success(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockRepo{}
 	readRepo := &mockReadRepo{}
 	router := setupRouter(repo, readRepo)
@@ -131,6 +133,8 @@ func TestHandler_Create_Success(t *testing.T) {
 }
 
 func TestHandler_Create_BadRequest(t *testing.T) {
+	t.Parallel()
+
 	router := setupRouter(&mockRepo{}, &mockReadRepo{})
 
 	w := httptest.NewRecorder()
@@ -144,6 +148,8 @@ func TestHandler_Create_BadRequest(t *testing.T) {
 }
 
 func TestHandler_List_Success(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockReadRepo{
 		views: []*domain.NotificationView{
 			{ID: uuid.New(), UserID: uuid.New(), Title: "N1", Type: "INFO", CreatedAt: time.Now()},
@@ -162,6 +168,8 @@ func TestHandler_List_Success(t *testing.T) {
 }
 
 func TestHandler_Get_Success(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	readRepo := &mockReadRepo{
 		view: &domain.NotificationView{ID: id, UserID: uuid.New(), Title: "N", Type: "INFO", CreatedAt: time.Now()},
@@ -178,6 +186,8 @@ func TestHandler_Get_Success(t *testing.T) {
 }
 
 func TestHandler_Get_InvalidID(t *testing.T) {
+	t.Parallel()
+
 	router := setupRouter(&mockRepo{}, &mockReadRepo{})
 
 	w := httptest.NewRecorder()
@@ -190,6 +200,8 @@ func TestHandler_Get_InvalidID(t *testing.T) {
 }
 
 func TestHandler_Delete_Success(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockRepo{}
 	router := setupRouter(repo, &mockReadRepo{})
 
@@ -204,6 +216,8 @@ func TestHandler_Delete_Success(t *testing.T) {
 }
 
 func TestHandler_Delete_InvalidID(t *testing.T) {
+	t.Parallel()
+
 	router := setupRouter(&mockRepo{}, &mockReadRepo{})
 
 	w := httptest.NewRecorder()

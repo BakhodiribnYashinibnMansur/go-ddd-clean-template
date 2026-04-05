@@ -5,11 +5,12 @@ import (
 	"errors"
 	"testing"
 
-	"gct/internal/platform/application"
-	shared "gct/internal/platform/domain"
+	"gct/internal/kernel/application"
+	shared "gct/internal/kernel/domain"
 	"gct/internal/context/admin/sitesetting/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 // --- Mocks ---
@@ -82,6 +83,8 @@ func (m *mockLogger) Fatalc(_ context.Context, _ string, _ ...any)              
 // --- Tests ---
 
 func TestCreateSiteSettingHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockRepo{}
 	eb := &mockEventBus{}
 	log := &mockLogger{}
@@ -96,9 +99,7 @@ func TestCreateSiteSettingHandler_Handle(t *testing.T) {
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.saved == nil {
 		t.Fatal("expected site setting to be saved")
@@ -118,6 +119,8 @@ func TestCreateSiteSettingHandler_Handle(t *testing.T) {
 }
 
 func TestCreateSiteSettingHandler_MinimalFields(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockRepo{}
 	eb := &mockEventBus{}
 	log := &mockLogger{}
@@ -129,9 +132,7 @@ func TestCreateSiteSettingHandler_MinimalFields(t *testing.T) {
 		Value: "false",
 		Type:  "system",
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 	if repo.saved == nil {
 		t.Fatal("expected site setting to be saved")
 	}
@@ -141,6 +142,8 @@ func TestCreateSiteSettingHandler_MinimalFields(t *testing.T) {
 }
 
 func TestCreateSiteSettingHandler_RepoError(t *testing.T) {
+	t.Parallel()
+
 	repoErr := errors.New("repo save failed")
 	errR := &errorRepo{saveErr: repoErr}
 	eb := &mockEventBus{}

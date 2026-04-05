@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"gct/internal/context/iam/audit/domain"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
-	"gct/internal/platform/infrastructure/pgxutil"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/pgxutil"
 
 	"github.com/google/uuid"
 )

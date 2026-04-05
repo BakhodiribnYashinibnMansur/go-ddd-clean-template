@@ -3,9 +3,9 @@ package postgres
 import (
 	"context"
 
-	"gct/internal/platform/domain/consts"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/pgxutil"
+	"gct/internal/kernel/consts"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/pgxutil"
 	"gct/internal/context/content/translation/domain"
 
 	"github.com/Masterminds/squirrel"
@@ -121,7 +121,7 @@ func scanTranslationViewFromRows(rows pgx.Rows) (*domain.TranslationView, error)
 	var v domain.TranslationView
 	err := rows.Scan(&v.ID, &v.Key, &v.Language, &v.Value, &v.Group, &v.CreatedAt, &v.UpdatedAt)
 	if err != nil {
-		return nil, err
+		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 	return &v, nil
 }

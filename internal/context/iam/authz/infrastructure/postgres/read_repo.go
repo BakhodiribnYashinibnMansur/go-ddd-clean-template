@@ -6,11 +6,11 @@ import (
 	"strings"
 
 	"gct/internal/context/iam/authz/domain"
-	"gct/internal/platform/domain/consts"
-	shared "gct/internal/platform/domain"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/metadata"
-	"gct/internal/platform/infrastructure/pgxutil"
+	"gct/internal/kernel/consts"
+	shared "gct/internal/kernel/domain"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/metadata"
+	"gct/internal/kernel/infrastructure/pgxutil"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"

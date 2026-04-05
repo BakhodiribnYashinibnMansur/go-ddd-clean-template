@@ -1,7 +1,7 @@
 package query
 
 import (
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
@@ -10,6 +10,7 @@ import (
 	"gct/internal/context/content/announcement/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 // --- Mocks ---
@@ -46,6 +47,8 @@ var errRepo = errors.New("repo failure")
 // --- Tests ---
 
 func TestGetAnnouncementHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	now := time.Now()
 	readRepo := &mockReadRepo{
@@ -65,10 +68,8 @@ func TestGetAnnouncementHandler_Handle(t *testing.T) {
 	}
 
 	handler := NewGetAnnouncementHandler(readRepo, logger.Noop())
-	result, err := handler.Handle(context.Background(), GetAnnouncementQuery{ID: id})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	result, err := handler.Handle(context.Background(), GetAnnouncementQuery{ID: domain.AnnouncementID(id)})
+	require.NoError(t, err)
 	if result == nil {
 		t.Fatal("expected result")
 	}
@@ -87,24 +88,30 @@ func TestGetAnnouncementHandler_Handle(t *testing.T) {
 }
 
 func TestGetAnnouncementHandler_NotFound(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockReadRepo{}
 	handler := NewGetAnnouncementHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), GetAnnouncementQuery{ID: uuid.New()})
+	_, err := handler.Handle(context.Background(), GetAnnouncementQuery{ID: domain.AnnouncementID(uuid.New())})
 	if err == nil {
 		t.Fatal("expected error for not found")
 	}
 }
 
 func TestGetAnnouncementHandler_RepoError(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &errorReadRepo{err: errRepo}
 	handler := NewGetAnnouncementHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), GetAnnouncementQuery{ID: uuid.New()})
+	_, err := handler.Handle(context.Background(), GetAnnouncementQuery{ID: domain.AnnouncementID(uuid.New())})
 	if err == nil {
 		t.Fatal("expected error from repo")
 	}
 }
 
 func TestGetAnnouncementHandler_AllFieldsMapped(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	now := time.Now()
 	readRepo := &mockReadRepo{
@@ -127,10 +134,8 @@ func TestGetAnnouncementHandler_AllFieldsMapped(t *testing.T) {
 	}
 
 	handler := NewGetAnnouncementHandler(readRepo, logger.Noop())
-	result, err := handler.Handle(context.Background(), GetAnnouncementQuery{ID: id})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	result, err := handler.Handle(context.Background(), GetAnnouncementQuery{ID: domain.AnnouncementID(id)})
+	require.NoError(t, err)
 	if !result.Published {
 		t.Error("expected published")
 	}

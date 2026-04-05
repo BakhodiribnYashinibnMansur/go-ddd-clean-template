@@ -12,6 +12,8 @@ import (
 func se_now() time.Time { return time.Now() }
 
 func TestNewSystemError(t *testing.T) {
+	t.Parallel()
+
 	se := domain.NewSystemError("INTERNAL_ERROR", "something went wrong", "ERROR")
 
 	if se.Code() != "INTERNAL_ERROR" {
@@ -53,6 +55,8 @@ func TestNewSystemError(t *testing.T) {
 }
 
 func TestSystemError_Resolve(t *testing.T) {
+	t.Parallel()
+
 	se := domain.NewSystemError("INTERNAL_ERROR", "something went wrong", "ERROR")
 	se.ClearEvents()
 
@@ -80,6 +84,8 @@ func TestSystemError_Resolve(t *testing.T) {
 }
 
 func TestNewSystemError_Setters(t *testing.T) {
+	t.Parallel()
+
 	se := domain.NewSystemError("CODE", "msg", "WARN")
 
 	st := "stack trace here"
@@ -132,6 +138,8 @@ func TestNewSystemError_Setters(t *testing.T) {
 }
 
 func TestReconstructSystemError(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	code := "DB_ERROR"
 	msg := "connection failed"

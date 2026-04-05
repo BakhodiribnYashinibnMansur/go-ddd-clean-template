@@ -10,14 +10,13 @@ import (
 	"gct/internal/context/iam/user/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func testJWTConfig(t *testing.T) JWTConfig {
 	t.Helper()
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
-	if err != nil {
-		t.Fatalf("failed to generate RSA key: %v", err)
-	}
+	require.NoError(t, err)
 	return JWTConfig{
 		PrivateKey: key,
 		Issuer:     "test",
@@ -27,17 +26,15 @@ func testJWTConfig(t *testing.T) JWTConfig {
 }
 
 func TestSignInHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	// Create a user with known credentials.
 	phone, err := domain.NewPhone("+998901234567")
-	if err != nil {
-		t.Fatalf("failed to create phone: %v", err)
-	}
+	require.NoError(t, err)
 	password, err := domain.NewPasswordFromRaw("StrongP@ss123")
-	if err != nil {
-		t.Fatalf("failed to create password: %v", err)
-	}
+	require.NoError(t, err)
 
-	user := domain.NewUser(phone, password)
+	user, _ := domain.NewUser(phone, password)
 	user.Approve()
 	// Clear events from construction/approval so we only check sign-in events.
 	user.ClearEvents()
@@ -64,9 +61,7 @@ func TestSignInHandler_Handle(t *testing.T) {
 	}
 
 	result, err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if result == nil {
 		t.Fatal("expected sign-in result, got nil")
@@ -96,10 +91,12 @@ func TestSignInHandler_Handle(t *testing.T) {
 }
 
 func TestSignInHandler_WrongPassword(t *testing.T) {
+	t.Parallel()
+
 	phone, _ := domain.NewPhone("+998901234567")
 	password, _ := domain.NewPasswordFromRaw("StrongP@ss123")
 
-	user := domain.NewUser(phone, password)
+	user, _ := domain.NewUser(phone, password)
 	user.Approve()
 
 	phoneRepo := &signInMockRepo{user: user}
@@ -123,10 +120,12 @@ func TestSignInHandler_WrongPassword(t *testing.T) {
 }
 
 func TestSignInHandler_InactiveUser(t *testing.T) {
+	t.Parallel()
+
 	phone, _ := domain.NewPhone("+998901234567")
 	password, _ := domain.NewPasswordFromRaw("StrongP@ss123")
 
-	user := domain.NewUser(phone, password)
+	user, _ := domain.NewUser(phone, password)
 	user.Approve()
 	user.Deactivate()
 

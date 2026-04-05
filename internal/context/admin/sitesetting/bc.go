@@ -1,8 +1,8 @@
 package sitesetting
 
 import (
-	"gct/internal/platform/application"
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/application"
+	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/context/admin/sitesetting/application/command"
 	"gct/internal/context/admin/sitesetting/application/query"
 	"gct/internal/context/admin/sitesetting/infrastructure/postgres"

@@ -1,9 +1,10 @@
 package domain
 
 import (
+	"fmt"
 	"time"
 
-	shared "gct/internal/platform/domain"
+	shared "gct/internal/kernel/domain"
 
 	"github.com/google/uuid"
 )
@@ -53,7 +54,14 @@ func WithAttributes(attrs map[string]string) UserOption {
 // ---------------------------------------------------------------------------
 
 // NewUser creates a brand-new User aggregate. It is active but not yet approved.
-func NewUser(phone Phone, password Password, opts ...UserOption) *User {
+// Returns an error if required value objects (phone, password) are zero.
+func NewUser(phone Phone, password Password, opts ...UserOption) (*User, error) {
+	if phone.Value() == "" {
+		return nil, fmt.Errorf("new_user: %s", "phone is required")
+	}
+	if password.Hash() == "" {
+		return nil, fmt.Errorf("new_user: %s", "password is required")
+	}
 	u := &User{
 		AggregateRoot: shared.NewAggregateRoot(),
 		phone:         phone,
@@ -67,7 +75,7 @@ func NewUser(phone Phone, password Password, opts ...UserOption) *User {
 		opt(u)
 	}
 	u.AddEvent(NewUserCreated(u.ID(), phone.Value()))
-	return u
+	return u, nil
 }
 
 // ReconstructUser rebuilds a User aggregate from persisted data. No events are raised.
@@ -117,7 +125,10 @@ func (u *User) AddSession(deviceType SessionDeviceType, ip, userAgent string) (*
 	if len(u.sessions) >= maxSessions {
 		return nil, ErrMaxSessionsReached
 	}
-	s := NewSession(u.ID(), deviceType, ip, userAgent)
+	s, err := NewSession(u.ID(), deviceType, ip, userAgent)
+	if err != nil {
+		return nil, err
+	}
 	u.sessions = append(u.sessions, *s)
 	u.Touch()
 	u.AddEvent(NewUserSignedIn(u.ID(), s.ID(), ip))

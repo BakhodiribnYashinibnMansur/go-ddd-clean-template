@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"gct/config"
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/logger"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
 	"go.uber.org/zap"

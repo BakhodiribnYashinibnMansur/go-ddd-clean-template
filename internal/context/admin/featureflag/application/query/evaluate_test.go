@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"gct/internal/context/admin/featureflag/application/query"
+	"github.com/stretchr/testify/require"
 )
 
 type mockEvaluator struct {
@@ -16,6 +17,8 @@ func (m *mockEvaluator) EvaluateFull(_ context.Context, _ string, _ map[string]s
 }
 
 func TestEvaluateHandler_ReturnsValue(t *testing.T) {
+	t.Parallel()
+
 	eval := &mockEvaluator{result: &query.EvalResult{Value: "true", FlagType: "bool"}}
 	h := query.NewEvaluateHandler(eval)
 
@@ -23,9 +26,7 @@ func TestEvaluateHandler_ReturnsValue(t *testing.T) {
 		Key:       "dark_mode",
 		UserAttrs: map[string]string{"platform": "web"},
 	})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 	if result.Key != "dark_mode" {
 		t.Errorf("expected key dark_mode, got %s", result.Key)
 	}
@@ -38,6 +39,8 @@ func TestEvaluateHandler_ReturnsValue(t *testing.T) {
 }
 
 func TestEvaluateHandler_FlagNotFound(t *testing.T) {
+	t.Parallel()
+
 	eval := &mockEvaluator{result: nil}
 	h := query.NewEvaluateHandler(eval)
 

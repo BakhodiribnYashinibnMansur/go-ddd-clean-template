@@ -4,12 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"gct/internal/platform/application"
-	"gct/internal/platform/infrastructure/logger"
-	"gct/internal/platform/infrastructure/pgxutil"
 	"gct/internal/context/iam/user/domain"
-
-	"github.com/google/uuid"
+	"gct/internal/kernel/application"
+	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 const (
@@ -20,7 +18,7 @@ const (
 
 // BulkActionCommand holds the input for performing a bulk action on users.
 type BulkActionCommand struct {
-	IDs    []uuid.UUID
+	IDs    []domain.UserID
 	Action string
 }
 
@@ -28,14 +26,14 @@ type BulkActionCommand struct {
 type BulkActionHandler struct {
 	repo     domain.UserRepository
 	eventBus application.EventBus
-	logger   logger.Log
+	logger   commandLogger
 }
 
 // NewBulkActionHandler creates a new BulkActionHandler.
 func NewBulkActionHandler(
 	repo domain.UserRepository,
 	eventBus application.EventBus,
-	logger logger.Log,
+	logger commandLogger,
 ) *BulkActionHandler {
 	return &BulkActionHandler{
 		repo:     repo,
@@ -51,9 +49,10 @@ func (h *BulkActionHandler) Handle(ctx context.Context, cmd BulkActionCommand) (
 	defer logger.SlowOp(h.logger, ctx, "BulkAction", "user")()
 
 	for _, id := range cmd.IDs {
-		user, err := h.repo.FindByID(ctx, id)
+		uid := id.UUID()
+		user, err := h.repo.FindByID(ctx, uid)
 		if err != nil {
-			h.logger.Warnc(ctx, "bulk action: user find failed", logger.F{Op: "BulkAction", Entity: "user", EntityID: id, Err: err}.KV()...)
+			h.logger.Warnc(ctx, "bulk action: user find failed", logger.F{Op: "BulkAction", Entity: "user", EntityID: uid, Err: err}.KV()...)
 			continue
 		}
 
@@ -70,12 +69,12 @@ func (h *BulkActionHandler) Handle(ctx context.Context, cmd BulkActionCommand) (
 		}
 
 		if err := h.repo.Update(ctx, user); err != nil {
-			h.logger.Errorc(ctx, "bulk action: repository update failed", logger.F{Op: "BulkAction", Entity: "user", EntityID: id, Err: err}.KV()...)
+			h.logger.Errorc(ctx, "bulk action: repository update failed", logger.F{Op: "BulkAction", Entity: "user", EntityID: uid, Err: err}.KV()...)
 			continue
 		}
 
 		if err := h.eventBus.Publish(ctx, user.Events()...); err != nil {
-			h.logger.Warnc(ctx, "bulk action: event publish failed", logger.F{Op: "BulkAction", Entity: "user", EntityID: id, Err: err}.KV()...)
+			h.logger.Warnc(ctx, "bulk action: event publish failed", logger.F{Op: "BulkAction", Entity: "user", EntityID: uid, Err: err}.KV()...)
 		}
 	}
 

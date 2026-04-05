@@ -1,7 +1,7 @@
 package query
 
 import (
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
@@ -10,6 +10,7 @@ import (
 	"gct/internal/context/admin/featureflag/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 // --- Mocks ---
@@ -36,6 +37,8 @@ func (m *mockReadRepo) List(ctx context.Context, filter domain.FeatureFlagFilter
 // --- Tests ---
 
 func TestGetHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	flagID := uuid.New()
 	now := time.Now().Format(time.RFC3339)
 
@@ -74,9 +77,7 @@ func TestGetHandler_Handle(t *testing.T) {
 
 	handler := NewGetHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), GetQuery{ID: flagID})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if result == nil {
 		t.Fatal("expected result, got nil")
@@ -108,6 +109,8 @@ func TestGetHandler_Handle(t *testing.T) {
 }
 
 func TestGetHandler_Handle_NotFound(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockReadRepo{} // default returns ErrFeatureFlagNotFound
 	handler := NewGetHandler(readRepo, logger.Noop())
 
@@ -124,6 +127,8 @@ func TestGetHandler_Handle_NotFound(t *testing.T) {
 }
 
 func TestGetHandler_Handle_RepoError(t *testing.T) {
+	t.Parallel()
+
 	repoErr := errors.New("db connection failed")
 	readRepo := &mockReadRepo{
 		findByIDFn: func(_ context.Context, _ uuid.UUID) (*domain.FeatureFlagView, error) {
@@ -145,6 +150,8 @@ func TestGetHandler_Handle_RepoError(t *testing.T) {
 }
 
 func TestGetHandler_Handle_EmptyRuleGroups(t *testing.T) {
+	t.Parallel()
+
 	flagID := uuid.New()
 	now := time.Now().Format(time.RFC3339)
 
@@ -164,9 +171,7 @@ func TestGetHandler_Handle_EmptyRuleGroups(t *testing.T) {
 
 	handler := NewGetHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), GetQuery{ID: flagID})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 	if len(result.RuleGroups) != 0 {
 		t.Errorf("expected 0 rule groups, got %d", len(result.RuleGroups))
 	}

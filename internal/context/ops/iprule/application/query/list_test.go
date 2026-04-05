@@ -1,7 +1,7 @@
 package query
 
 import (
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/logger"
 	"context"
 	"testing"
 	"time"
@@ -9,9 +9,12 @@ import (
 	"gct/internal/context/ops/iprule/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func TestListIPRulesHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockReadRepo{
 		views: []*domain.IPRuleView{
 			{ID: uuid.New(), IPAddress: "1.1.1.1", Action: "DENY", Reason: "r1", CreatedAt: time.Now(), UpdatedAt: time.Now()},
@@ -24,9 +27,7 @@ func TestListIPRulesHandler_Handle(t *testing.T) {
 	result, err := handler.Handle(context.Background(), ListIPRulesQuery{
 		Filter: domain.IPRuleFilter{Limit: 10, Offset: 0},
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 	if result.Total != 2 {
 		t.Errorf("expected total 2, got %d", result.Total)
 	}
@@ -39,15 +40,15 @@ func TestListIPRulesHandler_Handle(t *testing.T) {
 }
 
 func TestListIPRulesHandler_Empty(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockReadRepo{views: []*domain.IPRuleView{}, total: 0}
 
 	handler := NewListIPRulesHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListIPRulesQuery{
 		Filter: domain.IPRuleFilter{},
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 	if result.Total != 0 {
 		t.Errorf("expected total 0, got %d", result.Total)
 	}
@@ -57,6 +58,8 @@ func TestListIPRulesHandler_Empty(t *testing.T) {
 }
 
 func TestListIPRulesHandler_WithFilters(t *testing.T) {
+	t.Parallel()
+
 	action := "DENY"
 	readRepo := &mockReadRepo{
 		views: []*domain.IPRuleView{
@@ -69,15 +72,15 @@ func TestListIPRulesHandler_WithFilters(t *testing.T) {
 	result, err := handler.Handle(context.Background(), ListIPRulesQuery{
 		Filter: domain.IPRuleFilter{Action: &action, Limit: 10},
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 	if result.Total != 1 {
 		t.Errorf("expected total 1, got %d", result.Total)
 	}
 }
 
 func TestListIPRulesHandler_RepoError(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &errorReadRepo{err: errRepo}
 	handler := NewListIPRulesHandler(readRepo, logger.Noop())
 	_, err := handler.Handle(context.Background(), ListIPRulesQuery{Filter: domain.IPRuleFilter{}})

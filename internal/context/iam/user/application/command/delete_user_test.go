@@ -7,9 +7,12 @@ import (
 	"gct/internal/context/iam/user/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDeleteUserHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	user := makeTestUser(t)
 	repo := &mockUserRepository{
 		findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.User, error) {
@@ -24,10 +27,8 @@ func TestDeleteUserHandler_Handle(t *testing.T) {
 
 	handler := NewDeleteUserHandler(repo, eventBus, log)
 
-	err := handler.Handle(context.Background(), DeleteUserCommand{ID: user.ID()})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	err := handler.Handle(context.Background(), DeleteUserCommand{ID: domain.UserID(user.ID())})
+	require.NoError(t, err)
 
 	if repo.updatedUser == nil {
 		t.Fatal("expected user to be updated (soft-deleted)")
@@ -47,13 +48,15 @@ func TestDeleteUserHandler_Handle(t *testing.T) {
 }
 
 func TestDeleteUserHandler_NotFound(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockUserRepository{}
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
 	handler := NewDeleteUserHandler(repo, eventBus, log)
 
-	err := handler.Handle(context.Background(), DeleteUserCommand{ID: uuid.New()})
+	err := handler.Handle(context.Background(), DeleteUserCommand{ID: domain.NewUserID()})
 	if err == nil {
 		t.Fatal("expected error for non-existent user")
 	}

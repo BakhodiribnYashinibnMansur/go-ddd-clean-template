@@ -1,7 +1,7 @@
 package query
 
 import (
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
@@ -10,6 +10,7 @@ import (
 	"gct/internal/context/content/file/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 // --- Mocks ---
@@ -46,6 +47,8 @@ var errRepo = errors.New("repo failure")
 // --- Tests: GetFile ---
 
 func TestGetFileHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	uploaderID := uuid.New()
 	now := time.Now()
@@ -64,10 +67,8 @@ func TestGetFileHandler_Handle(t *testing.T) {
 	}
 
 	handler := NewGetFileHandler(readRepo, logger.Noop())
-	result, err := handler.Handle(context.Background(), GetFileQuery{ID: id})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	result, err := handler.Handle(context.Background(), GetFileQuery{ID: domain.FileID(id)})
+	require.NoError(t, err)
 	if result == nil {
 		t.Fatal("expected result")
 	}
@@ -86,24 +87,30 @@ func TestGetFileHandler_Handle(t *testing.T) {
 }
 
 func TestGetFileHandler_NotFound(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockReadRepo{}
 	handler := NewGetFileHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), GetFileQuery{ID: uuid.New()})
+	_, err := handler.Handle(context.Background(), GetFileQuery{ID: domain.NewFileID()})
 	if err == nil {
 		t.Fatal("expected error for not found")
 	}
 }
 
 func TestGetFileHandler_RepoError(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &errorReadRepo{err: errRepo}
 	handler := NewGetFileHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), GetFileQuery{ID: uuid.New()})
+	_, err := handler.Handle(context.Background(), GetFileQuery{ID: domain.NewFileID()})
 	if err == nil {
 		t.Fatal("expected error from repo")
 	}
 }
 
 func TestGetFileHandler_AllFieldsMapped(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	uploaderID := uuid.New()
 	now := time.Now()
@@ -123,10 +130,8 @@ func TestGetFileHandler_AllFieldsMapped(t *testing.T) {
 	}
 
 	handler := NewGetFileHandler(readRepo, logger.Noop())
-	result, err := handler.Handle(context.Background(), GetFileQuery{ID: id})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	result, err := handler.Handle(context.Background(), GetFileQuery{ID: domain.FileID(id)})
+	require.NoError(t, err)
 	if result.OriginalName != "annual-report.pdf" {
 		t.Errorf("expected originalName 'annual-report.pdf', got %s", result.OriginalName)
 	}

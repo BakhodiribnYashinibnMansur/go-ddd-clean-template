@@ -45,6 +45,8 @@ func (m *errorIntegrationRepo) Delete(_ context.Context, _ uuid.UUID) error {
 // --- Tests ---
 
 func TestCreateHandler_RepoError(t *testing.T) {
+	t.Parallel()
+
 	repo := &errorIntegrationRepo{saveErr: errRepoSave}
 	handler := NewCreateHandler(repo, &mockEventBus{}, &mockLogger{})
 
@@ -57,7 +59,9 @@ func TestCreateHandler_RepoError(t *testing.T) {
 }
 
 func TestUpdateHandler_RepoUpdateError(t *testing.T) {
-	i := domain.NewIntegration("n", "t", "k", "u", true, nil)
+	t.Parallel()
+
+	i, _ := domain.NewIntegration("n", "t", "k", "u", true, nil)
 
 	repo := &errorIntegrationRepo{
 		findFn:    func(_ context.Context, _ uuid.UUID) (*domain.Integration, error) { return i, nil },
@@ -65,17 +69,19 @@ func TestUpdateHandler_RepoUpdateError(t *testing.T) {
 	}
 	handler := NewUpdateHandler(repo, &mockEventBus{}, &mockLogger{})
 
-	err := handler.Handle(context.Background(), UpdateCommand{ID: i.ID()})
+	err := handler.Handle(context.Background(), UpdateCommand{ID: domain.IntegrationID(i.ID())})
 	if !errors.Is(err, errRepoUpdate) {
 		t.Fatalf("expected errRepoUpdate, got: %v", err)
 	}
 }
 
 func TestDeleteHandler_RepoError(t *testing.T) {
+	t.Parallel()
+
 	repo := &errorIntegrationRepo{deleteErr: errRepoDelete}
 	handler := NewDeleteHandler(repo, &mockEventBus{}, &mockLogger{})
 
-	err := handler.Handle(context.Background(), DeleteCommand{ID: uuid.New()})
+	err := handler.Handle(context.Background(), DeleteCommand{ID: domain.NewIntegrationID()})
 	if !errors.Is(err, errRepoDelete) {
 		t.Fatalf("expected errRepoDelete, got: %v", err)
 	}

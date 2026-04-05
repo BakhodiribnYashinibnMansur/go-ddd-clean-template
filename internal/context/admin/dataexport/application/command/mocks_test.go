@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"gct/internal/context/admin/dataexport/domain"
-	"gct/internal/platform/application"
-	shared "gct/internal/platform/domain"
+	"gct/internal/kernel/application"
+	shared "gct/internal/kernel/domain"
 
 	"github.com/google/uuid"
 )

@@ -3,11 +3,11 @@ package query
 import (
 	"context"
 
-	apperrors "gct/internal/platform/infrastructure/errors"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
 
 	appdto "gct/internal/context/iam/session/application"
-	"gct/internal/platform/infrastructure/logger"
-	"gct/internal/platform/infrastructure/pgxutil"
+	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // ListSessionsQuery holds the input for listing sessions with filtering.

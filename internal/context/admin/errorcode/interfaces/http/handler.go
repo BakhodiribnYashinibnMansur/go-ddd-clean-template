@@ -8,9 +8,9 @@ import (
 	"gct/internal/context/admin/errorcode/application/command"
 	"gct/internal/context/admin/errorcode/application/query"
 	"gct/internal/context/admin/errorcode/domain"
-	"gct/internal/platform/infrastructure/httpx"
-	"gct/internal/platform/infrastructure/httpx/response"
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/httpx"
+	"gct/internal/kernel/infrastructure/httpx/response"
+	"gct/internal/kernel/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -76,7 +76,7 @@ func (h *Handler) Get(ctx *gin.Context) {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
-	result, err := h.bc.GetErrorCode.Handle(ctx.Request.Context(), query.GetErrorCodeQuery{ID: id})
+	result, err := h.bc.GetErrorCode.Handle(ctx.Request.Context(), query.GetErrorCodeQuery{ID: domain.ErrorCodeID(id)})
 	if err != nil {
 		response.HandleError(ctx, err)
 		return
@@ -97,7 +97,7 @@ func (h *Handler) Update(ctx *gin.Context) {
 		return
 	}
 	cmd := command.UpdateErrorCodeCommand{
-		ID:         id,
+		ID:         domain.ErrorCodeID(id),
 		Message:    req.Message,
 		MessageUz:  req.MessageUz,
 		MessageRu:  req.MessageRu,
@@ -122,7 +122,7 @@ func (h *Handler) Delete(ctx *gin.Context) {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
-	if err := h.bc.DeleteErrorCode.Handle(ctx.Request.Context(), command.DeleteErrorCodeCommand{ID: id}); err != nil {
+	if err := h.bc.DeleteErrorCode.Handle(ctx.Request.Context(), command.DeleteErrorCodeCommand{ID: domain.ErrorCodeID(id)}); err != nil {
 		response.HandleError(ctx, err)
 		return
 	}

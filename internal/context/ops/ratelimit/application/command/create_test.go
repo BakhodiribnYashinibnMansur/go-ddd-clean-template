@@ -5,10 +5,11 @@ import (
 	"testing"
 
 	"gct/internal/context/ops/ratelimit/domain"
-	"gct/internal/platform/application"
-	shared "gct/internal/platform/domain"
+	"gct/internal/kernel/application"
+	shared "gct/internal/kernel/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 // --- Mocks ---
@@ -83,6 +84,8 @@ func (m *mockLogger) Fatalc(_ context.Context, _ string, _ ...any)  {}
 // --- Tests ---
 
 func TestCreateRateLimitHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockRateLimitRepo{}
 	eb := &mockEventBus{}
 	handler := NewCreateRateLimitHandler(repo, eb, &mockLogger{})
@@ -96,9 +99,7 @@ func TestCreateRateLimitHandler_Handle(t *testing.T) {
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.saved == nil {
 		t.Fatal("expected rate limit to be saved")
@@ -121,6 +122,8 @@ func TestCreateRateLimitHandler_Handle(t *testing.T) {
 }
 
 func TestCreateRateLimitHandler_Disabled(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockRateLimitRepo{}
 	handler := NewCreateRateLimitHandler(repo, &mockEventBus{}, &mockLogger{})
 
@@ -131,9 +134,7 @@ func TestCreateRateLimitHandler_Disabled(t *testing.T) {
 		WindowDuration:    30,
 		Enabled:           false,
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 	if repo.saved == nil {
 		t.Fatal("expected rate limit to be saved")
 	}

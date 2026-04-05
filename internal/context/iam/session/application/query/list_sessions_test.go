@@ -1,7 +1,7 @@
 package query
 
 import (
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
@@ -10,9 +10,12 @@ import (
 	appdto "gct/internal/context/iam/session/application"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func TestListSessionsHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	now := time.Now()
 	readRepo := &mockSessionReadRepository{
 		views: []*appdto.SessionView{
@@ -50,9 +53,7 @@ func TestListSessionsHandler_Handle(t *testing.T) {
 	result, err := handler.Handle(context.Background(), ListSessionsQuery{
 		Filter: appdto.SessionsFilter{Limit: 10, Offset: 0},
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 	if result.Total != 2 {
 		t.Errorf("expected total 2, got %d", result.Total)
 	}
@@ -68,6 +69,8 @@ func TestListSessionsHandler_Handle(t *testing.T) {
 }
 
 func TestListSessionsHandler_Empty(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockSessionReadRepository{
 		views: []*appdto.SessionView{},
 		total: 0,
@@ -77,9 +80,7 @@ func TestListSessionsHandler_Empty(t *testing.T) {
 	result, err := handler.Handle(context.Background(), ListSessionsQuery{
 		Filter: appdto.SessionsFilter{},
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 	if result.Total != 0 {
 		t.Errorf("expected total 0, got %d", result.Total)
 	}
@@ -89,6 +90,8 @@ func TestListSessionsHandler_Empty(t *testing.T) {
 }
 
 func TestListSessionsHandler_RepoError(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockSessionReadRepository{
 		err: errors.New("database connection failed"),
 	}

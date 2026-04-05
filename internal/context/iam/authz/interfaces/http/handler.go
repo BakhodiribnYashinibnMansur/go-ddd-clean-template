@@ -7,10 +7,11 @@ import (
 	"gct/internal/context/iam/authz"
 	"gct/internal/context/iam/authz/application/command"
 	"gct/internal/context/iam/authz/application/query"
-	shared "gct/internal/platform/domain"
-	"gct/internal/platform/infrastructure/httpx"
-	"gct/internal/platform/infrastructure/httpx/response"
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/context/iam/authz/domain"
+	shared "gct/internal/kernel/domain"
+	"gct/internal/kernel/infrastructure/httpx"
+	"gct/internal/kernel/infrastructure/httpx/response"
+	"gct/internal/kernel/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -79,7 +80,7 @@ func (h *Handler) GetRole(ctx *gin.Context) {
 		return
 	}
 
-	view, err := h.bc.GetRole.Handle(ctx.Request.Context(), query.GetRoleQuery{ID: id})
+	view, err := h.bc.GetRole.Handle(ctx.Request.Context(), query.GetRoleQuery{ID: domain.RoleID(id)})
 	if err != nil {
 		response.HandleError(ctx, err)
 		return
@@ -103,7 +104,7 @@ func (h *Handler) UpdateRole(ctx *gin.Context) {
 	}
 
 	err = h.bc.UpdateRole.Handle(ctx.Request.Context(), command.UpdateRoleCommand{
-		ID:          id,
+		ID:          domain.RoleID(id),
 		Name:        req.Name,
 		Description: req.Description,
 	})
@@ -123,7 +124,7 @@ func (h *Handler) DeleteRole(ctx *gin.Context) {
 		return
 	}
 
-	err = h.bc.DeleteRole.Handle(ctx.Request.Context(), command.DeleteRoleCommand{ID: id})
+	err = h.bc.DeleteRole.Handle(ctx.Request.Context(), command.DeleteRoleCommand{ID: domain.RoleID(id)})
 	if err != nil {
 		response.HandleError(ctx, err)
 		return
@@ -142,9 +143,14 @@ func (h *Handler) CreatePermission(ctx *gin.Context) {
 		return
 	}
 
+	var parentID *domain.PermissionID
+	if req.ParentID != nil {
+		pid := domain.PermissionID(*req.ParentID)
+		parentID = &pid
+	}
 	err := h.bc.CreatePermission.Handle(ctx.Request.Context(), command.CreatePermissionCommand{
 		Name:        req.Name,
-		ParentID:    req.ParentID,
+		ParentID:    parentID,
 		Description: req.Description,
 	})
 	if err != nil {
@@ -185,7 +191,7 @@ func (h *Handler) DeletePermission(ctx *gin.Context) {
 		return
 	}
 
-	err = h.bc.DeletePermission.Handle(ctx.Request.Context(), command.DeletePermissionCommand{ID: id})
+	err = h.bc.DeletePermission.Handle(ctx.Request.Context(), command.DeletePermissionCommand{ID: domain.PermissionID(id)})
 	if err != nil {
 		response.HandleError(ctx, err)
 		return
@@ -205,7 +211,7 @@ func (h *Handler) CreatePolicy(ctx *gin.Context) {
 	}
 
 	err := h.bc.CreatePolicy.Handle(ctx.Request.Context(), command.CreatePolicyCommand{
-		PermissionID: req.PermissionID,
+		PermissionID: domain.PermissionID(req.PermissionID),
 		Effect:       req.Effect,
 		Priority:     req.Priority,
 		Conditions:   req.Conditions,
@@ -255,7 +261,7 @@ func (h *Handler) UpdatePolicy(ctx *gin.Context) {
 	}
 
 	err = h.bc.UpdatePolicy.Handle(ctx.Request.Context(), command.UpdatePolicyCommand{
-		ID:         id,
+		ID:         domain.PolicyID(id),
 		Effect:     req.Effect,
 		Priority:   req.Priority,
 		Conditions: req.Conditions,
@@ -276,7 +282,7 @@ func (h *Handler) DeletePolicy(ctx *gin.Context) {
 		return
 	}
 
-	err = h.bc.DeletePolicy.Handle(ctx.Request.Context(), command.DeletePolicyCommand{ID: id})
+	err = h.bc.DeletePolicy.Handle(ctx.Request.Context(), command.DeletePolicyCommand{ID: domain.PolicyID(id)})
 	if err != nil {
 		response.HandleError(ctx, err)
 		return
@@ -293,7 +299,7 @@ func (h *Handler) TogglePolicy(ctx *gin.Context) {
 		return
 	}
 
-	err = h.bc.TogglePolicy.Handle(ctx.Request.Context(), command.TogglePolicyCommand{ID: id})
+	err = h.bc.TogglePolicy.Handle(ctx.Request.Context(), command.TogglePolicyCommand{ID: domain.PolicyID(id)})
 	if err != nil {
 		response.HandleError(ctx, err)
 		return
@@ -383,8 +389,8 @@ func (h *Handler) AssignPermission(ctx *gin.Context) {
 	}
 
 	err = h.bc.AssignPermission.Handle(ctx.Request.Context(), command.AssignPermissionCommand{
-		RoleID:       roleID,
-		PermissionID: req.PermissionID,
+		RoleID:       domain.RoleID(roleID),
+		PermissionID: domain.PermissionID(req.PermissionID),
 	})
 	if err != nil {
 		response.HandleError(ctx, err)
@@ -409,7 +415,7 @@ func (h *Handler) AssignScope(ctx *gin.Context) {
 	}
 
 	err = h.bc.AssignScope.Handle(ctx.Request.Context(), command.AssignScopeCommand{
-		PermissionID: permID,
+		PermissionID: domain.PermissionID(permID),
 		Path:         req.Path,
 		Method:       req.Method,
 	})

@@ -4,17 +4,15 @@ import (
 	"context"
 
 	"gct/internal/context/admin/featureflag/domain"
-	"gct/internal/platform/application"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
-	"gct/internal/platform/infrastructure/pgxutil"
-
-	"github.com/google/uuid"
+	"gct/internal/kernel/application"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // UpdateCommand represents a partial update to an existing feature flag.
 type UpdateCommand struct {
-	ID                uuid.UUID
+	ID                domain.FeatureFlagID
 	Name              *string
 	Key               *string
 	Description       *string
@@ -50,7 +48,7 @@ func (h *UpdateHandler) Handle(ctx context.Context, cmd UpdateCommand) (err erro
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "UpdateFeatureFlag", "feature_flag")()
 
-	ff, err := h.repo.FindByID(ctx, cmd.ID)
+	ff, err := h.repo.FindByID(ctx, cmd.ID.UUID())
 	if err != nil {
 		return apperrors.MapToServiceError(err)
 	}
@@ -58,7 +56,7 @@ func (h *UpdateHandler) Handle(ctx context.Context, cmd UpdateCommand) (err erro
 	ff.UpdateDetails(cmd.Name, cmd.Key, cmd.Description, cmd.FlagType, cmd.DefaultValue, cmd.RolloutPercentage, cmd.IsActive)
 
 	if err := h.repo.Update(ctx, ff); err != nil {
-		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "UpdateFeatureFlag", Entity: "feature_flag", EntityID: cmd.ID, Err: err}.KV()...)
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "UpdateFeatureFlag", Entity: "feature_flag", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 

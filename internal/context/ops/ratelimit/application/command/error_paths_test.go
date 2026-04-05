@@ -49,6 +49,8 @@ func (m *errorRateLimitRepo) List(_ context.Context, _ domain.RateLimitFilter) (
 // --- Tests ---
 
 func TestCreateRateLimitHandler_RepoError(t *testing.T) {
+	t.Parallel()
+
 	repo := &errorRateLimitRepo{saveErr: errRepoSave}
 	handler := NewCreateRateLimitHandler(repo, &mockEventBus{}, &mockLogger{})
 
@@ -61,6 +63,8 @@ func TestCreateRateLimitHandler_RepoError(t *testing.T) {
 }
 
 func TestUpdateRateLimitHandler_RepoUpdateError(t *testing.T) {
+	t.Parallel()
+
 	rl := domain.NewRateLimit("n", "/r", 10, 30, true)
 
 	repo := &errorRateLimitRepo{
@@ -69,17 +73,19 @@ func TestUpdateRateLimitHandler_RepoUpdateError(t *testing.T) {
 	}
 	handler := NewUpdateRateLimitHandler(repo, &mockEventBus{}, &mockLogger{})
 
-	err := handler.Handle(context.Background(), UpdateRateLimitCommand{ID: rl.ID()})
+	err := handler.Handle(context.Background(), UpdateRateLimitCommand{ID: domain.RateLimitID(rl.ID())})
 	if !errors.Is(err, errRepoUpdate) {
 		t.Fatalf("expected errRepoUpdate, got: %v", err)
 	}
 }
 
 func TestDeleteRateLimitHandler_RepoError(t *testing.T) {
+	t.Parallel()
+
 	repo := &errorRateLimitRepo{deleteErr: errRepoDelete}
 	handler := NewDeleteRateLimitHandler(repo, &mockLogger{})
 
-	err := handler.Handle(context.Background(), DeleteRateLimitCommand{ID: uuid.New()})
+	err := handler.Handle(context.Background(), DeleteRateLimitCommand{ID: domain.NewRateLimitID()})
 	if !errors.Is(err, errRepoDelete) {
 		t.Fatalf("expected errRepoDelete, got: %v", err)
 	}

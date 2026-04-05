@@ -8,10 +8,10 @@ import (
 
 	"gct/internal/context/iam/audit/application/command"
 	auditdomain "gct/internal/context/iam/audit/domain"
-	shared "gct/internal/platform/domain"
-	"gct/internal/platform/domain/consts"
-	"gct/internal/platform/infrastructure/httpx"
-	"gct/internal/platform/infrastructure/logger"
+	shared "gct/internal/kernel/domain"
+	"gct/internal/kernel/consts"
+	"gct/internal/kernel/infrastructure/httpx"
+	"gct/internal/kernel/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -77,9 +77,11 @@ func (m *AuditMiddleware) EndpointHistory() gin.HandlerFunc {
 		}
 
 		// Persist the history entry asynchronously to avoid adding latency to the client response.
-		// Uses a background context with timeout to ensure the goroutine outlives the request lifetime.
+		// Detach cancellation from the request context so the goroutine outlives the response,
+		// while still preserving values (trace IDs, logger fields) from the parent context.
+		bgCtx := context.WithoutCancel(c.Request.Context())
 		go func(cmd command.CreateEndpointHistoryCommand) {
-			ctx, cancel := context.WithTimeout(context.Background(), consts.AuditPersistTimeout*time.Second)
+			ctx, cancel := context.WithTimeout(bgCtx, consts.AuditPersistTimeout*time.Second)
 			defer cancel()
 
 			if err := m.createEndpointHistory.Handle(ctx, cmd); err != nil {
@@ -144,8 +146,11 @@ func (m *AuditMiddleware) ChangeAudit() gin.HandlerFunc {
 		}
 
 		// Asynchronously save mutation record to avoid blocking the response.
+		// Detach cancellation from the request context so the goroutine outlives the response,
+		// while still preserving values from the parent context.
+		bgCtx := context.WithoutCancel(c.Request.Context())
 		go func(cmd command.CreateAuditLogCommand) {
-			ctx, cancel := context.WithTimeout(context.Background(), consts.AuditPersistTimeout*time.Second)
+			ctx, cancel := context.WithTimeout(bgCtx, consts.AuditPersistTimeout*time.Second)
 			defer cancel()
 
 			if err := m.createAuditLog.Handle(ctx, cmd); err != nil {

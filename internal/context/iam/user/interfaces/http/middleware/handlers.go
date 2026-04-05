@@ -3,12 +3,13 @@ package middleware
 import (
 	"net/http"
 
-	"gct/internal/platform/domain/consts"
-	"gct/internal/platform/infrastructure/httpx"
-	"gct/internal/platform/infrastructure/httpx/cookie"
-	"gct/internal/platform/infrastructure/httpx/response"
-	"gct/internal/platform/infrastructure/security/jwt"
+	"gct/internal/kernel/consts"
+	"gct/internal/kernel/infrastructure/httpx"
+	"gct/internal/kernel/infrastructure/httpx/cookie"
+	"gct/internal/kernel/infrastructure/httpx/response"
+	"gct/internal/kernel/infrastructure/security/jwt"
 	"gct/internal/context/iam/user/application/query"
+	userdomain "gct/internal/context/iam/user/domain"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -68,7 +69,7 @@ func (m *AuthMiddleware) AuthClientRefresh(ctx *gin.Context) {
 		return
 	}
 
-	session, err := m.findSession.Handle(ctx.Request.Context(), query.FindSessionQuery{SessionID: sessionID})
+	session, err := m.findSession.Handle(ctx.Request.Context(), query.FindSessionQuery{SessionID: userdomain.SessionID(sessionID)})
 	if err != nil {
 		m.l.Errorw("AuthMiddleware - AuthClientRefresh - session not found", "error", err)
 		response.ControllerResponse(ctx, http.StatusUnauthorized, httpx.ErrInvalidRefreshSession, nil, false)
@@ -124,7 +125,7 @@ func (m *AuthMiddleware) AuthAdmin(ctx *gin.Context) {
 	}
 
 	// Fetch user to verify administrative status
-	user, err := m.findUserForAuth.Handle(ctx.Request.Context(), query.FindUserForAuthQuery{UserID: session.UserID})
+	user, err := m.findUserForAuth.Handle(ctx.Request.Context(), query.FindUserForAuthQuery{UserID: userdomain.UserID(session.UserID)})
 	if err != nil {
 		m.l.Errorw("AuthMiddleware - AuthAdmin - FindUserForAuth", "error", err)
 		response.ControllerResponse(ctx, http.StatusUnauthorized, httpx.ErrUserNotFound, nil, false)

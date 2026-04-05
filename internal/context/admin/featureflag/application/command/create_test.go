@@ -7,10 +7,11 @@ import (
 	"time"
 
 	"gct/internal/context/admin/featureflag/domain"
-	"gct/internal/platform/application"
-	shared "gct/internal/platform/domain"
+	"gct/internal/kernel/application"
+	shared "gct/internal/kernel/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 // --- Mocks ---
@@ -162,6 +163,8 @@ func newReconstructedFlag(id uuid.UUID) *domain.FeatureFlag {
 // --- Tests ---
 
 func TestCreateHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockFeatureFlagRepo{}
 	eb := &mockEventBus{}
 	handler := NewCreateHandler(repo, eb, &mockLogger{})
@@ -177,9 +180,7 @@ func TestCreateHandler_Handle(t *testing.T) {
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.saved == nil {
 		t.Fatal("expected feature flag to be saved")
@@ -208,6 +209,8 @@ func TestCreateHandler_Handle(t *testing.T) {
 }
 
 func TestCreateHandler_Handle_Active(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockFeatureFlagRepo{}
 	eb := &mockEventBus{}
 	handler := NewCreateHandler(repo, eb, &mockLogger{})
@@ -220,9 +223,7 @@ func TestCreateHandler_Handle_Active(t *testing.T) {
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 	if repo.saved == nil {
 		t.Fatal("expected feature flag to be saved")
 	}
@@ -232,6 +233,8 @@ func TestCreateHandler_Handle_Active(t *testing.T) {
 }
 
 func TestCreateHandler_Handle_RepoError(t *testing.T) {
+	t.Parallel()
+
 	repoErr := errors.New("db failure")
 	repo := &mockFeatureFlagRepo{
 		saveFn: func(_ context.Context, _ *domain.FeatureFlag) error {

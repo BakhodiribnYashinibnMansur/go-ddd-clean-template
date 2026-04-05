@@ -2,24 +2,23 @@ package query
 
 import (
 	"context"
+	"fmt"
 
-	shared "gct/internal/platform/domain"
-	"gct/internal/platform/infrastructure/logger"
-	"gct/internal/platform/infrastructure/pgxutil"
 	"gct/internal/context/iam/user/domain"
-
-	"github.com/google/uuid"
+	shared "gct/internal/kernel/domain"
+	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // FindUserForAuthQuery holds the input for fetching minimal user data for auth.
 type FindUserForAuthQuery struct {
-	UserID uuid.UUID
+	UserID domain.UserID
 }
 
 // FindUserForAuthHandler handles the FindUserForAuthQuery.
 type FindUserForAuthHandler struct {
 	readRepo domain.UserReadRepository
-	logger   logger.Log
+	logger   queryLogger
 }
 
 // NewFindUserForAuthHandler creates a new FindUserForAuthHandler.
@@ -33,5 +32,9 @@ func (h *FindUserForAuthHandler) Handle(ctx context.Context, q FindUserForAuthQu
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "FindUserForAuth", "user")()
 
-	return h.readRepo.FindUserForAuth(ctx, q.UserID)
+	user, err := h.readRepo.FindUserForAuth(ctx, q.UserID.UUID())
+	if err != nil {
+		return nil, fmt.Errorf("find_user_for_auth: read repo: %w", err)
+	}
+	return user, nil
 }

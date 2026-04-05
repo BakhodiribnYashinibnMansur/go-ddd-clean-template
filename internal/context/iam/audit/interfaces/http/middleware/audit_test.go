@@ -8,10 +8,10 @@ import (
 	"testing"
 	"time"
 
-	shared "gct/internal/platform/domain"
-	"gct/internal/platform/application"
-	"gct/internal/platform/domain/consts"
-	"gct/internal/platform/infrastructure/logger"
+	shared "gct/internal/kernel/domain"
+	"gct/internal/kernel/application"
+	"gct/internal/kernel/consts"
+	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/context/iam/audit/application/command"
 	"gct/internal/context/iam/audit/domain"
 
@@ -91,6 +91,8 @@ func newTestAuditMiddleware(historyRepo *mockEndpointHistoryRepo, auditRepo *moc
 // --- EndpointHistory Tests ---
 
 func TestEndpointHistory_RecordsOnGET(t *testing.T) {
+	t.Parallel()
+
 	gin.SetMode(gin.TestMode)
 
 	historyRepo := &mockEndpointHistoryRepo{}
@@ -124,6 +126,8 @@ func TestEndpointHistory_RecordsOnGET(t *testing.T) {
 }
 
 func TestEndpointHistory_RecordsOnPOST(t *testing.T) {
+	t.Parallel()
+
 	gin.SetMode(gin.TestMode)
 
 	historyRepo := &mockEndpointHistoryRepo{}
@@ -157,6 +161,8 @@ func TestEndpointHistory_RecordsOnPOST(t *testing.T) {
 }
 
 func TestEndpointHistory_IncludesSessionUserID(t *testing.T) {
+	t.Parallel()
+
 	gin.SetMode(gin.TestMode)
 
 	historyRepo := &mockEndpointHistoryRepo{}
@@ -198,6 +204,8 @@ func TestEndpointHistory_IncludesSessionUserID(t *testing.T) {
 // --- ChangeAudit Tests ---
 
 func TestChangeAudit_SkipsGET(t *testing.T) {
+	t.Parallel()
+
 	gin.SetMode(gin.TestMode)
 
 	historyRepo := &mockEndpointHistoryRepo{}
@@ -231,6 +239,8 @@ func TestChangeAudit_SkipsGET(t *testing.T) {
 }
 
 func TestChangeAudit_SkipsHEAD(t *testing.T) {
+	t.Parallel()
+
 	gin.SetMode(gin.TestMode)
 
 	historyRepo := &mockEndpointHistoryRepo{}
@@ -260,6 +270,8 @@ func TestChangeAudit_SkipsHEAD(t *testing.T) {
 }
 
 func TestChangeAudit_SkipsOPTIONS(t *testing.T) {
+	t.Parallel()
+
 	gin.SetMode(gin.TestMode)
 
 	historyRepo := &mockEndpointHistoryRepo{}
@@ -289,6 +301,8 @@ func TestChangeAudit_SkipsOPTIONS(t *testing.T) {
 }
 
 func TestChangeAudit_RecordsPOST(t *testing.T) {
+	t.Parallel()
+
 	gin.SetMode(gin.TestMode)
 
 	historyRepo := &mockEndpointHistoryRepo{}
@@ -318,6 +332,8 @@ func TestChangeAudit_RecordsPOST(t *testing.T) {
 }
 
 func TestChangeAudit_RecordsPUT(t *testing.T) {
+	t.Parallel()
+
 	gin.SetMode(gin.TestMode)
 
 	historyRepo := &mockEndpointHistoryRepo{}
@@ -347,6 +363,8 @@ func TestChangeAudit_RecordsPUT(t *testing.T) {
 }
 
 func TestChangeAudit_RecordsDELETE(t *testing.T) {
+	t.Parallel()
+
 	gin.SetMode(gin.TestMode)
 
 	historyRepo := &mockEndpointHistoryRepo{}
@@ -376,6 +394,8 @@ func TestChangeAudit_RecordsDELETE(t *testing.T) {
 }
 
 func TestChangeAudit_RecordsPATCH(t *testing.T) {
+	t.Parallel()
+
 	gin.SetMode(gin.TestMode)
 
 	historyRepo := &mockEndpointHistoryRepo{}
@@ -407,6 +427,8 @@ func TestChangeAudit_RecordsPATCH(t *testing.T) {
 // --- Helper function tests ---
 
 func TestGetSessionFromContext_ValidSession(t *testing.T) {
+	t.Parallel()
+
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
@@ -427,6 +449,8 @@ func TestGetSessionFromContext_ValidSession(t *testing.T) {
 }
 
 func TestGetSessionFromContext_NoSession(t *testing.T) {
+	t.Parallel()
+
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
@@ -438,6 +462,8 @@ func TestGetSessionFromContext_NoSession(t *testing.T) {
 }
 
 func TestUuidPtr_ValidUUID(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	result := uuidPtr(id.String())
 	if result == nil {
@@ -449,6 +475,8 @@ func TestUuidPtr_ValidUUID(t *testing.T) {
 }
 
 func TestUuidPtr_EmptyString(t *testing.T) {
+	t.Parallel()
+
 	result := uuidPtr("")
 	if result != nil {
 		t.Error("expected nil for empty string")
@@ -456,6 +484,8 @@ func TestUuidPtr_EmptyString(t *testing.T) {
 }
 
 func TestUuidPtr_InvalidString(t *testing.T) {
+	t.Parallel()
+
 	result := uuidPtr("not-a-uuid")
 	if result != nil {
 		t.Error("expected nil for invalid UUID string")

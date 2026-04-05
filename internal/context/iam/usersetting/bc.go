@@ -1,8 +1,8 @@
 package usersetting
 
 import (
-	"gct/internal/platform/application"
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/application"
+	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/context/iam/usersetting/application/command"
 	"gct/internal/context/iam/usersetting/application/query"
 	"gct/internal/context/iam/usersetting/infrastructure/postgres"

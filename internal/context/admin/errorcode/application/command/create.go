@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"gct/internal/context/admin/errorcode/domain"
-	"gct/internal/platform/application"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
-	"gct/internal/platform/infrastructure/pgxutil"
+	"gct/internal/kernel/application"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // CreateErrorCodeCommand represents an intent to register a new standardized error code in the system.

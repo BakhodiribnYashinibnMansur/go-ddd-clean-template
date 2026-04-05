@@ -8,9 +8,12 @@ import (
 	"gct/internal/context/admin/errorcode/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDeleteErrorCodeHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	ec := domain.ReconstructErrorCode(id, time.Now(), time.Now(), "ERR_TEST", "test", "", "", 500, "SYSTEM", "LOW", false, 0, "")
 	repo := &mockErrorCodeRepo{
@@ -24,10 +27,8 @@ func TestDeleteErrorCodeHandler_Handle(t *testing.T) {
 	eb := &mockEventBus{}
 	handler := NewDeleteErrorCodeHandler(repo, eb, &mockLogger{})
 
-	err := handler.Handle(context.Background(), DeleteErrorCodeCommand{ID: id})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	err := handler.Handle(context.Background(), DeleteErrorCodeCommand{ID: domain.ErrorCodeID(id)})
+	require.NoError(t, err)
 	if repo.deleted != id {
 		t.Errorf("expected deleted ID %s, got %s", id, repo.deleted)
 	}

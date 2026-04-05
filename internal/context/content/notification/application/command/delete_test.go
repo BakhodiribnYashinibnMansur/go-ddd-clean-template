@@ -5,21 +5,23 @@ import (
 	"testing"
 
 	"gct/internal/context/content/notification/application/command"
+	"gct/internal/context/content/notification/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDeleteHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockNotificationRepo{}
 	handler := command.NewDeleteHandler(repo, &mockEventBus{}, &mockLogger{})
 
 	id := uuid.New()
-	cmd := command.DeleteCommand{ID: id}
+	cmd := command.DeleteCommand{ID: domain.NotificationID(id)}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("Handle returned error: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.deleted != id {
 		t.Fatalf("expected deleted ID %s, got %s", id, repo.deleted)

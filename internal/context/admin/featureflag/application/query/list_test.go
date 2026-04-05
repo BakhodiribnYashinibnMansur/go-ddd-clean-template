@@ -1,7 +1,7 @@
 package query
 
 import (
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
@@ -10,9 +10,12 @@ import (
 	"gct/internal/context/admin/featureflag/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func TestListHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	now := time.Now().Format(time.RFC3339)
 	flag1 := &domain.FeatureFlagView{
 		ID:        uuid.New(),
@@ -43,9 +46,7 @@ func TestListHandler_Handle(t *testing.T) {
 	result, err := handler.Handle(context.Background(), ListQuery{
 		Filter: domain.FeatureFlagFilter{Limit: 10, Offset: 0},
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if result == nil {
 		t.Fatal("expected result, got nil")
@@ -65,6 +66,8 @@ func TestListHandler_Handle(t *testing.T) {
 }
 
 func TestListHandler_Handle_Empty(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockReadRepo{
 		listFn: func(_ context.Context, _ domain.FeatureFlagFilter) ([]*domain.FeatureFlagView, int64, error) {
 			return []*domain.FeatureFlagView{}, 0, nil
@@ -73,9 +76,7 @@ func TestListHandler_Handle_Empty(t *testing.T) {
 
 	handler := NewListHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListQuery{})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 	if result.Total != 0 {
 		t.Errorf("expected total 0, got %d", result.Total)
 	}
@@ -85,6 +86,8 @@ func TestListHandler_Handle_Empty(t *testing.T) {
 }
 
 func TestListHandler_Handle_WithFilter(t *testing.T) {
+	t.Parallel()
+
 	now := time.Now().Format(time.RFC3339)
 	var capturedFilter domain.FeatureFlagFilter
 
@@ -108,9 +111,7 @@ func TestListHandler_Handle_WithFilter(t *testing.T) {
 			Offset:  5,
 		},
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if capturedFilter.Search == nil || *capturedFilter.Search != "active" {
 		t.Error("expected search filter to be passed through")
@@ -130,6 +131,8 @@ func TestListHandler_Handle_WithFilter(t *testing.T) {
 }
 
 func TestListHandler_Handle_RepoError(t *testing.T) {
+	t.Parallel()
+
 	repoErr := errors.New("db failure")
 	readRepo := &mockReadRepo{
 		listFn: func(_ context.Context, _ domain.FeatureFlagFilter) ([]*domain.FeatureFlagView, int64, error) {

@@ -1,7 +1,7 @@
 package query
 
 import (
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/logger"
 	"context"
 	"testing"
 	"time"
@@ -9,9 +9,12 @@ import (
 	"gct/internal/context/admin/errorcode/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func TestListErrorCodesHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockReadRepo{
 		views: []*domain.ErrorCodeView{
 			{ID: uuid.New(), Code: "ERR_1", Message: "m1", HTTPStatus: 400, Category: "c", Severity: "low", CreatedAt: time.Now(), UpdatedAt: time.Now()},
@@ -24,9 +27,7 @@ func TestListErrorCodesHandler_Handle(t *testing.T) {
 	result, err := handler.Handle(context.Background(), ListErrorCodesQuery{
 		Filter: domain.ErrorCodeFilter{Limit: 10, Offset: 0},
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 	if result.Total != 2 {
 		t.Errorf("expected total 2, got %d", result.Total)
 	}
@@ -39,15 +40,15 @@ func TestListErrorCodesHandler_Handle(t *testing.T) {
 }
 
 func TestListErrorCodesHandler_Empty(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockReadRepo{views: []*domain.ErrorCodeView{}, total: 0}
 
 	handler := NewListErrorCodesHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListErrorCodesQuery{
 		Filter: domain.ErrorCodeFilter{},
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 	if result.Total != 0 {
 		t.Errorf("expected total 0, got %d", result.Total)
 	}
@@ -57,6 +58,8 @@ func TestListErrorCodesHandler_Empty(t *testing.T) {
 }
 
 func TestListErrorCodesHandler_WithFilters(t *testing.T) {
+	t.Parallel()
+
 	code := "AUTH_001"
 	category := "auth"
 	readRepo := &mockReadRepo{
@@ -70,15 +73,15 @@ func TestListErrorCodesHandler_WithFilters(t *testing.T) {
 	result, err := handler.Handle(context.Background(), ListErrorCodesQuery{
 		Filter: domain.ErrorCodeFilter{Code: &code, Category: &category, Limit: 10},
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 	if result.Total != 1 {
 		t.Errorf("expected total 1, got %d", result.Total)
 	}
 }
 
 func TestListErrorCodesHandler_RepoError(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &errorReadRepo{err: errRepo}
 	handler := NewListErrorCodesHandler(readRepo, logger.Noop())
 	_, err := handler.Handle(context.Background(), ListErrorCodesQuery{Filter: domain.ErrorCodeFilter{}})

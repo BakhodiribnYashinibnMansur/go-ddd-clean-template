@@ -5,10 +5,11 @@ import (
 	"testing"
 
 	"gct/internal/context/iam/authz/domain"
-	"gct/internal/platform/application"
-	shared "gct/internal/platform/domain"
+	"gct/internal/kernel/application"
+	shared "gct/internal/kernel/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 // --- Mock RoleRepository ---
@@ -87,6 +88,8 @@ func (m *mockLogger) Fatalc(ctx context.Context, msg string, keysAndValues ...an
 // --- Tests ---
 
 func TestCreateRoleHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockRoleRepository{}
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
@@ -100,9 +103,7 @@ func TestCreateRoleHandler_Handle(t *testing.T) {
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.savedRole == nil {
 		t.Fatal("expected role to be saved, but it was nil")
@@ -126,6 +127,8 @@ func TestCreateRoleHandler_Handle(t *testing.T) {
 }
 
 func TestCreateRoleHandler_NoDescription(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockRoleRepository{}
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
@@ -137,9 +140,7 @@ func TestCreateRoleHandler_NoDescription(t *testing.T) {
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.savedRole == nil {
 		t.Fatal("expected role to be saved")

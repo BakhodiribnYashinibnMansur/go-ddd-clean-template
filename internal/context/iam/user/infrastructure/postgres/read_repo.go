@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	shared "gct/internal/platform/domain"
-	"gct/internal/platform/domain/consts"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/metadata"
-	"gct/internal/platform/infrastructure/pgxutil"
+	shared "gct/internal/kernel/domain"
+	"gct/internal/kernel/consts"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/metadata"
+	"gct/internal/kernel/infrastructure/pgxutil"
 	"gct/internal/context/iam/user/domain"
 
 	"github.com/Masterminds/squirrel"

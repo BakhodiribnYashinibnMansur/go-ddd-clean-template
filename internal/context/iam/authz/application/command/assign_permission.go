@@ -4,19 +4,17 @@ import (
 	"context"
 
 	"gct/internal/context/iam/authz/domain"
-	"gct/internal/platform/application"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
-	"gct/internal/platform/infrastructure/pgxutil"
-
-	"github.com/google/uuid"
+	"gct/internal/kernel/application"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // AssignPermissionCommand represents an intent to grant a permission to a role in the RBAC hierarchy.
 // This creates a role-permission binding; all users holding this role gain the permission immediately.
 type AssignPermissionCommand struct {
-	RoleID       uuid.UUID
-	PermissionID uuid.UUID
+	RoleID       domain.RoleID
+	PermissionID domain.PermissionID
 }
 
 // AssignPermissionHandler binds a permission to a role and emits a PermissionGranted event.
@@ -48,14 +46,14 @@ func (h *AssignPermissionHandler) Handle(ctx context.Context, cmd AssignPermissi
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "AssignPermission", "role")()
 
-	if err := h.rolePermRepo.Assign(ctx, cmd.RoleID, cmd.PermissionID); err != nil {
-		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "AssignPermission", Entity: "role", EntityID: cmd.RoleID, Err: err}.KV()...)
+	if err := h.rolePermRepo.Assign(ctx, cmd.RoleID.UUID(), cmd.PermissionID.UUID()); err != nil {
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "AssignPermission", Entity: "role", EntityID: cmd.RoleID.UUID(), Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 
-	event := domain.NewPermissionGranted(cmd.RoleID, cmd.PermissionID)
+	event := domain.NewPermissionGranted(cmd.RoleID.UUID(), cmd.PermissionID.UUID())
 	if err := h.eventBus.Publish(ctx, event); err != nil {
-		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "AssignPermission", Entity: "role", EntityID: cmd.RoleID, Err: err}.KV()...)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "AssignPermission", Entity: "role", EntityID: cmd.RoleID.UUID(), Err: err}.KV()...)
 	}
 
 	return nil

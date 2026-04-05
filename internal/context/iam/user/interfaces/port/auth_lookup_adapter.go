@@ -6,10 +6,12 @@ package port
 
 import (
 	"context"
+	"fmt"
 
 	"gct/internal/context/iam/user/application/query"
+	"gct/internal/context/iam/user/domain"
 	"gct/internal/contract/ports"
-	shared "gct/internal/platform/domain"
+	shared "gct/internal/kernel/domain"
 
 	"github.com/google/uuid"
 )
@@ -30,7 +32,11 @@ func NewAuthLookupAdapter(h *query.FindUserForAuthHandler) *AuthLookupAdapter {
 // FindForAuth resolves the user's minimal auth projection by delegating to
 // the query handler.
 func (a *AuthLookupAdapter) FindForAuth(ctx context.Context, userID uuid.UUID) (*shared.AuthUser, error) {
-	return a.h.Handle(ctx, query.FindUserForAuthQuery{UserID: userID})
+	u, err := a.h.Handle(ctx, query.FindUserForAuthQuery{UserID: domain.UserID(userID)})
+	if err != nil {
+		return nil, fmt.Errorf("user.port.AuthLookupAdapter.FindForAuth: %w", err)
+	}
+	return u, nil
 }
 
 // Compile-time assertion that the adapter satisfies the port contract.

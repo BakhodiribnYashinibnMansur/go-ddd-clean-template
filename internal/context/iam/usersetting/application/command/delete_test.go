@@ -5,23 +5,23 @@ import (
 	"testing"
 
 	"gct/internal/context/iam/usersetting/application/command"
-
-	"github.com/google/uuid"
+	"gct/internal/context/iam/usersetting/domain"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDeleteUserSettingHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockUserSettingRepo{}
 	handler := command.NewDeleteUserSettingHandler(repo, &mockLogger{})
 
-	id := uuid.New()
+	id := domain.NewUserSettingID()
 	cmd := command.DeleteUserSettingCommand{ID: id}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("Handle returned error: %v", err)
-	}
+	require.NoError(t, err)
 
-	if repo.deleted != id {
+	if repo.deleted != id.UUID() {
 		t.Fatalf("expected deleted ID %s, got %s", id, repo.deleted)
 	}
 }

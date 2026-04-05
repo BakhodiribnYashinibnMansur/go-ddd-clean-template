@@ -5,17 +5,15 @@ import (
 	"fmt"
 
 	"gct/internal/context/admin/featureflag/domain"
-	"gct/internal/platform/application"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
-	"gct/internal/platform/infrastructure/pgxutil"
-
-	"github.com/google/uuid"
+	"gct/internal/kernel/application"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // UpdateRuleGroupCommand represents a partial update to an existing rule group.
 type UpdateRuleGroupCommand struct {
-	ID         uuid.UUID
+	ID         domain.RuleGroupID
 	Name       *string
 	Variation  *string
 	Priority   *int
@@ -48,7 +46,7 @@ func (h *UpdateRuleGroupHandler) Handle(ctx context.Context, cmd UpdateRuleGroup
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "UpdateRuleGroup", "rule_group")()
 
-	rg, err := h.rgRepo.FindByID(ctx, cmd.ID)
+	rg, err := h.rgRepo.FindByID(ctx, cmd.ID.UUID())
 	if err != nil {
 		return apperrors.MapToServiceError(err)
 	}
@@ -76,7 +74,7 @@ func (h *UpdateRuleGroupHandler) Handle(ctx context.Context, cmd UpdateRuleGroup
 	}
 
 	if err := h.rgRepo.Update(ctx, rg); err != nil {
-		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "UpdateRuleGroup", Entity: "rule_group", EntityID: cmd.ID, Err: err}.KV()...)
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "UpdateRuleGroup", Entity: "rule_group", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 

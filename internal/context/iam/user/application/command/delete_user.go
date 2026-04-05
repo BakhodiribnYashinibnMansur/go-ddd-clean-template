@@ -3,19 +3,17 @@ package command
 import (
 	"context"
 
-	"gct/internal/platform/application"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
-	"gct/internal/platform/infrastructure/pgxutil"
 	"gct/internal/context/iam/user/domain"
-
-	"github.com/google/uuid"
+	"gct/internal/kernel/application"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // DeleteUserCommand represents an intent to soft-delete a user by their unique identifier.
 // The user is deactivated and marked as deleted but not physically removed from the database.
 type DeleteUserCommand struct {
-	ID uuid.UUID
+	ID domain.UserID
 }
 
 // DeleteUserHandler performs a two-step soft-delete: deactivation followed by a soft-delete timestamp.
@@ -23,14 +21,14 @@ type DeleteUserCommand struct {
 type DeleteUserHandler struct {
 	repo     domain.UserRepository
 	eventBus application.EventBus
-	logger   logger.Log
+	logger   commandLogger
 }
 
 // NewDeleteUserHandler creates a new DeleteUserHandler.
 func NewDeleteUserHandler(
 	repo domain.UserRepository,
 	eventBus application.EventBus,
-	logger logger.Log,
+	logger commandLogger,
 ) *DeleteUserHandler {
 	return &DeleteUserHandler{
 		repo:     repo,
@@ -46,7 +44,7 @@ func (h *DeleteUserHandler) Handle(ctx context.Context, cmd DeleteUserCommand) (
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "DeleteUser", "user")()
 
-	user, err := h.repo.FindByID(ctx, cmd.ID)
+	user, err := h.repo.FindByID(ctx, cmd.ID.UUID())
 	if err != nil {
 		return apperrors.MapToServiceError(err)
 	}
@@ -55,12 +53,12 @@ func (h *DeleteUserHandler) Handle(ctx context.Context, cmd DeleteUserCommand) (
 	user.SoftDelete()
 
 	if err := h.repo.Update(ctx, user); err != nil {
-		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "DeleteUser", Entity: "user", EntityID: cmd.ID, Err: err}.KV()...)
+		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "DeleteUser", Entity: "user", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, user.Events()...); err != nil {
-		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "DeleteUser", Entity: "user", EntityID: cmd.ID, Err: err}.KV()...)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "DeleteUser", Entity: "user", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
 	}
 
 	return nil

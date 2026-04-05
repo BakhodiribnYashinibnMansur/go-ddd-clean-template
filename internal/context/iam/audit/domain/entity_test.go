@@ -10,6 +10,8 @@ import (
 )
 
 func TestNewAuditLog_Defaults(t *testing.T) {
+	t.Parallel()
+
 	userID := uuid.New()
 	action := domain.AuditActionLogin
 
@@ -70,6 +72,8 @@ func TestNewAuditLog_Defaults(t *testing.T) {
 }
 
 func TestNewAuditLog_AllFields(t *testing.T) {
+	t.Parallel()
+
 	userID := uuid.New()
 	sessionID := uuid.New()
 	resourceID := uuid.New()
@@ -134,6 +138,8 @@ func TestNewAuditLog_AllFields(t *testing.T) {
 }
 
 func TestNewAuditLog_EventPublished(t *testing.T) {
+	t.Parallel()
+
 	a := domain.NewAuditLog(
 		nil, nil, domain.AuditActionLogout,
 		nil, nil, nil, nil, nil, nil, nil, nil,
@@ -155,6 +161,8 @@ func TestNewAuditLog_EventPublished(t *testing.T) {
 }
 
 func TestReconstructAuditLog(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	userID := uuid.New()
 	now := time.Now()

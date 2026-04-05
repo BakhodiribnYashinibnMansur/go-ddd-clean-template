@@ -8,18 +8,19 @@ import (
 	"gct/internal/context/iam/user/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSignOutHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	phone, _ := domain.NewPhone("+998901234567")
 	pw, _ := domain.NewPasswordFromRaw("StrongP@ss123")
-	user := domain.NewUser(phone, pw)
+	user, _ := domain.NewUser(phone, pw)
 	user.Approve()
 
 	session, err := user.AddSession(domain.DeviceDesktop, "10.0.0.1", "TestAgent")
-	if err != nil {
-		t.Fatalf("AddSession: %v", err)
-	}
+	require.NoError(t, err)
 
 	repo := &mockUserRepository{
 		findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.User, error) {
@@ -38,9 +39,7 @@ func TestSignOutHandler_Handle(t *testing.T) {
 		UserID:    domain.UserID(user.ID()),
 		SessionID: domain.SessionID(session.ID()),
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.updatedUser == nil {
 		t.Fatal("expected user to be updated")
@@ -55,9 +54,11 @@ func TestSignOutHandler_Handle(t *testing.T) {
 }
 
 func TestSignOutHandler_SessionNotFound(t *testing.T) {
+	t.Parallel()
+
 	phone, _ := domain.NewPhone("+998901234567")
 	pw, _ := domain.NewPasswordFromRaw("StrongP@ss123")
-	user := domain.NewUser(phone, pw)
+	user, _ := domain.NewUser(phone, pw)
 
 	repo := &mockUserRepository{
 		findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.User, error) {
@@ -82,6 +83,8 @@ func TestSignOutHandler_SessionNotFound(t *testing.T) {
 }
 
 func TestSignOutHandler_UserNotFound(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockUserRepository{}
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}

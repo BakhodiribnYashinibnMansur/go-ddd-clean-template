@@ -8,9 +8,9 @@ import (
 	"gct/internal/context/content/announcement/application/command"
 	"gct/internal/context/content/announcement/application/query"
 	"gct/internal/context/content/announcement/domain"
-	shared "gct/internal/platform/domain"
-	"gct/internal/platform/infrastructure/eventbus"
-	"gct/internal/platform/infrastructure/logger"
+	shared "gct/internal/kernel/domain"
+	"gct/internal/kernel/infrastructure/eventbus"
+	"gct/internal/kernel/infrastructure/logger"
 	"gct/test/integration/common/setup"
 )
 
@@ -53,7 +53,7 @@ func TestIntegration_CreateAndGetAnnouncement(t *testing.T) {
 		t.Errorf("expected priority 1, got %d", a.Priority)
 	}
 
-	view, err := bc.GetAnnouncement.Handle(ctx, query.GetAnnouncementQuery{ID: a.ID})
+	view, err := bc.GetAnnouncement.Handle(ctx, query.GetAnnouncementQuery{ID: domain.AnnouncementID(a.ID)})
 	if err != nil {
 		t.Fatalf("GetAnnouncement: %v", err)
 	}
@@ -88,7 +88,7 @@ func TestIntegration_UpdateAndPublishAnnouncement(t *testing.T) {
 	newTitle := shared.Lang{Uz: "Yangilangan", Ru: "Обновлено", En: "Updated"}
 	newPriority := 5
 	err = bc.UpdateAnnouncement.Handle(ctx, command.UpdateAnnouncementCommand{
-		ID:       aID,
+		ID:       domain.AnnouncementID(aID),
 		Title:    &newTitle,
 		Priority: &newPriority,
 		Publish:  true,
@@ -97,7 +97,7 @@ func TestIntegration_UpdateAndPublishAnnouncement(t *testing.T) {
 		t.Fatalf("UpdateAnnouncement: %v", err)
 	}
 
-	view, _ := bc.GetAnnouncement.Handle(ctx, query.GetAnnouncementQuery{ID: aID})
+	view, _ := bc.GetAnnouncement.Handle(ctx, query.GetAnnouncementQuery{ID: domain.AnnouncementID(aID)})
 	if view.Title.Uz != "Yangilangan" {
 		t.Errorf("title not updated, got %s", view.Title.Uz)
 	}
@@ -128,7 +128,7 @@ func TestIntegration_DeleteAnnouncement(t *testing.T) {
 	})
 	aID := list.Announcements[0].ID
 
-	err = bc.DeleteAnnouncement.Handle(ctx, command.DeleteAnnouncementCommand{ID: aID})
+	err = bc.DeleteAnnouncement.Handle(ctx, command.DeleteAnnouncementCommand{ID: domain.AnnouncementID(aID)})
 	if err != nil {
 		t.Fatalf("DeleteAnnouncement: %v", err)
 	}

@@ -3,7 +3,7 @@ package http
 import (
 	"time"
 
-	shared "gct/internal/platform/domain"
+	shared "gct/internal/kernel/domain"
 )
 
 // CreateRequest represents the request body for creating an announcement.

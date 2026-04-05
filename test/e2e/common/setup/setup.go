@@ -17,9 +17,9 @@ import (
 	"time"
 
 	"gct/config"
-	tc "gct/internal/platform/infrastructure/container"
-	dbPostgres "gct/internal/platform/infrastructure/db/postgres"
-	"gct/internal/platform/infrastructure/logger"
+	tc "gct/test/testcontainers"
+	dbPostgres "gct/internal/kernel/infrastructure/db/postgres"
+	"gct/internal/kernel/infrastructure/logger"
 	"github.com/minio/minio-go/v7"
 	"github.com/redis/go-redis/v9"
 )

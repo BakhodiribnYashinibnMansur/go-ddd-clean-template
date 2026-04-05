@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/platform/application"
-	shared "gct/internal/platform/domain"
-	"gct/internal/platform/infrastructure/eventbus"
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/application"
+	shared "gct/internal/kernel/domain"
+	"gct/internal/kernel/infrastructure/eventbus"
+	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/context/iam/user"
 	"gct/internal/context/iam/user/application/command"
 	"gct/internal/context/iam/user/application/query"
@@ -87,7 +87,7 @@ func TestIntegration_CreateAndGetUser(t *testing.T) {
 	}
 
 	// Get user by ID
-	getResult, err := bc.GetUser.Handle(ctx, query.GetUserQuery{ID: userView.ID})
+	getResult, err := bc.GetUser.Handle(ctx, query.GetUserQuery{ID: domain.UserID(userView.ID)})
 	if err != nil {
 		t.Fatalf("GetUser: %v", err)
 	}
@@ -124,7 +124,7 @@ func TestIntegration_UpdateUser(t *testing.T) {
 	newEmail := "updated@example.com"
 	newName := "updateduser"
 	err = bc.UpdateUser.Handle(ctx, command.UpdateUserCommand{
-		ID:       userID,
+		ID:       domain.UserID(userID),
 		Email:    &newEmail,
 		Username: &newName,
 	})
@@ -133,7 +133,7 @@ func TestIntegration_UpdateUser(t *testing.T) {
 	}
 
 	// Verify
-	view, _ := bc.GetUser.Handle(ctx, query.GetUserQuery{ID: userID})
+	view, _ := bc.GetUser.Handle(ctx, query.GetUserQuery{ID: domain.UserID(userID)})
 	if view.Email == nil || *view.Email != "updated@example.com" {
 		t.Error("email not updated")
 	}
@@ -168,12 +168,12 @@ func TestIntegration_ApproveUser(t *testing.T) {
 		t.Fatal("new user should not be approved")
 	}
 
-	err = bc.ApproveUser.Handle(ctx, command.ApproveUserCommand{ID: userID})
+	err = bc.ApproveUser.Handle(ctx, command.ApproveUserCommand{ID: domain.UserID(userID)})
 	if err != nil {
 		t.Fatalf("ApproveUser: %v", err)
 	}
 
-	view, _ := bc.GetUser.Handle(ctx, query.GetUserQuery{ID: userID})
+	view, _ := bc.GetUser.Handle(ctx, query.GetUserQuery{ID: domain.UserID(userID)})
 	if !view.IsApproved {
 		t.Error("user should be approved")
 	}
@@ -208,14 +208,14 @@ func TestIntegration_ChangeRole(t *testing.T) {
 	}
 
 	err = bc.ChangeRole.Handle(ctx, command.ChangeRoleCommand{
-		UserID: userID,
+		UserID: domain.UserID(userID),
 		RoleID: newRoleID,
 	})
 	if err != nil {
 		t.Fatalf("ChangeRole: %v", err)
 	}
 
-	view, _ := bc.GetUser.Handle(ctx, query.GetUserQuery{ID: userID})
+	view, _ := bc.GetUser.Handle(ctx, query.GetUserQuery{ID: domain.UserID(userID)})
 	if view.RoleID == nil || *view.RoleID != newRoleID {
 		t.Error("role ID not updated")
 	}
@@ -243,7 +243,7 @@ func TestIntegration_DeleteUser(t *testing.T) {
 	})
 	userID := list.Users[0].ID
 
-	err = bc.DeleteUser.Handle(ctx, command.DeleteUserCommand{ID: userID})
+	err = bc.DeleteUser.Handle(ctx, command.DeleteUserCommand{ID: domain.UserID(userID)})
 	if err != nil {
 		t.Fatalf("DeleteUser: %v", err)
 	}
@@ -299,7 +299,7 @@ func TestIntegration_SignUp_SignIn_SignOut(t *testing.T) {
 		Filter: domain.UsersFilter{Pagination: &shared.Pagination{Limit: 10}},
 	})
 	userID := list.Users[0].ID
-	bc.ApproveUser.Handle(ctx, command.ApproveUserCommand{ID: userID})
+	bc.ApproveUser.Handle(ctx, command.ApproveUserCommand{ID: domain.UserID(userID)})
 
 	// Sign In
 	result, err := bc.SignIn.Handle(ctx, command.SignInCommand{
@@ -366,14 +366,14 @@ func TestIntegration_BulkAction(t *testing.T) {
 
 	// Verify: first 2 should be inactive
 	for _, id := range ids {
-		view, _ := bc.GetUser.Handle(ctx, query.GetUserQuery{ID: id})
+		view, _ := bc.GetUser.Handle(ctx, query.GetUserQuery{ID: domain.UserID(id)})
 		if view.Active {
 			t.Errorf("user %s should be inactive", id)
 		}
 	}
 
 	// Third should still be active
-	view3, _ := bc.GetUser.Handle(ctx, query.GetUserQuery{ID: list.Users[2].ID})
+	view3, _ := bc.GetUser.Handle(ctx, query.GetUserQuery{ID: domain.UserID(list.Users[2].ID)})
 	if !view3.Active {
 		t.Error("third user should still be active")
 	}

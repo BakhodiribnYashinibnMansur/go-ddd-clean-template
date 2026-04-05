@@ -10,6 +10,8 @@ import (
 )
 
 func TestNewDataExport(t *testing.T) {
+	t.Parallel()
+
 	userID := uuid.New()
 	de := domain.NewDataExport(userID, "users", "csv")
 
@@ -39,6 +41,8 @@ func TestNewDataExport(t *testing.T) {
 }
 
 func TestDataExport_Complete(t *testing.T) {
+	t.Parallel()
+
 	de := domain.NewDataExport(uuid.New(), "orders", "xlsx")
 	de.StartProcessing()
 
@@ -65,6 +69,8 @@ func TestDataExport_Complete(t *testing.T) {
 }
 
 func TestDataExport_Fail(t *testing.T) {
+	t.Parallel()
+
 	de := domain.NewDataExport(uuid.New(), "logs", "json")
 	de.Fail("disk full")
 
@@ -77,6 +83,8 @@ func TestDataExport_Fail(t *testing.T) {
 }
 
 func TestReconstructDataExport(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	userID := uuid.New()
 	now := time.Now()

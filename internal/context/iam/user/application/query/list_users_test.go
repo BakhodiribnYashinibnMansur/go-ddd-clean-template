@@ -1,17 +1,20 @@
 package query
 
 import (
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/logger"
 	"context"
 	"testing"
 
-	shared "gct/internal/platform/domain"
+	shared "gct/internal/kernel/domain"
 	"gct/internal/context/iam/user/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func TestListUsersHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	id1 := uuid.New()
 	id2 := uuid.New()
 	phone1 := "+998901111111"
@@ -30,9 +33,7 @@ func TestListUsersHandler_Handle(t *testing.T) {
 	result, err := handler.Handle(context.Background(), ListUsersQuery{
 		Filter: domain.UsersFilter{},
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if result == nil {
 		t.Fatal("expected result, got nil")
@@ -56,6 +57,8 @@ func TestListUsersHandler_Handle(t *testing.T) {
 }
 
 func TestListUsersHandler_Empty(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockUserReadRepository{
 		views: []*domain.UserView{},
 		total: 0,
@@ -66,9 +69,7 @@ func TestListUsersHandler_Empty(t *testing.T) {
 	result, err := handler.Handle(context.Background(), ListUsersQuery{
 		Filter: domain.UsersFilter{},
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if result.Total != 0 {
 		t.Errorf("expected total 0, got %d", result.Total)
@@ -80,6 +81,8 @@ func TestListUsersHandler_Empty(t *testing.T) {
 }
 
 func TestListUsersHandler_WithPagination(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockUserReadRepository{
 		views: []*domain.UserView{
 			{ID: uuid.New(), Phone: "+998901111111", Active: true},
@@ -94,9 +97,7 @@ func TestListUsersHandler_WithPagination(t *testing.T) {
 			Pagination: &shared.Pagination{Limit: 1, Offset: 0},
 		},
 	})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 
 	if result.Total != 5 {
 		t.Errorf("expected total 5, got %d", result.Total)
@@ -107,6 +108,8 @@ func TestListUsersHandler_WithPagination(t *testing.T) {
 }
 
 func TestListUsersHandler_WithFilters(t *testing.T) {
+	t.Parallel()
+
 	activeUser := &domain.UserView{ID: uuid.New(), Phone: "+998901111111", Active: true, IsApproved: true}
 
 	readRepo := &mockUserReadRepository{
@@ -130,9 +133,7 @@ func TestListUsersHandler_WithFilters(t *testing.T) {
 			Pagination: &shared.Pagination{Limit: 10, Offset: 0},
 		},
 	})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 
 	if result.Total != 1 {
 		t.Errorf("expected total 1, got %d", result.Total)
@@ -146,6 +147,8 @@ func TestListUsersHandler_WithFilters(t *testing.T) {
 }
 
 func TestListUsersHandler_AllFieldsMapped(t *testing.T) {
+	t.Parallel()
+
 	roleID := uuid.New()
 	email := "mapped@test.com"
 	username := "mappeduser"
@@ -168,9 +171,7 @@ func TestListUsersHandler_AllFieldsMapped(t *testing.T) {
 
 	handler := NewListUsersHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListUsersQuery{Filter: domain.UsersFilter{}})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 
 	u := result.Users[0]
 	if u.Email == nil || *u.Email != "mapped@test.com" {
@@ -188,6 +189,8 @@ func TestListUsersHandler_AllFieldsMapped(t *testing.T) {
 }
 
 func TestListUsersHandler_RepoError(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &errorReadRepo{err: errRepoFailure}
 
 	handler := NewListUsersHandler(readRepo, logger.Noop())

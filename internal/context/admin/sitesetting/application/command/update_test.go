@@ -8,9 +8,12 @@ import (
 	"gct/internal/context/admin/sitesetting/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func TestUpdateSiteSettingHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	ss := domain.NewSiteSetting("old_key", "old_value", "general", "old desc")
 
 	repo := &mockRepo{
@@ -29,15 +32,13 @@ func TestUpdateSiteSettingHandler_Handle(t *testing.T) {
 	newValue := "new_value"
 	newDesc := "new desc"
 	cmd := UpdateSiteSettingCommand{
-		ID:          ss.ID(),
+		ID:          domain.SiteSettingID(ss.ID()),
 		Value:       &newValue,
 		Description: &newDesc,
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.updated == nil {
 		t.Fatal("expected site setting to be updated")
@@ -65,6 +66,8 @@ func TestUpdateSiteSettingHandler_Handle(t *testing.T) {
 }
 
 func TestUpdateSiteSettingHandler_NotFound(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockRepo{}
 	eb := &mockEventBus{}
 	log := &mockLogger{}
@@ -73,7 +76,7 @@ func TestUpdateSiteSettingHandler_NotFound(t *testing.T) {
 
 	newVal := "v"
 	err := handler.Handle(context.Background(), UpdateSiteSettingCommand{
-		ID:    uuid.New(),
+		ID:    domain.SiteSettingID(uuid.New()),
 		Value: &newVal,
 	})
 	if err == nil {
@@ -82,6 +85,8 @@ func TestUpdateSiteSettingHandler_NotFound(t *testing.T) {
 }
 
 func TestUpdateSiteSettingHandler_RepoUpdateError(t *testing.T) {
+	t.Parallel()
+
 	ss := domain.NewSiteSetting("k", "v", "t", "d")
 	repoErr := errors.New("repo update failed")
 
@@ -96,7 +101,7 @@ func TestUpdateSiteSettingHandler_RepoUpdateError(t *testing.T) {
 
 	newVal := "new"
 	err := handler.Handle(context.Background(), UpdateSiteSettingCommand{
-		ID:    ss.ID(),
+		ID:    domain.SiteSettingID(ss.ID()),
 		Value: &newVal,
 	})
 	if !errors.Is(err, repoErr) {

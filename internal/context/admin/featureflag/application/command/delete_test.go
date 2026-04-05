@@ -5,19 +5,22 @@ import (
 	"errors"
 	"testing"
 
+	"gct/internal/context/admin/featureflag/domain"
+
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDeleteHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockFeatureFlagRepo{}
 	eb := &mockEventBus{}
 	handler := NewDeleteHandler(repo, eb, &mockLogger{})
 
 	id := uuid.New()
-	err := handler.Handle(context.Background(), DeleteCommand{ID: id})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	err := handler.Handle(context.Background(), DeleteCommand{ID: domain.FeatureFlagID(id)})
+	require.NoError(t, err)
 
 	if repo.deleted != id {
 		t.Errorf("expected deleted ID %s, got %s", id, repo.deleted)
@@ -31,6 +34,8 @@ func TestDeleteHandler_Handle(t *testing.T) {
 }
 
 func TestDeleteHandler_Handle_RepoError(t *testing.T) {
+	t.Parallel()
+
 	repoErr := errors.New("delete failed")
 	repo := &mockFeatureFlagRepo{
 		deleteFn: func(_ context.Context, _ uuid.UUID) error {
@@ -39,7 +44,7 @@ func TestDeleteHandler_Handle_RepoError(t *testing.T) {
 	}
 	handler := NewDeleteHandler(repo, &mockEventBus{}, &mockLogger{})
 
-	err := handler.Handle(context.Background(), DeleteCommand{ID: uuid.New()})
+	err := handler.Handle(context.Background(), DeleteCommand{ID: domain.FeatureFlagID(uuid.New())})
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}

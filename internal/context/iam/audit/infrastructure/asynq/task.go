@@ -10,7 +10,7 @@ import (
 
 	auditcmd "gct/internal/context/iam/audit/application/command"
 	auditdomain "gct/internal/context/iam/audit/domain"
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/logger"
 
 	hibikenasynq "github.com/hibiken/asynq"
 	"github.com/google/uuid"

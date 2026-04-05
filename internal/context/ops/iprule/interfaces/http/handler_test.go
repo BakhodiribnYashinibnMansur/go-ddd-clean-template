@@ -13,8 +13,8 @@ import (
 	"gct/internal/context/ops/iprule/application/command"
 	"gct/internal/context/ops/iprule/application/query"
 	"gct/internal/context/ops/iprule/domain"
-	"gct/internal/platform/application"
-	shared "gct/internal/platform/domain"
+	"gct/internal/kernel/application"
+	shared "gct/internal/kernel/domain"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -124,6 +124,8 @@ func setupRouter(repo *mockRepo, readRepo *mockReadRepo) *gin.Engine {
 // --- Tests ---
 
 func TestHandler_Create_Success(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockRepo{}
 	router := setupRouter(repo, &mockReadRepo{})
 
@@ -145,6 +147,8 @@ func TestHandler_Create_Success(t *testing.T) {
 }
 
 func TestHandler_Create_BadRequest(t *testing.T) {
+	t.Parallel()
+
 	router := setupRouter(&mockRepo{}, &mockReadRepo{})
 
 	w := httptest.NewRecorder()
@@ -158,6 +162,8 @@ func TestHandler_Create_BadRequest(t *testing.T) {
 }
 
 func TestHandler_List_Success(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockReadRepo{
 		views: []*domain.IPRuleView{
 			{ID: uuid.New(), IPAddress: "1.1.1.1", Action: "DENY", CreatedAt: time.Now(), UpdatedAt: time.Now()},
@@ -176,6 +182,8 @@ func TestHandler_List_Success(t *testing.T) {
 }
 
 func TestHandler_Get_Success(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	readRepo := &mockReadRepo{
 		view: &domain.IPRuleView{
@@ -194,6 +202,8 @@ func TestHandler_Get_Success(t *testing.T) {
 }
 
 func TestHandler_Get_InvalidID(t *testing.T) {
+	t.Parallel()
+
 	router := setupRouter(&mockRepo{}, &mockReadRepo{})
 
 	w := httptest.NewRecorder()
@@ -206,6 +216,8 @@ func TestHandler_Get_InvalidID(t *testing.T) {
 }
 
 func TestHandler_Update_Success(t *testing.T) {
+	t.Parallel()
+
 	r := domain.NewIPRule("192.168.1.1", "DENY", "test", nil)
 	repo := &mockRepo{
 		findFn: func(_ context.Context, id uuid.UUID) (*domain.IPRule, error) {
@@ -232,6 +244,8 @@ func TestHandler_Update_Success(t *testing.T) {
 }
 
 func TestHandler_Update_InvalidID(t *testing.T) {
+	t.Parallel()
+
 	router := setupRouter(&mockRepo{}, &mockReadRepo{})
 
 	w := httptest.NewRecorder()
@@ -245,6 +259,8 @@ func TestHandler_Update_InvalidID(t *testing.T) {
 }
 
 func TestHandler_Delete_Success(t *testing.T) {
+	t.Parallel()
+
 	router := setupRouter(&mockRepo{}, &mockReadRepo{})
 
 	w := httptest.NewRecorder()
@@ -257,6 +273,8 @@ func TestHandler_Delete_Success(t *testing.T) {
 }
 
 func TestHandler_Delete_InvalidID(t *testing.T) {
+	t.Parallel()
+
 	router := setupRouter(&mockRepo{}, &mockReadRepo{})
 
 	w := httptest.NewRecorder()

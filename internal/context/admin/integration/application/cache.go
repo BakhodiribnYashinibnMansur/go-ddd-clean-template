@@ -2,11 +2,12 @@ package application
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"gct/internal/context/admin/integration/domain"
-	"gct/internal/platform/domain/consts"
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/consts"
+	"gct/internal/kernel/infrastructure/logger"
 
 	"github.com/google/uuid"
 )
@@ -52,7 +53,7 @@ func (s *CacheService) InitCache(ctx context.Context) error {
 		Limit:   10000,
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("integration_cache.init: list integrations: %w", err)
 	}
 
 	s.mu.Lock()

@@ -3,25 +3,22 @@ package query
 import (
 	"context"
 
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
-
-	"gct/internal/platform/infrastructure/pgxutil"
 	appdto "gct/internal/context/iam/user/application"
 	"gct/internal/context/iam/user/domain"
-
-	"github.com/google/uuid"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // GetUserQuery holds the input for fetching a single user.
 type GetUserQuery struct {
-	ID uuid.UUID
+	ID domain.UserID
 }
 
 // GetUserHandler handles the GetUserQuery.
 type GetUserHandler struct {
 	readRepo domain.UserReadRepository
-	logger   logger.Log
+	logger   queryLogger
 }
 
 // NewGetUserHandler creates a new GetUserHandler.
@@ -35,9 +32,9 @@ func (h *GetUserHandler) Handle(ctx context.Context, q GetUserQuery) (_ *appdto.
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "GetUser", "user")()
 
-	view, err := h.readRepo.FindByID(ctx, q.ID)
+	view, err := h.readRepo.FindByID(ctx, q.ID.UUID())
 	if err != nil {
-		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetUser", Entity: "user", EntityID: q.ID, Err: err}.KV()...)
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetUser", Entity: "user", EntityID: q.ID.UUID(), Err: err}.KV()...)
 		return nil, apperrors.MapToServiceError(err)
 	}
 

@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
-	"gct/internal/platform/domain/consts"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/metadata"
-	"gct/internal/platform/infrastructure/pgxutil"
+	"gct/internal/kernel/consts"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/metadata"
+	"gct/internal/kernel/infrastructure/pgxutil"
 	"gct/internal/context/ops/systemerror/domain"
 
 	"github.com/Masterminds/squirrel"
@@ -269,7 +269,7 @@ func scanSystemError(row pgx.Row) (*domain.SystemError, error) {
 		&isResolved, &resolvedAt, &resolvedBy, &createdAt,
 	)
 	if err != nil {
-		return nil, err
+		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 
 	return reconstructFromRow(
@@ -306,7 +306,7 @@ func scanSystemErrorFromRows(rows pgx.Rows) (*domain.SystemError, error) {
 		&isResolved, &resolvedAt, &resolvedBy, &createdAt,
 	)
 	if err != nil {
-		return nil, err
+		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 
 	return reconstructFromRow(

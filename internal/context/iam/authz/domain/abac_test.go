@@ -9,6 +9,8 @@ import (
 // --- EvaluationContext ---
 
 func TestEvaluationContext_Resolve(t *testing.T) {
+	t.Parallel()
+
 	ctx := EvaluationContext{
 		Attrs: map[string]map[string]any{
 			"user": {"role_name": "admin", "department": "engineering"},
@@ -46,6 +48,8 @@ func TestEvaluationContext_Resolve(t *testing.T) {
 }
 
 func TestEvaluationContext_Resolve_TargetRef(t *testing.T) {
+	t.Parallel()
+
 	ctx := EvaluationContext{
 		Attrs: map[string]map[string]any{
 			"target": {"user.relation_names": []any{"friend", "coworker"}},
@@ -65,6 +69,8 @@ func TestEvaluationContext_Resolve_TargetRef(t *testing.T) {
 // --- parseConditionKey ---
 
 func TestParseConditionKey(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		key       string
 		wantNS    string
@@ -97,6 +103,8 @@ func TestParseConditionKey(t *testing.T) {
 // --- Operator Tests ---
 
 func TestOpEquals(t *testing.T) {
+	t.Parallel()
+
 	op := operators["equals"]
 	if !op("admin", "admin") {
 		t.Error("expected equal strings to match")
@@ -120,6 +128,8 @@ func TestOpEquals(t *testing.T) {
 }
 
 func TestOpNotEquals(t *testing.T) {
+	t.Parallel()
+
 	op := operators["not_equals"]
 	if !op("admin", "user") {
 		t.Error("expected different strings to match not_equals")
@@ -130,6 +140,8 @@ func TestOpNotEquals(t *testing.T) {
 }
 
 func TestOpIn(t *testing.T) {
+	t.Parallel()
+
 	op := operators["in"]
 	if !op("admin", []any{"admin", "user"}) {
 		t.Error("expected admin in [admin, user]")
@@ -144,6 +156,8 @@ func TestOpIn(t *testing.T) {
 }
 
 func TestOpNotIn(t *testing.T) {
+	t.Parallel()
+
 	op := operators["not_in"]
 	if !op("guest", []any{"admin", "user"}) {
 		t.Error("expected guest not_in [admin, user]")
@@ -154,6 +168,8 @@ func TestOpNotIn(t *testing.T) {
 }
 
 func TestOpContains(t *testing.T) {
+	t.Parallel()
+
 	op := operators["contains"]
 	if !op([]any{"a", "b", "c"}, "b") {
 		t.Error("expected [a,b,c] contains b")
@@ -168,6 +184,8 @@ func TestOpContains(t *testing.T) {
 }
 
 func TestOpAny(t *testing.T) {
+	t.Parallel()
+
 	op := operators["any"]
 	if !op([]any{"a", "b"}, []any{"b", "c"}) {
 		t.Error("expected intersection")
@@ -178,6 +196,8 @@ func TestOpAny(t *testing.T) {
 }
 
 func TestOpAll(t *testing.T) {
+	t.Parallel()
+
 	op := operators["all"]
 	if !op([]any{"a", "b", "c"}, []any{"a", "c"}) {
 		t.Error("expected all present")
@@ -188,6 +208,8 @@ func TestOpAll(t *testing.T) {
 }
 
 func TestOpGt(t *testing.T) {
+	t.Parallel()
+
 	op := operators["gt"]
 	if !op(10, 5) {
 		t.Error("expected 10 > 5")
@@ -201,6 +223,8 @@ func TestOpGt(t *testing.T) {
 }
 
 func TestOpGte(t *testing.T) {
+	t.Parallel()
+
 	op := operators["gte"]
 	if !op(10, 5) {
 		t.Error("expected 10 >= 5")
@@ -214,6 +238,8 @@ func TestOpGte(t *testing.T) {
 }
 
 func TestOpLt(t *testing.T) {
+	t.Parallel()
+
 	op := operators["lt"]
 	if !op(3, 5) {
 		t.Error("expected 3 < 5")
@@ -224,6 +250,8 @@ func TestOpLt(t *testing.T) {
 }
 
 func TestOpLte(t *testing.T) {
+	t.Parallel()
+
 	op := operators["lte"]
 	if !op(3, 5) {
 		t.Error("expected 3 <= 5")
@@ -237,6 +265,8 @@ func TestOpLte(t *testing.T) {
 }
 
 func TestOpBetween(t *testing.T) {
+	t.Parallel()
+
 	op := operators["between"]
 	if !op(5, []any{1, 10}) {
 		t.Error("expected 5 between 1..10")
@@ -273,6 +303,8 @@ func newTestPolicy(effect PolicyEffect, priority int, active bool, conditions ma
 }
 
 func TestPolicyEvaluator_SingleAllow(t *testing.T) {
+	t.Parallel()
+
 	e := &PolicyEvaluator{}
 	p := newTestPolicy(PolicyAllow, 1, true, map[string]any{
 		"user.role_name": "admin",
@@ -289,6 +321,8 @@ func TestPolicyEvaluator_SingleAllow(t *testing.T) {
 }
 
 func TestPolicyEvaluator_SingleDeny(t *testing.T) {
+	t.Parallel()
+
 	e := &PolicyEvaluator{}
 	p := newTestPolicy(PolicyDeny, 1, true, map[string]any{
 		"user.role_name": "guest",
@@ -305,6 +339,8 @@ func TestPolicyEvaluator_SingleDeny(t *testing.T) {
 }
 
 func TestPolicyEvaluator_DenyWinsOverAllow(t *testing.T) {
+	t.Parallel()
+
 	e := &PolicyEvaluator{}
 	allow := newTestPolicy(PolicyAllow, 10, true, map[string]any{
 		"user.role_name": "admin",
@@ -324,6 +360,8 @@ func TestPolicyEvaluator_DenyWinsOverAllow(t *testing.T) {
 }
 
 func TestPolicyEvaluator_InactivePolicySkipped(t *testing.T) {
+	t.Parallel()
+
 	e := &PolicyEvaluator{}
 	p := newTestPolicy(PolicyAllow, 1, false, map[string]any{
 		"user.role_name": "admin",
@@ -340,6 +378,8 @@ func TestPolicyEvaluator_InactivePolicySkipped(t *testing.T) {
 }
 
 func TestPolicyEvaluator_NoMatch(t *testing.T) {
+	t.Parallel()
+
 	e := &PolicyEvaluator{}
 	p := newTestPolicy(PolicyAllow, 1, true, map[string]any{
 		"user.role_name": "admin",
@@ -356,6 +396,8 @@ func TestPolicyEvaluator_NoMatch(t *testing.T) {
 }
 
 func TestPolicyEvaluator_ANDSemantics(t *testing.T) {
+	t.Parallel()
+
 	e := &PolicyEvaluator{}
 	p := newTestPolicy(PolicyAllow, 1, true, map[string]any{
 		"user.role_name":   "admin",
@@ -373,6 +415,8 @@ func TestPolicyEvaluator_ANDSemantics(t *testing.T) {
 }
 
 func TestPolicyEvaluator_EmptyConditions_AlwaysMatches(t *testing.T) {
+	t.Parallel()
+
 	e := &PolicyEvaluator{}
 	p := newTestPolicy(PolicyAllow, 1, true, map[string]any{})
 	ctx := EvaluationContext{
@@ -385,6 +429,8 @@ func TestPolicyEvaluator_EmptyConditions_AlwaysMatches(t *testing.T) {
 }
 
 func TestPolicyEvaluator_DynamicReference(t *testing.T) {
+	t.Parallel()
+
 	e := &PolicyEvaluator{}
 	p := newTestPolicy(PolicyAllow, 1, true, map[string]any{
 		"user.relation_names_any": "$target.user.relation_names",
@@ -402,6 +448,8 @@ func TestPolicyEvaluator_DynamicReference(t *testing.T) {
 }
 
 func TestPolicyEvaluator_DynamicReference_NoMatch(t *testing.T) {
+	t.Parallel()
+
 	e := &PolicyEvaluator{}
 	p := newTestPolicy(PolicyAllow, 1, true, map[string]any{
 		"user.relation_names_any": "$target.user.relation_names",
@@ -419,6 +467,8 @@ func TestPolicyEvaluator_DynamicReference_NoMatch(t *testing.T) {
 }
 
 func TestPolicyEvaluator_NoPolicies(t *testing.T) {
+	t.Parallel()
+
 	e := &PolicyEvaluator{}
 	ctx := EvaluationContext{Attrs: map[string]map[string]any{}}
 

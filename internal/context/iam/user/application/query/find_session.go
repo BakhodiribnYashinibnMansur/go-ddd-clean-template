@@ -2,24 +2,23 @@ package query
 
 import (
 	"context"
+	"fmt"
 
-	shared "gct/internal/platform/domain"
-	"gct/internal/platform/infrastructure/logger"
-	"gct/internal/platform/infrastructure/pgxutil"
 	"gct/internal/context/iam/user/domain"
-
-	"github.com/google/uuid"
+	shared "gct/internal/kernel/domain"
+	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // FindSessionQuery holds the input for fetching a session by ID.
 type FindSessionQuery struct {
-	SessionID uuid.UUID
+	SessionID domain.SessionID
 }
 
 // FindSessionHandler handles the FindSessionQuery.
 type FindSessionHandler struct {
 	readRepo domain.UserReadRepository
-	logger   logger.Log
+	logger   queryLogger
 }
 
 // NewFindSessionHandler creates a new FindSessionHandler.
@@ -33,5 +32,9 @@ func (h *FindSessionHandler) Handle(ctx context.Context, q FindSessionQuery) (_ 
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "FindSession", "user")()
 
-	return h.readRepo.FindSessionByID(ctx, q.SessionID)
+	session, err := h.readRepo.FindSessionByID(ctx, q.SessionID.UUID())
+	if err != nil {
+		return nil, fmt.Errorf("find_session: read repo: %w", err)
+	}
+	return session, nil
 }

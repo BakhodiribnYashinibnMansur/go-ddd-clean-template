@@ -8,18 +8,15 @@ import (
 	"gct/internal/context/iam/user/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func makeTestUser(t *testing.T) *domain.User {
 	t.Helper()
 	phone, err := domain.NewPhone("+998901234567")
-	if err != nil {
-		t.Fatalf("NewPhone: %v", err)
-	}
+	require.NoError(t, err)
 	pw, err := domain.NewPasswordFromRaw("StrongP@ss123")
-	if err != nil {
-		t.Fatalf("NewPasswordFromRaw: %v", err)
-	}
+	require.NoError(t, err)
 	email, _ := domain.NewEmail("old@example.com")
 	username := "olduser"
 	return domain.ReconstructUser(
@@ -32,6 +29,8 @@ func makeTestUser(t *testing.T) *domain.User {
 }
 
 func TestUpdateUserHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	user := makeTestUser(t)
 	repo := &mockUserRepository{
 		findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.User, error) {
@@ -49,15 +48,13 @@ func TestUpdateUserHandler_Handle(t *testing.T) {
 	newEmail := "new@example.com"
 	newUsername := "newuser"
 	cmd := UpdateUserCommand{
-		ID:       user.ID(),
+		ID:       domain.UserID(user.ID()),
 		Email:    &newEmail,
 		Username: &newUsername,
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.updatedUser == nil {
 		t.Fatal("expected user to be updated")
@@ -73,13 +70,15 @@ func TestUpdateUserHandler_Handle(t *testing.T) {
 }
 
 func TestUpdateUserHandler_NotFound(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockUserRepository{}
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
 	handler := NewUpdateUserHandler(repo, eventBus, log)
 
-	cmd := UpdateUserCommand{ID: uuid.New()}
+	cmd := UpdateUserCommand{ID: domain.NewUserID()}
 	err := handler.Handle(context.Background(), cmd)
 	if err == nil {
 		t.Fatal("expected error for non-existent user")
@@ -87,6 +86,8 @@ func TestUpdateUserHandler_NotFound(t *testing.T) {
 }
 
 func TestUpdateUserHandler_InvalidEmail(t *testing.T) {
+	t.Parallel()
+
 	user := makeTestUser(t)
 	repo := &mockUserRepository{
 		findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.User, error) {
@@ -100,7 +101,7 @@ func TestUpdateUserHandler_InvalidEmail(t *testing.T) {
 
 	badEmail := "not-an-email"
 	cmd := UpdateUserCommand{
-		ID:    user.ID(),
+		ID:    domain.UserID(user.ID()),
 		Email: &badEmail,
 	}
 
@@ -111,6 +112,8 @@ func TestUpdateUserHandler_InvalidEmail(t *testing.T) {
 }
 
 func TestUpdateUserHandler_OnlyAttributes(t *testing.T) {
+	t.Parallel()
+
 	user := makeTestUser(t)
 	repo := &mockUserRepository{
 		findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.User, error) {
@@ -123,14 +126,12 @@ func TestUpdateUserHandler_OnlyAttributes(t *testing.T) {
 	handler := NewUpdateUserHandler(repo, eventBus, log)
 
 	cmd := UpdateUserCommand{
-		ID:         user.ID(),
+		ID:         domain.UserID(user.ID()),
 		Attributes: map[string]string{"new_key": "new_val"},
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.updatedUser.Attributes()["new_key"] != "new_val" {
 		t.Error("expected attributes to be updated")

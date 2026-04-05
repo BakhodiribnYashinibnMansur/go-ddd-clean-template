@@ -49,6 +49,8 @@ func (m *errorIPRuleRepo) List(_ context.Context, _ domain.IPRuleFilter) ([]*dom
 // --- Tests ---
 
 func TestCreateIPRuleHandler_RepoError(t *testing.T) {
+	t.Parallel()
+
 	repo := &errorIPRuleRepo{saveErr: errRepoSave}
 	handler := NewCreateIPRuleHandler(repo, &mockEventBus{}, &mockLogger{})
 
@@ -61,6 +63,8 @@ func TestCreateIPRuleHandler_RepoError(t *testing.T) {
 }
 
 func TestUpdateIPRuleHandler_RepoUpdateError(t *testing.T) {
+	t.Parallel()
+
 	r := domain.NewIPRule("1.1.1.1", "DENY", "test", nil)
 
 	repo := &errorIPRuleRepo{
@@ -69,17 +73,19 @@ func TestUpdateIPRuleHandler_RepoUpdateError(t *testing.T) {
 	}
 	handler := NewUpdateIPRuleHandler(repo, &mockEventBus{}, &mockLogger{})
 
-	err := handler.Handle(context.Background(), UpdateIPRuleCommand{ID: r.ID()})
+	err := handler.Handle(context.Background(), UpdateIPRuleCommand{ID: domain.IPRuleID(r.ID())})
 	if !errors.Is(err, errRepoUpdate) {
 		t.Fatalf("expected errRepoUpdate, got: %v", err)
 	}
 }
 
 func TestDeleteIPRuleHandler_RepoError(t *testing.T) {
+	t.Parallel()
+
 	repo := &errorIPRuleRepo{deleteErr: errRepoDelete}
 	handler := NewDeleteIPRuleHandler(repo, &mockLogger{})
 
-	err := handler.Handle(context.Background(), DeleteIPRuleCommand{ID: uuid.New()})
+	err := handler.Handle(context.Background(), DeleteIPRuleCommand{ID: domain.NewIPRuleID()})
 	if !errors.Is(err, errRepoDelete) {
 		t.Fatalf("expected errRepoDelete, got: %v", err)
 	}

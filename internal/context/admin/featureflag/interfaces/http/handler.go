@@ -8,9 +8,9 @@ import (
 	"gct/internal/context/admin/featureflag/application/command"
 	"gct/internal/context/admin/featureflag/application/query"
 	"gct/internal/context/admin/featureflag/domain"
-	"gct/internal/platform/infrastructure/httpx"
-	"gct/internal/platform/infrastructure/httpx/response"
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/httpx"
+	"gct/internal/kernel/infrastructure/httpx/response"
+	"gct/internal/kernel/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -94,7 +94,7 @@ func (h *Handler) Update(ctx *gin.Context) {
 		return
 	}
 	cmd := command.UpdateCommand{
-		ID:                id,
+		ID:                domain.FeatureFlagID(id),
 		Name:              req.Name,
 		Key:               req.Key,
 		Description:       req.Description,
@@ -117,7 +117,7 @@ func (h *Handler) Delete(ctx *gin.Context) {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
-	if err := h.bc.DeleteFlag.Handle(ctx.Request.Context(), command.DeleteCommand{ID: id}); err != nil {
+	if err := h.bc.DeleteFlag.Handle(ctx.Request.Context(), command.DeleteCommand{ID: domain.FeatureFlagID(id)}); err != nil {
 		response.HandleError(ctx, err)
 		return
 	}
@@ -147,7 +147,7 @@ func (h *Handler) CreateRuleGroup(ctx *gin.Context) {
 	}
 
 	cmd := command.CreateRuleGroupCommand{
-		FlagID:     flagID,
+		FlagID:     domain.FeatureFlagID(flagID),
 		Name:       req.Name,
 		Variation:  req.Variation,
 		Priority:   req.Priority,
@@ -174,7 +174,7 @@ func (h *Handler) UpdateRuleGroup(ctx *gin.Context) {
 	}
 
 	cmd := command.UpdateRuleGroupCommand{
-		ID:        groupID,
+		ID:        domain.RuleGroupID(groupID),
 		Name:      req.Name,
 		Variation: req.Variation,
 		Priority:  req.Priority,
@@ -206,7 +206,7 @@ func (h *Handler) DeleteRuleGroup(ctx *gin.Context) {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
-	if err := h.bc.DeleteRuleGroup.Handle(ctx.Request.Context(), command.DeleteRuleGroupCommand{ID: groupID}); err != nil {
+	if err := h.bc.DeleteRuleGroup.Handle(ctx.Request.Context(), command.DeleteRuleGroupCommand{ID: domain.RuleGroupID(groupID)}); err != nil {
 		response.HandleError(ctx, err)
 		return
 	}

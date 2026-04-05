@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"gct/internal/context/content/announcement/domain"
-	"gct/internal/platform/domain/consts"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/pgxutil"
+	"gct/internal/kernel/consts"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/pgxutil"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -156,7 +156,7 @@ func scanAnnouncementViewFromRows(rows pgx.Rows) (*domain.AnnouncementView, erro
 	)
 	err := rows.Scan(&id, &title, &content, &aType, &isActive, &priority, &startsAt, &endsAt, &createdAt, &updatedAt)
 	if err != nil {
-		return nil, err
+		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 	_ = aType
 	return &domain.AnnouncementView{

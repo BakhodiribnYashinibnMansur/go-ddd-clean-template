@@ -9,9 +9,12 @@ import (
 	"gct/internal/context/iam/authz/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func TestUpdateRoleHandler_Rename(t *testing.T) {
+	t.Parallel()
+
 	roleID := uuid.New()
 	existingRole := domain.ReconstructRole(roleID, time.Now(), time.Now(), nil, "old_name", nil, nil)
 
@@ -30,14 +33,12 @@ func TestUpdateRoleHandler_Rename(t *testing.T) {
 
 	newName := "new_name"
 	cmd := UpdateRoleCommand{
-		ID:   roleID,
+		ID:   domain.RoleID(roleID),
 		Name: &newName,
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.updatedRole == nil {
 		t.Fatal("expected role to be updated, but it was nil")
@@ -49,6 +50,8 @@ func TestUpdateRoleHandler_Rename(t *testing.T) {
 }
 
 func TestUpdateRoleHandler_SetDescription(t *testing.T) {
+	t.Parallel()
+
 	roleID := uuid.New()
 	existingRole := domain.ReconstructRole(roleID, time.Now(), time.Now(), nil, "admin", nil, nil)
 
@@ -67,14 +70,12 @@ func TestUpdateRoleHandler_SetDescription(t *testing.T) {
 
 	desc := "Updated description"
 	cmd := UpdateRoleCommand{
-		ID:          roleID,
+		ID:          domain.RoleID(roleID),
 		Description: &desc,
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.updatedRole == nil {
 		t.Fatal("expected role to be updated")
@@ -86,6 +87,8 @@ func TestUpdateRoleHandler_SetDescription(t *testing.T) {
 }
 
 func TestUpdateRoleHandler_NotFound(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockRoleRepository{} // default findByIDFn returns ErrRoleNotFound
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
@@ -94,7 +97,7 @@ func TestUpdateRoleHandler_NotFound(t *testing.T) {
 
 	newName := "anything"
 	cmd := UpdateRoleCommand{
-		ID:   uuid.New(),
+		ID:   domain.RoleID(uuid.New()),
 		Name: &newName,
 	}
 

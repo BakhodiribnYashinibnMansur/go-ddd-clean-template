@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"strconv"
 
-	"gct/internal/platform/infrastructure/httpx"
-	"gct/internal/platform/infrastructure/httpx/response"
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/httpx"
+	"gct/internal/kernel/infrastructure/httpx/response"
+	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/context/admin/sitesetting"
 	"gct/internal/context/admin/sitesetting/application/command"
 	"gct/internal/context/admin/sitesetting/application/query"
@@ -70,7 +70,7 @@ func (h *Handler) Get(ctx *gin.Context) {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
-	result, err := h.bc.GetSiteSetting.Handle(ctx.Request.Context(), query.GetSiteSettingQuery{ID: id})
+	result, err := h.bc.GetSiteSetting.Handle(ctx.Request.Context(), query.GetSiteSettingQuery{ID: domain.SiteSettingID(id)})
 	if err != nil {
 		response.HandleError(ctx, err)
 		return
@@ -91,7 +91,7 @@ func (h *Handler) Update(ctx *gin.Context) {
 		return
 	}
 	cmd := command.UpdateSiteSettingCommand{
-		ID:          id,
+		ID:          domain.SiteSettingID(id),
 		Key:         req.Key,
 		Value:       req.Value,
 		Type:        req.Type,
@@ -111,7 +111,7 @@ func (h *Handler) Delete(ctx *gin.Context) {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
-	if err := h.bc.DeleteSiteSetting.Handle(ctx.Request.Context(), command.DeleteSiteSettingCommand{ID: id}); err != nil {
+	if err := h.bc.DeleteSiteSetting.Handle(ctx.Request.Context(), command.DeleteSiteSettingCommand{ID: domain.SiteSettingID(id)}); err != nil {
 		response.HandleError(ctx, err)
 		return
 	}

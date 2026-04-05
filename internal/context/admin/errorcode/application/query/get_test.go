@@ -1,7 +1,7 @@
 package query
 
 import (
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
@@ -10,6 +10,7 @@ import (
 	"gct/internal/context/admin/errorcode/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 // --- Mocks ---
@@ -46,6 +47,8 @@ var errRepo = errors.New("repo failure")
 // --- Tests ---
 
 func TestGetErrorCodeHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	now := time.Now()
 	readRepo := &mockReadRepo{
@@ -65,10 +68,8 @@ func TestGetErrorCodeHandler_Handle(t *testing.T) {
 	}
 
 	handler := NewGetErrorCodeHandler(readRepo, logger.Noop())
-	result, err := handler.Handle(context.Background(), GetErrorCodeQuery{ID: id})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	result, err := handler.Handle(context.Background(), GetErrorCodeQuery{ID: domain.ErrorCodeID(id)})
+	require.NoError(t, err)
 	if result == nil {
 		t.Fatal("expected result")
 	}
@@ -84,24 +85,30 @@ func TestGetErrorCodeHandler_Handle(t *testing.T) {
 }
 
 func TestGetErrorCodeHandler_NotFound(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockReadRepo{}
 	handler := NewGetErrorCodeHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), GetErrorCodeQuery{ID: uuid.New()})
+	_, err := handler.Handle(context.Background(), GetErrorCodeQuery{ID: domain.ErrorCodeID(uuid.New())})
 	if err == nil {
 		t.Fatal("expected error for not found")
 	}
 }
 
 func TestGetErrorCodeHandler_RepoError(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &errorReadRepo{err: errRepo}
 	handler := NewGetErrorCodeHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), GetErrorCodeQuery{ID: uuid.New()})
+	_, err := handler.Handle(context.Background(), GetErrorCodeQuery{ID: domain.ErrorCodeID(uuid.New())})
 	if err == nil {
 		t.Fatal("expected error from repo")
 	}
 }
 
 func TestGetErrorCodeHandler_AllFieldsMapped(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	now := time.Now()
 	readRepo := &mockReadRepo{
@@ -121,10 +128,8 @@ func TestGetErrorCodeHandler_AllFieldsMapped(t *testing.T) {
 	}
 
 	handler := NewGetErrorCodeHandler(readRepo, logger.Noop())
-	result, err := handler.Handle(context.Background(), GetErrorCodeQuery{ID: id})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	result, err := handler.Handle(context.Background(), GetErrorCodeQuery{ID: domain.ErrorCodeID(id)})
+	require.NoError(t, err)
 	if !result.Retryable {
 		t.Error("expected retryable true")
 	}

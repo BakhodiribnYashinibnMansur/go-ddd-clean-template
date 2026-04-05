@@ -246,11 +246,11 @@ func TestScanSessionFromRows_Success(t *testing.T) {
 	if session.DeviceName() != deviceName {
 		t.Fatalf("expected deviceName %q, got %q", deviceName, session.DeviceName())
 	}
-	if session.IPAddress() != ipAddr {
-		t.Fatalf("expected ipAddress %q, got %q", ipAddr, session.IPAddress())
+	if session.IPAddress().String() != ipAddr {
+		t.Fatalf("expected ipAddress %q, got %q", ipAddr, session.IPAddress().String())
 	}
-	if session.UserAgent() != ua {
-		t.Fatalf("expected userAgent %q, got %q", ua, session.UserAgent())
+	if session.UserAgent().String() != ua {
+		t.Fatalf("expected userAgent %q, got %q", ua, session.UserAgent().String())
 	}
 	if session.IsRevoked() {
 		t.Fatal("expected revoked=false")
@@ -288,8 +288,8 @@ func TestScanSessionFromRows_NilOptionalFields(t *testing.T) {
 	if session.DeviceID() != "" {
 		t.Fatalf("expected empty deviceID for nil, got %q", session.DeviceID())
 	}
-	if session.IPAddress() != "" {
-		t.Fatalf("expected empty ipAddress for nil, got %q", session.IPAddress())
+	if session.IPAddress().String() != "" {
+		t.Fatalf("expected empty ipAddress for nil, got %q", session.IPAddress().String())
 	}
 	if !session.IsRevoked() {
 		t.Fatal("expected revoked=true")

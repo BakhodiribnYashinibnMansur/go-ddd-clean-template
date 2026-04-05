@@ -2,14 +2,15 @@ package command
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"gct/internal/context/content/announcement/domain"
-	"gct/internal/platform/application"
-	shared "gct/internal/platform/domain"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
-	"gct/internal/platform/infrastructure/pgxutil"
+	"gct/internal/kernel/application"
+	shared "gct/internal/kernel/domain"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // CreateAnnouncementCommand represents an intent to create a new system announcement.
@@ -51,7 +52,10 @@ func (h *CreateAnnouncementHandler) Handle(ctx context.Context, cmd CreateAnnoun
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "CreateAnnouncement", "announcement")()
 
-	a := domain.NewAnnouncement(cmd.Title, cmd.Content, cmd.Priority, cmd.StartDate, cmd.EndDate)
+	a, err := domain.NewAnnouncement(cmd.Title, cmd.Content, cmd.Priority, cmd.StartDate, cmd.EndDate)
+	if err != nil {
+		return fmt.Errorf("create_announcement: %w", err)
+	}
 
 	if err := h.repo.Save(ctx, a); err != nil {
 		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateAnnouncement", Entity: "announcement", Err: err}.KV()...)

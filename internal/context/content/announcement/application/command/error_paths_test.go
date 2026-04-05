@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"gct/internal/context/content/announcement/domain"
-	shared "gct/internal/platform/domain"
+	shared "gct/internal/kernel/domain"
 
 	"github.com/google/uuid"
 )
@@ -50,6 +50,8 @@ func (m *errorAnnouncementRepo) List(_ context.Context, _ domain.AnnouncementFil
 // --- Tests ---
 
 func TestCreateAnnouncementHandler_RepoError(t *testing.T) {
+	t.Parallel()
+
 	repo := &errorAnnouncementRepo{saveErr: errRepoSave}
 	handler := NewCreateAnnouncementHandler(repo, &mockEventBus{}, &mockLogger{})
 
@@ -63,7 +65,9 @@ func TestCreateAnnouncementHandler_RepoError(t *testing.T) {
 }
 
 func TestUpdateAnnouncementHandler_RepoUpdateError(t *testing.T) {
-	a := domain.NewAnnouncement(
+	t.Parallel()
+
+	a, _ := domain.NewAnnouncement(
 		shared.Lang{Uz: "t", Ru: "t", En: "t"},
 		shared.Lang{Uz: "c", Ru: "c", En: "c"},
 		1, nil, nil,
@@ -75,17 +79,19 @@ func TestUpdateAnnouncementHandler_RepoUpdateError(t *testing.T) {
 	}
 	handler := NewUpdateAnnouncementHandler(repo, &mockEventBus{}, &mockLogger{})
 
-	err := handler.Handle(context.Background(), UpdateAnnouncementCommand{ID: a.ID()})
+	err := handler.Handle(context.Background(), UpdateAnnouncementCommand{ID: domain.AnnouncementID(a.ID())})
 	if !errors.Is(err, errRepoUpdate) {
 		t.Fatalf("expected errRepoUpdate, got: %v", err)
 	}
 }
 
 func TestDeleteAnnouncementHandler_RepoError(t *testing.T) {
+	t.Parallel()
+
 	repo := &errorAnnouncementRepo{deleteErr: errRepoDelete}
 	handler := NewDeleteAnnouncementHandler(repo, &mockLogger{})
 
-	err := handler.Handle(context.Background(), DeleteAnnouncementCommand{ID: uuid.New()})
+	err := handler.Handle(context.Background(), DeleteAnnouncementCommand{ID: domain.NewAnnouncementID()})
 	if !errors.Is(err, errRepoDelete) {
 		t.Fatalf("expected errRepoDelete, got: %v", err)
 	}

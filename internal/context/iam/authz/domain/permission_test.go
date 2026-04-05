@@ -7,9 +7,12 @@ import (
 	"gct/internal/context/iam/authz/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewPermission(t *testing.T) {
+	t.Parallel()
+
 	perm := domain.NewPermission("users.read", nil)
 
 	if perm.ID() == uuid.Nil {
@@ -30,6 +33,8 @@ func TestNewPermission(t *testing.T) {
 }
 
 func TestNewPermission_WithParentID(t *testing.T) {
+	t.Parallel()
+
 	parentID := uuid.New()
 	perm := domain.NewPermission("users.read.detail", &parentID)
 
@@ -42,6 +47,8 @@ func TestNewPermission_WithParentID(t *testing.T) {
 }
 
 func TestReconstructPermission(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	parentID := uuid.New()
 	desc := "can read users"
@@ -76,6 +83,8 @@ func TestReconstructPermission(t *testing.T) {
 }
 
 func TestReconstructPermission_NilScopes(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	now := time.Now()
 
@@ -93,6 +102,8 @@ func TestReconstructPermission_NilScopes(t *testing.T) {
 }
 
 func TestPermission_Rename(t *testing.T) {
+	t.Parallel()
+
 	perm := domain.NewPermission("old_name", nil)
 	before := perm.UpdatedAt()
 
@@ -107,6 +118,8 @@ func TestPermission_Rename(t *testing.T) {
 }
 
 func TestPermission_SetDescription(t *testing.T) {
+	t.Parallel()
+
 	perm := domain.NewPermission("test", nil)
 
 	desc := "a description"
@@ -122,6 +135,8 @@ func TestPermission_SetDescription(t *testing.T) {
 }
 
 func TestPermission_AddScope(t *testing.T) {
+	t.Parallel()
+
 	perm := domain.NewPermission("test", nil)
 
 	perm.AddScope(domain.Scope{Path: "/api/a", Method: "GET"})
@@ -139,14 +154,14 @@ func TestPermission_AddScope(t *testing.T) {
 }
 
 func TestPermission_RemoveScope_Success(t *testing.T) {
+	t.Parallel()
+
 	perm := domain.NewPermission("test", nil)
 	perm.AddScope(domain.Scope{Path: "/api/a", Method: "GET"})
 	perm.AddScope(domain.Scope{Path: "/api/b", Method: "POST"})
 
 	err := perm.RemoveScope("/api/a", "GET")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 	if len(perm.Scopes()) != 1 {
 		t.Fatalf("expected 1 scope, got %d", len(perm.Scopes()))
 	}
@@ -156,6 +171,8 @@ func TestPermission_RemoveScope_Success(t *testing.T) {
 }
 
 func TestPermission_RemoveScope_NotFound(t *testing.T) {
+	t.Parallel()
+
 	perm := domain.NewPermission("test", nil)
 
 	err := perm.RemoveScope("/api/missing", "GET")
@@ -165,6 +182,8 @@ func TestPermission_RemoveScope_NotFound(t *testing.T) {
 }
 
 func TestPermission_RemoveScope_WrongMethod(t *testing.T) {
+	t.Parallel()
+
 	perm := domain.NewPermission("test", nil)
 	perm.AddScope(domain.Scope{Path: "/api/a", Method: "GET"})
 

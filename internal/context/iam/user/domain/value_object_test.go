@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	domain "gct/internal/context/iam/user/domain"
+	"github.com/stretchr/testify/require"
 )
 
 // ---------------------------------------------------------------------------
@@ -12,10 +13,10 @@ import (
 // ---------------------------------------------------------------------------
 
 func TestNewPhone_Valid(t *testing.T) {
+	t.Parallel()
+
 	p, err := domain.NewPhone("+998901234567")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 	if p.Value() != "+998901234567" {
 		t.Fatalf("expected +998901234567, got %s", p.Value())
 	}
@@ -25,6 +26,8 @@ func TestNewPhone_Valid(t *testing.T) {
 }
 
 func TestNewPhone_Empty(t *testing.T) {
+	t.Parallel()
+
 	_, err := domain.NewPhone("")
 	if err == nil {
 		t.Fatal("expected error for empty phone")
@@ -35,6 +38,8 @@ func TestNewPhone_Empty(t *testing.T) {
 }
 
 func TestNewPhone_MissingPlus(t *testing.T) {
+	t.Parallel()
+
 	_, err := domain.NewPhone("998901234567")
 	if err == nil {
 		t.Fatal("expected error for missing +")
@@ -42,6 +47,8 @@ func TestNewPhone_MissingPlus(t *testing.T) {
 }
 
 func TestNewPhone_TooShort(t *testing.T) {
+	t.Parallel()
+
 	_, err := domain.NewPhone("+12345")
 	if err == nil {
 		t.Fatal("expected error for short phone")
@@ -53,16 +60,18 @@ func TestNewPhone_TooShort(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestNewEmail_Valid(t *testing.T) {
+	t.Parallel()
+
 	e, err := domain.NewEmail("user@example.com")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 	if e.Value() != "user@example.com" {
 		t.Fatalf("expected user@example.com, got %s", e.Value())
 	}
 }
 
 func TestNewEmail_Empty(t *testing.T) {
+	t.Parallel()
+
 	_, err := domain.NewEmail("")
 	if err == nil {
 		t.Fatal("expected error for empty email")
@@ -73,6 +82,8 @@ func TestNewEmail_Empty(t *testing.T) {
 }
 
 func TestNewEmail_MissingAt(t *testing.T) {
+	t.Parallel()
+
 	_, err := domain.NewEmail("userexample.com")
 	if err == nil {
 		t.Fatal("expected error for missing @")
@@ -84,10 +95,10 @@ func TestNewEmail_MissingAt(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestNewPasswordFromRaw_Valid(t *testing.T) {
+	t.Parallel()
+
 	pw, err := domain.NewPasswordFromRaw("SecureP@ss1")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	require.NoError(t, err)
 	if pw.Hash() == "" {
 		t.Fatal("hash should not be empty")
 	}
@@ -97,6 +108,8 @@ func TestNewPasswordFromRaw_Valid(t *testing.T) {
 }
 
 func TestNewPasswordFromRaw_TooShort(t *testing.T) {
+	t.Parallel()
+
 	_, err := domain.NewPasswordFromRaw("short")
 	if err == nil {
 		t.Fatal("expected error for short password")
@@ -107,6 +120,8 @@ func TestNewPasswordFromRaw_TooShort(t *testing.T) {
 }
 
 func TestPassword_CompareWrong(t *testing.T) {
+	t.Parallel()
+
 	pw, _ := domain.NewPasswordFromRaw("CorrectPassword1")
 	err := pw.Compare("WrongPassword1")
 	if err == nil {
@@ -118,6 +133,8 @@ func TestPassword_CompareWrong(t *testing.T) {
 }
 
 func TestNewPasswordFromHash(t *testing.T) {
+	t.Parallel()
+
 	pw, _ := domain.NewPasswordFromRaw("TestPassword1")
 	reconstructed := domain.NewPasswordFromHash(pw.Hash())
 	if reconstructed.Hash() != pw.Hash() {
@@ -133,22 +150,26 @@ func TestNewPasswordFromHash(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestNewPhone_WhitespaceTrimmed(t *testing.T) {
+	t.Parallel()
+
 	p, err := domain.NewPhone("  +998901234567  ")
-	if err != nil {
-		t.Fatalf("expected whitespace to be trimmed: %v", err)
-	}
+	require.NoError(t, err)
 	if p.Value() != "+998901234567" {
 		t.Errorf("expected trimmed value, got %q", p.Value())
 	}
 }
 
 func TestNewPhone_Unicode(t *testing.T) {
+	t.Parallel()
+
 	_, err := domain.NewPhone("+٩٩٨٩٠١٢٣٤٥٦٧")
 	// Should succeed or fail gracefully — never panic
 	_ = err
 }
 
 func TestNewPhone_VeryLong(t *testing.T) {
+	t.Parallel()
+
 	long := "+" + string(make([]byte, 1000))
 	_, err := domain.NewPhone(long)
 	// Should not panic
@@ -156,6 +177,8 @@ func TestNewPhone_VeryLong(t *testing.T) {
 }
 
 func TestNewPhone_TableDriven(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name    string
 		input   string
@@ -175,6 +198,7 @@ func TestNewPhone_TableDriven(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			_, err := domain.NewPhone(tt.input)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("NewPhone(%q) error = %v, wantErr %v", tt.input, err, tt.wantErr)
@@ -188,16 +212,18 @@ func TestNewPhone_TableDriven(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestNewEmail_WhitespaceTrimmed(t *testing.T) {
+	t.Parallel()
+
 	e, err := domain.NewEmail("  user@example.com  ")
-	if err != nil {
-		t.Fatalf("expected whitespace to be trimmed: %v", err)
-	}
+	require.NoError(t, err)
 	if e.Value() != "user@example.com" {
 		t.Errorf("expected trimmed value, got %q", e.Value())
 	}
 }
 
 func TestNewEmail_TableDriven(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name    string
 		input   string
@@ -215,6 +241,7 @@ func TestNewEmail_TableDriven(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			_, err := domain.NewEmail(tt.input)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("NewEmail(%q) error = %v, wantErr %v", tt.input, err, tt.wantErr)
@@ -228,17 +255,19 @@ func TestNewEmail_TableDriven(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestNewPasswordFromRaw_ExactlyMinLength(t *testing.T) {
+	t.Parallel()
+
 	// 8 chars exactly — should succeed
 	pw, err := domain.NewPasswordFromRaw("12345678")
-	if err != nil {
-		t.Fatalf("8 char password should be valid: %v", err)
-	}
+	require.NoError(t, err)
 	if err := pw.Compare("12345678"); err != nil {
 		t.Fatalf("compare should succeed: %v", err)
 	}
 }
 
 func TestNewPasswordFromRaw_SevenChars(t *testing.T) {
+	t.Parallel()
+
 	_, err := domain.NewPasswordFromRaw("1234567")
 	if err == nil {
 		t.Fatal("7 char password should fail")
@@ -246,16 +275,18 @@ func TestNewPasswordFromRaw_SevenChars(t *testing.T) {
 }
 
 func TestNewPasswordFromRaw_UnicodePassword(t *testing.T) {
+	t.Parallel()
+
 	pw, err := domain.NewPasswordFromRaw("パスワード12345678")
-	if err != nil {
-		t.Fatalf("unicode password should be valid: %v", err)
-	}
+	require.NoError(t, err)
 	if err := pw.Compare("パスワード12345678"); err != nil {
 		t.Fatalf("compare should succeed for unicode: %v", err)
 	}
 }
 
 func TestPassword_DifferentHashesForSameInput(t *testing.T) {
+	t.Parallel()
+
 	pw1, _ := domain.NewPasswordFromRaw("SamePassword1")
 	pw2, _ := domain.NewPasswordFromRaw("SamePassword1")
 	if pw1.Hash() == pw2.Hash() {

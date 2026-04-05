@@ -7,9 +7,12 @@ import (
 	"gct/internal/context/iam/user/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func TestBulkActionHandler_Activate(t *testing.T) {
+	t.Parallel()
+
 	user := makeTestUser(t)
 	user.Deactivate()
 
@@ -20,12 +23,10 @@ func TestBulkActionHandler_Activate(t *testing.T) {
 	handler := NewBulkActionHandler(repo, eventBus, log)
 
 	err := handler.Handle(context.Background(), BulkActionCommand{
-		IDs:    []uuid.UUID{user.ID()},
+		IDs:    []domain.UserID{domain.UserID(user.ID())},
 		Action: BulkActionActivate,
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	updated := repo.updatedUsers[user.ID()]
 	if updated == nil {
@@ -37,6 +38,8 @@ func TestBulkActionHandler_Activate(t *testing.T) {
 }
 
 func TestBulkActionHandler_Deactivate(t *testing.T) {
+	t.Parallel()
+
 	user := makeTestUser(t)
 
 	repo := &bulkMockRepo{users: map[uuid.UUID]*domain.User{user.ID(): user}}
@@ -46,12 +49,10 @@ func TestBulkActionHandler_Deactivate(t *testing.T) {
 	handler := NewBulkActionHandler(repo, eventBus, log)
 
 	err := handler.Handle(context.Background(), BulkActionCommand{
-		IDs:    []uuid.UUID{user.ID()},
+		IDs:    []domain.UserID{domain.UserID(user.ID())},
 		Action: BulkActionDeactivate,
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	updated := repo.updatedUsers[user.ID()]
 	if updated == nil {
@@ -63,6 +64,8 @@ func TestBulkActionHandler_Deactivate(t *testing.T) {
 }
 
 func TestBulkActionHandler_Delete(t *testing.T) {
+	t.Parallel()
+
 	user := makeTestUser(t)
 
 	repo := &bulkMockRepo{users: map[uuid.UUID]*domain.User{user.ID(): user}}
@@ -72,12 +75,10 @@ func TestBulkActionHandler_Delete(t *testing.T) {
 	handler := NewBulkActionHandler(repo, eventBus, log)
 
 	err := handler.Handle(context.Background(), BulkActionCommand{
-		IDs:    []uuid.UUID{user.ID()},
+		IDs:    []domain.UserID{domain.UserID(user.ID())},
 		Action: BulkActionDelete,
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	updated := repo.updatedUsers[user.ID()]
 	if updated == nil {
@@ -92,6 +93,8 @@ func TestBulkActionHandler_Delete(t *testing.T) {
 }
 
 func TestBulkActionHandler_UnknownAction(t *testing.T) {
+	t.Parallel()
+
 	user := makeTestUser(t)
 
 	repo := &bulkMockRepo{users: map[uuid.UUID]*domain.User{user.ID(): user}}
@@ -101,7 +104,7 @@ func TestBulkActionHandler_UnknownAction(t *testing.T) {
 	handler := NewBulkActionHandler(repo, eventBus, log)
 
 	err := handler.Handle(context.Background(), BulkActionCommand{
-		IDs:    []uuid.UUID{user.ID()},
+		IDs:    []domain.UserID{domain.UserID(user.ID())},
 		Action: "unknown_action",
 	})
 	if err == nil {
@@ -110,6 +113,8 @@ func TestBulkActionHandler_UnknownAction(t *testing.T) {
 }
 
 func TestBulkActionHandler_MultipleUsers(t *testing.T) {
+	t.Parallel()
+
 	user1 := makeTestUser(t)
 	user2 := makeTestUser(t)
 
@@ -123,12 +128,10 @@ func TestBulkActionHandler_MultipleUsers(t *testing.T) {
 	handler := NewBulkActionHandler(repo, eventBus, log)
 
 	err := handler.Handle(context.Background(), BulkActionCommand{
-		IDs:    []uuid.UUID{user1.ID(), user2.ID()},
+		IDs:    []domain.UserID{domain.UserID(user1.ID()), domain.UserID(user2.ID())},
 		Action: BulkActionDeactivate,
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if len(repo.updatedUsers) != 2 {
 		t.Fatalf("expected 2 updated users, got %d", len(repo.updatedUsers))
@@ -136,6 +139,8 @@ func TestBulkActionHandler_MultipleUsers(t *testing.T) {
 }
 
 func TestBulkActionHandler_SkipsMissing(t *testing.T) {
+	t.Parallel()
+
 	user := makeTestUser(t)
 
 	repo := &bulkMockRepo{users: map[uuid.UUID]*domain.User{user.ID(): user}}
@@ -145,12 +150,10 @@ func TestBulkActionHandler_SkipsMissing(t *testing.T) {
 	handler := NewBulkActionHandler(repo, eventBus, log)
 
 	err := handler.Handle(context.Background(), BulkActionCommand{
-		IDs:    []uuid.UUID{user.ID(), uuid.New()}, // second ID doesn't exist
+		IDs:    []domain.UserID{domain.UserID(user.ID()), domain.NewUserID()}, // second ID doesn't exist
 		Action: BulkActionActivate,
 	})
-	if err != nil {
-		t.Fatalf("expected no error (missing users are skipped), got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if len(repo.updatedUsers) != 1 {
 		t.Fatalf("expected 1 updated user, got %d", len(repo.updatedUsers))

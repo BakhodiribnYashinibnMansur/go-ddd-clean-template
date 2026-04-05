@@ -8,7 +8,7 @@ package published
 import (
 	"gct/internal/context/iam/user/domain"
 	"gct/internal/contract/events"
-	shareddomain "gct/internal/platform/domain"
+	shareddomain "gct/internal/kernel/domain"
 )
 
 // Map translates a batch of internal user domain events into the stable

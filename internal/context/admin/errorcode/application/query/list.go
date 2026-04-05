@@ -3,12 +3,12 @@ package query
 import (
 	"context"
 
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
 
 	appdto "gct/internal/context/admin/errorcode/application"
 	"gct/internal/context/admin/errorcode/domain"
-	"gct/internal/platform/infrastructure/pgxutil"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // ListErrorCodesQuery holds the input for listing error codes with filtering.

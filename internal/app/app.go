@@ -14,9 +14,9 @@ import (
 	"time"
 
 	"gct/config"
-	"gct/internal/platform/domain/consts"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	sharedmw "gct/internal/platform/infrastructure/middleware"
+	"gct/internal/kernel/consts"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	sharedmw "gct/internal/kernel/infrastructure/middleware"
 
 	// DDD BC middleware
 	auditmw "gct/internal/context/iam/audit/interfaces/http/middleware"
@@ -27,21 +27,21 @@ import (
 	usermw "gct/internal/context/iam/user/interfaces/http/middleware"
 	userport "gct/internal/context/iam/user/interfaces/port"
 
-	"gct/internal/platform/application"
-	"gct/internal/platform/infrastructure/asynq"
-	"gct/internal/platform/infrastructure/db/postgres"
-	redispkg "gct/internal/platform/infrastructure/db/redis"
-	"gct/internal/platform/infrastructure/eventbus"
-	"gct/internal/platform/infrastructure/httpclient"
-	"gct/internal/platform/infrastructure/logger"
-	"gct/internal/platform/infrastructure/metrics"
-	"gct/internal/platform/infrastructure/metrics/latency"
-	"gct/internal/platform/infrastructure/pubsub"
-	"gct/internal/platform/infrastructure/reqlog"
-	"gct/internal/platform/infrastructure/sse"
-	jwtpkg "gct/internal/platform/infrastructure/security/jwt"
-	httpserver "gct/internal/platform/infrastructure/server/http"
-	"gct/internal/platform/infrastructure/tracing"
+	"gct/internal/kernel/application"
+	"gct/internal/kernel/infrastructure/asynq"
+	"gct/internal/kernel/infrastructure/db/postgres"
+	redispkg "gct/internal/kernel/infrastructure/db/redis"
+	"gct/internal/kernel/infrastructure/eventbus"
+	"gct/internal/kernel/infrastructure/httpclient"
+	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/metrics"
+	"gct/internal/kernel/infrastructure/metrics/latency"
+	"gct/internal/kernel/infrastructure/pubsub"
+	"gct/internal/kernel/infrastructure/reqlog"
+	"gct/internal/kernel/infrastructure/sse"
+	jwtpkg "gct/internal/kernel/infrastructure/security/jwt"
+	httpserver "gct/internal/kernel/infrastructure/server/http"
+	"gct/internal/kernel/infrastructure/tracing"
 
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
@@ -581,5 +581,9 @@ type asynqClientAdapter struct {
 }
 
 func (a *asynqClientAdapter) EnqueueTask(ctx context.Context, taskType string, payload any, opts ...any) (any, error) {
-	return a.client.EnqueueTask(ctx, taskType, payload)
+	info, err := a.client.EnqueueTask(ctx, taskType, payload)
+	if err != nil {
+		return nil, fmt.Errorf("app.asynqClientAdapter.EnqueueTask: %w", err)
+	}
+	return info, nil
 }

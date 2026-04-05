@@ -4,8 +4,8 @@ import (
 	"gct/internal/context/content/announcement/application/command"
 	"gct/internal/context/content/announcement/application/query"
 	"gct/internal/context/content/announcement/infrastructure/postgres"
-	"gct/internal/platform/application"
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/application"
+	"gct/internal/kernel/infrastructure/logger"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )

@@ -3,7 +3,7 @@ package domain
 import (
 	"context"
 
-	shared "gct/internal/platform/domain"
+	shared "gct/internal/kernel/domain"
 
 	"github.com/google/uuid"
 )

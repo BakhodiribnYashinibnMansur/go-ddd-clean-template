@@ -1,7 +1,7 @@
 package query
 
 import (
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
@@ -10,9 +10,12 @@ import (
 	"gct/internal/context/iam/audit/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func TestListEndpointHistoryHandler_Success(t *testing.T) {
+	t.Parallel()
+
 	userID := uuid.New()
 	now := time.Now()
 	ip := "192.168.1.1"
@@ -53,9 +56,7 @@ func TestListEndpointHistoryHandler_Success(t *testing.T) {
 	}
 
 	result, err := handler.Handle(context.Background(), q)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if result == nil {
 		t.Fatal("expected non-nil result")
@@ -79,6 +80,8 @@ func TestListEndpointHistoryHandler_Success(t *testing.T) {
 }
 
 func TestListEndpointHistoryHandler_Empty(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockAuditReadRepository{
 		endpointViews: []*domain.EndpointHistoryView{},
 		endpointTotal: 0,
@@ -91,9 +94,7 @@ func TestListEndpointHistoryHandler_Empty(t *testing.T) {
 	}
 
 	result, err := handler.Handle(context.Background(), q)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if result.Total != 0 {
 		t.Errorf("expected total 0, got %d", result.Total)
@@ -105,6 +106,8 @@ func TestListEndpointHistoryHandler_Empty(t *testing.T) {
 }
 
 func TestListEndpointHistoryHandler_RepoError(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockAuditReadRepository{
 		endpointErr: errors.New("database unavailable"),
 	}
@@ -126,6 +129,8 @@ func TestListEndpointHistoryHandler_RepoError(t *testing.T) {
 }
 
 func TestListEndpointHistoryHandler_MapsAllFields(t *testing.T) {
+	t.Parallel()
+
 	userID := uuid.New()
 	entryID := uuid.New()
 	ip := "10.0.0.1"
@@ -152,9 +157,7 @@ func TestListEndpointHistoryHandler_MapsAllFields(t *testing.T) {
 	handler := NewListEndpointHistoryHandler(readRepo, logger.Noop())
 
 	result, err := handler.Handle(context.Background(), ListEndpointHistoryQuery{})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	v := result.Entries[0]
 

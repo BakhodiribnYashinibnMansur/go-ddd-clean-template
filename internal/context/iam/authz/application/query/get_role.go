@@ -3,19 +3,17 @@ package query
 import (
 	"context"
 
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
 
 	appdto "gct/internal/context/iam/authz/application"
 	"gct/internal/context/iam/authz/domain"
-	"gct/internal/platform/infrastructure/pgxutil"
-
-	"github.com/google/uuid"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // GetRoleQuery holds the input for fetching a single role.
 type GetRoleQuery struct {
-	ID uuid.UUID
+	ID domain.RoleID
 }
 
 // GetRoleHandler handles the GetRoleQuery.
@@ -35,9 +33,9 @@ func (h *GetRoleHandler) Handle(ctx context.Context, q GetRoleQuery) (_ *appdto.
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "GetRole", "role")()
 
-	view, err := h.readRepo.GetRole(ctx, q.ID)
+	view, err := h.readRepo.GetRole(ctx, q.ID.UUID())
 	if err != nil {
-		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetRole", Entity: "access", EntityID: q.ID, Err: err}.KV()...)
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetRole", Entity: "access", EntityID: q.ID.UUID(), Err: err}.KV()...)
 		return nil, apperrors.MapToServiceError(err)
 	}
 

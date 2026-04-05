@@ -9,9 +9,12 @@ import (
 	"gct/internal/context/iam/authz/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func TestUpdatePolicyHandler_UpdateFields(t *testing.T) {
+	t.Parallel()
+
 	policyID := uuid.New()
 	permID := uuid.New()
 	existingPolicy := domain.ReconstructPolicy(
@@ -36,16 +39,14 @@ func TestUpdatePolicyHandler_UpdateFields(t *testing.T) {
 	newConditions := map[string]any{"env": "production"}
 
 	cmd := UpdatePolicyCommand{
-		ID:         policyID,
+		ID:         domain.PolicyID(policyID),
 		Effect:     &newEffect,
 		Priority:   &newPriority,
 		Conditions: newConditions,
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.updatedPolicy == nil {
 		t.Fatal("expected policy to be updated")
@@ -65,6 +66,8 @@ func TestUpdatePolicyHandler_UpdateFields(t *testing.T) {
 }
 
 func TestUpdatePolicyHandler_NotFound(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockPolicyRepository{} // default returns ErrPolicyNotFound
 	log := &mockLogger{}
 
@@ -72,7 +75,7 @@ func TestUpdatePolicyHandler_NotFound(t *testing.T) {
 
 	newEffect := domain.PolicyAllow
 	cmd := UpdatePolicyCommand{
-		ID:     uuid.New(),
+		ID:     domain.PolicyID(uuid.New()),
 		Effect: &newEffect,
 	}
 

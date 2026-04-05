@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"gct/internal/context/iam/authz/domain"
-	shared "gct/internal/platform/domain"
+	shared "gct/internal/kernel/domain"
+	"github.com/stretchr/testify/require"
 )
 
 // --- Mock ScopeRepository ---
@@ -38,6 +39,8 @@ func (m *mockScopeRepository) List(ctx context.Context, pagination shared.Pagina
 // --- Tests ---
 
 func TestCreateScopeHandler_Success(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockScopeRepository{}
 	log := &mockLogger{}
 
@@ -49,9 +52,7 @@ func TestCreateScopeHandler_Success(t *testing.T) {
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.savedScope == nil {
 		t.Fatal("expected scope to be saved")

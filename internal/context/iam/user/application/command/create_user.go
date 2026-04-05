@@ -2,11 +2,12 @@ package command
 
 import (
 	"context"
+	"fmt"
 
-	"gct/internal/platform/application"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
-	"gct/internal/platform/infrastructure/pgxutil"
+	"gct/internal/kernel/application"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/pgxutil"
 	"gct/internal/context/iam/user/domain"
 
 	"github.com/google/uuid"
@@ -29,14 +30,14 @@ type CreateUserCommand struct {
 type CreateUserHandler struct {
 	repo     domain.UserRepository
 	eventBus application.EventBus
-	logger   logger.Log
+	logger   commandLogger
 }
 
 // NewCreateUserHandler creates a new CreateUserHandler.
 func NewCreateUserHandler(
 	repo domain.UserRepository,
 	eventBus application.EventBus,
-	logger logger.Log,
+	logger commandLogger,
 ) *CreateUserHandler {
 	return &CreateUserHandler{
 		repo:     repo,
@@ -84,7 +85,10 @@ func (h *CreateUserHandler) Handle(ctx context.Context, cmd CreateUserCommand) (
 		opts = append(opts, domain.WithAttributes(cmd.Attributes))
 	}
 
-	user := domain.NewUser(phone, password, opts...)
+	user, err := domain.NewUser(phone, password, opts...)
+	if err != nil {
+		return fmt.Errorf("create_user: %w", err)
+	}
 
 	if err := h.repo.Save(ctx, user); err != nil {
 		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateUser", Entity: "user", Err: err}.KV()...)

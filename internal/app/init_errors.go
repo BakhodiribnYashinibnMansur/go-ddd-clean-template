@@ -7,10 +7,10 @@ import (
 	"gct/internal/context/admin/errorcode/application/command"
 	"gct/internal/context/admin/errorcode/application/query"
 	"gct/internal/context/admin/errorcode/domain"
-	"gct/internal/platform/application"
-	shareddomain "gct/internal/platform/domain"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/application"
+	shareddomain "gct/internal/kernel/domain"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
 )
 
 // initErrorCodes loads dynamic error codes from the database and configures the error package.

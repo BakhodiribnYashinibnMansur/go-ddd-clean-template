@@ -6,12 +6,13 @@ package subscriber
 
 import (
 	"context"
+	"fmt"
 
 	auditcmd "gct/internal/context/iam/audit/application/command"
 	auditdomain "gct/internal/context/iam/audit/domain"
-	"gct/internal/platform/application"
-	shareddomain "gct/internal/platform/domain"
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/application"
+	shareddomain "gct/internal/kernel/domain"
+	"gct/internal/kernel/infrastructure/logger"
 )
 
 // userEventTopics lists the user BC event names this subscriber reacts to.
@@ -55,7 +56,7 @@ func (s *UserEventSubscriber) Register(bus application.EventBus) error {
 		if err := bus.Subscribe(topic.Name, func(ctx context.Context, event shareddomain.DomainEvent) error {
 			return s.handle(ctx, topic.Action, event)
 		}); err != nil {
-			return err
+			return fmt.Errorf("user_event_subscriber.register: subscribe %s: %w", topic.Name, err)
 		}
 	}
 	return nil

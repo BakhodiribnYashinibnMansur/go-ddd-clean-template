@@ -1,6 +1,6 @@
 package domain
 
-import shared "gct/internal/platform/domain"
+import shared "gct/internal/kernel/domain"
 
 // Domain errors for the iprule bounded context.
 // Returned by repositories when the requested IP rule does not exist in the data store.

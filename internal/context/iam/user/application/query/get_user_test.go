@@ -1,15 +1,16 @@
 package query
 
 import (
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
 
-	shared "gct/internal/platform/domain"
+	shared "gct/internal/kernel/domain"
 	"gct/internal/context/iam/user/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 // --- Mock Read Repository ---
@@ -73,6 +74,8 @@ func (m *mockUserReadRepository) FindUserForAuth(_ context.Context, _ uuid.UUID)
 // --- Tests ---
 
 func TestGetUserHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	userID := uuid.New()
 	phone := "+998901234567"
 	email := "test@example.com"
@@ -89,11 +92,9 @@ func TestGetUserHandler_Handle(t *testing.T) {
 
 	handler := NewGetUserHandler(readRepo, logger.Noop())
 
-	q := GetUserQuery{ID: userID}
+	q := GetUserQuery{ID: domain.UserID(userID)}
 	result, err := handler.Handle(context.Background(), q)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if result == nil {
 		t.Fatal("expected user view, got nil")
@@ -121,11 +122,13 @@ func TestGetUserHandler_Handle(t *testing.T) {
 }
 
 func TestGetUserHandler_NotFound(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockUserReadRepository{}
 
 	handler := NewGetUserHandler(readRepo, logger.Noop())
 
-	q := GetUserQuery{ID: uuid.New()}
+	q := GetUserQuery{ID: domain.NewUserID()}
 	_, err := handler.Handle(context.Background(), q)
 	if err == nil {
 		t.Fatal("expected error for non-existent user, got nil")
@@ -133,6 +136,8 @@ func TestGetUserHandler_NotFound(t *testing.T) {
 }
 
 func TestGetUserHandler_AllFieldsMapped(t *testing.T) {
+	t.Parallel()
+
 	userID := uuid.New()
 	roleID := uuid.New()
 	phone := "+998901234567"
@@ -153,10 +158,8 @@ func TestGetUserHandler_AllFieldsMapped(t *testing.T) {
 	}
 
 	handler := NewGetUserHandler(readRepo, logger.Noop())
-	result, err := handler.Handle(context.Background(), GetUserQuery{ID: userID})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	result, err := handler.Handle(context.Background(), GetUserQuery{ID: domain.UserID(userID)})
+	require.NoError(t, err)
 
 	if result.RoleID == nil || *result.RoleID != roleID {
 		t.Error("roleID not mapped")
@@ -170,6 +173,8 @@ func TestGetUserHandler_AllFieldsMapped(t *testing.T) {
 }
 
 func TestGetUserHandler_NilOptionalFields(t *testing.T) {
+	t.Parallel()
+
 	userID := uuid.New()
 
 	readRepo := &mockUserReadRepository{
@@ -181,10 +186,8 @@ func TestGetUserHandler_NilOptionalFields(t *testing.T) {
 	}
 
 	handler := NewGetUserHandler(readRepo, logger.Noop())
-	result, err := handler.Handle(context.Background(), GetUserQuery{ID: userID})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	result, err := handler.Handle(context.Background(), GetUserQuery{ID: domain.UserID(userID)})
+	require.NoError(t, err)
 
 	if result.Email != nil {
 		t.Error("email should be nil")
@@ -201,10 +204,12 @@ func TestGetUserHandler_NilOptionalFields(t *testing.T) {
 }
 
 func TestGetUserHandler_RepoError(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &errorReadRepo{err: errRepoFailure}
 
 	handler := NewGetUserHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), GetUserQuery{ID: uuid.New()})
+	_, err := handler.Handle(context.Background(), GetUserQuery{ID: domain.NewUserID()})
 	if err == nil {
 		t.Fatal("expected error from repo")
 	}

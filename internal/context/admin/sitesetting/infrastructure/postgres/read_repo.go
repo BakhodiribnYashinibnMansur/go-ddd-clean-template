@@ -3,9 +3,9 @@ package postgres
 import (
 	"context"
 
-	"gct/internal/platform/domain/consts"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/pgxutil"
+	"gct/internal/kernel/consts"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/pgxutil"
 	"gct/internal/context/admin/sitesetting/domain"
 
 	"github.com/Masterminds/squirrel"
@@ -121,7 +121,7 @@ func scanSiteSettingViewFromRows(rows pgx.Rows) (*domain.SiteSettingView, error)
 	var v domain.SiteSettingView
 	err := rows.Scan(&v.ID, &v.Key, &v.Value, &v.Type, &v.Description, &v.CreatedAt, &v.UpdatedAt)
 	if err != nil {
-		return nil, err
+		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 	return &v, nil
 }

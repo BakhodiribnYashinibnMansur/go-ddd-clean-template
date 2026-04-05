@@ -5,8 +5,8 @@ import (
 
 	"gct/internal/context/admin/statistics"
 	"gct/internal/context/admin/statistics/application/query"
-	"gct/internal/platform/infrastructure/httpx/response"
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/httpx/response"
+	"gct/internal/kernel/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
 )

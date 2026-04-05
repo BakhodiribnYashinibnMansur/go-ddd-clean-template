@@ -16,7 +16,7 @@ import (
 	"gct/config"
 	"gct/internal/context/admin/integration/application/query"
 	"gct/internal/context/admin/integration/domain"
-	"gct/internal/platform/domain/consts"
+	"gct/internal/kernel/consts"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -116,6 +116,8 @@ func performRequest(mw gin.HandlerFunc, method, path string, headers map[string]
 // ---------------------------------------------------------------------------
 
 func TestSignature_SkipAdminPath(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockReadRepo{}
 	mw := newMiddleware(repo, 10)
 
@@ -126,6 +128,8 @@ func TestSignature_SkipAdminPath(t *testing.T) {
 }
 
 func TestSignature_SkipStaticPath(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockReadRepo{}
 	mw := newMiddleware(repo, 10)
 
@@ -136,6 +140,8 @@ func TestSignature_SkipStaticPath(t *testing.T) {
 }
 
 func TestSignature_SkipDocsPath(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockReadRepo{}
 	mw := newMiddleware(repo, 10)
 
@@ -146,6 +152,8 @@ func TestSignature_SkipDocsPath(t *testing.T) {
 }
 
 func TestSignature_SkipHealthPath(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockReadRepo{}
 	mw := newMiddleware(repo, 10)
 
@@ -156,6 +164,8 @@ func TestSignature_SkipHealthPath(t *testing.T) {
 }
 
 func TestSignature_SkipRootPath(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockReadRepo{}
 	mw := newMiddleware(repo, 10)
 
@@ -170,6 +180,8 @@ func TestSignature_SkipRootPath(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestSignature_MissingTimeUnix(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockReadRepo{}
 	mw := newMiddleware(repo, 10)
 
@@ -180,6 +192,8 @@ func TestSignature_MissingTimeUnix(t *testing.T) {
 }
 
 func TestSignature_MissingRequestID(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockReadRepo{}
 	mw := newMiddleware(repo, 10)
 
@@ -193,6 +207,8 @@ func TestSignature_MissingRequestID(t *testing.T) {
 }
 
 func TestSignature_MissingAPIKey(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockReadRepo{}
 	mw := newMiddleware(repo, 10)
 
@@ -207,6 +223,8 @@ func TestSignature_MissingAPIKey(t *testing.T) {
 }
 
 func TestSignature_MissingSign(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockReadRepo{}
 	mw := newMiddleware(repo, 10)
 
@@ -226,6 +244,8 @@ func TestSignature_MissingSign(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestSignature_InvalidTimeFormat(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockReadRepo{}
 	mw := newMiddleware(repo, 10)
 
@@ -242,6 +262,8 @@ func TestSignature_InvalidTimeFormat(t *testing.T) {
 }
 
 func TestSignature_ExpiredTimestamp(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockReadRepo{}
 	mw := newMiddleware(repo, 10)
 
@@ -259,6 +281,8 @@ func TestSignature_ExpiredTimestamp(t *testing.T) {
 }
 
 func TestSignature_FutureTimestamp(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockReadRepo{}
 	mw := newMiddleware(repo, 10)
 
@@ -280,6 +304,8 @@ func TestSignature_FutureTimestamp(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestSignature_InvalidAPIKeyInDB(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockReadRepo{findErr: errors.New("not found")}
 	mw := newMiddleware(repo, 10)
 
@@ -302,6 +328,8 @@ func TestSignature_InvalidAPIKeyInDB(t *testing.T) {
 }
 
 func TestSignature_InactiveAPIKey(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockReadRepo{
 		apiKeyView: &domain.IntegrationAPIKeyView{
 			ID:            uuid.New(),
@@ -336,6 +364,8 @@ func TestSignature_InactiveAPIKey(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestSignature_InvalidSign(t *testing.T) {
+	t.Parallel()
+
 	integrationID := uuid.New()
 	apiKeyID := uuid.New()
 	repo := &mockReadRepo{
@@ -366,6 +396,8 @@ func TestSignature_InvalidSign(t *testing.T) {
 }
 
 func TestSignature_ValidRequest(t *testing.T) {
+	t.Parallel()
+
 	integrationID := uuid.New()
 	apiKeyID := uuid.New()
 	repo := &mockReadRepo{
@@ -418,6 +450,8 @@ func TestSignature_ValidRequest(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestSignature_DefaultExpireTime(t *testing.T) {
+	t.Parallel()
+
 	integrationID := uuid.New()
 	apiKeyID := uuid.New()
 	repo := &mockReadRepo{
@@ -454,6 +488,8 @@ func TestSignature_DefaultExpireTime(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestMakeSign_Deterministic(t *testing.T) {
+	t.Parallel()
+
 	timeStr := "1711234567"
 	apiKey := "test-key-abc"
 	reqID := "req-001"
@@ -475,6 +511,8 @@ func TestMakeSign_Deterministic(t *testing.T) {
 }
 
 func TestMakeSign_DifferentInputs(t *testing.T) {
+	t.Parallel()
+
 	sign1 := makeSign("1111111111", "key-a", "req-1")
 	sign2 := makeSign("2222222222", "key-b", "req-2")
 	if sign1 == sign2 {
@@ -487,6 +525,8 @@ func TestMakeSign_DifferentInputs(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestSignature_APIKeyFromQueryParam(t *testing.T) {
+	t.Parallel()
+
 	integrationID := uuid.New()
 	apiKeyID := uuid.New()
 	repo := &mockReadRepo{

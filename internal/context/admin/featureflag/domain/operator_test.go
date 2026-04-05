@@ -7,6 +7,8 @@ import (
 )
 
 func TestIsValidOperator_ValidOperators(t *testing.T) {
+	t.Parallel()
+
 	validOps := []string{
 		domain.OpEq, domain.OpNotEq,
 		domain.OpIn, domain.OpNotIn,
@@ -23,6 +25,8 @@ func TestIsValidOperator_ValidOperators(t *testing.T) {
 }
 
 func TestIsValidOperator_InvalidOperators(t *testing.T) {
+	t.Parallel()
+
 	invalidOps := []string{
 		"",
 		"invalid",
@@ -42,6 +46,8 @@ func TestIsValidOperator_InvalidOperators(t *testing.T) {
 }
 
 func TestValidOperatorsMap_Count(t *testing.T) {
+	t.Parallel()
+
 	expected := 9
 	if len(domain.ValidOperators) != expected {
 		t.Errorf("expected %d valid operators, got %d", expected, len(domain.ValidOperators))

@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"strconv"
 
-	"gct/internal/platform/infrastructure/httpx"
-	"gct/internal/platform/infrastructure/httpx/response"
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/httpx"
+	"gct/internal/kernel/infrastructure/httpx/response"
+	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/context/ops/systemerror"
 	"gct/internal/context/ops/systemerror/application/command"
 	"gct/internal/context/ops/systemerror/application/query"
@@ -77,7 +77,7 @@ func (h *Handler) Get(ctx *gin.Context) {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
-	result, err := h.bc.GetSystemError.Handle(ctx.Request.Context(), query.GetSystemErrorQuery{ID: id})
+	result, err := h.bc.GetSystemError.Handle(ctx.Request.Context(), query.GetSystemErrorQuery{ID: domain.SystemErrorID(id)})
 	if err != nil {
 		response.HandleError(ctx, err)
 		return
@@ -98,7 +98,7 @@ func (h *Handler) Resolve(ctx *gin.Context) {
 		return
 	}
 	cmd := command.ResolveErrorCommand{
-		ID:         id,
+		ID:         domain.SystemErrorID(id),
 		ResolvedBy: req.ResolvedBy,
 	}
 	if err := h.bc.ResolveError.Handle(ctx.Request.Context(), cmd); err != nil {

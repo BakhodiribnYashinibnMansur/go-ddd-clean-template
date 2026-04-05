@@ -6,10 +6,11 @@ import (
 	"time"
 
 	"gct/internal/context/ops/iprule/domain"
-	"gct/internal/platform/application"
-	shared "gct/internal/platform/domain"
+	"gct/internal/kernel/application"
+	shared "gct/internal/kernel/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 // --- Mocks ---
@@ -84,6 +85,8 @@ func (m *mockLogger) Fatalc(_ context.Context, _ string, _ ...any)  {}
 // --- Tests ---
 
 func TestCreateIPRuleHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockIPRuleRepo{}
 	eb := &mockEventBus{}
 	handler := NewCreateIPRuleHandler(repo, eb, &mockLogger{})
@@ -97,9 +100,7 @@ func TestCreateIPRuleHandler_Handle(t *testing.T) {
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.saved == nil {
 		t.Fatal("expected ip rule to be saved")
@@ -126,6 +127,8 @@ func TestCreateIPRuleHandler_Handle(t *testing.T) {
 }
 
 func TestCreateIPRuleHandler_PermanentRule(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockIPRuleRepo{}
 	handler := NewCreateIPRuleHandler(repo, &mockEventBus{}, &mockLogger{})
 
@@ -135,9 +138,7 @@ func TestCreateIPRuleHandler_PermanentRule(t *testing.T) {
 		Reason:    "trusted",
 		ExpiresAt: nil,
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 	if repo.saved == nil {
 		t.Fatal("expected ip rule to be saved")
 	}

@@ -9,8 +9,10 @@ import (
 )
 
 func TestNewNotification(t *testing.T) {
+	t.Parallel()
+
 	userID := uuid.New()
-	n := domain.NewNotification(userID, "Welcome", "Hello world", "info")
+	n, _ := domain.NewNotification(userID, "Welcome", "Hello world", "info")
 
 	if n.UserID() != userID {
 		t.Fatalf("expected userID %s, got %s", userID, n.UserID())
@@ -36,7 +38,9 @@ func TestNewNotification(t *testing.T) {
 }
 
 func TestNotification_MarkAsRead(t *testing.T) {
-	n := domain.NewNotification(uuid.New(), "Test", "msg", "info")
+	t.Parallel()
+
+	n, _ := domain.NewNotification(uuid.New(), "Test", "msg", "info")
 
 	n.MarkAsRead()
 	if n.ReadAt() == nil {

@@ -10,6 +10,8 @@ import (
 )
 
 func TestNewFile(t *testing.T) {
+	t.Parallel()
+
 	uploaderID := uuid.New()
 	f := domain.NewFile("stored_abc.png", "photo.png", "image/png", 1024, "/uploads/stored_abc.png", "https://cdn.example.com/stored_abc.png", &uploaderID)
 
@@ -45,6 +47,8 @@ func TestNewFile(t *testing.T) {
 }
 
 func TestNewFile_NoUploader(t *testing.T) {
+	t.Parallel()
+
 	f := domain.NewFile("doc.pdf", "document.pdf", "application/pdf", 2048, "/uploads/doc.pdf", "https://cdn.example.com/doc.pdf", nil)
 
 	if f.UploadedBy() != nil {
@@ -53,6 +57,8 @@ func TestNewFile_NoUploader(t *testing.T) {
 }
 
 func TestReconstructFile(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	createdAt := time.Now()
 	uploaderID := uuid.New()

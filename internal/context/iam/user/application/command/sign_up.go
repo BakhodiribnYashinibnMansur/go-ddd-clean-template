@@ -2,11 +2,12 @@ package command
 
 import (
 	"context"
+	"fmt"
 
-	"gct/internal/platform/application"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
-	"gct/internal/platform/infrastructure/pgxutil"
+	"gct/internal/kernel/application"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/pgxutil"
 	"gct/internal/context/iam/user/domain"
 )
 
@@ -22,14 +23,14 @@ type SignUpCommand struct {
 type SignUpHandler struct {
 	repo     domain.UserRepository
 	eventBus application.EventBus
-	logger   logger.Log
+	logger   commandLogger
 }
 
 // NewSignUpHandler creates a new SignUpHandler.
 func NewSignUpHandler(
 	repo domain.UserRepository,
 	eventBus application.EventBus,
-	logger logger.Log,
+	logger commandLogger,
 ) *SignUpHandler {
 	return &SignUpHandler{
 		repo:     repo,
@@ -70,7 +71,10 @@ func (h *SignUpHandler) Handle(ctx context.Context, cmd SignUpCommand) (err erro
 	}
 
 	// Self-registration: user is auto-approved with default role.
-	user := domain.NewUser(phone, password, opts...)
+	user, err := domain.NewUser(phone, password, opts...)
+	if err != nil {
+		return fmt.Errorf("create_user: %w", err)
+	}
 	user.Approve()
 
 	if defaultRoleID, err := h.repo.FindDefaultRoleID(ctx); err == nil {

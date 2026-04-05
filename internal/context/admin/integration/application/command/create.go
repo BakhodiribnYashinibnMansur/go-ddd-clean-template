@@ -2,12 +2,13 @@ package command
 
 import (
 	"context"
+	"fmt"
 
 	"gct/internal/context/admin/integration/domain"
-	"gct/internal/platform/application"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
-	"gct/internal/platform/infrastructure/pgxutil"
+	"gct/internal/kernel/application"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // CreateCommand represents an intent to register a new third-party integration.
@@ -50,7 +51,10 @@ func (h *CreateHandler) Handle(ctx context.Context, cmd CreateCommand) (err erro
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "CreateIntegration", "integration")()
 
-	i := domain.NewIntegration(cmd.Name, cmd.Type, cmd.APIKey, cmd.WebhookURL, cmd.Enabled, cmd.Config)
+	i, err := domain.NewIntegration(cmd.Name, cmd.Type, cmd.APIKey, cmd.WebhookURL, cmd.Enabled, cmd.Config)
+	if err != nil {
+		return fmt.Errorf("create_integration: %w", err)
+	}
 
 	if err := h.repo.Save(ctx, i); err != nil {
 		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateIntegration", Entity: "integration", Err: err}.KV()...)

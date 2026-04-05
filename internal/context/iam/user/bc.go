@@ -1,8 +1,8 @@
 package user
 
 import (
-	"gct/internal/platform/application"
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/application"
+	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/context/iam/user/application/command"
 	"gct/internal/context/iam/user/application/query"
 	"gct/internal/context/iam/user/infrastructure/postgres"

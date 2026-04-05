@@ -8,8 +8,8 @@ import (
 	"gct/internal/context/admin/dataexport/application/command"
 	"gct/internal/context/admin/dataexport/application/query"
 	"gct/internal/context/admin/dataexport/domain"
-	"gct/internal/platform/infrastructure/eventbus"
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/eventbus"
+	"gct/internal/kernel/infrastructure/logger"
 	"gct/test/integration/common/setup"
 
 	"github.com/google/uuid"
@@ -59,7 +59,7 @@ func TestIntegration_CreateAndGetDataExport(t *testing.T) {
 		t.Errorf("expected status PENDING, got %s", de.Status)
 	}
 
-	view, err := bc.GetDataExport.Handle(ctx, query.GetDataExportQuery{ID: de.ID})
+	view, err := bc.GetDataExport.Handle(ctx, query.GetDataExportQuery{ID: domain.DataExportID(de.ID)})
 	if err != nil {
 		t.Fatalf("GetDataExport: %v", err)
 	}
@@ -91,14 +91,14 @@ func TestIntegration_UpdateDataExport(t *testing.T) {
 
 	processing := domain.ExportStatusProcessing
 	err = bc.UpdateDataExport.Handle(ctx, command.UpdateDataExportCommand{
-		ID:     deID,
+		ID:     domain.DataExportID(deID),
 		Status: &processing,
 	})
 	if err != nil {
 		t.Fatalf("UpdateDataExport (processing): %v", err)
 	}
 
-	view, _ := bc.GetDataExport.Handle(ctx, query.GetDataExportQuery{ID: deID})
+	view, _ := bc.GetDataExport.Handle(ctx, query.GetDataExportQuery{ID: domain.DataExportID(deID)})
 	if view.Status != "PROCESSING" {
 		t.Errorf("expected status PROCESSING, got %s", view.Status)
 	}
@@ -106,7 +106,7 @@ func TestIntegration_UpdateDataExport(t *testing.T) {
 	completed := domain.ExportStatusCompleted
 	fileURL := "https://storage.example.com/exports/audit_logs.json"
 	err = bc.UpdateDataExport.Handle(ctx, command.UpdateDataExportCommand{
-		ID:      deID,
+		ID:      domain.DataExportID(deID),
 		Status:  &completed,
 		FileURL: &fileURL,
 	})
@@ -114,7 +114,7 @@ func TestIntegration_UpdateDataExport(t *testing.T) {
 		t.Fatalf("UpdateDataExport (completed): %v", err)
 	}
 
-	view, _ = bc.GetDataExport.Handle(ctx, query.GetDataExportQuery{ID: deID})
+	view, _ = bc.GetDataExport.Handle(ctx, query.GetDataExportQuery{ID: domain.DataExportID(deID)})
 	if view.Status != "COMPLETED" {
 		t.Errorf("expected status COMPLETED, got %s", view.Status)
 	}
@@ -141,7 +141,7 @@ func TestIntegration_DeleteDataExport(t *testing.T) {
 	})
 	deID := list.Exports[0].ID
 
-	err = bc.DeleteDataExport.Handle(ctx, command.DeleteDataExportCommand{ID: deID})
+	err = bc.DeleteDataExport.Handle(ctx, command.DeleteDataExportCommand{ID: domain.DataExportID(deID)})
 	if err != nil {
 		t.Fatalf("DeleteDataExport: %v", err)
 	}

@@ -4,7 +4,10 @@ import (
 	"context"
 	"testing"
 
+	"gct/internal/context/iam/authz/domain"
+
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 // --- Mock PermissionScopeRepository ---
@@ -33,6 +36,8 @@ func (m *mockPermissionScopeRepository) Revoke(ctx context.Context, permissionID
 // --- Tests ---
 
 func TestAssignScopeHandler_Success(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockPermissionScopeRepository{}
 	log := &mockLogger{}
 
@@ -40,15 +45,13 @@ func TestAssignScopeHandler_Success(t *testing.T) {
 
 	permID := uuid.New()
 	cmd := AssignScopeCommand{
-		PermissionID: permID,
+		PermissionID: domain.PermissionID(permID),
 		Path:         "/api/v1/orders",
 		Method:       "POST",
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.assignedPermID != permID {
 		t.Errorf("expected permission ID %s, got %s", permID, repo.assignedPermID)

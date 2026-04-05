@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"gct/config"
-	tc "gct/internal/platform/infrastructure/container"
+	tc "gct/test/testcontainers"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/testcontainers/testcontainers-go"

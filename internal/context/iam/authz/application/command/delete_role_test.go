@@ -4,10 +4,15 @@ import (
 	"context"
 	"testing"
 
+	"gct/internal/context/iam/authz/domain"
+
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDeleteRoleHandler_Success(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockRoleRepository{}
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
@@ -15,12 +20,10 @@ func TestDeleteRoleHandler_Success(t *testing.T) {
 	handler := NewDeleteRoleHandler(repo, eventBus, log)
 
 	roleID := uuid.New()
-	cmd := DeleteRoleCommand{ID: roleID}
+	cmd := DeleteRoleCommand{ID: domain.RoleID(roleID)}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if len(eventBus.publishedEvents) == 0 {
 		t.Fatal("expected at least one event to be published")

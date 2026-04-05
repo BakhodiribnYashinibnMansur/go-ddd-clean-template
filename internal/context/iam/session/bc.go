@@ -3,7 +3,7 @@ package session
 import (
 	"gct/internal/context/iam/session/application/query"
 	"gct/internal/context/iam/session/infrastructure/postgres"
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/logger"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )

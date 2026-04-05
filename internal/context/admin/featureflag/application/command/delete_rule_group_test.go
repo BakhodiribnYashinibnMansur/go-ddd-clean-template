@@ -9,9 +9,12 @@ import (
 	"gct/internal/context/admin/featureflag/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDeleteRuleGroupHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	rgID := uuid.New()
 	flagID := uuid.New()
 	rg := domain.ReconstructRuleGroup(rgID, flagID, "test-rg", "true", 1, time.Now(), time.Now(), nil)
@@ -27,10 +30,8 @@ func TestDeleteRuleGroupHandler_Handle(t *testing.T) {
 	eb := &mockEventBus{}
 	handler := NewDeleteRuleGroupHandler(rgRepo, eb, &mockLogger{})
 
-	err := handler.Handle(context.Background(), DeleteRuleGroupCommand{ID: rgID})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	err := handler.Handle(context.Background(), DeleteRuleGroupCommand{ID: domain.RuleGroupID(rgID)})
+	require.NoError(t, err)
 
 	if rgRepo.deleted != rgID {
 		t.Errorf("expected deleted ID %s, got %s", rgID, rgRepo.deleted)
@@ -44,10 +45,12 @@ func TestDeleteRuleGroupHandler_Handle(t *testing.T) {
 }
 
 func TestDeleteRuleGroupHandler_Handle_NotFound(t *testing.T) {
+	t.Parallel()
+
 	rgRepo := &mockRuleGroupRepo{} // default returns ErrRuleGroupNotFound
 	handler := NewDeleteRuleGroupHandler(rgRepo, &mockEventBus{}, &mockLogger{})
 
-	err := handler.Handle(context.Background(), DeleteRuleGroupCommand{ID: uuid.New()})
+	err := handler.Handle(context.Background(), DeleteRuleGroupCommand{ID: domain.RuleGroupID(uuid.New())})
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
@@ -57,6 +60,8 @@ func TestDeleteRuleGroupHandler_Handle_NotFound(t *testing.T) {
 }
 
 func TestDeleteRuleGroupHandler_Handle_DeleteRepoError(t *testing.T) {
+	t.Parallel()
+
 	rgID := uuid.New()
 	flagID := uuid.New()
 	rg := domain.ReconstructRuleGroup(rgID, flagID, "test-rg", "true", 1, time.Now(), time.Now(), nil)
@@ -72,7 +77,7 @@ func TestDeleteRuleGroupHandler_Handle_DeleteRepoError(t *testing.T) {
 	}
 	handler := NewDeleteRuleGroupHandler(rgRepo, &mockEventBus{}, &mockLogger{})
 
-	err := handler.Handle(context.Background(), DeleteRuleGroupCommand{ID: rgID})
+	err := handler.Handle(context.Background(), DeleteRuleGroupCommand{ID: domain.RuleGroupID(rgID)})
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}

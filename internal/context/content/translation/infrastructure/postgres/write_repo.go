@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"gct/internal/platform/domain/consts"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/pgxutil"
+	"gct/internal/kernel/consts"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/pgxutil"
 	"gct/internal/context/content/translation/domain"
 
 	"github.com/Masterminds/squirrel"
@@ -229,7 +229,7 @@ func scanTranslationFromRows(rows pgx.Rows) (*domain.Translation, error) {
 
 	err := rows.Scan(&id, &entityType, &entityID, &langCode, &data, &createdAt, &updatedAt)
 	if err != nil {
-		return nil, err
+		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 
 	return domain.ReconstructTranslation(id, createdAt, updatedAt, entityType, langCode, string(data), entityID.String()), nil

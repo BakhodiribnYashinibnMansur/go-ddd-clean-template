@@ -5,26 +5,27 @@ import (
 	"testing"
 
 	domain "gct/internal/context/iam/user/domain"
+	"github.com/stretchr/testify/require"
 )
 
 func activeApprovedUser(t *testing.T) *domain.User {
 	t.Helper()
 	phone := mustPhone(t, "+998901234567")
 	pw := mustPassword(t, "SecureP@ss1")
-	u := domain.NewUser(phone, pw)
+	u, _ := domain.NewUser(phone, pw)
 	u.Approve()
 	u.ClearEvents()
 	return u
 }
 
 func TestSignInService_Success(t *testing.T) {
+	t.Parallel()
+
 	svc := &domain.SignInService{}
 	u := activeApprovedUser(t)
 
 	sess, err := svc.SignIn(u, "SecureP@ss1", domain.DeviceDesktop, "10.0.0.1", "TestAgent")
-	if err != nil {
-		t.Fatalf("SignIn: %v", err)
-	}
+	require.NoError(t, err)
 	if sess == nil {
 		t.Fatal("session should not be nil")
 	}
@@ -44,6 +45,8 @@ func TestSignInService_Success(t *testing.T) {
 }
 
 func TestSignInService_Inactive(t *testing.T) {
+	t.Parallel()
+
 	svc := &domain.SignInService{}
 	u := activeApprovedUser(t)
 	u.Deactivate()
@@ -56,10 +59,12 @@ func TestSignInService_Inactive(t *testing.T) {
 }
 
 func TestSignInService_NotApproved(t *testing.T) {
+	t.Parallel()
+
 	svc := &domain.SignInService{}
 	phone := mustPhone(t, "+998901234567")
 	pw := mustPassword(t, "SecureP@ss1")
-	u := domain.NewUser(phone, pw) // not approved
+	u, _ := domain.NewUser(phone, pw) // not approved
 
 	_, err := svc.SignIn(u, "SecureP@ss1", domain.DeviceDesktop, "10.0.0.1", "TestAgent")
 	if !errors.Is(err, domain.ErrUserNotApproved) {
@@ -68,6 +73,8 @@ func TestSignInService_NotApproved(t *testing.T) {
 }
 
 func TestSignInService_WrongPassword(t *testing.T) {
+	t.Parallel()
+
 	svc := &domain.SignInService{}
 	u := activeApprovedUser(t)
 
@@ -78,6 +85,8 @@ func TestSignInService_WrongPassword(t *testing.T) {
 }
 
 func TestSignInService_MaxSessions(t *testing.T) {
+	t.Parallel()
+
 	svc := &domain.SignInService{}
 	u := activeApprovedUser(t)
 

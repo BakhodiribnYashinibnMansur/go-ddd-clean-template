@@ -3,11 +3,11 @@ package query
 import (
 	"context"
 
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
 
 	appdto "gct/internal/context/iam/usersetting/application"
-	"gct/internal/platform/infrastructure/pgxutil"
+	"gct/internal/kernel/infrastructure/pgxutil"
 	"gct/internal/context/iam/usersetting/domain"
 )
 

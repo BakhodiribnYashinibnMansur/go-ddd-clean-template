@@ -1,11 +1,13 @@
 package domain
 
 import (
+	"fmt"
 	"hash/fnv"
 	"sort"
+	"strings"
 	"time"
 
-	shared "gct/internal/platform/domain"
+	shared "gct/internal/kernel/domain"
 
 	"github.com/google/uuid"
 )
@@ -24,7 +26,20 @@ type FeatureFlag struct {
 }
 
 // NewFeatureFlag creates a new FeatureFlag aggregate. isActive defaults to false.
-func NewFeatureFlag(name, key, description, flagType, defaultValue string, rolloutPercentage int) *FeatureFlag {
+// Returns an error if name, key, or flagType is empty after trim, or if rolloutPercentage is out of [0,100].
+func NewFeatureFlag(name, key, description, flagType, defaultValue string, rolloutPercentage int) (*FeatureFlag, error) {
+	if strings.TrimSpace(name) == "" {
+		return nil, fmt.Errorf("new_feature_flag: %s", "name is required")
+	}
+	if strings.TrimSpace(key) == "" {
+		return nil, fmt.Errorf("new_feature_flag: %s", "key is required")
+	}
+	if strings.TrimSpace(flagType) == "" {
+		return nil, fmt.Errorf("new_feature_flag: %s", "flagType is required")
+	}
+	if rolloutPercentage < 0 || rolloutPercentage > 100 {
+		return nil, fmt.Errorf("new_feature_flag: %s", "rolloutPercentage must be between 0 and 100")
+	}
 	return &FeatureFlag{
 		AggregateRoot:     shared.NewAggregateRoot(),
 		name:              name,
@@ -34,7 +49,7 @@ func NewFeatureFlag(name, key, description, flagType, defaultValue string, rollo
 		defaultValue:      defaultValue,
 		rolloutPercentage: rolloutPercentage,
 		isActive:          false,
-	}
+	}, nil
 }
 
 // ReconstructFeatureFlag rebuilds a FeatureFlag aggregate from persisted data. No events are raised.

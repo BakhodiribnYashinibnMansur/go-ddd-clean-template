@@ -10,6 +10,8 @@ import (
 )
 
 func TestNewSiteSetting(t *testing.T) {
+	t.Parallel()
+
 	s := domain.NewSiteSetting("site_name", "My Site", "string", "The name of the site")
 
 	if s.Key() != "site_name" {
@@ -27,6 +29,8 @@ func TestNewSiteSetting(t *testing.T) {
 }
 
 func TestSiteSetting_Update(t *testing.T) {
+	t.Parallel()
+
 	s := domain.NewSiteSetting("site_name", "My Site", "string", "desc")
 
 	newValue := "New Site Name"
@@ -46,6 +50,8 @@ func TestSiteSetting_Update(t *testing.T) {
 }
 
 func TestReconstructSiteSetting(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	now := time.Now()
 

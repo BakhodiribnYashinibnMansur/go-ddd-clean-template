@@ -4,18 +4,16 @@ import (
 	"context"
 
 	"gct/internal/context/iam/authz/domain"
-	"gct/internal/platform/application"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
-	"gct/internal/platform/infrastructure/pgxutil"
-
-	"github.com/google/uuid"
+	"gct/internal/kernel/application"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // UpdateRoleCommand represents a partial update to an existing role.
 // Nil pointer fields are left unchanged, enabling callers to modify name or description independently.
 type UpdateRoleCommand struct {
-	ID          uuid.UUID
+	ID          domain.RoleID
 	Name        *string
 	Description *string
 }
@@ -48,7 +46,7 @@ func (h *UpdateRoleHandler) Handle(ctx context.Context, cmd UpdateRoleCommand) (
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "UpdateRole", "role")()
 
-	role, err := h.repo.FindByID(ctx, cmd.ID)
+	role, err := h.repo.FindByID(ctx, cmd.ID.UUID())
 	if err != nil {
 		return apperrors.MapToServiceError(err)
 	}
@@ -61,12 +59,12 @@ func (h *UpdateRoleHandler) Handle(ctx context.Context, cmd UpdateRoleCommand) (
 	}
 
 	if err := h.repo.Update(ctx, role); err != nil {
-		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "UpdateRole", Entity: "role", EntityID: cmd.ID, Err: err}.KV()...)
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "UpdateRole", Entity: "role", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, role.Events()...); err != nil {
-		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "UpdateRole", Entity: "role", EntityID: cmd.ID, Err: err}.KV()...)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "UpdateRole", Entity: "role", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
 	}
 
 	return nil

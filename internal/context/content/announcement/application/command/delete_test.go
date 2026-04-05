@@ -4,19 +4,20 @@ import (
 	"context"
 	"testing"
 
-	"github.com/google/uuid"
+	"gct/internal/context/content/announcement/domain"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDeleteAnnouncementHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockAnnouncementRepo{}
 	handler := NewDeleteAnnouncementHandler(repo, &mockLogger{})
 
-	id := uuid.New()
+	id := domain.NewAnnouncementID()
 	err := handler.Handle(context.Background(), DeleteAnnouncementCommand{ID: id})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
-	if repo.deleted != id {
+	require.NoError(t, err)
+	if repo.deleted != id.UUID() {
 		t.Errorf("expected deleted ID %s, got %s", id, repo.deleted)
 	}
 }

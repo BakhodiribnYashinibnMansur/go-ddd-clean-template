@@ -12,8 +12,8 @@ import (
 	"gct/internal/context/iam/authz/application/command"
 	"gct/internal/context/iam/authz/application/query"
 	"gct/internal/context/iam/authz/domain"
-	"gct/internal/platform/application"
-	shared "gct/internal/platform/domain"
+	"gct/internal/kernel/application"
+	shared "gct/internal/kernel/domain"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -300,6 +300,8 @@ func defaultBCWithReadRepo(readRepo *mockAuthzReadRepository) *authz.BoundedCont
 // ---------------------------------------------------------------------------
 
 func TestHandler_CreateRole_Success(t *testing.T) {
+	t.Parallel()
+
 	bc, roleRepo, _ := defaultBC()
 	router := setupRouter(bc)
 
@@ -323,6 +325,8 @@ func TestHandler_CreateRole_Success(t *testing.T) {
 }
 
 func TestHandler_CreateRole_WithDescription(t *testing.T) {
+	t.Parallel()
+
 	bc, roleRepo, _ := defaultBC()
 	router := setupRouter(bc)
 
@@ -344,6 +348,8 @@ func TestHandler_CreateRole_WithDescription(t *testing.T) {
 }
 
 func TestHandler_CreateRole_BadRequest(t *testing.T) {
+	t.Parallel()
+
 	bc, _, _ := defaultBC()
 	router := setupRouter(bc)
 
@@ -359,6 +365,8 @@ func TestHandler_CreateRole_BadRequest(t *testing.T) {
 }
 
 func TestHandler_CreateRole_InvalidJSON(t *testing.T) {
+	t.Parallel()
+
 	bc, _, _ := defaultBC()
 	router := setupRouter(bc)
 
@@ -377,6 +385,8 @@ func TestHandler_CreateRole_InvalidJSON(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestHandler_ListRoles_Success(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockAuthzReadRepository{
 		listRolesFn: func(_ context.Context, _ shared.Pagination) ([]*domain.RoleView, int64, error) {
 			return []*domain.RoleView{
@@ -407,6 +417,8 @@ func TestHandler_ListRoles_Success(t *testing.T) {
 }
 
 func TestHandler_ListRoles_DefaultPagination(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockAuthzReadRepository{
 		listRolesFn: func(_ context.Context, _ shared.Pagination) ([]*domain.RoleView, int64, error) {
 			return []*domain.RoleView{}, 0, nil
@@ -429,6 +441,8 @@ func TestHandler_ListRoles_DefaultPagination(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestHandler_GetRole_Success(t *testing.T) {
+	t.Parallel()
+
 	roleID := uuid.New()
 	readRepo := &mockAuthzReadRepository{
 		getRoleFn: func(_ context.Context, id uuid.UUID) (*domain.RoleView, error) {
@@ -459,6 +473,8 @@ func TestHandler_GetRole_Success(t *testing.T) {
 }
 
 func TestHandler_GetRole_InvalidID(t *testing.T) {
+	t.Parallel()
+
 	bc, _, _ := defaultBC()
 	router := setupRouter(bc)
 
@@ -472,6 +488,8 @@ func TestHandler_GetRole_InvalidID(t *testing.T) {
 }
 
 func TestHandler_GetRole_NotFound(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockAuthzReadRepository{
 		getRoleFn: func(_ context.Context, _ uuid.UUID) (*domain.RoleView, error) {
 			return nil, domain.ErrRoleNotFound
@@ -494,6 +512,8 @@ func TestHandler_GetRole_NotFound(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestHandler_UpdateRole_Success(t *testing.T) {
+	t.Parallel()
+
 	existingRole := domain.NewRole("old-name")
 	roleRepo := &mockRoleRepository{
 		findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.Role, error) {
@@ -527,6 +547,8 @@ func TestHandler_UpdateRole_Success(t *testing.T) {
 }
 
 func TestHandler_UpdateRole_InvalidID(t *testing.T) {
+	t.Parallel()
+
 	bc, _, _ := defaultBC()
 	router := setupRouter(bc)
 
@@ -545,6 +567,8 @@ func TestHandler_UpdateRole_InvalidID(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestHandler_DeleteRole_Success(t *testing.T) {
+	t.Parallel()
+
 	bc, _, _ := defaultBC()
 	router := setupRouter(bc)
 
@@ -558,6 +582,8 @@ func TestHandler_DeleteRole_Success(t *testing.T) {
 }
 
 func TestHandler_DeleteRole_InvalidID(t *testing.T) {
+	t.Parallel()
+
 	bc, _, _ := defaultBC()
 	router := setupRouter(bc)
 
@@ -575,6 +601,8 @@ func TestHandler_DeleteRole_InvalidID(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestHandler_CreatePermission_Success(t *testing.T) {
+	t.Parallel()
+
 	bc, _, _ := defaultBC()
 	router := setupRouter(bc)
 
@@ -592,6 +620,8 @@ func TestHandler_CreatePermission_Success(t *testing.T) {
 }
 
 func TestHandler_CreatePermission_BadRequest(t *testing.T) {
+	t.Parallel()
+
 	bc, _, _ := defaultBC()
 	router := setupRouter(bc)
 
@@ -607,6 +637,8 @@ func TestHandler_CreatePermission_BadRequest(t *testing.T) {
 }
 
 func TestHandler_CreatePermission_WithParentID(t *testing.T) {
+	t.Parallel()
+
 	bc, _, _ := defaultBC()
 	router := setupRouter(bc)
 
@@ -629,6 +661,8 @@ func TestHandler_CreatePermission_WithParentID(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestHandler_ListPermissions_Success(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockAuthzReadRepository{
 		listPermsFn: func(_ context.Context, _ shared.Pagination) ([]*domain.PermissionView, int64, error) {
 			return []*domain.PermissionView{
@@ -662,6 +696,8 @@ func TestHandler_ListPermissions_Success(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestHandler_DeletePermission_Success(t *testing.T) {
+	t.Parallel()
+
 	bc, _, _ := defaultBC()
 	router := setupRouter(bc)
 
@@ -675,6 +711,8 @@ func TestHandler_DeletePermission_Success(t *testing.T) {
 }
 
 func TestHandler_DeletePermission_InvalidID(t *testing.T) {
+	t.Parallel()
+
 	bc, _, _ := defaultBC()
 	router := setupRouter(bc)
 
@@ -692,6 +730,8 @@ func TestHandler_DeletePermission_InvalidID(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestHandler_CreatePolicy_Success(t *testing.T) {
+	t.Parallel()
+
 	bc, _, _ := defaultBC()
 	router := setupRouter(bc)
 
@@ -715,6 +755,8 @@ func TestHandler_CreatePolicy_Success(t *testing.T) {
 }
 
 func TestHandler_CreatePolicy_BadRequest(t *testing.T) {
+	t.Parallel()
+
 	bc, _, _ := defaultBC()
 	router := setupRouter(bc)
 
@@ -730,6 +772,8 @@ func TestHandler_CreatePolicy_BadRequest(t *testing.T) {
 }
 
 func TestHandler_CreatePolicy_InvalidJSON(t *testing.T) {
+	t.Parallel()
+
 	bc, _, _ := defaultBC()
 	router := setupRouter(bc)
 
@@ -748,6 +792,8 @@ func TestHandler_CreatePolicy_InvalidJSON(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestHandler_ListPolicies_Success(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockAuthzReadRepository{
 		listPoliciesFn: func(_ context.Context, _ shared.Pagination) ([]*domain.PolicyView, int64, error) {
 			return []*domain.PolicyView{
@@ -781,6 +827,8 @@ func TestHandler_ListPolicies_Success(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestHandler_UpdatePolicy_Success(t *testing.T) {
+	t.Parallel()
+
 	existingPolicy := domain.NewPolicy(uuid.New(), domain.PolicyAllow)
 	policyRepo := &mockPolicyRepository{
 		findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.Policy, error) {
@@ -814,6 +862,8 @@ func TestHandler_UpdatePolicy_Success(t *testing.T) {
 }
 
 func TestHandler_UpdatePolicy_InvalidID(t *testing.T) {
+	t.Parallel()
+
 	bc, _, _ := defaultBC()
 	router := setupRouter(bc)
 
@@ -832,6 +882,8 @@ func TestHandler_UpdatePolicy_InvalidID(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestHandler_DeletePolicy_Success(t *testing.T) {
+	t.Parallel()
+
 	bc, _, _ := defaultBC()
 	router := setupRouter(bc)
 
@@ -845,6 +897,8 @@ func TestHandler_DeletePolicy_Success(t *testing.T) {
 }
 
 func TestHandler_DeletePolicy_InvalidID(t *testing.T) {
+	t.Parallel()
+
 	bc, _, _ := defaultBC()
 	router := setupRouter(bc)
 
@@ -862,6 +916,8 @@ func TestHandler_DeletePolicy_InvalidID(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestHandler_TogglePolicy_Success(t *testing.T) {
+	t.Parallel()
+
 	existingPolicy := domain.NewPolicy(uuid.New(), domain.PolicyAllow)
 	policyRepo := &mockPolicyRepository{
 		findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.Policy, error) {
@@ -890,6 +946,8 @@ func TestHandler_TogglePolicy_Success(t *testing.T) {
 }
 
 func TestHandler_TogglePolicy_InvalidID(t *testing.T) {
+	t.Parallel()
+
 	bc, _, _ := defaultBC()
 	router := setupRouter(bc)
 
@@ -907,6 +965,8 @@ func TestHandler_TogglePolicy_InvalidID(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestHandler_CreateScope_Success(t *testing.T) {
+	t.Parallel()
+
 	bc, _, _ := defaultBC()
 	router := setupRouter(bc)
 
@@ -924,6 +984,8 @@ func TestHandler_CreateScope_Success(t *testing.T) {
 }
 
 func TestHandler_CreateScope_BadRequest(t *testing.T) {
+	t.Parallel()
+
 	bc, _, _ := defaultBC()
 	router := setupRouter(bc)
 
@@ -943,6 +1005,8 @@ func TestHandler_CreateScope_BadRequest(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestHandler_ListScopes_Success(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockAuthzReadRepository{
 		listScopesFn: func(_ context.Context, _ shared.Pagination) ([]*domain.ScopeView, int64, error) {
 			return []*domain.ScopeView{
@@ -977,6 +1041,8 @@ func TestHandler_ListScopes_Success(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestHandler_DeleteScope_Success(t *testing.T) {
+	t.Parallel()
+
 	bc, _, _ := defaultBC()
 	router := setupRouter(bc)
 
@@ -994,6 +1060,8 @@ func TestHandler_DeleteScope_Success(t *testing.T) {
 }
 
 func TestHandler_DeleteScope_BadRequest(t *testing.T) {
+	t.Parallel()
+
 	bc, _, _ := defaultBC()
 	router := setupRouter(bc)
 
@@ -1013,6 +1081,8 @@ func TestHandler_DeleteScope_BadRequest(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestHandler_AssignPermission_Success(t *testing.T) {
+	t.Parallel()
+
 	bc, _, _ := defaultBC()
 	router := setupRouter(bc)
 
@@ -1032,6 +1102,8 @@ func TestHandler_AssignPermission_Success(t *testing.T) {
 }
 
 func TestHandler_AssignPermission_InvalidRoleID(t *testing.T) {
+	t.Parallel()
+
 	bc, _, _ := defaultBC()
 	router := setupRouter(bc)
 
@@ -1050,6 +1122,8 @@ func TestHandler_AssignPermission_InvalidRoleID(t *testing.T) {
 }
 
 func TestHandler_AssignPermission_BadRequest(t *testing.T) {
+	t.Parallel()
+
 	bc, _, _ := defaultBC()
 	router := setupRouter(bc)
 
@@ -1069,6 +1143,8 @@ func TestHandler_AssignPermission_BadRequest(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestHandler_AssignScope_Success(t *testing.T) {
+	t.Parallel()
+
 	bc, _, _ := defaultBC()
 	router := setupRouter(bc)
 
@@ -1087,6 +1163,8 @@ func TestHandler_AssignScope_Success(t *testing.T) {
 }
 
 func TestHandler_AssignScope_InvalidPermissionID(t *testing.T) {
+	t.Parallel()
+
 	bc, _, _ := defaultBC()
 	router := setupRouter(bc)
 
@@ -1104,6 +1182,8 @@ func TestHandler_AssignScope_InvalidPermissionID(t *testing.T) {
 }
 
 func TestHandler_AssignScope_BadRequest(t *testing.T) {
+	t.Parallel()
+
 	bc, _, _ := defaultBC()
 	router := setupRouter(bc)
 
@@ -1123,6 +1203,8 @@ func TestHandler_AssignScope_BadRequest(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestHandler_ListRoles_ResponseFormat(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockAuthzReadRepository{
 		listRolesFn: func(_ context.Context, _ shared.Pagination) ([]*domain.RoleView, int64, error) {
 			return []*domain.RoleView{
@@ -1150,6 +1232,8 @@ func TestHandler_ListRoles_ResponseFormat(t *testing.T) {
 }
 
 func TestHandler_CreateRole_ResponseFormat(t *testing.T) {
+	t.Parallel()
+
 	bc, _, _ := defaultBC()
 	router := setupRouter(bc)
 

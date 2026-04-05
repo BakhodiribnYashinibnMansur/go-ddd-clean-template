@@ -9,11 +9,11 @@ import (
 	access "gct/internal/context/iam/authz/application/query"
 	"gct/internal/context/iam/authz/domain"
 	"gct/internal/contract/ports"
-	shared "gct/internal/platform/domain"
-	"gct/internal/platform/domain/consts"
-	"gct/internal/platform/infrastructure/httpx"
-	"gct/internal/platform/infrastructure/httpx/response"
-	"gct/internal/platform/infrastructure/logger"
+	shared "gct/internal/kernel/domain"
+	"gct/internal/kernel/consts"
+	"gct/internal/kernel/infrastructure/httpx"
+	"gct/internal/kernel/infrastructure/httpx/response"
+	"gct/internal/kernel/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
 )
@@ -91,7 +91,7 @@ func (m *AuthzMiddleware) Authz(ctx *gin.Context) {
 
 	// 6. Check access via the Authz BC query handler.
 	allowed, err := m.checkAccess.Handle(ctx.Request.Context(), access.CheckAccessQuery{
-		RoleID:  *user.RoleID,
+		RoleID:  domain.RoleID(*user.RoleID),
 		Path:    path,
 		Method:  strings.ToUpper(method),
 		EvalCtx: evalCtx,

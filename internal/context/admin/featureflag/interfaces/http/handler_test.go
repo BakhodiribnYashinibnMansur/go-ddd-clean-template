@@ -13,8 +13,8 @@ import (
 	"gct/internal/context/admin/featureflag/application/command"
 	"gct/internal/context/admin/featureflag/application/query"
 	"gct/internal/context/admin/featureflag/domain"
-	"gct/internal/platform/application"
-	shared "gct/internal/platform/domain"
+	"gct/internal/kernel/application"
+	shared "gct/internal/kernel/domain"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -181,6 +181,8 @@ func setupRouter(repo *mockFeatureFlagRepo, rgRepo *mockRuleGroupRepo, readRepo 
 // --- Tests ---
 
 func TestHandler_Create_Success(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockFeatureFlagRepo{}
 	router := setupRouter(repo, &mockRuleGroupRepo{}, &mockReadRepo{})
 
@@ -201,6 +203,8 @@ func TestHandler_Create_Success(t *testing.T) {
 }
 
 func TestHandler_Create_BadRequest(t *testing.T) {
+	t.Parallel()
+
 	router := setupRouter(&mockFeatureFlagRepo{}, &mockRuleGroupRepo{}, &mockReadRepo{})
 
 	w := httptest.NewRecorder()
@@ -214,6 +218,8 @@ func TestHandler_Create_BadRequest(t *testing.T) {
 }
 
 func TestHandler_List_Success(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockReadRepo{
 		views: []*domain.FeatureFlagView{
 			{ID: uuid.New(), Name: "Flag 1", Key: "flag_1"},
@@ -232,6 +238,8 @@ func TestHandler_List_Success(t *testing.T) {
 }
 
 func TestHandler_Get_Success(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	readRepo := &mockReadRepo{
 		view: &domain.FeatureFlagView{ID: id, Name: "Flag", Key: "flag"},
@@ -248,6 +256,8 @@ func TestHandler_Get_Success(t *testing.T) {
 }
 
 func TestHandler_Get_InvalidID(t *testing.T) {
+	t.Parallel()
+
 	router := setupRouter(&mockFeatureFlagRepo{}, &mockRuleGroupRepo{}, &mockReadRepo{})
 
 	w := httptest.NewRecorder()
@@ -260,6 +270,8 @@ func TestHandler_Get_InvalidID(t *testing.T) {
 }
 
 func TestHandler_Delete_Success(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	repo := &mockFeatureFlagRepo{
 		findFn: func(_ context.Context, fid uuid.UUID) (*domain.FeatureFlag, error) {
@@ -279,6 +291,8 @@ func TestHandler_Delete_Success(t *testing.T) {
 }
 
 func TestHandler_Delete_InvalidID(t *testing.T) {
+	t.Parallel()
+
 	router := setupRouter(&mockFeatureFlagRepo{}, &mockRuleGroupRepo{}, &mockReadRepo{})
 
 	w := httptest.NewRecorder()
@@ -291,6 +305,8 @@ func TestHandler_Delete_InvalidID(t *testing.T) {
 }
 
 func TestHandler_Update_BadRequest(t *testing.T) {
+	t.Parallel()
+
 	router := setupRouter(&mockFeatureFlagRepo{}, &mockRuleGroupRepo{}, &mockReadRepo{})
 
 	w := httptest.NewRecorder()
@@ -304,6 +320,8 @@ func TestHandler_Update_BadRequest(t *testing.T) {
 }
 
 func TestHandler_CreateRuleGroup_Success(t *testing.T) {
+	t.Parallel()
+
 	flagID := uuid.New()
 	repo := &mockFeatureFlagRepo{
 		findFn: func(_ context.Context, id uuid.UUID) (*domain.FeatureFlag, error) {
@@ -335,6 +353,8 @@ func TestHandler_CreateRuleGroup_Success(t *testing.T) {
 }
 
 func TestHandler_CreateRuleGroup_InvalidFlagID(t *testing.T) {
+	t.Parallel()
+
 	router := setupRouter(&mockFeatureFlagRepo{}, &mockRuleGroupRepo{}, &mockReadRepo{})
 
 	body := CreateRuleGroupRequest{Name: "Test", Variation: "true"}
@@ -351,6 +371,8 @@ func TestHandler_CreateRuleGroup_InvalidFlagID(t *testing.T) {
 }
 
 func TestHandler_DeleteRuleGroup_InvalidID(t *testing.T) {
+	t.Parallel()
+
 	router := setupRouter(&mockFeatureFlagRepo{}, &mockRuleGroupRepo{}, &mockReadRepo{})
 
 	w := httptest.NewRecorder()
@@ -363,6 +385,8 @@ func TestHandler_DeleteRuleGroup_InvalidID(t *testing.T) {
 }
 
 func TestHandler_UpdateRuleGroup_InvalidID(t *testing.T) {
+	t.Parallel()
+
 	router := setupRouter(&mockFeatureFlagRepo{}, &mockRuleGroupRepo{}, &mockReadRepo{})
 
 	w := httptest.NewRecorder()
@@ -402,6 +426,8 @@ func setupRouterWithEvaluator(evalResults map[string]*query.EvalResult) *gin.Eng
 }
 
 func TestHandler_Evaluate_Success(t *testing.T) {
+	t.Parallel()
+
 	router := setupRouterWithEvaluator(map[string]*query.EvalResult{
 		"dark_mode": {Value: "true", FlagType: "bool"},
 	})
@@ -429,6 +455,8 @@ func TestHandler_Evaluate_Success(t *testing.T) {
 }
 
 func TestHandler_Evaluate_NotFound(t *testing.T) {
+	t.Parallel()
+
 	router := setupRouterWithEvaluator(nil)
 
 	body := EvaluateRequest{Key: "nonexistent", UserAttrs: nil}
@@ -445,6 +473,8 @@ func TestHandler_Evaluate_NotFound(t *testing.T) {
 }
 
 func TestHandler_Evaluate_BadRequest(t *testing.T) {
+	t.Parallel()
+
 	router := setupRouterWithEvaluator(nil)
 
 	w := httptest.NewRecorder()
@@ -458,6 +488,8 @@ func TestHandler_Evaluate_BadRequest(t *testing.T) {
 }
 
 func TestHandler_BatchEvaluate_Success(t *testing.T) {
+	t.Parallel()
+
 	router := setupRouterWithEvaluator(map[string]*query.EvalResult{
 		"flag_a": {Value: "true", FlagType: "bool"},
 		"flag_b": {Value: "dark", FlagType: "string"},
@@ -487,6 +519,8 @@ func TestHandler_BatchEvaluate_Success(t *testing.T) {
 }
 
 func TestHandler_BatchEvaluate_BadRequest(t *testing.T) {
+	t.Parallel()
+
 	router := setupRouterWithEvaluator(nil)
 
 	w := httptest.NewRecorder()

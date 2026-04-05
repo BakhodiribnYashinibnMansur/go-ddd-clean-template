@@ -1,7 +1,7 @@
 package query
 
 import (
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
@@ -10,6 +10,7 @@ import (
 	"gct/internal/context/ops/systemerror/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 // --- Mocks ---
@@ -46,6 +47,8 @@ var errRepo = errors.New("repo failure")
 // --- Tests: GetSystemError ---
 
 func TestGetSystemErrorHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	readRepo := &mockReadRepo{
 		view: &domain.SystemErrorView{
@@ -58,10 +61,8 @@ func TestGetSystemErrorHandler_Handle(t *testing.T) {
 	}
 
 	handler := NewGetSystemErrorHandler(readRepo, logger.Noop())
-	result, err := handler.Handle(context.Background(), GetSystemErrorQuery{ID: id})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	result, err := handler.Handle(context.Background(), GetSystemErrorQuery{ID: domain.SystemErrorID(id)})
+	require.NoError(t, err)
 	if result == nil {
 		t.Fatal("expected result")
 	}
@@ -74,24 +75,30 @@ func TestGetSystemErrorHandler_Handle(t *testing.T) {
 }
 
 func TestGetSystemErrorHandler_NotFound(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockReadRepo{}
 	handler := NewGetSystemErrorHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), GetSystemErrorQuery{ID: uuid.New()})
+	_, err := handler.Handle(context.Background(), GetSystemErrorQuery{ID: domain.NewSystemErrorID()})
 	if err == nil {
 		t.Fatal("expected error for not found")
 	}
 }
 
 func TestGetSystemErrorHandler_RepoError(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &errorReadRepo{err: errRepo}
 	handler := NewGetSystemErrorHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), GetSystemErrorQuery{ID: uuid.New()})
+	_, err := handler.Handle(context.Background(), GetSystemErrorQuery{ID: domain.NewSystemErrorID()})
 	if err == nil {
 		t.Fatal("expected error from repo")
 	}
 }
 
 func TestGetSystemErrorHandler_AllFieldsMapped(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	stack := "trace"
 	svc := "api"
@@ -125,10 +132,8 @@ func TestGetSystemErrorHandler_AllFieldsMapped(t *testing.T) {
 	}
 
 	handler := NewGetSystemErrorHandler(readRepo, logger.Noop())
-	result, err := handler.Handle(context.Background(), GetSystemErrorQuery{ID: id})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	result, err := handler.Handle(context.Background(), GetSystemErrorQuery{ID: domain.SystemErrorID(id)})
+	require.NoError(t, err)
 	if result.StackTrace == nil || *result.StackTrace != "trace" {
 		t.Error("stack trace not mapped")
 	}

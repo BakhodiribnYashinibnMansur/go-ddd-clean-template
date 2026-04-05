@@ -5,6 +5,7 @@ import (
 	"time"
 
 	appdto "gct/internal/context/iam/session/application"
+	sessiondomain "gct/internal/context/iam/session/domain"
 
 	"github.com/google/uuid"
 )
@@ -42,7 +43,7 @@ func TestSessionsFilter_NoFilters(t *testing.T) {
 }
 
 func TestSessionsFilter_UserIDOnly(t *testing.T) {
-	uid := uuid.New()
+	uid := sessiondomain.NewUserID()
 	f := appdto.SessionsFilter{UserID: &uid, Limit: 10}
 	if f.UserID == nil || *f.UserID != uid {
 		t.Errorf("expected user_id %v", uid)
@@ -61,7 +62,7 @@ func TestSessionsFilter_RevokedOnly(t *testing.T) {
 }
 
 func TestSessionsFilter_AllFilters(t *testing.T) {
-	uid := uuid.New()
+	uid := sessiondomain.NewUserID()
 	rev := true
 	f := appdto.SessionsFilter{UserID: &uid, Revoked: &rev, Limit: 20, Offset: 5}
 	if *f.UserID != uid {

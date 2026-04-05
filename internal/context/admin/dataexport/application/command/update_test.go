@@ -8,12 +8,15 @@ import (
 
 	"gct/internal/context/admin/dataexport/application/command"
 	"gct/internal/context/admin/dataexport/domain"
-	shared "gct/internal/platform/domain"
+	shared "gct/internal/kernel/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func TestUpdateDataExportHandler_StatusProcessing(t *testing.T) {
+	t.Parallel()
+
 	exportID := uuid.New()
 	existing := domain.ReconstructDataExport(
 		exportID, time.Now(), time.Now(),
@@ -34,14 +37,12 @@ func TestUpdateDataExportHandler_StatusProcessing(t *testing.T) {
 
 	status := domain.ExportStatusProcessing
 	cmd := command.UpdateDataExportCommand{
-		ID:     exportID,
+		ID:     domain.DataExportID(exportID),
 		Status: &status,
 	}
 
 	err := h.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
-	}
+	require.NoError(t, err)
 	if repo.updatedEntity == nil {
 		t.Fatal("expected entity to be updated")
 	}
@@ -51,6 +52,8 @@ func TestUpdateDataExportHandler_StatusProcessing(t *testing.T) {
 }
 
 func TestUpdateDataExportHandler_StatusCompleted(t *testing.T) {
+	t.Parallel()
+
 	exportID := uuid.New()
 	existing := domain.ReconstructDataExport(
 		exportID, time.Now(), time.Now(),
@@ -72,15 +75,13 @@ func TestUpdateDataExportHandler_StatusCompleted(t *testing.T) {
 	status := domain.ExportStatusCompleted
 	fileURL := "https://example.com/export.csv"
 	cmd := command.UpdateDataExportCommand{
-		ID:      exportID,
+		ID:      domain.DataExportID(exportID),
 		Status:  &status,
 		FileURL: &fileURL,
 	}
 
 	err := h.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
-	}
+	require.NoError(t, err)
 	if repo.updatedEntity.Status() != domain.ExportStatusCompleted {
 		t.Fatalf("expected status COMPLETED, got %s", repo.updatedEntity.Status())
 	}
@@ -93,6 +94,8 @@ func TestUpdateDataExportHandler_StatusCompleted(t *testing.T) {
 }
 
 func TestUpdateDataExportHandler_StatusFailed(t *testing.T) {
+	t.Parallel()
+
 	exportID := uuid.New()
 	existing := domain.ReconstructDataExport(
 		exportID, time.Now(), time.Now(),
@@ -114,15 +117,13 @@ func TestUpdateDataExportHandler_StatusFailed(t *testing.T) {
 	status := domain.ExportStatusFailed
 	errMsg := "disk full"
 	cmd := command.UpdateDataExportCommand{
-		ID:     exportID,
+		ID:     domain.DataExportID(exportID),
 		Status: &status,
 		Error:  &errMsg,
 	}
 
 	err := h.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
-	}
+	require.NoError(t, err)
 	if repo.updatedEntity.Status() != domain.ExportStatusFailed {
 		t.Fatalf("expected status FAILED, got %s", repo.updatedEntity.Status())
 	}
@@ -132,6 +133,8 @@ func TestUpdateDataExportHandler_StatusFailed(t *testing.T) {
 }
 
 func TestUpdateDataExportHandler_NotFound(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockWriteRepo{}
 	eb := &mockEventBus{}
 	l := &mockLogger{}
@@ -139,7 +142,7 @@ func TestUpdateDataExportHandler_NotFound(t *testing.T) {
 
 	status := domain.ExportStatusProcessing
 	cmd := command.UpdateDataExportCommand{
-		ID:     uuid.New(),
+		ID:     domain.DataExportID(uuid.New()),
 		Status: &status,
 	}
 
@@ -153,6 +156,8 @@ func TestUpdateDataExportHandler_NotFound(t *testing.T) {
 }
 
 func TestUpdateDataExportHandler_RepoUpdateError(t *testing.T) {
+	t.Parallel()
+
 	exportID := uuid.New()
 	existing := domain.ReconstructDataExport(
 		exportID, time.Now(), time.Now(),
@@ -177,7 +182,7 @@ func TestUpdateDataExportHandler_RepoUpdateError(t *testing.T) {
 
 	status := domain.ExportStatusProcessing
 	cmd := command.UpdateDataExportCommand{
-		ID:     exportID,
+		ID:     domain.DataExportID(exportID),
 		Status: &status,
 	}
 
@@ -191,6 +196,8 @@ func TestUpdateDataExportHandler_RepoUpdateError(t *testing.T) {
 }
 
 func TestUpdateDataExportHandler_NilStatus(t *testing.T) {
+	t.Parallel()
+
 	exportID := uuid.New()
 	existing := domain.ReconstructDataExport(
 		exportID, time.Now(), time.Now(),
@@ -209,18 +216,18 @@ func TestUpdateDataExportHandler_NilStatus(t *testing.T) {
 	l := &mockLogger{}
 	h := command.NewUpdateDataExportHandler(repo, eb, l)
 
-	cmd := command.UpdateDataExportCommand{ID: exportID}
+	cmd := command.UpdateDataExportCommand{ID: domain.DataExportID(exportID)}
 
 	err := h.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
-	}
+	require.NoError(t, err)
 	if repo.updatedEntity.Status() != domain.ExportStatusPending {
 		t.Fatalf("expected status unchanged (PENDING), got %s", repo.updatedEntity.Status())
 	}
 }
 
 func TestUpdateDataExportHandler_EventBusError(t *testing.T) {
+	t.Parallel()
+
 	exportID := uuid.New()
 	existing := domain.ReconstructDataExport(
 		exportID, time.Now(), time.Now(),
@@ -245,14 +252,12 @@ func TestUpdateDataExportHandler_EventBusError(t *testing.T) {
 
 	status := domain.ExportStatusProcessing
 	cmd := command.UpdateDataExportCommand{
-		ID:     exportID,
+		ID:     domain.DataExportID(exportID),
 		Status: &status,
 	}
 
 	err := h.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error (event bus failure is non-fatal), got %v", err)
-	}
+	require.NoError(t, err)
 	if repo.updatedEntity == nil {
 		t.Fatal("entity should still be updated even if event bus fails")
 	}

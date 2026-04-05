@@ -11,8 +11,8 @@ import (
 	access "gct/internal/context/iam/authz/application/query"
 	"gct/internal/context/iam/authz/domain"
 	"gct/internal/contract/ports"
-	shared "gct/internal/platform/domain"
-	"gct/internal/platform/domain/consts"
+	shared "gct/internal/kernel/domain"
+	"gct/internal/kernel/consts"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -148,6 +148,8 @@ func validSession() *shared.AuthSession {
 // ---------------------------------------------------------------------------
 
 func TestAuthzMiddleware_NoSession(t *testing.T) {
+	t.Parallel()
+
 	mw := setupMiddleware(nil, nil)
 
 	w := performRequest(mw, "GET", "/api/v1/users", nil)
@@ -158,6 +160,8 @@ func TestAuthzMiddleware_NoSession(t *testing.T) {
 }
 
 func TestAuthzMiddleware_InvalidSessionType(t *testing.T) {
+	t.Parallel()
+
 	mw := setupMiddleware(nil, nil)
 
 	w := performRequest(mw, "GET", "/api/v1/users", func(c *gin.Context) {
@@ -170,6 +174,8 @@ func TestAuthzMiddleware_InvalidSessionType(t *testing.T) {
 }
 
 func TestAuthzMiddleware_UserNotFound(t *testing.T) {
+	t.Parallel()
+
 	session := validSession()
 
 	mw := setupMiddleware(nil, func(_ context.Context, _ uuid.UUID) (*shared.AuthUser, error) {
@@ -186,6 +192,8 @@ func TestAuthzMiddleware_UserNotFound(t *testing.T) {
 }
 
 func TestAuthzMiddleware_UserHasNoRole(t *testing.T) {
+	t.Parallel()
+
 	session := validSession()
 
 	mw := setupMiddleware(nil, func(_ context.Context, userID uuid.UUID) (*shared.AuthUser, error) {
@@ -206,6 +214,8 @@ func TestAuthzMiddleware_UserHasNoRole(t *testing.T) {
 }
 
 func TestAuthzMiddleware_AccessAllowed(t *testing.T) {
+	t.Parallel()
+
 	session := validSession()
 	roleID := uuid.New()
 
@@ -232,6 +242,8 @@ func TestAuthzMiddleware_AccessAllowed(t *testing.T) {
 }
 
 func TestAuthzMiddleware_AccessDenied(t *testing.T) {
+	t.Parallel()
+
 	session := validSession()
 	roleID := uuid.New()
 
@@ -258,6 +270,8 @@ func TestAuthzMiddleware_AccessDenied(t *testing.T) {
 }
 
 func TestAuthzMiddleware_CheckAccessError(t *testing.T) {
+	t.Parallel()
+
 	session := validSession()
 	roleID := uuid.New()
 
@@ -284,6 +298,8 @@ func TestAuthzMiddleware_CheckAccessError(t *testing.T) {
 }
 
 func TestAuthzMiddleware_CorrectRoleIDPassedToCheckAccess(t *testing.T) {
+	t.Parallel()
+
 	session := validSession()
 	roleID := uuid.New()
 	var capturedRoleID uuid.UUID
@@ -322,6 +338,8 @@ func TestAuthzMiddleware_CorrectRoleIDPassedToCheckAccess(t *testing.T) {
 }
 
 func TestAuthzMiddleware_CorrectUserIDPassedToFindUser(t *testing.T) {
+	t.Parallel()
+
 	session := validSession()
 	var capturedUserID uuid.UUID
 
@@ -343,6 +361,8 @@ func TestAuthzMiddleware_CorrectUserIDPassedToFindUser(t *testing.T) {
 }
 
 func TestAuthzMiddleware_DifferentHTTPMethods(t *testing.T) {
+	t.Parallel()
+
 	session := validSession()
 	roleID := uuid.New()
 
@@ -350,6 +370,7 @@ func TestAuthzMiddleware_DifferentHTTPMethods(t *testing.T) {
 
 	for _, method := range methods {
 		t.Run(method, func(t *testing.T) {
+			t.Parallel()
 			var capturedMethod string
 
 			mw := setupMiddleware(
@@ -381,6 +402,8 @@ func TestAuthzMiddleware_DifferentHTTPMethods(t *testing.T) {
 }
 
 func TestAuthzMiddleware_AbortsPipelineOnDenied(t *testing.T) {
+	t.Parallel()
+
 	session := validSession()
 	roleID := uuid.New()
 	handlerCalled := false
@@ -425,6 +448,8 @@ func TestAuthzMiddleware_AbortsPipelineOnDenied(t *testing.T) {
 }
 
 func TestAuthzMiddleware_AllowsPipelineOnGranted(t *testing.T) {
+	t.Parallel()
+
 	session := validSession()
 	roleID := uuid.New()
 	handlerCalled := false

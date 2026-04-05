@@ -3,10 +3,10 @@ package command
 import (
 	"context"
 
-	"gct/internal/platform/application"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
-	"gct/internal/platform/infrastructure/pgxutil"
+	"gct/internal/kernel/application"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/pgxutil"
 	"gct/internal/context/ops/systemerror/domain"
 
 	"github.com/google/uuid"
@@ -15,7 +15,7 @@ import (
 // ResolveErrorCommand represents an intent to mark a system error as resolved by a specific user.
 // This is an irreversible status transition — once resolved, the error cannot be re-opened.
 type ResolveErrorCommand struct {
-	ID         uuid.UUID
+	ID         domain.SystemErrorID
 	ResolvedBy uuid.UUID
 }
 
@@ -47,7 +47,7 @@ func (h *ResolveErrorHandler) Handle(ctx context.Context, cmd ResolveErrorComman
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "ResolveError", "system_error")()
 
-	se, err := h.repo.FindByID(ctx, cmd.ID)
+	se, err := h.repo.FindByID(ctx, cmd.ID.UUID())
 	if err != nil {
 		return apperrors.MapToServiceError(err)
 	}
@@ -55,12 +55,12 @@ func (h *ResolveErrorHandler) Handle(ctx context.Context, cmd ResolveErrorComman
 	se.Resolve(cmd.ResolvedBy)
 
 	if err := h.repo.Update(ctx, se); err != nil {
-		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "ResolveError", Entity: "system_error", EntityID: cmd.ID, Err: err}.KV()...)
+		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "ResolveError", Entity: "system_error", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, se.Events()...); err != nil {
-		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "ResolveError", Entity: "system_error", EntityID: cmd.ID, Err: err}.KV()...)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "ResolveError", Entity: "system_error", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
 	}
 
 	return nil

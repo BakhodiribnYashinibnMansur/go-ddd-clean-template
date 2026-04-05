@@ -6,9 +6,10 @@ import (
 	"testing"
 
 	"gct/internal/context/admin/integration/domain"
-	"gct/internal/platform/domain/consts"
+	"gct/internal/kernel/consts"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 // ---------------------------------------------------------------------------
@@ -64,6 +65,8 @@ func (m *cacheTestLogger) Fatalc(_ context.Context, _ string, _ ...any) {}
 // ---------------------------------------------------------------------------
 
 func TestCacheService_InitCache_Success(t *testing.T) {
+	t.Parallel()
+
 	id1 := uuid.New()
 	id2 := uuid.New()
 	repo := &cacheTestReadRepo{
@@ -91,9 +94,7 @@ func TestCacheService_InitCache_Success(t *testing.T) {
 	svc := NewCacheService(repo, l)
 
 	err := svc.InitCache(context.Background())
-	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
-	}
+	require.NoError(t, err)
 
 	// Verify FindByID
 	ci, ok := svc.FindByID(id1)
@@ -134,6 +135,8 @@ func TestCacheService_InitCache_Success(t *testing.T) {
 }
 
 func TestCacheService_InitCache_Empty(t *testing.T) {
+	t.Parallel()
+
 	repo := &cacheTestReadRepo{
 		views: []*domain.IntegrationView{},
 		total: 0,
@@ -142,9 +145,7 @@ func TestCacheService_InitCache_Empty(t *testing.T) {
 	svc := NewCacheService(repo, l)
 
 	err := svc.InitCache(context.Background())
-	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
-	}
+	require.NoError(t, err)
 
 	_, ok := svc.FindByID(uuid.New())
 	if ok {
@@ -158,6 +159,8 @@ func TestCacheService_InitCache_Empty(t *testing.T) {
 }
 
 func TestCacheService_InitCache_RepoError(t *testing.T) {
+	t.Parallel()
+
 	repoErr := errors.New("database unavailable")
 	repo := &cacheTestReadRepo{err: repoErr}
 	l := &cacheTestLogger{}
@@ -173,6 +176,8 @@ func TestCacheService_InitCache_RepoError(t *testing.T) {
 }
 
 func TestCacheService_InitCache_EmptyAPIKeySkipped(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	repo := &cacheTestReadRepo{
 		views: []*domain.IntegrationView{
@@ -190,9 +195,7 @@ func TestCacheService_InitCache_EmptyAPIKeySkipped(t *testing.T) {
 	svc := NewCacheService(repo, l)
 
 	err := svc.InitCache(context.Background())
-	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
-	}
+	require.NoError(t, err)
 
 	// Should be findable by ID
 	ci, ok := svc.FindByID(id)
@@ -215,6 +218,8 @@ func TestCacheService_InitCache_EmptyAPIKeySkipped(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestCacheService_FindByAPIKey_NotFound(t *testing.T) {
+	t.Parallel()
+
 	repo := &cacheTestReadRepo{views: []*domain.IntegrationView{}}
 	l := &cacheTestLogger{}
 	svc := NewCacheService(repo, l)
@@ -227,6 +232,8 @@ func TestCacheService_FindByAPIKey_NotFound(t *testing.T) {
 }
 
 func TestCacheService_FindByID_NotFound(t *testing.T) {
+	t.Parallel()
+
 	repo := &cacheTestReadRepo{views: []*domain.IntegrationView{}}
 	l := &cacheTestLogger{}
 	svc := NewCacheService(repo, l)
@@ -243,6 +250,8 @@ func TestCacheService_FindByID_NotFound(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestCacheService_InvalidateCache_IntegrationsTable(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	repo := &cacheTestReadRepo{
 		views: []*domain.IntegrationView{
@@ -254,9 +263,7 @@ func TestCacheService_InvalidateCache_IntegrationsTable(t *testing.T) {
 	svc := NewCacheService(repo, l)
 
 	err := svc.InvalidateCache(context.Background(), consts.TableIntegrations)
-	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
-	}
+	require.NoError(t, err)
 
 	// After invalidation, cache should have data from the repo
 	ci, ok := svc.FindByID(id)
@@ -269,6 +276,8 @@ func TestCacheService_InvalidateCache_IntegrationsTable(t *testing.T) {
 }
 
 func TestCacheService_InvalidateCache_APIKeysTable(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	repo := &cacheTestReadRepo{
 		views: []*domain.IntegrationView{
@@ -280,9 +289,7 @@ func TestCacheService_InvalidateCache_APIKeysTable(t *testing.T) {
 	svc := NewCacheService(repo, l)
 
 	err := svc.InvalidateCache(context.Background(), consts.TableAPIKeys)
-	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
-	}
+	require.NoError(t, err)
 
 	ci, ok := svc.FindByAPIKey("smtp-key")
 	if !ok {
@@ -294,6 +301,8 @@ func TestCacheService_InvalidateCache_APIKeysTable(t *testing.T) {
 }
 
 func TestCacheService_InvalidateCache_UnrelatedTable(t *testing.T) {
+	t.Parallel()
+
 	repo := &cacheTestReadRepo{
 		views: []*domain.IntegrationView{},
 		total: 0,
@@ -303,12 +312,12 @@ func TestCacheService_InvalidateCache_UnrelatedTable(t *testing.T) {
 
 	// Unrelated table should not trigger re-init
 	err := svc.InvalidateCache(context.Background(), "some_other_table")
-	if err != nil {
-		t.Fatalf("expected no error for unrelated table, got %v", err)
-	}
+	require.NoError(t, err)
 }
 
 func TestCacheService_InvalidateCache_RepoError(t *testing.T) {
+	t.Parallel()
+
 	repoErr := errors.New("db connection lost")
 	repo := &cacheTestReadRepo{err: repoErr}
 	l := &cacheTestLogger{}

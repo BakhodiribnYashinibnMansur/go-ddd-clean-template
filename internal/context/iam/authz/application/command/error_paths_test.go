@@ -16,6 +16,8 @@ var errDB = errors.New("database connection failed")
 // --- Role error paths ---
 
 func TestCreateRoleHandler_SaveError(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockRoleRepository{}
 	// Override Save to return an error
 	errRepo := &errMockRoleRepository{mockRoleRepository: repo, saveErr: errDB}
@@ -61,6 +63,8 @@ func (m *errMockRoleRepository) Delete(ctx context.Context, id uuid.UUID) error 
 }
 
 func TestUpdateRoleHandler_UpdateError(t *testing.T) {
+	t.Parallel()
+
 	roleID := uuid.New()
 	existingRole := domain.ReconstructRole(roleID, time.Now(), time.Now(), nil, "admin", nil, nil)
 
@@ -81,7 +85,7 @@ func TestUpdateRoleHandler_UpdateError(t *testing.T) {
 	handler := NewUpdateRoleHandler(repo, eventBus, log)
 
 	newName := "updated"
-	cmd := UpdateRoleCommand{ID: roleID, Name: &newName}
+	cmd := UpdateRoleCommand{ID: domain.RoleID(roleID), Name: &newName}
 
 	err := handler.Handle(context.Background(), cmd)
 	if !errors.Is(err, errDB) {
@@ -90,6 +94,8 @@ func TestUpdateRoleHandler_UpdateError(t *testing.T) {
 }
 
 func TestDeleteRoleHandler_DeleteError(t *testing.T) {
+	t.Parallel()
+
 	repo := &errMockRoleRepository{
 		mockRoleRepository: &mockRoleRepository{},
 		deleteErr:          errDB,
@@ -99,7 +105,7 @@ func TestDeleteRoleHandler_DeleteError(t *testing.T) {
 
 	handler := NewDeleteRoleHandler(repo, eventBus, log)
 
-	cmd := DeleteRoleCommand{ID: uuid.New()}
+	cmd := DeleteRoleCommand{ID: domain.RoleID(uuid.New())}
 
 	err := handler.Handle(context.Background(), cmd)
 	if !errors.Is(err, errDB) {
@@ -114,6 +120,8 @@ func TestDeleteRoleHandler_DeleteError(t *testing.T) {
 // --- Permission error paths ---
 
 func TestCreatePermissionHandler_SaveError(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockPermissionRepository{
 		saveFn: func(_ context.Context, _ *domain.Permission) error {
 			return errDB
@@ -132,6 +140,8 @@ func TestCreatePermissionHandler_SaveError(t *testing.T) {
 }
 
 func TestDeletePermissionHandler_DeleteError(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockPermissionRepository{
 		deleteFn: func(_ context.Context, _ uuid.UUID) error {
 			return errDB
@@ -141,7 +151,7 @@ func TestDeletePermissionHandler_DeleteError(t *testing.T) {
 
 	handler := NewDeletePermissionHandler(repo, log)
 
-	cmd := DeletePermissionCommand{ID: uuid.New()}
+	cmd := DeletePermissionCommand{ID: domain.PermissionID(uuid.New())}
 
 	err := handler.Handle(context.Background(), cmd)
 	if !errors.Is(err, errDB) {
@@ -152,6 +162,8 @@ func TestDeletePermissionHandler_DeleteError(t *testing.T) {
 // --- Policy error paths ---
 
 func TestCreatePolicyHandler_SaveError(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockPolicyRepository{
 		saveFn: func(_ context.Context, _ *domain.Policy) error {
 			return errDB
@@ -162,7 +174,7 @@ func TestCreatePolicyHandler_SaveError(t *testing.T) {
 	handler := NewCreatePolicyHandler(repo, log)
 
 	cmd := CreatePolicyCommand{
-		PermissionID: uuid.New(),
+		PermissionID: domain.PermissionID(uuid.New()),
 		Effect:       domain.PolicyAllow,
 		Priority:     1,
 	}
@@ -174,6 +186,8 @@ func TestCreatePolicyHandler_SaveError(t *testing.T) {
 }
 
 func TestUpdatePolicyHandler_UpdateError(t *testing.T) {
+	t.Parallel()
+
 	policyID := uuid.New()
 	existingPolicy := domain.ReconstructPolicy(
 		policyID, time.Now(), time.Now(), nil,
@@ -196,7 +210,7 @@ func TestUpdatePolicyHandler_UpdateError(t *testing.T) {
 	handler := NewUpdatePolicyHandler(repo, log)
 
 	newEffect := domain.PolicyDeny
-	cmd := UpdatePolicyCommand{ID: policyID, Effect: &newEffect}
+	cmd := UpdatePolicyCommand{ID: domain.PolicyID(policyID), Effect: &newEffect}
 
 	err := handler.Handle(context.Background(), cmd)
 	if !errors.Is(err, errDB) {
@@ -205,6 +219,8 @@ func TestUpdatePolicyHandler_UpdateError(t *testing.T) {
 }
 
 func TestDeletePolicyHandler_DeleteError(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockPolicyRepository{
 		deleteFn: func(_ context.Context, _ uuid.UUID) error {
 			return errDB
@@ -214,7 +230,7 @@ func TestDeletePolicyHandler_DeleteError(t *testing.T) {
 
 	handler := NewDeletePolicyHandler(repo, log)
 
-	cmd := DeletePolicyCommand{ID: uuid.New()}
+	cmd := DeletePolicyCommand{ID: domain.PolicyID(uuid.New())}
 
 	err := handler.Handle(context.Background(), cmd)
 	if !errors.Is(err, errDB) {
@@ -223,6 +239,8 @@ func TestDeletePolicyHandler_DeleteError(t *testing.T) {
 }
 
 func TestTogglePolicyHandler_UpdateError(t *testing.T) {
+	t.Parallel()
+
 	policyID := uuid.New()
 	existingPolicy := domain.ReconstructPolicy(
 		policyID, time.Now(), time.Now(), nil,
@@ -244,7 +262,7 @@ func TestTogglePolicyHandler_UpdateError(t *testing.T) {
 
 	handler := NewTogglePolicyHandler(repo, log)
 
-	cmd := TogglePolicyCommand{ID: policyID}
+	cmd := TogglePolicyCommand{ID: domain.PolicyID(policyID)}
 
 	err := handler.Handle(context.Background(), cmd)
 	if !errors.Is(err, errDB) {
@@ -255,6 +273,8 @@ func TestTogglePolicyHandler_UpdateError(t *testing.T) {
 // --- Scope error paths ---
 
 func TestCreateScopeHandler_SaveError(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockScopeRepository{
 		saveFn: func(_ context.Context, _ domain.Scope) error {
 			return errDB
@@ -273,6 +293,8 @@ func TestCreateScopeHandler_SaveError(t *testing.T) {
 }
 
 func TestDeleteScopeHandler_DeleteError(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockScopeRepository{
 		deleteFn: func(_ context.Context, _, _ string) error {
 			return errDB
@@ -293,6 +315,8 @@ func TestDeleteScopeHandler_DeleteError(t *testing.T) {
 // --- Assign error paths ---
 
 func TestAssignPermissionHandler_AssignError(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockRolePermissionRepository{
 		assignFn: func(_ context.Context, _, _ uuid.UUID) error {
 			return errDB
@@ -304,8 +328,8 @@ func TestAssignPermissionHandler_AssignError(t *testing.T) {
 	handler := NewAssignPermissionHandler(repo, eventBus, log)
 
 	cmd := AssignPermissionCommand{
-		RoleID:       uuid.New(),
-		PermissionID: uuid.New(),
+		RoleID:       domain.RoleID(uuid.New()),
+		PermissionID: domain.PermissionID(uuid.New()),
 	}
 
 	err := handler.Handle(context.Background(), cmd)
@@ -319,6 +343,8 @@ func TestAssignPermissionHandler_AssignError(t *testing.T) {
 }
 
 func TestAssignScopeHandler_AssignError(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockPermissionScopeRepository{
 		assignFn: func(_ context.Context, _ uuid.UUID, _, _ string) error {
 			return errDB
@@ -329,7 +355,7 @@ func TestAssignScopeHandler_AssignError(t *testing.T) {
 	handler := NewAssignScopeHandler(repo, log)
 
 	cmd := AssignScopeCommand{
-		PermissionID: uuid.New(),
+		PermissionID: domain.PermissionID(uuid.New()),
 		Path:         "/fail",
 		Method:       "POST",
 	}

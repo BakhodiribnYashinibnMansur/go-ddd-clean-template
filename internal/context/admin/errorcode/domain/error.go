@@ -1,6 +1,6 @@
 package domain
 
-import shared "gct/internal/platform/domain"
+import shared "gct/internal/kernel/domain"
 
 // Domain errors for the errorcode bounded context.
 var (

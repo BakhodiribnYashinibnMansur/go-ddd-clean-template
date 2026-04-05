@@ -48,6 +48,8 @@ var errUpdate = errors.New("update failed")
 var errDelete = errors.New("delete failed")
 
 func TestCreateSiteSettingHandler_SaveError(t *testing.T) {
+	t.Parallel()
+
 	repo := &errorRepo{saveErr: errSave}
 	eb := &mockEventBus{}
 	log := &mockLogger{}
@@ -62,6 +64,8 @@ func TestCreateSiteSettingHandler_SaveError(t *testing.T) {
 }
 
 func TestUpdateSiteSettingHandler_FindError(t *testing.T) {
+	t.Parallel()
+
 	repo := &errorRepo{}
 	eb := &mockEventBus{}
 	log := &mockLogger{}
@@ -69,7 +73,7 @@ func TestUpdateSiteSettingHandler_FindError(t *testing.T) {
 	handler := NewUpdateSiteSettingHandler(repo, eb, log)
 	newVal := "new"
 	err := handler.Handle(context.Background(), UpdateSiteSettingCommand{
-		ID:    uuid.New(),
+		ID:    domain.SiteSettingID(uuid.New()),
 		Value: &newVal,
 	})
 	if err == nil {
@@ -78,6 +82,8 @@ func TestUpdateSiteSettingHandler_FindError(t *testing.T) {
 }
 
 func TestUpdateSiteSettingHandler_UpdateError(t *testing.T) {
+	t.Parallel()
+
 	ss := domain.NewSiteSetting("k", "v", "t", "d")
 
 	repo := &errorRepo{
@@ -90,7 +96,7 @@ func TestUpdateSiteSettingHandler_UpdateError(t *testing.T) {
 	handler := NewUpdateSiteSettingHandler(repo, eb, log)
 	newVal := "updated"
 	err := handler.Handle(context.Background(), UpdateSiteSettingCommand{
-		ID:    ss.ID(),
+		ID:    domain.SiteSettingID(ss.ID()),
 		Value: &newVal,
 	})
 	if !errors.Is(err, errUpdate) {
@@ -99,11 +105,13 @@ func TestUpdateSiteSettingHandler_UpdateError(t *testing.T) {
 }
 
 func TestDeleteSiteSettingHandler_DeleteError(t *testing.T) {
+	t.Parallel()
+
 	repo := &errorRepo{deleteErr: errDelete}
 	log := &mockLogger{}
 
 	handler := NewDeleteSiteSettingHandler(repo, log)
-	err := handler.Handle(context.Background(), DeleteSiteSettingCommand{ID: uuid.New()})
+	err := handler.Handle(context.Background(), DeleteSiteSettingCommand{ID: domain.SiteSettingID(uuid.New())})
 	if !errors.Is(err, errDelete) {
 		t.Fatalf("expected errDelete, got: %v", err)
 	}

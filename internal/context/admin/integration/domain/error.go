@@ -1,6 +1,6 @@
 package domain
 
-import shared "gct/internal/platform/domain"
+import shared "gct/internal/kernel/domain"
 
 // Domain errors for the integration bounded context.
 // Matched by application-layer handlers to produce appropriate HTTP status codes.

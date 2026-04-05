@@ -13,8 +13,8 @@ import (
 	"gct/internal/context/admin/errorcode/application/command"
 	"gct/internal/context/admin/errorcode/application/query"
 	"gct/internal/context/admin/errorcode/domain"
-	"gct/internal/platform/application"
-	shared "gct/internal/platform/domain"
+	"gct/internal/kernel/application"
+	shared "gct/internal/kernel/domain"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -121,6 +121,8 @@ func setupRouter(repo *mockRepo, readRepo *mockReadRepo) *gin.Engine {
 // --- Tests ---
 
 func TestHandler_Create_Success(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockRepo{}
 	readRepo := &mockReadRepo{}
 	router := setupRouter(repo, readRepo)
@@ -142,6 +144,8 @@ func TestHandler_Create_Success(t *testing.T) {
 }
 
 func TestHandler_Create_BadRequest(t *testing.T) {
+	t.Parallel()
+
 	router := setupRouter(&mockRepo{}, &mockReadRepo{})
 
 	w := httptest.NewRecorder()
@@ -155,6 +159,8 @@ func TestHandler_Create_BadRequest(t *testing.T) {
 }
 
 func TestHandler_List_Success(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockReadRepo{
 		views: []*domain.ErrorCodeView{
 			{ID: uuid.New(), Code: "ERR_1", HTTPStatus: 400, Category: "c", Severity: "low", CreatedAt: time.Now(), UpdatedAt: time.Now()},
@@ -173,6 +179,8 @@ func TestHandler_List_Success(t *testing.T) {
 }
 
 func TestHandler_Get_Success(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	readRepo := &mockReadRepo{
 		view: &domain.ErrorCodeView{
@@ -191,6 +199,8 @@ func TestHandler_Get_Success(t *testing.T) {
 }
 
 func TestHandler_Get_InvalidID(t *testing.T) {
+	t.Parallel()
+
 	router := setupRouter(&mockRepo{}, &mockReadRepo{})
 
 	w := httptest.NewRecorder()
@@ -203,6 +213,8 @@ func TestHandler_Get_InvalidID(t *testing.T) {
 }
 
 func TestHandler_Update_Success(t *testing.T) {
+	t.Parallel()
+
 	ec := domain.NewErrorCode("AUTH_001", "old", 401, "auth", "high", false, 0, "")
 	repo := &mockRepo{
 		findFn: func(_ context.Context, id uuid.UUID) (*domain.ErrorCode, error) {
@@ -230,6 +242,8 @@ func TestHandler_Update_Success(t *testing.T) {
 }
 
 func TestHandler_Update_InvalidID(t *testing.T) {
+	t.Parallel()
+
 	router := setupRouter(&mockRepo{}, &mockReadRepo{})
 
 	w := httptest.NewRecorder()
@@ -243,6 +257,8 @@ func TestHandler_Update_InvalidID(t *testing.T) {
 }
 
 func TestHandler_Update_BadRequest(t *testing.T) {
+	t.Parallel()
+
 	router := setupRouter(&mockRepo{}, &mockReadRepo{})
 
 	w := httptest.NewRecorder()
@@ -256,6 +272,8 @@ func TestHandler_Update_BadRequest(t *testing.T) {
 }
 
 func TestHandler_Delete_Success(t *testing.T) {
+	t.Parallel()
+
 	ec := domain.NewErrorCode("ERR_DEL", "test", 500, "SYSTEM", "LOW", false, 0, "")
 	repo := &mockRepo{
 		findFn: func(_ context.Context, id uuid.UUID) (*domain.ErrorCode, error) {
@@ -280,6 +298,8 @@ func TestHandler_Delete_Success(t *testing.T) {
 }
 
 func TestHandler_Delete_InvalidID(t *testing.T) {
+	t.Parallel()
+
 	router := setupRouter(&mockRepo{}, &mockReadRepo{})
 
 	w := httptest.NewRecorder()

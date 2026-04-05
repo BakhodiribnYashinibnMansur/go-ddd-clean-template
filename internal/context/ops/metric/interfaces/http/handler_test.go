@@ -13,8 +13,8 @@ import (
 	"gct/internal/context/ops/metric/application/command"
 	"gct/internal/context/ops/metric/application/query"
 	"gct/internal/context/ops/metric/domain"
-	"gct/internal/platform/application"
-	shared "gct/internal/platform/domain"
+	"gct/internal/kernel/application"
+	shared "gct/internal/kernel/domain"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -97,6 +97,8 @@ func setupRouter(repo *mockRepo, readRepo *mockReadRepo) *gin.Engine {
 // --- Tests ---
 
 func TestHandler_Create_Success(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockRepo{}
 	readRepo := &mockReadRepo{}
 	router := setupRouter(repo, readRepo)
@@ -119,6 +121,8 @@ func TestHandler_Create_Success(t *testing.T) {
 }
 
 func TestHandler_Create_BadRequest(t *testing.T) {
+	t.Parallel()
+
 	router := setupRouter(&mockRepo{}, &mockReadRepo{})
 
 	w := httptest.NewRecorder()
@@ -132,6 +136,8 @@ func TestHandler_Create_BadRequest(t *testing.T) {
 }
 
 func TestHandler_List_Success(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockReadRepo{
 		views: []*domain.MetricView{
 			{ID: uuid.New(), Name: "UserService.Create", LatencyMs: 150.5, IsPanic: false, CreatedAt: time.Now()},

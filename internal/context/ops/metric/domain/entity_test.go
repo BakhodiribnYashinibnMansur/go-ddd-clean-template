@@ -10,6 +10,8 @@ import (
 )
 
 func TestNewFunctionMetric(t *testing.T) {
+	t.Parallel()
+
 	fm := domain.NewFunctionMetric("UserService.Create", 150.5, false, nil)
 
 	if fm.Name() != "UserService.Create" {
@@ -36,6 +38,8 @@ func TestNewFunctionMetric(t *testing.T) {
 }
 
 func TestNewFunctionMetric_WithPanic(t *testing.T) {
+	t.Parallel()
+
 	panicErr := "runtime error: index out of range"
 	fm := domain.NewFunctionMetric("Handler.Process", 0.5, true, &panicErr)
 
@@ -48,6 +52,8 @@ func TestNewFunctionMetric_WithPanic(t *testing.T) {
 }
 
 func TestReconstructFunctionMetric(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	createdAt := time.Now()
 	panicErr := "nil pointer"

@@ -2,12 +2,13 @@ package command
 
 import (
 	"context"
+	"fmt"
 
 	"gct/internal/context/content/notification/domain"
-	"gct/internal/platform/application"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
-	"gct/internal/platform/infrastructure/pgxutil"
+	"gct/internal/kernel/application"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/pgxutil"
 
 	"github.com/google/uuid"
 )
@@ -46,7 +47,10 @@ func (h *CreateHandler) Handle(ctx context.Context, cmd CreateCommand) (err erro
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "CreateNotification", "notification")()
 
-	n := domain.NewNotification(cmd.UserID, cmd.Title, cmd.Message, cmd.Type)
+	n, err := domain.NewNotification(cmd.UserID, cmd.Title, cmd.Message, cmd.Type)
+	if err != nil {
+		return fmt.Errorf("create_notification: %w", err)
+	}
 
 	if err := h.repo.Save(ctx, n); err != nil {
 		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateNotification", Entity: "notification", Err: err}.KV()...)

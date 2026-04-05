@@ -8,8 +8,8 @@ import (
 	"gct/internal/context/ops/metric/application/command"
 	"gct/internal/context/ops/metric/application/query"
 	"gct/internal/context/ops/metric/domain"
-	"gct/internal/platform/infrastructure/httpx/response"
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/httpx/response"
+	"gct/internal/kernel/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
 )

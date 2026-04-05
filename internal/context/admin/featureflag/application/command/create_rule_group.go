@@ -5,12 +5,10 @@ import (
 	"fmt"
 
 	"gct/internal/context/admin/featureflag/domain"
-	"gct/internal/platform/application"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
-	"gct/internal/platform/infrastructure/pgxutil"
-
-	"github.com/google/uuid"
+	"gct/internal/kernel/application"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // ConditionInput is the input DTO for creating a condition.
@@ -22,7 +20,7 @@ type ConditionInput struct {
 
 // CreateRuleGroupCommand represents an intent to add a rule group to a feature flag.
 type CreateRuleGroupCommand struct {
-	FlagID     uuid.UUID
+	FlagID     domain.FeatureFlagID
 	Name       string
 	Variation  string
 	Priority   int
@@ -59,7 +57,7 @@ func (h *CreateRuleGroupHandler) Handle(ctx context.Context, cmd CreateRuleGroup
 	defer logger.SlowOp(h.logger, ctx, "CreateRuleGroup", "rule_group")()
 
 	// Verify the flag exists.
-	if _, err := h.flagRepo.FindByID(ctx, cmd.FlagID); err != nil {
+	if _, err := h.flagRepo.FindByID(ctx, cmd.FlagID.UUID()); err != nil {
 		return apperrors.MapToServiceError(err)
 	}
 
@@ -70,18 +68,18 @@ func (h *CreateRuleGroupHandler) Handle(ctx context.Context, cmd CreateRuleGroup
 		}
 	}
 
-	rg := domain.NewRuleGroup(cmd.FlagID, cmd.Name, cmd.Variation, cmd.Priority)
+	rg := domain.NewRuleGroup(cmd.FlagID.UUID(), cmd.Name, cmd.Variation, cmd.Priority)
 
 	for _, c := range cmd.Conditions {
 		rg.AddCondition(domain.NewCondition(c.Attribute, c.Operator, c.Value))
 	}
 
 	if err := h.rgRepo.Save(ctx, rg); err != nil {
-		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateRuleGroup", Entity: "rule_group", EntityID: cmd.FlagID, Err: err}.KV()...)
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateRuleGroup", Entity: "rule_group", EntityID: cmd.FlagID.UUID(), Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 
-	if err := h.eventBus.Publish(ctx, domain.NewFlagUpdated(cmd.FlagID)); err != nil {
+	if err := h.eventBus.Publish(ctx, domain.NewFlagUpdated(cmd.FlagID.UUID())); err != nil {
 		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "CreateRuleGroup", Entity: "rule_group", Err: err}.KV()...)
 	}
 

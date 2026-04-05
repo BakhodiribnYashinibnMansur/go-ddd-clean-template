@@ -60,3 +60,4 @@ SCHEMATHESIS_SUMMARY.md
 # Generic ignores (be careful with these)
 *.log
 # *.txt  # Removed to avoid ignoring documentation. Added specific test files instead.
+.claude/

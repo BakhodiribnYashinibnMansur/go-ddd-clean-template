@@ -3,12 +3,12 @@ package query
 import (
 	"context"
 
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
 
 	appdto "gct/internal/context/ops/ratelimit/application"
 	"gct/internal/context/ops/ratelimit/domain"
-	"gct/internal/platform/infrastructure/pgxutil"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // ListRateLimitsQuery holds the input for listing rate limits.

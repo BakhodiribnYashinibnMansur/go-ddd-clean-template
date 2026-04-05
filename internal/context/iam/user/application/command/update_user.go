@@ -3,20 +3,18 @@ package command
 import (
 	"context"
 
-	"gct/internal/platform/application"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
-	"gct/internal/platform/infrastructure/pgxutil"
 	"gct/internal/context/iam/user/domain"
-
-	"github.com/google/uuid"
+	"gct/internal/kernel/application"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // UpdateUserCommand represents a partial update to a user's profile fields.
 // Pointer fields use nil-means-unchanged semantics. Phone, password, and role are excluded —
 // use dedicated commands (ChangeRole, etc.) for those privileged mutations.
 type UpdateUserCommand struct {
-	ID         uuid.UUID
+	ID         domain.UserID
 	Email      *string
 	Username   *string
 	Attributes map[string]string
@@ -27,14 +25,14 @@ type UpdateUserCommand struct {
 type UpdateUserHandler struct {
 	repo     domain.UserRepository
 	eventBus application.EventBus
-	logger   logger.Log
+	logger   commandLogger
 }
 
 // NewUpdateUserHandler creates a new UpdateUserHandler.
 func NewUpdateUserHandler(
 	repo domain.UserRepository,
 	eventBus application.EventBus,
-	logger logger.Log,
+	logger commandLogger,
 ) *UpdateUserHandler {
 	return &UpdateUserHandler{
 		repo:     repo,
@@ -50,7 +48,7 @@ func (h *UpdateUserHandler) Handle(ctx context.Context, cmd UpdateUserCommand) (
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "UpdateUser", "user")()
 
-	user, err := h.repo.FindByID(ctx, cmd.ID)
+	user, err := h.repo.FindByID(ctx, cmd.ID.UUID())
 	if err != nil {
 		return apperrors.MapToServiceError(err)
 	}
@@ -96,12 +94,12 @@ func (h *UpdateUserHandler) Handle(ctx context.Context, cmd UpdateUserCommand) (
 	updated.Touch()
 
 	if err := h.repo.Update(ctx, updated); err != nil {
-		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "UpdateUser", Entity: "user", EntityID: cmd.ID, Err: err}.KV()...)
+		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "UpdateUser", Entity: "user", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, updated.Events()...); err != nil {
-		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "UpdateUser", Entity: "user", EntityID: cmd.ID, Err: err}.KV()...)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "UpdateUser", Entity: "user", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
 	}
 
 	return nil

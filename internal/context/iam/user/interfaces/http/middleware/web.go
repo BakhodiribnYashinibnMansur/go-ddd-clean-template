@@ -4,8 +4,9 @@ import (
 	"net/http"
 	"net/url"
 
-	"gct/internal/platform/domain/consts"
 	"gct/internal/context/iam/user/application/query"
+	userdomain "gct/internal/context/iam/user/domain"
+	"gct/internal/kernel/consts"
 
 	"github.com/gin-gonic/gin"
 )
@@ -34,7 +35,7 @@ func (m *AuthMiddleware) AuthWeb(ctx *gin.Context) {
 	ctx.Set(consts.CtxUserID, session.UserID.String())
 
 	// Fetch user for template context (role title, etc.)
-	user, uErr := m.findUserForAuth.Handle(ctx.Request.Context(), query.FindUserForAuthQuery{UserID: session.UserID})
+	user, uErr := m.findUserForAuth.Handle(ctx.Request.Context(), query.FindUserForAuthQuery{UserID: userdomain.UserID(session.UserID)})
 	if uErr == nil {
 		ctx.Set(consts.CtxUser, user)
 	} else {

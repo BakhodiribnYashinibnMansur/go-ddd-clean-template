@@ -3,18 +3,16 @@ package query
 import (
 	"context"
 
-	apperrors "gct/internal/platform/infrastructure/errors"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
 
 	"gct/internal/context/iam/authz/domain"
-	"gct/internal/platform/infrastructure/logger"
-	"gct/internal/platform/infrastructure/pgxutil"
-
-	"github.com/google/uuid"
+	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // CheckAccessQuery holds the input for checking whether a role has access to a specific endpoint.
 type CheckAccessQuery struct {
-	RoleID  uuid.UUID
+	RoleID  domain.RoleID
 	Path    string
 	Method  string
 	EvalCtx domain.EvaluationContext
@@ -37,9 +35,9 @@ func (h *CheckAccessHandler) Handle(ctx context.Context, q CheckAccessQuery) (al
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "CheckAccess", "access")()
 
-	allowed, err = h.readRepo.CheckAccess(ctx, q.RoleID, q.Path, q.Method, q.EvalCtx)
+	allowed, err = h.readRepo.CheckAccess(ctx, q.RoleID.UUID(), q.Path, q.Method, q.EvalCtx)
 	if err != nil {
-		h.logger.Warnc(ctx, "query failed", logger.F{Op: "CheckAccess", Entity: "access", EntityID: q.RoleID, Err: err}.KV()...)
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "CheckAccess", Entity: "access", EntityID: q.RoleID.UUID(), Err: err}.KV()...)
 		return false, apperrors.MapToServiceError(err)
 	}
 	return allowed, nil

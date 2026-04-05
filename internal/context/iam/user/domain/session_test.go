@@ -10,8 +10,13 @@ import (
 )
 
 func TestNewSession(t *testing.T) {
+	t.Parallel()
+
 	uid := uuid.New()
-	s := domain.NewSession(uid, domain.DeviceMobile, "10.0.0.1", "TestAgent/1.0")
+	s, err := domain.NewSession(uid, domain.DeviceMobile, "10.0.0.1", "TestAgent/1.0")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 
 	if s.UserID() != uid {
 		t.Fatal("user ID mismatch")
@@ -19,10 +24,10 @@ func TestNewSession(t *testing.T) {
 	if s.DeviceType() != domain.DeviceMobile {
 		t.Fatalf("expected MOBILE, got %s", s.DeviceType())
 	}
-	if s.IPAddress() != "10.0.0.1" {
+	if s.IPAddress().String() != "10.0.0.1" {
 		t.Fatal("IP mismatch")
 	}
-	if s.UserAgent() != "TestAgent/1.0" {
+	if s.UserAgent().String() != "TestAgent/1.0" {
 		t.Fatal("user agent mismatch")
 	}
 	if s.IsRevoked() {
@@ -40,7 +45,9 @@ func TestNewSession(t *testing.T) {
 }
 
 func TestSession_Revoke(t *testing.T) {
-	s := domain.NewSession(uuid.New(), domain.DeviceDesktop, "1.1.1.1", "Agent")
+	t.Parallel()
+
+	s, _ := domain.NewSession(uuid.New(), domain.DeviceDesktop, "1.1.1.1", "Agent")
 	s.Revoke()
 	if !s.IsRevoked() {
 		t.Fatal("session should be revoked")
@@ -51,7 +58,9 @@ func TestSession_Revoke(t *testing.T) {
 }
 
 func TestSession_UpdateActivity(t *testing.T) {
-	s := domain.NewSession(uuid.New(), domain.DeviceDesktop, "1.1.1.1", "Agent")
+	t.Parallel()
+
+	s, _ := domain.NewSession(uuid.New(), domain.DeviceDesktop, "1.1.1.1", "Agent")
 	before := s.ExpiresAt()
 	time.Sleep(2 * time.Millisecond) // tiny pause so timestamps differ
 	s.UpdateActivity()
@@ -64,7 +73,9 @@ func TestSession_UpdateActivity(t *testing.T) {
 }
 
 func TestSession_SetRefreshTokenHash(t *testing.T) {
-	s := domain.NewSession(uuid.New(), domain.DeviceBot, "2.2.2.2", "Bot")
+	t.Parallel()
+
+	s, _ := domain.NewSession(uuid.New(), domain.DeviceBot, "2.2.2.2", "Bot")
 	s.SetRefreshTokenHash("somehash")
 	if s.RefreshTokenHash() != "somehash" {
 		t.Fatalf("expected somehash, got %s", s.RefreshTokenHash())
@@ -72,6 +83,8 @@ func TestSession_SetRefreshTokenHash(t *testing.T) {
 }
 
 func TestReconstructSession(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	uid := uuid.New()
 	now := time.Now()

@@ -5,11 +5,12 @@ import (
 	"errors"
 	"testing"
 
-	"gct/internal/platform/application"
-	shared "gct/internal/platform/domain"
+	"gct/internal/kernel/application"
+	shared "gct/internal/kernel/domain"
 	"gct/internal/context/iam/user/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 // ---------------------------------------------------------------------------
@@ -59,6 +60,8 @@ func (m *errorEventBus) Subscribe(_ string, _ application.EventHandler) error {
 // ---------------------------------------------------------------------------
 
 func TestCreateUserHandler_RepoSaveError(t *testing.T) {
+	t.Parallel()
+
 	repo := &errorRepo{saveErr: errRepoSave}
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
@@ -78,6 +81,8 @@ func TestCreateUserHandler_RepoSaveError(t *testing.T) {
 }
 
 func TestSignUpHandler_RepoSaveError(t *testing.T) {
+	t.Parallel()
+
 	repo := &errorRepo{saveErr: errRepoSave}
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
@@ -98,6 +103,8 @@ func TestSignUpHandler_RepoSaveError(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestUpdateUserHandler_RepoUpdateError(t *testing.T) {
+	t.Parallel()
+
 	user := makeTestUser(t)
 	repo := &errorRepo{
 		updateErr: errRepoUpdate,
@@ -110,7 +117,7 @@ func TestUpdateUserHandler_RepoUpdateError(t *testing.T) {
 
 	newName := "updated"
 	err := handler.Handle(context.Background(), UpdateUserCommand{
-		ID:       user.ID(),
+		ID:       domain.UserID(user.ID()),
 		Username: &newName,
 	})
 	if !errors.Is(err, errRepoUpdate) {
@@ -119,6 +126,8 @@ func TestUpdateUserHandler_RepoUpdateError(t *testing.T) {
 }
 
 func TestApproveUserHandler_RepoUpdateError(t *testing.T) {
+	t.Parallel()
+
 	user := makeTestUser(t)
 	repo := &errorRepo{
 		updateErr: errRepoUpdate,
@@ -129,13 +138,15 @@ func TestApproveUserHandler_RepoUpdateError(t *testing.T) {
 
 	handler := NewApproveUserHandler(repo, eventBus, log)
 
-	err := handler.Handle(context.Background(), ApproveUserCommand{ID: user.ID()})
+	err := handler.Handle(context.Background(), ApproveUserCommand{ID: domain.UserID(user.ID())})
 	if !errors.Is(err, errRepoUpdate) {
 		t.Fatalf("expected errRepoUpdate, got: %v", err)
 	}
 }
 
 func TestDeleteUserHandler_RepoUpdateError(t *testing.T) {
+	t.Parallel()
+
 	user := makeTestUser(t)
 	repo := &errorRepo{
 		updateErr: errRepoUpdate,
@@ -146,13 +157,15 @@ func TestDeleteUserHandler_RepoUpdateError(t *testing.T) {
 
 	handler := NewDeleteUserHandler(repo, eventBus, log)
 
-	err := handler.Handle(context.Background(), DeleteUserCommand{ID: user.ID()})
+	err := handler.Handle(context.Background(), DeleteUserCommand{ID: domain.UserID(user.ID())})
 	if !errors.Is(err, errRepoUpdate) {
 		t.Fatalf("expected errRepoUpdate, got: %v", err)
 	}
 }
 
 func TestChangeRoleHandler_RepoUpdateError(t *testing.T) {
+	t.Parallel()
+
 	user := makeTestUser(t)
 	repo := &errorRepo{
 		updateErr: errRepoUpdate,
@@ -164,7 +177,7 @@ func TestChangeRoleHandler_RepoUpdateError(t *testing.T) {
 	handler := NewChangeRoleHandler(repo, eventBus, log)
 
 	err := handler.Handle(context.Background(), ChangeRoleCommand{
-		UserID: user.ID(),
+		UserID: domain.UserID(user.ID()),
 		RoleID: uuid.New(),
 	})
 	if !errors.Is(err, errRepoUpdate) {
@@ -177,6 +190,8 @@ func TestChangeRoleHandler_RepoUpdateError(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestCreateUserHandler_EventPublishError_StillSucceeds(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockUserRepository{}
 	eventBus := &errorEventBus{err: errEventPublish}
 	log := &mockLogger{}
@@ -188,9 +203,7 @@ func TestCreateUserHandler_EventPublishError_StillSucceeds(t *testing.T) {
 		Password: "StrongP@ss123",
 	})
 	// Event publish errors are logged, not returned
-	if err != nil {
-		t.Fatalf("expected no error (event publish errors are logged), got: %v", err)
-	}
+	require.NoError(t, err)
 	if repo.savedUser == nil {
 		t.Fatal("user should still be saved")
 	}
@@ -201,6 +214,8 @@ func TestCreateUserHandler_EventPublishError_StillSucceeds(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestCreateUserHandler_CancelledContext(t *testing.T) {
+	t.Parallel()
+
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel() // cancel immediately
 
@@ -226,9 +241,11 @@ func TestCreateUserHandler_CancelledContext(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestSignInHandler_RepoUpdateError(t *testing.T) {
+	t.Parallel()
+
 	phone, _ := domain.NewPhone("+998901234567")
 	pw, _ := domain.NewPasswordFromRaw("StrongP@ss123")
-	user := domain.NewUser(phone, pw)
+	user, _ := domain.NewUser(phone, pw)
 	user.Approve()
 
 	repo := &signInErrorRepo{user: user, updateErr: errRepoUpdate}

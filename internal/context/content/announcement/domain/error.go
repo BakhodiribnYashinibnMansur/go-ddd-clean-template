@@ -1,6 +1,6 @@
 package domain
 
-import shared "gct/internal/platform/domain"
+import shared "gct/internal/kernel/domain"
 
 // Domain errors for the announcement bounded context.
 // These are returned by aggregate methods and repository lookups — callers should

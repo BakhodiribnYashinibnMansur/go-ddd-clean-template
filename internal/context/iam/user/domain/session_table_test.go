@@ -10,6 +10,8 @@ import (
 )
 
 func TestNewSession_TableDriven(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name       string
 		deviceType domain.SessionDeviceType
@@ -25,8 +27,9 @@ func TestNewSession_TableDriven(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			userID := uuid.New()
-			s := domain.NewSession(userID, tt.deviceType, tt.ip, tt.userAgent)
+			s, _ := domain.NewSession(userID, tt.deviceType, tt.ip, tt.userAgent)
 
 			if s.UserID() != userID {
 				t.Errorf("expected userID %s, got %s", userID, s.UserID())
@@ -34,11 +37,11 @@ func TestNewSession_TableDriven(t *testing.T) {
 			if s.DeviceType() != tt.deviceType {
 				t.Errorf("expected deviceType %s, got %s", tt.deviceType, s.DeviceType())
 			}
-			if s.IPAddress() != tt.ip {
-				t.Errorf("expected IP %s, got %s", tt.ip, s.IPAddress())
+			if s.IPAddress().String() != tt.ip {
+				t.Errorf("expected IP %s, got %s", tt.ip, s.IPAddress().String())
 			}
-			if s.UserAgent() != tt.userAgent {
-				t.Errorf("expected userAgent %s, got %s", tt.userAgent, s.UserAgent())
+			if s.UserAgent().String() != tt.userAgent {
+				t.Errorf("expected userAgent %s, got %s", tt.userAgent, s.UserAgent().String())
 			}
 			if s.IsRevoked() {
 				t.Error("new session should not be revoked")
@@ -57,6 +60,8 @@ func TestNewSession_TableDriven(t *testing.T) {
 }
 
 func TestReconstructSession_TableDriven(t *testing.T) {
+	t.Parallel()
+
 	now := time.Now()
 	tests := []struct {
 		name    string
@@ -71,6 +76,7 @@ func TestReconstructSession_TableDriven(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			expiresAt := now.Add(7 * 24 * time.Hour)
 			if tt.expired {
 				expiresAt = now.Add(-1 * time.Hour)
@@ -103,8 +109,10 @@ func TestReconstructSession_TableDriven(t *testing.T) {
 }
 
 func TestSession_Lifecycle(t *testing.T) {
+	t.Parallel()
+
 	userID := uuid.New()
-	s := domain.NewSession(userID, domain.DeviceDesktop, "10.0.0.1", "TestAgent")
+	s, _ := domain.NewSession(userID, domain.DeviceDesktop, "10.0.0.1", "TestAgent")
 
 	// Initially active
 	if !s.IsActive() {

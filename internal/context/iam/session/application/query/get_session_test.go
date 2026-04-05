@@ -1,15 +1,17 @@
 package query
 
 import (
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
 	"time"
 
 	appdto "gct/internal/context/iam/session/application"
+	sessiondomain "gct/internal/context/iam/session/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 // --- Mock Read Repository ---
@@ -66,6 +68,8 @@ func (ml *mockLogger) Fatalc(_ context.Context, _ string, _ ...any)         {}
 // --- Tests ---
 
 func TestGetSessionHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	sessionID := uuid.New()
 	userID := uuid.New()
 	now := time.Now()
@@ -88,11 +92,9 @@ func TestGetSessionHandler_Handle(t *testing.T) {
 
 	handler := NewGetSessionHandler(readRepo, logger.Noop())
 
-	q := GetSessionQuery{ID: sessionID}
+	q := GetSessionQuery{ID: sessiondomain.SessionID(sessionID)}
 	result, err := handler.Handle(context.Background(), q)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if result == nil {
 		t.Fatal("expected session view, got nil")
@@ -120,11 +122,13 @@ func TestGetSessionHandler_Handle(t *testing.T) {
 }
 
 func TestGetSessionHandler_NotFound(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockSessionReadRepository{}
 
 	handler := NewGetSessionHandler(readRepo, logger.Noop())
 
-	q := GetSessionQuery{ID: uuid.New()}
+	q := GetSessionQuery{ID: sessiondomain.NewSessionID()}
 	_, err := handler.Handle(context.Background(), q)
 	if err == nil {
 		t.Fatal("expected error for non-existent session, got nil")
@@ -132,13 +136,15 @@ func TestGetSessionHandler_NotFound(t *testing.T) {
 }
 
 func TestGetSessionHandler_RepoError(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockSessionReadRepository{
 		err: errors.New("database connection failed"),
 	}
 
 	handler := NewGetSessionHandler(readRepo, logger.Noop())
 
-	q := GetSessionQuery{ID: uuid.New()}
+	q := GetSessionQuery{ID: sessiondomain.NewSessionID()}
 	_, err := handler.Handle(context.Background(), q)
 	if err == nil {
 		t.Fatal("expected error when repo fails, got nil")

@@ -4,11 +4,12 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/platform/application"
-	shared "gct/internal/platform/domain"
+	"gct/internal/kernel/application"
+	shared "gct/internal/kernel/domain"
 	"gct/internal/context/iam/user/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 // --- Mock Repository ---
@@ -99,6 +100,8 @@ func (m *mockLogger) Fatalc(ctx context.Context, msg string, keysAndValues ...an
 // --- Tests ---
 
 func TestCreateUserHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockUserRepository{}
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
@@ -116,9 +119,7 @@ func TestCreateUserHandler_Handle(t *testing.T) {
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.savedUser == nil {
 		t.Fatal("expected user to be saved, but it was nil")
@@ -146,6 +147,8 @@ func TestCreateUserHandler_Handle(t *testing.T) {
 }
 
 func TestCreateUserHandler_InvalidPhone(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockUserRepository{}
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
@@ -168,6 +171,8 @@ func TestCreateUserHandler_InvalidPhone(t *testing.T) {
 }
 
 func TestCreateUserHandler_WeakPassword(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockUserRepository{}
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}

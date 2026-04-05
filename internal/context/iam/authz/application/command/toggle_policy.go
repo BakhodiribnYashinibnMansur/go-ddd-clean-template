@@ -4,18 +4,16 @@ import (
 	"context"
 
 	"gct/internal/context/iam/authz/domain"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
-	"gct/internal/platform/infrastructure/pgxutil"
-
-	"github.com/google/uuid"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // TogglePolicyCommand represents an intent to flip a policy between active and inactive states.
 // This is an idempotent toggle — calling it twice restores the original state.
 // Disabled policies are skipped during authorization evaluation without being deleted.
 type TogglePolicyCommand struct {
-	ID uuid.UUID
+	ID domain.PolicyID
 }
 
 // TogglePolicyHandler orchestrates the enable/disable lifecycle of an authorization policy.
@@ -43,7 +41,7 @@ func (h *TogglePolicyHandler) Handle(ctx context.Context, cmd TogglePolicyComman
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "TogglePolicy", "policy")()
 
-	policy, err := h.repo.FindByID(ctx, cmd.ID)
+	policy, err := h.repo.FindByID(ctx, cmd.ID.UUID())
 	if err != nil {
 		return apperrors.MapToServiceError(err)
 	}
@@ -51,7 +49,7 @@ func (h *TogglePolicyHandler) Handle(ctx context.Context, cmd TogglePolicyComman
 	policy.Toggle()
 
 	if err := h.repo.Update(ctx, policy); err != nil {
-		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "TogglePolicy", Entity: "policy", EntityID: cmd.ID, Err: err}.KV()...)
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "TogglePolicy", Entity: "policy", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 

@@ -1,16 +1,19 @@
 package query
 
 import (
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
 
 	"gct/internal/context/iam/authz/domain"
-	shared "gct/internal/platform/domain"
+	shared "gct/internal/kernel/domain"
+	"github.com/stretchr/testify/require"
 )
 
 func TestListScopesHandler_WithResults(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockAuthzReadRepository{
 		listScopesFn: func(_ context.Context, _ shared.Pagination) ([]*domain.ScopeView, int64, error) {
 			return []*domain.ScopeView{
@@ -25,9 +28,7 @@ func TestListScopesHandler_WithResults(t *testing.T) {
 	result, err := handler.Handle(context.Background(), ListScopesQuery{
 		Pagination: shared.Pagination{Limit: 10, Offset: 0},
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if len(result.Scopes) != 3 {
 		t.Fatalf("expected 3 scopes, got %d", len(result.Scopes))
@@ -47,6 +48,8 @@ func TestListScopesHandler_WithResults(t *testing.T) {
 }
 
 func TestListScopesHandler_Empty(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockAuthzReadRepository{
 		listScopesFn: func(_ context.Context, _ shared.Pagination) ([]*domain.ScopeView, int64, error) {
 			return []*domain.ScopeView{}, 0, nil
@@ -57,9 +60,7 @@ func TestListScopesHandler_Empty(t *testing.T) {
 	result, err := handler.Handle(context.Background(), ListScopesQuery{
 		Pagination: shared.Pagination{Limit: 10, Offset: 0},
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if len(result.Scopes) != 0 {
 		t.Errorf("expected 0 scopes, got %d", len(result.Scopes))
@@ -70,6 +71,8 @@ func TestListScopesHandler_Empty(t *testing.T) {
 }
 
 func TestListScopesHandler_RepoError(t *testing.T) {
+	t.Parallel()
+
 	repoErr := errors.New("scope query failed")
 	repo := &mockAuthzReadRepository{
 		listScopesFn: func(_ context.Context, _ shared.Pagination) ([]*domain.ScopeView, int64, error) {

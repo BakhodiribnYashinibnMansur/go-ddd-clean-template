@@ -1,6 +1,6 @@
 package domain
 
-import shared "gct/internal/platform/domain"
+import shared "gct/internal/kernel/domain"
 
 // Domain errors for the audit bounded context.
 // Audit logs are append-only, so the only expected lookup failure is "not found."

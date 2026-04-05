@@ -7,6 +7,8 @@ import (
 )
 
 func TestScope_ValueObject(t *testing.T) {
+	t.Parallel()
+
 	s := domain.Scope{Path: "/api/users", Method: "GET"}
 
 	if s.Path != "/api/users" {
@@ -18,6 +20,8 @@ func TestScope_ValueObject(t *testing.T) {
 }
 
 func TestScope_Equality(t *testing.T) {
+	t.Parallel()
+
 	a := domain.Scope{Path: "/api/users", Method: "GET"}
 	b := domain.Scope{Path: "/api/users", Method: "GET"}
 	c := domain.Scope{Path: "/api/users", Method: "POST"}
@@ -35,6 +39,8 @@ func TestScope_Equality(t *testing.T) {
 }
 
 func TestScope_ZeroValue(t *testing.T) {
+	t.Parallel()
+
 	var s domain.Scope
 	if s.Path != "" {
 		t.Errorf("expected empty path, got %q", s.Path)

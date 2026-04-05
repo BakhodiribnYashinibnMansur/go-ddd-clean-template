@@ -3,19 +3,17 @@ package query
 import (
 	"context"
 
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
 
 	appdto "gct/internal/context/ops/iprule/application"
 	"gct/internal/context/ops/iprule/domain"
-	"gct/internal/platform/infrastructure/pgxutil"
-
-	"github.com/google/uuid"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // GetIPRuleQuery holds the input for getting a single IP rule.
 type GetIPRuleQuery struct {
-	ID uuid.UUID
+	ID domain.IPRuleID
 }
 
 // GetIPRuleHandler handles the GetIPRuleQuery.
@@ -35,9 +33,9 @@ func (h *GetIPRuleHandler) Handle(ctx context.Context, q GetIPRuleQuery) (result
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "GetIPRule", "ip_rule")()
 
-	v, err := h.readRepo.FindByID(ctx, q.ID)
+	v, err := h.readRepo.FindByID(ctx, q.ID.UUID())
 	if err != nil {
-		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetIPRule", Entity: "ip_rule", EntityID: q.ID, Err: err}.KV()...)
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetIPRule", Entity: "ip_rule", EntityID: q.ID.UUID(), Err: err}.KV()...)
 		return nil, apperrors.MapToServiceError(err)
 	}
 

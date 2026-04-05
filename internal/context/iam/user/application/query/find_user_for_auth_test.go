@@ -1,16 +1,20 @@
 package query
 
 import (
-	"gct/internal/platform/infrastructure/logger"
 	"context"
 	"testing"
 
-	shared "gct/internal/platform/domain"
+	"gct/internal/context/iam/user/domain"
+	shared "gct/internal/kernel/domain"
+	"gct/internal/kernel/infrastructure/logger"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func TestFindUserForAuthHandler_Success(t *testing.T) {
+	t.Parallel()
+
 	userID := uuid.New()
 	roleID := uuid.New()
 
@@ -26,10 +30,8 @@ func TestFindUserForAuthHandler_Success(t *testing.T) {
 
 	handler := NewFindUserForAuthHandler(readRepo, logger.Noop())
 
-	result, err := handler.Handle(context.Background(), FindUserForAuthQuery{UserID: userID})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	result, err := handler.Handle(context.Background(), FindUserForAuthQuery{UserID: domain.UserID(userID)})
+	require.NoError(t, err)
 
 	if result == nil {
 		t.Fatal("expected auth user, got nil")
@@ -57,22 +59,26 @@ func TestFindUserForAuthHandler_Success(t *testing.T) {
 }
 
 func TestFindUserForAuthHandler_NotFound(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockUserReadRepository{}
 
 	handler := NewFindUserForAuthHandler(readRepo, logger.Noop())
 
-	_, err := handler.Handle(context.Background(), FindUserForAuthQuery{UserID: uuid.New()})
+	_, err := handler.Handle(context.Background(), FindUserForAuthQuery{UserID: domain.NewUserID()})
 	if err == nil {
 		t.Fatal("expected error for non-existent user, got nil")
 	}
 }
 
 func TestFindUserForAuthHandler_RepoError(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &errorReadRepo{err: errRepoFailure}
 
 	handler := NewFindUserForAuthHandler(readRepo, logger.Noop())
 
-	_, err := handler.Handle(context.Background(), FindUserForAuthQuery{UserID: uuid.New()})
+	_, err := handler.Handle(context.Background(), FindUserForAuthQuery{UserID: domain.NewUserID()})
 	if err == nil {
 		t.Fatal("expected error from repo")
 	}

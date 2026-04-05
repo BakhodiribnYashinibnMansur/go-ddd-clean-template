@@ -1,7 +1,7 @@
 package query
 
 import (
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/logger"
 	"context"
 	"testing"
 	"time"
@@ -9,9 +9,12 @@ import (
 	"gct/internal/context/ops/ratelimit/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func TestListRateLimitsHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockReadRepo{
 		views: []*domain.RateLimitView{
 			{ID: uuid.New(), Name: "r1", Rule: "/a", RequestsPerWindow: 10, WindowDuration: 30, Enabled: true, CreatedAt: time.Now(), UpdatedAt: time.Now()},
@@ -24,9 +27,7 @@ func TestListRateLimitsHandler_Handle(t *testing.T) {
 	result, err := handler.Handle(context.Background(), ListRateLimitsQuery{
 		Filter: domain.RateLimitFilter{Limit: 10, Offset: 0},
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 	if result.Total != 2 {
 		t.Errorf("expected total 2, got %d", result.Total)
 	}
@@ -39,15 +40,15 @@ func TestListRateLimitsHandler_Handle(t *testing.T) {
 }
 
 func TestListRateLimitsHandler_Empty(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockReadRepo{views: []*domain.RateLimitView{}, total: 0}
 
 	handler := NewListRateLimitsHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListRateLimitsQuery{
 		Filter: domain.RateLimitFilter{},
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 	if result.Total != 0 {
 		t.Errorf("expected total 0, got %d", result.Total)
 	}
@@ -57,6 +58,8 @@ func TestListRateLimitsHandler_Empty(t *testing.T) {
 }
 
 func TestListRateLimitsHandler_WithFilters(t *testing.T) {
+	t.Parallel()
+
 	enabled := true
 	name := "api"
 	readRepo := &mockReadRepo{
@@ -70,15 +73,15 @@ func TestListRateLimitsHandler_WithFilters(t *testing.T) {
 	result, err := handler.Handle(context.Background(), ListRateLimitsQuery{
 		Filter: domain.RateLimitFilter{Name: &name, Enabled: &enabled, Limit: 10},
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 	if result.Total != 1 {
 		t.Errorf("expected total 1, got %d", result.Total)
 	}
 }
 
 func TestListRateLimitsHandler_RepoError(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &errorReadRepo{err: errRepo}
 	handler := NewListRateLimitsHandler(readRepo, logger.Noop())
 	_, err := handler.Handle(context.Background(), ListRateLimitsQuery{Filter: domain.RateLimitFilter{}})

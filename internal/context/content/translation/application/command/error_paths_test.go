@@ -48,6 +48,8 @@ var errUpdate = errors.New("update failed")
 var errDelete = errors.New("delete failed")
 
 func TestCreateTranslationHandler_SaveError(t *testing.T) {
+	t.Parallel()
+
 	repo := &errorRepo{saveErr: errSave}
 	eb := &mockEventBus{}
 	log := &mockLogger{}
@@ -62,6 +64,8 @@ func TestCreateTranslationHandler_SaveError(t *testing.T) {
 }
 
 func TestUpdateTranslationHandler_FindError(t *testing.T) {
+	t.Parallel()
+
 	repo := &errorRepo{}
 	eb := &mockEventBus{}
 	log := &mockLogger{}
@@ -69,7 +73,7 @@ func TestUpdateTranslationHandler_FindError(t *testing.T) {
 	handler := NewUpdateTranslationHandler(repo, eb, log)
 	newVal := "new"
 	err := handler.Handle(context.Background(), UpdateTranslationCommand{
-		ID:    uuid.New(),
+		ID:    domain.NewTranslationID(),
 		Value: &newVal,
 	})
 	if err == nil {
@@ -78,6 +82,8 @@ func TestUpdateTranslationHandler_FindError(t *testing.T) {
 }
 
 func TestUpdateTranslationHandler_UpdateError(t *testing.T) {
+	t.Parallel()
+
 	tr := domain.NewTranslation("k", "en", "v", "g")
 
 	repo := &errorRepo{
@@ -90,7 +96,7 @@ func TestUpdateTranslationHandler_UpdateError(t *testing.T) {
 	handler := NewUpdateTranslationHandler(repo, eb, log)
 	newVal := "updated"
 	err := handler.Handle(context.Background(), UpdateTranslationCommand{
-		ID:    tr.ID(),
+		ID:    domain.TranslationID(tr.ID()),
 		Value: &newVal,
 	})
 	if !errors.Is(err, errUpdate) {
@@ -99,11 +105,13 @@ func TestUpdateTranslationHandler_UpdateError(t *testing.T) {
 }
 
 func TestDeleteTranslationHandler_DeleteError(t *testing.T) {
+	t.Parallel()
+
 	repo := &errorRepo{deleteErr: errDelete}
 	log := &mockLogger{}
 
 	handler := NewDeleteTranslationHandler(repo, log)
-	err := handler.Handle(context.Background(), DeleteTranslationCommand{ID: uuid.New()})
+	err := handler.Handle(context.Background(), DeleteTranslationCommand{ID: domain.NewTranslationID()})
 	if !errors.Is(err, errDelete) {
 		t.Fatalf("expected errDelete, got: %v", err)
 	}

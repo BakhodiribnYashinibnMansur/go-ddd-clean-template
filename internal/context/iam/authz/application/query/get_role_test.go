@@ -1,15 +1,16 @@
 package query
 
 import (
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
 
 	"gct/internal/context/iam/authz/domain"
-	shared "gct/internal/platform/domain"
+	shared "gct/internal/kernel/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 // ---------------------------------------------------------------------------
@@ -88,6 +89,8 @@ func (m *mockAuthzReadRepository) FindPoliciesByPermissionIDs(ctx context.Contex
 // ---------------------------------------------------------------------------
 
 func TestGetRoleHandler_Found(t *testing.T) {
+	t.Parallel()
+
 	roleID := uuid.New()
 	desc := "Admin role"
 	repo := &mockAuthzReadRepository{
@@ -104,10 +107,8 @@ func TestGetRoleHandler_Found(t *testing.T) {
 	}
 
 	handler := NewGetRoleHandler(repo, logger.Noop())
-	result, err := handler.Handle(context.Background(), GetRoleQuery{ID: roleID})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	result, err := handler.Handle(context.Background(), GetRoleQuery{ID: domain.RoleID(roleID)})
+	require.NoError(t, err)
 
 	if result.ID != roleID {
 		t.Errorf("expected ID %s, got %s", roleID, result.ID)
@@ -121,6 +122,8 @@ func TestGetRoleHandler_Found(t *testing.T) {
 }
 
 func TestGetRoleHandler_NotFound(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockAuthzReadRepository{
 		getRoleFn: func(_ context.Context, _ uuid.UUID) (*domain.RoleView, error) {
 			return nil, domain.ErrRoleNotFound
@@ -128,7 +131,7 @@ func TestGetRoleHandler_NotFound(t *testing.T) {
 	}
 
 	handler := NewGetRoleHandler(repo, logger.Noop())
-	_, err := handler.Handle(context.Background(), GetRoleQuery{ID: uuid.New()})
+	_, err := handler.Handle(context.Background(), GetRoleQuery{ID: domain.RoleID(uuid.New())})
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
@@ -138,6 +141,8 @@ func TestGetRoleHandler_NotFound(t *testing.T) {
 }
 
 func TestGetRoleHandler_RepoError(t *testing.T) {
+	t.Parallel()
+
 	repoErr := errors.New("database connection failed")
 	repo := &mockAuthzReadRepository{
 		getRoleFn: func(_ context.Context, _ uuid.UUID) (*domain.RoleView, error) {
@@ -146,7 +151,7 @@ func TestGetRoleHandler_RepoError(t *testing.T) {
 	}
 
 	handler := NewGetRoleHandler(repo, logger.Noop())
-	_, err := handler.Handle(context.Background(), GetRoleQuery{ID: uuid.New()})
+	_, err := handler.Handle(context.Background(), GetRoleQuery{ID: domain.RoleID(uuid.New())})
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}

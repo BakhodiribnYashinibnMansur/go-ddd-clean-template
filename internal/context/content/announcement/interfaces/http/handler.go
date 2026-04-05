@@ -8,9 +8,9 @@ import (
 	"gct/internal/context/content/announcement/application/command"
 	"gct/internal/context/content/announcement/application/query"
 	"gct/internal/context/content/announcement/domain"
-	"gct/internal/platform/infrastructure/httpx"
-	"gct/internal/platform/infrastructure/httpx/response"
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/httpx"
+	"gct/internal/kernel/infrastructure/httpx/response"
+	"gct/internal/kernel/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -71,7 +71,7 @@ func (h *Handler) Get(ctx *gin.Context) {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
-	result, err := h.bc.GetAnnouncement.Handle(ctx.Request.Context(), query.GetAnnouncementQuery{ID: id})
+	result, err := h.bc.GetAnnouncement.Handle(ctx.Request.Context(), query.GetAnnouncementQuery{ID: domain.AnnouncementID(id)})
 	if err != nil {
 		response.HandleError(ctx, err)
 		return
@@ -92,7 +92,7 @@ func (h *Handler) Update(ctx *gin.Context) {
 		return
 	}
 	cmd := command.UpdateAnnouncementCommand{
-		ID:        id,
+		ID:        domain.AnnouncementID(id),
 		Title:     req.Title,
 		Content:   req.Content,
 		Priority:  req.Priority,
@@ -114,7 +114,7 @@ func (h *Handler) Delete(ctx *gin.Context) {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
-	if err := h.bc.DeleteAnnouncement.Handle(ctx.Request.Context(), command.DeleteAnnouncementCommand{ID: id}); err != nil {
+	if err := h.bc.DeleteAnnouncement.Handle(ctx.Request.Context(), command.DeleteAnnouncementCommand{ID: domain.AnnouncementID(id)}); err != nil {
 		response.HandleError(ctx, err)
 		return
 	}

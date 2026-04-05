@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"gct/internal/context/admin/featureflag/domain"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/pgxutil"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // EvalResult is the value/type pair returned by the flag evaluator. Defined

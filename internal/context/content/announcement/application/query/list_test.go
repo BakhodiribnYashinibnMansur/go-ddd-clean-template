@@ -1,7 +1,7 @@
 package query
 
 import (
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/logger"
 	"context"
 	"testing"
 	"time"
@@ -9,9 +9,12 @@ import (
 	"gct/internal/context/content/announcement/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func TestListAnnouncementsHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockReadRepo{
 		views: []*domain.AnnouncementView{
 			{ID: uuid.New(), TitleEn: "A1", Priority: 1, CreatedAt: time.Now(), UpdatedAt: time.Now()},
@@ -24,9 +27,7 @@ func TestListAnnouncementsHandler_Handle(t *testing.T) {
 	result, err := handler.Handle(context.Background(), ListAnnouncementsQuery{
 		Filter: domain.AnnouncementFilter{Limit: 10, Offset: 0},
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 	if result.Total != 2 {
 		t.Errorf("expected total 2, got %d", result.Total)
 	}
@@ -39,15 +40,15 @@ func TestListAnnouncementsHandler_Handle(t *testing.T) {
 }
 
 func TestListAnnouncementsHandler_Empty(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockReadRepo{views: []*domain.AnnouncementView{}, total: 0}
 
 	handler := NewListAnnouncementsHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListAnnouncementsQuery{
 		Filter: domain.AnnouncementFilter{},
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 	if result.Total != 0 {
 		t.Errorf("expected total 0, got %d", result.Total)
 	}
@@ -57,6 +58,8 @@ func TestListAnnouncementsHandler_Empty(t *testing.T) {
 }
 
 func TestListAnnouncementsHandler_WithFilters(t *testing.T) {
+	t.Parallel()
+
 	published := true
 	readRepo := &mockReadRepo{
 		views: []*domain.AnnouncementView{
@@ -69,15 +72,15 @@ func TestListAnnouncementsHandler_WithFilters(t *testing.T) {
 	result, err := handler.Handle(context.Background(), ListAnnouncementsQuery{
 		Filter: domain.AnnouncementFilter{Published: &published, Limit: 10},
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 	if result.Total != 1 {
 		t.Errorf("expected total 1, got %d", result.Total)
 	}
 }
 
 func TestListAnnouncementsHandler_RepoError(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &errorReadRepo{err: errRepo}
 	handler := NewListAnnouncementsHandler(readRepo, logger.Noop())
 	_, err := handler.Handle(context.Background(), ListAnnouncementsQuery{Filter: domain.AnnouncementFilter{}})

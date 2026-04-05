@@ -1,7 +1,7 @@
 package query
 
 import (
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
@@ -10,6 +10,7 @@ import (
 	"gct/internal/context/admin/dataexport/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 // ---------------------------------------------------------------------------
@@ -43,6 +44,8 @@ func (m *mockDataExportReadRepository) List(_ context.Context, _ domain.DataExpo
 // ---------------------------------------------------------------------------
 
 func TestGetDataExportHandler_Success(t *testing.T) {
+	t.Parallel()
+
 	exportID := uuid.New()
 	userID := uuid.New()
 	now := time.Now()
@@ -63,10 +66,8 @@ func TestGetDataExportHandler_Success(t *testing.T) {
 
 	handler := NewGetDataExportHandler(readRepo, logger.Noop())
 
-	result, err := handler.Handle(context.Background(), GetDataExportQuery{ID: exportID})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	result, err := handler.Handle(context.Background(), GetDataExportQuery{ID: domain.DataExportID(exportID)})
+	require.NoError(t, err)
 
 	if result == nil {
 		t.Fatal("expected non-nil result")
@@ -82,13 +83,15 @@ func TestGetDataExportHandler_Success(t *testing.T) {
 }
 
 func TestGetDataExportHandler_RepoError(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockDataExportReadRepository{
 		findByIDErr: errors.New("not found"),
 	}
 
 	handler := NewGetDataExportHandler(readRepo, logger.Noop())
 
-	result, err := handler.Handle(context.Background(), GetDataExportQuery{ID: uuid.New()})
+	result, err := handler.Handle(context.Background(), GetDataExportQuery{ID: domain.DataExportID(uuid.New())})
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
@@ -99,6 +102,8 @@ func TestGetDataExportHandler_RepoError(t *testing.T) {
 }
 
 func TestGetDataExportHandler_MapsAllFields(t *testing.T) {
+	t.Parallel()
+
 	exportID := uuid.New()
 	userID := uuid.New()
 	now := time.Now()
@@ -121,10 +126,8 @@ func TestGetDataExportHandler_MapsAllFields(t *testing.T) {
 
 	handler := NewGetDataExportHandler(readRepo, logger.Noop())
 
-	result, err := handler.Handle(context.Background(), GetDataExportQuery{ID: exportID})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	result, err := handler.Handle(context.Background(), GetDataExportQuery{ID: domain.DataExportID(exportID)})
+	require.NoError(t, err)
 
 	v := result
 

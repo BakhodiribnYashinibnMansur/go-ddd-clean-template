@@ -3,7 +3,7 @@ package app
 import (
 	"net/http"
 
-	apperrors "gct/internal/platform/infrastructure/errors"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
 
 	"github.com/gin-gonic/gin"
 )

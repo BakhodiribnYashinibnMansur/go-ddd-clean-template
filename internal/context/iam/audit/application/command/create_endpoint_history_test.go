@@ -8,6 +8,7 @@ import (
 	"gct/internal/context/iam/audit/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 // --- Mock EndpointHistory Repository ---
@@ -28,6 +29,8 @@ func (m *mockEndpointHistoryRepository) Save(_ context.Context, entry *domain.En
 // --- Tests ---
 
 func TestCreateEndpointHistoryHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockEndpointHistoryRepository{}
 	log := &mockLogger{}
 
@@ -48,9 +51,7 @@ func TestCreateEndpointHistoryHandler_Handle(t *testing.T) {
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.savedEntry == nil {
 		t.Fatal("expected endpoint history to be saved, but it was nil")
@@ -86,6 +87,8 @@ func TestCreateEndpointHistoryHandler_Handle(t *testing.T) {
 }
 
 func TestCreateEndpointHistoryHandler_RepoError(t *testing.T) {
+	t.Parallel()
+
 	repoErr := errors.New("db connection failed")
 	repo := &mockEndpointHistoryRepository{saveErr: repoErr}
 	log := &mockLogger{}
@@ -110,6 +113,8 @@ func TestCreateEndpointHistoryHandler_RepoError(t *testing.T) {
 }
 
 func TestCreateEndpointHistoryHandler_NilOptionalFields(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockEndpointHistoryRepository{}
 	log := &mockLogger{}
 
@@ -126,9 +131,7 @@ func TestCreateEndpointHistoryHandler_NilOptionalFields(t *testing.T) {
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.savedEntry == nil {
 		t.Fatal("expected entry to be saved")
@@ -148,6 +151,8 @@ func TestCreateEndpointHistoryHandler_NilOptionalFields(t *testing.T) {
 }
 
 func TestCreateEndpointHistoryHandler_VariousStatusCodes(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name       string
 		statusCode int
@@ -161,6 +166,7 @@ func TestCreateEndpointHistoryHandler_VariousStatusCodes(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			repo := &mockEndpointHistoryRepository{}
 			log := &mockLogger{}
 			handler := NewCreateEndpointHistoryHandler(repo, log)
@@ -173,9 +179,7 @@ func TestCreateEndpointHistoryHandler_VariousStatusCodes(t *testing.T) {
 			}
 
 			err := handler.Handle(context.Background(), cmd)
-			if err != nil {
-				t.Fatalf("expected no error, got: %v", err)
-			}
+			require.NoError(t, err)
 
 			if repo.savedEntry.StatusCode() != tt.statusCode {
 				t.Errorf("expected status code %d, got %d", tt.statusCode, repo.savedEntry.StatusCode())

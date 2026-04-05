@@ -8,9 +8,9 @@ import (
 	"gct/internal/context/admin/integration/application/command"
 	"gct/internal/context/admin/integration/application/query"
 	"gct/internal/context/admin/integration/domain"
-	"gct/internal/platform/infrastructure/httpx"
-	"gct/internal/platform/infrastructure/httpx/response"
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/httpx"
+	"gct/internal/kernel/infrastructure/httpx/response"
+	"gct/internal/kernel/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -72,7 +72,7 @@ func (h *Handler) Get(ctx *gin.Context) {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
-	result, err := h.bc.GetIntegration.Handle(ctx.Request.Context(), query.GetQuery{ID: id})
+	result, err := h.bc.GetIntegration.Handle(ctx.Request.Context(), query.GetQuery{ID: domain.IntegrationID(id)})
 	if err != nil {
 		response.HandleError(ctx, err)
 		return
@@ -93,7 +93,7 @@ func (h *Handler) Update(ctx *gin.Context) {
 		return
 	}
 	cmd := command.UpdateCommand{
-		ID:         id,
+		ID:         domain.IntegrationID(id),
 		Name:       req.Name,
 		Type:       req.Type,
 		APIKey:     req.APIKey,
@@ -115,7 +115,7 @@ func (h *Handler) Delete(ctx *gin.Context) {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
-	if err := h.bc.DeleteIntegration.Handle(ctx.Request.Context(), command.DeleteCommand{ID: id}); err != nil {
+	if err := h.bc.DeleteIntegration.Handle(ctx.Request.Context(), command.DeleteCommand{ID: domain.IntegrationID(id)}); err != nil {
 		response.HandleError(ctx, err)
 		return
 	}

@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"gct/internal/context/ops/ratelimit/domain"
-	"gct/internal/platform/domain/consts"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/pgxutil"
+	"gct/internal/kernel/consts"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/pgxutil"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -122,7 +122,7 @@ func scanRateLimitViewFromRows(rows pgx.Rows) (*domain.RateLimitView, error) {
 	var v domain.RateLimitView
 	err := rows.Scan(&v.ID, &v.Name, &v.Rule, &v.RequestsPerWindow, &v.WindowDuration, &v.Enabled, &v.CreatedAt, &v.UpdatedAt)
 	if err != nil {
-		return nil, err
+		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 	return &v, nil
 }

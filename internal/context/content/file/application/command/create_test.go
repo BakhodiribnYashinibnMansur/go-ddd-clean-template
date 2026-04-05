@@ -6,10 +6,11 @@ import (
 
 	"gct/internal/context/content/file/application/command"
 	"gct/internal/context/content/file/domain"
-	"gct/internal/platform/application"
-	shared "gct/internal/platform/domain"
+	"gct/internal/kernel/application"
+	shared "gct/internal/kernel/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 // --- Mocks ---
@@ -54,6 +55,8 @@ func (m *mockLogger) Fatalc(_ context.Context, _ string, _ ...any)  {}
 // --- Tests ---
 
 func TestCreateFileHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockFileRepo{}
 	handler := command.NewCreateFileHandler(repo, &mockEventBus{}, &mockLogger{})
 
@@ -69,9 +72,7 @@ func TestCreateFileHandler_Handle(t *testing.T) {
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("Handle returned error: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.saved == nil {
 		t.Fatal("expected file to be saved")
@@ -100,6 +101,8 @@ func TestCreateFileHandler_Handle(t *testing.T) {
 }
 
 func TestCreateFileHandler_NilUploadedBy(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockFileRepo{}
 	handler := command.NewCreateFileHandler(repo, &mockEventBus{}, &mockLogger{})
 
@@ -114,9 +117,7 @@ func TestCreateFileHandler_NilUploadedBy(t *testing.T) {
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("Handle returned error: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.saved == nil {
 		t.Fatal("expected file to be saved")

@@ -75,6 +75,7 @@ func TestDomainEvents_TableDriven(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			if tt.event.EventName() != tt.expectedName {
 				t.Errorf("expected event name %q, got %q", tt.expectedName, tt.event.EventName())
 			}
@@ -110,6 +111,8 @@ func TestDomainEvents_TableDriven(t *testing.T) {
 }
 
 func TestRoleChanged_CarriesOldAndNewRoleIDs(t *testing.T) {
+	t.Parallel()
+
 	userID := uuid.New()
 	oldRole := uuid.New()
 	newRole := uuid.New()
@@ -125,6 +128,8 @@ func TestRoleChanged_CarriesOldAndNewRoleIDs(t *testing.T) {
 }
 
 func TestRoleChanged_NilOldRole(t *testing.T) {
+	t.Parallel()
+
 	event := domain.NewRoleChanged(uuid.New(), nil, uuid.New())
 
 	if event.OldRoleID != nil {
@@ -133,6 +138,8 @@ func TestRoleChanged_NilOldRole(t *testing.T) {
 }
 
 func TestUserSignedIn_CarriesSessionAndIP(t *testing.T) {
+	t.Parallel()
+
 	userID := uuid.New()
 	sessionID := uuid.New()
 
@@ -147,6 +154,8 @@ func TestUserSignedIn_CarriesSessionAndIP(t *testing.T) {
 }
 
 func TestUserCreated_CarriesPhone(t *testing.T) {
+	t.Parallel()
+
 	userID := uuid.New()
 	event := domain.NewUserCreated(userID, "+998901234567")
 

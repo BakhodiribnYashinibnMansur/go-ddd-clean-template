@@ -5,15 +5,17 @@ import (
 	"time"
 
 	domain "gct/internal/context/content/announcement/domain"
-	shared "gct/internal/platform/domain"
+	shared "gct/internal/kernel/domain"
 
 	"github.com/google/uuid"
 )
 
 func TestNewAnnouncement(t *testing.T) {
+	t.Parallel()
+
 	title := shared.Lang{Uz: "Sarlavha", Ru: "Заголовок", En: "Title"}
 	content := shared.Lang{Uz: "Mazmun", Ru: "Содержание", En: "Content"}
-	a := domain.NewAnnouncement(title, content, 1, nil, nil)
+	a, _ := domain.NewAnnouncement(title, content, 1, nil, nil)
 
 	if a.Title().Uz != "Sarlavha" {
 		t.Fatalf("expected title uz Sarlavha, got %s", a.Title().Uz)
@@ -33,9 +35,11 @@ func TestNewAnnouncement(t *testing.T) {
 }
 
 func TestAnnouncement_Publish(t *testing.T) {
+	t.Parallel()
+
 	title := shared.Lang{Uz: "T", Ru: "T", En: "T"}
 	content := shared.Lang{Uz: "C", Ru: "C", En: "C"}
-	a := domain.NewAnnouncement(title, content, 0, nil, nil)
+	a, _ := domain.NewAnnouncement(title, content, 0, nil, nil)
 
 	a.Publish()
 
@@ -56,6 +60,8 @@ func TestAnnouncement_Publish(t *testing.T) {
 }
 
 func TestReconstructAnnouncement(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	now := time.Now()
 	title := shared.Lang{Uz: "T", Ru: "T", En: "T"}

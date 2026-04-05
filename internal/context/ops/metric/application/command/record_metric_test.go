@@ -4,10 +4,11 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/platform/application"
-	shared "gct/internal/platform/domain"
+	"gct/internal/kernel/application"
+	shared "gct/internal/kernel/domain"
 	"gct/internal/context/ops/metric/application/command"
 	"gct/internal/context/ops/metric/domain"
+	"github.com/stretchr/testify/require"
 )
 
 // --- Mocks ---
@@ -56,6 +57,8 @@ func (m *mockLogger) Errorc(_ context.Context, _ string, _ ...any)  {}
 func (m *mockLogger) Fatalc(_ context.Context, _ string, _ ...any)  {}
 
 func TestRecordMetricHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockMetricRepo{}
 	handler := command.NewRecordMetricHandler(repo, &mockEventBus{}, &mockLogger{})
 
@@ -66,9 +69,7 @@ func TestRecordMetricHandler_Handle(t *testing.T) {
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("Handle returned error: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.saved == nil {
 		t.Fatal("expected metric to be saved")

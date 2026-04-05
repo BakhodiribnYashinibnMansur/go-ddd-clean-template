@@ -6,11 +6,11 @@ import (
 	"strings"
 	"time"
 
-	"gct/internal/platform/application"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
-	"gct/internal/platform/infrastructure/pgxutil"
-	jwtpkg "gct/internal/platform/infrastructure/security/jwt"
+	"gct/internal/kernel/application"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/pgxutil"
+	jwtpkg "gct/internal/kernel/infrastructure/security/jwt"
 	"gct/internal/context/iam/user/domain"
 
 	"github.com/google/uuid"
@@ -47,7 +47,7 @@ type JWTConfig struct {
 type SignInHandler struct {
 	repo      domain.UserRepository
 	eventBus  application.EventBus
-	logger    logger.Log
+	logger   commandLogger
 	signIn    domain.SignInService
 	jwtConfig JWTConfig
 }
@@ -56,7 +56,7 @@ type SignInHandler struct {
 func NewSignInHandler(
 	repo domain.UserRepository,
 	eventBus application.EventBus,
-	logger logger.Log,
+	logger commandLogger,
 	jwtCfg JWTConfig,
 ) *SignInHandler {
 	return &SignInHandler{

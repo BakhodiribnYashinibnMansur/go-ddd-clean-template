@@ -5,12 +5,12 @@ import (
 	"strconv"
 
 	"gct/internal/context/ops/ratelimit"
-	"gct/internal/platform/infrastructure/httpx"
-	"gct/internal/platform/infrastructure/httpx/response"
+	"gct/internal/kernel/infrastructure/httpx"
+	"gct/internal/kernel/infrastructure/httpx/response"
 	"gct/internal/context/ops/ratelimit/application/command"
 	"gct/internal/context/ops/ratelimit/application/query"
 	"gct/internal/context/ops/ratelimit/domain"
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -71,7 +71,7 @@ func (h *Handler) Get(ctx *gin.Context) {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
-	result, err := h.bc.GetRateLimit.Handle(ctx.Request.Context(), query.GetRateLimitQuery{ID: id})
+	result, err := h.bc.GetRateLimit.Handle(ctx.Request.Context(), query.GetRateLimitQuery{ID: domain.RateLimitID(id)})
 	if err != nil {
 		response.HandleError(ctx, err)
 		return
@@ -92,7 +92,7 @@ func (h *Handler) Update(ctx *gin.Context) {
 		return
 	}
 	cmd := command.UpdateRateLimitCommand{
-		ID:                id,
+		ID:                domain.RateLimitID(id),
 		Name:              req.Name,
 		Rule:              req.Rule,
 		RequestsPerWindow: req.RequestsPerWindow,
@@ -113,7 +113,7 @@ func (h *Handler) Delete(ctx *gin.Context) {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
-	if err := h.bc.DeleteRateLimit.Handle(ctx.Request.Context(), command.DeleteRateLimitCommand{ID: id}); err != nil {
+	if err := h.bc.DeleteRateLimit.Handle(ctx.Request.Context(), command.DeleteRateLimitCommand{ID: domain.RateLimitID(id)}); err != nil {
 		response.HandleError(ctx, err)
 		return
 	}

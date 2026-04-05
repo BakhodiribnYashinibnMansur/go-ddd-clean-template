@@ -4,17 +4,15 @@ import (
 	"context"
 
 	"gct/internal/context/ops/iprule/domain"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
-	"gct/internal/platform/infrastructure/pgxutil"
-
-	"github.com/google/uuid"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // DeleteIPRuleCommand represents an intent to permanently remove an IP rule by its unique identifier.
 // Once deleted, any traffic previously matched by this rule will fall through to the default policy.
 type DeleteIPRuleCommand struct {
-	ID uuid.UUID
+	ID domain.IPRuleID
 }
 
 // DeleteIPRuleHandler orchestrates IP rule deletion through the repository layer.
@@ -43,8 +41,8 @@ func (h *DeleteIPRuleHandler) Handle(ctx context.Context, cmd DeleteIPRuleComman
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "DeleteIPRule", "ip_rule")()
 
-	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
-		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteIPRule", Entity: "ip_rule", EntityID: cmd.ID, Err: err}.KV()...)
+	if err := h.repo.Delete(ctx, cmd.ID.UUID()); err != nil {
+		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteIPRule", Entity: "ip_rule", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 	return nil

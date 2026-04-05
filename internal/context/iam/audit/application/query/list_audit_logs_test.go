@@ -1,7 +1,7 @@
 package query
 
 import (
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
@@ -10,6 +10,7 @@ import (
 	"gct/internal/context/iam/audit/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 // --- Mock AuditReadRepository ---
@@ -40,6 +41,8 @@ func (m *mockAuditReadRepository) ListEndpointHistory(_ context.Context, _ domai
 // --- Tests ---
 
 func TestListAuditLogsHandler_Success(t *testing.T) {
+	t.Parallel()
+
 	userID := uuid.New()
 	now := time.Now()
 
@@ -70,9 +73,7 @@ func TestListAuditLogsHandler_Success(t *testing.T) {
 	}
 
 	result, err := handler.Handle(context.Background(), q)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if result == nil {
 		t.Fatal("expected non-nil result")
@@ -100,6 +101,8 @@ func TestListAuditLogsHandler_Success(t *testing.T) {
 }
 
 func TestListAuditLogsHandler_Empty(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockAuditReadRepository{
 		auditLogs:  []*domain.AuditLogView{},
 		auditTotal: 0,
@@ -112,9 +115,7 @@ func TestListAuditLogsHandler_Empty(t *testing.T) {
 	}
 
 	result, err := handler.Handle(context.Background(), q)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if result.Total != 0 {
 		t.Errorf("expected total 0, got %d", result.Total)
@@ -126,6 +127,8 @@ func TestListAuditLogsHandler_Empty(t *testing.T) {
 }
 
 func TestListAuditLogsHandler_RepoError(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockAuditReadRepository{
 		auditErr: errors.New("database unavailable"),
 	}
@@ -147,6 +150,8 @@ func TestListAuditLogsHandler_RepoError(t *testing.T) {
 }
 
 func TestListAuditLogsHandler_MapsAllFields(t *testing.T) {
+	t.Parallel()
+
 	userID := uuid.New()
 	sessionID := uuid.New()
 	resourceID := uuid.New()
@@ -187,9 +192,7 @@ func TestListAuditLogsHandler_MapsAllFields(t *testing.T) {
 	handler := NewListAuditLogsHandler(readRepo, logger.Noop())
 
 	result, err := handler.Handle(context.Background(), ListAuditLogsQuery{})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	v := result.AuditLogs[0]
 
@@ -241,6 +244,8 @@ func TestListAuditLogsHandler_MapsAllFields(t *testing.T) {
 }
 
 func TestListAuditLogsHandler_WithFilter(t *testing.T) {
+	t.Parallel()
+
 	userID := uuid.New()
 	action := domain.AuditActionLogin
 	success := true
@@ -268,9 +273,7 @@ func TestListAuditLogsHandler_WithFilter(t *testing.T) {
 	}
 
 	result, err := handler.Handle(context.Background(), q)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if result.Total != 1 {
 		t.Errorf("expected total 1, got %d", result.Total)

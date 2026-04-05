@@ -1,7 +1,7 @@
 package query
 
 import (
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/logger"
 	"context"
 	"testing"
 	"time"
@@ -9,9 +9,12 @@ import (
 	"gct/internal/context/content/file/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func TestListFilesHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	now := time.Now()
 	readRepo := &mockReadRepo{
 		views: []*domain.FileView{
@@ -25,9 +28,7 @@ func TestListFilesHandler_Handle(t *testing.T) {
 	result, err := handler.Handle(context.Background(), ListFilesQuery{
 		Filter: domain.FileFilter{Limit: 10, Offset: 0},
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 	if result.Total != 2 {
 		t.Errorf("expected total 2, got %d", result.Total)
 	}
@@ -40,15 +41,15 @@ func TestListFilesHandler_Handle(t *testing.T) {
 }
 
 func TestListFilesHandler_Empty(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockReadRepo{views: []*domain.FileView{}, total: 0}
 
 	handler := NewListFilesHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListFilesQuery{
 		Filter: domain.FileFilter{},
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 	if result.Total != 0 {
 		t.Errorf("expected total 0, got %d", result.Total)
 	}
@@ -58,6 +59,8 @@ func TestListFilesHandler_Empty(t *testing.T) {
 }
 
 func TestListFilesHandler_RepoError(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &errorReadRepo{err: errRepo}
 	handler := NewListFilesHandler(readRepo, logger.Noop())
 	_, err := handler.Handle(context.Background(), ListFilesQuery{Filter: domain.FileFilter{}})

@@ -45,6 +45,8 @@ func (m *errorErrorCodeRepo) Delete(_ context.Context, _ uuid.UUID) error {
 // --- Tests ---
 
 func TestCreateErrorCodeHandler_RepoError(t *testing.T) {
+	t.Parallel()
+
 	repo := &errorErrorCodeRepo{saveErr: errRepoSave}
 	handler := NewCreateErrorCodeHandler(repo, &mockEventBus{}, &mockLogger{})
 
@@ -57,6 +59,8 @@ func TestCreateErrorCodeHandler_RepoError(t *testing.T) {
 }
 
 func TestUpdateErrorCodeHandler_RepoUpdateError(t *testing.T) {
+	t.Parallel()
+
 	ec := domain.NewErrorCode("ERR", "msg", 500, "c", "s", false, 0, "")
 
 	repo := &errorErrorCodeRepo{
@@ -66,7 +70,7 @@ func TestUpdateErrorCodeHandler_RepoUpdateError(t *testing.T) {
 	handler := NewUpdateErrorCodeHandler(repo, &mockEventBus{}, &mockLogger{})
 
 	err := handler.Handle(context.Background(), UpdateErrorCodeCommand{
-		ID: ec.ID(), Message: "m", HTTPStatus: 500, Category: "c", Severity: "s",
+		ID: domain.ErrorCodeID(ec.ID()), Message: "m", HTTPStatus: 500, Category: "c", Severity: "s",
 	})
 	if !errors.Is(err, errRepoUpdate) {
 		t.Fatalf("expected errRepoUpdate, got: %v", err)
@@ -74,6 +78,8 @@ func TestUpdateErrorCodeHandler_RepoUpdateError(t *testing.T) {
 }
 
 func TestDeleteErrorCodeHandler_RepoError(t *testing.T) {
+	t.Parallel()
+
 	ec := domain.NewErrorCode("ERR_DEL", "msg", 500, "c", "s", false, 0, "")
 	repo := &errorErrorCodeRepo{
 		findFn:    func(_ context.Context, _ uuid.UUID) (*domain.ErrorCode, error) { return ec, nil },
@@ -81,17 +87,19 @@ func TestDeleteErrorCodeHandler_RepoError(t *testing.T) {
 	}
 	handler := NewDeleteErrorCodeHandler(repo, &mockEventBus{}, &mockLogger{})
 
-	err := handler.Handle(context.Background(), DeleteErrorCodeCommand{ID: ec.ID()})
+	err := handler.Handle(context.Background(), DeleteErrorCodeCommand{ID: domain.ErrorCodeID(ec.ID())})
 	if !errors.Is(err, errRepoDelete) {
 		t.Fatalf("expected errRepoDelete, got: %v", err)
 	}
 }
 
 func TestDeleteErrorCodeHandler_FindByIDError(t *testing.T) {
+	t.Parallel()
+
 	repo := &errorErrorCodeRepo{} // findFn is nil, returns ErrErrorCodeNotFound
 	handler := NewDeleteErrorCodeHandler(repo, &mockEventBus{}, &mockLogger{})
 
-	err := handler.Handle(context.Background(), DeleteErrorCodeCommand{ID: uuid.New()})
+	err := handler.Handle(context.Background(), DeleteErrorCodeCommand{ID: domain.ErrorCodeID(uuid.New())})
 	if !errors.Is(err, domain.ErrErrorCodeNotFound) {
 		t.Fatalf("expected ErrErrorCodeNotFound, got: %v", err)
 	}

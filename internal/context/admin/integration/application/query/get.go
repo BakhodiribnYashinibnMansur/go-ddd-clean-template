@@ -3,19 +3,17 @@ package query
 import (
 	"context"
 
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
 
 	appdto "gct/internal/context/admin/integration/application"
 	"gct/internal/context/admin/integration/domain"
-	"gct/internal/platform/infrastructure/pgxutil"
-
-	"github.com/google/uuid"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // GetQuery holds the input for fetching a single integration.
 type GetQuery struct {
-	ID uuid.UUID
+	ID domain.IntegrationID
 }
 
 // GetHandler handles the GetQuery.
@@ -35,9 +33,9 @@ func (h *GetHandler) Handle(ctx context.Context, q GetQuery) (result *appdto.Int
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "GetIntegration", "integration")()
 
-	view, err := h.readRepo.FindByID(ctx, q.ID)
+	view, err := h.readRepo.FindByID(ctx, q.ID.UUID())
 	if err != nil {
-		h.logger.Warnc(ctx, "query failed", logger.F{Op: "Get", Entity: "integration", EntityID: q.ID, Err: err}.KV()...)
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "Get", Entity: "integration", EntityID: q.ID.UUID(), Err: err}.KV()...)
 		return nil, apperrors.MapToServiceError(err)
 	}
 

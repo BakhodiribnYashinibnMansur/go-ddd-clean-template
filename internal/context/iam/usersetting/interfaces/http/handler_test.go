@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/platform/application"
-	shared "gct/internal/platform/domain"
+	"gct/internal/kernel/application"
+	shared "gct/internal/kernel/domain"
 	"gct/internal/context/iam/usersetting"
 	"gct/internal/context/iam/usersetting/application/command"
 	"gct/internal/context/iam/usersetting/application/query"
@@ -111,6 +111,8 @@ func setupRouter(repo *mockRepo, readRepo *mockReadRepo) *gin.Engine {
 // --- Tests ---
 
 func TestHandler_Upsert_Success(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockRepo{}
 	readRepo := &mockReadRepo{}
 	router := setupRouter(repo, readRepo)
@@ -130,6 +132,8 @@ func TestHandler_Upsert_Success(t *testing.T) {
 }
 
 func TestHandler_Upsert_BadRequest(t *testing.T) {
+	t.Parallel()
+
 	router := setupRouter(&mockRepo{}, &mockReadRepo{})
 
 	w := httptest.NewRecorder()
@@ -143,6 +147,8 @@ func TestHandler_Upsert_BadRequest(t *testing.T) {
 }
 
 func TestHandler_List_Success(t *testing.T) {
+	t.Parallel()
+
 	now := time.Now()
 	readRepo := &mockReadRepo{
 		views: []*domain.UserSettingView{
@@ -162,6 +168,8 @@ func TestHandler_List_Success(t *testing.T) {
 }
 
 func TestHandler_Delete_Success(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockRepo{}
 	router := setupRouter(repo, &mockReadRepo{})
 
@@ -176,6 +184,8 @@ func TestHandler_Delete_Success(t *testing.T) {
 }
 
 func TestHandler_Delete_InvalidID(t *testing.T) {
+	t.Parallel()
+
 	router := setupRouter(&mockRepo{}, &mockReadRepo{})
 
 	w := httptest.NewRecorder()

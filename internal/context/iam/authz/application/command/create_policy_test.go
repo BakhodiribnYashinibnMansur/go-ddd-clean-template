@@ -5,9 +5,10 @@ import (
 	"testing"
 
 	"gct/internal/context/iam/authz/domain"
-	shared "gct/internal/platform/domain"
+	shared "gct/internal/kernel/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 // --- Mock PolicyRepository ---
@@ -62,6 +63,8 @@ func (m *mockPolicyRepository) FindByPermissionID(ctx context.Context, permissio
 // --- Tests ---
 
 func TestCreatePolicyHandler_AllowEffect(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockPolicyRepository{}
 	log := &mockLogger{}
 
@@ -69,15 +72,13 @@ func TestCreatePolicyHandler_AllowEffect(t *testing.T) {
 
 	permID := uuid.New()
 	cmd := CreatePolicyCommand{
-		PermissionID: permID,
+		PermissionID: domain.PermissionID(permID),
 		Effect:       domain.PolicyAllow,
 		Priority:     10,
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.savedPolicy == nil {
 		t.Fatal("expected policy to be saved")
@@ -101,21 +102,21 @@ func TestCreatePolicyHandler_AllowEffect(t *testing.T) {
 }
 
 func TestCreatePolicyHandler_DenyEffect(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockPolicyRepository{}
 	log := &mockLogger{}
 
 	handler := NewCreatePolicyHandler(repo, log)
 
 	cmd := CreatePolicyCommand{
-		PermissionID: uuid.New(),
+		PermissionID: domain.PermissionID(uuid.New()),
 		Effect:       domain.PolicyDeny,
 		Priority:     5,
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.savedPolicy == nil {
 		t.Fatal("expected policy to be saved")
@@ -127,6 +128,8 @@ func TestCreatePolicyHandler_DenyEffect(t *testing.T) {
 }
 
 func TestCreatePolicyHandler_WithConditions(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockPolicyRepository{}
 	log := &mockLogger{}
 
@@ -138,16 +141,14 @@ func TestCreatePolicyHandler_WithConditions(t *testing.T) {
 	}
 
 	cmd := CreatePolicyCommand{
-		PermissionID: uuid.New(),
+		PermissionID: domain.PermissionID(uuid.New()),
 		Effect:       domain.PolicyAllow,
 		Priority:     1,
 		Conditions:   conditions,
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.savedPolicy == nil {
 		t.Fatal("expected policy to be saved")
@@ -168,22 +169,22 @@ func TestCreatePolicyHandler_WithConditions(t *testing.T) {
 }
 
 func TestCreatePolicyHandler_NilConditions(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockPolicyRepository{}
 	log := &mockLogger{}
 
 	handler := NewCreatePolicyHandler(repo, log)
 
 	cmd := CreatePolicyCommand{
-		PermissionID: uuid.New(),
+		PermissionID: domain.PermissionID(uuid.New()),
 		Effect:       domain.PolicyAllow,
 		Priority:     0,
 		Conditions:   nil,
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.savedPolicy == nil {
 		t.Fatal("expected policy to be saved")

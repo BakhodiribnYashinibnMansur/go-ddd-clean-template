@@ -1,7 +1,7 @@
 package query
 
 import (
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/logger"
 	"context"
 	"testing"
 	"time"
@@ -9,9 +9,12 @@ import (
 	"gct/internal/context/content/notification/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func TestListHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockReadRepo{
 		views: []*domain.NotificationView{
 			{ID: uuid.New(), UserID: uuid.New(), Title: "N1", Type: "INFO", CreatedAt: time.Now()},
@@ -24,9 +27,7 @@ func TestListHandler_Handle(t *testing.T) {
 	result, err := handler.Handle(context.Background(), ListQuery{
 		Filter: domain.NotificationFilter{Limit: 10, Offset: 0},
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 	if result.Total != 2 {
 		t.Errorf("expected total 2, got %d", result.Total)
 	}
@@ -39,15 +40,15 @@ func TestListHandler_Handle(t *testing.T) {
 }
 
 func TestListHandler_Empty(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockReadRepo{views: []*domain.NotificationView{}, total: 0}
 
 	handler := NewListHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListQuery{
 		Filter: domain.NotificationFilter{},
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 	if result.Total != 0 {
 		t.Errorf("expected total 0, got %d", result.Total)
 	}
@@ -57,6 +58,8 @@ func TestListHandler_Empty(t *testing.T) {
 }
 
 func TestListHandler_RepoError(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &errorReadRepo{err: errRepo}
 	handler := NewListHandler(readRepo, logger.Noop())
 	_, err := handler.Handle(context.Background(), ListQuery{Filter: domain.NotificationFilter{}})

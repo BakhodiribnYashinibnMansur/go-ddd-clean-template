@@ -6,8 +6,8 @@ import (
 	"crypto/rsa"
 
 	"gct/config"
-	"gct/internal/platform/infrastructure/logger"
-	"gct/internal/platform/infrastructure/security/jwt"
+	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/security/jwt"
 	"gct/internal/context/iam/user/application/query"
 )
 

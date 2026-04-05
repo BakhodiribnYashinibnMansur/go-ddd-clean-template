@@ -5,9 +5,9 @@ import (
 	"time"
 
 	appdto "gct/internal/context/iam/session/application"
-	"gct/internal/platform/domain/consts"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/pgxutil"
+	"gct/internal/kernel/consts"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/pgxutil"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -97,7 +97,7 @@ func (r *SessionReadRepo) List(ctx context.Context, filter appdto.SessionsFilter
 	// Build WHERE conditions.
 	conds := squirrel.And{}
 	if filter.UserID != nil {
-		conds = append(conds, squirrel.Eq{"user_id": *filter.UserID})
+		conds = append(conds, squirrel.Eq{"user_id": filter.UserID.UUID()})
 	}
 	if filter.Revoked != nil {
 		conds = append(conds, squirrel.Eq{"revoked": *filter.Revoked})

@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/platform/infrastructure/eventbus"
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/eventbus"
+	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/context/ops/systemerror"
 	"gct/internal/context/ops/systemerror/application/command"
 	"gct/internal/context/ops/systemerror/application/query"
@@ -59,7 +59,7 @@ func TestIntegration_CreateAndGetSystemError(t *testing.T) {
 		t.Errorf("new system error should not be resolved")
 	}
 
-	view, err := bc.GetSystemError.Handle(ctx, query.GetSystemErrorQuery{ID: se.ID})
+	view, err := bc.GetSystemError.Handle(ctx, query.GetSystemErrorQuery{ID: domain.SystemErrorID(se.ID)})
 	if err != nil {
 		t.Fatalf("GetSystemError: %v", err)
 	}
@@ -89,14 +89,14 @@ func TestIntegration_ResolveSystemError(t *testing.T) {
 
 	resolvedBy := uuid.New()
 	err = bc.ResolveError.Handle(ctx, command.ResolveErrorCommand{
-		ID:         seID,
+		ID:         domain.SystemErrorID(seID),
 		ResolvedBy: resolvedBy,
 	})
 	if err != nil {
 		t.Fatalf("ResolveError: %v", err)
 	}
 
-	view, _ := bc.GetSystemError.Handle(ctx, query.GetSystemErrorQuery{ID: seID})
+	view, _ := bc.GetSystemError.Handle(ctx, query.GetSystemErrorQuery{ID: domain.SystemErrorID(seID)})
 	if !view.IsResolved {
 		t.Error("system error should be resolved")
 	}

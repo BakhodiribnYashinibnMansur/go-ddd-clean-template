@@ -8,6 +8,7 @@ import (
 	"gct/internal/context/iam/user/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 // revokeTestRepo is a specialized mock for revoke_all_sessions tests that supports
@@ -24,20 +25,18 @@ func (r *revokeTestRepo) Update(_ context.Context, entity *domain.User) error {
 }
 
 func TestRevokeAllSessionsHandler_Success(t *testing.T) {
+	t.Parallel()
+
 	phone, _ := domain.NewPhone("+998901234567")
 	pw, _ := domain.NewPasswordFromRaw("StrongP@ss123")
-	user := domain.NewUser(phone, pw)
+	user, _ := domain.NewUser(phone, pw)
 	user.Approve()
 
 	// Add two sessions
 	_, err := user.AddSession(domain.DeviceDesktop, "10.0.0.1", "Agent1")
-	if err != nil {
-		t.Fatalf("AddSession: %v", err)
-	}
+	require.NoError(t, err)
 	_, err = user.AddSession(domain.DeviceMobile, "10.0.0.2", "Agent2")
-	if err != nil {
-		t.Fatalf("AddSession: %v", err)
-	}
+	require.NoError(t, err)
 
 	repo := &revokeTestRepo{
 		mockUserRepository: mockUserRepository{
@@ -55,11 +54,9 @@ func TestRevokeAllSessionsHandler_Success(t *testing.T) {
 	handler := NewRevokeAllSessionsHandler(repo, eb, l)
 
 	err = handler.Handle(context.Background(), RevokeAllSessionsCommand{
-		UserID: user.ID(),
+		UserID: domain.UserID(user.ID()),
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.updated == nil {
 		t.Fatal("expected user to be updated")
@@ -73,6 +70,8 @@ func TestRevokeAllSessionsHandler_Success(t *testing.T) {
 }
 
 func TestRevokeAllSessionsHandler_UserNotFound(t *testing.T) {
+	t.Parallel()
+
 	repo := &revokeTestRepo{} // default findByIDFn returns ErrUserNotFound
 	eb := &mockEventBus{}
 	l := &mockLogger{}
@@ -80,7 +79,7 @@ func TestRevokeAllSessionsHandler_UserNotFound(t *testing.T) {
 	handler := NewRevokeAllSessionsHandler(repo, eb, l)
 
 	err := handler.Handle(context.Background(), RevokeAllSessionsCommand{
-		UserID: uuid.New(),
+		UserID: domain.NewUserID(),
 	})
 	if err == nil {
 		t.Fatal("expected error, got nil")
@@ -91,9 +90,11 @@ func TestRevokeAllSessionsHandler_UserNotFound(t *testing.T) {
 }
 
 func TestRevokeAllSessionsHandler_UpdateError(t *testing.T) {
+	t.Parallel()
+
 	phone, _ := domain.NewPhone("+998901234567")
 	pw, _ := domain.NewPasswordFromRaw("StrongP@ss123")
-	user := domain.NewUser(phone, pw)
+	user, _ := domain.NewUser(phone, pw)
 
 	updateErr := errors.New("db write failed")
 	repo := &revokeTestRepo{
@@ -113,7 +114,7 @@ func TestRevokeAllSessionsHandler_UpdateError(t *testing.T) {
 	handler := NewRevokeAllSessionsHandler(repo, eb, l)
 
 	err := handler.Handle(context.Background(), RevokeAllSessionsCommand{
-		UserID: user.ID(),
+		UserID: domain.UserID(user.ID()),
 	})
 	if err == nil {
 		t.Fatal("expected error, got nil")
@@ -124,9 +125,11 @@ func TestRevokeAllSessionsHandler_UpdateError(t *testing.T) {
 }
 
 func TestRevokeAllSessionsHandler_NoSessions(t *testing.T) {
+	t.Parallel()
+
 	phone, _ := domain.NewPhone("+998901234567")
 	pw, _ := domain.NewPasswordFromRaw("StrongP@ss123")
-	user := domain.NewUser(phone, pw)
+	user, _ := domain.NewUser(phone, pw)
 
 	repo := &revokeTestRepo{
 		mockUserRepository: mockUserRepository{
@@ -144,11 +147,9 @@ func TestRevokeAllSessionsHandler_NoSessions(t *testing.T) {
 	handler := NewRevokeAllSessionsHandler(repo, eb, l)
 
 	err := handler.Handle(context.Background(), RevokeAllSessionsCommand{
-		UserID: user.ID(),
+		UserID: domain.UserID(user.ID()),
 	})
-	if err != nil {
-		t.Fatalf("expected no error for user with no sessions, got %v", err)
-	}
+	require.NoError(t, err)
 	if repo.updated == nil {
 		t.Fatal("expected user to be updated")
 	}

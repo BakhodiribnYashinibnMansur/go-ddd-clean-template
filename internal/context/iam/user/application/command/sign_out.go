@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"gct/internal/context/iam/user/domain"
-	"gct/internal/platform/application"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
-	"gct/internal/platform/infrastructure/pgxutil"
+	"gct/internal/kernel/application"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // SignOutCommand holds the input for user sign-out.
@@ -20,14 +20,14 @@ type SignOutCommand struct {
 type SignOutHandler struct {
 	repo     domain.UserRepository
 	eventBus application.EventBus
-	logger   logger.Log
+	logger   commandLogger
 }
 
 // NewSignOutHandler creates a new SignOutHandler.
 func NewSignOutHandler(
 	repo domain.UserRepository,
 	eventBus application.EventBus,
-	logger logger.Log,
+	logger commandLogger,
 ) *SignOutHandler {
 	return &SignOutHandler{
 		repo:     repo,

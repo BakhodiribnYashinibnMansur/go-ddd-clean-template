@@ -9,9 +9,12 @@ import (
 	"gct/internal/context/admin/featureflag/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func TestUpdateRuleGroupHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	rgID := uuid.New()
 	flagID := uuid.New()
 	rg := domain.ReconstructRuleGroup(rgID, flagID, "old-name", "false", 1, time.Now(), time.Now(), nil)
@@ -31,16 +34,14 @@ func TestUpdateRuleGroupHandler_Handle(t *testing.T) {
 	newVariation := "true"
 	newPriority := 5
 	cmd := UpdateRuleGroupCommand{
-		ID:        rgID,
+		ID:        domain.RuleGroupID(rgID),
 		Name:      &newName,
 		Variation: &newVariation,
 		Priority:  &newPriority,
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if rgRepo.updated == nil {
 		t.Fatal("expected rule group to be updated")
@@ -60,6 +61,8 @@ func TestUpdateRuleGroupHandler_Handle(t *testing.T) {
 }
 
 func TestUpdateRuleGroupHandler_Handle_WithConditions(t *testing.T) {
+	t.Parallel()
+
 	rgID := uuid.New()
 	flagID := uuid.New()
 	rg := domain.ReconstructRuleGroup(rgID, flagID, "rg", "false", 1, time.Now(), time.Now(), nil)
@@ -76,14 +79,12 @@ func TestUpdateRuleGroupHandler_Handle_WithConditions(t *testing.T) {
 		{Attribute: "region", Operator: "in", Value: "us,eu"},
 	}
 	cmd := UpdateRuleGroupCommand{
-		ID:         rgID,
+		ID:         domain.RuleGroupID(rgID),
 		Conditions: &conditions,
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if rgRepo.updated == nil {
 		t.Fatal("expected rule group to be updated")
@@ -97,6 +98,8 @@ func TestUpdateRuleGroupHandler_Handle_WithConditions(t *testing.T) {
 }
 
 func TestUpdateRuleGroupHandler_Handle_InvalidOperator(t *testing.T) {
+	t.Parallel()
+
 	rgID := uuid.New()
 	flagID := uuid.New()
 	rg := domain.ReconstructRuleGroup(rgID, flagID, "rg", "false", 1, time.Now(), time.Now(), nil)
@@ -112,7 +115,7 @@ func TestUpdateRuleGroupHandler_Handle_InvalidOperator(t *testing.T) {
 		{Attribute: "plan", Operator: "bad_op", Value: "premium"},
 	}
 	err := handler.Handle(context.Background(), UpdateRuleGroupCommand{
-		ID:         rgID,
+		ID:         domain.RuleGroupID(rgID),
 		Conditions: &conditions,
 	})
 	if err == nil {
@@ -124,10 +127,12 @@ func TestUpdateRuleGroupHandler_Handle_InvalidOperator(t *testing.T) {
 }
 
 func TestUpdateRuleGroupHandler_Handle_NotFound(t *testing.T) {
+	t.Parallel()
+
 	rgRepo := &mockRuleGroupRepo{} // default returns ErrRuleGroupNotFound
 	handler := NewUpdateRuleGroupHandler(rgRepo, &mockEventBus{}, &mockLogger{})
 
-	err := handler.Handle(context.Background(), UpdateRuleGroupCommand{ID: uuid.New()})
+	err := handler.Handle(context.Background(), UpdateRuleGroupCommand{ID: domain.RuleGroupID(uuid.New())})
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
@@ -137,6 +142,8 @@ func TestUpdateRuleGroupHandler_Handle_NotFound(t *testing.T) {
 }
 
 func TestUpdateRuleGroupHandler_Handle_UpdateRepoError(t *testing.T) {
+	t.Parallel()
+
 	rgID := uuid.New()
 	flagID := uuid.New()
 	rg := domain.ReconstructRuleGroup(rgID, flagID, "rg", "false", 1, time.Now(), time.Now(), nil)
@@ -152,7 +159,7 @@ func TestUpdateRuleGroupHandler_Handle_UpdateRepoError(t *testing.T) {
 	}
 	handler := NewUpdateRuleGroupHandler(rgRepo, &mockEventBus{}, &mockLogger{})
 
-	err := handler.Handle(context.Background(), UpdateRuleGroupCommand{ID: rgID})
+	err := handler.Handle(context.Background(), UpdateRuleGroupCommand{ID: domain.RuleGroupID(rgID)})
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}

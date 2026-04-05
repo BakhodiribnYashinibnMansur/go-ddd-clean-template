@@ -3,10 +3,14 @@ package application
 import (
 	"time"
 
+	"gct/internal/context/iam/session/domain"
+
 	"github.com/google/uuid"
 )
 
 // SessionView is a read-model DTO for session data.
+// It is a wire-format output DTO: identifiers remain raw uuid.UUID so it can
+// be serialized directly to HTTP responses.
 type SessionView struct {
 	ID           uuid.UUID `json:"id"`
 	UserID       uuid.UUID `json:"user_id"`
@@ -21,9 +25,10 @@ type SessionView struct {
 	CreatedAt    time.Time `json:"created_at"`
 }
 
-// SessionsFilter holds optional filters for listing sessions.
+// SessionsFilter holds optional filters for listing sessions. It is a query
+// DTO input — UserID is a typed ID owned by the Session BC.
 type SessionsFilter struct {
-	UserID  *uuid.UUID
+	UserID  *domain.UserID
 	Revoked *bool
 	Limit   int64
 	Offset  int64

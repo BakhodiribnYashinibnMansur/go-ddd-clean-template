@@ -10,6 +10,8 @@ import (
 )
 
 func TestUserCreated(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	e := domain.NewUserCreated(id, "+998901234567")
 	if e.EventName() != "user.created" {
@@ -24,6 +26,8 @@ func TestUserCreated(t *testing.T) {
 }
 
 func TestUserSignedIn(t *testing.T) {
+	t.Parallel()
+
 	uid, sid := uuid.New(), uuid.New()
 	e := domain.NewUserSignedIn(uid, sid, "1.2.3.4")
 	if e.EventName() != "user.signed_in" {
@@ -38,6 +42,8 @@ func TestUserSignedIn(t *testing.T) {
 }
 
 func TestUserDeactivated(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	e := domain.NewUserDeactivated(id)
 	if e.EventName() != "user.deactivated" {
@@ -49,6 +55,8 @@ func TestUserDeactivated(t *testing.T) {
 }
 
 func TestPasswordChanged(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	e := domain.NewPasswordChanged(id)
 	if e.EventName() != "user.password_changed" {
@@ -57,6 +65,8 @@ func TestPasswordChanged(t *testing.T) {
 }
 
 func TestUserApproved(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	e := domain.NewUserApproved(id)
 	if e.EventName() != "user.approved" {
@@ -65,6 +75,8 @@ func TestUserApproved(t *testing.T) {
 }
 
 func TestRoleChanged(t *testing.T) {
+	t.Parallel()
+
 	uid := uuid.New()
 	oldRole := uuid.New()
 	newRole := uuid.New()
@@ -81,6 +93,8 @@ func TestRoleChanged(t *testing.T) {
 }
 
 func TestEventsImplementDomainEvent(t *testing.T) {
+	t.Parallel()
+
 	// Compile-time check that all events satisfy shared.DomainEvent.
 	// The interface requires EventName(), OccurredAt(), AggregateID().
 	id := uuid.New()

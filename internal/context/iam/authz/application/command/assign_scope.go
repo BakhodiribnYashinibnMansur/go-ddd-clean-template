@@ -4,17 +4,15 @@ import (
 	"context"
 
 	"gct/internal/context/iam/authz/domain"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
-	"gct/internal/platform/infrastructure/pgxutil"
-
-	"github.com/google/uuid"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // AssignScopeCommand represents an intent to bind an API scope (path + method) to a permission.
 // This mapping determines which API endpoints a permission protects during authorization evaluation.
 type AssignScopeCommand struct {
-	PermissionID uuid.UUID
+	PermissionID domain.PermissionID
 	Path         string
 	Method       string
 }
@@ -44,8 +42,8 @@ func (h *AssignScopeHandler) Handle(ctx context.Context, cmd AssignScopeCommand)
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "AssignScope", "role")()
 
-	if err := h.permScopeRepo.Assign(ctx, cmd.PermissionID, cmd.Path, cmd.Method); err != nil {
-		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "AssignScope", Entity: "role", EntityID: cmd.PermissionID, Err: err}.KV()...)
+	if err := h.permScopeRepo.Assign(ctx, cmd.PermissionID.UUID(), cmd.Path, cmd.Method); err != nil {
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "AssignScope", Entity: "role", EntityID: cmd.PermissionID.UUID(), Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 

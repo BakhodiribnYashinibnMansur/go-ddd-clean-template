@@ -4,18 +4,16 @@ import (
 	"context"
 
 	"gct/internal/context/admin/integration/domain"
-	"gct/internal/platform/application"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
-	"gct/internal/platform/infrastructure/pgxutil"
-
-	"github.com/google/uuid"
+	"gct/internal/kernel/application"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // DeleteCommand represents an intent to permanently remove an integration by its unique identifier.
 // Once deleted, any webhooks or API keys associated with this integration become inoperative.
 type DeleteCommand struct {
-	ID uuid.UUID
+	ID domain.IntegrationID
 }
 
 // DeleteHandler orchestrates integration deletion through the repository layer.
@@ -47,8 +45,8 @@ func (h *DeleteHandler) Handle(ctx context.Context, cmd DeleteCommand) (err erro
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "DeleteIntegration", "integration")()
 
-	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
-		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteIntegration", Entity: "integration", EntityID: cmd.ID, Err: err}.KV()...)
+	if err := h.repo.Delete(ctx, cmd.ID.UUID()); err != nil {
+		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteIntegration", Entity: "integration", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 

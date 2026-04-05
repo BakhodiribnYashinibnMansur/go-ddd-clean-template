@@ -9,6 +9,8 @@ import (
 )
 
 func TestRuleGroup_MatchAll_AllConditionsTrue(t *testing.T) {
+	t.Parallel()
+
 	rg := domain.NewRuleGroup(uuid.New(), "beta-users", "true", 1)
 	rg.AddCondition(domain.NewCondition("country", "eq", "US"))
 	rg.AddCondition(domain.NewCondition("age", "gte", "18"))
@@ -20,6 +22,8 @@ func TestRuleGroup_MatchAll_AllConditionsTrue(t *testing.T) {
 }
 
 func TestRuleGroup_MatchAll_OneConditionFalse(t *testing.T) {
+	t.Parallel()
+
 	rg := domain.NewRuleGroup(uuid.New(), "beta-users", "true", 1)
 	rg.AddCondition(domain.NewCondition("country", "eq", "US"))
 	rg.AddCondition(domain.NewCondition("age", "gte", "18"))
@@ -31,6 +35,8 @@ func TestRuleGroup_MatchAll_OneConditionFalse(t *testing.T) {
 }
 
 func TestRuleGroup_MatchAll_MissingAttribute(t *testing.T) {
+	t.Parallel()
+
 	rg := domain.NewRuleGroup(uuid.New(), "beta-users", "true", 1)
 	rg.AddCondition(domain.NewCondition("country", "eq", "US"))
 
@@ -41,6 +47,8 @@ func TestRuleGroup_MatchAll_MissingAttribute(t *testing.T) {
 }
 
 func TestRuleGroup_MatchAll_NoConditions(t *testing.T) {
+	t.Parallel()
+
 	rg := domain.NewRuleGroup(uuid.New(), "empty-group", "true", 1)
 
 	attrs := map[string]string{"country": "US"}

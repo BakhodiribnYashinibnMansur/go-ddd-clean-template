@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"gct/config"
-	"gct/internal/platform/infrastructure/metrics/latency"
+	"gct/internal/kernel/infrastructure/metrics/latency"
 	docs "gct/docs/swagger"
-	"gct/internal/platform/infrastructure/httpx"
+	"gct/internal/kernel/infrastructure/httpx"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"

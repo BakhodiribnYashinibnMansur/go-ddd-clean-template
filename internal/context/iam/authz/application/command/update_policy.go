@@ -4,17 +4,15 @@ import (
 	"context"
 
 	"gct/internal/context/iam/authz/domain"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
-	"gct/internal/platform/infrastructure/pgxutil"
-
-	"github.com/google/uuid"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // UpdatePolicyCommand represents a partial update to an existing authorization policy.
 // Nil pointer fields are left unchanged. Conditions use a full-replace strategy — pass nil to keep existing, pass a map to overwrite.
 type UpdatePolicyCommand struct {
-	ID         uuid.UUID
+	ID         domain.PolicyID
 	Effect     *domain.PolicyEffect
 	Priority   *int
 	Conditions map[string]any
@@ -45,7 +43,7 @@ func (h *UpdatePolicyHandler) Handle(ctx context.Context, cmd UpdatePolicyComman
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "UpdatePolicy", "policy")()
 
-	policy, err := h.repo.FindByID(ctx, cmd.ID)
+	policy, err := h.repo.FindByID(ctx, cmd.ID.UUID())
 	if err != nil {
 		return apperrors.MapToServiceError(err)
 	}
@@ -61,7 +59,7 @@ func (h *UpdatePolicyHandler) Handle(ctx context.Context, cmd UpdatePolicyComman
 	}
 
 	if err := h.repo.Update(ctx, policy); err != nil {
-		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "UpdatePolicy", Entity: "policy", EntityID: cmd.ID, Err: err}.KV()...)
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "UpdatePolicy", Entity: "policy", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 

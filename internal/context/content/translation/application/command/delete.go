@@ -3,18 +3,16 @@ package command
 import (
 	"context"
 
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
-	"gct/internal/platform/infrastructure/pgxutil"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/pgxutil"
 	"gct/internal/context/content/translation/domain"
-
-	"github.com/google/uuid"
 )
 
 // DeleteTranslationCommand represents an intent to permanently remove a translation entry.
 // Once deleted, any UI referencing this key+language will fall back to the default locale or show a missing-key placeholder.
 type DeleteTranslationCommand struct {
-	ID uuid.UUID
+	ID domain.TranslationID
 }
 
 // DeleteTranslationHandler performs hard-delete of translations through the repository.
@@ -42,8 +40,8 @@ func (h *DeleteTranslationHandler) Handle(ctx context.Context, cmd DeleteTransla
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "DeleteTranslation", "translation")()
 
-	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
-		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteTranslation", Entity: "translation", EntityID: cmd.ID, Err: err}.KV()...)
+	if err := h.repo.Delete(ctx, cmd.ID.UUID()); err != nil {
+		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteTranslation", Entity: "translation", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 	return nil

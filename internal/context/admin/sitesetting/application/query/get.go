@@ -3,19 +3,17 @@ package query
 import (
 	"context"
 
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
 
-	"gct/internal/platform/infrastructure/pgxutil"
+	"gct/internal/kernel/infrastructure/pgxutil"
 	appdto "gct/internal/context/admin/sitesetting/application"
 	"gct/internal/context/admin/sitesetting/domain"
-
-	"github.com/google/uuid"
 )
 
 // GetSiteSettingQuery holds the input for getting a single site setting.
 type GetSiteSettingQuery struct {
-	ID uuid.UUID
+	ID domain.SiteSettingID
 }
 
 // GetSiteSettingHandler handles the GetSiteSettingQuery.
@@ -35,9 +33,9 @@ func (h *GetSiteSettingHandler) Handle(ctx context.Context, q GetSiteSettingQuer
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "GetSiteSetting", "site_setting")()
 
-	v, err := h.readRepo.FindByID(ctx, q.ID)
+	v, err := h.readRepo.FindByID(ctx, q.ID.UUID())
 	if err != nil {
-		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetSiteSetting", Entity: "site_setting", EntityID: q.ID, Err: err}.KV()...)
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetSiteSetting", Entity: "site_setting", EntityID: q.ID.UUID(), Err: err}.KV()...)
 		return nil, apperrors.MapToServiceError(err)
 	}
 

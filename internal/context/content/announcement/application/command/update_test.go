@@ -5,15 +5,18 @@ import (
 	"testing"
 	"time"
 
-	shared "gct/internal/platform/domain"
+	shared "gct/internal/kernel/domain"
 
 	"gct/internal/context/content/announcement/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func TestUpdateAnnouncementHandler_Handle(t *testing.T) {
-	a := domain.NewAnnouncement(
+	t.Parallel()
+
+	a, _ := domain.NewAnnouncement(
 		shared.Lang{Uz: "old", Ru: "old", En: "old"},
 		shared.Lang{Uz: "old", Ru: "old", En: "old"},
 		1, nil, nil,
@@ -33,15 +36,13 @@ func TestUpdateAnnouncementHandler_Handle(t *testing.T) {
 	newTitle := shared.Lang{Uz: "new_uz", Ru: "new_ru", En: "new_en"}
 	newPriority := 5
 	cmd := UpdateAnnouncementCommand{
-		ID:       a.ID(),
+		ID:       domain.AnnouncementID(a.ID()),
 		Title:    &newTitle,
 		Priority: &newPriority,
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 	if repo.updated == nil {
 		t.Fatal("expected announcement to be updated")
 	}
@@ -54,7 +55,9 @@ func TestUpdateAnnouncementHandler_Handle(t *testing.T) {
 }
 
 func TestUpdateAnnouncementHandler_WithPublish(t *testing.T) {
-	a := domain.NewAnnouncement(
+	t.Parallel()
+
+	a, _ := domain.NewAnnouncement(
 		shared.Lang{Uz: "t", Ru: "t", En: "t"},
 		shared.Lang{Uz: "c", Ru: "c", En: "c"},
 		1, nil, nil,
@@ -69,13 +72,11 @@ func TestUpdateAnnouncementHandler_WithPublish(t *testing.T) {
 	handler := NewUpdateAnnouncementHandler(repo, eb, &mockLogger{})
 
 	cmd := UpdateAnnouncementCommand{
-		ID:      a.ID(),
+		ID:      domain.AnnouncementID(a.ID()),
 		Publish: true,
 	}
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 	if !repo.updated.Published() {
 		t.Error("expected announcement to be published")
 	}
@@ -96,6 +97,8 @@ func TestUpdateAnnouncementHandler_WithPublish(t *testing.T) {
 }
 
 func TestUpdateAnnouncementHandler_AlreadyPublished(t *testing.T) {
+	t.Parallel()
+
 	now := time.Now()
 	a := domain.ReconstructAnnouncement(
 		uuid.New(), time.Now(), time.Now(),
@@ -113,13 +116,11 @@ func TestUpdateAnnouncementHandler_AlreadyPublished(t *testing.T) {
 	handler := NewUpdateAnnouncementHandler(repo, eb, &mockLogger{})
 
 	cmd := UpdateAnnouncementCommand{
-		ID:      a.ID(),
+		ID:      domain.AnnouncementID(a.ID()),
 		Publish: true,
 	}
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 	// Should not re-publish since already published
 	for _, e := range eb.published {
 		if e.EventName() == "announcement.published" {
@@ -129,10 +130,12 @@ func TestUpdateAnnouncementHandler_AlreadyPublished(t *testing.T) {
 }
 
 func TestUpdateAnnouncementHandler_NotFound(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockAnnouncementRepo{}
 	handler := NewUpdateAnnouncementHandler(repo, &mockEventBus{}, &mockLogger{})
 
-	err := handler.Handle(context.Background(), UpdateAnnouncementCommand{ID: uuid.New()})
+	err := handler.Handle(context.Background(), UpdateAnnouncementCommand{ID: domain.NewAnnouncementID()})
 	if err == nil {
 		t.Fatal("expected error for not found")
 	}

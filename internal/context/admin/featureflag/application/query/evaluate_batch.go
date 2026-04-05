@@ -3,7 +3,7 @@ package query
 import (
 	"context"
 
-	"gct/internal/platform/infrastructure/pgxutil"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // BatchEvaluateQuery holds the input for evaluating multiple feature flags.

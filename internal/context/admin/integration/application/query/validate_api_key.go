@@ -3,12 +3,12 @@ package query
 import (
 	"context"
 
-	apperrors "gct/internal/platform/infrastructure/errors"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
 
 	appdto "gct/internal/context/admin/integration/application"
 	"gct/internal/context/admin/integration/domain"
-	"gct/internal/platform/infrastructure/logger"
-	"gct/internal/platform/infrastructure/pgxutil"
+	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // ValidateAPIKeyQuery holds the input for validating an API key.

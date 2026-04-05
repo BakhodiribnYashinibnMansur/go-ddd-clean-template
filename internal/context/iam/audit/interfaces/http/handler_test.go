@@ -77,6 +77,8 @@ func setupRouter(readRepo *mockReadRepo) *gin.Engine {
 // --- Tests ---
 
 func TestHandler_ListAuditLogs_Success(t *testing.T) {
+	t.Parallel()
+
 	userID := uuid.New()
 	readRepo := &mockReadRepo{
 		auditLogs: []*domain.AuditLogView{
@@ -96,6 +98,8 @@ func TestHandler_ListAuditLogs_Success(t *testing.T) {
 }
 
 func TestHandler_ListEndpointHistory_Success(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockReadRepo{
 		endpointViews: []*domain.EndpointHistoryView{
 			{ID: uuid.New(), Endpoint: "/api/v1/users", Method: "GET", StatusCode: 200, Latency: 15, CreatedAt: time.Now()},
@@ -114,6 +118,8 @@ func TestHandler_ListEndpointHistory_Success(t *testing.T) {
 }
 
 func TestHandler_ListAuditLogs_WithPagination(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockReadRepo{
 		auditLogs: []*domain.AuditLogView{
 			{ID: uuid.New(), Action: domain.AuditActionLogin, Success: true, CreatedAt: time.Now()},
@@ -132,6 +138,8 @@ func TestHandler_ListAuditLogs_WithPagination(t *testing.T) {
 }
 
 func TestHandler_ListEndpointHistory_WithPagination(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockReadRepo{
 		endpointViews: []*domain.EndpointHistoryView{
 			{ID: uuid.New(), Endpoint: "/api/v1/jobs", Method: "POST", StatusCode: 201, Latency: 42, CreatedAt: time.Now()},

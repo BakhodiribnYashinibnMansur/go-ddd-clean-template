@@ -10,6 +10,8 @@ import (
 )
 
 func TestNewErrorCode(t *testing.T) {
+	t.Parallel()
+
 	ec := domain.NewErrorCode(
 		"AUTH_FAILED", "Authentication failed", 401,
 		"AUTH", "HIGH", false, 0, "Check your credentials",
@@ -50,6 +52,8 @@ func TestNewErrorCode(t *testing.T) {
 }
 
 func TestErrorCode_Update(t *testing.T) {
+	t.Parallel()
+
 	ec := domain.NewErrorCode(
 		"RATE_LIMIT", "Rate limit exceeded", 429,
 		"SYSTEM", "MEDIUM", true, 60, "Wait and retry",
@@ -74,6 +78,8 @@ func TestErrorCode_Update(t *testing.T) {
 }
 
 func TestReconstructErrorCode(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	now := time.Now()
 

@@ -4,9 +4,12 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewRole(t *testing.T) {
+	t.Parallel()
+
 	role := NewRole("admin")
 
 	if role.Name() != "admin" {
@@ -31,6 +34,8 @@ func TestNewRole(t *testing.T) {
 }
 
 func TestRole_Rename(t *testing.T) {
+	t.Parallel()
+
 	role := NewRole("admin")
 	role.Rename("super_admin")
 
@@ -40,6 +45,8 @@ func TestRole_Rename(t *testing.T) {
 }
 
 func TestRole_SetDescription(t *testing.T) {
+	t.Parallel()
+
 	role := NewRole("admin")
 	desc := "Administrator role"
 	role.SetDescription(&desc)
@@ -50,6 +57,8 @@ func TestRole_SetDescription(t *testing.T) {
 }
 
 func TestRole_AddPermission(t *testing.T) {
+	t.Parallel()
+
 	role := NewRole("admin")
 	perm := NewPermission("users.read", nil)
 
@@ -70,14 +79,14 @@ func TestRole_AddPermission(t *testing.T) {
 }
 
 func TestRole_RemovePermission(t *testing.T) {
+	t.Parallel()
+
 	role := NewRole("admin")
 	perm := NewPermission("users.read", nil)
 	role.AddPermission(*perm)
 
 	err := role.RemovePermission(perm.ID())
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if len(role.Permissions()) != 0 {
 		t.Errorf("expected 0 permissions, got %d", len(role.Permissions()))
@@ -85,6 +94,8 @@ func TestRole_RemovePermission(t *testing.T) {
 }
 
 func TestRole_RemovePermission_NotFound(t *testing.T) {
+	t.Parallel()
+
 	role := NewRole("admin")
 
 	err := role.RemovePermission(uuid.New())
@@ -97,6 +108,8 @@ func TestRole_RemovePermission_NotFound(t *testing.T) {
 }
 
 func TestPermission_AddScope(t *testing.T) {
+	t.Parallel()
+
 	perm := NewPermission("users.read", nil)
 	scope := Scope{Path: "/api/users", Method: "GET"}
 	perm.AddScope(scope)
@@ -111,13 +124,13 @@ func TestPermission_AddScope(t *testing.T) {
 }
 
 func TestPermission_RemoveScope(t *testing.T) {
+	t.Parallel()
+
 	perm := NewPermission("users.read", nil)
 	perm.AddScope(Scope{Path: "/api/users", Method: "GET"})
 
 	err := perm.RemoveScope("/api/users", "GET")
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if len(perm.Scopes()) != 0 {
 		t.Errorf("expected 0 scopes, got %d", len(perm.Scopes()))
@@ -125,6 +138,8 @@ func TestPermission_RemoveScope(t *testing.T) {
 }
 
 func TestPermission_RemoveScope_NotFound(t *testing.T) {
+	t.Parallel()
+
 	perm := NewPermission("users.read", nil)
 
 	err := perm.RemoveScope("/api/missing", "GET")

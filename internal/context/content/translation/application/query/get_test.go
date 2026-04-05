@@ -1,7 +1,7 @@
 package query
 
 import (
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
@@ -10,6 +10,7 @@ import (
 	"gct/internal/context/content/translation/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 // --- Mocks ---
@@ -46,6 +47,8 @@ var errRepo = errors.New("repo failure")
 // --- Tests: GetTranslation ---
 
 func TestGetTranslationHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	now := time.Now()
 	readRepo := &mockReadRepo{
@@ -61,10 +64,8 @@ func TestGetTranslationHandler_Handle(t *testing.T) {
 	}
 
 	handler := NewGetTranslationHandler(readRepo, logger.Noop())
-	result, err := handler.Handle(context.Background(), GetTranslationQuery{ID: id})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	result, err := handler.Handle(context.Background(), GetTranslationQuery{ID: domain.TranslationID(id)})
+	require.NoError(t, err)
 	if result == nil {
 		t.Fatal("expected result")
 	}
@@ -83,24 +84,30 @@ func TestGetTranslationHandler_Handle(t *testing.T) {
 }
 
 func TestGetTranslationHandler_NotFound(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockReadRepo{}
 	handler := NewGetTranslationHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), GetTranslationQuery{ID: uuid.New()})
+	_, err := handler.Handle(context.Background(), GetTranslationQuery{ID: domain.NewTranslationID()})
 	if err == nil {
 		t.Fatal("expected error for not found")
 	}
 }
 
 func TestGetTranslationHandler_RepoError(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &errorReadRepo{err: errRepo}
 	handler := NewGetTranslationHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), GetTranslationQuery{ID: uuid.New()})
+	_, err := handler.Handle(context.Background(), GetTranslationQuery{ID: domain.NewTranslationID()})
 	if err == nil {
 		t.Fatal("expected error from repo")
 	}
 }
 
 func TestGetTranslationHandler_AllFieldsMapped(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	now := time.Now()
 
@@ -117,10 +124,8 @@ func TestGetTranslationHandler_AllFieldsMapped(t *testing.T) {
 	}
 
 	handler := NewGetTranslationHandler(readRepo, logger.Noop())
-	result, err := handler.Handle(context.Background(), GetTranslationQuery{ID: id})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	result, err := handler.Handle(context.Background(), GetTranslationQuery{ID: domain.TranslationID(id)})
+	require.NoError(t, err)
 	if result.ID != id {
 		t.Error("ID not mapped correctly")
 	}

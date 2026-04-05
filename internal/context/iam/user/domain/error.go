@@ -1,6 +1,6 @@
 package domain
 
-import shared "gct/internal/platform/domain"
+import shared "gct/internal/kernel/domain"
 
 // Sentinel domain errors for the User bounded context.
 // The presentation layer maps these codes to HTTP status codes:

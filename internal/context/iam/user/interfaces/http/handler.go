@@ -4,15 +4,15 @@ import (
 	"net/http"
 	"strconv"
 
-	"gct/internal/platform/infrastructure/httpx"
-	"gct/internal/platform/infrastructure/httpx/response"
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/httpx"
+	"gct/internal/kernel/infrastructure/httpx/response"
+	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/context/iam/user"
 	"gct/internal/context/iam/user/application/command"
 	"gct/internal/context/iam/user/application/query"
 	userdomain "gct/internal/context/iam/user/domain"
 
-	shared "gct/internal/platform/domain"
+	shared "gct/internal/kernel/domain"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -98,7 +98,7 @@ func (h *Handler) Get(ctx *gin.Context) {
 		return
 	}
 
-	view, err := h.bc.GetUser.Handle(ctx.Request.Context(), query.GetUserQuery{ID: id})
+	view, err := h.bc.GetUser.Handle(ctx.Request.Context(), query.GetUserQuery{ID: userdomain.UserID(id)})
 	if err != nil {
 		response.HandleError(ctx, err)
 		return
@@ -122,7 +122,7 @@ func (h *Handler) Update(ctx *gin.Context) {
 	}
 
 	err = h.bc.UpdateUser.Handle(ctx.Request.Context(), command.UpdateUserCommand{
-		ID:         id,
+		ID:         userdomain.UserID(id),
 		Email:      req.Email,
 		Username:   req.Username,
 		Attributes: req.Attributes,
@@ -143,7 +143,7 @@ func (h *Handler) Delete(ctx *gin.Context) {
 		return
 	}
 
-	err = h.bc.DeleteUser.Handle(ctx.Request.Context(), command.DeleteUserCommand{ID: id})
+	err = h.bc.DeleteUser.Handle(ctx.Request.Context(), command.DeleteUserCommand{ID: userdomain.UserID(id)})
 	if err != nil {
 		response.HandleError(ctx, err)
 		return
@@ -160,7 +160,7 @@ func (h *Handler) Approve(ctx *gin.Context) {
 		return
 	}
 
-	err = h.bc.ApproveUser.Handle(ctx.Request.Context(), command.ApproveUserCommand{ID: id})
+	err = h.bc.ApproveUser.Handle(ctx.Request.Context(), command.ApproveUserCommand{ID: userdomain.UserID(id)})
 	if err != nil {
 		response.HandleError(ctx, err)
 		return
@@ -184,7 +184,7 @@ func (h *Handler) ChangeRole(ctx *gin.Context) {
 	}
 
 	err = h.bc.ChangeRole.Handle(ctx.Request.Context(), command.ChangeRoleCommand{
-		UserID: id,
+		UserID: userdomain.UserID(id),
 		RoleID: req.RoleID,
 	})
 	if err != nil {
@@ -203,8 +203,12 @@ func (h *Handler) BulkAction(ctx *gin.Context) {
 		return
 	}
 
+	ids := make([]userdomain.UserID, len(req.IDs))
+	for i, id := range req.IDs {
+		ids[i] = userdomain.UserID(id)
+	}
 	err := h.bc.BulkAction.Handle(ctx.Request.Context(), command.BulkActionCommand{
-		IDs:    req.IDs,
+		IDs:    ids,
 		Action: req.Action,
 	})
 	if err != nil {

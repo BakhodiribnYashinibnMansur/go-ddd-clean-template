@@ -1,7 +1,7 @@
 package query
 
 import (
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
@@ -10,9 +10,12 @@ import (
 	"gct/internal/context/admin/dataexport/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func TestListDataExportsHandler_Success(t *testing.T) {
+	t.Parallel()
+
 	userID := uuid.New()
 	now := time.Now()
 
@@ -47,9 +50,7 @@ func TestListDataExportsHandler_Success(t *testing.T) {
 	}
 
 	result, err := handler.Handle(context.Background(), q)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if result == nil {
 		t.Fatal("expected non-nil result")
@@ -73,6 +74,8 @@ func TestListDataExportsHandler_Success(t *testing.T) {
 }
 
 func TestListDataExportsHandler_Empty(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockDataExportReadRepository{
 		listViews: []*domain.DataExportView{},
 		listTotal: 0,
@@ -85,9 +88,7 @@ func TestListDataExportsHandler_Empty(t *testing.T) {
 	}
 
 	result, err := handler.Handle(context.Background(), q)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if result.Total != 0 {
 		t.Errorf("expected total 0, got %d", result.Total)
@@ -99,6 +100,8 @@ func TestListDataExportsHandler_Empty(t *testing.T) {
 }
 
 func TestListDataExportsHandler_RepoError(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockDataExportReadRepository{
 		listErr: errors.New("database unavailable"),
 	}

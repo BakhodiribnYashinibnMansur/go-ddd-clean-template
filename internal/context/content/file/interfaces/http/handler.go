@@ -14,10 +14,10 @@ import (
 	"gct/internal/context/content/file/application/command"
 	"gct/internal/context/content/file/application/query"
 	"gct/internal/context/content/file/domain"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/httpx"
-	"gct/internal/platform/infrastructure/httpx/response"
-	"gct/internal/platform/infrastructure/logger"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/httpx"
+	"gct/internal/kernel/infrastructure/httpx/response"
+	"gct/internal/kernel/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -91,7 +91,7 @@ func (h *Handler) Get(ctx *gin.Context) {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
-	result, err := h.bc.GetFile.Handle(ctx.Request.Context(), query.GetFileQuery{ID: id})
+	result, err := h.bc.GetFile.Handle(ctx.Request.Context(), query.GetFileQuery{ID: domain.FileID(id)})
 	if err != nil {
 		response.HandleError(ctx, err)
 		return

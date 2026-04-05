@@ -6,11 +6,12 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/platform/application"
-	shared "gct/internal/platform/domain"
+	"gct/internal/kernel/application"
+	shared "gct/internal/kernel/domain"
 	"gct/internal/context/ops/systemerror/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 // --- Mocks ---
@@ -79,6 +80,8 @@ func (m *mockLogger) Fatalc(_ context.Context, _ string, _ ...any)              
 // --- Tests: CreateSystemError ---
 
 func TestCreateSystemErrorHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockSystemErrorRepo{}
 	eb := &mockEventBus{}
 	log := &mockLogger{}
@@ -106,9 +109,7 @@ func TestCreateSystemErrorHandler_Handle(t *testing.T) {
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.saved == nil {
 		t.Fatal("expected system error to be saved")
@@ -134,6 +135,8 @@ func TestCreateSystemErrorHandler_Handle(t *testing.T) {
 }
 
 func TestCreateSystemErrorHandler_MinimalFields(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockSystemErrorRepo{}
 	eb := &mockEventBus{}
 	log := &mockLogger{}
@@ -145,9 +148,7 @@ func TestCreateSystemErrorHandler_MinimalFields(t *testing.T) {
 		Message:  "bad request",
 		Severity: "warning",
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 	if repo.saved == nil {
 		t.Fatal("expected system error to be saved")
 	}
@@ -162,6 +163,8 @@ func TestCreateSystemErrorHandler_MinimalFields(t *testing.T) {
 // --- Tests: ResolveError ---
 
 func TestResolveErrorHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	se := domain.NewSystemError("ERR_500", "test error", "critical")
 
 	repo := &mockSystemErrorRepo{
@@ -179,12 +182,10 @@ func TestResolveErrorHandler_Handle(t *testing.T) {
 
 	resolverID := uuid.New()
 	err := handler.Handle(context.Background(), ResolveErrorCommand{
-		ID:         se.ID(),
+		ID:         domain.SystemErrorID(se.ID()),
 		ResolvedBy: resolverID,
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.updated == nil {
 		t.Fatal("expected system error to be updated")
@@ -211,6 +212,8 @@ func TestResolveErrorHandler_Handle(t *testing.T) {
 }
 
 func TestResolveErrorHandler_NotFound(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockSystemErrorRepo{}
 	eb := &mockEventBus{}
 	log := &mockLogger{}
@@ -218,7 +221,7 @@ func TestResolveErrorHandler_NotFound(t *testing.T) {
 	handler := NewResolveErrorHandler(repo, eb, log)
 
 	err := handler.Handle(context.Background(), ResolveErrorCommand{
-		ID:         uuid.New(),
+		ID:         domain.NewSystemErrorID(),
 		ResolvedBy: uuid.New(),
 	})
 	if err == nil {
@@ -227,6 +230,8 @@ func TestResolveErrorHandler_NotFound(t *testing.T) {
 }
 
 func TestResolveErrorHandler_AlreadyResolved(t *testing.T) {
+	t.Parallel()
+
 	resolverID := uuid.New()
 	now := time.Now()
 	se := domain.ReconstructSystemError(
@@ -248,12 +253,10 @@ func TestResolveErrorHandler_AlreadyResolved(t *testing.T) {
 
 	// Should be idempotent
 	err := handler.Handle(context.Background(), ResolveErrorCommand{
-		ID:         se.ID(),
+		ID:         domain.SystemErrorID(se.ID()),
 		ResolvedBy: uuid.New(),
 	})
-	if err != nil {
-		t.Fatalf("resolve on already-resolved should be idempotent, got: %v", err)
-	}
+	require.NoError(t, err)
 }
 
 // --- Error paths ---
@@ -262,6 +265,8 @@ var errRepoSave = errors.New("repo save failed")
 var errRepoUpdate = errors.New("repo update failed")
 
 func TestCreateSystemErrorHandler_RepoError(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockSystemErrorRepo{}
 	repo2 := &errorSystemErrorRepo{saveErr: errRepoSave}
 	eb := &mockEventBus{}
@@ -279,6 +284,8 @@ func TestCreateSystemErrorHandler_RepoError(t *testing.T) {
 }
 
 func TestResolveErrorHandler_RepoUpdateError(t *testing.T) {
+	t.Parallel()
+
 	se := domain.NewSystemError("ERR", "test", "low")
 
 	repo := &errorSystemErrorRepo{
@@ -290,7 +297,7 @@ func TestResolveErrorHandler_RepoUpdateError(t *testing.T) {
 
 	handler := NewResolveErrorHandler(repo, eb, log)
 	err := handler.Handle(context.Background(), ResolveErrorCommand{
-		ID: se.ID(), ResolvedBy: uuid.New(),
+		ID: domain.SystemErrorID(se.ID()), ResolvedBy: uuid.New(),
 	})
 	if !errors.Is(err, errRepoUpdate) {
 		t.Fatalf("expected errRepoUpdate, got: %v", err)

@@ -3,7 +3,7 @@ package domain
 import (
 	"time"
 
-	shared "gct/internal/platform/domain"
+	shared "gct/internal/kernel/domain"
 
 	"github.com/google/uuid"
 )
@@ -36,8 +36,8 @@ type Session struct {
 	deviceID         string
 	deviceName       string
 	deviceType       SessionDeviceType
-	ipAddress        string
-	userAgent        string
+	ipAddress        shared.IPAddress
+	userAgent        shared.UserAgent
 	refreshTokenHash string
 	expiresAt        time.Time
 	lastActivity     time.Time
@@ -47,18 +47,25 @@ type Session struct {
 const defaultSessionDuration = 7 * 24 * time.Hour // 7 days
 
 // NewSession creates a new session for the given user.
-func NewSession(userID uuid.UUID, deviceType SessionDeviceType, ip, userAgent string) *Session {
+// It validates the IP address via shared.NewIPAddress and normalises the user agent;
+// an invalid IP returns shared.ErrInvalidIPAddress and no session is created.
+func NewSession(userID uuid.UUID, deviceType SessionDeviceType, ip, userAgent string) (*Session, error) {
+	ipVO, err := shared.NewIPAddress(ip)
+	if err != nil {
+		return nil, err
+	}
+	uaVO := shared.NewUserAgent(userAgent)
 	now := time.Now()
 	return &Session{
 		BaseEntity:   shared.NewBaseEntity(),
 		userID:       userID,
 		deviceID:     uuid.New().String(),
 		deviceType:   deviceType,
-		ipAddress:    ip,
-		userAgent:    userAgent,
+		ipAddress:    ipVO,
+		userAgent:    uaVO,
 		expiresAt:    now.Add(defaultSessionDuration),
 		lastActivity: now,
-	}
+	}, nil
 }
 
 // ReconstructSession rebuilds a Session from persisted data.
@@ -73,14 +80,16 @@ func ReconstructSession(
 	expiresAt, lastActivity time.Time,
 	revoked bool,
 ) *Session {
+	ipVO, _ := shared.NewIPAddress(ipAddress) // tolerate legacy/empty rows
+	uaVO := shared.NewUserAgent(userAgent)
 	return &Session{
 		BaseEntity:       shared.NewBaseEntityWithID(id, createdAt, updatedAt, deletedAt),
 		userID:           userID,
 		deviceID:         deviceID,
 		deviceName:       deviceName,
 		deviceType:       deviceType,
-		ipAddress:        ipAddress,
-		userAgent:        userAgent,
+		ipAddress:        ipVO,
+		userAgent:        uaVO,
 		refreshTokenHash: refreshTokenHash,
 		expiresAt:        expiresAt,
 		lastActivity:     lastActivity,
@@ -131,8 +140,8 @@ func (s *Session) UserID() uuid.UUID            { return s.userID }
 func (s *Session) DeviceID() string             { return s.deviceID }
 func (s *Session) DeviceName() string           { return s.deviceName }
 func (s *Session) DeviceType() SessionDeviceType { return s.deviceType }
-func (s *Session) IPAddress() string            { return s.ipAddress }
-func (s *Session) UserAgent() string            { return s.userAgent }
+func (s *Session) IPAddress() shared.IPAddress  { return s.ipAddress }
+func (s *Session) UserAgent() shared.UserAgent  { return s.userAgent }
 func (s *Session) RefreshTokenHash() string     { return s.refreshTokenHash }
 func (s *Session) ExpiresAt() time.Time         { return s.expiresAt }
 func (s *Session) LastActivity() time.Time      { return s.lastActivity }

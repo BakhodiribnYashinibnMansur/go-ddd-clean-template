@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"strconv"
 
-	"gct/internal/platform/infrastructure/httpx"
-	"gct/internal/platform/infrastructure/httpx/response"
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/httpx"
+	"gct/internal/kernel/infrastructure/httpx/response"
+	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/context/iam/usersetting"
 	"gct/internal/context/iam/usersetting/application/command"
 	"gct/internal/context/iam/usersetting/application/query"
@@ -69,7 +69,7 @@ func (h *Handler) Delete(ctx *gin.Context) {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
-	if err := h.bc.DeleteUserSetting.Handle(ctx.Request.Context(), command.DeleteUserSettingCommand{ID: id}); err != nil {
+	if err := h.bc.DeleteUserSetting.Handle(ctx.Request.Context(), command.DeleteUserSettingCommand{ID: domain.UserSettingID(id)}); err != nil {
 		response.HandleError(ctx, err)
 		return
 	}

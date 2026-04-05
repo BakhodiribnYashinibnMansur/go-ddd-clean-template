@@ -1,18 +1,21 @@
 package query
 
 import (
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
 
 	"gct/internal/context/iam/authz/domain"
-	shared "gct/internal/platform/domain"
+	shared "gct/internal/kernel/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func TestListPermissionsHandler_WithResults(t *testing.T) {
+	t.Parallel()
+
 	parentID := uuid.New()
 	desc := "Read-only access"
 	repo := &mockAuthzReadRepository{
@@ -28,9 +31,7 @@ func TestListPermissionsHandler_WithResults(t *testing.T) {
 	result, err := handler.Handle(context.Background(), ListPermissionsQuery{
 		Pagination: shared.Pagination{Limit: 10, Offset: 0},
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if len(result.Permissions) != 2 {
 		t.Fatalf("expected 2 permissions, got %d", len(result.Permissions))
@@ -50,6 +51,8 @@ func TestListPermissionsHandler_WithResults(t *testing.T) {
 }
 
 func TestListPermissionsHandler_Empty(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockAuthzReadRepository{
 		listPermsFn: func(_ context.Context, _ shared.Pagination) ([]*domain.PermissionView, int64, error) {
 			return []*domain.PermissionView{}, 0, nil
@@ -60,9 +63,7 @@ func TestListPermissionsHandler_Empty(t *testing.T) {
 	result, err := handler.Handle(context.Background(), ListPermissionsQuery{
 		Pagination: shared.Pagination{Limit: 10, Offset: 0},
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if len(result.Permissions) != 0 {
 		t.Errorf("expected 0 permissions, got %d", len(result.Permissions))
@@ -73,6 +74,8 @@ func TestListPermissionsHandler_Empty(t *testing.T) {
 }
 
 func TestListPermissionsHandler_RepoError(t *testing.T) {
+	t.Parallel()
+
 	repoErr := errors.New("query failed")
 	repo := &mockAuthzReadRepository{
 		listPermsFn: func(_ context.Context, _ shared.Pagination) ([]*domain.PermissionView, int64, error) {

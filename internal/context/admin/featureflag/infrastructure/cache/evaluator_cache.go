@@ -7,7 +7,7 @@ import (
 
 	"gct/internal/context/admin/featureflag/application/query"
 	"gct/internal/context/admin/featureflag/domain"
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/logger"
 )
 
 // CachedEvaluator evaluates feature flags from an in-memory cache backed by

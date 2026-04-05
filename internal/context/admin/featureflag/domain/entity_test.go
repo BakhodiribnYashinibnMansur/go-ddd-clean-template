@@ -10,7 +10,9 @@ import (
 )
 
 func TestNewFeatureFlag(t *testing.T) {
-	ff := domain.NewFeatureFlag("dark-mode", "dark_mode", "Enable dark mode", "bool", "false", 50)
+	t.Parallel()
+
+	ff, _ := domain.NewFeatureFlag("dark-mode", "dark_mode", "Enable dark mode", "bool", "false", 50)
 
 	if ff.Name() != "dark-mode" {
 		t.Fatalf("expected name dark-mode, got %s", ff.Name())
@@ -39,7 +41,9 @@ func TestNewFeatureFlag(t *testing.T) {
 }
 
 func TestFeatureFlag_Evaluate_InactiveReturnsDefault(t *testing.T) {
-	ff := domain.NewFeatureFlag("test", "test_flag", "desc", "bool", "false", 100)
+	t.Parallel()
+
+	ff, _ := domain.NewFeatureFlag("test", "test_flag", "desc", "bool", "false", 100)
 	result := ff.Evaluate(map[string]string{"user_id": "user1"})
 	if result != "false" {
 		t.Fatalf("expected 'false', got %s", result)
@@ -47,7 +51,9 @@ func TestFeatureFlag_Evaluate_InactiveReturnsDefault(t *testing.T) {
 }
 
 func TestFeatureFlag_Evaluate_RuleGroupMatch(t *testing.T) {
-	ff := domain.NewFeatureFlag("test", "test_flag", "desc", "bool", "false", 0)
+	t.Parallel()
+
+	ff, _ := domain.NewFeatureFlag("test", "test_flag", "desc", "bool", "false", 0)
 	ff.Activate()
 
 	rg := domain.NewRuleGroup(ff.ID(), "beta", "true", 1)
@@ -61,7 +67,9 @@ func TestFeatureFlag_Evaluate_RuleGroupMatch(t *testing.T) {
 }
 
 func TestFeatureFlag_Evaluate_RuleGroupNoMatch_FallsToDefault(t *testing.T) {
-	ff := domain.NewFeatureFlag("test", "test_flag", "desc", "bool", "false", 0)
+	t.Parallel()
+
+	ff, _ := domain.NewFeatureFlag("test", "test_flag", "desc", "bool", "false", 0)
 	ff.Activate()
 
 	rg := domain.NewRuleGroup(ff.ID(), "beta", "true", 1)
@@ -75,7 +83,9 @@ func TestFeatureFlag_Evaluate_RuleGroupNoMatch_FallsToDefault(t *testing.T) {
 }
 
 func TestFeatureFlag_Evaluate_PriorityOrder(t *testing.T) {
-	ff := domain.NewFeatureFlag("test", "test_flag", "desc", "string", "default", 0)
+	t.Parallel()
+
+	ff, _ := domain.NewFeatureFlag("test", "test_flag", "desc", "string", "default", 0)
 	ff.Activate()
 
 	rg1 := domain.NewRuleGroup(ff.ID(), "low-priority", "variation-B", 2)
@@ -93,7 +103,9 @@ func TestFeatureFlag_Evaluate_PriorityOrder(t *testing.T) {
 }
 
 func TestFeatureFlag_Evaluate_RolloutPercentage(t *testing.T) {
-	ff := domain.NewFeatureFlag("test", "test_flag", "desc", "bool", "false", 100)
+	t.Parallel()
+
+	ff, _ := domain.NewFeatureFlag("test", "test_flag", "desc", "bool", "false", 100)
 	ff.Activate()
 
 	result := ff.Evaluate(map[string]string{"user_id": "user1"})
@@ -103,7 +115,9 @@ func TestFeatureFlag_Evaluate_RolloutPercentage(t *testing.T) {
 }
 
 func TestFeatureFlag_Evaluate_RolloutZero(t *testing.T) {
-	ff := domain.NewFeatureFlag("test", "test_flag", "desc", "bool", "false", 0)
+	t.Parallel()
+
+	ff, _ := domain.NewFeatureFlag("test", "test_flag", "desc", "bool", "false", 0)
 	ff.Activate()
 
 	result := ff.Evaluate(map[string]string{"user_id": "user1"})
@@ -113,7 +127,9 @@ func TestFeatureFlag_Evaluate_RolloutZero(t *testing.T) {
 }
 
 func TestFeatureFlag_Toggle(t *testing.T) {
-	ff := domain.NewFeatureFlag("test", "test_flag", "desc", "bool", "false", 100)
+	t.Parallel()
+
+	ff, _ := domain.NewFeatureFlag("test", "test_flag", "desc", "bool", "false", 100)
 
 	ff.Activate()
 	if !ff.IsActive() {
@@ -136,7 +152,9 @@ func TestFeatureFlag_Toggle(t *testing.T) {
 }
 
 func TestFeatureFlag_Evaluate_MultipleRuleGroups_AND(t *testing.T) {
-	ff := domain.NewFeatureFlag("test", "test_flag", "desc", "bool", "false", 0)
+	t.Parallel()
+
+	ff, _ := domain.NewFeatureFlag("test", "test_flag", "desc", "bool", "false", 0)
 	ff.Activate()
 
 	rg := domain.NewRuleGroup(ff.ID(), "multi-condition", "true", 1)
@@ -158,6 +176,8 @@ func TestFeatureFlag_Evaluate_MultipleRuleGroups_AND(t *testing.T) {
 }
 
 func TestFeatureFlag_ReconstructWithRuleGroups(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	now := time.Now()
 

@@ -8,9 +8,12 @@ import (
 	"gct/internal/context/admin/featureflag/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCreateRuleGroupHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	flagID := uuid.New()
 	flagRepo := &mockFeatureFlagRepo{
 		findFn: func(_ context.Context, id uuid.UUID) (*domain.FeatureFlag, error) {
@@ -25,7 +28,7 @@ func TestCreateRuleGroupHandler_Handle(t *testing.T) {
 	handler := NewCreateRuleGroupHandler(flagRepo, rgRepo, eb, &mockLogger{})
 
 	cmd := CreateRuleGroupCommand{
-		FlagID:    flagID,
+		FlagID:    domain.FeatureFlagID(flagID),
 		Name:      "beta-users",
 		Variation: "true",
 		Priority:  1,
@@ -35,9 +38,7 @@ func TestCreateRuleGroupHandler_Handle(t *testing.T) {
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if rgRepo.saved == nil {
 		t.Fatal("expected rule group to be saved")
@@ -63,12 +64,14 @@ func TestCreateRuleGroupHandler_Handle(t *testing.T) {
 }
 
 func TestCreateRuleGroupHandler_Handle_FlagNotFound(t *testing.T) {
+	t.Parallel()
+
 	flagRepo := &mockFeatureFlagRepo{} // default returns ErrFeatureFlagNotFound
 	rgRepo := &mockRuleGroupRepo{}
 	handler := NewCreateRuleGroupHandler(flagRepo, rgRepo, &mockEventBus{}, &mockLogger{})
 
 	err := handler.Handle(context.Background(), CreateRuleGroupCommand{
-		FlagID: uuid.New(),
+		FlagID: domain.FeatureFlagID(uuid.New()),
 		Name:   "test",
 	})
 	if err == nil {
@@ -83,6 +86,8 @@ func TestCreateRuleGroupHandler_Handle_FlagNotFound(t *testing.T) {
 }
 
 func TestCreateRuleGroupHandler_Handle_InvalidOperator(t *testing.T) {
+	t.Parallel()
+
 	flagID := uuid.New()
 	flagRepo := &mockFeatureFlagRepo{
 		findFn: func(_ context.Context, id uuid.UUID) (*domain.FeatureFlag, error) {
@@ -93,7 +98,7 @@ func TestCreateRuleGroupHandler_Handle_InvalidOperator(t *testing.T) {
 	handler := NewCreateRuleGroupHandler(flagRepo, rgRepo, &mockEventBus{}, &mockLogger{})
 
 	err := handler.Handle(context.Background(), CreateRuleGroupCommand{
-		FlagID:    flagID,
+		FlagID:    domain.FeatureFlagID(flagID),
 		Name:      "test",
 		Variation: "true",
 		Conditions: []ConditionInput{
@@ -112,6 +117,8 @@ func TestCreateRuleGroupHandler_Handle_InvalidOperator(t *testing.T) {
 }
 
 func TestCreateRuleGroupHandler_Handle_RepoError(t *testing.T) {
+	t.Parallel()
+
 	flagID := uuid.New()
 	flagRepo := &mockFeatureFlagRepo{
 		findFn: func(_ context.Context, _ uuid.UUID) (*domain.FeatureFlag, error) {
@@ -127,7 +134,7 @@ func TestCreateRuleGroupHandler_Handle_RepoError(t *testing.T) {
 	handler := NewCreateRuleGroupHandler(flagRepo, rgRepo, &mockEventBus{}, &mockLogger{})
 
 	err := handler.Handle(context.Background(), CreateRuleGroupCommand{
-		FlagID:    flagID,
+		FlagID:    domain.FeatureFlagID(flagID),
 		Name:      "test",
 		Variation: "true",
 	})
@@ -140,6 +147,8 @@ func TestCreateRuleGroupHandler_Handle_RepoError(t *testing.T) {
 }
 
 func TestCreateRuleGroupHandler_Handle_MultipleConditions(t *testing.T) {
+	t.Parallel()
+
 	flagID := uuid.New()
 	flagRepo := &mockFeatureFlagRepo{
 		findFn: func(_ context.Context, _ uuid.UUID) (*domain.FeatureFlag, error) {
@@ -150,7 +159,7 @@ func TestCreateRuleGroupHandler_Handle_MultipleConditions(t *testing.T) {
 	handler := NewCreateRuleGroupHandler(flagRepo, rgRepo, &mockEventBus{}, &mockLogger{})
 
 	cmd := CreateRuleGroupCommand{
-		FlagID:    flagID,
+		FlagID:    domain.FeatureFlagID(flagID),
 		Name:      "complex-rule",
 		Variation: "variant-a",
 		Priority:  5,
@@ -162,9 +171,7 @@ func TestCreateRuleGroupHandler_Handle_MultipleConditions(t *testing.T) {
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 	if len(rgRepo.saved.Conditions()) != 3 {
 		t.Fatalf("expected 3 conditions, got %d", len(rgRepo.saved.Conditions()))
 	}

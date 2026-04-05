@@ -5,10 +5,11 @@ import (
 	"testing"
 
 	"gct/internal/context/iam/audit/domain"
-	"gct/internal/platform/application"
-	shared "gct/internal/platform/domain"
+	"gct/internal/kernel/application"
+	shared "gct/internal/kernel/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 // --- Mock Repository ---
@@ -69,6 +70,8 @@ func (m *mockLogger) Fatalc(ctx context.Context, msg string, keysAndValues ...an
 // --- Tests ---
 
 func TestCreateAuditLogHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockAuditLogRepository{}
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
@@ -86,9 +89,7 @@ func TestCreateAuditLogHandler_Handle(t *testing.T) {
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.savedAuditLog == nil {
 		t.Fatal("expected audit log to be saved, but it was nil")
@@ -120,6 +121,8 @@ func TestCreateAuditLogHandler_Handle(t *testing.T) {
 }
 
 func TestCreateAuditLogHandler_RepoError(t *testing.T) {
+	t.Parallel()
+
 	repoErr := shared.NewDomainError("TEST_ERROR", "test error")
 	repo := &mockAuditLogRepository{saveErr: repoErr}
 	eventBus := &mockEventBus{}
@@ -147,6 +150,8 @@ func TestCreateAuditLogHandler_RepoError(t *testing.T) {
 }
 
 func TestCreateAuditLogHandler_WithMetadata(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockAuditLogRepository{}
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
@@ -162,9 +167,7 @@ func TestCreateAuditLogHandler_WithMetadata(t *testing.T) {
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.savedAuditLog.Metadata()["browser"] != "Chrome" {
 		t.Error("expected metadata browser to be Chrome")

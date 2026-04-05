@@ -1,7 +1,7 @@
 package query
 
 import (
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
@@ -10,6 +10,7 @@ import (
 	"gct/internal/context/ops/metric/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 // --- Mocks ---
@@ -34,6 +35,8 @@ var errRepo = errors.New("repo failure")
 // --- Tests: ListMetrics ---
 
 func TestListMetricsHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	now := time.Now()
 	readRepo := &mockReadRepo{
 		views: []*domain.MetricView{
@@ -47,9 +50,7 @@ func TestListMetricsHandler_Handle(t *testing.T) {
 	result, err := handler.Handle(context.Background(), ListMetricsQuery{
 		Filter: domain.MetricFilter{Limit: 10, Offset: 0},
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 	if result.Total != 2 {
 		t.Errorf("expected total 2, got %d", result.Total)
 	}
@@ -65,15 +66,15 @@ func TestListMetricsHandler_Handle(t *testing.T) {
 }
 
 func TestListMetricsHandler_Empty(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockReadRepo{views: []*domain.MetricView{}, total: 0}
 
 	handler := NewListMetricsHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListMetricsQuery{
 		Filter: domain.MetricFilter{},
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 	if result.Total != 0 {
 		t.Errorf("expected total 0, got %d", result.Total)
 	}
@@ -83,6 +84,8 @@ func TestListMetricsHandler_Empty(t *testing.T) {
 }
 
 func TestListMetricsHandler_WithPanicError(t *testing.T) {
+	t.Parallel()
+
 	panicErr := "nil pointer dereference"
 	now := time.Now()
 	readRepo := &mockReadRepo{
@@ -96,9 +99,7 @@ func TestListMetricsHandler_WithPanicError(t *testing.T) {
 	result, err := handler.Handle(context.Background(), ListMetricsQuery{
 		Filter: domain.MetricFilter{Limit: 10},
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 	if result.Total != 1 {
 		t.Errorf("expected total 1, got %d", result.Total)
 	}
@@ -111,6 +112,8 @@ func TestListMetricsHandler_WithPanicError(t *testing.T) {
 }
 
 func TestListMetricsHandler_RepoError(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &errorReadRepo{err: errRepo}
 	handler := NewListMetricsHandler(readRepo, logger.Noop())
 	_, err := handler.Handle(context.Background(), ListMetricsQuery{Filter: domain.MetricFilter{}})

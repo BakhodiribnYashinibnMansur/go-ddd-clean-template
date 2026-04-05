@@ -1,7 +1,7 @@
 package query
 
 import (
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
@@ -10,6 +10,7 @@ import (
 	"gct/internal/context/ops/iprule/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 // --- Mocks ---
@@ -46,6 +47,8 @@ var errRepo = errors.New("repo failure")
 // --- Tests ---
 
 func TestGetIPRuleHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	now := time.Now()
 	expires := now.Add(24 * time.Hour)
@@ -62,10 +65,8 @@ func TestGetIPRuleHandler_Handle(t *testing.T) {
 	}
 
 	handler := NewGetIPRuleHandler(readRepo, logger.Noop())
-	result, err := handler.Handle(context.Background(), GetIPRuleQuery{ID: id})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	result, err := handler.Handle(context.Background(), GetIPRuleQuery{ID: domain.IPRuleID(id)})
+	require.NoError(t, err)
 	if result == nil {
 		t.Fatal("expected result")
 	}
@@ -81,24 +82,30 @@ func TestGetIPRuleHandler_Handle(t *testing.T) {
 }
 
 func TestGetIPRuleHandler_NotFound(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockReadRepo{}
 	handler := NewGetIPRuleHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), GetIPRuleQuery{ID: uuid.New()})
+	_, err := handler.Handle(context.Background(), GetIPRuleQuery{ID: domain.NewIPRuleID()})
 	if err == nil {
 		t.Fatal("expected error for not found")
 	}
 }
 
 func TestGetIPRuleHandler_RepoError(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &errorReadRepo{err: errRepo}
 	handler := NewGetIPRuleHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), GetIPRuleQuery{ID: uuid.New()})
+	_, err := handler.Handle(context.Background(), GetIPRuleQuery{ID: domain.NewIPRuleID()})
 	if err == nil {
 		t.Fatal("expected error from repo")
 	}
 }
 
 func TestGetIPRuleHandler_AllFieldsMapped(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	now := time.Now()
 	readRepo := &mockReadRepo{
@@ -114,10 +121,8 @@ func TestGetIPRuleHandler_AllFieldsMapped(t *testing.T) {
 	}
 
 	handler := NewGetIPRuleHandler(readRepo, logger.Noop())
-	result, err := handler.Handle(context.Background(), GetIPRuleQuery{ID: id})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	result, err := handler.Handle(context.Background(), GetIPRuleQuery{ID: domain.IPRuleID(id)})
+	require.NoError(t, err)
 	if result.Reason != "trusted" {
 		t.Errorf("expected reason 'trusted', got %s", result.Reason)
 	}

@@ -3,32 +3,30 @@ package command
 import (
 	"context"
 
-	"gct/internal/platform/application"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
-	"gct/internal/platform/infrastructure/pgxutil"
 	"gct/internal/context/iam/user/domain"
-
-	"github.com/google/uuid"
+	"gct/internal/kernel/application"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // RevokeAllSessionsCommand holds the input for revoking all user sessions.
 type RevokeAllSessionsCommand struct {
-	UserID uuid.UUID
+	UserID domain.UserID
 }
 
 // RevokeAllSessionsHandler handles the RevokeAllSessionsCommand.
 type RevokeAllSessionsHandler struct {
 	repo     domain.UserRepository
 	eventBus application.EventBus
-	logger   logger.Log
+	logger   commandLogger
 }
 
 // NewRevokeAllSessionsHandler creates a new RevokeAllSessionsHandler.
 func NewRevokeAllSessionsHandler(
 	repo domain.UserRepository,
 	eventBus application.EventBus,
-	logger logger.Log,
+	logger commandLogger,
 ) *RevokeAllSessionsHandler {
 	return &RevokeAllSessionsHandler{
 		repo:     repo,
@@ -43,7 +41,7 @@ func (h *RevokeAllSessionsHandler) Handle(ctx context.Context, cmd RevokeAllSess
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "RevokeAllSessions", "user")()
 
-	user, err := h.repo.FindByID(ctx, cmd.UserID)
+	user, err := h.repo.FindByID(ctx, cmd.UserID.UUID())
 	if err != nil {
 		return apperrors.MapToServiceError(err)
 	}
@@ -51,7 +49,7 @@ func (h *RevokeAllSessionsHandler) Handle(ctx context.Context, cmd RevokeAllSess
 	user.RevokeAllSessions()
 
 	if err := h.repo.Update(ctx, user); err != nil {
-		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "RevokeAllSessions", Entity: "user", EntityID: cmd.UserID, Err: err}.KV()...)
+		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "RevokeAllSessions", Entity: "user", EntityID: cmd.UserID.UUID(), Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 

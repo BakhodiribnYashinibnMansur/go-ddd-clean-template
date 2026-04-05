@@ -5,12 +5,12 @@ import (
 	"strconv"
 
 	"gct/internal/context/admin/dataexport"
-	"gct/internal/platform/infrastructure/httpx"
-	"gct/internal/platform/infrastructure/httpx/response"
+	"gct/internal/kernel/infrastructure/httpx"
+	"gct/internal/kernel/infrastructure/httpx/response"
 	"gct/internal/context/admin/dataexport/application/command"
 	"gct/internal/context/admin/dataexport/application/query"
 	"gct/internal/context/admin/dataexport/domain"
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -69,7 +69,7 @@ func (h *Handler) Get(ctx *gin.Context) {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
-	result, err := h.bc.GetDataExport.Handle(ctx.Request.Context(), query.GetDataExportQuery{ID: id})
+	result, err := h.bc.GetDataExport.Handle(ctx.Request.Context(), query.GetDataExportQuery{ID: domain.DataExportID(id)})
 	if err != nil {
 		response.HandleError(ctx, err)
 		return
@@ -90,7 +90,7 @@ func (h *Handler) Update(ctx *gin.Context) {
 		return
 	}
 	cmd := command.UpdateDataExportCommand{
-		ID:      id,
+		ID:      domain.DataExportID(id),
 		Status:  req.Status,
 		FileURL: req.FileURL,
 		Error:   req.Error,
@@ -109,7 +109,7 @@ func (h *Handler) Delete(ctx *gin.Context) {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
-	if err := h.bc.DeleteDataExport.Handle(ctx.Request.Context(), command.DeleteDataExportCommand{ID: id}); err != nil {
+	if err := h.bc.DeleteDataExport.Handle(ctx.Request.Context(), command.DeleteDataExportCommand{ID: domain.DataExportID(id)}); err != nil {
 		response.HandleError(ctx, err)
 		return
 	}

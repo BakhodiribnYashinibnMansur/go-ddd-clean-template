@@ -4,17 +4,15 @@ import (
 	"context"
 
 	"gct/internal/context/iam/authz/domain"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
-	"gct/internal/platform/infrastructure/pgxutil"
-
-	"github.com/google/uuid"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // CreatePolicyCommand represents an intent to create an authorization policy binding a permission to an effect.
 // Priority determines evaluation order when multiple policies match; Conditions enable attribute-based access control (ABAC).
 type CreatePolicyCommand struct {
-	PermissionID uuid.UUID
+	PermissionID domain.PermissionID
 	Effect       domain.PolicyEffect
 	Priority     int
 	Conditions   map[string]any
@@ -45,7 +43,7 @@ func (h *CreatePolicyHandler) Handle(ctx context.Context, cmd CreatePolicyComman
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "CreatePolicy", "policy")()
 
-	policy := domain.NewPolicy(cmd.PermissionID, cmd.Effect)
+	policy := domain.NewPolicy(cmd.PermissionID.UUID(), cmd.Effect)
 	policy.SetPriority(cmd.Priority)
 	if cmd.Conditions != nil {
 		policy.SetConditions(cmd.Conditions)

@@ -4,17 +4,15 @@ import (
 	"context"
 
 	"gct/internal/context/iam/authz/domain"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
-	"gct/internal/platform/infrastructure/pgxutil"
-
-	"github.com/google/uuid"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // DeletePolicyCommand represents an intent to permanently remove an authorization policy.
 // Once deleted, any access previously governed by this policy falls through to the next matching policy or default deny.
 type DeletePolicyCommand struct {
-	ID uuid.UUID
+	ID domain.PolicyID
 }
 
 // DeletePolicyHandler performs hard deletion of an authorization policy via the repository.
@@ -42,8 +40,8 @@ func (h *DeletePolicyHandler) Handle(ctx context.Context, cmd DeletePolicyComman
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "DeletePolicy", "policy")()
 
-	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
-		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeletePolicy", Entity: "policy", EntityID: cmd.ID, Err: err}.KV()...)
+	if err := h.repo.Delete(ctx, cmd.ID.UUID()); err != nil {
+		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeletePolicy", Entity: "policy", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 

@@ -8,10 +8,11 @@ import (
 	"gct/internal/context/iam/session"
 	appdto "gct/internal/context/iam/session/application"
 	"gct/internal/context/iam/session/application/query"
-	"gct/internal/platform/domain/consts"
-	"gct/internal/platform/infrastructure/httpx"
-	"gct/internal/platform/infrastructure/httpx/response"
-	"gct/internal/platform/infrastructure/logger"
+	sessiondomain "gct/internal/context/iam/session/domain"
+	"gct/internal/kernel/consts"
+	"gct/internal/kernel/infrastructure/httpx"
+	"gct/internal/kernel/infrastructure/httpx/response"
+	"gct/internal/kernel/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -51,7 +52,7 @@ func (h *Handler) List(ctx *gin.Context) {
 	}
 
 	if userIDStr := ctx.Query("user_id"); userIDStr != "" {
-		uid, err := uuid.Parse(userIDStr)
+		uid, err := sessiondomain.ParseUserID(userIDStr)
 		if err != nil {
 			response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 			return
@@ -75,7 +76,7 @@ func (h *Handler) List(ctx *gin.Context) {
 
 // Get handles GET /sessions/:id.
 func (h *Handler) Get(ctx *gin.Context) {
-	id, err := uuid.Parse(ctx.Param("id"))
+	id, err := sessiondomain.ParseSessionID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return

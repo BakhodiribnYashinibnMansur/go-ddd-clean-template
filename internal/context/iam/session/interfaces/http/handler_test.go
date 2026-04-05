@@ -79,6 +79,8 @@ func setupRouter(readRepo *mockReadRepo) *gin.Engine {
 // --- Tests ---
 
 func TestHandler_List_Success(t *testing.T) {
+	t.Parallel()
+
 	now := time.Now()
 	readRepo := &mockReadRepo{
 		views: []*appdto.SessionView{
@@ -110,6 +112,8 @@ func TestHandler_List_Success(t *testing.T) {
 }
 
 func TestHandler_Get_Success(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	now := time.Now()
 	readRepo := &mockReadRepo{
@@ -139,6 +143,8 @@ func TestHandler_Get_Success(t *testing.T) {
 }
 
 func TestHandler_Get_InvalidID(t *testing.T) {
+	t.Parallel()
+
 	router := setupRouter(&mockReadRepo{})
 
 	w := httptest.NewRecorder()
@@ -151,6 +157,8 @@ func TestHandler_Get_InvalidID(t *testing.T) {
 }
 
 func TestHandler_List_WithUserIDFilter(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockReadRepo{
 		views: []*appdto.SessionView{},
 		total: 0,
@@ -168,6 +176,8 @@ func TestHandler_List_WithUserIDFilter(t *testing.T) {
 }
 
 func TestHandler_List_InvalidUserID(t *testing.T) {
+	t.Parallel()
+
 	router := setupRouter(&mockReadRepo{})
 
 	w := httptest.NewRecorder()

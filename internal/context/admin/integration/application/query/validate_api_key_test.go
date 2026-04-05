@@ -1,7 +1,7 @@
 package query
 
 import (
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
@@ -9,9 +9,12 @@ import (
 	"gct/internal/context/admin/integration/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func TestValidateAPIKeyHandler_Success(t *testing.T) {
+	t.Parallel()
+
 	keyID := uuid.New()
 	integrationID := uuid.New()
 
@@ -30,9 +33,7 @@ func TestValidateAPIKeyHandler_Success(t *testing.T) {
 	result, err := handler.Handle(context.Background(), ValidateAPIKeyQuery{
 		APIKey: "sk-test-key-123",
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
-	}
+	require.NoError(t, err)
 	if result == nil {
 		t.Fatal("expected result, got nil")
 	}
@@ -51,6 +52,8 @@ func TestValidateAPIKeyHandler_Success(t *testing.T) {
 }
 
 func TestValidateAPIKeyHandler_KeyNotFound(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockReadRepo{} // FindByAPIKey returns ErrIntegrationNotFound by default
 	l := logger.Noop()
 
@@ -68,6 +71,8 @@ func TestValidateAPIKeyHandler_KeyNotFound(t *testing.T) {
 }
 
 func TestValidateAPIKeyHandler_Inactive(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockReadRepo{
 		apiKeyView: &domain.IntegrationAPIKeyView{
 			ID:            uuid.New(),
@@ -95,6 +100,8 @@ func TestValidateAPIKeyHandler_Inactive(t *testing.T) {
 }
 
 func TestValidateAPIKeyHandler_RepoError(t *testing.T) {
+	t.Parallel()
+
 	repoErr := errors.New("database unavailable")
 	readRepo := &errorReadRepo{err: repoErr}
 	l := logger.Noop()

@@ -1,6 +1,6 @@
 package domain
 
-import shared "gct/internal/platform/domain"
+import shared "gct/internal/kernel/domain"
 
 var (
 	ErrFeatureFlagNotFound = shared.NewDomainError("FEATURE_FLAG_NOT_FOUND", "feature flag not found")

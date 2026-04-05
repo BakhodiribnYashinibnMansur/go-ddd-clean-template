@@ -3,12 +3,13 @@ package middleware
 import (
 	"errors"
 
-	shared "gct/internal/platform/domain"
-	"gct/internal/platform/domain/consts"
-	"gct/internal/platform/infrastructure/httpx"
-	"gct/internal/platform/infrastructure/httpx/cookie"
-	"gct/internal/platform/infrastructure/security/jwt"
+	shared "gct/internal/kernel/domain"
+	"gct/internal/kernel/consts"
+	"gct/internal/kernel/infrastructure/httpx"
+	"gct/internal/kernel/infrastructure/httpx/cookie"
+	"gct/internal/kernel/infrastructure/security/jwt"
 	"gct/internal/context/iam/user/application/query"
+	userdomain "gct/internal/context/iam/user/domain"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -46,7 +47,7 @@ func (m *AuthMiddleware) validateAccessToken(ctx *gin.Context) (*shared.AuthSess
 		return nil, httpx.ErrInvalidSession
 	}
 
-	session, err := m.findSession.Handle(ctx.Request.Context(), query.FindSessionQuery{SessionID: sessionID})
+	session, err := m.findSession.Handle(ctx.Request.Context(), query.FindSessionQuery{SessionID: userdomain.SessionID(sessionID)})
 	if err != nil || session.Revoked || session.IsExpired() {
 		m.l.Errorw("AuthMiddleware - validateAccessToken - FindSession", "error", err)
 		return nil, httpx.ErrRevokedToken

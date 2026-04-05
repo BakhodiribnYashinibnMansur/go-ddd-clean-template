@@ -3,32 +3,30 @@ package command
 import (
 	"context"
 
-	"gct/internal/platform/application"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
-	"gct/internal/platform/infrastructure/pgxutil"
 	"gct/internal/context/iam/user/domain"
-
-	"github.com/google/uuid"
+	"gct/internal/kernel/application"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // ApproveUserCommand holds the input for approving a user.
 type ApproveUserCommand struct {
-	ID uuid.UUID
+	ID domain.UserID
 }
 
 // ApproveUserHandler handles the ApproveUserCommand.
 type ApproveUserHandler struct {
 	repo     domain.UserRepository
 	eventBus application.EventBus
-	logger   logger.Log
+	logger   commandLogger
 }
 
 // NewApproveUserHandler creates a new ApproveUserHandler.
 func NewApproveUserHandler(
 	repo domain.UserRepository,
 	eventBus application.EventBus,
-	logger logger.Log,
+	logger commandLogger,
 ) *ApproveUserHandler {
 	return &ApproveUserHandler{
 		repo:     repo,
@@ -43,7 +41,7 @@ func (h *ApproveUserHandler) Handle(ctx context.Context, cmd ApproveUserCommand)
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "ApproveUser", "user")()
 
-	user, err := h.repo.FindByID(ctx, cmd.ID)
+	user, err := h.repo.FindByID(ctx, cmd.ID.UUID())
 	if err != nil {
 		return apperrors.MapToServiceError(err)
 	}
@@ -51,12 +49,12 @@ func (h *ApproveUserHandler) Handle(ctx context.Context, cmd ApproveUserCommand)
 	user.Approve()
 
 	if err := h.repo.Update(ctx, user); err != nil {
-		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "ApproveUser", Entity: "user", EntityID: cmd.ID, Err: err}.KV()...)
+		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "ApproveUser", Entity: "user", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, user.Events()...); err != nil {
-		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "ApproveUser", Entity: "user", EntityID: cmd.ID, Err: err}.KV()...)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "ApproveUser", Entity: "user", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
 	}
 
 	return nil

@@ -7,8 +7,10 @@ import (
 )
 
 func TestNewIntegration(t *testing.T) {
+	t.Parallel()
+
 	config := map[string]string{"timeout": "30"}
-	i := domain.NewIntegration("Stripe", "payment", "sk_test_123", "https://hooks.example.com", true, config)
+	i, _ := domain.NewIntegration("Stripe", "payment", "sk_test_123", "https://hooks.example.com", true, config)
 
 	if i.Name() != "Stripe" {
 		t.Fatalf("expected name Stripe, got %s", i.Name())

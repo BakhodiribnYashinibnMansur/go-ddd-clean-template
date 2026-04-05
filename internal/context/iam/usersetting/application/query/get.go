@@ -3,19 +3,17 @@ package query
 import (
 	"context"
 
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
 
 	appdto "gct/internal/context/iam/usersetting/application"
-	"gct/internal/platform/infrastructure/pgxutil"
+	"gct/internal/kernel/infrastructure/pgxutil"
 	"gct/internal/context/iam/usersetting/domain"
-
-	"github.com/google/uuid"
 )
 
 // GetUserSettingQuery holds the input for getting a single user setting.
 type GetUserSettingQuery struct {
-	ID uuid.UUID
+	ID domain.UserSettingID
 }
 
 // GetUserSettingHandler handles the GetUserSettingQuery.
@@ -35,9 +33,9 @@ func (h *GetUserSettingHandler) Handle(ctx context.Context, q GetUserSettingQuer
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "GetUserSetting", "user_setting")()
 
-	v, err := h.readRepo.FindByID(ctx, q.ID)
+	v, err := h.readRepo.FindByID(ctx, q.ID.UUID())
 	if err != nil {
-		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetUserSetting", Entity: "user_setting", EntityID: q.ID, Err: err}.KV()...)
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetUserSetting", Entity: "user_setting", EntityID: q.ID.UUID(), Err: err}.KV()...)
 		return nil, apperrors.MapToServiceError(err)
 	}
 

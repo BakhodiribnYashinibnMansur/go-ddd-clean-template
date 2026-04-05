@@ -4,12 +4,13 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/platform/application"
-	shared "gct/internal/platform/domain"
+	"gct/internal/kernel/application"
+	shared "gct/internal/kernel/domain"
 	"gct/internal/context/iam/usersetting/application/command"
 	"gct/internal/context/iam/usersetting/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 // --- Mocks ---
@@ -68,6 +69,8 @@ func (m *mockLogger) Fatalc(_ context.Context, _ string, _ ...any)  {}
 // --- Tests ---
 
 func TestUpsertUserSettingHandler_Create(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockUserSettingRepo{}
 	handler := command.NewUpsertUserSettingHandler(repo, &mockEventBus{}, &mockLogger{})
 
@@ -79,9 +82,7 @@ func TestUpsertUserSettingHandler_Create(t *testing.T) {
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("Handle returned error: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.upserted == nil {
 		t.Fatal("expected user setting to be upserted")
@@ -98,6 +99,8 @@ func TestUpsertUserSettingHandler_Create(t *testing.T) {
 }
 
 func TestUpsertUserSettingHandler_Update(t *testing.T) {
+	t.Parallel()
+
 	userID := uuid.New()
 	existing := domain.NewUserSetting(userID, "theme", "light")
 
@@ -118,9 +121,7 @@ func TestUpsertUserSettingHandler_Update(t *testing.T) {
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("Handle returned error: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.upserted == nil {
 		t.Fatal("expected user setting to be upserted")

@@ -4,19 +4,17 @@ import (
 	"context"
 
 	"gct/internal/context/admin/errorcode/domain"
-	"gct/internal/platform/application"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
-	"gct/internal/platform/infrastructure/pgxutil"
-
-	"github.com/google/uuid"
+	"gct/internal/kernel/application"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // UpdateErrorCodeCommand represents a full replacement of an error code's mutable fields.
 // The Code field is immutable after creation — only Message, HTTPStatus, and behavioral hints can be changed.
 // All fields are required (non-pointer), so every update is a full overwrite of the mutable attributes.
 type UpdateErrorCodeCommand struct {
-	ID         uuid.UUID
+	ID         domain.ErrorCodeID
 	Message    string
 	MessageUz  string
 	MessageRu  string
@@ -56,7 +54,7 @@ func (h *UpdateErrorCodeHandler) Handle(ctx context.Context, cmd UpdateErrorCode
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "UpdateErrorCode", "error_code")()
 
-	ec, err := h.repo.FindByID(ctx, cmd.ID)
+	ec, err := h.repo.FindByID(ctx, cmd.ID.UUID())
 	if err != nil {
 		return apperrors.MapToServiceError(err)
 	}
@@ -68,7 +66,7 @@ func (h *UpdateErrorCodeHandler) Handle(ctx context.Context, cmd UpdateErrorCode
 	)
 
 	if err := h.repo.Update(ctx, ec); err != nil {
-		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "UpdateErrorCode", Entity: "error_code", EntityID: cmd.ID, Err: err}.KV()...)
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "UpdateErrorCode", Entity: "error_code", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 

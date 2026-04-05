@@ -7,9 +7,12 @@ import (
 	"gct/internal/context/ops/ratelimit/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func TestUpdateRateLimitHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	rl := domain.NewRateLimit("old-name", "/old", 50, 30, true)
 
 	repo := &mockRateLimitRepo{
@@ -27,16 +30,14 @@ func TestUpdateRateLimitHandler_Handle(t *testing.T) {
 	newRequests := 200
 	newEnabled := false
 	cmd := UpdateRateLimitCommand{
-		ID:                rl.ID(),
+		ID:                domain.RateLimitID(rl.ID()),
 		Name:              &newName,
 		RequestsPerWindow: &newRequests,
 		Enabled:           &newEnabled,
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 	if repo.updated == nil {
 		t.Fatal("expected rate limit to be updated")
 	}
@@ -63,6 +64,8 @@ func TestUpdateRateLimitHandler_Handle(t *testing.T) {
 }
 
 func TestUpdateRateLimitHandler_PartialUpdate(t *testing.T) {
+	t.Parallel()
+
 	rl := domain.NewRateLimit("name", "/rule", 100, 60, true)
 
 	repo := &mockRateLimitRepo{
@@ -74,12 +77,10 @@ func TestUpdateRateLimitHandler_PartialUpdate(t *testing.T) {
 
 	newWindow := 120
 	err := handler.Handle(context.Background(), UpdateRateLimitCommand{
-		ID:             rl.ID(),
+		ID:             domain.RateLimitID(rl.ID()),
 		WindowDuration: &newWindow,
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 	if repo.updated.WindowDuration() != 120 {
 		t.Errorf("expected windowDuration 120, got %d", repo.updated.WindowDuration())
 	}
@@ -89,10 +90,12 @@ func TestUpdateRateLimitHandler_PartialUpdate(t *testing.T) {
 }
 
 func TestUpdateRateLimitHandler_NotFound(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockRateLimitRepo{}
 	handler := NewUpdateRateLimitHandler(repo, &mockEventBus{}, &mockLogger{})
 
-	err := handler.Handle(context.Background(), UpdateRateLimitCommand{ID: uuid.New()})
+	err := handler.Handle(context.Background(), UpdateRateLimitCommand{ID: domain.NewRateLimitID()})
 	if err == nil {
 		t.Fatal("expected error for not found")
 	}

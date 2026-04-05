@@ -1,9 +1,11 @@
 package domain
 
 import (
+	"fmt"
+	"strings"
 	"time"
 
-	shared "gct/internal/platform/domain"
+	shared "gct/internal/kernel/domain"
 
 	"github.com/google/uuid"
 )
@@ -22,7 +24,14 @@ type Integration struct {
 }
 
 // NewIntegration creates a new Integration aggregate.
-func NewIntegration(name, intType, apiKey, webhookURL string, enabled bool, config map[string]string) *Integration {
+// Returns an error if name or intType is empty after trim.
+func NewIntegration(name, intType, apiKey, webhookURL string, enabled bool, config map[string]string) (*Integration, error) {
+	if strings.TrimSpace(name) == "" {
+		return nil, fmt.Errorf("new_integration: %s", "name is required")
+	}
+	if strings.TrimSpace(intType) == "" {
+		return nil, fmt.Errorf("new_integration: %s", "type is required")
+	}
 	if config == nil {
 		config = make(map[string]string)
 	}
@@ -36,7 +45,7 @@ func NewIntegration(name, intType, apiKey, webhookURL string, enabled bool, conf
 		config:        config,
 	}
 	i.AddEvent(NewIntegrationConnected(i.ID(), name, intType))
-	return i
+	return i, nil
 }
 
 // ReconstructIntegration rebuilds an Integration aggregate from persisted data. No events are raised.

@@ -5,10 +5,10 @@ import (
 	"time"
 
 	"gct/internal/context/content/announcement/domain"
-	shared "gct/internal/platform/domain"
-	"gct/internal/platform/domain/consts"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/pgxutil"
+	shared "gct/internal/kernel/domain"
+	"gct/internal/kernel/consts"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/pgxutil"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -246,7 +246,7 @@ func scanAnnouncementFromRows(rows pgx.Rows) (*domain.Announcement, error) {
 
 	err := rows.Scan(&id, &title, &content, &aType, &isActive, &priority, &startsAt, &endsAt, &createdAt, &updatedAt)
 	if err != nil {
-		return nil, err
+		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 
 	_ = aType

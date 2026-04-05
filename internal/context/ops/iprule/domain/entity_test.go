@@ -10,6 +10,8 @@ import (
 )
 
 func TestNewIPRule(t *testing.T) {
+	t.Parallel()
+
 	r := domain.NewIPRule("192.168.1.1", "DENY", "suspicious activity", nil)
 
 	if r.IPAddress() != "192.168.1.1" {
@@ -35,6 +37,8 @@ func TestNewIPRule(t *testing.T) {
 }
 
 func TestIPRule_Update(t *testing.T) {
+	t.Parallel()
+
 	r := domain.NewIPRule("10.0.0.1", "ALLOW", "trusted", nil)
 	r.ClearEvents()
 
@@ -47,6 +51,8 @@ func TestIPRule_Update(t *testing.T) {
 }
 
 func TestReconstructIPRule(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	now := time.Now()
 	expires := now.Add(24 * time.Hour)

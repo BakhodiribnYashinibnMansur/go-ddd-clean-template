@@ -1,9 +1,11 @@
 package domain
 
 import (
+	"fmt"
+	"strings"
 	"time"
 
-	shared "gct/internal/platform/domain"
+	shared "gct/internal/kernel/domain"
 
 	"github.com/google/uuid"
 )
@@ -23,13 +25,17 @@ type Announcement struct {
 }
 
 // NewAnnouncement creates a new Announcement aggregate.
+// Returns an error if title has no non-empty translation in any supported language.
 func NewAnnouncement(
 	title shared.Lang,
 	content shared.Lang,
 	priority int,
 	startDate *time.Time,
 	endDate *time.Time,
-) *Announcement {
+) (*Announcement, error) {
+	if strings.TrimSpace(title.Uz) == "" && strings.TrimSpace(title.Ru) == "" && strings.TrimSpace(title.En) == "" {
+		return nil, fmt.Errorf("new_announcement: %s", "title is required")
+	}
 	return &Announcement{
 		AggregateRoot: shared.NewAggregateRoot(),
 		title:         title,
@@ -39,7 +45,7 @@ func NewAnnouncement(
 		priority:      priority,
 		startDate:     startDate,
 		endDate:       endDate,
-	}
+	}, nil
 }
 
 // ReconstructAnnouncement rebuilds an Announcement from persisted data. No events are raised.

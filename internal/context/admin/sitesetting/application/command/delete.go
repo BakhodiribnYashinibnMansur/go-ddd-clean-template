@@ -3,18 +3,16 @@ package command
 import (
 	"context"
 
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
-	"gct/internal/platform/infrastructure/pgxutil"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/pgxutil"
 	"gct/internal/context/admin/sitesetting/domain"
-
-	"github.com/google/uuid"
 )
 
 // DeleteSiteSettingCommand represents an intent to permanently remove a site setting.
 // Once deleted, any feature relying on this setting will fall back to its default behavior.
 type DeleteSiteSettingCommand struct {
-	ID uuid.UUID
+	ID domain.SiteSettingID
 }
 
 // DeleteSiteSettingHandler performs hard-delete of site settings through the repository.
@@ -41,8 +39,8 @@ func (h *DeleteSiteSettingHandler) Handle(ctx context.Context, cmd DeleteSiteSet
 	ctx, end := pgxutil.AppSpan(ctx, "DeleteSiteSettingHandler.Handle")
 	defer func() { end(err) }()
 
-	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
-		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteSiteSetting", Entity: "site_setting", EntityID: cmd.ID, Err: err}.KV()...)
+	if err := h.repo.Delete(ctx, cmd.ID.UUID()); err != nil {
+		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteSiteSetting", Entity: "site_setting", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 	return nil

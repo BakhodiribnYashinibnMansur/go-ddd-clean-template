@@ -5,20 +5,18 @@ import (
 	"time"
 
 	"gct/internal/context/content/announcement/domain"
-	"gct/internal/platform/application"
-	shared "gct/internal/platform/domain"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
-	"gct/internal/platform/infrastructure/pgxutil"
-
-	"github.com/google/uuid"
+	"gct/internal/kernel/application"
+	shared "gct/internal/kernel/domain"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // UpdateAnnouncementCommand represents a partial update to an existing announcement.
 // Nil pointer fields are skipped (no change), while Publish triggers a one-way state transition
 // from draft to published — already-published announcements ignore this flag.
 type UpdateAnnouncementCommand struct {
-	ID        uuid.UUID
+	ID        domain.AnnouncementID
 	Title     *shared.Lang
 	Content   *shared.Lang
 	Priority  *int
@@ -55,7 +53,7 @@ func (h *UpdateAnnouncementHandler) Handle(ctx context.Context, cmd UpdateAnnoun
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "UpdateAnnouncement", "announcement")()
 
-	a, err := h.repo.FindByID(ctx, cmd.ID)
+	a, err := h.repo.FindByID(ctx, cmd.ID.UUID())
 	if err != nil {
 		return apperrors.MapToServiceError(err)
 	}
@@ -67,7 +65,7 @@ func (h *UpdateAnnouncementHandler) Handle(ctx context.Context, cmd UpdateAnnoun
 	}
 
 	if err := h.repo.Update(ctx, a); err != nil {
-		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "UpdateAnnouncement", Entity: "announcement", EntityID: cmd.ID, Err: err}.KV()...)
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "UpdateAnnouncement", Entity: "announcement", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 

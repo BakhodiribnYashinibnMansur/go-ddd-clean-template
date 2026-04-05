@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/platform/infrastructure/eventbus"
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/eventbus"
+	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/context/content/translation"
 	"gct/internal/context/content/translation/application/command"
 	"gct/internal/context/content/translation/application/query"

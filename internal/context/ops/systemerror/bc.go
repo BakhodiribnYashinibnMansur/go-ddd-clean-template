@@ -1,8 +1,8 @@
 package systemerror
 
 import (
-	"gct/internal/platform/application"
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/application"
+	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/context/ops/systemerror/application/command"
 	"gct/internal/context/ops/systemerror/application/query"
 	"gct/internal/context/ops/systemerror/infrastructure/postgres"

@@ -4,12 +4,13 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/platform/application"
-	shared "gct/internal/platform/domain"
+	"gct/internal/kernel/application"
+	shared "gct/internal/kernel/domain"
 	"gct/internal/context/ops/systemerror/application/command"
 	"gct/internal/context/ops/systemerror/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 // --- Mocks ---
@@ -66,6 +67,8 @@ func (m *mockLogger) Errorc(_ context.Context, _ string, _ ...any)  {}
 func (m *mockLogger) Fatalc(_ context.Context, _ string, _ ...any)  {}
 
 func TestCreateSystemErrorHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockSystemErrorRepo{}
 	handler := command.NewCreateSystemErrorHandler(repo, &mockEventBus{}, &mockLogger{})
 
@@ -76,9 +79,7 @@ func TestCreateSystemErrorHandler_Handle(t *testing.T) {
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("Handle returned error: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.saved == nil {
 		t.Fatal("expected system error to be saved")

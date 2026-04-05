@@ -3,10 +3,10 @@ package query
 import (
 	"context"
 
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
 
-	"gct/internal/platform/infrastructure/pgxutil"
+	"gct/internal/kernel/infrastructure/pgxutil"
 	appdto "gct/internal/context/iam/user/application"
 	"gct/internal/context/iam/user/domain"
 )
@@ -25,7 +25,7 @@ type ListUsersResult struct {
 // ListUsersHandler handles the ListUsersQuery.
 type ListUsersHandler struct {
 	readRepo domain.UserReadRepository
-	logger   logger.Log
+	logger   queryLogger
 }
 
 // NewListUsersHandler creates a new ListUsersHandler.

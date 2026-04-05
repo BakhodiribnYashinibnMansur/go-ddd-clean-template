@@ -6,10 +6,11 @@ import (
 
 	"gct/internal/context/content/notification/application/command"
 	"gct/internal/context/content/notification/domain"
-	"gct/internal/platform/application"
-	shared "gct/internal/platform/domain"
+	"gct/internal/kernel/application"
+	shared "gct/internal/kernel/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 // --- Mocks ---
@@ -68,6 +69,8 @@ func (m *mockLogger) Fatalc(_ context.Context, _ string, _ ...any)  {}
 // --- Tests ---
 
 func TestCreateHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockNotificationRepo{}
 	handler := command.NewCreateHandler(repo, &mockEventBus{}, &mockLogger{})
 
@@ -80,9 +83,7 @@ func TestCreateHandler_Handle(t *testing.T) {
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("Handle returned error: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.saved == nil {
 		t.Fatal("expected notification to be saved")

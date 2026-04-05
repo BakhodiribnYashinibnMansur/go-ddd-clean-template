@@ -10,6 +10,8 @@ import (
 )
 
 func TestNewEndpointHistory(t *testing.T) {
+	t.Parallel()
+
 	userID := uuid.New()
 	ip := "192.168.1.1"
 	ua := "Mozilla/5.0"
@@ -48,6 +50,8 @@ func TestNewEndpointHistory(t *testing.T) {
 }
 
 func TestNewEndpointHistory_NilOptionals(t *testing.T) {
+	t.Parallel()
+
 	h := domain.NewEndpointHistory(
 		nil, "/health", "GET", 200, 1, nil, nil,
 	)
@@ -64,6 +68,8 @@ func TestNewEndpointHistory_NilOptionals(t *testing.T) {
 }
 
 func TestReconstructEndpointHistory(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	userID := uuid.New()
 	now := time.Now()
@@ -105,6 +111,8 @@ func TestReconstructEndpointHistory(t *testing.T) {
 }
 
 func TestReconstructEndpointHistory_NilOptionals(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	now := time.Now()
 
@@ -125,6 +133,8 @@ func TestReconstructEndpointHistory_NilOptionals(t *testing.T) {
 }
 
 func TestNewEndpointHistory_ErrorStatus(t *testing.T) {
+	t.Parallel()
+
 	h := domain.NewEndpointHistory(
 		nil, "/api/fail", "DELETE", 500, 2000, nil, nil,
 	)

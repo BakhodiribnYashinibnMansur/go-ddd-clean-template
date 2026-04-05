@@ -1,7 +1,7 @@
 package query
 
 import (
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
@@ -10,6 +10,7 @@ import (
 	"gct/internal/context/admin/integration/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 // --- Mocks ---
@@ -58,6 +59,8 @@ var errRepo = errors.New("repo failure")
 // --- Tests ---
 
 func TestGetHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	now := time.Now()
 	readRepo := &mockReadRepo{
@@ -75,10 +78,8 @@ func TestGetHandler_Handle(t *testing.T) {
 	}
 
 	handler := NewGetHandler(readRepo, logger.Noop())
-	result, err := handler.Handle(context.Background(), GetQuery{ID: id})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	result, err := handler.Handle(context.Background(), GetQuery{ID: domain.IntegrationID(id)})
+	require.NoError(t, err)
 	if result == nil {
 		t.Fatal("expected result")
 	}
@@ -100,24 +101,30 @@ func TestGetHandler_Handle(t *testing.T) {
 }
 
 func TestGetHandler_NotFound(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockReadRepo{}
 	handler := NewGetHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), GetQuery{ID: uuid.New()})
+	_, err := handler.Handle(context.Background(), GetQuery{ID: domain.NewIntegrationID()})
 	if err == nil {
 		t.Fatal("expected error for not found")
 	}
 }
 
 func TestGetHandler_RepoError(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &errorReadRepo{err: errRepo}
 	handler := NewGetHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), GetQuery{ID: uuid.New()})
+	_, err := handler.Handle(context.Background(), GetQuery{ID: domain.NewIntegrationID()})
 	if err == nil {
 		t.Fatal("expected error from repo")
 	}
 }
 
 func TestGetHandler_AllFieldsMapped(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	now := time.Now()
 	readRepo := &mockReadRepo{
@@ -135,10 +142,8 @@ func TestGetHandler_AllFieldsMapped(t *testing.T) {
 	}
 
 	handler := NewGetHandler(readRepo, logger.Noop())
-	result, err := handler.Handle(context.Background(), GetQuery{ID: id})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	result, err := handler.Handle(context.Background(), GetQuery{ID: domain.IntegrationID(id)})
+	require.NoError(t, err)
 	if result.WebhookURL != "" {
 		t.Errorf("expected empty webhookURL, got %s", result.WebhookURL)
 	}

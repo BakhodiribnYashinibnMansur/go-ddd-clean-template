@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"gct/internal/context/content/file/domain"
-	"gct/internal/platform/domain/consts"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/pgxutil"
+	"gct/internal/kernel/consts"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/pgxutil"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -169,7 +169,7 @@ func scanFileViewFromRows(rows pgx.Rows) (*domain.FileView, error) {
 
 	err := rows.Scan(&id, &name, &originalName, &mimeType, &size, &path, &url, &uploadedBy, &createdAt)
 	if err != nil {
-		return nil, err
+		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 
 	return &domain.FileView{

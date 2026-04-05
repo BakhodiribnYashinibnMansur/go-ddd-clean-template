@@ -12,8 +12,8 @@ import (
 
 	"gct/config"
 	"gct/internal/context/admin/integration/application/query"
-	"gct/internal/platform/domain/consts"
-	"gct/internal/platform/infrastructure/httpx/response"
+	"gct/internal/kernel/consts"
+	"gct/internal/kernel/infrastructure/httpx/response"
 
 	"github.com/gin-gonic/gin"
 )

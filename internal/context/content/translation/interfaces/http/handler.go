@@ -4,16 +4,15 @@ import (
 	"net/http"
 	"strconv"
 
-	"gct/internal/platform/infrastructure/httpx"
-	"gct/internal/platform/infrastructure/httpx/response"
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/httpx"
+	"gct/internal/kernel/infrastructure/httpx/response"
+	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/context/content/translation"
 	"gct/internal/context/content/translation/application/command"
 	"gct/internal/context/content/translation/application/query"
 	"gct/internal/context/content/translation/domain"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 // Handler provides HTTP endpoints for the Translation bounded context.
@@ -65,7 +64,7 @@ func (h *Handler) List(ctx *gin.Context) {
 
 // Get returns a single translation by ID.
 func (h *Handler) Get(ctx *gin.Context) {
-	id, err := uuid.Parse(ctx.Param("id"))
+	id, err := domain.ParseTranslationID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
@@ -80,7 +79,7 @@ func (h *Handler) Get(ctx *gin.Context) {
 
 // Update updates a translation.
 func (h *Handler) Update(ctx *gin.Context) {
-	id, err := uuid.Parse(ctx.Param("id"))
+	id, err := domain.ParseTranslationID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
@@ -106,7 +105,7 @@ func (h *Handler) Update(ctx *gin.Context) {
 
 // Delete deletes a translation.
 func (h *Handler) Delete(ctx *gin.Context) {
-	id, err := uuid.Parse(ctx.Param("id"))
+	id, err := domain.ParseTranslationID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return

@@ -8,9 +8,12 @@ import (
 	"gct/internal/context/content/translation/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func TestUpdateTranslationHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	tr := domain.NewTranslation("old_key", "en", "Old Value", "general")
 
 	repo := &mockRepo{
@@ -29,15 +32,13 @@ func TestUpdateTranslationHandler_Handle(t *testing.T) {
 	newKey := "new_key"
 	newValue := "New Value"
 	cmd := UpdateTranslationCommand{
-		ID:    tr.ID(),
+		ID:    domain.TranslationID(tr.ID()),
 		Key:   &newKey,
 		Value: &newValue,
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.updated == nil {
 		t.Fatal("expected translation to be updated")
@@ -65,6 +66,8 @@ func TestUpdateTranslationHandler_Handle(t *testing.T) {
 }
 
 func TestUpdateTranslationHandler_NotFound(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockRepo{}
 	eb := &mockEventBus{}
 	log := &mockLogger{}
@@ -73,7 +76,7 @@ func TestUpdateTranslationHandler_NotFound(t *testing.T) {
 
 	newKey := "k"
 	err := handler.Handle(context.Background(), UpdateTranslationCommand{
-		ID:  uuid.New(),
+		ID:  domain.NewTranslationID(),
 		Key: &newKey,
 	})
 	if err == nil {
@@ -82,6 +85,8 @@ func TestUpdateTranslationHandler_NotFound(t *testing.T) {
 }
 
 func TestUpdateTranslationHandler_RepoUpdateError(t *testing.T) {
+	t.Parallel()
+
 	tr := domain.NewTranslation("k", "en", "v", "g")
 	repoErr := errors.New("repo update failed")
 
@@ -96,7 +101,7 @@ func TestUpdateTranslationHandler_RepoUpdateError(t *testing.T) {
 
 	newVal := "new"
 	err := handler.Handle(context.Background(), UpdateTranslationCommand{
-		ID:    tr.ID(),
+		ID:    domain.TranslationID(tr.ID()),
 		Value: &newVal,
 	})
 	if !errors.Is(err, repoErr) {

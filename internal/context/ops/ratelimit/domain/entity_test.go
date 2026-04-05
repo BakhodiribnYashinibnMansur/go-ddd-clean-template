@@ -10,6 +10,8 @@ import (
 )
 
 func TestNewRateLimit(t *testing.T) {
+	t.Parallel()
+
 	rl := domain.NewRateLimit("api_global", "/api/*", 100, 60, true)
 
 	if rl.Name() != "api_global" {
@@ -30,6 +32,8 @@ func TestNewRateLimit(t *testing.T) {
 }
 
 func TestRateLimit_Update(t *testing.T) {
+	t.Parallel()
+
 	rl := domain.NewRateLimit("api_global", "/api/*", 100, 60, true)
 
 	newRequests := 200
@@ -49,6 +53,8 @@ func TestRateLimit_Update(t *testing.T) {
 }
 
 func TestReconstructRateLimit(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	now := time.Now()
 

@@ -5,9 +5,10 @@ import (
 	"testing"
 
 	"gct/internal/context/iam/authz/domain"
-	shared "gct/internal/platform/domain"
+	shared "gct/internal/kernel/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 // --- Mock PermissionRepository ---
@@ -54,6 +55,8 @@ func (m *mockPermissionRepository) List(ctx context.Context, pagination shared.P
 // --- Tests ---
 
 func TestCreatePermissionHandler_Success(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockPermissionRepository{}
 	log := &mockLogger{}
 
@@ -66,9 +69,7 @@ func TestCreatePermissionHandler_Success(t *testing.T) {
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.savedPerm == nil {
 		t.Fatal("expected permission to be saved")
@@ -88,21 +89,22 @@ func TestCreatePermissionHandler_Success(t *testing.T) {
 }
 
 func TestCreatePermissionHandler_WithParent(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockPermissionRepository{}
 	log := &mockLogger{}
 
 	handler := NewCreatePermissionHandler(repo, log)
 
-	parentID := uuid.New()
+	parentUUID := uuid.New()
+	parentID := domain.PermissionID(parentUUID)
 	cmd := CreatePermissionCommand{
 		Name:     "read_users",
 		ParentID: &parentID,
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.savedPerm == nil {
 		t.Fatal("expected permission to be saved")
@@ -112,12 +114,14 @@ func TestCreatePermissionHandler_WithParent(t *testing.T) {
 		t.Fatal("expected non-nil parent ID")
 	}
 
-	if *repo.savedPerm.ParentID() != parentID {
-		t.Errorf("expected parent ID %s, got %s", parentID, *repo.savedPerm.ParentID())
+	if *repo.savedPerm.ParentID() != parentUUID {
+		t.Errorf("expected parent ID %s, got %s", parentUUID, *repo.savedPerm.ParentID())
 	}
 }
 
 func TestCreatePermissionHandler_WithoutDescription(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockPermissionRepository{}
 	log := &mockLogger{}
 
@@ -128,9 +132,7 @@ func TestCreatePermissionHandler_WithoutDescription(t *testing.T) {
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.savedPerm == nil {
 		t.Fatal("expected permission to be saved")

@@ -1,6 +1,6 @@
 package domain
 
-import shared "gct/internal/platform/domain"
+import shared "gct/internal/kernel/domain"
 
 // Sentinel domain errors for the SiteSetting bounded context.
 // Use errors.Is to match these in the application/presentation layers.

@@ -3,7 +3,7 @@ package statistics
 import (
 	"gct/internal/context/admin/statistics/application/query"
 	"gct/internal/context/admin/statistics/infrastructure/postgres"
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/logger"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )

@@ -2,11 +2,12 @@ package app
 
 import (
 	"context"
+	"fmt"
 
 	"gct/internal/context/iam/user"
 	"gct/internal/context/iam/user/application/command"
 	userdomain "gct/internal/context/iam/user/domain"
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/logger"
 
 	"github.com/google/uuid"
 	miniogo "github.com/minio/minio-go/v7"
@@ -41,16 +42,22 @@ type sessionRevokerAdapter struct {
 }
 
 func (a *sessionRevokerAdapter) RevokeSession(ctx context.Context, userID, sessionID uuid.UUID) error {
-	return a.userBC.SignOut.Handle(ctx, command.SignOutCommand{
+	if err := a.userBC.SignOut.Handle(ctx, command.SignOutCommand{
 		UserID:    userdomain.UserID(userID),
 		SessionID: userdomain.SessionID(sessionID),
-	})
+	}); err != nil {
+		return fmt.Errorf("app.sessionRevokerAdapter.RevokeSession: %w", err)
+	}
+	return nil
 }
 
 func (a *sessionRevokerAdapter) RevokeAllSessions(ctx context.Context, userID uuid.UUID) error {
-	return a.userBC.RevokeAll.Handle(ctx, command.RevokeAllSessionsCommand{
-		UserID: userID,
-	})
+	if err := a.userBC.RevokeAll.Handle(ctx, command.RevokeAllSessionsCommand{
+		UserID: userdomain.UserID(userID),
+	}); err != nil {
+		return fmt.Errorf("app.sessionRevokerAdapter.RevokeAllSessions: %w", err)
+	}
+	return nil
 }
 
 // RouteOptions holds optional dependencies for route registration.

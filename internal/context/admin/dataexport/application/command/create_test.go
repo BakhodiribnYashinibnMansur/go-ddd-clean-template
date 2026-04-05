@@ -7,12 +7,15 @@ import (
 
 	"gct/internal/context/admin/dataexport/application/command"
 	"gct/internal/context/admin/dataexport/domain"
-	shared "gct/internal/platform/domain"
+	shared "gct/internal/kernel/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCreateDataExportHandler_Success(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockWriteRepo{}
 	eb := &mockEventBus{}
 	l := &mockLogger{}
@@ -25,9 +28,7 @@ func TestCreateDataExportHandler_Success(t *testing.T) {
 	}
 
 	err := h.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.savedEntity == nil {
 		t.Fatal("expected entity to be saved")
@@ -53,6 +54,8 @@ func TestCreateDataExportHandler_Success(t *testing.T) {
 }
 
 func TestCreateDataExportHandler_RepoSaveError(t *testing.T) {
+	t.Parallel()
+
 	repoErr := errors.New("db connection failed")
 	repo := &mockWriteRepo{
 		saveFn: func(_ context.Context, _ *domain.DataExport) error {
@@ -82,6 +85,8 @@ func TestCreateDataExportHandler_RepoSaveError(t *testing.T) {
 }
 
 func TestCreateDataExportHandler_EventBusError(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockWriteRepo{}
 	eb := &mockEventBus{
 		publishFn: func(_ context.Context, _ ...shared.DomainEvent) error {
@@ -99,9 +104,7 @@ func TestCreateDataExportHandler_EventBusError(t *testing.T) {
 
 	// Event bus failure is non-fatal — handler returns nil
 	err := h.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error (event bus failure is non-fatal), got %v", err)
-	}
+	require.NoError(t, err)
 	if repo.savedEntity == nil {
 		t.Fatal("entity should still be saved even if event bus fails")
 	}

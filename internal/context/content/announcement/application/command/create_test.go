@@ -6,10 +6,11 @@ import (
 	"time"
 
 	"gct/internal/context/content/announcement/domain"
-	"gct/internal/platform/application"
-	shared "gct/internal/platform/domain"
+	"gct/internal/kernel/application"
+	shared "gct/internal/kernel/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 // --- Mocks ---
@@ -84,6 +85,8 @@ func (m *mockLogger) Fatalc(_ context.Context, _ string, _ ...any)  {}
 // --- Tests ---
 
 func TestCreateAnnouncementHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockAnnouncementRepo{}
 	eb := &mockEventBus{}
 	handler := NewCreateAnnouncementHandler(repo, eb, &mockLogger{})
@@ -98,9 +101,7 @@ func TestCreateAnnouncementHandler_Handle(t *testing.T) {
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.saved == nil {
 		t.Fatal("expected announcement to be saved")
@@ -123,6 +124,8 @@ func TestCreateAnnouncementHandler_Handle(t *testing.T) {
 }
 
 func TestCreateAnnouncementHandler_MinimalFields(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockAnnouncementRepo{}
 	handler := NewCreateAnnouncementHandler(repo, &mockEventBus{}, &mockLogger{})
 
@@ -130,9 +133,7 @@ func TestCreateAnnouncementHandler_MinimalFields(t *testing.T) {
 		Title:   shared.Lang{Uz: "t", Ru: "t", En: "t"},
 		Content: shared.Lang{Uz: "c", Ru: "c", En: "c"},
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 	if repo.saved == nil {
 		t.Fatal("expected announcement to be saved")
 	}

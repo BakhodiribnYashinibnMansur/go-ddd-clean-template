@@ -8,8 +8,8 @@ import (
 	"gct/internal/context/ops/ratelimit/application/command"
 	"gct/internal/context/ops/ratelimit/application/query"
 	"gct/internal/context/ops/ratelimit/domain"
-	"gct/internal/platform/infrastructure/eventbus"
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/eventbus"
+	"gct/internal/kernel/infrastructure/logger"
 	"gct/test/integration/common/setup"
 )
 

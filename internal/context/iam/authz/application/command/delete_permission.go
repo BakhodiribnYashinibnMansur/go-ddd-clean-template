@@ -4,17 +4,15 @@ import (
 	"context"
 
 	"gct/internal/context/iam/authz/domain"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
-	"gct/internal/platform/infrastructure/pgxutil"
-
-	"github.com/google/uuid"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // DeletePermissionCommand represents an intent to permanently remove a permission.
 // Deleting a permission may cascade to role-permission assignments depending on the repository's FK constraints.
 type DeletePermissionCommand struct {
-	ID uuid.UUID
+	ID domain.PermissionID
 }
 
 // DeletePermissionHandler performs hard deletion of a permission via the repository.
@@ -42,8 +40,8 @@ func (h *DeletePermissionHandler) Handle(ctx context.Context, cmd DeletePermissi
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "DeletePermission", "permission")()
 
-	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
-		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeletePermission", Entity: "permission", EntityID: cmd.ID, Err: err}.KV()...)
+	if err := h.repo.Delete(ctx, cmd.ID.UUID()); err != nil {
+		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeletePermission", Entity: "permission", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 

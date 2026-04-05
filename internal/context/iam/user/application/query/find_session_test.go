@@ -1,17 +1,21 @@
 package query
 
 import (
-	"gct/internal/platform/infrastructure/logger"
 	"context"
 	"testing"
 	"time"
 
-	shared "gct/internal/platform/domain"
+	"gct/internal/context/iam/user/domain"
+	shared "gct/internal/kernel/domain"
+	"gct/internal/kernel/infrastructure/logger"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func TestFindSessionHandler_Success(t *testing.T) {
+	t.Parallel()
+
 	sessionID := uuid.New()
 	userID := uuid.New()
 	deviceID := uuid.New()
@@ -31,10 +35,8 @@ func TestFindSessionHandler_Success(t *testing.T) {
 
 	handler := NewFindSessionHandler(readRepo, logger.Noop())
 
-	result, err := handler.Handle(context.Background(), FindSessionQuery{SessionID: sessionID})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	result, err := handler.Handle(context.Background(), FindSessionQuery{SessionID: domain.SessionID(sessionID)})
+	require.NoError(t, err)
 
 	if result == nil {
 		t.Fatal("expected session, got nil")
@@ -58,22 +60,26 @@ func TestFindSessionHandler_Success(t *testing.T) {
 }
 
 func TestFindSessionHandler_NotFound(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockUserReadRepository{}
 
 	handler := NewFindSessionHandler(readRepo, logger.Noop())
 
-	_, err := handler.Handle(context.Background(), FindSessionQuery{SessionID: uuid.New()})
+	_, err := handler.Handle(context.Background(), FindSessionQuery{SessionID: domain.NewSessionID()})
 	if err == nil {
 		t.Fatal("expected error for non-existent session, got nil")
 	}
 }
 
 func TestFindSessionHandler_RepoError(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &errorReadRepo{err: errRepoFailure}
 
 	handler := NewFindSessionHandler(readRepo, logger.Noop())
 
-	_, err := handler.Handle(context.Background(), FindSessionQuery{SessionID: uuid.New()})
+	_, err := handler.Handle(context.Background(), FindSessionQuery{SessionID: domain.NewSessionID()})
 	if err == nil {
 		t.Fatal("expected error from repo")
 	}

@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"gct/internal/platform/domain/consts"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/pgxutil"
+	"gct/internal/kernel/consts"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/pgxutil"
 	"gct/internal/context/admin/sitesetting/domain"
 
 	"github.com/Masterminds/squirrel"
@@ -226,7 +226,7 @@ func scanSiteSettingFromRows(rows pgx.Rows) (*domain.SiteSetting, error) {
 
 	err := rows.Scan(&id, &key, &value, &sType, &description, &createdAt, &updatedAt)
 	if err != nil {
-		return nil, err
+		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 
 	return domain.ReconstructSiteSetting(id, createdAt, updatedAt, key, value, sType, description), nil

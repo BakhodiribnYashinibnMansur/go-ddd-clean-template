@@ -8,8 +8,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"gct/internal/platform/application"
-	shared "gct/internal/platform/domain"
+	"gct/internal/kernel/application"
+	shared "gct/internal/kernel/domain"
 	"gct/internal/context/iam/user"
 	"gct/internal/context/iam/user/application/command"
 	"gct/internal/context/iam/user/application/query"
@@ -159,6 +159,8 @@ func newBC(repo *mockUserRepo, readRepo *mockReadRepo) *user.BoundedContext {
 // ---------------------------------------------------------------------------
 
 func TestHandler_Create_Success(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockUserRepo{}
 	readRepo := &mockReadRepo{}
 	bc := newBC(repo, readRepo)
@@ -185,6 +187,8 @@ func TestHandler_Create_Success(t *testing.T) {
 }
 
 func TestHandler_Create_BadRequest(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockUserRepo{}
 	readRepo := &mockReadRepo{}
 	bc := newBC(repo, readRepo)
@@ -206,6 +210,8 @@ func TestHandler_Create_BadRequest(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestHandler_List_Success(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockUserRepo{}
 	readRepo := &mockReadRepo{
 		views: []*domain.UserView{
@@ -240,6 +246,8 @@ func TestHandler_List_Success(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestHandler_Get_Success(t *testing.T) {
+	t.Parallel()
+
 	userID := uuid.New()
 	repo := &mockUserRepo{}
 	readRepo := &mockReadRepo{
@@ -262,6 +270,8 @@ func TestHandler_Get_Success(t *testing.T) {
 }
 
 func TestHandler_Get_InvalidID(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockUserRepo{}
 	readRepo := &mockReadRepo{}
 	bc := newBC(repo, readRepo)
@@ -277,6 +287,8 @@ func TestHandler_Get_InvalidID(t *testing.T) {
 }
 
 func TestHandler_Get_NotFound(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockUserRepo{}
 	readRepo := &mockReadRepo{} // no view set
 	bc := newBC(repo, readRepo)
@@ -296,9 +308,11 @@ func TestHandler_Get_NotFound(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestHandler_Update_Success(t *testing.T) {
+	t.Parallel()
+
 	phone, _ := domain.NewPhone("+998901234567")
 	pw, _ := domain.NewPasswordFromRaw("StrongP@ss123")
-	existingUser := domain.NewUser(phone, pw)
+	existingUser, _ := domain.NewUser(phone, pw)
 
 	repo := &mockUserRepo{
 		findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.User, error) {
@@ -331,9 +345,11 @@ func TestHandler_Update_Success(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestHandler_Delete_Success(t *testing.T) {
+	t.Parallel()
+
 	phone, _ := domain.NewPhone("+998901234567")
 	pw, _ := domain.NewPasswordFromRaw("StrongP@ss123")
-	existingUser := domain.NewUser(phone, pw)
+	existingUser, _ := domain.NewUser(phone, pw)
 
 	repo := &mockUserRepo{
 		findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.User, error) {
@@ -357,6 +373,8 @@ func TestHandler_Delete_Success(t *testing.T) {
 }
 
 func TestHandler_Delete_InvalidID(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockUserRepo{}
 	readRepo := &mockReadRepo{}
 	bc := newBC(repo, readRepo)
@@ -376,9 +394,11 @@ func TestHandler_Delete_InvalidID(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestHandler_Approve_Success(t *testing.T) {
+	t.Parallel()
+
 	phone, _ := domain.NewPhone("+998901234567")
 	pw, _ := domain.NewPasswordFromRaw("StrongP@ss123")
-	existingUser := domain.NewUser(phone, pw)
+	existingUser, _ := domain.NewUser(phone, pw)
 
 	repo := &mockUserRepo{
 		findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.User, error) {
@@ -406,9 +426,11 @@ func TestHandler_Approve_Success(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestHandler_ChangeRole_Success(t *testing.T) {
+	t.Parallel()
+
 	phone, _ := domain.NewPhone("+998901234567")
 	pw, _ := domain.NewPasswordFromRaw("StrongP@ss123")
-	existingUser := domain.NewUser(phone, pw)
+	existingUser, _ := domain.NewUser(phone, pw)
 
 	repo := &mockUserRepo{
 		findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.User, error) {
@@ -437,6 +459,8 @@ func TestHandler_ChangeRole_Success(t *testing.T) {
 }
 
 func TestHandler_ChangeRole_BadRequest(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockUserRepo{}
 	readRepo := &mockReadRepo{}
 	bc := newBC(repo, readRepo)
@@ -457,9 +481,11 @@ func TestHandler_ChangeRole_BadRequest(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestHandler_BulkAction_Success(t *testing.T) {
+	t.Parallel()
+
 	phone, _ := domain.NewPhone("+998901234567")
 	pw, _ := domain.NewPasswordFromRaw("StrongP@ss123")
-	existingUser := domain.NewUser(phone, pw)
+	existingUser, _ := domain.NewUser(phone, pw)
 
 	repo := &mockUserRepo{
 		findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.User, error) {
@@ -494,6 +520,8 @@ func TestHandler_BulkAction_Success(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestHandler_SignUp_Success(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockUserRepo{}
 	readRepo := &mockReadRepo{}
 	bc := newBC(repo, readRepo)
@@ -516,6 +544,8 @@ func TestHandler_SignUp_Success(t *testing.T) {
 }
 
 func TestHandler_SignUp_BadRequest(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockUserRepo{}
 	readRepo := &mockReadRepo{}
 	bc := newBC(repo, readRepo)
@@ -536,6 +566,8 @@ func TestHandler_SignUp_BadRequest(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestHandler_SignIn_BadRequest(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockUserRepo{}
 	readRepo := &mockReadRepo{}
 	bc := newBC(repo, readRepo)
@@ -556,6 +588,8 @@ func TestHandler_SignIn_BadRequest(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestHandler_SignOut_BadRequest(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockUserRepo{}
 	readRepo := &mockReadRepo{}
 	bc := newBC(repo, readRepo)
@@ -576,6 +610,8 @@ func TestHandler_SignOut_BadRequest(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestHandler_Create_InvalidPhone(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockUserRepo{}
 	readRepo := &mockReadRepo{}
 	bc := newBC(repo, readRepo)
@@ -595,6 +631,8 @@ func TestHandler_Create_InvalidPhone(t *testing.T) {
 }
 
 func TestHandler_Update_InvalidID(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockUserRepo{}
 	readRepo := &mockReadRepo{}
 	bc := newBC(repo, readRepo)
@@ -611,6 +649,8 @@ func TestHandler_Update_InvalidID(t *testing.T) {
 }
 
 func TestHandler_Approve_InvalidID(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockUserRepo{}
 	readRepo := &mockReadRepo{}
 	bc := newBC(repo, readRepo)
@@ -626,6 +666,8 @@ func TestHandler_Approve_InvalidID(t *testing.T) {
 }
 
 func TestHandler_BulkAction_BadRequest(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockUserRepo{}
 	readRepo := &mockReadRepo{}
 	bc := newBC(repo, readRepo)
@@ -642,6 +684,8 @@ func TestHandler_BulkAction_BadRequest(t *testing.T) {
 }
 
 func TestHandler_Create_InvalidJSON(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockUserRepo{}
 	readRepo := &mockReadRepo{}
 	bc := newBC(repo, readRepo)
@@ -658,6 +702,8 @@ func TestHandler_Create_InvalidJSON(t *testing.T) {
 }
 
 func TestHandler_SignIn_InvalidJSON(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockUserRepo{}
 	readRepo := &mockReadRepo{}
 	bc := newBC(repo, readRepo)
@@ -674,6 +720,8 @@ func TestHandler_SignIn_InvalidJSON(t *testing.T) {
 }
 
 func TestHandler_ChangeRole_InvalidID(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockUserRepo{}
 	readRepo := &mockReadRepo{}
 	bc := newBC(repo, readRepo)
@@ -692,6 +740,8 @@ func TestHandler_ChangeRole_InvalidID(t *testing.T) {
 }
 
 func TestHandler_List_DefaultPagination(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockUserRepo{}
 	readRepo := &mockReadRepo{
 		views: []*domain.UserView{},
@@ -711,6 +761,8 @@ func TestHandler_List_DefaultPagination(t *testing.T) {
 }
 
 func TestHandler_List_WithFilters(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockUserRepo{}
 	readRepo := &mockReadRepo{
 		views: []*domain.UserView{},
@@ -729,6 +781,8 @@ func TestHandler_List_WithFilters(t *testing.T) {
 }
 
 func TestHandler_ResponseFormat(t *testing.T) {
+	t.Parallel()
+
 	userID := uuid.New()
 	repo := &mockUserRepo{}
 	readRepo := &mockReadRepo{

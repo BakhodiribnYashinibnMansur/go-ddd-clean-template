@@ -3,19 +3,17 @@ package command
 import (
 	"context"
 
-	"gct/internal/platform/application"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
-	"gct/internal/platform/infrastructure/pgxutil"
+	"gct/internal/kernel/application"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/pgxutil"
 	"gct/internal/context/content/translation/domain"
-
-	"github.com/google/uuid"
 )
 
 // UpdateTranslationCommand represents a partial update to an existing translation record.
 // Pointer fields use nil-means-unchanged semantics, so callers only set the fields they want to modify.
 type UpdateTranslationCommand struct {
-	ID       uuid.UUID
+	ID       domain.TranslationID
 	Key      *string
 	Language *string
 	Value    *string
@@ -50,7 +48,7 @@ func (h *UpdateTranslationHandler) Handle(ctx context.Context, cmd UpdateTransla
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "UpdateTranslation", "translation")()
 
-	t, err := h.repo.FindByID(ctx, cmd.ID)
+	t, err := h.repo.FindByID(ctx, cmd.ID.UUID())
 	if err != nil {
 		return apperrors.MapToServiceError(err)
 	}
@@ -58,12 +56,12 @@ func (h *UpdateTranslationHandler) Handle(ctx context.Context, cmd UpdateTransla
 	t.Update(cmd.Key, cmd.Language, cmd.Value, cmd.Group)
 
 	if err := h.repo.Update(ctx, t); err != nil {
-		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "UpdateTranslation", Entity: "translation", EntityID: cmd.ID, Err: err}.KV()...)
+		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "UpdateTranslation", Entity: "translation", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, t.Events()...); err != nil {
-		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "UpdateTranslation", Entity: "translation", EntityID: cmd.ID, Err: err}.KV()...)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "UpdateTranslation", Entity: "translation", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
 	}
 
 	return nil

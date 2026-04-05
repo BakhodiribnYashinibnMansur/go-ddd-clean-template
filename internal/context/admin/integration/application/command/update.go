@@ -4,19 +4,17 @@ import (
 	"context"
 
 	"gct/internal/context/admin/integration/domain"
-	"gct/internal/platform/application"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
-	"gct/internal/platform/infrastructure/pgxutil"
-
-	"github.com/google/uuid"
+	"gct/internal/kernel/application"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // UpdateCommand represents a partial update to an existing integration identified by ID.
 // Pointer fields implement patch semantics — nil means "leave unchanged," non-nil means "overwrite."
 // Callers must provide at least one non-nil field for the update to be meaningful.
 type UpdateCommand struct {
-	ID         uuid.UUID
+	ID         domain.IntegrationID
 	Name       *string
 	Type       *string
 	APIKey     *string
@@ -53,7 +51,7 @@ func (h *UpdateHandler) Handle(ctx context.Context, cmd UpdateCommand) (err erro
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "UpdateIntegration", "integration")()
 
-	i, err := h.repo.FindByID(ctx, cmd.ID)
+	i, err := h.repo.FindByID(ctx, cmd.ID.UUID())
 	if err != nil {
 		return apperrors.MapToServiceError(err)
 	}
@@ -61,12 +59,12 @@ func (h *UpdateHandler) Handle(ctx context.Context, cmd UpdateCommand) (err erro
 	i.UpdateDetails(cmd.Name, cmd.Type, cmd.APIKey, cmd.WebhookURL, cmd.Enabled, cmd.Config)
 
 	if err := h.repo.Update(ctx, i); err != nil {
-		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "UpdateIntegration", Entity: "integration", EntityID: cmd.ID, Err: err}.KV()...)
+		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "UpdateIntegration", Entity: "integration", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 
 	if err := h.eventBus.Publish(ctx, i.Events()...); err != nil {
-		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "UpdateIntegration", Entity: "integration", EntityID: cmd.ID, Err: err}.KV()...)
+		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "UpdateIntegration", Entity: "integration", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
 	}
 
 	return nil

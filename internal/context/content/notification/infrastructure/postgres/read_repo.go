@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"gct/internal/context/content/notification/domain"
-	"gct/internal/platform/domain/consts"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/pgxutil"
+	"gct/internal/kernel/consts"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/pgxutil"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -159,7 +159,7 @@ func scanNotificationViewFromRows(rows pgx.Rows) (*domain.NotificationView, erro
 
 	err := rows.Scan(&id, &title, &body, &nType, &targetType, &isActive, &createdAt, &updatedAt)
 	if err != nil {
-		return nil, err
+		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 
 	_ = targetType

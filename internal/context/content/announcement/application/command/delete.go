@@ -4,17 +4,15 @@ import (
 	"context"
 
 	"gct/internal/context/content/announcement/domain"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
-	"gct/internal/platform/infrastructure/pgxutil"
-
-	"github.com/google/uuid"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // DeleteAnnouncementCommand represents an intent to permanently remove an announcement.
 // Once deleted, the announcement is no longer visible to any audience.
 type DeleteAnnouncementCommand struct {
-	ID uuid.UUID
+	ID domain.AnnouncementID
 }
 
 // DeleteAnnouncementHandler performs hard deletion of announcements via the repository.
@@ -42,8 +40,8 @@ func (h *DeleteAnnouncementHandler) Handle(ctx context.Context, cmd DeleteAnnoun
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "DeleteAnnouncement", "announcement")()
 
-	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
-		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "DeleteAnnouncement", Entity: "announcement", EntityID: cmd.ID, Err: err}.KV()...)
+	if err := h.repo.Delete(ctx, cmd.ID.UUID()); err != nil {
+		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "DeleteAnnouncement", Entity: "announcement", EntityID: cmd.ID.UUID(), Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
 	return nil

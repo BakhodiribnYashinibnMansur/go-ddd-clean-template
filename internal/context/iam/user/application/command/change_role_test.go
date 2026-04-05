@@ -7,9 +7,12 @@ import (
 	"gct/internal/context/iam/user/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func TestChangeRoleHandler_Handle(t *testing.T) {
+	t.Parallel()
+
 	user := makeTestUser(t)
 	repo := &mockUserRepository{
 		findByIDFn: func(_ context.Context, id uuid.UUID) (*domain.User, error) {
@@ -26,12 +29,10 @@ func TestChangeRoleHandler_Handle(t *testing.T) {
 
 	newRoleID := uuid.New()
 	err := handler.Handle(context.Background(), ChangeRoleCommand{
-		UserID: user.ID(),
+		UserID: domain.UserID(user.ID()),
 		RoleID: newRoleID,
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.updatedUser == nil {
 		t.Fatal("expected user to be updated")
@@ -53,6 +54,8 @@ func TestChangeRoleHandler_Handle(t *testing.T) {
 }
 
 func TestChangeRoleHandler_NotFound(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockUserRepository{}
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
@@ -60,7 +63,7 @@ func TestChangeRoleHandler_NotFound(t *testing.T) {
 	handler := NewChangeRoleHandler(repo, eventBus, log)
 
 	err := handler.Handle(context.Background(), ChangeRoleCommand{
-		UserID: uuid.New(),
+		UserID: domain.NewUserID(),
 		RoleID: uuid.New(),
 	})
 	if err == nil {

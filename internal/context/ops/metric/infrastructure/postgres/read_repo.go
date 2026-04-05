@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"gct/internal/context/ops/metric/domain"
-	"gct/internal/platform/domain/consts"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/pgxutil"
+	"gct/internal/kernel/consts"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/pgxutil"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -106,7 +106,7 @@ func scanMetricView(rows pgx.Rows) (*domain.MetricView, error) {
 
 	err := rows.Scan(&id, &name, &latencyMs, &isPanic, &panicError, &createdAt)
 	if err != nil {
-		return nil, err
+		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 
 	return &domain.MetricView{

@@ -7,11 +7,11 @@ import (
 	"time"
 
 	"gct/internal/context/iam/authz/domain"
-	"gct/internal/platform/domain/consts"
-	shared "gct/internal/platform/domain"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/metadata"
-	"gct/internal/platform/infrastructure/pgxutil"
+	"gct/internal/kernel/consts"
+	shared "gct/internal/kernel/domain"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/metadata"
+	"gct/internal/kernel/infrastructure/pgxutil"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -896,7 +896,7 @@ func scanRoleFromRows(rows pgx.Rows) (*domain.Role, error) {
 
 	err := rows.Scan(&id, &name, &description, &ct, &ut)
 	if err != nil {
-		return nil, err
+		return nil, apperrors.HandlePgError(err, roleTable, nil)
 	}
 
 	return domain.ReconstructRole(id, toTime(ct), toTime(ut), nil, name, description, nil), nil
@@ -930,7 +930,7 @@ func scanPermissionFromRows(rows pgx.Rows) (*domain.Permission, error) {
 
 	err := rows.Scan(&id, &parentID, &name, &description, &ct, &ut)
 	if err != nil {
-		return nil, err
+		return nil, apperrors.HandlePgError(err, permissionTable, nil)
 	}
 
 	return domain.ReconstructPermission(id, toTime(ct), toTime(ut), nil, parentID, name, description, nil), nil
@@ -966,7 +966,7 @@ func scanPolicyFromRows(rows pgx.Rows) (*domain.Policy, error) {
 
 	err := rows.Scan(&id, &permissionID, &effect, &priority, &active, &ct, &ut)
 	if err != nil {
-		return nil, err
+		return nil, apperrors.HandlePgError(err, policyTable, nil)
 	}
 
 	return domain.ReconstructPolicy(id, toTime(ct), toTime(ut), nil, permissionID, domain.PolicyEffect(effect), priority, active, nil), nil

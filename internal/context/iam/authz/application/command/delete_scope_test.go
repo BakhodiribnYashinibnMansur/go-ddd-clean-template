@@ -3,9 +3,12 @@ package command
 import (
 	"context"
 	"testing"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDeleteScopeHandler_Success(t *testing.T) {
+	t.Parallel()
+
 	deleted := false
 	repo := &mockScopeRepository{
 		deleteFn: func(_ context.Context, path, method string) error {
@@ -29,9 +32,7 @@ func TestDeleteScopeHandler_Success(t *testing.T) {
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if !deleted {
 		t.Error("expected delete to be called on repository")

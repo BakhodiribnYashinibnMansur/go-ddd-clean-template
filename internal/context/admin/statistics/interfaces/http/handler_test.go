@@ -9,7 +9,7 @@ import (
 	"gct/internal/context/admin/statistics"
 	appdto "gct/internal/context/admin/statistics/application"
 	"gct/internal/context/admin/statistics/application/query"
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
 )
@@ -67,6 +67,8 @@ func setupRouter() *gin.Engine {
 }
 
 func TestHandler_AllEndpoints_ReturnOK(t *testing.T) {
+	t.Parallel()
+
 	router := setupRouter()
 	paths := []string{
 		"/api/v1/statistics/overview",

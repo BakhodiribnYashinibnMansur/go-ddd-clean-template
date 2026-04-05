@@ -8,6 +8,8 @@ import (
 )
 
 func TestRoleCreated(t *testing.T) {
+	t.Parallel()
+
 	roleID := uuid.New()
 	before := time.Now()
 	e := NewRoleCreated(roleID, "admin")
@@ -27,6 +29,8 @@ func TestRoleCreated(t *testing.T) {
 }
 
 func TestReconstructRole_Full(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	now := time.Now()
 	desc := "Admin"
@@ -52,6 +56,8 @@ func TestReconstructRole_Full(t *testing.T) {
 }
 
 func TestReconstructRole_NilPermissions(t *testing.T) {
+	t.Parallel()
+
 	role := ReconstructRole(uuid.New(), time.Now(), time.Now(), nil, "test", nil, nil)
 	if role.Permissions() == nil {
 		t.Error("expected non-nil permissions")
@@ -59,6 +65,8 @@ func TestReconstructRole_NilPermissions(t *testing.T) {
 }
 
 func TestReconstructPolicy_Full(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	permID := uuid.New()
 	now := time.Now()
@@ -87,6 +95,8 @@ func TestReconstructPolicy_Full(t *testing.T) {
 }
 
 func TestReconstructPolicy_NilConditions(t *testing.T) {
+	t.Parallel()
+
 	policy := ReconstructPolicy(uuid.New(), time.Now(), time.Now(), nil, uuid.New(), PolicyAllow, 0, true, nil)
 	if policy.Conditions() == nil {
 		t.Error("expected non-nil conditions")
@@ -94,6 +104,8 @@ func TestReconstructPolicy_NilConditions(t *testing.T) {
 }
 
 func TestRoleDeleted(t *testing.T) {
+	t.Parallel()
+
 	roleID := uuid.New()
 	before := time.Now()
 	e := NewRoleDeleted(roleID)
@@ -110,6 +122,8 @@ func TestRoleDeleted(t *testing.T) {
 }
 
 func TestPolicyUpdated(t *testing.T) {
+	t.Parallel()
+
 	roleID := uuid.New()
 	policyID := uuid.New()
 	before := time.Now()
@@ -130,6 +144,8 @@ func TestPolicyUpdated(t *testing.T) {
 }
 
 func TestPermissionGranted(t *testing.T) {
+	t.Parallel()
+
 	roleID := uuid.New()
 	permID := uuid.New()
 	before := time.Now()

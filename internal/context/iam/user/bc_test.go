@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/platform/application"
-	"gct/internal/platform/domain"
+	"gct/internal/kernel/application"
+	"gct/internal/kernel/domain"
 	"gct/internal/context/iam/user/application/command"
 )
 

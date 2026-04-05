@@ -58,7 +58,7 @@ func BenchmarkNewUser(b *testing.B) {
 	email, _ := domain.NewEmail("bench@example.com")
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = domain.NewUser(phone, pw, domain.WithEmail(email), domain.WithUsername("bench"))
+		_, _ = domain.NewUser(phone, pw, domain.WithEmail(email), domain.WithUsername("bench"))
 	}
 }
 
@@ -71,7 +71,7 @@ func BenchmarkAddSession(b *testing.B) {
 	pw, _ := domain.NewPasswordFromRaw("BenchmarkP@ss1")
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		u := domain.NewUser(phone, pw)
+		u, _ := domain.NewUser(phone, pw)
 		_, _ = u.AddSession(domain.DeviceDesktop, "1.2.3.4", "BenchAgent")
 	}
 }
@@ -79,7 +79,7 @@ func BenchmarkAddSession(b *testing.B) {
 func BenchmarkVerifyPassword(b *testing.B) {
 	phone, _ := domain.NewPhone("+998901234567")
 	pw, _ := domain.NewPasswordFromRaw("BenchmarkP@ss1")
-	u := domain.NewUser(phone, pw)
+	u, _ := domain.NewUser(phone, pw)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_ = u.VerifyPassword("BenchmarkP@ss1")
@@ -96,7 +96,7 @@ func BenchmarkSignInService(b *testing.B) {
 	svc := &domain.SignInService{}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		u := domain.NewUser(phone, pw)
+		u, _ := domain.NewUser(phone, pw)
 		u.Approve()
 		_, _ = svc.SignIn(u, "BenchmarkP@ss1", domain.DeviceDesktop, "10.0.0.1", "BenchAgent")
 	}

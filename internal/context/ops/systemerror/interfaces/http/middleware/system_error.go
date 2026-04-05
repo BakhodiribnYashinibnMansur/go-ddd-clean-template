@@ -8,10 +8,10 @@ import (
 	"runtime/debug"
 	"time"
 
-	"gct/internal/platform/domain/consts"
-	"gct/internal/platform/infrastructure/httpx"
-	"gct/internal/platform/infrastructure/httpx/response"
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/consts"
+	"gct/internal/kernel/infrastructure/httpx"
+	"gct/internal/kernel/infrastructure/httpx/response"
+	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/context/ops/systemerror/application/command"
 
 	"github.com/gin-gonic/gin"
@@ -118,10 +118,12 @@ func (m *SystemErrorMiddleware) saveError(c *gin.Context, errVal any, stack *str
 		}
 	}
 
-	// Fire-and-forget: Persist to DB in background context.
-	// Uses a disconnected context with a timeout to ensure persistence happens even if client disconnects.
+	// Fire-and-forget: Persist to DB in a detached context with a timeout so persistence
+	// completes even if the client disconnects. Values (trace IDs, etc.) are preserved
+	// from the request context via WithoutCancel.
+	bgCtx := context.WithoutCancel(c.Request.Context())
 	go func(cmd command.CreateSystemErrorCommand) {
-		ctx, cancel := context.WithTimeout(context.Background(), consts.DurationAuditSave*time.Second)
+		ctx, cancel := context.WithTimeout(bgCtx, consts.DurationAuditSave*time.Second)
 		defer cancel()
 
 		if err := m.createSystemError.Handle(ctx, cmd); err != nil {

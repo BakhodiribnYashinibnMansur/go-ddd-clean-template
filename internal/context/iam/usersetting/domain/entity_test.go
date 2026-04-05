@@ -10,6 +10,8 @@ import (
 )
 
 func TestNewUserSetting(t *testing.T) {
+	t.Parallel()
+
 	userID := uuid.New()
 	us := domain.NewUserSetting(userID, "theme", "dark")
 
@@ -33,6 +35,8 @@ func TestNewUserSetting(t *testing.T) {
 }
 
 func TestUserSetting_ChangeValue(t *testing.T) {
+	t.Parallel()
+
 	us := domain.NewUserSetting(uuid.New(), "language", "en")
 	us.ChangeValue("fr")
 
@@ -50,6 +54,8 @@ func TestUserSetting_ChangeValue(t *testing.T) {
 }
 
 func TestReconstructUserSetting(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	userID := uuid.New()
 	now := time.Now()

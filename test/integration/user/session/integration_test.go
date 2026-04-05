@@ -10,9 +10,10 @@ import (
 	"gct/internal/context/iam/session"
 	sessionapp "gct/internal/context/iam/session/application"
 	sessionquery "gct/internal/context/iam/session/application/query"
-	shared "gct/internal/platform/domain"
-	"gct/internal/platform/infrastructure/eventbus"
-	"gct/internal/platform/infrastructure/logger"
+	sessiondomain "gct/internal/context/iam/session/domain"
+	shared "gct/internal/kernel/domain"
+	"gct/internal/kernel/infrastructure/eventbus"
+	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/context/iam/user"
 	"gct/internal/context/iam/user/application/command"
 	userquery "gct/internal/context/iam/user/application/query"
@@ -56,7 +57,7 @@ func TestIntegration_ListAndGetSessions(t *testing.T) {
 		Filter: domain.UsersFilter{Pagination: &shared.Pagination{Limit: 10}},
 	})
 	userID := list.Users[0].ID
-	_ = userBC.ApproveUser.Handle(ctx, command.ApproveUserCommand{ID: userID})
+	_ = userBC.ApproveUser.Handle(ctx, command.ApproveUserCommand{ID: domain.UserID(userID)})
 
 	// Sign in to create a session
 	signInResult, err := userBC.SignIn.Handle(ctx, command.SignInCommand{
@@ -71,8 +72,9 @@ func TestIntegration_ListAndGetSessions(t *testing.T) {
 	}
 
 	// List sessions
+	filterUserID := sessiondomain.UserID(userID)
 	sessions, err := sessionBC.ListSessions.Handle(ctx, sessionquery.ListSessionsQuery{
-		Filter: sessionapp.SessionsFilter{UserID: &userID, Limit: 10},
+		Filter: sessionapp.SessionsFilter{UserID: &filterUserID, Limit: 10},
 	})
 	if err != nil {
 		t.Fatalf("ListSessions: %v", err)
@@ -82,7 +84,7 @@ func TestIntegration_ListAndGetSessions(t *testing.T) {
 	}
 
 	// Get session by ID
-	sess, err := sessionBC.GetSession.Handle(ctx, sessionquery.GetSessionQuery{ID: signInResult.SessionID})
+	sess, err := sessionBC.GetSession.Handle(ctx, sessionquery.GetSessionQuery{ID: sessiondomain.SessionID(signInResult.SessionID)})
 	if err != nil {
 		t.Fatalf("GetSession: %v", err)
 	}

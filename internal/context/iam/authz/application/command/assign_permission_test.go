@@ -4,7 +4,10 @@ import (
 	"context"
 	"testing"
 
+	"gct/internal/context/iam/authz/domain"
+
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 // --- Mock RolePermissionRepository ---
@@ -31,6 +34,8 @@ func (m *mockRolePermissionRepository) Revoke(ctx context.Context, roleID, permi
 // --- Tests ---
 
 func TestAssignPermissionHandler_Success(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockRolePermissionRepository{}
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
@@ -40,14 +45,12 @@ func TestAssignPermissionHandler_Success(t *testing.T) {
 	roleID := uuid.New()
 	permID := uuid.New()
 	cmd := AssignPermissionCommand{
-		RoleID:       roleID,
-		PermissionID: permID,
+		RoleID:       domain.RoleID(roleID),
+		PermissionID: domain.PermissionID(permID),
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if repo.assignedRoleID != roleID {
 		t.Errorf("expected role ID %s, got %s", roleID, repo.assignedRoleID)

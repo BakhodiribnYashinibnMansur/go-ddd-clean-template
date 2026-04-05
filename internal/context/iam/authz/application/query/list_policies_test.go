@@ -1,18 +1,21 @@
 package query
 
 import (
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/logger"
 	"context"
 	"errors"
 	"testing"
 
 	"gct/internal/context/iam/authz/domain"
-	shared "gct/internal/platform/domain"
+	shared "gct/internal/kernel/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func TestListPoliciesHandler_WithResults(t *testing.T) {
+	t.Parallel()
+
 	permID := uuid.New()
 	repo := &mockAuthzReadRepository{
 		listPoliciesFn: func(_ context.Context, _ shared.Pagination) ([]*domain.PolicyView, int64, error) {
@@ -41,9 +44,7 @@ func TestListPoliciesHandler_WithResults(t *testing.T) {
 	result, err := handler.Handle(context.Background(), ListPoliciesQuery{
 		Pagination: shared.Pagination{Limit: 10, Offset: 0},
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if len(result.Policies) != 2 {
 		t.Fatalf("expected 2 policies, got %d", len(result.Policies))
@@ -72,6 +73,8 @@ func TestListPoliciesHandler_WithResults(t *testing.T) {
 }
 
 func TestListPoliciesHandler_Empty(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockAuthzReadRepository{
 		listPoliciesFn: func(_ context.Context, _ shared.Pagination) ([]*domain.PolicyView, int64, error) {
 			return []*domain.PolicyView{}, 0, nil
@@ -82,9 +85,7 @@ func TestListPoliciesHandler_Empty(t *testing.T) {
 	result, err := handler.Handle(context.Background(), ListPoliciesQuery{
 		Pagination: shared.Pagination{Limit: 10, Offset: 0},
 	})
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
+	require.NoError(t, err)
 
 	if len(result.Policies) != 0 {
 		t.Errorf("expected 0 policies, got %d", len(result.Policies))
@@ -95,6 +96,8 @@ func TestListPoliciesHandler_Empty(t *testing.T) {
 }
 
 func TestListPoliciesHandler_RepoError(t *testing.T) {
+	t.Parallel()
+
 	repoErr := errors.New("policy query failed")
 	repo := &mockAuthzReadRepository{
 		listPoliciesFn: func(_ context.Context, _ shared.Pagination) ([]*domain.PolicyView, int64, error) {

@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/platform/application"
-	shared "gct/internal/platform/domain"
+	"gct/internal/kernel/application"
+	shared "gct/internal/kernel/domain"
 	"gct/internal/context/ops/systemerror"
 	"gct/internal/context/ops/systemerror/application/command"
 	"gct/internal/context/ops/systemerror/application/query"
@@ -118,6 +118,8 @@ func setupRouter(repo *mockRepo, readRepo *mockReadRepo) *gin.Engine {
 // --- Tests ---
 
 func TestHandler_Create_Success(t *testing.T) {
+	t.Parallel()
+
 	repo := &mockRepo{}
 	readRepo := &mockReadRepo{}
 	router := setupRouter(repo, readRepo)
@@ -136,6 +138,8 @@ func TestHandler_Create_Success(t *testing.T) {
 }
 
 func TestHandler_Create_BadRequest(t *testing.T) {
+	t.Parallel()
+
 	router := setupRouter(&mockRepo{}, &mockReadRepo{})
 
 	w := httptest.NewRecorder()
@@ -149,6 +153,8 @@ func TestHandler_Create_BadRequest(t *testing.T) {
 }
 
 func TestHandler_List_Success(t *testing.T) {
+	t.Parallel()
+
 	readRepo := &mockReadRepo{
 		views: []*domain.SystemErrorView{
 			{ID: uuid.New(), Code: "ERR_1", Severity: "high", CreatedAt: time.Now()},
@@ -167,6 +173,8 @@ func TestHandler_List_Success(t *testing.T) {
 }
 
 func TestHandler_Get_Success(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	readRepo := &mockReadRepo{
 		view: &domain.SystemErrorView{ID: id, Code: "ERR", Severity: "low", CreatedAt: time.Now()},
@@ -183,6 +191,8 @@ func TestHandler_Get_Success(t *testing.T) {
 }
 
 func TestHandler_Get_InvalidID(t *testing.T) {
+	t.Parallel()
+
 	router := setupRouter(&mockRepo{}, &mockReadRepo{})
 
 	w := httptest.NewRecorder()
@@ -195,6 +205,8 @@ func TestHandler_Get_InvalidID(t *testing.T) {
 }
 
 func TestHandler_Resolve_Success(t *testing.T) {
+	t.Parallel()
+
 	se := domain.NewSystemError("ERR", "test", "low")
 	repo := &mockRepo{
 		findFn: func(_ context.Context, id uuid.UUID) (*domain.SystemError, error) {
@@ -221,6 +233,8 @@ func TestHandler_Resolve_Success(t *testing.T) {
 }
 
 func TestHandler_Resolve_BadRequest(t *testing.T) {
+	t.Parallel()
+
 	router := setupRouter(&mockRepo{}, &mockReadRepo{})
 
 	w := httptest.NewRecorder()
@@ -234,6 +248,8 @@ func TestHandler_Resolve_BadRequest(t *testing.T) {
 }
 
 func TestHandler_Resolve_InvalidID(t *testing.T) {
+	t.Parallel()
+
 	router := setupRouter(&mockRepo{}, &mockReadRepo{})
 
 	body := ResolveRequest{ResolvedBy: uuid.New()}

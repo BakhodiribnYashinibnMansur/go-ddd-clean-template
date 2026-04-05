@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"gct/internal/platform/domain/consts"
-	shared "gct/internal/platform/domain"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/metadata"
-	"gct/internal/platform/infrastructure/pgxutil"
+	"gct/internal/kernel/consts"
+	shared "gct/internal/kernel/domain"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/metadata"
+	"gct/internal/kernel/infrastructure/pgxutil"
 	"gct/internal/context/iam/user/domain"
 
 	"github.com/Masterminds/squirrel"
@@ -134,8 +134,8 @@ func (r *UserWriteRepo) insertSession(ctx context.Context, tx pgx.Tx, s *domain.
 			s.DeviceID(),
 			s.DeviceName(),
 			string(s.DeviceType()),
-			s.IPAddress(),
-			s.UserAgent(),
+			s.IPAddress().String(),
+			s.UserAgent().String(),
 			s.RefreshTokenHash(),
 			s.ExpiresAt(),
 			s.LastActivity(),
@@ -264,7 +264,7 @@ func (r *UserWriteRepo) upsertSessions(ctx context.Context, tx pgx.Tx, sessions 
 			Columns(sessionInsertColumns...).
 			Values(
 				s.ID(), s.UserID(), s.DeviceID(), s.DeviceName(), string(s.DeviceType()),
-				s.IPAddress(), s.UserAgent(), s.RefreshTokenHash(),
+				s.IPAddress().String(), s.UserAgent().String(), s.RefreshTokenHash(),
 				s.ExpiresAt(), s.LastActivity(), s.IsRevoked(),
 				s.CreatedAt(), s.UpdatedAt(),
 			).
@@ -540,7 +540,7 @@ func scanUser(row pgx.Row) (*domain.User, error) {
 		&createdAt, &updatedAt, &deletedAt, &lastSeen,
 	)
 	if err != nil {
-		return nil, err
+		return nil, apperrors.HandlePgError(err, usersTable, nil)
 	}
 
 	return reconstructUserFromRow(
@@ -574,7 +574,7 @@ func scanUserFromRows(rows pgx.Rows) (*domain.User, error) {
 		&createdAt, &updatedAt, &deletedAt, &lastSeen,
 	)
 	if err != nil {
-		return nil, err
+		return nil, apperrors.HandlePgError(err, usersTable, nil)
 	}
 
 	return reconstructUserFromRow(
@@ -653,7 +653,7 @@ func scanSessionFromRows(rows pgx.Rows) (*domain.Session, error) {
 		&createdAt, &updatedAt,
 	)
 	if err != nil {
-		return nil, err
+		return nil, apperrors.HandlePgError(err, sessionTable, nil)
 	}
 
 	deref := func(s *string) string {

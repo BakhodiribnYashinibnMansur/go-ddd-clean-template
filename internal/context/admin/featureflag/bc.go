@@ -8,9 +8,9 @@ import (
 
 	"gct/internal/context/admin/featureflag/application/command"
 	"gct/internal/context/admin/featureflag/application/query"
-	"gct/internal/platform/application"
-	shareddomain "gct/internal/platform/domain"
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/application"
+	shareddomain "gct/internal/kernel/domain"
+	"gct/internal/kernel/infrastructure/logger"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )

@@ -7,6 +7,7 @@ import (
 	domain "gct/internal/context/iam/user/domain"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func mustPhone(t *testing.T, raw string) domain.Phone {
@@ -21,16 +22,23 @@ func mustPhone(t *testing.T, raw string) domain.Phone {
 func mustPassword(t *testing.T, raw string) domain.Password {
 	t.Helper()
 	pw, err := domain.NewPasswordFromRaw(raw)
-	if err != nil {
-		t.Fatalf("NewPasswordFromRaw: %v", err)
-	}
+	require.NoError(t, err)
 	return pw
 }
 
+func mustUser(t *testing.T, phone domain.Phone, pw domain.Password, opts ...domain.UserOption) *domain.User {
+	t.Helper()
+	u, err := domain.NewUser(phone, pw, opts...)
+	require.NoError(t, err)
+	return u
+}
+
 func TestNewUser_Defaults(t *testing.T) {
+	t.Parallel()
+
 	phone := mustPhone(t, "+998901234567")
 	pw := mustPassword(t, "SecureP@ss1")
-	u := domain.NewUser(phone, pw)
+	u := mustUser(t, phone, pw)
 
 	if u.Phone().Value() != "+998901234567" {
 		t.Fatal("phone mismatch")
@@ -68,12 +76,14 @@ func TestNewUser_Defaults(t *testing.T) {
 }
 
 func TestNewUser_WithOptions(t *testing.T) {
+	t.Parallel()
+
 	phone := mustPhone(t, "+998901234567")
 	pw := mustPassword(t, "SecureP@ss1")
 	email, _ := domain.NewEmail("test@example.com")
 	roleID := uuid.New()
 
-	u := domain.NewUser(phone, pw,
+	u := mustUser(t, phone, pw,
 		domain.WithEmail(email),
 		domain.WithUsername("john"),
 		domain.WithRoleID(roleID),
@@ -95,15 +105,15 @@ func TestNewUser_WithOptions(t *testing.T) {
 }
 
 func TestUser_AddSession(t *testing.T) {
+	t.Parallel()
+
 	phone := mustPhone(t, "+998901234567")
 	pw := mustPassword(t, "SecureP@ss1")
-	u := domain.NewUser(phone, pw)
+	u := mustUser(t, phone, pw)
 	u.ClearEvents() // clear the UserCreated event
 
 	s, err := u.AddSession(domain.DeviceDesktop, "1.2.3.4", "TestAgent")
-	if err != nil {
-		t.Fatalf("AddSession: %v", err)
-	}
+	require.NoError(t, err)
 	if s == nil {
 		t.Fatal("session should not be nil")
 	}
@@ -122,9 +132,11 @@ func TestUser_AddSession(t *testing.T) {
 }
 
 func TestUser_AddSession_MaxReached(t *testing.T) {
+	t.Parallel()
+
 	phone := mustPhone(t, "+998901234567")
 	pw := mustPassword(t, "SecureP@ss1")
-	u := domain.NewUser(phone, pw)
+	u := mustUser(t, phone, pw)
 
 	for i := 0; i < 50; i++ {
 		_, err := u.AddSession(domain.DeviceMobile, "1.1.1.1", "Agent")
@@ -139,9 +151,11 @@ func TestUser_AddSession_MaxReached(t *testing.T) {
 }
 
 func TestUser_RemoveSession(t *testing.T) {
+	t.Parallel()
+
 	phone := mustPhone(t, "+998901234567")
 	pw := mustPassword(t, "SecureP@ss1")
-	u := domain.NewUser(phone, pw)
+	u := mustUser(t, phone, pw)
 
 	s, _ := u.AddSession(domain.DeviceDesktop, "1.1.1.1", "Agent")
 	if err := u.RemoveSession(s.ID()); err != nil {
@@ -153,9 +167,11 @@ func TestUser_RemoveSession(t *testing.T) {
 }
 
 func TestUser_RemoveSession_NotFound(t *testing.T) {
+	t.Parallel()
+
 	phone := mustPhone(t, "+998901234567")
 	pw := mustPassword(t, "SecureP@ss1")
-	u := domain.NewUser(phone, pw)
+	u := mustUser(t, phone, pw)
 
 	err := u.RemoveSession(uuid.New())
 	if !errors.Is(err, domain.ErrSessionNotFound) {
@@ -164,9 +180,11 @@ func TestUser_RemoveSession_NotFound(t *testing.T) {
 }
 
 func TestUser_RevokeAllSessions(t *testing.T) {
+	t.Parallel()
+
 	phone := mustPhone(t, "+998901234567")
 	pw := mustPassword(t, "SecureP@ss1")
-	u := domain.NewUser(phone, pw)
+	u := mustUser(t, phone, pw)
 	u.AddSession(domain.DeviceDesktop, "1.1.1.1", "A1")
 	u.AddSession(domain.DeviceMobile, "2.2.2.2", "A2")
 
@@ -179,9 +197,11 @@ func TestUser_RevokeAllSessions(t *testing.T) {
 }
 
 func TestUser_VerifyPassword(t *testing.T) {
+	t.Parallel()
+
 	phone := mustPhone(t, "+998901234567")
 	pw := mustPassword(t, "SecureP@ss1")
-	u := domain.NewUser(phone, pw)
+	u := mustUser(t, phone, pw)
 
 	if err := u.VerifyPassword("SecureP@ss1"); err != nil {
 		t.Fatalf("VerifyPassword should succeed: %v", err)
@@ -192,15 +212,15 @@ func TestUser_VerifyPassword(t *testing.T) {
 }
 
 func TestUser_ChangePassword(t *testing.T) {
+	t.Parallel()
+
 	phone := mustPhone(t, "+998901234567")
 	pw := mustPassword(t, "OldPassword1")
-	u := domain.NewUser(phone, pw)
+	u := mustUser(t, phone, pw)
 	u.ClearEvents()
 
 	err := u.ChangePassword("OldPassword1", "NewPassword1")
-	if err != nil {
-		t.Fatalf("ChangePassword: %v", err)
-	}
+	require.NoError(t, err)
 	if err := u.VerifyPassword("NewPassword1"); err != nil {
 		t.Fatal("new password should work after change")
 	}
@@ -215,9 +235,11 @@ func TestUser_ChangePassword(t *testing.T) {
 }
 
 func TestUser_ChangePassword_WrongOld(t *testing.T) {
+	t.Parallel()
+
 	phone := mustPhone(t, "+998901234567")
 	pw := mustPassword(t, "CorrectOld1")
-	u := domain.NewUser(phone, pw)
+	u := mustUser(t, phone, pw)
 
 	err := u.ChangePassword("WrongOld123", "NewPassword1")
 	if !errors.Is(err, domain.ErrInvalidPassword) {
@@ -226,9 +248,11 @@ func TestUser_ChangePassword_WrongOld(t *testing.T) {
 }
 
 func TestUser_Activate_Deactivate(t *testing.T) {
+	t.Parallel()
+
 	phone := mustPhone(t, "+998901234567")
 	pw := mustPassword(t, "SecureP@ss1")
-	u := domain.NewUser(phone, pw)
+	u := mustUser(t, phone, pw)
 	u.ClearEvents()
 
 	u.Deactivate()
@@ -247,9 +271,11 @@ func TestUser_Activate_Deactivate(t *testing.T) {
 }
 
 func TestUser_Approve(t *testing.T) {
+	t.Parallel()
+
 	phone := mustPhone(t, "+998901234567")
 	pw := mustPassword(t, "SecureP@ss1")
-	u := domain.NewUser(phone, pw)
+	u := mustUser(t, phone, pw)
 	u.ClearEvents()
 
 	u.Approve()
@@ -263,9 +289,11 @@ func TestUser_Approve(t *testing.T) {
 }
 
 func TestUser_ChangeRole(t *testing.T) {
+	t.Parallel()
+
 	phone := mustPhone(t, "+998901234567")
 	pw := mustPassword(t, "SecureP@ss1")
-	u := domain.NewUser(phone, pw)
+	u := mustUser(t, phone, pw)
 	u.ClearEvents()
 
 	roleID := uuid.New()
@@ -280,9 +308,11 @@ func TestUser_ChangeRole(t *testing.T) {
 }
 
 func TestUser_UpdateLastSeen(t *testing.T) {
+	t.Parallel()
+
 	phone := mustPhone(t, "+998901234567")
 	pw := mustPassword(t, "SecureP@ss1")
-	u := domain.NewUser(phone, pw)
+	u := mustUser(t, phone, pw)
 
 	if u.LastSeen() != nil {
 		t.Fatal("lastSeen should be nil initially")

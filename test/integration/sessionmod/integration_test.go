@@ -7,7 +7,7 @@ import (
 	"gct/internal/context/iam/session"
 	appdto "gct/internal/context/iam/session/application"
 	"gct/internal/context/iam/session/application/query"
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/logger"
 	"gct/test/integration/common/setup"
 )
 

@@ -8,8 +8,8 @@ import (
 	"gct/internal/context/admin/errorcode/application/command"
 	"gct/internal/context/admin/errorcode/application/query"
 	"gct/internal/context/admin/errorcode/domain"
-	"gct/internal/platform/infrastructure/eventbus"
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/eventbus"
+	"gct/internal/kernel/infrastructure/logger"
 	"gct/test/integration/common/setup"
 )
 

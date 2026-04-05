@@ -5,15 +5,14 @@ import (
 	"strconv"
 
 	"gct/internal/context/content/notification"
-	"gct/internal/platform/infrastructure/httpx"
-	"gct/internal/platform/infrastructure/httpx/response"
+	"gct/internal/kernel/infrastructure/httpx"
+	"gct/internal/kernel/infrastructure/httpx/response"
 	"gct/internal/context/content/notification/application/command"
 	"gct/internal/context/content/notification/application/query"
 	"gct/internal/context/content/notification/domain"
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 // Handler provides HTTP endpoints for the Notification bounded context.
@@ -65,7 +64,7 @@ func (h *Handler) List(ctx *gin.Context) {
 
 // Get returns a single notification by ID.
 func (h *Handler) Get(ctx *gin.Context) {
-	id, err := uuid.Parse(ctx.Param("id"))
+	id, err := domain.ParseNotificationID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
@@ -80,7 +79,7 @@ func (h *Handler) Get(ctx *gin.Context) {
 
 // Delete deletes a notification.
 func (h *Handler) Delete(ctx *gin.Context) {
-	id, err := uuid.Parse(ctx.Param("id"))
+	id, err := domain.ParseNotificationID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return

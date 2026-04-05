@@ -3,19 +3,17 @@ package query
 import (
 	"context"
 
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
 
 	appdto "gct/internal/context/admin/errorcode/application"
 	"gct/internal/context/admin/errorcode/domain"
-	"gct/internal/platform/infrastructure/pgxutil"
-
-	"github.com/google/uuid"
+	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // GetErrorCodeQuery holds the input for getting a single error code.
 type GetErrorCodeQuery struct {
-	ID uuid.UUID
+	ID domain.ErrorCodeID
 }
 
 // GetErrorCodeHandler handles the GetErrorCodeQuery.
@@ -35,9 +33,9 @@ func (h *GetErrorCodeHandler) Handle(ctx context.Context, q GetErrorCodeQuery) (
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "GetErrorCode", "error_code")()
 
-	v, err := h.readRepo.FindByID(ctx, q.ID)
+	v, err := h.readRepo.FindByID(ctx, q.ID.UUID())
 	if err != nil {
-		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetErrorCode", Entity: "error_code", EntityID: q.ID, Err: err}.KV()...)
+		h.logger.Warnc(ctx, "query failed", logger.F{Op: "GetErrorCode", Entity: "error_code", EntityID: q.ID.UUID(), Err: err}.KV()...)
 		return nil, apperrors.MapToServiceError(err)
 	}
 

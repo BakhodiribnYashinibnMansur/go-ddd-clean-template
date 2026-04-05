@@ -3,7 +3,7 @@ package statistics
 import (
 	"testing"
 
-	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/logger"
 )
 
 func TestNewBoundedContext(t *testing.T) {

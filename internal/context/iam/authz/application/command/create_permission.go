@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"gct/internal/context/iam/authz/domain"
-	apperrors "gct/internal/platform/infrastructure/errors"
-	"gct/internal/platform/infrastructure/logger"
-	"gct/internal/platform/infrastructure/pgxutil"
+	apperrors "gct/internal/kernel/infrastructure/errorx"
+	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/pgxutil"
 
 	"github.com/google/uuid"
 )
@@ -15,7 +15,7 @@ import (
 // ParentID enables hierarchical permission trees — nil means a root-level permission.
 type CreatePermissionCommand struct {
 	Name        string
-	ParentID    *uuid.UUID
+	ParentID    *domain.PermissionID
 	Description *string
 }
 
@@ -44,7 +44,12 @@ func (h *CreatePermissionHandler) Handle(ctx context.Context, cmd CreatePermissi
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "CreatePermission", "permission")()
 
-	perm := domain.NewPermission(cmd.Name, cmd.ParentID)
+	var parentUUID *uuid.UUID
+	if cmd.ParentID != nil {
+		u := cmd.ParentID.UUID()
+		parentUUID = &u
+	}
+	perm := domain.NewPermission(cmd.Name, parentUUID)
 	if cmd.Description != nil {
 		perm.SetDescription(cmd.Description)
 	}

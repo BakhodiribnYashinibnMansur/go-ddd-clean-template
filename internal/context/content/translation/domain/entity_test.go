@@ -10,6 +10,8 @@ import (
 )
 
 func TestNewTranslation(t *testing.T) {
+	t.Parallel()
+
 	tr := domain.NewTranslation("greeting", "en", "Hello", "common")
 
 	if tr.Key() != "greeting" {
@@ -27,6 +29,8 @@ func TestNewTranslation(t *testing.T) {
 }
 
 func TestTranslation_Update(t *testing.T) {
+	t.Parallel()
+
 	tr := domain.NewTranslation("greeting", "en", "Hello", "common")
 
 	newValue := "Hi there"
@@ -46,6 +50,8 @@ func TestTranslation_Update(t *testing.T) {
 }
 
 func TestReconstructTranslation(t *testing.T) {
+	t.Parallel()
+
 	id := uuid.New()
 	now := time.Now()
 
