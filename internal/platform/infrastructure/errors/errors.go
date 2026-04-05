@@ -8,22 +8,29 @@ import (
 	"runtime"
 )
 
-// AppError custom error structure
+// AppError custom error structure.
+//
+// Security note: fields tagged `json:"-"` MUST NEVER be serialized to API
+// responses. They may contain internal details, wrapped infrastructure errors,
+// stack traces, or raw request/response payloads (which can include passwords,
+// tokens, or PII). These fields are for internal logging and debugging only.
+// The HTTP layer builds its own response struct from the safe fields
+// (Type, Code, HTTPStatus, UserMsg, Details, Severity, Category, Suggestion).
 type AppError struct {
 	Type       string         // Error type (e.g.: "USER_NOT_FOUND")
 	Code       string         // Numeric error code (e.g.: "4041")
-	Message    string         // Developer message
+	Message    string         `json:"-"` // Developer message (internal)
 	HTTPStatus int            // HTTP status code
 	UserMsg    string         // User-facing message
 	Details    string         // Detailed explanation
 	Severity   ErrorSeverity  // Error severity
 	Category   ErrorCategory  // Error category
 	Suggestion string         // Help suggestion
-	Fields     map[string]any // Additional data
-	Err        error          // Wrapped error
-	Stack      []uintptr      // Stack trace
-	Input      any            // Input data
-	Output     any            // Output data
+	Fields     map[string]any `json:"-"` // Additional data (may contain sensitive values)
+	Err        error          `json:"-"` // Wrapped error (may expose infra internals)
+	Stack      []uintptr      `json:"-"` // Stack trace (never expose to clients)
+	Input      any            `json:"-"` // Input data (may contain credentials/PII)
+	Output     any            `json:"-"` // Output data (may contain credentials/PII)
 }
 
 // Error interface implementation
