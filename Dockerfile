@@ -1,5 +1,5 @@
 # Step 1: Modules caching
-FROM golang:1.26.0-alpine3.21 AS modules
+FROM golang:1.26.1-alpine3.21 AS modules
 
 COPY go.mod go.sum /modules/
 
@@ -8,7 +8,7 @@ WORKDIR /modules
 RUN go mod download
 
 # Step 2: Install protoc and generate protobuf
-FROM golang:1.26.0-alpine3.21 AS proto-generator
+FROM golang:1.26.1-alpine3.21 AS proto-generator
 
 COPY --from=modules /go/pkg /go/pkg
 COPY . /app
@@ -31,7 +31,7 @@ RUN mkdir -p v1/genproto && \
            docs/proto/v1/*.proto
 
 # Step 3: Builder
-FROM golang:1.26.0-alpine3.21 AS builder
+FROM golang:1.26.1-alpine3.21 AS builder
 
 COPY --from=modules /go/pkg /go/pkg
 COPY --from=proto-generator /app /app
