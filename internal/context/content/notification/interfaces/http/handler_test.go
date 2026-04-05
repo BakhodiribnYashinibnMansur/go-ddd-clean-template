@@ -228,3 +228,46 @@ func TestHandler_Delete_InvalidID(t *testing.T) {
 		t.Fatalf("expected 400, got %d", w.Code)
 	}
 }
+
+func TestHandler_Get_NotFound(t *testing.T) {
+	// readRepo has no view set, so FindByID returns ErrNotificationNotFound
+	router := setupRouter(&mockRepo{}, &mockReadRepo{})
+
+	id := uuid.New()
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/api/v1/notifications/"+id.String(), nil)
+	router.ServeHTTP(w, req)
+
+	if w.Code == http.StatusOK {
+		t.Fatalf("expected non-200 for missing notification, got %d", w.Code)
+	}
+}
+
+func TestHandler_Create_InvalidJSON(t *testing.T) {
+	router := setupRouter(&mockRepo{}, &mockReadRepo{})
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/v1/notifications", bytes.NewBufferString(`not json at all`))
+	req.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for invalid JSON, got %d", w.Code)
+	}
+}
+
+func TestHandler_List_DefaultPagination(t *testing.T) {
+	readRepo := &mockReadRepo{
+		views: []*domain.NotificationView{},
+		total: 0,
+	}
+	router := setupRouter(&mockRepo{}, readRepo)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/api/v1/notifications", nil)
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200 with default pagination, got %d: %s", w.Code, w.Body.String())
+	}
+}

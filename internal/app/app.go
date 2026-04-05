@@ -332,6 +332,9 @@ func Run(cfg *config.Config) {
 		l.Fatalw("failed to register audit subscribers", "error", err)
 	}
 
+	// 4.3 Subscribe session events — Session BC publishes, User BC handles
+	subscribeSessionEvents(eventBusInstance, dddBCs.User, l)
+
 	// 5. Integration Cache
 	if err := dddBCs.Integration.Cache.InitCache(ctx); err != nil {
 		l.Errorc(ctx, "Failed to initialize integration cache", "error", err)

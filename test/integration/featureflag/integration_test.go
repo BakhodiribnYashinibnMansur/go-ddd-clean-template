@@ -304,3 +304,297 @@ func TestIntegration_Evaluator(t *testing.T) {
 		t.Error("expected nonexistent flag to return false")
 	}
 }
+
+func TestIntegration_EvaluateFlag(t *testing.T) {
+	cleanDB(t)
+	bc := newTestBC(t)
+	ctx := context.Background()
+
+	// Create a flag with a rule group: region=eu -> "eu_variant".
+	err := bc.CreateFlag.Handle(ctx, command.CreateCommand{
+		Name:         "regional_feature",
+		Key:          "regional_feature",
+		Description:  "Region-based feature",
+		FlagType:     "string",
+		DefaultValue: "default_variant",
+		IsActive:     true,
+	})
+	if err != nil {
+		t.Fatalf("CreateFlag: %v", err)
+	}
+
+	list, err := bc.ListFlags.Handle(ctx, query.ListQuery{
+		Filter: domain.FeatureFlagFilter{Limit: 10},
+	})
+	if err != nil {
+		t.Fatalf("ListFlags: %v", err)
+	}
+	flagID := list.Flags[0].ID
+
+	err = bc.CreateRuleGroup.Handle(ctx, command.CreateRuleGroupCommand{
+		FlagID:    flagID,
+		Name:      "eu_users",
+		Variation: "eu_variant",
+		Priority:  1,
+		Conditions: []command.ConditionInput{
+			{Attribute: "region", Operator: "eq", Value: "eu"},
+		},
+	})
+	if err != nil {
+		t.Fatalf("CreateRuleGroup: %v", err)
+	}
+
+	bc.Evaluator.Invalidate(ctx)
+
+	// Matching user attributes should return the rule group variation.
+	result, err := bc.EvaluateFlag.Handle(ctx, query.EvaluateQuery{
+		Key:       "regional_feature",
+		UserAttrs: map[string]string{"region": "eu"},
+	})
+	if err != nil {
+		t.Fatalf("EvaluateFlag: %v", err)
+	}
+	if result.Value != "eu_variant" {
+		t.Errorf("expected value eu_variant, got %s", result.Value)
+	}
+	if result.FlagType != "string" {
+		t.Errorf("expected flag_type string, got %s", result.FlagType)
+	}
+	if result.Key != "regional_feature" {
+		t.Errorf("expected key regional_feature, got %s", result.Key)
+	}
+
+	// Non-matching attributes should return the default value.
+	result2, err := bc.EvaluateFlag.Handle(ctx, query.EvaluateQuery{
+		Key:       "regional_feature",
+		UserAttrs: map[string]string{"region": "us"},
+	})
+	if err != nil {
+		t.Fatalf("EvaluateFlag (non-matching): %v", err)
+	}
+	if result2.Value != "default_variant" {
+		t.Errorf("expected default_variant for non-matching user, got %s", result2.Value)
+	}
+}
+
+func TestIntegration_BatchEvaluateFlags(t *testing.T) {
+	cleanDB(t)
+	bc := newTestBC(t)
+	ctx := context.Background()
+
+	// Create two flags.
+	for _, fc := range []command.CreateCommand{
+		{
+			Name:         "flag_alpha",
+			Key:          "flag_alpha",
+			Description:  "Alpha flag",
+			FlagType:     "bool",
+			DefaultValue: "false",
+			IsActive:     true,
+		},
+		{
+			Name:         "flag_beta",
+			Key:          "flag_beta",
+			Description:  "Beta flag",
+			FlagType:     "string",
+			DefaultValue: "off",
+			IsActive:     true,
+		},
+	} {
+		if err := bc.CreateFlag.Handle(ctx, fc); err != nil {
+			t.Fatalf("CreateFlag %s: %v", fc.Key, err)
+		}
+	}
+
+	bc.Evaluator.Invalidate(ctx)
+
+	// Batch evaluate: two existing flags + one non-existent.
+	batchResult, err := bc.BatchEvaluateFlag.Handle(ctx, query.BatchEvaluateQuery{
+		Keys:      []string{"flag_alpha", "flag_beta", "nonexistent_flag"},
+		UserAttrs: map[string]string{},
+	})
+	if err != nil {
+		t.Fatalf("BatchEvaluateFlag: %v", err)
+	}
+
+	// Both existing flags should be present.
+	if len(batchResult.Flags) != 2 {
+		t.Fatalf("expected 2 flags in batch result, got %d", len(batchResult.Flags))
+	}
+
+	alpha, ok := batchResult.Flags["flag_alpha"]
+	if !ok {
+		t.Fatal("flag_alpha missing from batch result")
+	}
+	if alpha.Value != "false" {
+		t.Errorf("expected flag_alpha value false, got %s", alpha.Value)
+	}
+	if alpha.FlagType != "bool" {
+		t.Errorf("expected flag_alpha type bool, got %s", alpha.FlagType)
+	}
+
+	beta, ok := batchResult.Flags["flag_beta"]
+	if !ok {
+		t.Fatal("flag_beta missing from batch result")
+	}
+	if beta.Value != "off" {
+		t.Errorf("expected flag_beta value off, got %s", beta.Value)
+	}
+
+	// Non-existent flag should be omitted.
+	if _, ok := batchResult.Flags["nonexistent_flag"]; ok {
+		t.Error("nonexistent_flag should not be in batch result")
+	}
+}
+
+func TestIntegration_UpdateRuleGroup(t *testing.T) {
+	cleanDB(t)
+	bc := newTestBC(t)
+	ctx := context.Background()
+
+	// Create a flag with a rule group.
+	err := bc.CreateFlag.Handle(ctx, command.CreateCommand{
+		Name:         "updatable_flag",
+		Key:          "updatable_flag",
+		Description:  "Flag for rule group update test",
+		FlagType:     "string",
+		DefaultValue: "default",
+		IsActive:     true,
+	})
+	if err != nil {
+		t.Fatalf("CreateFlag: %v", err)
+	}
+
+	list, err := bc.ListFlags.Handle(ctx, query.ListQuery{
+		Filter: domain.FeatureFlagFilter{Limit: 10},
+	})
+	if err != nil {
+		t.Fatalf("ListFlags: %v", err)
+	}
+	flagID := list.Flags[0].ID
+
+	err = bc.CreateRuleGroup.Handle(ctx, command.CreateRuleGroupCommand{
+		FlagID:    flagID,
+		Name:      "original_name",
+		Variation: "original_variation",
+		Priority:  1,
+		Conditions: []command.ConditionInput{
+			{Attribute: "env", Operator: "eq", Value: "staging"},
+		},
+	})
+	if err != nil {
+		t.Fatalf("CreateRuleGroup: %v", err)
+	}
+
+	// Get the rule group ID.
+	view, err := bc.GetFlag.Handle(ctx, query.GetQuery{ID: flagID})
+	if err != nil {
+		t.Fatalf("GetFlag: %v", err)
+	}
+	if len(view.RuleGroups) != 1 {
+		t.Fatalf("expected 1 rule group, got %d", len(view.RuleGroups))
+	}
+	rgID := view.RuleGroups[0].ID
+
+	// Update rule group name and variation.
+	newName := "updated_name"
+	newVariation := "updated_variation"
+	err = bc.UpdateRuleGroup.Handle(ctx, command.UpdateRuleGroupCommand{
+		ID:        rgID,
+		Name:      &newName,
+		Variation: &newVariation,
+	})
+	if err != nil {
+		t.Fatalf("UpdateRuleGroup: %v", err)
+	}
+
+	// Verify via GetFlag.
+	view2, err := bc.GetFlag.Handle(ctx, query.GetQuery{ID: flagID})
+	if err != nil {
+		t.Fatalf("GetFlag after update: %v", err)
+	}
+	if len(view2.RuleGroups) != 1 {
+		t.Fatalf("expected 1 rule group after update, got %d", len(view2.RuleGroups))
+	}
+	rg := view2.RuleGroups[0]
+	if rg.Name != "updated_name" {
+		t.Errorf("expected rule group name updated_name, got %s", rg.Name)
+	}
+	if rg.Variation != "updated_variation" {
+		t.Errorf("expected rule group variation updated_variation, got %s", rg.Variation)
+	}
+	// Conditions should remain unchanged.
+	if len(rg.Conditions) != 1 {
+		t.Fatalf("expected 1 condition preserved, got %d", len(rg.Conditions))
+	}
+}
+
+func TestIntegration_RolloutPercentage(t *testing.T) {
+	cleanDB(t)
+	bc := newTestBC(t)
+	ctx := context.Background()
+
+	// Create an active bool flag with 100% rollout.
+	err := bc.CreateFlag.Handle(ctx, command.CreateCommand{
+		Name:              "full_rollout",
+		Key:               "full_rollout",
+		Description:       "Flag with 100% rollout",
+		FlagType:          "bool",
+		DefaultValue:      "true",
+		IsActive:          true,
+		RolloutPercentage: 100,
+	})
+	if err != nil {
+		t.Fatalf("CreateFlag: %v", err)
+	}
+
+	bc.Evaluator.Invalidate(ctx)
+
+	// Evaluate with a user_id; 100% rollout should always return "true".
+	result, err := bc.EvaluateFlag.Handle(ctx, query.EvaluateQuery{
+		Key:       "full_rollout",
+		UserAttrs: map[string]string{"user_id": "user_123"},
+	})
+	if err != nil {
+		t.Fatalf("EvaluateFlag: %v", err)
+	}
+	if result.Value != "true" {
+		t.Errorf("expected value true for 100%% rollout, got %s", result.Value)
+	}
+	if result.FlagType != "bool" {
+		t.Errorf("expected flag_type bool, got %s", result.FlagType)
+	}
+}
+
+func TestIntegration_EvaluateInactiveFlag(t *testing.T) {
+	cleanDB(t)
+	bc := newTestBC(t)
+	ctx := context.Background()
+
+	// Create an inactive flag.
+	err := bc.CreateFlag.Handle(ctx, command.CreateCommand{
+		Name:         "inactive_flag",
+		Key:          "inactive_flag",
+		Description:  "This flag is not active",
+		FlagType:     "bool",
+		DefaultValue: "false",
+		IsActive:     false,
+	})
+	if err != nil {
+		t.Fatalf("CreateFlag: %v", err)
+	}
+
+	bc.Evaluator.Invalidate(ctx)
+
+	// Evaluate inactive flag should return default value.
+	result, err := bc.EvaluateFlag.Handle(ctx, query.EvaluateQuery{
+		Key:       "inactive_flag",
+		UserAttrs: map[string]string{"user_id": "user_456"},
+	})
+	if err != nil {
+		t.Fatalf("EvaluateFlag: %v", err)
+	}
+	if result.Value != "false" {
+		t.Errorf("expected default value false for inactive flag, got %s", result.Value)
+	}
+}

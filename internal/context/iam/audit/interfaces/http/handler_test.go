@@ -156,3 +156,32 @@ func TestHandler_ListEndpointHistory_WithPagination(t *testing.T) {
 		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
 	}
 }
+
+func TestHandler_ListAuditLogs_DefaultPagination(t *testing.T) {
+	readRepo := &mockReadRepo{
+		auditLogs:  []*domain.AuditLogView{},
+		auditTotal: 0,
+	}
+	router := setupRouter(readRepo)
+
+	w := httptest.NewRecorder()
+	// No query params — should use default pagination and return 200
+	req, _ := http.NewRequest("GET", "/api/v1/audit-logs", nil)
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestHandler_ListAuditLogs_InvalidLimit(t *testing.T) {
+	router := setupRouter(&mockReadRepo{})
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/api/v1/audit-logs?limit=abc", nil)
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", w.Code, w.Body.String())
+	}
+}

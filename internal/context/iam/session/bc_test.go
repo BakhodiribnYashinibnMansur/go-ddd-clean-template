@@ -3,6 +3,9 @@ package session
 import (
 	"context"
 	"testing"
+
+	"gct/internal/shared/application"
+	"gct/internal/shared/domain"
 )
 
 type mockLogger struct{}
@@ -28,10 +31,23 @@ func (m *mockLogger) Warnc(_ context.Context, _ string, _ ...any)     {}
 func (m *mockLogger) Errorc(_ context.Context, _ string, _ ...any)    {}
 func (m *mockLogger) Fatalc(_ context.Context, _ string, _ ...any)    {}
 
+type mockEventBus struct{}
+
+func (m *mockEventBus) Publish(_ context.Context, _ ...domain.DomainEvent) error { return nil }
+func (m *mockEventBus) Subscribe(_ string, _ application.EventHandler) error {
+	return nil
+}
+
 func TestNewBoundedContext(t *testing.T) {
-	bc := NewBoundedContext(nil, &mockLogger{})
+	bc := NewBoundedContext(nil, &mockEventBus{}, &mockLogger{})
 	if bc == nil {
 		t.Fatal("expected non-nil BoundedContext")
+	}
+	if bc.RevokeSession == nil {
+		t.Error("RevokeSession handler not wired")
+	}
+	if bc.RevokeAllSessions == nil {
+		t.Error("RevokeAllSessions handler not wired")
 	}
 	if bc.GetSession == nil {
 		t.Error("GetSession handler not wired")

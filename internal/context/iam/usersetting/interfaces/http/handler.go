@@ -2,7 +2,6 @@ package http
 
 import (
 	"net/http"
-	"strconv"
 
 	"gct/internal/kernel/infrastructure/httpx"
 	"gct/internal/kernel/infrastructure/httpx/response"
@@ -48,11 +47,14 @@ func (h *Handler) Upsert(ctx *gin.Context) {
 
 // List returns a paginated list of user settings.
 func (h *Handler) List(ctx *gin.Context) {
-	limit, _ := strconv.ParseInt(ctx.DefaultQuery("limit", "10"), 10, 64)
-	offset, _ := strconv.ParseInt(ctx.DefaultQuery("offset", "0"), 10, 64)
+	pg, err := httpx.GetPagination(ctx)
+	if err != nil {
+		response.RespondWithError(ctx, httpx.ErrParamIsInvalid, http.StatusBadRequest)
+		return
+	}
 
 	q := query.ListUserSettingsQuery{
-		Filter: domain.UserSettingFilter{Limit: limit, Offset: offset},
+		Filter: domain.UserSettingFilter{Limit: pg.Limit, Offset: pg.Offset},
 	}
 	result, err := h.bc.ListUserSettings.Handle(ctx.Request.Context(), q)
 	if err != nil {

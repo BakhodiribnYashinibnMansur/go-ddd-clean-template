@@ -283,3 +283,46 @@ func TestHandler_Delete_InvalidID(t *testing.T) {
 		t.Fatalf("expected 400, got %d", w.Code)
 	}
 }
+
+func TestHandler_Get_NotFound(t *testing.T) {
+	// mockReadRepo with nil view returns ErrSiteSettingNotFound for any UUID
+	readRepo := &mockReadRepo{}
+	router := setupRouter(&mockRepo{}, readRepo)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/api/v1/site-settings/"+uuid.New().String(), nil)
+	router.ServeHTTP(w, req)
+
+	if w.Code == http.StatusOK {
+		t.Fatalf("expected non-200 for not-found site setting, got %d", w.Code)
+	}
+}
+
+func TestHandler_Create_InvalidJSON(t *testing.T) {
+	router := setupRouter(&mockRepo{}, &mockReadRepo{})
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/v1/site-settings", bytes.NewBufferString(`{invalid json`))
+	req.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for invalid JSON, got %d", w.Code)
+	}
+}
+
+func TestHandler_List_DefaultPagination(t *testing.T) {
+	readRepo := &mockReadRepo{
+		views: []*domain.SiteSettingView{},
+		total: 0,
+	}
+	router := setupRouter(&mockRepo{}, readRepo)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/api/v1/site-settings", nil)
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200 for default pagination, got %d: %s", w.Code, w.Body.String())
+	}
+}

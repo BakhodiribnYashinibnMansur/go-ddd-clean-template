@@ -812,3 +812,91 @@ func TestHandler_ResponseFormat(t *testing.T) {
 		t.Error("response should contain 'data' field")
 	}
 }
+
+// --- Additional error-path, parsing, and pagination tests ---
+
+func TestHandler_GetUser_InvalidUUID(t *testing.T) {
+	bc := newBC(&mockUserRepo{}, &mockReadRepo{})
+	router := setupRouter(bc)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/api/v1/users/not-a-uuid", nil)
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for invalid UUID, got %d: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestHandler_DeleteUser_InvalidUUID(t *testing.T) {
+	bc := newBC(&mockUserRepo{}, &mockReadRepo{})
+	router := setupRouter(bc)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("DELETE", "/api/v1/users/not-a-uuid", nil)
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for invalid UUID, got %d: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestHandler_ListUsers_DefaultPagination(t *testing.T) {
+	readRepo := &mockReadRepo{
+		views: []*domain.UserView{},
+		total: 0,
+	}
+	bc := newBC(&mockUserRepo{}, readRepo)
+	router := setupRouter(bc)
+
+	// No query params — should use default pagination and succeed
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/api/v1/users", nil)
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200 for default pagination, got %d: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestHandler_CreateUser_EmptyBody(t *testing.T) {
+	bc := newBC(&mockUserRepo{}, &mockReadRepo{})
+	router := setupRouter(bc)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/v1/users", bytes.NewBufferString(``))
+	req.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for empty body, got %d: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestHandler_CreateUser_InvalidJSON(t *testing.T) {
+	bc := newBC(&mockUserRepo{}, &mockReadRepo{})
+	router := setupRouter(bc)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/v1/users", bytes.NewBufferString(`{invalid json`))
+	req.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for invalid JSON, got %d: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestHandler_UpdateUser_InvalidUUID(t *testing.T) {
+	bc := newBC(&mockUserRepo{}, &mockReadRepo{})
+	router := setupRouter(bc)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("PATCH", "/api/v1/users/not-a-uuid", bytes.NewBufferString(`{"email":"a@b.com"}`))
+	req.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for invalid UUID, got %d: %s", w.Code, w.Body.String())
+	}
+}

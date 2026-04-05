@@ -2,7 +2,6 @@ package http
 
 import (
 	"net/http"
-	"strconv"
 
 	"gct/internal/context/ops/ratelimit"
 	"gct/internal/kernel/infrastructure/httpx"
@@ -50,11 +49,14 @@ func (h *Handler) Create(ctx *gin.Context) {
 
 // List returns a paginated list of rate limit rules.
 func (h *Handler) List(ctx *gin.Context) {
-	limit, _ := strconv.ParseInt(ctx.DefaultQuery("limit", "10"), 10, 64)
-	offset, _ := strconv.ParseInt(ctx.DefaultQuery("offset", "0"), 10, 64)
+	pg, err := httpx.GetPagination(ctx)
+	if err != nil {
+		response.RespondWithError(ctx, httpx.ErrParamIsInvalid, http.StatusBadRequest)
+		return
+	}
 
 	q := query.ListRateLimitsQuery{
-		Filter: domain.RateLimitFilter{Limit: limit, Offset: offset},
+		Filter: domain.RateLimitFilter{Limit: pg.Limit, Offset: pg.Offset},
 	}
 	result, err := h.bc.ListRateLimits.Handle(ctx.Request.Context(), q)
 	if err != nil {

@@ -2,7 +2,6 @@ package http
 
 import (
 	"net/http"
-	"strconv"
 
 	"gct/internal/kernel/infrastructure/httpx"
 	"gct/internal/kernel/infrastructure/httpx/response"
@@ -49,11 +48,14 @@ func (h *Handler) Create(ctx *gin.Context) {
 
 // List returns a paginated list of site settings.
 func (h *Handler) List(ctx *gin.Context) {
-	limit, _ := strconv.ParseInt(ctx.DefaultQuery("limit", "10"), 10, 64)
-	offset, _ := strconv.ParseInt(ctx.DefaultQuery("offset", "0"), 10, 64)
+	pg, err := httpx.GetPagination(ctx)
+	if err != nil {
+		response.RespondWithError(ctx, httpx.ErrParamIsInvalid, http.StatusBadRequest)
+		return
+	}
 
 	q := query.ListSiteSettingsQuery{
-		Filter: domain.SiteSettingFilter{Limit: limit, Offset: offset},
+		Filter: domain.SiteSettingFilter{Limit: pg.Limit, Offset: pg.Offset},
 	}
 	result, err := h.bc.ListSiteSettings.Handle(ctx.Request.Context(), q)
 	if err != nil {

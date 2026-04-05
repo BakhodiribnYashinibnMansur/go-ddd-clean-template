@@ -2,7 +2,6 @@ package http
 
 import (
 	"net/http"
-	"strconv"
 
 	"gct/internal/context/iam/audit"
 	"gct/internal/context/iam/audit/application/query"
@@ -27,12 +26,15 @@ func NewHandler(bc *audit.BoundedContext, l logger.Log) *Handler {
 
 // ListAuditLogs returns a paginated list of audit log entries.
 func (h *Handler) ListAuditLogs(ctx *gin.Context) {
-	limit, _ := strconv.ParseInt(ctx.DefaultQuery("limit", "10"), 10, 64)
-	offset, _ := strconv.ParseInt(ctx.DefaultQuery("offset", "0"), 10, 64)
+	pg, err := httpx.GetPagination(ctx)
+	if err != nil {
+		response.RespondWithError(ctx, httpx.ErrParamIsInvalid, http.StatusBadRequest)
+		return
+	}
 
 	q := query.ListAuditLogsQuery{
 		Filter: domain.AuditLogFilter{
-			Pagination: &shared.Pagination{Limit: limit, Offset: offset},
+			Pagination: &pg,
 		},
 	}
 	result, err := h.bc.ListAuditLogs.Handle(ctx.Request.Context(), q)
@@ -45,12 +47,15 @@ func (h *Handler) ListAuditLogs(ctx *gin.Context) {
 
 // ListEndpointHistory returns a paginated list of endpoint history entries.
 func (h *Handler) ListEndpointHistory(ctx *gin.Context) {
-	limit, _ := strconv.ParseInt(ctx.DefaultQuery("limit", "10"), 10, 64)
-	offset, _ := strconv.ParseInt(ctx.DefaultQuery("offset", "0"), 10, 64)
+	pg, err := httpx.GetPagination(ctx)
+	if err != nil {
+		response.RespondWithError(ctx, httpx.ErrParamIsInvalid, http.StatusBadRequest)
+		return
+	}
 
 	q := query.ListEndpointHistoryQuery{
 		Filter: domain.EndpointHistoryFilter{
-			Pagination: &shared.Pagination{Limit: limit, Offset: offset},
+			Pagination: &pg,
 		},
 	}
 	result, err := h.bc.ListEndpointHistory.Handle(ctx.Request.Context(), q)
