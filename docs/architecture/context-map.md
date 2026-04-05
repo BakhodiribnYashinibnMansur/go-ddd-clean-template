@@ -69,10 +69,10 @@ _Problems every SaaS/web app solves the same way. Off-the-shelf alternatives exi
 
 If a BC's strategic tier changes (e.g. `notification` evolves into a core capability because the product becomes a notification engine):
 
-1. Update this document's table.
+1. Update this document's table (move the BC row between tier sections).
 2. Update the BC's `doc.go` comment (`// Subdomain: ...` marker).
 3. Update the team's investment plan (where to allocate effort).
-4. **Do NOT move the directory** — folder structure reflects domain area, not strategy.
+4. **Move the directory** between tier sub-folders within the same area: `git mv internal/context/<area>/<old-tier>/<bc> internal/context/<area>/<new-tier>/<bc>`. Area cohesion is preserved — never move across areas during reclassification. Update all import paths accordingly (use `goimports`/IDE refactor).
 
 ---
 

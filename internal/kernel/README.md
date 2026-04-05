@@ -1,4 +1,4 @@
-# Shared
+# Kernel
 
 Shared DDD building blocks and cross-cutting infrastructure used by all bounded contexts. Provides base types for entities, aggregates, domain events, and errors, plus a comprehensive infrastructure layer for databases, security, caching, observability, and more.
 
@@ -125,9 +125,9 @@ In-memory cache implementations with TTL support:
 ## Usage
 ```go
 import (
-    "gct/internal/shared/domain"
-    "gct/internal/shared/application"
-    "gct/internal/shared/infrastructure/logger"
+    "gct/internal/kernel/domain"
+    "gct/internal/kernel/application"
+    "gct/internal/kernel/infrastructure/logger"
     // ... other infrastructure packages as needed
 )
 ```

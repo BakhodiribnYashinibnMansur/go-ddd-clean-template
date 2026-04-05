@@ -60,8 +60,13 @@ Backend/
 │
 ├── internal/
 │   ├── app/                # Bootstrap, wiring, routes
-│   ├── shared/             # Shared kernel (see below)
-│   └── [19 Bounded Contexts]
+│   ├── kernel/             # Shared kernel (see below)
+│   ├── contract/           # Cross-BC contracts (events, ports)
+│   └── context/            # Bounded Contexts (hybrid area → tier → BC layout)
+│       ├── iam/            #   Identity & Access Management
+│       ├── ops/            #   Operational concerns
+│       ├── content/        #   Content & messaging
+│       └── admin/          #   Admin / platform-level concerns
 │
 ├── test/
 │   ├── e2e/                # End-to-end flow tests
@@ -89,8 +94,10 @@ This project implements three complementary architectural patterns:
 
 ### Bounded Context Structure
 
+BCs live under `internal/context/<area>/<tier>/<bc>/` where `area ∈ {iam, ops, content, admin}` and `tier ∈ {core, supporting, generic}`. The tier reflects the BC's strategic classification (DDD Blue Book, Part IV) and is visible in the import path. Reclassification = `git mv` between tier sub-folders within the same area. See [docs/architecture/context-map.md](docs/architecture/context-map.md) for the single source of truth on classification.
+
 ```
-internal/{bc_name}/
+internal/context/<area>/<tier>/<bc>/
 │
 ├── domain/                     # DOMAIN LAYER (innermost — no external dependencies)
 │   ├── entity.go              # Aggregate Root with business rules and invariants
@@ -201,43 +208,55 @@ HTTP GET ─────────→ QueryHandler → ReadRepo → DB (optimi
 
 Write and read repositories have separate interfaces. Write repos enforce domain invariants. Read repos use optimized SQL (joins, projections) without loading full aggregates.
 
-### 19 Bounded Contexts
+### Bounded Contexts (Area × Tier)
 
-**Core (Authentication & Authorization):**
+Strategic tier classification (Core / Supporting / Generic) with full justification: [docs/architecture/context-map.md](docs/architecture/context-map.md). The **Core** tier is intentionally empty in this template — product-specific Core BCs live under `<area>/core/` (or a new area) when the template is forked. Each area reserves a `core/.gitkeep` slot.
 
-| BC | Purpose |
-|----|---------|
-| `user` | User management, authentication (SignIn, SignUp, CRUD) |
-| `authz` | Authorization — RBAC (Role, Permission, Policy, Scope) |
-| `session` | Session management with device tracking |
-| `audit` | Audit logging for all state changes |
+**iam — Identity & Access Management**
 
-**Feature:**
+| BC | Tier | Location | Purpose |
+|----|------|----------|---------|
+| `user` | generic | `iam/generic/user` | User management, authentication (SignIn, SignUp, CRUD) |
+| `session` | generic | `iam/generic/session` | Session management with device tracking |
+| `authz` | generic | `iam/generic/authz` | RBAC — Role, Permission, Policy, Scope |
+| `usersetting` | generic | `iam/generic/usersetting` | Per-user preferences |
+| `audit` | supporting | `iam/supporting/audit` | Audit logging (GDPR/SOC2 compliance) |
 
-| BC | Purpose |
-|----|---------|
-| `announcement` | System announcements (multilingual) |
-| `dashboard` | Dashboard data aggregation |
-| `dataexport` | Async data export jobs |
-| `errorcode` | Error code registry (maps codes → HTTP status + user messages) |
-| `featureflag` | Feature toggles with Redis/file-based evaluation |
-| `file` | File metadata management (MinIO backend) |
-| `integration` | External system integrations with API keys |
-| `iprule` | IP-based access control (whitelist/blacklist) |
-| `metric` | Performance metrics collection |
-| `notification` | User notifications (in-app, push) |
-| `ratelimit` | Rate limiting rules |
-| `sitesetting` | Site-wide configuration |
-| `systemerror` | Automatic 5xx error tracking |
-| `translation` | Multi-language support (i18n) |
-| `usersetting` | Per-user preferences |
+**ops — Operational Concerns**
 
-### Shared Kernel (`internal/shared/`)
+| BC | Tier | Location | Purpose |
+|----|------|----------|---------|
+| `metric` | generic | `ops/generic/metric` | Performance metrics collection |
+| `ratelimit` | generic | `ops/generic/ratelimit` | Rate limiting rules |
+| `systemerror` | generic | `ops/generic/systemerror` | Automatic 5xx error tracking |
+| `iprule` | supporting | `ops/supporting/iprule` | IP-based access control (whitelist/blacklist) |
+
+**content — Content & Messaging**
+
+| BC | Tier | Location | Purpose |
+|----|------|----------|---------|
+| `notification` | generic | `content/generic/notification` | User notifications (in-app, push) |
+| `file` | generic | `content/generic/file` | File metadata management (MinIO backend) |
+| `translation` | generic | `content/generic/translation` | Multi-language support (i18n) |
+| `announcement` | supporting | `content/supporting/announcement` | System announcements (multilingual) |
+
+**admin — Admin / Platform**
+
+| BC | Tier | Location | Purpose |
+|----|------|----------|---------|
+| `featureflag` | generic | `admin/generic/featureflag` | Feature toggles with Redis/file-based evaluation |
+| `statistics` | supporting | `admin/supporting/statistics` | Business KPI aggregations |
+| `integration` | supporting | `admin/supporting/integration` | External system integrations with API keys |
+| `sitesetting` | supporting | `admin/supporting/sitesetting` | Site-wide configuration |
+| `dataexport` | supporting | `admin/supporting/dataexport` | Async data export jobs (GDPR portability) |
+| `errorcode` | supporting | `admin/supporting/errorcode` | Error code catalog (public API contract) |
+
+### Shared Kernel (`internal/kernel/`)
 
 Cross-cutting infrastructure used by all bounded contexts:
 
 ```
-shared/
+kernel/
 ├── domain/consts/          # Shared constants (claim names, header keys)
 ├── application/            # EventBus interface, CQRS base types
 └── infrastructure/
@@ -357,7 +376,7 @@ cmd/app/main.go → config.NewConfig() → app.Run(cfg)
   3. PostgreSQL connection pool (pgx)
   4. Redis connection
   5. Asynq task queue client
-  6. DDD: NewDDDBoundedContexts() — instantiate 19 BCs
+  6. DDD: NewDDDBoundedContexts() — instantiate all BCs
   7. EventBus (InMemory)
   8. Cache invalidation service
   9. Asynq Worker (background jobs)

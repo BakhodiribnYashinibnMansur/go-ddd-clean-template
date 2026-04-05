@@ -21,8 +21,13 @@ Backend/
 │
 ├── internal/                      # Asosiy business logika
 │   ├── app/                      # Bootstrap & Wiring
-│   ├── shared/                   # Shared Kernel
-│   └── [19 Bounded Context]      # DDD domenlar
+│   ├── kernel/                   # Shared Kernel (infrastructure, domain, application primitives)
+│   ├── contract/                 # BC contract slots (events, ports) — cross-BC contracts
+│   └── context/                  # Bounded Contexts (hybrid area → tier → BC)
+│       ├── iam/                  #   Identity & Access Management
+│       ├── ops/                  #   Operational concerns
+│       ├── content/              #   Content & messaging
+│       └── admin/                #   Admin / platform-level concerns
 │
 ├── test/                          # Testlar
 │   ├── e2e/                      # End-to-end flow testlar
@@ -41,10 +46,16 @@ Backend/
 
 ## DDD Bounded Context Strukturasi
 
-Har bir Bounded Context quyidagi hexagonal/onion arxitektura layerlaridan iborat:
+Har bir Bounded Context `internal/context/<area>/<tier>/<bc>/` yo'lida joylashadi, bu yerda:
+- **area** ∈ {`iam`, `ops`, `content`, `admin`} — domen hududi (cohesion saqlanadi)
+- **tier** ∈ {`core`, `supporting`, `generic`} — strategik tier (DDD Blue Book, Part IV)
+
+Tier reklassifikatsiya — `git mv` bilan shu area ichida tier sub-folderlar o'rtasida. Classification'ning yagona manbai: [docs/architecture/context-map.md](docs/architecture/context-map.md).
+
+Har bir BC quyidagi hexagonal/onion arxitektura layerlaridan iborat:
 
 ```
-internal/{bc_name}/
+internal/context/<area>/<tier>/<bc>/
 ├── domain/                        # DOMAIN LAYER
 │   ├── entity.go                 # Aggregate Root / Entity
 │   ├── repository.go             # Repository interfeysi (port)
@@ -75,41 +86,52 @@ internal/{bc_name}/
 
 ---
 
-## 19 Bounded Context ro'yxati
+## Bounded Context ro'yxati (Area × Tier)
 
-### Core Domenlar
-| BC | Vazifasi |
-|----|----------|
-| **user** | Foydalanuvchi boshqaruvi, autentifikatsiya (SignIn, SignUp, CRUD) |
-| **authz** | Avtorizatsiya — RBAC (Role, Permission, Policy, Scope) |
-| **session** | Sessiya boshqaruvi, device tracking |
-| **audit** | Audit logging |
+> Strategik tier tasnifi (Core / Supporting / Generic) — to'liq asoslar bilan: [docs/architecture/context-map.md](docs/architecture/context-map.md).
+> Template holatida **Core** tier bo'sh (har area'da `core/.gitkeep` slot zahirada) — mahsulot core BC'lari fork qilinganda tegishli `<area>/core/` ichiga qo'shiladi.
 
-### Feature Domenlar
-| BC | Vazifasi |
-|----|----------|
-| **announcement** | Tizim e'lonlari (ko'p tilli) |
-| **dashboard** | Dashboard ma'lumotlari agregatsiyasi |
-| **dataexport** | Ma'lumot eksport ishlari |
-| **errorcode** | Xato kodlari boshqaruvi |
-| **featureflag** | Feature toggle |
-| **file** | Fayl metadata boshqaruvi (MinIO) |
-| **integration** | Tashqi tizimlar integratsiyasi, API kalitlar |
-| **iprule** | IP asosida kirish nazorati |
-| **metric** | Performance metrikalari |
-| **notification** | Foydalanuvchi bildirishnomalari |
-| **ratelimit** | Rate limiting qoidalari |
-| **sitesetting** | Sayt konfiguratsiyasi |
-| **systemerror** | Tizim xatolarini kuzatish (5xx) |
-| **translation** | Ko'p tilli qo'llab-quvvatlash |
-| **usersetting** | Foydalanuvchi sozlamalari |
+### 🔐 iam — Identity & Access Management
+| BC | Tier | Location | Vazifasi |
+|----|------|----------|----------|
+| **user** | generic | `iam/generic/user` | Foydalanuvchi boshqaruvi, auth (SignIn, SignUp, CRUD) |
+| **session** | generic | `iam/generic/session` | Sessiya boshqaruvi, device tracking |
+| **authz** | generic | `iam/generic/authz` | RBAC (Role, Permission, Policy, Scope) |
+| **usersetting** | generic | `iam/generic/usersetting` | Foydalanuvchi sozlamalari |
+| **audit** | supporting | `iam/supporting/audit` | Audit logging (GDPR/SOC2 compliance) |
+
+### ⚙️ ops — Operational Concerns
+| BC | Tier | Location | Vazifasi |
+|----|------|----------|----------|
+| **metric** | generic | `ops/generic/metric` | Performance metrikalari |
+| **ratelimit** | generic | `ops/generic/ratelimit` | Rate limiting qoidalari |
+| **systemerror** | generic | `ops/generic/systemerror` | Tizim xatolarini kuzatish (5xx) |
+| **iprule** | supporting | `ops/supporting/iprule` | IP asosida kirish nazorati |
+
+### 📣 content — Content & Messaging
+| BC | Tier | Location | Vazifasi |
+|----|------|----------|----------|
+| **notification** | generic | `content/generic/notification` | Foydalanuvchi bildirishnomalari |
+| **file** | generic | `content/generic/file` | Fayl metadata boshqaruvi (MinIO) |
+| **translation** | generic | `content/generic/translation` | Ko'p tilli qo'llab-quvvatlash (i18n) |
+| **announcement** | supporting | `content/supporting/announcement` | Tizim e'lonlari (ko'p tilli) |
+
+### 🛠 admin — Admin / Platform
+| BC | Tier | Location | Vazifasi |
+|----|------|----------|----------|
+| **featureflag** | generic | `admin/generic/featureflag` | Feature toggle |
+| **statistics** | supporting | `admin/supporting/statistics` | Business KPI agregatsiyalari |
+| **integration** | supporting | `admin/supporting/integration` | Tashqi tizim integratsiyalari, API kalitlar |
+| **sitesetting** | supporting | `admin/supporting/sitesetting` | Sayt konfiguratsiyasi |
+| **dataexport** | supporting | `admin/supporting/dataexport` | Ma'lumot eksport ishlari |
+| **errorcode** | supporting | `admin/supporting/errorcode` | Xato kodlari katalogi |
 
 ---
 
-## Shared Kernel (`internal/shared/`)
+## Shared Kernel (`internal/kernel/`)
 
 ```
-internal/shared/
+internal/kernel/
 ├── domain/                        # Umumiy value objectlar & konstantalar
 │   └── consts/
 │
@@ -161,7 +183,7 @@ cmd/app/main.go
               ├── 3. PostgreSQL connection pool
               ├── 4. Redis connection
               ├── 5. Asynq task queue client
-              ├── 6. DDD: NewDDDBoundedContexts()  ← 19 BC yaratish
+              ├── 6. DDD: NewDDDBoundedContexts()  ← barcha BC'larni yaratish
               ├── 7. EventBus (InMemory)
               ├── 8. Cache invalidation service
               ├── 9. Asynq Worker
