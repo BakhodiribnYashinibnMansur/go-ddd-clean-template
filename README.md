@@ -6,7 +6,7 @@ Production-ready Go backend built with **Domain-Driven Design**, **CQRS**, and *
 
 | Component | Technology |
 |-----------|------------|
-| Language | Go 1.25 |
+| Language | Go 1.26 |
 | Web Framework | Gin |
 | Database | PostgreSQL 18 |
 | Query Builder | Squirrel |

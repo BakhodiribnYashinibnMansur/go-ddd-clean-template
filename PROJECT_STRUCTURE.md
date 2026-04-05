@@ -202,7 +202,7 @@ cmd/app/main.go
 
 | Komponent | Texnologiya |
 |-----------|-------------|
-| Til | Go 1.25 |
+| Til | Go 1.26 |
 | Web Framework | Gin |
 | Database | PostgreSQL 18 |
 | Query Builder | Squirrel |
