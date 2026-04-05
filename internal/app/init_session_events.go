@@ -3,10 +3,10 @@ package app
 import (
 	"context"
 
-	sessiondomain "gct/internal/context/iam/session/domain"
-	"gct/internal/context/iam/user"
-	usercommand "gct/internal/context/iam/user/application/command"
-	userdomain "gct/internal/context/iam/user/domain"
+	sessiondomain "gct/internal/context/iam/generic/session/domain"
+	"gct/internal/context/iam/generic/user"
+	usercommand "gct/internal/context/iam/generic/user/application/command"
+	userdomain "gct/internal/context/iam/generic/user/domain"
 	"gct/internal/kernel/application"
 	shareddomain "gct/internal/kernel/domain"
 	"gct/internal/kernel/infrastructure/logger"

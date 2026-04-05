@@ -27,7 +27,7 @@ const (
 	// System tasks
 	TypeSystemSeed = "system:seed"
 	// NOTE: BC-owned task types live in their own bounded context (e.g.
-	// gct/internal/context/iam/audit/infrastructure/asynq.TaskType).
+	// gct/internal/context/iam/supporting/audit/infrastructure/asynq.TaskType).
 )
 
 // Queue name constants.

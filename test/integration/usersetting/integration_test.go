@@ -6,10 +6,10 @@ import (
 
 	"gct/internal/kernel/infrastructure/eventbus"
 	"gct/internal/kernel/infrastructure/logger"
-	"gct/internal/context/iam/usersetting"
-	"gct/internal/context/iam/usersetting/application/command"
-	"gct/internal/context/iam/usersetting/application/query"
-	"gct/internal/context/iam/usersetting/domain"
+	"gct/internal/context/iam/generic/usersetting"
+	"gct/internal/context/iam/generic/usersetting/application/command"
+	"gct/internal/context/iam/generic/usersetting/application/query"
+	"gct/internal/context/iam/generic/usersetting/domain"
 	"gct/test/integration/common/setup"
 
 	"github.com/google/uuid"

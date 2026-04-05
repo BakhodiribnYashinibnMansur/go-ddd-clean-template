@@ -6,10 +6,10 @@ import (
 
 	"gct/internal/kernel/infrastructure/eventbus"
 	"gct/internal/kernel/infrastructure/logger"
-	"gct/internal/context/ops/systemerror"
-	"gct/internal/context/ops/systemerror/application/command"
-	"gct/internal/context/ops/systemerror/application/query"
-	"gct/internal/context/ops/systemerror/domain"
+	"gct/internal/context/ops/generic/systemerror"
+	"gct/internal/context/ops/generic/systemerror/application/command"
+	"gct/internal/context/ops/generic/systemerror/application/query"
+	"gct/internal/context/ops/generic/systemerror/domain"
 	"gct/test/integration/common/setup"
 
 	"github.com/google/uuid"

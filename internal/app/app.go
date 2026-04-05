@@ -19,13 +19,13 @@ import (
 	sharedmw "gct/internal/kernel/infrastructure/middleware"
 
 	// DDD BC middleware
-	auditmw "gct/internal/context/iam/audit/interfaces/http/middleware"
-	authzmw "gct/internal/context/iam/authz/interfaces/http/middleware"
-	integrationmw "gct/internal/context/admin/integration/interfaces/http/middleware"
-	syserrmw "gct/internal/context/ops/systemerror/interfaces/http/middleware"
-	"gct/internal/context/iam/user/application/command"
-	usermw "gct/internal/context/iam/user/interfaces/http/middleware"
-	userport "gct/internal/context/iam/user/interfaces/port"
+	auditmw "gct/internal/context/iam/supporting/audit/interfaces/http/middleware"
+	authzmw "gct/internal/context/iam/generic/authz/interfaces/http/middleware"
+	integrationmw "gct/internal/context/admin/supporting/integration/interfaces/http/middleware"
+	syserrmw "gct/internal/context/ops/generic/systemerror/interfaces/http/middleware"
+	"gct/internal/context/iam/generic/user/application/command"
+	usermw "gct/internal/context/iam/generic/user/interfaces/http/middleware"
+	userport "gct/internal/context/iam/generic/user/interfaces/port"
 
 	"gct/internal/kernel/application"
 	"gct/internal/kernel/infrastructure/asynq"

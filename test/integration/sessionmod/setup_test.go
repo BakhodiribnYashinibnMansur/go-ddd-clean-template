@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/iam/user/application/command"
+	"gct/internal/context/iam/generic/user/application/command"
 	"gct/test/integration/common/setup"
 )
 

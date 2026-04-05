@@ -6,10 +6,10 @@ import (
 
 	"gct/internal/kernel/infrastructure/eventbus"
 	"gct/internal/kernel/infrastructure/logger"
-	"gct/internal/context/admin/sitesetting"
-	"gct/internal/context/admin/sitesetting/application/command"
-	"gct/internal/context/admin/sitesetting/application/query"
-	"gct/internal/context/admin/sitesetting/domain"
+	"gct/internal/context/admin/supporting/sitesetting"
+	"gct/internal/context/admin/supporting/sitesetting/application/command"
+	"gct/internal/context/admin/supporting/sitesetting/application/query"
+	"gct/internal/context/admin/supporting/sitesetting/domain"
 	"gct/test/integration/common/setup"
 )
 

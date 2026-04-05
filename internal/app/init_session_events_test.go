@@ -4,12 +4,12 @@ import (
 	"context"
 	"testing"
 
-	sessiondomain "gct/internal/context/iam/session/domain"
+	sessiondomain "gct/internal/context/iam/generic/session/domain"
 	"gct/internal/kernel/application"
 	shareddomain "gct/internal/kernel/domain"
-	"gct/internal/context/iam/user"
-	usercommand "gct/internal/context/iam/user/application/command"
-	userdomain "gct/internal/context/iam/user/domain"
+	"gct/internal/context/iam/generic/user"
+	usercommand "gct/internal/context/iam/generic/user/application/command"
+	userdomain "gct/internal/context/iam/generic/user/domain"
 
 	"github.com/google/uuid"
 )

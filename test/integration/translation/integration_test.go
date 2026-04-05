@@ -6,10 +6,10 @@ import (
 
 	"gct/internal/kernel/infrastructure/eventbus"
 	"gct/internal/kernel/infrastructure/logger"
-	"gct/internal/context/content/translation"
-	"gct/internal/context/content/translation/application/command"
-	"gct/internal/context/content/translation/application/query"
-	"gct/internal/context/content/translation/domain"
+	"gct/internal/context/content/generic/translation"
+	"gct/internal/context/content/generic/translation/application/command"
+	"gct/internal/context/content/generic/translation/application/query"
+	"gct/internal/context/content/generic/translation/domain"
 	"gct/test/integration/common/setup"
 )
 

@@ -6,8 +6,8 @@ import (
 	"fmt"
 
 	"gct/config"
-	auditcmd "gct/internal/context/iam/audit/application/command"
-	auditasynq "gct/internal/context/iam/audit/infrastructure/asynq"
+	auditcmd "gct/internal/context/iam/supporting/audit/application/command"
+	auditasynq "gct/internal/context/iam/supporting/audit/infrastructure/asynq"
 	"gct/internal/app/seeder"
 	"gct/internal/kernel/infrastructure/asynq"
 	"gct/internal/kernel/infrastructure/asynq/tasks"

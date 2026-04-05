@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/context/iam/authz/application/command"
-	"gct/internal/context/iam/authz/application/query"
-	"gct/internal/context/iam/authz/domain"
+	"gct/internal/context/iam/generic/authz/application/command"
+	"gct/internal/context/iam/generic/authz/application/query"
+	"gct/internal/context/iam/generic/authz/domain"
 	shared "gct/internal/kernel/domain"
 	"gct/test/integration/common/setup"
 )

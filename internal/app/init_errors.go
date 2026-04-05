@@ -3,10 +3,10 @@ package app
 import (
 	"context"
 
-	"gct/internal/context/admin/errorcode"
-	"gct/internal/context/admin/errorcode/application/command"
-	"gct/internal/context/admin/errorcode/application/query"
-	"gct/internal/context/admin/errorcode/domain"
+	"gct/internal/context/admin/supporting/errorcode"
+	"gct/internal/context/admin/supporting/errorcode/application/command"
+	"gct/internal/context/admin/supporting/errorcode/application/query"
+	"gct/internal/context/admin/supporting/errorcode/domain"
 	"gct/internal/kernel/application"
 	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"

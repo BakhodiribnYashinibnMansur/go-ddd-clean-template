@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/context/content/announcement/application/command"
-	"gct/internal/context/content/announcement/application/query"
-	"gct/internal/context/content/announcement/domain"
+	"gct/internal/context/content/supporting/announcement/application/command"
+	"gct/internal/context/content/supporting/announcement/application/query"
+	"gct/internal/context/content/supporting/announcement/domain"
 	shared "gct/internal/kernel/domain"
 )
 

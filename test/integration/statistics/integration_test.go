@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/context/admin/statistics"
-	"gct/internal/context/admin/statistics/application/query"
+	"gct/internal/context/admin/supporting/statistics"
+	"gct/internal/context/admin/supporting/statistics/application/query"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/test/integration/common/setup"
 )

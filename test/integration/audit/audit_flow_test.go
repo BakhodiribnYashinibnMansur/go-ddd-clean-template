@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/context/iam/audit/application/command"
-	"gct/internal/context/iam/audit/application/query"
-	"gct/internal/context/iam/audit/domain"
+	"gct/internal/context/iam/supporting/audit/application/command"
+	"gct/internal/context/iam/supporting/audit/application/query"
+	"gct/internal/context/iam/supporting/audit/domain"
 	shared "gct/internal/kernel/domain"
 	"gct/test/integration/common/setup"
 )

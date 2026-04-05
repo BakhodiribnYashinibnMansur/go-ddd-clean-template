@@ -2,7 +2,7 @@
 
 > **Purpose:** Document the strategic classification of every Bounded Context (BC) in this codebase per Eric Evans' DDD (Blue Book, Part IV).
 >
-> **Important:** Strategic classification is a _strategic decision tool_ (where to invest, build vs. buy) — not a code organization mandate. The folder structure under `internal/context/` is organized by **domain area** (iam/ops/content/admin), NOT by subdomain tier. This document is the single source of truth for classification.
+> **Important:** Strategic classification is a _strategic decision tool_ (where to invest, build vs. buy). The folder structure under `internal/context/` uses a **hybrid area → tier → BC layout**: BCs live under `internal/context/<area>/<tier>/<bc>/` where area ∈ {iam, ops, content, admin} and tier ∈ {generic, supporting, core}. Area cohesion is preserved (all iam BCs stay under iam/) while tier becomes visible in the import path. When a BC is reclassified, move it between tier sub-folders within its area. This document remains the single source of truth for classification and reasoning.
 >
 > **How to use this document:**
 > - Before starting work on a BC, check its tier here.
@@ -20,7 +20,7 @@ _Strategic competitive advantage. Where the business differentiates. In-house, t
 
 **Current state: EMPTY.**
 
-This repository is a **backend template (boilerplate)**. Core domain belongs to the _product_ that consumes this template, not the template itself. When forking this template for a specific product, the product's core BCs should be added under `internal/context/` (e.g. `internal/context/commerce/`, `internal/context/learning/`, `internal/context/finance/` — depending on the product).
+This repository is a **backend template (boilerplate)**. Core domain belongs to the _product_ that consumes this template, not the template itself. When forking this template for a specific product, the product's core BCs should be added under the relevant area's `core/` sub-folder (e.g. `internal/context/commerce/core/<bc>/`, `internal/context/learning/core/<bc>/`) — or a new area may be created if the product's core domain doesn't fit iam/ops/content/admin. Each area already has an empty `core/.gitkeep` slot reserving the location.
 
 | BC | Location | Justification |
 |----|----------|---------------|
