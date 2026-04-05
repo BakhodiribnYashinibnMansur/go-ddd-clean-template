@@ -107,19 +107,13 @@ func TestRegisterHealthRoutes(t *testing.T) {
 	deps := healthDeps{}
 	registerHealthRoutes(r, deps)
 
-	// Test /health route exists
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/health", nil)
-	r.ServeHTTP(w, req)
-	if w.Code != http.StatusOK {
-		t.Fatalf("expected /health 200, got %d", w.Code)
-	}
-
-	// Test /ready route exists
-	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("GET", "/ready", nil)
-	r.ServeHTTP(w, req)
-	if w.Code != http.StatusOK {
-		t.Fatalf("expected /ready 200, got %d", w.Code)
+	// K8s-style endpoints + backward-compat alias
+	for _, path := range []string{"/health", "/health/live", "/health/ready"} {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", path, nil)
+		r.ServeHTTP(w, req)
+		if w.Code != http.StatusOK {
+			t.Fatalf("expected %s 200, got %d", path, w.Code)
+		}
 	}
 }
