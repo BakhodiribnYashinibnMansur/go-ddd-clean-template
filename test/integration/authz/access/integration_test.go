@@ -4,13 +4,13 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/authz"
-	"gct/internal/authz/application/command"
-	"gct/internal/authz/application/query"
-	"gct/internal/authz/domain"
-	shared "gct/internal/shared/domain"
-	"gct/internal/shared/infrastructure/eventbus"
-	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/context/iam/authz"
+	"gct/internal/context/iam/authz/application/command"
+	"gct/internal/context/iam/authz/application/query"
+	"gct/internal/context/iam/authz/domain"
+	shared "gct/internal/platform/domain"
+	"gct/internal/platform/infrastructure/eventbus"
+	"gct/internal/platform/infrastructure/logger"
 	"gct/test/integration/common/setup"
 )
 

@@ -42,6 +42,10 @@ type (
 		ReqLogSkipPaths         []string `yaml:"req_log_skip_paths" env:"REQLOG_SKIP_PATHS" envSeparator:"," envDefault:"/health,/health/ready,/health/live,/metrics,/favicon.ico"`
 		ReqLogSkipPrefixes      []string `yaml:"req_log_skip_prefixes" env:"REQLOG_SKIP_PREFIXES" envSeparator:"," envDefault:"/swagger/,/static/,/assets/"`
 		ReqLogBodySuppressPaths []string `yaml:"req_log_body_suppress_paths" env:"REQLOG_BODY_SUPPRESS_PATHS" envSeparator:"," envDefault:"/api/v1/auth/login,/api/v1/auth/register,/api/v1/auth/reset-password,/api/v1/otp/verify"`
+
+		// APILog — outgoing 3rd-party HTTP call logging (external_api_logs table)
+		APILogSlowThresholdMs   int     `yaml:"api_log_slow_threshold_ms" env:"APILOG_SLOW_THRESHOLD_MS" envDefault:"2000"`
+		APILogSuccessSampleRate float64 `yaml:"api_log_success_sample_rate" env:"APILOG_SUCCESS_SAMPLE_RATE" envDefault:"0" validate:"min=0,max=1"`
 	}
 
 	// APIKeys configuration -.

@@ -4,12 +4,12 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/errorcode"
-	"gct/internal/errorcode/application/command"
-	"gct/internal/errorcode/application/query"
-	"gct/internal/errorcode/domain"
-	"gct/internal/shared/infrastructure/eventbus"
-	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/context/admin/errorcode"
+	"gct/internal/context/admin/errorcode/application/command"
+	"gct/internal/context/admin/errorcode/application/query"
+	"gct/internal/context/admin/errorcode/domain"
+	"gct/internal/platform/infrastructure/eventbus"
+	"gct/internal/platform/infrastructure/logger"
 	"gct/test/integration/common/setup"
 )
 

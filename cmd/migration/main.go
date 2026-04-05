@@ -6,8 +6,8 @@ import (
 	"log"
 
 	"gct/config"
-	"gct/internal/shared/infrastructure/db/postgres"
-	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/platform/infrastructure/db/postgres"
+	"gct/internal/platform/infrastructure/logger"
 
 	"go.uber.org/zap"
 )

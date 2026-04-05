@@ -4,12 +4,12 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/ratelimit"
-	"gct/internal/ratelimit/application/command"
-	"gct/internal/ratelimit/application/query"
-	"gct/internal/ratelimit/domain"
-	"gct/internal/shared/infrastructure/eventbus"
-	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/context/ops/ratelimit"
+	"gct/internal/context/ops/ratelimit/application/command"
+	"gct/internal/context/ops/ratelimit/application/query"
+	"gct/internal/context/ops/ratelimit/domain"
+	"gct/internal/platform/infrastructure/eventbus"
+	"gct/internal/platform/infrastructure/logger"
 	"gct/test/integration/common/setup"
 )
 

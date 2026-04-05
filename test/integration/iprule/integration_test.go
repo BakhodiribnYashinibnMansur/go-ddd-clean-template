@@ -4,12 +4,12 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/iprule"
-	"gct/internal/iprule/application/command"
-	"gct/internal/iprule/application/query"
-	"gct/internal/iprule/domain"
-	"gct/internal/shared/infrastructure/eventbus"
-	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/context/ops/iprule"
+	"gct/internal/context/ops/iprule/application/command"
+	"gct/internal/context/ops/iprule/application/query"
+	"gct/internal/context/ops/iprule/domain"
+	"gct/internal/platform/infrastructure/eventbus"
+	"gct/internal/platform/infrastructure/logger"
 	"gct/test/integration/common/setup"
 )
 

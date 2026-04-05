@@ -4,12 +4,12 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/notification"
-	"gct/internal/notification/application/command"
-	"gct/internal/notification/application/query"
-	"gct/internal/notification/domain"
-	"gct/internal/shared/infrastructure/eventbus"
-	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/context/content/notification"
+	"gct/internal/context/content/notification/application/command"
+	"gct/internal/context/content/notification/application/query"
+	"gct/internal/context/content/notification/domain"
+	"gct/internal/platform/infrastructure/eventbus"
+	"gct/internal/platform/infrastructure/logger"
 	"gct/test/integration/common/setup"
 
 	"github.com/google/uuid"

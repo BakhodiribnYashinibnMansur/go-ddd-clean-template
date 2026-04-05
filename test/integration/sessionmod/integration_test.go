@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/session"
-	appdto "gct/internal/session/application"
-	"gct/internal/session/application/query"
-	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/context/iam/session"
+	appdto "gct/internal/context/iam/session/application"
+	"gct/internal/context/iam/session/application/query"
+	"gct/internal/platform/infrastructure/logger"
 	"gct/test/integration/common/setup"
 )
 

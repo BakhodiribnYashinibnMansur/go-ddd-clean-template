@@ -4,12 +4,12 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/featureflag"
-	"gct/internal/featureflag/application/command"
-	"gct/internal/featureflag/application/query"
-	"gct/internal/featureflag/domain"
-	"gct/internal/shared/infrastructure/eventbus"
-	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/context/admin/featureflag"
+	"gct/internal/context/admin/featureflag/application/command"
+	"gct/internal/context/admin/featureflag/application/query"
+	"gct/internal/context/admin/featureflag/domain"
+	"gct/internal/platform/infrastructure/eventbus"
+	"gct/internal/platform/infrastructure/logger"
 	"gct/test/integration/common/setup"
 )
 

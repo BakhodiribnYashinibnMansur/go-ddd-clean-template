@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"gct/config"
-	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/platform/infrastructure/logger"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
 	"go.uber.org/zap"
@@ -65,7 +65,7 @@ func init() {
 	}
 
 	l.Infow("Migrate: running up migrations")
-	if err := goose.Up(db, "migrations/postgres"); err != nil {
+	if err := goose.Up(db, "migration/postgres"); err != nil {
 		l.Fatalw("Migrate: up error", zap.Error(err))
 	}
 

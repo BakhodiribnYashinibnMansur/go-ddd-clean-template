@@ -3,34 +3,34 @@ package app
 import (
 	"context"
 
-	"gct/internal/shared/infrastructure/logger"
-	"gct/internal/user"
-	"gct/internal/user/application/command"
+	"gct/internal/context/iam/user"
+	"gct/internal/context/iam/user/application/command"
+	userdomain "gct/internal/context/iam/user/domain"
+	"gct/internal/platform/infrastructure/logger"
 
 	"github.com/google/uuid"
 	miniogo "github.com/minio/minio-go/v7"
 
-	announcementhttp "gct/internal/announcement/interfaces/http"
-	audithttp "gct/internal/audit/interfaces/http"
-	authzhttp "gct/internal/authz/interfaces/http"
-	dashboardhttp "gct/internal/dashboard/interfaces/http"
-	dataexporthttp "gct/internal/dataexport/interfaces/http"
-	errorcodehttp "gct/internal/errorcode/interfaces/http"
-	featureflaghttp "gct/internal/featureflag/interfaces/http"
-	filehttp "gct/internal/file/interfaces/http"
-	integrationhttp "gct/internal/integration/interfaces/http"
-	iprulehttp "gct/internal/iprule/interfaces/http"
+	announcementhttp "gct/internal/context/content/announcement/interfaces/http"
+	audithttp "gct/internal/context/iam/audit/interfaces/http"
+	authzhttp "gct/internal/context/iam/authz/interfaces/http"
+	dataexporthttp "gct/internal/context/admin/dataexport/interfaces/http"
+	statisticshttp "gct/internal/context/admin/statistics/interfaces/http"
+	errorcodehttp "gct/internal/context/admin/errorcode/interfaces/http"
+	featureflaghttp "gct/internal/context/admin/featureflag/interfaces/http"
+	filehttp "gct/internal/context/content/file/interfaces/http"
+	integrationhttp "gct/internal/context/admin/integration/interfaces/http"
+	iprulehttp "gct/internal/context/ops/iprule/interfaces/http"
 
-	metrichttp "gct/internal/metric/interfaces/http"
-	notificationhttp "gct/internal/notification/interfaces/http"
-	ratelimithttp "gct/internal/ratelimit/interfaces/http"
-	sessionhttp "gct/internal/session/interfaces/http"
-	sitesettinghttp "gct/internal/sitesetting/interfaces/http"
-	systemerrorhttp "gct/internal/systemerror/interfaces/http"
-	translationhttp "gct/internal/translation/interfaces/http"
-	userhttp "gct/internal/user/interfaces/http"
-	usersettinghttp "gct/internal/usersetting/interfaces/http"
-
+	metrichttp "gct/internal/context/ops/metric/interfaces/http"
+	notificationhttp "gct/internal/context/content/notification/interfaces/http"
+	ratelimithttp "gct/internal/context/ops/ratelimit/interfaces/http"
+	sessionhttp "gct/internal/context/iam/session/interfaces/http"
+	sitesettinghttp "gct/internal/context/admin/sitesetting/interfaces/http"
+	systemerrorhttp "gct/internal/context/ops/systemerror/interfaces/http"
+	translationhttp "gct/internal/context/content/translation/interfaces/http"
+	userhttp "gct/internal/context/iam/user/interfaces/http"
+	usersettinghttp "gct/internal/context/iam/usersetting/interfaces/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -42,8 +42,8 @@ type sessionRevokerAdapter struct {
 
 func (a *sessionRevokerAdapter) RevokeSession(ctx context.Context, userID, sessionID uuid.UUID) error {
 	return a.userBC.SignOut.Handle(ctx, command.SignOutCommand{
-		UserID:    userID,
-		SessionID: sessionID,
+		UserID:    userdomain.UserID(userID),
+		SessionID: userdomain.SessionID(sessionID),
 	})
 }
 
@@ -59,239 +59,291 @@ type RouteOptions struct {
 	MinioBucket string
 }
 
-// RegisterDDDRoutes registers all HTTP routes for DDD bounded contexts.
-func RegisterDDDRoutes(router *gin.Engine, bcs *DDDBoundedContexts, authMW, authzMW, csrfMW gin.HandlerFunc, l logger.Log, opts ...RouteOptions) {
-	var opt RouteOptions
-	if len(opts) > 0 {
-		opt = opts[0]
-	}
-	userHandler := userhttp.NewHandler(bcs.User, l)
-	authzHandler := authzhttp.NewHandler(bcs.Authz, l)
-	sessionHandler := sessionhttp.NewHandler(bcs.Session, l)
-	auditHandler := audithttp.NewHandler(bcs.Audit, l)
-	dashboardHandler := dashboardhttp.NewHandler(bcs.Dashboard, l)
-	sysErrHandler := systemerrorhttp.NewHandler(bcs.SystemError, l)
-	metricHandler := metrichttp.NewHandler(bcs.Metric, l)
-	ffHandler := featureflaghttp.NewHandler(bcs.FeatureFlag, l)
-	integrationHandler := integrationhttp.NewHandler(bcs.Integration, l)
+// dddHandlers bundles every HTTP handler constructed from the DDD bounded contexts.
+type dddHandlers struct {
+	user         *userhttp.Handler
+	authz        *authzhttp.Handler
+	session      *sessionhttp.Handler
+	audit        *audithttp.Handler
+	statistics   *statisticshttp.Handler
+	sysErr       *systemerrorhttp.Handler
+	metric       *metrichttp.Handler
+	ff           *featureflaghttp.Handler
+	integration  *integrationhttp.Handler
+	notification *notificationhttp.Handler
+	announcement *announcementhttp.Handler
+	translation  *translationhttp.Handler
+	siteSetting  *sitesettinghttp.Handler
+	rateLimit    *ratelimithttp.Handler
+	ipRule       *iprulehttp.Handler
+	dataExport   *dataexporthttp.Handler
+	file         *filehttp.Handler
+	userSetting  *usersettinghttp.Handler
+	errorCode    *errorcodehttp.Handler
+}
 
-	notifHandler := notificationhttp.NewHandler(bcs.Notification, l)
-	announcementHandler := announcementhttp.NewHandler(bcs.Announcement, l)
-	translationHandler := translationhttp.NewHandler(bcs.Translation, l)
-	siteSettingHandler := sitesettinghttp.NewHandler(bcs.SiteSetting, l)
-	rateLimitHandler := ratelimithttp.NewHandler(bcs.RateLimit, l)
-	ipRuleHandler := iprulehttp.NewHandler(bcs.IPRule, l)
-
-	dataExportHandler := dataexporthttp.NewHandler(bcs.DataExport, l)
+// buildDDDHandlers constructs every HTTP handler for the DDD bounded contexts.
+func buildDDDHandlers(bcs *DDDBoundedContexts, l logger.Log, opt RouteOptions) *dddHandlers {
 	fileHandler := filehttp.NewHandler(bcs.File, l)
 	if opt.Minio != nil {
 		fileHandler.SetMinio(opt.Minio, opt.MinioBucket)
 	}
-	userSettingHandler := usersettinghttp.NewHandler(bcs.UserSetting, l)
-	errorCodeHandler := errorcodehttp.NewHandler(bcs.ErrorCode, l)
+	return &dddHandlers{
+		user:         userhttp.NewHandler(bcs.User, l),
+		authz:        authzhttp.NewHandler(bcs.Authz, l),
+		session:      sessionhttp.NewHandler(bcs.Session, l),
+		audit:        audithttp.NewHandler(bcs.Audit, l),
+		statistics:   statisticshttp.NewHandler(bcs.Statistics, l),
+		sysErr:       systemerrorhttp.NewHandler(bcs.SystemError, l),
+		metric:       metrichttp.NewHandler(bcs.Metric, l),
+		ff:           featureflaghttp.NewHandler(bcs.FeatureFlag, l),
+		integration:  integrationhttp.NewHandler(bcs.Integration, l),
+		notification: notificationhttp.NewHandler(bcs.Notification, l),
+		announcement: announcementhttp.NewHandler(bcs.Announcement, l),
+		translation:  translationhttp.NewHandler(bcs.Translation, l),
+		siteSetting:  sitesettinghttp.NewHandler(bcs.SiteSetting, l),
+		rateLimit:    ratelimithttp.NewHandler(bcs.RateLimit, l),
+		ipRule:       iprulehttp.NewHandler(bcs.IPRule, l),
+		dataExport:   dataexporthttp.NewHandler(bcs.DataExport, l),
+		file:         fileHandler,
+		userSetting:  usersettinghttp.NewHandler(bcs.UserSetting, l),
+		errorCode:    errorcodehttp.NewHandler(bcs.ErrorCode, l),
+	}
+}
 
-	// Public routes
-	auth := router.Group("/api/v1/auth")
+// RegisterDDDRoutes registers all HTTP routes for DDD bounded contexts.
+func RegisterDDDRoutes(
+	router *gin.Engine,
+	bcs *DDDBoundedContexts,
+	authMW, authzMW, csrfMW gin.HandlerFunc,
+	l logger.Log,
+	opts ...RouteOptions,
+) {
+	var opt RouteOptions
+	if len(opts) > 0 {
+		opt = opts[0]
+	}
+	h := buildDDDHandlers(bcs, l, opt)
+	h.session.SetRevoker(&sessionRevokerAdapter{userBC: bcs.User})
+
+	registerAuthRoutes(router, authMW, h.user)
+
+	protected := router.Group("/api/v1")
+	protected.Use(authMW, authzMW, csrfMW)
+
+	registerIAMRoutes(protected, h)
+	registerAuthzRoutes(protected, h)
+	registerOpsRoutes(protected, h)
+	registerContentRoutes(protected, h)
+	registerAdminRoutes(protected, h)
+	h.ff.RegisterRoutes(protected)
+}
+
+// registerAuthRoutes wires the public and auth-only sign-in/sign-up/sign-out endpoints.
+func registerAuthRoutes(router *gin.Engine, authMW gin.HandlerFunc, userHandler *userhttp.Handler) {
+	public := router.Group("/api/v1/auth")
 	{
-		auth.POST("/sign-in", userHandler.SignIn)
-		auth.POST("/sign-up", userHandler.SignUp)
+		public.POST("/sign-in", userHandler.SignIn)
+		public.POST("/sign-up", userHandler.SignUp)
 	}
 
-	// Auth-only
 	authOnly := router.Group("/api/v1/auth")
 	authOnly.Use(authMW)
 	{
 		authOnly.POST("/sign-out", userHandler.SignOut)
 	}
+}
 
-	// Protected routes
-	protected := router.Group("/api/v1")
-	protected.Use(authMW, authzMW, csrfMW)
-
+// registerIAMRoutes wires identity routes (users, sessions, audit logs).
+func registerIAMRoutes(protected *gin.RouterGroup, h *dddHandlers) {
 	users := protected.Group("/users")
 	{
-		users.POST("", userHandler.Create)
-		users.GET("", userHandler.List)
-		users.GET("/:id", userHandler.Get)
-		users.PATCH("/:id", userHandler.Update)
-		users.DELETE("/:id", userHandler.Delete)
-		users.POST("/:id/approve", userHandler.Approve)
-		users.POST("/:id/role", userHandler.ChangeRole)
-		users.POST("/bulk-action", userHandler.BulkAction)
+		users.POST("", h.user.Create)
+		users.GET("", h.user.List)
+		users.GET("/:id", h.user.Get)
+		users.PATCH("/:id", h.user.Update)
+		users.DELETE("/:id", h.user.Delete)
+		users.POST("/:id/approve", h.user.Approve)
+		users.POST("/:id/role", h.user.ChangeRole)
+		users.POST("/bulk-action", h.user.BulkAction)
 	}
-
-	roles := protected.Group("/roles")
-	{
-		roles.POST("", authzHandler.CreateRole)
-		roles.GET("", authzHandler.ListRoles)
-		roles.GET("/:id", authzHandler.GetRole)
-		roles.PATCH("/:id", authzHandler.UpdateRole)
-		roles.DELETE("/:id", authzHandler.DeleteRole)
-		roles.POST("/:id/permissions", authzHandler.AssignPermission)
-	}
-
-	permissions := protected.Group("/permissions")
-	{
-		permissions.POST("", authzHandler.CreatePermission)
-		permissions.GET("", authzHandler.ListPermissions)
-		permissions.DELETE("/:id", authzHandler.DeletePermission)
-		permissions.POST("/:id/scopes", authzHandler.AssignScope)
-	}
-
-	policies := protected.Group("/policies")
-	{
-		policies.POST("", authzHandler.CreatePolicy)
-		policies.GET("", authzHandler.ListPolicies)
-		policies.PATCH("/:id", authzHandler.UpdatePolicy)
-		policies.DELETE("/:id", authzHandler.DeletePolicy)
-		policies.POST("/:id/toggle", authzHandler.TogglePolicy)
-	}
-
-	scopes := protected.Group("/scopes")
-	{
-		scopes.POST("", authzHandler.CreateScope)
-		scopes.GET("", authzHandler.ListScopes)
-		scopes.DELETE("", authzHandler.DeleteScope)
-	}
-
-	sessionHandler.SetRevoker(&sessionRevokerAdapter{userBC: bcs.User})
 
 	sessions := protected.Group("/sessions")
 	{
-		sessions.GET("", sessionHandler.List)
-		sessions.GET("/:id", sessionHandler.Get)
-		sessions.DELETE("/:id", sessionHandler.Delete)
-		sessions.POST("/revoke-all", sessionHandler.RevokeAll)
+		sessions.GET("", h.session.List)
+		sessions.GET("/:id", h.session.Get)
+		sessions.DELETE("/:id", h.session.Delete)
+		sessions.POST("/revoke-all", h.session.RevokeAll)
 	}
 
 	auditLogs := protected.Group("/audit-logs")
 	{
-		auditLogs.GET("", auditHandler.ListAuditLogs)
+		auditLogs.GET("", h.audit.ListAuditLogs)
 	}
 
 	endpointHistory := protected.Group("/endpoint-history")
 	{
-		endpointHistory.GET("", auditHandler.ListEndpointHistory)
+		endpointHistory.GET("", h.audit.ListEndpointHistory)
 	}
+}
 
-	dashboard := protected.Group("/dashboard")
+// registerAuthzRoutes wires authorization routes (roles, permissions, policies, scopes).
+func registerAuthzRoutes(protected *gin.RouterGroup, h *dddHandlers) {
+	roles := protected.Group("/roles")
 	{
-		dashboard.GET("/stats", dashboardHandler.GetStats)
+		roles.POST("", h.authz.CreateRole)
+		roles.GET("", h.authz.ListRoles)
+		roles.GET("/:id", h.authz.GetRole)
+		roles.PATCH("/:id", h.authz.UpdateRole)
+		roles.DELETE("/:id", h.authz.DeleteRole)
+		roles.POST("/:id/permissions", h.authz.AssignPermission)
 	}
 
+	permissions := protected.Group("/permissions")
+	{
+		permissions.POST("", h.authz.CreatePermission)
+		permissions.GET("", h.authz.ListPermissions)
+		permissions.DELETE("/:id", h.authz.DeletePermission)
+		permissions.POST("/:id/scopes", h.authz.AssignScope)
+	}
+
+	policies := protected.Group("/policies")
+	{
+		policies.POST("", h.authz.CreatePolicy)
+		policies.GET("", h.authz.ListPolicies)
+		policies.PATCH("/:id", h.authz.UpdatePolicy)
+		policies.DELETE("/:id", h.authz.DeletePolicy)
+		policies.POST("/:id/toggle", h.authz.TogglePolicy)
+	}
+
+	scopes := protected.Group("/scopes")
+	{
+		scopes.POST("", h.authz.CreateScope)
+		scopes.GET("", h.authz.ListScopes)
+		scopes.DELETE("", h.authz.DeleteScope)
+	}
+}
+
+// registerOpsRoutes wires operations routes (system errors, metrics, rate limits, ip rules).
+func registerOpsRoutes(protected *gin.RouterGroup, h *dddHandlers) {
 	systemErrors := protected.Group("/system-errors")
 	{
-		systemErrors.POST("", sysErrHandler.Create)
-		systemErrors.GET("", sysErrHandler.List)
-		systemErrors.GET("/:id", sysErrHandler.Get)
-		systemErrors.POST("/:id/resolve", sysErrHandler.Resolve)
+		systemErrors.POST("", h.sysErr.Create)
+		systemErrors.GET("", h.sysErr.List)
+		systemErrors.GET("/:id", h.sysErr.Get)
+		systemErrors.POST("/:id/resolve", h.sysErr.Resolve)
 	}
 
 	metrics := protected.Group("/metrics")
 	{
-		metrics.POST("", metricHandler.Create)
-		metrics.GET("", metricHandler.List)
-	}
-
-	ffHandler.RegisterRoutes(protected)
-
-	integrations := protected.Group("/integrations")
-	{
-		integrations.POST("", integrationHandler.Create)
-		integrations.GET("", integrationHandler.List)
-		integrations.GET("/:id", integrationHandler.Get)
-		integrations.PATCH("/:id", integrationHandler.Update)
-		integrations.DELETE("/:id", integrationHandler.Delete)
-	}
-
-
-	notifications := protected.Group("/notifications")
-	{
-		notifications.POST("", notifHandler.Create)
-		notifications.GET("", notifHandler.List)
-		notifications.GET("/:id", notifHandler.Get)
-		notifications.DELETE("/:id", notifHandler.Delete)
-	}
-
-	announcements := protected.Group("/announcements")
-	{
-		announcements.POST("", announcementHandler.Create)
-		announcements.GET("", announcementHandler.List)
-		announcements.GET("/:id", announcementHandler.Get)
-		announcements.PATCH("/:id", announcementHandler.Update)
-		announcements.DELETE("/:id", announcementHandler.Delete)
-	}
-
-	translations := protected.Group("/translations")
-	{
-		translations.POST("", translationHandler.Create)
-		translations.GET("", translationHandler.List)
-		translations.GET("/:id", translationHandler.Get)
-		translations.PATCH("/:id", translationHandler.Update)
-		translations.DELETE("/:id", translationHandler.Delete)
-	}
-
-	siteSettings := protected.Group("/site-settings")
-	{
-		siteSettings.POST("", siteSettingHandler.Create)
-		siteSettings.GET("", siteSettingHandler.List)
-		siteSettings.GET("/:id", siteSettingHandler.Get)
-		siteSettings.PATCH("/:id", siteSettingHandler.Update)
-		siteSettings.DELETE("/:id", siteSettingHandler.Delete)
+		metrics.POST("", h.metric.Create)
+		metrics.GET("", h.metric.List)
 	}
 
 	rateLimits := protected.Group("/rate-limits")
 	{
-		rateLimits.POST("", rateLimitHandler.Create)
-		rateLimits.GET("", rateLimitHandler.List)
-		rateLimits.GET("/:id", rateLimitHandler.Get)
-		rateLimits.PATCH("/:id", rateLimitHandler.Update)
-		rateLimits.DELETE("/:id", rateLimitHandler.Delete)
+		rateLimits.POST("", h.rateLimit.Create)
+		rateLimits.GET("", h.rateLimit.List)
+		rateLimits.GET("/:id", h.rateLimit.Get)
+		rateLimits.PATCH("/:id", h.rateLimit.Update)
+		rateLimits.DELETE("/:id", h.rateLimit.Delete)
 	}
 
 	ipRules := protected.Group("/ip-rules")
 	{
-		ipRules.POST("", ipRuleHandler.Create)
-		ipRules.GET("", ipRuleHandler.List)
-		ipRules.GET("/:id", ipRuleHandler.Get)
-		ipRules.PATCH("/:id", ipRuleHandler.Update)
-		ipRules.DELETE("/:id", ipRuleHandler.Delete)
+		ipRules.POST("", h.ipRule.Create)
+		ipRules.GET("", h.ipRule.List)
+		ipRules.GET("/:id", h.ipRule.Get)
+		ipRules.PATCH("/:id", h.ipRule.Update)
+		ipRules.DELETE("/:id", h.ipRule.Delete)
+	}
+}
+
+// registerContentRoutes wires content routes (notifications, announcements, translations, files).
+func registerContentRoutes(protected *gin.RouterGroup, h *dddHandlers) {
+	notifications := protected.Group("/notifications")
+	{
+		notifications.POST("", h.notification.Create)
+		notifications.GET("", h.notification.List)
+		notifications.GET("/:id", h.notification.Get)
+		notifications.DELETE("/:id", h.notification.Delete)
 	}
 
-
-	dataExports := protected.Group("/data-exports")
+	announcements := protected.Group("/announcements")
 	{
-		dataExports.POST("", dataExportHandler.Create)
-		dataExports.GET("", dataExportHandler.List)
-		dataExports.GET("/:id", dataExportHandler.Get)
-		dataExports.PATCH("/:id", dataExportHandler.Update)
-		dataExports.DELETE("/:id", dataExportHandler.Delete)
+		announcements.POST("", h.announcement.Create)
+		announcements.GET("", h.announcement.List)
+		announcements.GET("/:id", h.announcement.Get)
+		announcements.PATCH("/:id", h.announcement.Update)
+		announcements.DELETE("/:id", h.announcement.Delete)
+	}
+
+	translations := protected.Group("/translations")
+	{
+		translations.POST("", h.translation.Create)
+		translations.GET("", h.translation.List)
+		translations.GET("/:id", h.translation.Get)
+		translations.PATCH("/:id", h.translation.Update)
+		translations.DELETE("/:id", h.translation.Delete)
 	}
 
 	files := protected.Group("/files")
 	{
-		files.POST("", fileHandler.Create)
-		files.GET("", fileHandler.List)
-		files.GET("/:id", fileHandler.Get)
-		files.POST("/upload/image", fileHandler.UploadImage)
-		files.POST("/upload/images", fileHandler.UploadImages)
-		files.POST("/upload/doc", fileHandler.UploadDoc)
-		files.GET("/download", fileHandler.Download)
+		files.POST("", h.file.Create)
+		files.GET("", h.file.List)
+		files.GET("/:id", h.file.Get)
+		files.POST("/upload/image", h.file.UploadImage)
+		files.POST("/upload/images", h.file.UploadImages)
+		files.POST("/upload/doc", h.file.UploadDoc)
+		files.GET("/download", h.file.Download)
+	}
+}
+
+// registerAdminRoutes wires admin routes (statistics, integrations, site settings, data exports,
+// user settings, error codes).
+func registerAdminRoutes(protected *gin.RouterGroup, h *dddHandlers) {
+	h.statistics.RegisterRoutes(protected)
+
+	integrations := protected.Group("/integrations")
+	{
+		integrations.POST("", h.integration.Create)
+		integrations.GET("", h.integration.List)
+		integrations.GET("/:id", h.integration.Get)
+		integrations.PATCH("/:id", h.integration.Update)
+		integrations.DELETE("/:id", h.integration.Delete)
+	}
+
+	siteSettings := protected.Group("/site-settings")
+	{
+		siteSettings.POST("", h.siteSetting.Create)
+		siteSettings.GET("", h.siteSetting.List)
+		siteSettings.GET("/:id", h.siteSetting.Get)
+		siteSettings.PATCH("/:id", h.siteSetting.Update)
+		siteSettings.DELETE("/:id", h.siteSetting.Delete)
+	}
+
+	dataExports := protected.Group("/data-exports")
+	{
+		dataExports.POST("", h.dataExport.Create)
+		dataExports.GET("", h.dataExport.List)
+		dataExports.GET("/:id", h.dataExport.Get)
+		dataExports.PATCH("/:id", h.dataExport.Update)
+		dataExports.DELETE("/:id", h.dataExport.Delete)
 	}
 
 	userSettings := protected.Group("/user-settings")
 	{
-		userSettings.POST("", userSettingHandler.Upsert)
-		userSettings.GET("", userSettingHandler.List)
-		userSettings.DELETE("/:id", userSettingHandler.Delete)
+		userSettings.POST("", h.userSetting.Upsert)
+		userSettings.GET("", h.userSetting.List)
+		userSettings.DELETE("/:id", h.userSetting.Delete)
 	}
 
 	errorCodes := protected.Group("/error-codes")
 	{
-		errorCodes.POST("", errorCodeHandler.Create)
-		errorCodes.GET("", errorCodeHandler.List)
-		errorCodes.GET("/:id", errorCodeHandler.Get)
-		errorCodes.PATCH("/:id", errorCodeHandler.Update)
-		errorCodes.DELETE("/:id", errorCodeHandler.Delete)
+		errorCodes.POST("", h.errorCode.Create)
+		errorCodes.GET("", h.errorCode.List)
+		errorCodes.GET("/:id", h.errorCode.Get)
+		errorCodes.PATCH("/:id", h.errorCode.Update)
+		errorCodes.DELETE("/:id", h.errorCode.Delete)
 	}
 }

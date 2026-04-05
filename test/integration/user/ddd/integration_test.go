@@ -7,14 +7,14 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/shared/application"
-	shared "gct/internal/shared/domain"
-	"gct/internal/shared/infrastructure/eventbus"
-	"gct/internal/shared/infrastructure/logger"
-	"gct/internal/user"
-	"gct/internal/user/application/command"
-	"gct/internal/user/application/query"
-	"gct/internal/user/domain"
+	"gct/internal/platform/application"
+	shared "gct/internal/platform/domain"
+	"gct/internal/platform/infrastructure/eventbus"
+	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/context/iam/user"
+	"gct/internal/context/iam/user/application/command"
+	"gct/internal/context/iam/user/application/query"
+	"gct/internal/context/iam/user/domain"
 
 	"github.com/google/uuid"
 )
@@ -318,8 +318,8 @@ func TestIntegration_SignUp_SignIn_SignOut(t *testing.T) {
 
 	// Sign Out
 	err = bc.SignOut.Handle(ctx, command.SignOutCommand{
-		UserID:    result.UserID,
-		SessionID: result.SessionID,
+		UserID:    domain.UserID(result.UserID),
+		SessionID: domain.SessionID(result.SessionID),
 	})
 	if err != nil {
 		t.Fatalf("SignOut: %v", err)

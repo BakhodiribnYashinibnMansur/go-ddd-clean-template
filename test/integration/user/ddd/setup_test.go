@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"gct/config"
-	tc "gct/internal/shared/infrastructure/container"
+	tc "gct/internal/platform/infrastructure/container"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/testcontainers/testcontainers-go"
@@ -31,7 +31,7 @@ func TestMain(m *testing.M) {
 	_, b, _, _ := runtime.Caller(0)
 	rootPath := filepath.Join(filepath.Dir(b), "../../../..")
 
-	pool, container, err := tc.RunPostgresTestContainer(cfg.Database, filepath.Join(rootPath, "migrations/postgres"))
+	pool, container, err := tc.RunPostgresTestContainer(cfg.Database, filepath.Join(rootPath, "migration/postgres"))
 	if err != nil {
 		log.Fatalf("Postgres container error: %s", err)
 	}

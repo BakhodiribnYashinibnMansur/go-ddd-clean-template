@@ -3,14 +3,14 @@ package app
 import (
 	"context"
 
-	"gct/internal/errorcode"
-	"gct/internal/errorcode/application/command"
-	"gct/internal/errorcode/application/query"
-	"gct/internal/errorcode/domain"
-	"gct/internal/shared/application"
-	shareddomain "gct/internal/shared/domain"
-	apperrors "gct/internal/shared/infrastructure/errors"
-	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/context/admin/errorcode"
+	"gct/internal/context/admin/errorcode/application/command"
+	"gct/internal/context/admin/errorcode/application/query"
+	"gct/internal/context/admin/errorcode/domain"
+	"gct/internal/platform/application"
+	shareddomain "gct/internal/platform/domain"
+	apperrors "gct/internal/platform/infrastructure/errors"
+	"gct/internal/platform/infrastructure/logger"
 )
 
 // initErrorCodes loads dynamic error codes from the database and configures the error package.

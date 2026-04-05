@@ -133,7 +133,7 @@ linters:
     # - tagliatelle    # Struct tag naming flexibility needed
   settings:
     cyclop:
-      max-complexity: 10
+      max-complexity: 8
       package-average: 0.0
     dupl:
       threshold: 100
@@ -276,8 +276,8 @@ linters:
           msg: "do not panic"
       exclude-godoc-examples: false
     funlen:
-      lines: 100
-      statements: 50
+      lines: 60
+      statements: 40
       ignore-comments: true
     gci:
       sections:
@@ -287,7 +287,7 @@ linters:
       skip-generated: true
       custom-order: true
     gocognit:
-      min-complexity: 20
+      min-complexity: 15
     goconst:
       min-len: 3
       min-occurrences: 3
@@ -313,7 +313,7 @@ linters:
         rangeValCopy:
           sizeThreshold: 128
     gocyclo:
-      min-complexity: 15
+      min-complexity: 10
     godot:
       scope: declarations
       capital: false
@@ -411,7 +411,7 @@ linters:
     nakedret:
       max-func-lines: 30
     nestif:
-      min-complexity: 4
+      min-complexity: 3
     nolintlint:
       allow-unused: false
       require-explanation: true
@@ -562,6 +562,10 @@ linters:
           - errcheck
           - dupl
           - gosec
+          - funlen
+          - gocognit
+          - cyclop
+          - maintidx
       - path-except: _test\.go
         linters:
           - forbidigo

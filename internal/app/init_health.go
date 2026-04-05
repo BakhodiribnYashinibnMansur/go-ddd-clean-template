@@ -20,11 +20,18 @@ type healthDeps struct {
 var startTime = time.Now()
 
 func registerHealthRoutes(r *gin.Engine, deps healthDeps) {
-	r.GET("/health", handleHealth)
-	r.GET("/ready", handleReady(deps))
+	// K8s-style health endpoints:
+	//   /health/live  — liveness: 200 if process is up, no dependency checks.
+	//                   K8s restarts the pod if this fails.
+	//   /health/ready — readiness: checks postgres/redis/asynq. K8s removes
+	//                   the pod from the load balancer if this fails.
+	//   /health       — backward-compat alias for liveness.
+	r.GET("/health", handleLive)
+	r.GET("/health/live", handleLive)
+	r.GET("/health/ready", handleReady(deps))
 }
 
-func handleHealth(c *gin.Context) {
+func handleLive(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"status": "ok",
 		"uptime": time.Since(startTime).String(),
@@ -39,51 +46,9 @@ func handleReady(deps healthDeps) gin.HandlerFunc {
 		checks := make(map[string]any)
 		allOK := true
 
-		// PostgreSQL
-		if deps.pgPool != nil {
-			if err := deps.pgPool.Ping(ctx); err != nil {
-				checks["postgres"] = gin.H{"status": "unhealthy", "error": err.Error()}
-				allOK = false
-			} else {
-				stat := deps.pgPool.Stat()
-				checks["postgres"] = gin.H{
-					"status":           "ok",
-					"total_conns":      stat.TotalConns(),
-					"idle_conns":       stat.IdleConns(),
-					"acquired_conns":   stat.AcquiredConns(),
-					"max_conns":        stat.MaxConns(),
-				}
-			}
-		} else {
-			checks["postgres"] = gin.H{"status": "not configured"}
-		}
-
-		// Redis
-		if deps.redis != nil {
-			if err := deps.redis.Ping(ctx).Err(); err != nil {
-				checks["redis"] = gin.H{"status": "unhealthy", "error": err.Error()}
-				allOK = false
-			} else {
-				poolStats := deps.redis.PoolStats()
-				checks["redis"] = gin.H{
-					"status":     "ok",
-					"total_conns": poolStats.TotalConns,
-					"idle_conns":  poolStats.IdleConns,
-					"stale_conns": poolStats.StaleConns,
-					"hits":        poolStats.Hits,
-					"misses":      poolStats.Misses,
-				}
-			}
-		} else {
-			checks["redis"] = gin.H{"status": "not configured"}
-		}
-
-		// Asynq (via Redis ping on its address)
-		if deps.asynqAddr != "" {
-			checks["asynq"] = gin.H{"status": "ok", "addr": deps.asynqAddr}
-		} else {
-			checks["asynq"] = gin.H{"status": "not configured"}
-		}
+		allOK = checkPostgres(ctx, deps, checks) && allOK
+		allOK = checkRedis(ctx, deps, checks) && allOK
+		checks["asynq"] = checkAsynq(deps)
 
 		status := "ok"
 		statusCode := http.StatusOK
@@ -99,4 +64,57 @@ func handleReady(deps healthDeps) gin.HandlerFunc {
 			"uptime_s": fmt.Sprintf("%.0f", time.Since(startTime).Seconds()),
 		})
 	}
+}
+
+// checkPostgres probes the Postgres pool and records its status in checks.
+// Returns true if the component is healthy or not configured.
+func checkPostgres(ctx context.Context, deps healthDeps, checks map[string]any) bool {
+	if deps.pgPool == nil {
+		checks["postgres"] = gin.H{"status": "not configured"}
+		return true
+	}
+	if err := deps.pgPool.Ping(ctx); err != nil {
+		checks["postgres"] = gin.H{"status": "unhealthy", "error": err.Error()}
+		return false
+	}
+	stat := deps.pgPool.Stat()
+	checks["postgres"] = gin.H{
+		"status":         "ok",
+		"total_conns":    stat.TotalConns(),
+		"idle_conns":     stat.IdleConns(),
+		"acquired_conns": stat.AcquiredConns(),
+		"max_conns":      stat.MaxConns(),
+	}
+	return true
+}
+
+// checkRedis probes the Redis client and records its status in checks.
+// Returns true if the component is healthy or not configured.
+func checkRedis(ctx context.Context, deps healthDeps, checks map[string]any) bool {
+	if deps.redis == nil {
+		checks["redis"] = gin.H{"status": "not configured"}
+		return true
+	}
+	if err := deps.redis.Ping(ctx).Err(); err != nil {
+		checks["redis"] = gin.H{"status": "unhealthy", "error": err.Error()}
+		return false
+	}
+	poolStats := deps.redis.PoolStats()
+	checks["redis"] = gin.H{
+		"status":      "ok",
+		"total_conns": poolStats.TotalConns,
+		"idle_conns":  poolStats.IdleConns,
+		"stale_conns": poolStats.StaleConns,
+		"hits":        poolStats.Hits,
+		"misses":      poolStats.Misses,
+	}
+	return true
+}
+
+// checkAsynq reports the configured Asynq address.
+func checkAsynq(deps healthDeps) gin.H {
+	if deps.asynqAddr == "" {
+		return gin.H{"status": "not configured"}
+	}
+	return gin.H{"status": "ok", "addr": deps.asynqAddr}
 }

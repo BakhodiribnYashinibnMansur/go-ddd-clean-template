@@ -4,12 +4,12 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/shared/infrastructure/eventbus"
-	"gct/internal/shared/infrastructure/logger"
-	"gct/internal/usersetting"
-	"gct/internal/usersetting/application/command"
-	"gct/internal/usersetting/application/query"
-	"gct/internal/usersetting/domain"
+	"gct/internal/platform/infrastructure/eventbus"
+	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/context/iam/usersetting"
+	"gct/internal/context/iam/usersetting/application/command"
+	"gct/internal/context/iam/usersetting/application/query"
+	"gct/internal/context/iam/usersetting/domain"
 	"gct/test/integration/common/setup"
 
 	"github.com/google/uuid"

@@ -1,6 +1,18 @@
 // Package arch enforces DDD bounded context architecture rules at test time.
-// These tests complement the depguard linter rules in .golangci.yml and
-// provide a single source of truth for cross-BC isolation and layering.
+// These tests are the single source of truth for cross-BC isolation, DDD
+// layering, and platform/contracts integrity. Run with `go test ./test/arch/...`.
+//
+// Architecture:
+//
+//	internal/
+//	├── app/          — composition root (may import anything)
+//	├── contexts/
+//	│   ├── iam/{user,authz,session,audit,usersetting}/
+//	│   ├── content/{file,notification,announcement,translation}/
+//	│   ├── admin/{errorcode,featureflag,sitesetting,integration,dataexport}/
+//	│   └── ops/{ratelimit,iprule,metric,systemerror,dashboard}/
+//	├── contracts/    — Published Language (events/) + ACL ports/
+//	└── platform/     — infrastructure & shared kernel (no BC deps allowed)
 package arch_test
 
 import (
@@ -16,11 +28,15 @@ import (
 const (
 	modulePath  = "gct"
 	internalDir = "internal"
-	sharedBC    = "shared"
-	// appBC is the composition root — it wires all BCs together via DI.
-	// By definition it is allowed to depend on every other BC.
-	appBC = "app"
+	// Top-level non-BC areas under internal/.
+	appDir       = "app"
+	platformDir  = "platform"
+	contractsDir = "contract"
+	contextsDir  = "context"
 )
+
+// subdomains groups BCs by Evans' subdomain classification.
+var subdomains = []string{"iam", "content", "admin", "ops"}
 
 // layer represents a DDD layer within a bounded context.
 type layer string
@@ -32,47 +48,21 @@ const (
 	layerInterfaces     layer = "interfaces"
 )
 
-// layerRules defines which layers each layer is allowed to depend on
-// WITHIN the same bounded context. Cross-BC imports are handled separately.
+// layerRules defines which layers each layer may depend on WITHIN the same BC.
+// Domain is pure; application depends only on domain; infrastructure and
+// interfaces may depend on domain + application.
 var layerRules = map[layer]map[layer]bool{
-	layerDomain: {
-		// domain depends on nothing inside the BC
-	},
-	layerApplication: {
-		layerDomain: true,
-	},
-	layerInfrastructure: {
-		layerDomain:      true,
-		layerApplication: true,
-	},
-	layerInterfaces: {
-		layerDomain:      true,
-		layerApplication: true,
-	},
+	layerDomain:         {},
+	layerApplication:    {layerDomain: true},
+	layerInfrastructure: {layerDomain: true, layerApplication: true},
+	layerInterfaces:     {layerDomain: true, layerApplication: true},
 }
 
-// knownViolations lists existing architecture violations that are tolerated
-// until fixed. Each entry is "source_file -> imported_package". DO NOT add
-// new entries without team approval. Remove entries as they are fixed.
-var knownViolations = map[string]string{
-	// TODO: move audit job handlers out of shared infrastructure into audit BC
-	"internal/shared/infrastructure/asynq/handlers.go": "gct/internal/audit",
-	// TODO: move cache reads behind a domain-defined port
-	"internal/featureflag/application/query/evaluate.go": "gct/internal/featureflag/infrastructure/cache",
-	// TODO: replace direct user query with an authz-owned port + event sync
-	"internal/authz/interfaces/http/middleware/authz.go": "gct/internal/user/application/query",
-}
-
-// isKnownViolation reports whether a file->import pair is an accepted exception.
-func isKnownViolation(relFile, imp string) bool {
-	prefix, ok := knownViolations[filepath.ToSlash(relFile)]
-	return ok && strings.HasPrefix(imp, prefix)
-}
-
-// forbiddenInDomain lists external packages that MUST NOT appear in domain layer.
-// Domain must remain pure business logic.
+// forbiddenInDomain lists external packages that must never appear in a
+// domain layer. Domain must remain pure business logic.
 var forbiddenInDomain = []string{
 	"github.com/labstack/echo",
+	"github.com/gin-gonic/gin",
 	"gorm.io/gorm",
 	"github.com/jackc/pgx",
 	"github.com/redis/go-redis",
@@ -82,7 +72,7 @@ var forbiddenInDomain = []string{
 	"database/sql",
 }
 
-// repoRoot finds the repository root by walking up from the test file.
+// repoRoot walks up from cwd to find go.mod.
 func repoRoot(t *testing.T) string {
 	t.Helper()
 	wd, err := filepath.Abs(".")
@@ -98,23 +88,40 @@ func repoRoot(t *testing.T) string {
 	return ""
 }
 
-// boundedContexts lists all BCs under internal/, excluding shared.
-func boundedContexts(t *testing.T, root string) []string {
+// bcPath represents a bounded context as "<subdomain>/<name>", e.g. "iam/user".
+type bcPath struct {
+	subdomain string
+	name      string
+}
+
+func (b bcPath) importPrefix() string {
+	return modulePath + "/" + internalDir + "/" + contextsDir + "/" + b.subdomain + "/" + b.name
+}
+
+func (b bcPath) dir(root string) string {
+	return filepath.Join(root, internalDir, contextsDir, b.subdomain, b.name)
+}
+
+// boundedContexts enumerates every BC under contexts/<subdomain>/<bc>/.
+func boundedContexts(t *testing.T, root string) []bcPath {
 	t.Helper()
-	entries, err := os.ReadDir(filepath.Join(root, internalDir))
-	if err != nil {
-		t.Fatalf("read internal dir: %v", err)
-	}
-	var bcs []string
-	for _, e := range entries {
-		if e.IsDir() && e.Name() != sharedBC {
-			bcs = append(bcs, e.Name())
+	var bcs []bcPath
+	for _, sd := range subdomains {
+		sdDir := filepath.Join(root, internalDir, contextsDir, sd)
+		entries, err := os.ReadDir(sdDir)
+		if err != nil {
+			continue // subdomain may be empty
+		}
+		for _, e := range entries {
+			if e.IsDir() {
+				bcs = append(bcs, bcPath{subdomain: sd, name: e.Name()})
+			}
 		}
 	}
 	return bcs
 }
 
-// parseImports returns the import paths of a Go file.
+// parseImports returns import paths of a Go file.
 func parseImports(t *testing.T, path string) []string {
 	t.Helper()
 	fset := token.NewFileSet()
@@ -129,7 +136,7 @@ func parseImports(t *testing.T, path string) []string {
 	return imports
 }
 
-// walkGoFiles invokes fn for every non-test .go file under dir.
+// walkGoFiles invokes fn for every .go file under dir (tests included).
 func walkGoFiles(t *testing.T, dir string, fn func(path string)) {
 	t.Helper()
 	err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
@@ -139,7 +146,7 @@ func walkGoFiles(t *testing.T, dir string, fn func(path string)) {
 		if d.IsDir() {
 			return nil
 		}
-		if !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
+		if !strings.HasSuffix(path, ".go") {
 			return nil
 		}
 		fn(path)
@@ -150,84 +157,76 @@ func walkGoFiles(t *testing.T, dir string, fn func(path string)) {
 	}
 }
 
-// detectLayer extracts the layer name from a path under internal/<bc>/<layer>/...
-// Returns empty string if path is not within a layered BC.
+// detectLayer extracts BC + layer from a path like
+// internal/contexts/iam/user/domain/... → ("iam/user", "domain").
 func detectLayer(rel string) (bc string, l layer) {
 	parts := strings.Split(filepath.ToSlash(rel), "/")
-	if len(parts) < 3 || parts[0] != internalDir {
+	// internal / contexts / <subdomain> / <bc> / <layer> / ...
+	if len(parts) < 6 || parts[0] != internalDir || parts[1] != contextsDir {
 		return "", ""
 	}
-	return parts[1], layer(parts[2])
+	return parts[2] + "/" + parts[3], layer(parts[4])
 }
 
-// TestBoundedContextIsolation verifies no BC imports from another BC except shared.
+// TestBoundedContextIsolation asserts no BC imports another BC. All cross-BC
+// communication must flow through gct/internal/contracts.
 func TestBoundedContextIsolation(t *testing.T) {
 	t.Parallel()
 	root := repoRoot(t)
 	bcs := boundedContexts(t, root)
-	bcSet := make(map[string]struct{}, len(bcs))
+
+	// Build a set of all BC import prefixes for quick lookup.
+	bcPrefixes := make(map[string]bcPath, len(bcs))
 	for _, b := range bcs {
-		bcSet[b] = struct{}{}
+		bcPrefixes[b.importPrefix()] = b
 	}
 
 	for _, bc := range bcs {
-		if bc == appBC {
-			continue // composition root — allowed to import all BCs for DI wiring
-		}
-		bcDir := filepath.Join(root, internalDir, bc)
-		walkGoFiles(t, bcDir, func(path string) {
+		self := bc.importPrefix()
+		walkGoFiles(t, bc.dir(root), func(path string) {
 			rel, _ := filepath.Rel(root, path)
 			for _, imp := range parseImports(t, path) {
-				if !strings.HasPrefix(imp, modulePath+"/"+internalDir+"/") {
-					continue
-				}
-				// extract the BC of the import
-				tail := strings.TrimPrefix(imp, modulePath+"/"+internalDir+"/")
-				impBC := strings.SplitN(tail, "/", 2)[0]
-				if impBC == sharedBC || impBC == bc {
-					continue
-				}
-				if _, isBC := bcSet[impBC]; isBC {
-					if isKnownViolation(rel, imp) {
+				// Does this import belong to a different BC?
+				for prefix, other := range bcPrefixes {
+					if prefix == self {
 						continue
 					}
-					t.Errorf("cross-BC import forbidden:\n  file: %s\n  BC:   %s\n  imp:  %s\n  fix:  route through gct/internal/shared or use integration events",
-						rel, bc, imp)
+					if imp == prefix || strings.HasPrefix(imp, prefix+"/") {
+						t.Errorf("cross-BC import forbidden:\n  file: %s\n  BC:   %s\n  imp:  %s\n  fix:  route through gct/internal/contracts (events or ports)",
+							rel, bc.importPrefix(), imp)
+						_ = other
+					}
 				}
 			}
 		})
 	}
 }
 
-// TestLayerDependencies verifies DDD layering rules within each BC.
+// TestLayerDependencies verifies intra-BC DDD layer discipline.
 func TestLayerDependencies(t *testing.T) {
 	t.Parallel()
 	root := repoRoot(t)
 	bcs := boundedContexts(t, root)
 
 	for _, bc := range bcs {
-		bcDir := filepath.Join(root, internalDir, bc)
-		walkGoFiles(t, bcDir, func(path string) {
+		walkGoFiles(t, bc.dir(root), func(path string) {
 			rel, _ := filepath.Rel(root, path)
 			_, currentLayer := detectLayer(rel)
 			allowed, known := layerRules[currentLayer]
 			if !known {
 				return
 			}
+			selfPrefix := bc.importPrefix() + "/"
 			for _, imp := range parseImports(t, path) {
-				prefix := modulePath + "/" + internalDir + "/" + bc + "/"
-				if !strings.HasPrefix(imp, prefix) {
+				if !strings.HasPrefix(imp, selfPrefix) {
 					continue
 				}
-				tail := strings.TrimPrefix(imp, prefix)
+				tail := strings.TrimPrefix(imp, selfPrefix)
 				impLayer := layer(strings.SplitN(tail, "/", 2)[0])
 				if impLayer == currentLayer {
 					continue
 				}
 				if !allowed[impLayer] {
-					if isKnownViolation(rel, imp) {
-						continue
-					}
 					t.Errorf("DDD layer violation:\n  file: %s\n  from: %s layer\n  to:   %s layer\n  imp:  %s",
 						rel, currentLayer, impLayer, imp)
 				}
@@ -243,11 +242,14 @@ func TestDomainPurity(t *testing.T) {
 	bcs := boundedContexts(t, root)
 
 	for _, bc := range bcs {
-		domainDir := filepath.Join(root, internalDir, bc, string(layerDomain))
+		domainDir := filepath.Join(bc.dir(root), string(layerDomain))
 		if _, err := os.Stat(domainDir); err != nil {
 			continue
 		}
 		walkGoFiles(t, domainDir, func(path string) {
+			if strings.HasSuffix(path, "_test.go") {
+				return
+			}
 			rel, _ := filepath.Rel(root, path)
 			for _, imp := range parseImports(t, path) {
 				for _, forbidden := range forbiddenInDomain {
@@ -261,27 +263,85 @@ func TestDomainPurity(t *testing.T) {
 	}
 }
 
-// TestSharedDomainHasNoBCDeps verifies shared kernel does not depend on any BC.
-func TestSharedDomainHasNoBCDeps(t *testing.T) {
+// TestPlatformHasNoBCDeps verifies the platform layer (infrastructure / shared
+// kernel) does not reach into any bounded context.
+func TestPlatformHasNoBCDeps(t *testing.T) {
 	t.Parallel()
 	root := repoRoot(t)
-	sharedDir := filepath.Join(root, internalDir, sharedBC)
+	platformPath := filepath.Join(root, internalDir, platformDir)
 
-	walkGoFiles(t, sharedDir, func(path string) {
+	bcImportPrefix := modulePath + "/" + internalDir + "/" + contextsDir + "/"
+	walkGoFiles(t, platformPath, func(path string) {
 		rel, _ := filepath.Rel(root, path)
 		for _, imp := range parseImports(t, path) {
-			if !strings.HasPrefix(imp, modulePath+"/"+internalDir+"/") {
-				continue
-			}
-			tail := strings.TrimPrefix(imp, modulePath+"/"+internalDir+"/")
-			impBC := strings.SplitN(tail, "/", 2)[0]
-			if impBC != sharedBC {
-				if isKnownViolation(rel, imp) {
-					continue
-				}
-				t.Errorf("shared kernel must not depend on BC:\n  file: %s\n  imp:  %s",
+			if strings.HasPrefix(imp, bcImportPrefix) {
+				t.Errorf("platform must not depend on a bounded context:\n  file: %s\n  imp:  %s",
 					rel, imp)
 			}
 		}
 	})
+}
+
+// TestContractsHaveNoBCDeps verifies contracts/ depends only on platform/.
+// Contracts are the stable Published Language + ACL surface; they must not
+// couple back to any BC implementation.
+func TestContractsHaveNoBCDeps(t *testing.T) {
+	t.Parallel()
+	root := repoRoot(t)
+	contractsPath := filepath.Join(root, internalDir, contractsDir)
+
+	bcImportPrefix := modulePath + "/" + internalDir + "/" + contextsDir + "/"
+	walkGoFiles(t, contractsPath, func(path string) {
+		rel, _ := filepath.Rel(root, path)
+		for _, imp := range parseImports(t, path) {
+			if strings.HasPrefix(imp, bcImportPrefix) {
+				t.Errorf("contracts must not depend on a bounded context:\n  file: %s\n  imp:  %s",
+					rel, imp)
+			}
+		}
+	})
+}
+
+// TestBCsDependOnlyOnPlatformAndContracts asserts that any non-self
+// gct/internal import a BC makes resolves to platform/ or contracts/.
+func TestBCsDependOnlyOnPlatformAndContracts(t *testing.T) {
+	t.Parallel()
+	root := repoRoot(t)
+	bcs := boundedContexts(t, root)
+
+	allowedInternalPrefixes := []string{
+		modulePath + "/" + internalDir + "/" + platformDir + "/",
+		modulePath + "/" + internalDir + "/" + platformDir + `"`,
+		modulePath + "/" + internalDir + "/" + contractsDir + "/",
+		modulePath + "/" + internalDir + "/" + contractsDir + `"`,
+	}
+
+	for _, bc := range bcs {
+		self := bc.importPrefix()
+		walkGoFiles(t, bc.dir(root), func(path string) {
+			rel, _ := filepath.Rel(root, path)
+			for _, imp := range parseImports(t, path) {
+				if !strings.HasPrefix(imp, modulePath+"/"+internalDir+"/") {
+					continue
+				}
+				// Own BC is fine.
+				if imp == self || strings.HasPrefix(imp, self+"/") {
+					continue
+				}
+				// platform/ and contracts/ are allowed.
+				ok := false
+				for _, p := range allowedInternalPrefixes {
+					needle := strings.TrimSuffix(strings.TrimSuffix(p, "/"), `"`)
+					if imp == needle || strings.HasPrefix(imp, needle+"/") {
+						ok = true
+						break
+					}
+				}
+				if !ok {
+					t.Errorf("BC may only depend on platform/ or contracts/:\n  file: %s\n  imp:  %s",
+						rel, imp)
+				}
+			}
+		})
+	}
 }

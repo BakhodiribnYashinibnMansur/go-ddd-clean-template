@@ -4,12 +4,12 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/metric"
-	"gct/internal/metric/application/command"
-	"gct/internal/metric/application/query"
-	"gct/internal/metric/domain"
-	"gct/internal/shared/infrastructure/eventbus"
-	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/context/ops/metric"
+	"gct/internal/context/ops/metric/application/command"
+	"gct/internal/context/ops/metric/application/query"
+	"gct/internal/context/ops/metric/domain"
+	"gct/internal/platform/infrastructure/eventbus"
+	"gct/internal/platform/infrastructure/logger"
 	"gct/test/integration/common/setup"
 )
 

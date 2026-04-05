@@ -6,11 +6,12 @@ import (
 	"fmt"
 
 	"gct/config"
-	auditcmd "gct/internal/audit/application/command"
-	"gct/internal/seeder"
-	"gct/internal/shared/infrastructure/asynq"
-	"gct/internal/shared/infrastructure/asynq/tasks"
-	"gct/internal/shared/infrastructure/logger"
+	auditcmd "gct/internal/context/iam/audit/application/command"
+	auditasynq "gct/internal/context/iam/audit/infrastructure/asynq"
+	"gct/internal/platform/seeder"
+	"gct/internal/platform/infrastructure/asynq"
+	"gct/internal/platform/infrastructure/asynq/tasks"
+	"gct/internal/platform/infrastructure/logger"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	hibikenasynq "github.com/hibiken/asynq"
@@ -37,10 +38,13 @@ func initAsynqWorker(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool
 	asynqWorker := asynq.NewWorker(cfg.Asynq, l)
 
 	// Setup task handlers (Email, Notifications, Image processing).
-	handlers := asynq.NewHandlers(l, createAuditLog)
+	handlers := asynq.NewHandlers(l)
 	asynqWorker.RegisterHandler(asynq.TypeImageResize, handlers.HandleImageResize)
 	asynqWorker.RegisterHandler(asynq.TypePushNotification, handlers.HandlePushNotification)
-	asynqWorker.RegisterHandler(asynq.TypeAuditLog, handlers.HandleAuditLog)
+
+	// BC-owned handlers register themselves through the composition root.
+	auditTaskHandler := auditasynq.NewTaskHandler(l, createAuditLog)
+	asynqWorker.RegisterHandler(auditasynq.TaskType, auditTaskHandler.Handle)
 
 	// External service task handlers (Firebase, Telegram).
 	asynqWorker.RegisterExternalHandlers(fcmSender, tgSender)

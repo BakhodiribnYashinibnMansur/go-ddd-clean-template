@@ -14,33 +14,34 @@ import (
 	"time"
 
 	"gct/config"
-	"gct/internal/shared/domain/consts"
-	apperrors "gct/internal/shared/infrastructure/errors"
-	sharedmw "gct/internal/shared/infrastructure/middleware"
+	"gct/internal/platform/domain/consts"
+	apperrors "gct/internal/platform/infrastructure/errors"
+	sharedmw "gct/internal/platform/infrastructure/middleware"
 
 	// DDD BC middleware
-	auditmw "gct/internal/audit/interfaces/http/middleware"
-	authzmw "gct/internal/authz/interfaces/http/middleware"
-	integrationmw "gct/internal/integration/interfaces/http/middleware"
-	syserrmw "gct/internal/systemerror/interfaces/http/middleware"
-	"gct/internal/user/application/command"
-	usermw "gct/internal/user/interfaces/http/middleware"
+	auditmw "gct/internal/context/iam/audit/interfaces/http/middleware"
+	authzmw "gct/internal/context/iam/authz/interfaces/http/middleware"
+	integrationmw "gct/internal/context/admin/integration/interfaces/http/middleware"
+	syserrmw "gct/internal/context/ops/systemerror/interfaces/http/middleware"
+	"gct/internal/context/iam/user/application/command"
+	usermw "gct/internal/context/iam/user/interfaces/http/middleware"
+	userport "gct/internal/context/iam/user/interfaces/port"
 
-	"gct/internal/shared/application"
-	"gct/internal/shared/infrastructure/asynq"
-	"gct/internal/shared/infrastructure/db/postgres"
-	redispkg "gct/internal/shared/infrastructure/db/redis"
-	"gct/internal/shared/infrastructure/eventbus"
-	"gct/internal/shared/infrastructure/httpclient"
-	"gct/internal/shared/infrastructure/logger"
-	"gct/internal/shared/infrastructure/metrics"
-	"gct/internal/shared/infrastructure/metrics/latency"
-	"gct/internal/shared/infrastructure/pubsub"
-	"gct/internal/shared/infrastructure/reqlog"
-	"gct/internal/shared/infrastructure/sse"
-	jwtpkg "gct/internal/shared/infrastructure/security/jwt"
-	httpserver "gct/internal/shared/infrastructure/server/http"
-	"gct/internal/shared/infrastructure/tracing"
+	"gct/internal/platform/application"
+	"gct/internal/platform/infrastructure/asynq"
+	"gct/internal/platform/infrastructure/db/postgres"
+	redispkg "gct/internal/platform/infrastructure/db/redis"
+	"gct/internal/platform/infrastructure/eventbus"
+	"gct/internal/platform/infrastructure/httpclient"
+	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/platform/infrastructure/metrics"
+	"gct/internal/platform/infrastructure/metrics/latency"
+	"gct/internal/platform/infrastructure/pubsub"
+	"gct/internal/platform/infrastructure/reqlog"
+	"gct/internal/platform/infrastructure/sse"
+	jwtpkg "gct/internal/platform/infrastructure/security/jwt"
+	httpserver "gct/internal/platform/infrastructure/server/http"
+	"gct/internal/platform/infrastructure/tracing"
 
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
@@ -155,9 +156,18 @@ func Run(cfg *config.Config) {
 		apiLogFlusher.Start()
 		l.Infoc(ctx, "External API log persistence enabled",
 			"flush_interval", cfg.Log.FlushInterval,
+			"slow_threshold_ms", cfg.Log.APILogSlowThresholdMs,
+			"success_sample_rate", cfg.Log.APILogSuccessSampleRate,
 		)
 	}
-	_ = apiLogSink // injected into downstream HTTP clients as they're wired up
+	// Thresholds controlling when SUCCESSFUL outgoing calls are persisted
+	// alongside failures. Injected into downstream HTTP clients as they are
+	// wired up (see telegram.WithAPILogThresholds etc).
+	apiLogSlowThreshold := time.Duration(cfg.Log.APILogSlowThresholdMs) * time.Millisecond
+	apiLogSuccessSampleRate := cfg.Log.APILogSuccessSampleRate
+	_ = apiLogSink               // injected into downstream HTTP clients as they're wired up
+	_ = apiLogSlowThreshold      // injected into downstream HTTP clients as they're wired up
+	_ = apiLogSuccessSampleRate  // injected into downstream HTTP clients as they're wired up
 
 	// 2d. Incoming HTTP request/response logging — captures every request
 	// processed by the Gin engine and persists it to http_request_logs.
@@ -315,6 +325,13 @@ func Run(cfg *config.Config) {
 	// 4.1 Initialize Error Codes
 	initErrorCodes(ctx, dddBCs.ErrorCode, eventBusInstance, l)
 
+	// 4.2 Register BC subscribers (event-driven cross-BC coupling).
+	// Each BC owns its subscriber wiring; failures are fatal because a
+	// missing subscription breaks an event-driven workflow silently.
+	if err := dddBCs.Audit.RegisterSubscribers(eventBusInstance); err != nil {
+		l.Fatalw("failed to register audit subscribers", "error", err)
+	}
+
 	// 5. Integration Cache
 	if err := dddBCs.Integration.Cache.InitCache(ctx); err != nil {
 		l.Errorc(ctx, "Failed to initialize integration cache", "error", err)
@@ -452,21 +469,8 @@ func initRouter(cfg *config.Config, bcs *DDDBoundedContexts, redisClient *redis.
 
 	handler := gin.New()
 
-	// === BC-specific middleware (injected into shared setup) ===
-	sysErrMW := syserrmw.NewSystemErrorMiddleware(bcs.SystemError.CreateSystemError, l)
-	auditMW := auditmw.NewAuditMiddleware(bcs.Audit.CreateEndpointHistory, bcs.Audit.CreateAuditLog, l)
-	sigMW := integrationmw.NewSignatureMiddleware(bcs.Integration.ValidateAPIKey, cfg)
-
-	bcMW := &sharedmw.BCMiddleware{
-		Recovery:     sysErrMW.Recovery(),
-		Persist5xx:   sysErrMW.Persist5xx(),
-		AuditHistory: auditMW.EndpointHistory(),
-		AuditChange:  auditMW.ChangeAudit(),
-		Signature:    sigMW.Validate(),
-	}
-
-	// === Global shared middleware ===
-	sharedmw.Setup(handler, cfg, redisClient, bcMW, latencyTracker, reqLogSink, l)
+	// === Global shared middleware (with BC-specific middleware injected) ===
+	sharedmw.Setup(handler, cfg, redisClient, buildBCMiddleware(bcs, cfg, l), latencyTracker, reqLogSink, l)
 
 	// === Infrastructure routes (swagger, health, static) ===
 	var metricsHandler http.Handler
@@ -476,22 +480,16 @@ func initRouter(cfg *config.Config, bcs *DDDBoundedContexts, redisClient *redis.
 	setupInfraRoutes(handler, cfg, pg.Pool, redisClient, metricsHandler, nil, latencyTracker)
 
 	// === Health check routes ===
-	asynqAddr := ""
-	if cfg.Asynq.Enabled {
-		asynqAddr = cfg.Asynq.RedisAddr
-		if asynqAddr == "" {
-			asynqAddr = cfg.Redis.Addr()
-		}
-	}
 	registerHealthRoutes(handler, healthDeps{
 		pgPool:    pg.Pool,
 		redis:     redisClient,
-		asynqAddr: asynqAddr,
+		asynqAddr: resolveAsynqAddr(cfg),
 	})
 
 	// === DDD API routes ===
 	authMW := usermw.NewAuthMiddleware(bcs.User.FindSession, bcs.User.FindUserForAuth, cfg, l)
-	authzMiddleware := authzmw.NewAuthzMiddleware(bcs.Authz.CheckAccess, bcs.User.FindUserForAuth, l)
+	authUserLookup := userport.NewAuthLookupAdapter(bcs.User.FindUserForAuth)
+	authzMiddleware := authzmw.NewAuthzMiddleware(bcs.Authz.CheckAccess, authUserLookup, l)
 	csrfMW := sharedmw.HybridMiddleware(l, consts.CookieCsrfToken)
 
 	// Error dashboard (admin API)
@@ -507,6 +505,31 @@ func initRouter(cfg *config.Config, bcs *DDDBoundedContexts, redisClient *redis.
 	}
 
 	return handler
+}
+
+// buildBCMiddleware assembles the bounded-context-specific middleware injected into the shared setup.
+func buildBCMiddleware(bcs *DDDBoundedContexts, cfg *config.Config, l logger.Log) *sharedmw.BCMiddleware {
+	sysErrMW := syserrmw.NewSystemErrorMiddleware(bcs.SystemError.CreateSystemError, l)
+	auditMW := auditmw.NewAuditMiddleware(bcs.Audit.CreateEndpointHistory, bcs.Audit.CreateAuditLog, l)
+	sigMW := integrationmw.NewSignatureMiddleware(bcs.Integration.ValidateAPIKey, cfg)
+	return &sharedmw.BCMiddleware{
+		Recovery:     sysErrMW.Recovery(),
+		Persist5xx:   sysErrMW.Persist5xx(),
+		AuditHistory: auditMW.EndpointHistory(),
+		AuditChange:  auditMW.ChangeAudit(),
+		Signature:    sigMW.Validate(),
+	}
+}
+
+// resolveAsynqAddr returns the Asynq Redis address, falling back to the shared Redis address.
+func resolveAsynqAddr(cfg *config.Config) string {
+	if !cfg.Asynq.Enabled {
+		return ""
+	}
+	if cfg.Asynq.RedisAddr != "" {
+		return cfg.Asynq.RedisAddr
+	}
+	return cfg.Redis.Addr()
 }
 
 // startServer converts the port string and launches the listener in a background goroutine.

@@ -4,12 +4,12 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/dataexport"
-	"gct/internal/dataexport/application/command"
-	"gct/internal/dataexport/application/query"
-	"gct/internal/dataexport/domain"
-	"gct/internal/shared/infrastructure/eventbus"
-	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/context/admin/dataexport"
+	"gct/internal/context/admin/dataexport/application/command"
+	"gct/internal/context/admin/dataexport/application/query"
+	"gct/internal/context/admin/dataexport/domain"
+	"gct/internal/platform/infrastructure/eventbus"
+	"gct/internal/platform/infrastructure/logger"
 	"gct/test/integration/common/setup"
 
 	"github.com/google/uuid"

@@ -5,14 +5,15 @@ import (
 	"net/http/httptest"
 
 	"gct/internal/app"
-	authzmw "gct/internal/authz/interfaces/http/middleware"
-	"gct/internal/shared/domain/consts"
-	sharedmw "gct/internal/shared/infrastructure/middleware"
-	"gct/internal/shared/infrastructure/eventbus"
-	"gct/internal/shared/infrastructure/logger"
-	jwtpkg "gct/internal/shared/infrastructure/security/jwt"
-	"gct/internal/user/application/command"
-	usermw "gct/internal/user/interfaces/http/middleware"
+	authzmw "gct/internal/context/iam/authz/interfaces/http/middleware"
+	"gct/internal/platform/domain/consts"
+	sharedmw "gct/internal/platform/infrastructure/middleware"
+	"gct/internal/platform/infrastructure/eventbus"
+	"gct/internal/platform/infrastructure/logger"
+	jwtpkg "gct/internal/platform/infrastructure/security/jwt"
+	"gct/internal/context/iam/user/application/command"
+	usermw "gct/internal/context/iam/user/interfaces/http/middleware"
+	userport "gct/internal/context/iam/user/interfaces/port"
 	"gct/test/e2e/common/setup"
 
 	"github.com/gin-gonic/gin"
@@ -47,7 +48,7 @@ func startTestServer() *httptest.Server {
 
 	// DDD auth/authz middleware
 	authMW := usermw.NewAuthMiddleware(bcs.User.FindSession, bcs.User.FindUserForAuth, setup.TestCfg, l)
-	authzMiddleware := authzmw.NewAuthzMiddleware(bcs.Authz.CheckAccess, bcs.User.FindUserForAuth, l)
+	authzMiddleware := authzmw.NewAuthzMiddleware(bcs.Authz.CheckAccess, userport.NewAuthLookupAdapter(bcs.User.FindUserForAuth), l)
 	csrfMW := sharedmw.HybridMiddleware(l, consts.CookieCsrfToken)
 
 	app.RegisterDDDRoutes(handler, bcs, authMW.AuthClientAccess, authzMiddleware.Authz, csrfMW, l)

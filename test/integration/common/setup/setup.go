@@ -17,9 +17,9 @@ import (
 	"time"
 
 	"gct/config"
-	tc "gct/internal/shared/infrastructure/container"
-	dbPostgres "gct/internal/shared/infrastructure/db/postgres"
-	"gct/internal/shared/infrastructure/logger"
+	tc "gct/internal/platform/infrastructure/container"
+	dbPostgres "gct/internal/platform/infrastructure/db/postgres"
+	"gct/internal/platform/infrastructure/logger"
 	"github.com/minio/minio-go/v7"
 	"github.com/redis/go-redis/v9"
 )
@@ -49,7 +49,7 @@ func SetupTestEnvironment(m *testing.M) {
 		log.Fatalf("Config error: %s", err)
 	}
 
-	pgPool, pgC, err := tc.RunPostgresTestContainer(cfg.Database, filepath.Join(rootPath, "migrations/postgres"))
+	pgPool, pgC, err := tc.RunPostgresTestContainer(cfg.Database, filepath.Join(rootPath, "migration/postgres"))
 	if err != nil {
 		log.Fatalf("Postgres container error: %s", err)
 	}

@@ -4,30 +4,30 @@ import (
 	"context"
 	"fmt"
 
-	"gct/internal/announcement"
-	"gct/internal/audit"
-	"gct/internal/authz"
-	"gct/internal/dashboard"
-	"gct/internal/dataexport"
-	"gct/internal/errorcode"
-	"gct/internal/featureflag"
-	"gct/internal/file"
-	"gct/internal/integration"
-	"gct/internal/iprule"
+	"gct/internal/context/content/announcement"
+	"gct/internal/context/iam/audit"
+	"gct/internal/context/iam/authz"
+	"gct/internal/context/admin/statistics"
+	"gct/internal/context/admin/dataexport"
+	"gct/internal/context/admin/errorcode"
+	"gct/internal/context/admin/featureflag"
+	"gct/internal/context/content/file"
+	"gct/internal/context/admin/integration"
+	"gct/internal/context/ops/iprule"
 
-	"gct/internal/metric"
-	"gct/internal/notification"
-	"gct/internal/ratelimit"
-	"gct/internal/session"
-	"gct/internal/shared/application"
-	"gct/internal/shared/infrastructure/logger"
-	"gct/internal/shared/infrastructure/metrics"
-	"gct/internal/sitesetting"
-	"gct/internal/systemerror"
-	"gct/internal/translation"
-	"gct/internal/user"
-	"gct/internal/user/application/command"
-	"gct/internal/usersetting"
+	"gct/internal/context/ops/metric"
+	"gct/internal/context/content/notification"
+	"gct/internal/context/ops/ratelimit"
+	"gct/internal/context/iam/session"
+	"gct/internal/platform/application"
+	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/platform/infrastructure/metrics"
+	"gct/internal/context/admin/sitesetting"
+	"gct/internal/context/ops/systemerror"
+	"gct/internal/context/content/translation"
+	"gct/internal/context/iam/user"
+	"gct/internal/context/iam/user/application/command"
+	"gct/internal/context/iam/usersetting"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -38,7 +38,7 @@ type DDDBoundedContexts struct {
 	Authz        *authz.BoundedContext
 	Session      *session.BoundedContext
 	Audit        *audit.BoundedContext
-	Dashboard    *dashboard.BoundedContext
+	Statistics   *statistics.BoundedContext
 	SystemError  *systemerror.BoundedContext
 	Metric       *metric.BoundedContext
 	FeatureFlag  *featureflag.BoundedContext
@@ -88,6 +88,6 @@ func NewDDDBoundedContexts(ctx context.Context, pool *pgxpool.Pool, eventBus app
 
 		// Read-only BCs — no eventBus
 		Session:   session.NewBoundedContext(pool, l),
-		Dashboard: dashboard.NewBoundedContext(pool, l),
+		Statistics: statistics.NewBoundedContext(pool, l),
 	}, nil
 }

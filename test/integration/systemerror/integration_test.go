@@ -4,12 +4,12 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/shared/infrastructure/eventbus"
-	"gct/internal/shared/infrastructure/logger"
-	"gct/internal/systemerror"
-	"gct/internal/systemerror/application/command"
-	"gct/internal/systemerror/application/query"
-	"gct/internal/systemerror/domain"
+	"gct/internal/platform/infrastructure/eventbus"
+	"gct/internal/platform/infrastructure/logger"
+	"gct/internal/context/ops/systemerror"
+	"gct/internal/context/ops/systemerror/application/command"
+	"gct/internal/context/ops/systemerror/application/query"
+	"gct/internal/context/ops/systemerror/domain"
 	"gct/test/integration/common/setup"
 
 	"github.com/google/uuid"

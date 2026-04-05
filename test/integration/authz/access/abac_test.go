@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/authz/application/command"
-	"gct/internal/authz/application/query"
-	"gct/internal/authz/domain"
-	shared "gct/internal/shared/domain"
+	"gct/internal/context/iam/authz/application/command"
+	"gct/internal/context/iam/authz/application/query"
+	"gct/internal/context/iam/authz/domain"
+	shared "gct/internal/platform/domain"
 )
 
 // ---------------------------------------------------------------------------
