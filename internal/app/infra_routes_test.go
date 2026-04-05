@@ -12,7 +12,9 @@ import (
 
 func TestSetupAdminRedirectPage(t *testing.T) {
 	r := gin.New()
-	setupAdminRedirectPage(r)
+	cfg := &config.Config{}
+	cfg.Admin.URL = "http://localhost:3000"
+	setupAdminRedirectPage(r, cfg)
 
 	// Test /admin redirect
 	w := httptest.NewRecorder()
@@ -22,14 +24,16 @@ func TestSetupAdminRedirectPage(t *testing.T) {
 	if w.Code != http.StatusTemporaryRedirect {
 		t.Fatalf("expected 307, got %d", w.Code)
 	}
-	if loc := w.Header().Get("Location"); loc != reactAdminURL {
-		t.Fatalf("expected redirect to %s, got %s", reactAdminURL, loc)
+	if loc := w.Header().Get("Location"); loc != cfg.Admin.URL {
+		t.Fatalf("expected redirect to %s, got %s", cfg.Admin.URL, loc)
 	}
 }
 
 func TestSetupAdminRedirectPage_SubPath(t *testing.T) {
 	r := gin.New()
-	setupAdminRedirectPage(r)
+	cfg := &config.Config{}
+	cfg.Admin.URL = "http://localhost:3000"
+	setupAdminRedirectPage(r, cfg)
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/admin/dashboard", nil)

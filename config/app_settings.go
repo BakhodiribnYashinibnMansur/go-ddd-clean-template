@@ -76,7 +76,8 @@ type (
 
 	// Admin -.
 	Admin struct {
-		Enabled bool `yaml:"enabled"`
+		Enabled bool   `yaml:"enabled"`
+		URL     string `yaml:"url" env:"ADMIN_URL" envDefault:"http://localhost:3000"`
 	}
 
 	// Cookie -.

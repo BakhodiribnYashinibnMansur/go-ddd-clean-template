@@ -101,7 +101,7 @@ func setupInfraRoutes(handler *gin.Engine, cfg *config.Config, pool *pgxpool.Poo
 	handler.Static("/docs/linter", "./docs/report/linter")
 
 	// Admin redirect
-	setupAdminRedirectPage(handler)
+	setupAdminRedirectPage(handler, cfg)
 }
 
 const swaggerRoute = "/docs/swagger/*any"
@@ -189,13 +189,11 @@ func setupRootPage(handler *gin.Engine, cfg *config.Config) {
 	})
 }
 
-const reactAdminURL = "http://localhost:3000"
-
-func setupAdminRedirectPage(handler *gin.Engine) {
+func setupAdminRedirectPage(handler *gin.Engine, cfg *config.Config) {
 	handler.GET("/admin", func(c *gin.Context) {
-		c.Redirect(http.StatusTemporaryRedirect, reactAdminURL)
+		c.Redirect(http.StatusTemporaryRedirect, cfg.Admin.URL)
 	})
 	handler.GET("/admin/*path", func(c *gin.Context) {
-		c.Redirect(http.StatusTemporaryRedirect, reactAdminURL)
+		c.Redirect(http.StatusTemporaryRedirect, cfg.Admin.URL)
 	})
 }

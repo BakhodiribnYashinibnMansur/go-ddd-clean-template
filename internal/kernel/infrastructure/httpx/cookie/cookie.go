@@ -57,15 +57,15 @@ func ExpireCookies(ctx *gin.Context, cfg config.Cookie, keys ...string) {
 
 // GetCookieConfig instantiates a new http.Cookie with default application settings.
 // Useful for creating specialized cookies that don't follow the global config.
-func GetCookieConfig(key, value string) *http.Cookie {
+func GetCookieConfig(cfg config.Cookie, key, value string) *http.Cookie {
 	return &http.Cookie{
 		Name:     key,
 		Value:    value,
 		MaxAge:   consts.CookieExpiredTime,
 		Path:     consts.CookiePath,
-		Domain:   consts.CookieDomain,
+		Domain:   cfg.Domain,
 		Secure:   true,
-		HttpOnly: consts.CookieHttpOnly,
+		HttpOnly: cfg.IsHttpOnly(),
 		SameSite: http.SameSiteNoneMode,
 	}
 }

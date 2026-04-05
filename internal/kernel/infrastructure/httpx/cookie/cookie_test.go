@@ -133,7 +133,8 @@ func TestExpireCookies(t *testing.T) {
 }
 
 func TestGetCookieConfig(t *testing.T) {
-	cookie := GetCookieConfig("mykey", "myvalue")
+	cfg := testCookieConfig()
+	cookie := GetCookieConfig(cfg, "mykey", "myvalue")
 	if cookie == nil {
 		t.Fatal("expected non-nil cookie")
 	}
@@ -149,14 +150,14 @@ func TestGetCookieConfig(t *testing.T) {
 	if cookie.Path != consts.CookiePath {
 		t.Errorf("expected path %q, got %q", consts.CookiePath, cookie.Path)
 	}
-	if cookie.Domain != consts.CookieDomain {
-		t.Errorf("expected domain %q, got %q", consts.CookieDomain, cookie.Domain)
+	if cookie.Domain != cfg.Domain {
+		t.Errorf("expected domain %q, got %q", cfg.Domain, cookie.Domain)
 	}
 	if !cookie.Secure {
 		t.Error("expected Secure to be true")
 	}
-	if cookie.HttpOnly != consts.CookieHttpOnly {
-		t.Errorf("expected HttpOnly %v, got %v", consts.CookieHttpOnly, cookie.HttpOnly)
+	if cookie.HttpOnly != cfg.IsHttpOnly() {
+		t.Errorf("expected HttpOnly %v, got %v", cfg.IsHttpOnly(), cookie.HttpOnly)
 	}
 	if cookie.SameSite != http.SameSiteNoneMode {
 		t.Errorf("expected SameSite None, got %v", cookie.SameSite)

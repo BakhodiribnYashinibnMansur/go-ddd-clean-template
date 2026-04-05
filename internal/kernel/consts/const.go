@@ -17,7 +17,6 @@ const (
 	CookieCsrfToken    string = "c_csrf"
 
 	CookieExpiredTime int    = 3600
-	CookieDomain      string = "localhost"
 	CookieHttpOnly    bool   = true
 
 	// TELEGRAM
