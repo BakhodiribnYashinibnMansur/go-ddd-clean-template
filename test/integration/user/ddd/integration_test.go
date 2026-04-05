@@ -355,7 +355,7 @@ func TestIntegration_BulkAction(t *testing.T) {
 	}
 
 	// Bulk deactivate first 2
-	ids := []uuid.UUID{list.Users[0].ID, list.Users[1].ID}
+	ids := []domain.UserID{domain.UserID(list.Users[0].ID), domain.UserID(list.Users[1].ID)}
 	err := bc.BulkAction.Handle(ctx, command.BulkActionCommand{
 		IDs:    ids,
 		Action: "deactivate",
@@ -366,7 +366,7 @@ func TestIntegration_BulkAction(t *testing.T) {
 
 	// Verify: first 2 should be inactive
 	for _, id := range ids {
-		view, _ := bc.GetUser.Handle(ctx, query.GetUserQuery{ID: domain.UserID(id)})
+		view, _ := bc.GetUser.Handle(ctx, query.GetUserQuery{ID: id})
 		if view.Active {
 			t.Errorf("user %s should be inactive", id)
 		}

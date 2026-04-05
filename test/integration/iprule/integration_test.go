@@ -53,7 +53,7 @@ func TestIntegration_CreateAndGetIPRule(t *testing.T) {
 		t.Errorf("expected action block, got %s", r.Action)
 	}
 
-	view, err := bc.GetIPRule.Handle(ctx, query.GetIPRuleQuery{ID: r.ID})
+	view, err := bc.GetIPRule.Handle(ctx, query.GetIPRuleQuery{ID: domain.IPRuleID(r.ID)})
 	if err != nil {
 		t.Fatalf("GetIPRule: %v", err)
 	}
@@ -80,7 +80,7 @@ func TestIntegration_UpdateIPRule(t *testing.T) {
 	list, _ := bc.ListIPRules.Handle(ctx, query.ListIPRulesQuery{
 		Filter: domain.IPRuleFilter{Limit: 10},
 	})
-	rID := list.IPRules[0].ID
+	rID := domain.IPRuleID(list.IPRules[0].ID)
 
 	newAction := "block"
 	newReason := "No longer trusted"
@@ -120,7 +120,7 @@ func TestIntegration_DeleteIPRule(t *testing.T) {
 	list, _ := bc.ListIPRules.Handle(ctx, query.ListIPRulesQuery{
 		Filter: domain.IPRuleFilter{Limit: 10},
 	})
-	rID := list.IPRules[0].ID
+	rID := domain.IPRuleID(list.IPRules[0].ID)
 
 	err = bc.DeleteIPRule.Handle(ctx, command.DeleteIPRuleCommand{ID: rID})
 	if err != nil {

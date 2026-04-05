@@ -11,7 +11,7 @@ import (
 )
 
 func newTestHandlers() *Handlers {
-	return NewHandlers(logger.Noop(), nil)
+	return NewHandlers(logger.Noop())
 }
 
 func TestHandleImageResize_Success(t *testing.T) {
@@ -71,11 +71,3 @@ func TestHandlePushNotification_InvalidPayload(t *testing.T) {
 	}
 }
 
-func TestHandleAuditLog_InvalidPayload(t *testing.T) {
-	h := newTestHandlers()
-
-	task := asynq.NewTask("audit:log", []byte("invalid json"))
-	if err := h.HandleAuditLog(context.Background(), task); err == nil {
-		t.Fatal("expected error for invalid payload, got nil")
-	}
-}

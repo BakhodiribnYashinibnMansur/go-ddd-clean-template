@@ -53,7 +53,7 @@ func TestIntegration_CreateAndGetSiteSetting(t *testing.T) {
 		t.Errorf("expected value 'My Application', got %s", s.Value)
 	}
 
-	view, err := bc.GetSiteSetting.Handle(ctx, query.GetSiteSettingQuery{ID: s.ID})
+	view, err := bc.GetSiteSetting.Handle(ctx, query.GetSiteSettingQuery{ID: domain.SiteSettingID(s.ID)})
 	if err != nil {
 		t.Fatalf("GetSiteSetting: %v", err)
 	}
@@ -80,7 +80,7 @@ func TestIntegration_UpdateSiteSetting(t *testing.T) {
 	list, _ := bc.ListSiteSettings.Handle(ctx, query.ListSiteSettingsQuery{
 		Filter: domain.SiteSettingFilter{Limit: 10},
 	})
-	sID := list.Settings[0].ID
+	sID := domain.SiteSettingID(list.Settings[0].ID)
 
 	newValue := "true"
 	err = bc.UpdateSiteSetting.Handle(ctx, command.UpdateSiteSettingCommand{
@@ -115,7 +115,7 @@ func TestIntegration_DeleteSiteSetting(t *testing.T) {
 	list, _ := bc.ListSiteSettings.Handle(ctx, query.ListSiteSettingsQuery{
 		Filter: domain.SiteSettingFilter{Limit: 10},
 	})
-	sID := list.Settings[0].ID
+	sID := domain.SiteSettingID(list.Settings[0].ID)
 
 	err = bc.DeleteSiteSetting.Handle(ctx, command.DeleteSiteSettingCommand{ID: sID})
 	if err != nil {

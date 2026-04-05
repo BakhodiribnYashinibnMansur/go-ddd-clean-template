@@ -50,7 +50,7 @@ func TestIntegration_AnnouncementPublishFlow(t *testing.T) {
 
 	// Step 3: Publish the announcement.
 	err = bc.UpdateAnnouncement.Handle(ctx, command.UpdateAnnouncementCommand{
-		ID:      draft.ID,
+		ID:      domain.AnnouncementID(draft.ID),
 		Publish: true,
 	})
 	if err != nil {
@@ -58,7 +58,7 @@ func TestIntegration_AnnouncementPublishFlow(t *testing.T) {
 	}
 
 	// Step 4: Verify it is now published with a non-nil PublishedAt.
-	view, err := bc.GetAnnouncement.Handle(ctx, query.GetAnnouncementQuery{ID: draft.ID})
+	view, err := bc.GetAnnouncement.Handle(ctx, query.GetAnnouncementQuery{ID: domain.AnnouncementID(draft.ID)})
 	if err != nil {
 		t.Fatalf("GetAnnouncement: %v", err)
 	}
@@ -168,7 +168,7 @@ func TestIntegration_AnnouncementFilterByPublished(t *testing.T) {
 	}
 
 	err = bc.UpdateAnnouncement.Handle(ctx, command.UpdateAnnouncementCommand{
-		ID:      all.Announcements[0].ID,
+		ID:      domain.AnnouncementID(all.Announcements[0].ID),
 		Publish: true,
 	})
 	if err != nil {

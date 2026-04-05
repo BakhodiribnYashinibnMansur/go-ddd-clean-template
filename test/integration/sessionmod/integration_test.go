@@ -8,6 +8,7 @@ import (
 	appdto "gct/internal/context/iam/session/application"
 	sessioncmd "gct/internal/context/iam/session/application/command"
 	"gct/internal/context/iam/session/application/query"
+	sessiondomain "gct/internal/context/iam/session/domain"
 	"gct/internal/context/iam/user"
 	usercmd "gct/internal/context/iam/user/application/command"
 	userquery "gct/internal/context/iam/user/application/query"
@@ -58,7 +59,7 @@ func createApprovedUser(t *testing.T, ctx context.Context, env testEnv, phone, p
 	// Find our user by phone (in case the DB is not perfectly clean).
 	for _, u := range list.Users {
 		if u.Phone == phone {
-			if err := env.userBC.ApproveUser.Handle(ctx, usercmd.ApproveUserCommand{ID: u.ID}); err != nil {
+			if err := env.userBC.ApproveUser.Handle(ctx, usercmd.ApproveUserCommand{ID: domain.UserID(u.ID)}); err != nil {
 				t.Fatalf("ApproveUser: %v", err)
 			}
 			return u.ID
@@ -119,7 +120,7 @@ func TestIntegration_GetSession(t *testing.T) {
 	sir := signIn(t, ctx, env, phone, password, "desktop", "10.0.0.1", "IntegrationTest/1.0")
 
 	// Fetch session via Session BC
-	sess, err := env.sessionBC.GetSession.Handle(ctx, query.GetSessionQuery{ID: sir.SessionID})
+	sess, err := env.sessionBC.GetSession.Handle(ctx, query.GetSessionQuery{ID: sessiondomain.SessionID(sir.SessionID)})
 	if err != nil {
 		t.Fatalf("GetSession: %v", err)
 	}
@@ -164,8 +165,9 @@ func TestIntegration_ListSessions_WithData(t *testing.T) {
 	_ = signIn(t, ctx, env, phone, password, "mobile", "10.0.0.2", "IntegrationTest/Mobile")
 
 	// List sessions filtered by user ID.
+	suid := sessiondomain.UserID(userID)
 	result, err := env.sessionBC.ListSessions.Handle(ctx, query.ListSessionsQuery{
-		Filter: appdto.SessionsFilter{UserID: &userID, Limit: 10},
+		Filter: appdto.SessionsFilter{UserID: &suid, Limit: 10},
 	})
 	if err != nil {
 		t.Fatalf("ListSessions: %v", err)
@@ -220,7 +222,7 @@ func TestIntegration_RevokeSession(t *testing.T) {
 	// Without a subscriber that actually revokes the session in the DB,
 	// the session remains active. Verify the event was published successfully
 	// by confirming no error above, and that the session is still readable.
-	sess, err := env.sessionBC.GetSession.Handle(ctx, query.GetSessionQuery{ID: sir.SessionID})
+	sess, err := env.sessionBC.GetSession.Handle(ctx, query.GetSessionQuery{ID: sessiondomain.SessionID(sir.SessionID)})
 	if err != nil {
 		t.Fatalf("GetSession after revoke event: %v", err)
 	}
@@ -252,8 +254,9 @@ func TestIntegration_RevokeAllSessions(t *testing.T) {
 
 	// Same as RevokeSession: the command publishes an event but does not
 	// mutate the DB directly. Verify no error and sessions are still readable.
+	suid := sessiondomain.UserID(userID)
 	result, err := env.sessionBC.ListSessions.Handle(ctx, query.ListSessionsQuery{
-		Filter: appdto.SessionsFilter{UserID: &userID, Limit: 10},
+		Filter: appdto.SessionsFilter{UserID: &suid, Limit: 10},
 	})
 	if err != nil {
 		t.Fatalf("ListSessions after revoke-all event: %v", err)
@@ -268,7 +271,7 @@ func TestIntegration_GetSession_NotFound(t *testing.T) {
 	env := newTestEnv(t)
 	ctx := context.Background()
 
-	_, err := env.sessionBC.GetSession.Handle(ctx, query.GetSessionQuery{ID: uuid.New()})
+	_, err := env.sessionBC.GetSession.Handle(ctx, query.GetSessionQuery{ID: sessiondomain.SessionID(uuid.New())})
 	if err == nil {
 		t.Fatal("expected error for non-existent session, got nil")
 	}
@@ -291,8 +294,9 @@ func TestIntegration_ListSessions_FilterByUser(t *testing.T) {
 	_ = signIn(t, ctx, env, phone2, password, "mobile", "10.0.0.2", "UserB")
 
 	// Filter by user1 should return exactly 1.
+	suid1 := sessiondomain.UserID(userID1)
 	result, err := env.sessionBC.ListSessions.Handle(ctx, query.ListSessionsQuery{
-		Filter: appdto.SessionsFilter{UserID: &userID1, Limit: 10},
+		Filter: appdto.SessionsFilter{UserID: &suid1, Limit: 10},
 	})
 	if err != nil {
 		t.Fatalf("ListSessions (filtered): %v", err)

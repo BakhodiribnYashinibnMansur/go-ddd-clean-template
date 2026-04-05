@@ -42,7 +42,7 @@ func TestIntegration_FileCreateAndGet(t *testing.T) {
 	created := result.Files[0]
 
 	// Get by ID
-	got, err := bc.GetFile.Handle(ctx, query.GetFileQuery{ID: created.ID})
+	got, err := bc.GetFile.Handle(ctx, query.GetFileQuery{ID: domain.FileID(created.ID)})
 	if err != nil {
 		t.Fatalf("GetFile failed: %v", err)
 	}

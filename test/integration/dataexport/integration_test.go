@@ -82,7 +82,7 @@ func TestIntegration_UpdateDataExport(t *testing.T) {
 	list, _ := bc.ListDataExports.Handle(ctx, query.ListDataExportsQuery{
 		Filter: domain.DataExportFilter{Limit: 10},
 	})
-	deID := list.Exports[0].ID
+	deID := domain.DataExportID(list.Exports[0].ID)
 
 	processing := domain.ExportStatusProcessing
 	err = bc.UpdateDataExport.Handle(ctx, command.UpdateDataExportCommand{
@@ -133,7 +133,7 @@ func TestIntegration_DeleteDataExport(t *testing.T) {
 	list, _ := bc.ListDataExports.Handle(ctx, query.ListDataExportsQuery{
 		Filter: domain.DataExportFilter{Limit: 10},
 	})
-	deID := list.Exports[0].ID
+	deID := domain.DataExportID(list.Exports[0].ID)
 
 	err = bc.DeleteDataExport.Handle(ctx, command.DeleteDataExportCommand{ID: domain.DataExportID(deID)})
 	if err != nil {
@@ -173,7 +173,7 @@ func TestIntegration_DataExportStateMachine(t *testing.T) {
 	if list.Total != 1 {
 		t.Fatalf("expected 1 data export, got %d", list.Total)
 	}
-	deID := list.Exports[0].ID
+	deID := domain.DataExportID(list.Exports[0].ID)
 
 	view, err := bc.GetDataExport.Handle(ctx, query.GetDataExportQuery{ID: deID})
 	if err != nil {
@@ -251,7 +251,7 @@ func TestIntegration_DataExportFail(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ListDataExports: %v", err)
 	}
-	deID := list.Exports[0].ID
+	deID := domain.DataExportID(list.Exports[0].ID)
 
 	// Step 2: Update to PROCESSING
 	processing := domain.ExportStatusProcessing

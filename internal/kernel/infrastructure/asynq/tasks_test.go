@@ -29,7 +29,6 @@ func TestTaskTypeConstants(t *testing.T) {
 		{"TypeCleanupOldSessions", TypeCleanupOldSessions, "cleanup:old_sessions"},
 		{"TypeCleanupTempFiles", TypeCleanupTempFiles, "cleanup:temp_files"},
 		{"TypeSystemSeed", TypeSystemSeed, "system:seed"},
-		{"TypeAuditLog", TypeAuditLog, "audit:log"},
 	}
 
 	for _, tt := range tests {

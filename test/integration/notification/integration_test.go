@@ -56,7 +56,7 @@ func TestIntegration_CreateAndGetNotification(t *testing.T) {
 		t.Errorf("expected message 'This is a test message', got %s", n.Message)
 	}
 
-	view, err := bc.GetNotification.Handle(ctx, query.GetQuery{ID: n.ID})
+	view, err := bc.GetNotification.Handle(ctx, query.GetQuery{ID: domain.NotificationID(n.ID)})
 	if err != nil {
 		t.Fatalf("GetNotification: %v", err)
 	}
@@ -84,7 +84,7 @@ func TestIntegration_DeleteNotification(t *testing.T) {
 	list, _ := bc.ListNotifications.Handle(ctx, query.ListQuery{
 		Filter: domain.NotificationFilter{Limit: 10},
 	})
-	nID := list.Notifications[0].ID
+	nID := domain.NotificationID(list.Notifications[0].ID)
 
 	err = bc.DeleteNotification.Handle(ctx, command.DeleteCommand{ID: nID})
 	if err != nil {

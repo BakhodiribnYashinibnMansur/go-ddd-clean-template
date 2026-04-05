@@ -55,7 +55,7 @@ func TestIntegration_CreateAndGetIntegration(t *testing.T) {
 		t.Errorf("expected type webhook, got %s", ig.Type)
 	}
 
-	view, err := bc.GetIntegration.Handle(ctx, query.GetQuery{ID: ig.ID})
+	view, err := bc.GetIntegration.Handle(ctx, query.GetQuery{ID: domain.IntegrationID(ig.ID)})
 	if err != nil {
 		t.Fatalf("GetIntegration: %v", err)
 	}
@@ -84,7 +84,7 @@ func TestIntegration_UpdateIntegration(t *testing.T) {
 	list, _ := bc.ListIntegrations.Handle(ctx, query.ListQuery{
 		Filter: domain.IntegrationFilter{Limit: 10},
 	})
-	igID := list.Integrations[0].ID
+	igID := domain.IntegrationID(list.Integrations[0].ID)
 
 	newName := "updated-integration"
 	newURL := "https://example.com/updated"
@@ -126,7 +126,7 @@ func TestIntegration_DeleteIntegration(t *testing.T) {
 	list, _ := bc.ListIntegrations.Handle(ctx, query.ListQuery{
 		Filter: domain.IntegrationFilter{Limit: 10},
 	})
-	igID := list.Integrations[0].ID
+	igID := domain.IntegrationID(list.Integrations[0].ID)
 
 	err = bc.DeleteIntegration.Handle(ctx, command.DeleteCommand{ID: igID})
 	if err != nil {

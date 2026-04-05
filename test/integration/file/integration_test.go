@@ -56,7 +56,7 @@ func TestIntegration_CreateAndGetFile(t *testing.T) {
 		t.Errorf("expected mime type image/png, got %s", f.MimeType)
 	}
 
-	view, err := bc.GetFile.Handle(ctx, query.GetFileQuery{ID: f.ID})
+	view, err := bc.GetFile.Handle(ctx, query.GetFileQuery{ID: domain.FileID(f.ID)})
 	if err != nil {
 		t.Fatalf("GetFile: %v", err)
 	}

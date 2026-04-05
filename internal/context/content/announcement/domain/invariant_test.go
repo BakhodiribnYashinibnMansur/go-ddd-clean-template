@@ -10,7 +10,8 @@ import (
 func newTestAnnouncement() *Announcement {
 	title := shared.Lang{Uz: "Sarlavha", Ru: "Заголовок", En: "Title"}
 	content := shared.Lang{Uz: "Matn", Ru: "Содержание", En: "Content"}
-	return NewAnnouncement(title, content, 1, nil, nil)
+	a, _ := NewAnnouncement(title, content, 1, nil, nil)
+	return a
 }
 
 func TestInvariant_NewAnnouncement_NotPublished(t *testing.T) {

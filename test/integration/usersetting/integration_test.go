@@ -55,7 +55,7 @@ func TestIntegration_CreateAndGetUserSetting(t *testing.T) {
 		t.Errorf("expected value dark, got %s", s.Value)
 	}
 
-	view, err := bc.GetUserSetting.Handle(ctx, query.GetUserSettingQuery{ID: s.ID})
+	view, err := bc.GetUserSetting.Handle(ctx, query.GetUserSettingQuery{ID: domain.UserSettingID(s.ID)})
 	if err != nil {
 		t.Fatalf("GetUserSetting: %v", err)
 	}
@@ -122,7 +122,7 @@ func TestIntegration_DeleteUserSetting(t *testing.T) {
 	list, _ := bc.ListUserSettings.Handle(ctx, query.ListUserSettingsQuery{
 		Filter: domain.UserSettingFilter{Limit: 10},
 	})
-	sID := list.Settings[0].ID
+	sID := domain.UserSettingID(list.Settings[0].ID)
 
 	err = bc.DeleteUserSetting.Handle(ctx, command.DeleteUserSettingCommand{ID: sID})
 	if err != nil {

@@ -57,7 +57,7 @@ func TestIntegration_CreateAndGetErrorCode(t *testing.T) {
 		t.Errorf("expected message 'Unauthorized access', got %s", a.Message)
 	}
 
-	view, err := bc.GetErrorCode.Handle(ctx, query.GetErrorCodeQuery{ID: a.ID})
+	view, err := bc.GetErrorCode.Handle(ctx, query.GetErrorCodeQuery{ID: domain.ErrorCodeID(a.ID)})
 	if err != nil {
 		t.Fatalf("GetErrorCode: %v", err)
 	}
@@ -88,7 +88,7 @@ func TestIntegration_UpdateErrorCode(t *testing.T) {
 	list, _ := bc.ListErrorCodes.Handle(ctx, query.ListErrorCodesQuery{
 		Filter: domain.ErrorCodeFilter{Limit: 10},
 	})
-	ecID := list.ErrorCodes[0].ID
+	ecID := domain.ErrorCodeID(list.ErrorCodes[0].ID)
 
 	err = bc.UpdateErrorCode.Handle(ctx, command.UpdateErrorCodeCommand{
 		ID:         ecID,
@@ -135,7 +135,7 @@ func TestIntegration_DeleteErrorCode(t *testing.T) {
 	list, _ := bc.ListErrorCodes.Handle(ctx, query.ListErrorCodesQuery{
 		Filter: domain.ErrorCodeFilter{Limit: 10},
 	})
-	ecID := list.ErrorCodes[0].ID
+	ecID := domain.ErrorCodeID(list.ErrorCodes[0].ID)
 
 	err = bc.DeleteErrorCode.Handle(ctx, command.DeleteErrorCodeCommand{ID: ecID})
 	if err != nil {

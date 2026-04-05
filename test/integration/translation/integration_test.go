@@ -57,7 +57,7 @@ func TestIntegration_CreateAndGetTranslation(t *testing.T) {
 		t.Errorf("expected value 'Welcome!', got %s", tr.Value)
 	}
 
-	view, err := bc.GetTranslation.Handle(ctx, query.GetTranslationQuery{ID: tr.ID})
+	view, err := bc.GetTranslation.Handle(ctx, query.GetTranslationQuery{ID: domain.TranslationID(tr.ID)})
 	if err != nil {
 		t.Fatalf("GetTranslation: %v", err)
 	}
@@ -85,7 +85,7 @@ func TestIntegration_UpdateTranslation(t *testing.T) {
 	list, _ := bc.ListTranslations.Handle(ctx, query.ListTranslationsQuery{
 		Filter: domain.TranslationFilter{Limit: 10},
 	})
-	trID := list.Translations[0].ID
+	trID := domain.TranslationID(list.Translations[0].ID)
 
 	newValue := "Xush kelibsiz"
 	err = bc.UpdateTranslation.Handle(ctx, command.UpdateTranslationCommand{
@@ -121,7 +121,7 @@ func TestIntegration_DeleteTranslation(t *testing.T) {
 	list, _ := bc.ListTranslations.Handle(ctx, query.ListTranslationsQuery{
 		Filter: domain.TranslationFilter{Limit: 10},
 	})
-	trID := list.Translations[0].ID
+	trID := domain.TranslationID(list.Translations[0].ID)
 
 	err = bc.DeleteTranslation.Handle(ctx, command.DeleteTranslationCommand{ID: trID})
 	if err != nil {
