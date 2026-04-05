@@ -17,6 +17,7 @@ type AuthSession struct {
 	ExpiresAt        time.Time `json:"expires_at"`
 	Revoked          bool      `json:"revoked"`
 	LastActivity     time.Time `json:"last_activity"`
+	IntegrationName  string    `json:"integration_name"`
 }
 
 // IsExpired reports whether the session has passed its expiration time.

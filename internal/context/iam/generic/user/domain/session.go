@@ -42,29 +42,39 @@ type Session struct {
 	expiresAt        time.Time
 	lastActivity     time.Time
 	revoked          bool
+	integrationName  string
 }
 
 const defaultSessionDuration = 7 * 24 * time.Hour // 7 days
 
+// DefaultIntegrationName is used when no specific integration is supplied.
+// It binds the session to the canonical first-party client.
+const DefaultIntegrationName = "gct-client"
+
 // NewSession creates a new session for the given user.
 // It validates the IP address via shared.NewIPAddress and normalises the user agent;
 // an invalid IP returns shared.ErrInvalidIPAddress and no session is created.
-func NewSession(userID uuid.UUID, deviceType SessionDeviceType, ip, userAgent string) (*Session, error) {
+// If integrationName is empty, DefaultIntegrationName is used.
+func NewSession(userID uuid.UUID, deviceType SessionDeviceType, ip, userAgent, integrationName string) (*Session, error) {
 	ipVO, err := shared.NewIPAddress(ip)
 	if err != nil {
 		return nil, err
 	}
 	uaVO := shared.NewUserAgent(userAgent)
+	if integrationName == "" {
+		integrationName = DefaultIntegrationName
+	}
 	now := time.Now()
 	return &Session{
-		BaseEntity:   shared.NewBaseEntity(),
-		userID:       userID,
-		deviceID:     uuid.New().String(),
-		deviceType:   deviceType,
-		ipAddress:    ipVO,
-		userAgent:    uaVO,
-		expiresAt:    now.Add(defaultSessionDuration),
-		lastActivity: now,
+		BaseEntity:      shared.NewBaseEntity(),
+		userID:          userID,
+		deviceID:        uuid.New().String(),
+		deviceType:      deviceType,
+		ipAddress:       ipVO,
+		userAgent:       uaVO,
+		expiresAt:       now.Add(defaultSessionDuration),
+		lastActivity:    now,
+		integrationName: integrationName,
 	}, nil
 }
 
@@ -79,9 +89,13 @@ func ReconstructSession(
 	ipAddress, userAgent, refreshTokenHash string,
 	expiresAt, lastActivity time.Time,
 	revoked bool,
+	integrationName string,
 ) *Session {
 	ipVO, _ := shared.NewIPAddress(ipAddress) // tolerate legacy/empty rows
 	uaVO := shared.NewUserAgent(userAgent)
+	if integrationName == "" {
+		integrationName = DefaultIntegrationName
+	}
 	return &Session{
 		BaseEntity:       shared.NewBaseEntityWithID(id, createdAt, updatedAt, deletedAt),
 		userID:           userID,
@@ -94,6 +108,7 @@ func ReconstructSession(
 		expiresAt:        expiresAt,
 		lastActivity:     lastActivity,
 		revoked:          revoked,
+		integrationName:  integrationName,
 	}
 }
 
@@ -132,6 +147,15 @@ func (s *Session) SetRefreshTokenHash(hash string) {
 	s.Touch()
 }
 
+// SetIntegrationName assigns the integration (audience) this session is bound to.
+// It is idempotent and does not bump the modification timestamp on its own.
+func (s *Session) SetIntegrationName(name string) {
+	if name == "" {
+		name = DefaultIntegrationName
+	}
+	s.integrationName = name
+}
+
 // ---------------------------------------------------------------------------
 // Getters
 // ---------------------------------------------------------------------------
@@ -146,3 +170,4 @@ func (s *Session) RefreshTokenHash() string      { return s.refreshTokenHash }
 func (s *Session) ExpiresAt() time.Time          { return s.expiresAt }
 func (s *Session) LastActivity() time.Time       { return s.lastActivity }
 func (s *Session) IsRevoked() bool               { return s.revoked }
+func (s *Session) IntegrationName() string       { return s.integrationName }

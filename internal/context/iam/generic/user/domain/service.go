@@ -12,7 +12,7 @@ func (s *SignInService) SignIn(
 	user *User,
 	rawPassword string,
 	deviceType SessionDeviceType,
-	ip, userAgent string,
+	ip, userAgent, integrationName string,
 ) (*Session, error) {
 	if !user.IsActive() {
 		return nil, ErrUserInactive
@@ -23,7 +23,7 @@ func (s *SignInService) SignIn(
 	if err := user.VerifyPassword(rawPassword); err != nil {
 		return nil, err
 	}
-	session, err := user.AddSession(deviceType, ip, userAgent)
+	session, err := user.AddSession(deviceType, ip, userAgent, integrationName)
 	if err != nil {
 		return nil, err
 	}

@@ -40,6 +40,7 @@ import (
 	"gct/internal/kernel/infrastructure/reqlog"
 	"gct/internal/kernel/infrastructure/sse"
 	jwtpkg "gct/internal/kernel/infrastructure/security/jwt"
+	"gct/internal/kernel/infrastructure/security/keyring"
 	httpserver "gct/internal/kernel/infrastructure/server/http"
 	"gct/internal/kernel/infrastructure/tracing"
 
@@ -301,9 +302,21 @@ func Run(cfg *config.Config) {
 		l.Infoc(ctx, "EventBus: In-Memory (dev mode)")
 	}
 
-	jwtPrivateKey, err := jwtpkg.ParseRSAPrivateKey(cfg.JWT.PrivateKey)
+	refreshPepper, err := cfg.JWT.DecodeRefreshPepper()
 	if err != nil {
-		l.Fatalw("failed to parse RSA private key for DDD", "error", err)
+		l.Fatalw("failed to decode JWT refresh pepper", "error", err)
+	}
+	refreshHasher, err := jwtpkg.NewRefreshHasher(refreshPepper)
+	if err != nil {
+		l.Fatalw("failed to construct refresh token hasher", "error", err)
+	}
+	apiKeyPepper, err := cfg.JWT.DecodeAPIKeyPepper()
+	if err != nil {
+		l.Fatalw("failed to decode JWT API-key pepper", "error", err)
+	}
+	kr, err := keyring.New(cfg.JWT.KeysDir, cfg.JWT.KeyBits)
+	if err != nil {
+		l.Fatalw("failed to initialize RSA keyring", "error", err)
 	}
 
 	// Business Metrics
@@ -312,12 +325,12 @@ func Run(cfg *config.Config) {
 		businessMetrics = metrics.NewBusinessMetrics(cfg.Tracing.ServiceName)
 	}
 
+	// Sign-in resolver is injected inside NewDDDBoundedContexts once the
+	// Integration BC is wired; we pass only the issuer + hasher here.
 	dddBCs, err := NewDDDBoundedContexts(ctx, pg.Pool, eventBusInstance, l, businessMetrics, command.JWTConfig{
-		PrivateKey: jwtPrivateKey,
-		Issuer:     cfg.JWT.Issuer,
-		AccessTTL:  cfg.JWT.AccessTTL,
-		RefreshTTL: cfg.JWT.RefreshTTL,
-	})
+		Issuer:        cfg.JWT.Issuer,
+		RefreshHasher: refreshHasher,
+	}, cfg, apiKeyPepper, kr)
 	if err != nil {
 		l.Fatalw("failed to initialize DDD bounded contexts", "error", err)
 	}
@@ -490,7 +503,10 @@ func initRouter(cfg *config.Config, bcs *DDDBoundedContexts, redisClient *redis.
 	})
 
 	// === DDD API routes ===
-	authMW := usermw.NewAuthMiddleware(bcs.User.FindSession, bcs.User.FindUserForAuth, cfg, l)
+	mwResolver := NewMiddlewareResolver(bcs)
+	refreshPepperBytes, _ := cfg.JWT.DecodeRefreshPepper()
+	mwRefreshHasher, _ := jwtpkg.NewRefreshHasher(refreshPepperBytes)
+	authMW := usermw.NewAuthMiddleware(bcs.User.FindSession, bcs.User.FindUserForAuth, cfg, l, mwResolver, mwRefreshHasher)
 	authUserLookup := userport.NewAuthLookupAdapter(bcs.User.FindUserForAuth)
 	authzMiddleware := authzmw.NewAuthzMiddleware(bcs.Authz.CheckAccess, authUserLookup, l)
 	csrfMW := sharedmw.HybridMiddleware(l, consts.CookieCsrfToken)

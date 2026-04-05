@@ -1,6 +1,8 @@
 package integration
 
 import (
+	"time"
+
 	appl "gct/internal/context/admin/supporting/integration/application"
 	"gct/internal/context/admin/supporting/integration/application/command"
 	"gct/internal/context/admin/supporting/integration/application/query"
@@ -22,13 +24,14 @@ type BoundedContext struct {
 	GetIntegration   *query.GetHandler
 	ListIntegrations *query.ListHandler
 	ValidateAPIKey   *query.ValidateAPIKeyHandler
+	ResolveJWTAPIKey *query.ResolveJWTAPIKeyHandler
 
 	// Services
 	Cache *appl.CacheService
 }
 
 // NewBoundedContext creates a fully wired Integration bounded context.
-func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, l logger.Log) *BoundedContext {
+func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, apiKeyPepper []byte, cacheTTL time.Duration, l logger.Log) *BoundedContext {
 	writeRepo := postgres.NewIntegrationWriteRepo(pool)
 	readRepo := postgres.NewIntegrationReadRepo(pool)
 
@@ -39,6 +42,7 @@ func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, l logg
 		GetIntegration:    query.NewGetHandler(readRepo, l),
 		ListIntegrations:  query.NewListHandler(readRepo, l),
 		ValidateAPIKey:    query.NewValidateAPIKeyHandler(readRepo, l),
+		ResolveJWTAPIKey:  query.NewResolveJWTAPIKeyHandler(readRepo, apiKeyPepper, cacheTTL, l),
 		Cache:             appl.NewCacheService(readRepo, l),
 	}
 }

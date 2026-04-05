@@ -8,20 +8,39 @@ import (
 	"time"
 
 	"gct/internal/context/iam/generic/user/domain"
+	jwtpkg "gct/internal/kernel/infrastructure/security/jwt"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
+// fakeResolver implements IntegrationResolver by returning a fixed
+// JWTResolved constructed from a freshly-generated RSA key.
+type fakeResolver struct {
+	resolved *JWTResolved
+	err      error
+}
+
+func (f *fakeResolver) Resolve(_ context.Context, _ string) (*JWTResolved, error) {
+	return f.resolved, f.err
+}
+
 func testJWTConfig(t *testing.T) JWTConfig {
 	t.Helper()
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
 	require.NoError(t, err)
+	hasher, err := jwtpkg.NewRefreshHasher([]byte("0123456789abcdef0123456789abcdef"))
+	require.NoError(t, err)
 	return JWTConfig{
-		PrivateKey: key,
-		Issuer:     "test",
-		AccessTTL:  15 * time.Minute,
-		RefreshTTL: 7 * 24 * time.Hour,
+		Issuer:        "test",
+		RefreshHasher: hasher,
+		Resolver: &fakeResolver{resolved: &JWTResolved{
+			Name:       "gct-client",
+			PrivateKey: key,
+			KeyID:      "test-kid",
+			AccessTTL:  15 * time.Minute,
+			RefreshTTL: 7 * 24 * time.Hour,
+		}},
 	}
 }
 
@@ -176,4 +195,75 @@ func (m *signInMockRepo) FindDefaultRoleID(_ context.Context) (uuid.UUID, error)
 func (m *signInMockRepo) Update(ctx context.Context, entity *domain.User) error {
 	m.updatedUser = entity
 	return nil
+}
+
+// ---------------------------------------------------------------------------
+// Max-concurrent-sessions cap tests
+// ---------------------------------------------------------------------------
+
+func TestSignInHandler_EvictsOldestWhenAtCap(t *testing.T) {
+	t.Parallel()
+
+	phone, _ := domain.NewPhone("+998901234567")
+	password, _ := domain.NewPasswordFromRaw("StrongP@ss123")
+	user, _ := domain.NewUser(phone, password)
+	user.Approve()
+	user.ClearEvents()
+
+	repo := &signInMockRepo{user: user}
+	repo.activeCount = 3 // already at the cap
+	eventBus := &mockEventBus{}
+	log := &mockLogger{}
+
+	maxFn := func(_ context.Context) int { return 3 }
+	handler := NewSignInHandler(repo, eventBus, log, testJWTConfig(t), maxFn)
+
+	cmd := SignInCommand{
+		Login:      "+998901234567",
+		Password:   "StrongP@ss123",
+		DeviceType: "desktop",
+		IP:         "192.168.1.1",
+		UserAgent:  "TestAgent/1.0",
+	}
+
+	result, err := handler.Handle(context.Background(), cmd)
+	require.NoError(t, err)
+	require.NotNil(t, result)
+
+	if repo.revokedOldest != 1 {
+		t.Errorf("expected exactly 1 eviction, got %d", repo.revokedOldest)
+	}
+}
+
+func TestSignInHandler_NoEvictionBelowCap(t *testing.T) {
+	t.Parallel()
+
+	phone, _ := domain.NewPhone("+998901234567")
+	password, _ := domain.NewPasswordFromRaw("StrongP@ss123")
+	user, _ := domain.NewUser(phone, password)
+	user.Approve()
+	user.ClearEvents()
+
+	repo := &signInMockRepo{user: user}
+	repo.activeCount = 2 // under the cap — no eviction needed
+	eventBus := &mockEventBus{}
+	log := &mockLogger{}
+
+	maxFn := func(_ context.Context) int { return 3 }
+	handler := NewSignInHandler(repo, eventBus, log, testJWTConfig(t), maxFn)
+
+	cmd := SignInCommand{
+		Login:      "+998901234567",
+		Password:   "StrongP@ss123",
+		DeviceType: "desktop",
+		IP:         "192.168.1.1",
+		UserAgent:  "TestAgent/1.0",
+	}
+
+	_, err := handler.Handle(context.Background(), cmd)
+	require.NoError(t, err)
+
+	if repo.revokedOldest != 0 {
+		t.Errorf("expected no eviction, got %d", repo.revokedOldest)
+	}
 }

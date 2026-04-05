@@ -6,76 +6,121 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/golang-jwt/jwt/v4"
+	jwtgo "github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
 
 var (
+	// ErrAccessTokenInvalid is returned for any parse/validation failure
+	// that is not specifically an expiry.
 	ErrAccessTokenInvalid = errors.New("invalid access token")
+	// ErrAccessTokenExpired is returned when the access token's "exp" claim
+	// (with the configured leeway applied) is in the past.
 	ErrAccessTokenExpired = errors.New("access token has expired")
 )
 
-// AccessTokenClaims represents claims for access tokens
+// AccessTokenClaims is the body of an access token. It embeds the RFC 7519
+// registered claims so the v5 parser can validate iss/aud/exp/iat/nbf, and
+// adds two custom claims: the session ID ("sid") and token type ("typ").
 type AccessTokenClaims struct {
-	UserID    string `json:"sub"`
 	SessionID string `json:"sid"`
 	Type      string `json:"typ"`
-	jwt.RegisteredClaims
+	jwtgo.RegisteredClaims
 }
 
-// GenerateAccessToken generates a new access token
-func GenerateAccessToken(userID, sessionID, issuer, audience string, privateKey *rsa.PrivateKey, expiresIn time.Duration) (string, error) {
-	now := time.Now()
+// GenerateAccessToken signs an RS256 JWT access token.
+// All timestamps are emitted in UTC. If keyID is non-empty it is placed in
+// the JWT header under "kid" to support future key rotation without a
+// JWKS endpoint.
+func GenerateAccessToken(
+	userID, sessionID, issuer, audience, keyID string,
+	privateKey *rsa.PrivateKey,
+	expiresIn time.Duration,
+) (string, error) {
+	if privateKey == nil {
+		return "", fmt.Errorf("jwt.GenerateAccessToken: private key is nil")
+	}
+	if audience == "" {
+		return "", fmt.Errorf("jwt.GenerateAccessToken: audience is required")
+	}
+	if issuer == "" {
+		return "", fmt.Errorf("jwt.GenerateAccessToken: issuer is required")
+	}
+
+	now := time.Now().UTC()
 	claims := AccessTokenClaims{
-		UserID:    userID,
 		SessionID: sessionID,
 		Type:      TokenTypeAccess,
-		RegisteredClaims: jwt.RegisteredClaims{
+		RegisteredClaims: jwtgo.RegisteredClaims{
 			Issuer:    issuer,
 			Subject:   userID,
-			Audience:  jwt.ClaimStrings{audience},
-			ExpiresAt: jwt.NewNumericDate(now.Add(expiresIn)),
-			IssuedAt:  jwt.NewNumericDate(now),
-			ID:        uuid.New().String(),
+			Audience:  jwtgo.ClaimStrings{audience},
+			ExpiresAt: jwtgo.NewNumericDate(now.Add(expiresIn)),
+			NotBefore: jwtgo.NewNumericDate(now),
+			IssuedAt:  jwtgo.NewNumericDate(now),
+			ID:        uuid.NewString(),
 		},
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
+	token := jwtgo.NewWithClaims(jwtgo.SigningMethodRS256, claims)
+	if keyID != "" {
+		token.Header[HeaderKid] = keyID
+	}
 	signed, err := token.SignedString(privateKey)
 	if err != nil {
-		return "", fmt.Errorf("jwt.access_token.SignedString: %w", err)
+		return "", fmt.Errorf("jwt.GenerateAccessToken: sign: %w", err)
 	}
 	return signed, nil
 }
 
-// ParseAccessToken parses and validates an access token
-func ParseAccessToken(tokenString string, publicKey *rsa.PublicKey, issuer, audience string) (*AccessTokenClaims, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &AccessTokenClaims{}, func(token *jwt.Token) (any, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
-			return nil, fmt.Errorf("%w: unexpected signing method: %v", ErrAccessTokenInvalid, token.Header[HeaderAlg])
-		}
+// ParseAccessToken verifies the signature and all registered claims of an
+// access-token JWT using v5 parser options:
+//   - strict RS256 (rejects alg-downgrade and "none")
+//   - iss and aud must match exactly (non-empty)
+//   - exp is required and validated with leeway
+//   - iat is validated with leeway
+//
+// It additionally validates the custom "typ" claim equals "access".
+func ParseAccessToken(
+	tokenString string,
+	publicKey *rsa.PublicKey,
+	issuer, audience string,
+	leeway time.Duration,
+) (*AccessTokenClaims, error) {
+	if publicKey == nil {
+		return nil, fmt.Errorf("jwt.ParseAccessToken: public key is nil")
+	}
+	if leeway <= 0 {
+		leeway = DefaultLeeway
+	}
+
+	parser := jwtgo.NewParser(
+		jwtgo.WithValidMethods([]string{SigningMethod}),
+		jwtgo.WithIssuer(issuer),
+		jwtgo.WithAudience(audience),
+		jwtgo.WithExpirationRequired(),
+		jwtgo.WithIssuedAt(),
+		jwtgo.WithLeeway(leeway),
+	)
+
+	token, err := parser.ParseWithClaims(tokenString, &AccessTokenClaims{}, func(t *jwtgo.Token) (any, error) {
+		// The WithValidMethods option already vets t.Method; we need only
+		// supply the verification key.
 		return publicKey, nil
 	})
 	if err != nil {
-		var ve *jwt.ValidationError
-		if errors.As(err, &ve) {
-			if ve.Errors&jwt.ValidationErrorExpired != 0 {
-				return nil, ErrAccessTokenExpired
-			}
+		if errors.Is(err, jwtgo.ErrTokenExpired) {
+			return nil, ErrAccessTokenExpired
 		}
 		return nil, fmt.Errorf("%w: %w", ErrAccessTokenInvalid, err)
 	}
 
-	if claims, ok := token.Claims.(*AccessTokenClaims); ok && token.Valid {
-		// Validate issuer and audience
-		if !claims.VerifyIssuer(issuer, true) {
-			return nil, fmt.Errorf("%w: invalid issuer", ErrAccessTokenInvalid)
-		}
-		if !claims.VerifyAudience(audience, audience != "") {
-			return nil, fmt.Errorf("%w: invalid audience", ErrAccessTokenInvalid)
-		}
-		return claims, nil
+	claims, ok := token.Claims.(*AccessTokenClaims)
+	if !ok || !token.Valid {
+		return nil, ErrAccessTokenInvalid
 	}
-
-	return nil, ErrAccessTokenInvalid
+	if claims.Type != TokenTypeAccess {
+		return nil, fmt.Errorf("%w: wrong token type %q", ErrAccessTokenInvalid, claims.Type)
+	}
+	return claims, nil
 }

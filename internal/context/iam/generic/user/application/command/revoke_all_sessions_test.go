@@ -32,9 +32,9 @@ func TestRevokeAllSessionsHandler_Success(t *testing.T) {
 	user.Approve()
 
 	// Add two sessions
-	_, err := user.AddSession(domain.DeviceDesktop, "10.0.0.1", "Agent1")
+	_, err := user.AddSession(domain.DeviceDesktop, "10.0.0.1", "Agent1", "gct-client")
 	require.NoError(t, err)
-	_, err = user.AddSession(domain.DeviceMobile, "10.0.0.2", "Agent2")
+	_, err = user.AddSession(domain.DeviceMobile, "10.0.0.2", "Agent2", "gct-client")
 	require.NoError(t, err)
 
 	repo := &revokeTestRepo{

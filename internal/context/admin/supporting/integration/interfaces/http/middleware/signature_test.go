@@ -50,6 +50,14 @@ func (r *mockReadRepo) FindByAPIKey(_ context.Context, _ string) (*domain.Integr
 	return r.apiKeyView, nil
 }
 
+func (r *mockReadRepo) ListActiveJWT(_ context.Context) ([]domain.JWTIntegrationView, error) {
+	return nil, errors.New("not implemented")
+}
+
+func (r *mockReadRepo) FindJWTByHash(_ context.Context, _ []byte) (*domain.JWTIntegrationView, error) {
+	return nil, errors.New("not implemented")
+}
+
 // ---------------------------------------------------------------------------
 // Mock Logger
 // ---------------------------------------------------------------------------

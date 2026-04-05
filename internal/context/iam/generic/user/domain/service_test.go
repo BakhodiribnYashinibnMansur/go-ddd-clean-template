@@ -25,7 +25,7 @@ func TestSignInService_Success(t *testing.T) {
 	svc := &domain.SignInService{}
 	u := activeApprovedUser(t)
 
-	sess, err := svc.SignIn(u, "SecureP@ss1", domain.DeviceDesktop, "10.0.0.1", "TestAgent")
+	sess, err := svc.SignIn(u, "SecureP@ss1", domain.DeviceDesktop, "10.0.0.1", "TestAgent", "gct-client")
 	require.NoError(t, err)
 	if sess == nil {
 		t.Fatal("session should not be nil")
@@ -53,7 +53,7 @@ func TestSignInService_Inactive(t *testing.T) {
 	u.Deactivate()
 	u.ClearEvents()
 
-	_, err := svc.SignIn(u, "SecureP@ss1", domain.DeviceDesktop, "10.0.0.1", "TestAgent")
+	_, err := svc.SignIn(u, "SecureP@ss1", domain.DeviceDesktop, "10.0.0.1", "TestAgent", "gct-client")
 	if !errors.Is(err, domain.ErrUserInactive) {
 		t.Fatalf("expected ErrUserInactive, got %v", err)
 	}
@@ -67,7 +67,7 @@ func TestSignInService_NotApproved(t *testing.T) {
 	pw := mustPassword(t, "SecureP@ss1")
 	u, _ := domain.NewUser(phone, pw) // not approved
 
-	_, err := svc.SignIn(u, "SecureP@ss1", domain.DeviceDesktop, "10.0.0.1", "TestAgent")
+	_, err := svc.SignIn(u, "SecureP@ss1", domain.DeviceDesktop, "10.0.0.1", "TestAgent", "gct-client")
 	if !errors.Is(err, domain.ErrUserNotApproved) {
 		t.Fatalf("expected ErrUserNotApproved, got %v", err)
 	}
@@ -79,7 +79,7 @@ func TestSignInService_WrongPassword(t *testing.T) {
 	svc := &domain.SignInService{}
 	u := activeApprovedUser(t)
 
-	_, err := svc.SignIn(u, "WrongPassword", domain.DeviceDesktop, "10.0.0.1", "TestAgent")
+	_, err := svc.SignIn(u, "WrongPassword", domain.DeviceDesktop, "10.0.0.1", "TestAgent", "gct-client")
 	if !errors.Is(err, domain.ErrInvalidPassword) {
 		t.Fatalf("expected ErrInvalidPassword, got %v", err)
 	}
@@ -92,12 +92,12 @@ func TestSignInService_MaxSessions(t *testing.T) {
 	u := activeApprovedUser(t)
 
 	for i := 0; i < 50; i++ {
-		_, err := svc.SignIn(u, "SecureP@ss1", domain.DeviceMobile, "1.1.1.1", "Agent")
+		_, err := svc.SignIn(u, "SecureP@ss1", domain.DeviceMobile, "1.1.1.1", "Agent", "gct-client")
 		if err != nil {
 			t.Fatalf("SignIn %d: %v", i, err)
 		}
 	}
-	_, err := svc.SignIn(u, "SecureP@ss1", domain.DeviceMobile, "1.1.1.1", "Agent")
+	_, err := svc.SignIn(u, "SecureP@ss1", domain.DeviceMobile, "1.1.1.1", "Agent", "gct-client")
 	if !errors.Is(err, domain.ErrMaxSessionsReached) {
 		t.Fatalf("expected ErrMaxSessionsReached, got %v", err)
 	}

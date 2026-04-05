@@ -29,7 +29,7 @@ func TestNewSession_TableDriven(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			userID := domain.NewUserID()
-			s, _ := domain.NewSession(userID.UUID(), tt.deviceType, tt.ip, tt.userAgent)
+			s, _ := domain.NewSession(userID.UUID(), tt.deviceType, tt.ip, tt.userAgent, "gct-client")
 
 			if s.UserID() != userID.UUID() {
 				t.Errorf("expected userID %s, got %s", userID, s.UserID())
@@ -91,6 +91,7 @@ func TestReconstructSession_TableDriven(t *testing.T) {
 				"1.1.1.1", "TestAgent", "hash123",
 				expiresAt, now,
 				tt.revoked,
+				"gct-client",
 			)
 
 			if s.IsRevoked() != tt.revoked {
@@ -112,7 +113,7 @@ func TestSession_Lifecycle(t *testing.T) {
 	t.Parallel()
 
 	userID := domain.NewUserID()
-	s, _ := domain.NewSession(userID.UUID(), domain.DeviceDesktop, "10.0.0.1", "TestAgent")
+	s, _ := domain.NewSession(userID.UUID(), domain.DeviceDesktop, "10.0.0.1", "TestAgent", "gct-client")
 
 	// Initially active
 	if !s.IsActive() {

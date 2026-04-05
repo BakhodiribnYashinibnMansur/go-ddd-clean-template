@@ -3,6 +3,7 @@ package integration
 import (
 	"context"
 	"testing"
+	"time"
 
 	"gct/internal/kernel/application"
 	"gct/internal/kernel/domain"
@@ -37,7 +38,7 @@ func (m *mockLogger) Errorc(_ context.Context, _ string, _ ...any) {}
 func (m *mockLogger) Fatalc(_ context.Context, _ string, _ ...any) {}
 
 func TestNewBoundedContext(t *testing.T) {
-	bc := NewBoundedContext(nil, &mockEventBus{}, &mockLogger{})
+	bc := NewBoundedContext(nil, &mockEventBus{}, nil, 30*time.Second, &mockLogger{})
 	if bc == nil {
 		t.Fatal("expected non-nil BoundedContext")
 	}

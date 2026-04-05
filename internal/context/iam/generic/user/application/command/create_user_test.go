@@ -18,6 +18,12 @@ type mockUserRepository struct {
 	savedUser   *domain.User
 	updatedUser *domain.User
 	findByIDFn  func(ctx context.Context, id domain.UserID) (*domain.User, error)
+
+	activeCount    int
+	activeCountErr error
+	revokedOldest  int
+	revokeErr      error
+	countCalls     int
 }
 
 func (m *mockUserRepository) Save(ctx context.Context, entity *domain.User) error {
@@ -55,6 +61,30 @@ func (m *mockUserRepository) FindByEmail(ctx context.Context, email domain.Email
 
 func (m *mockUserRepository) FindDefaultRoleID(_ context.Context) (uuid.UUID, error) {
 	return uuid.New(), nil
+}
+
+func (m *mockUserRepository) ActiveSessionCount(_ context.Context, _ domain.UserID) (int, error) {
+	m.countCalls++
+	if m.activeCountErr != nil {
+		return 0, m.activeCountErr
+	}
+	// Mirror the DB: each revoke reduces the active count by one.
+	c := m.activeCount - m.revokedOldest
+	if c < 0 {
+		c = 0
+	}
+	return c, nil
+}
+
+func (m *mockUserRepository) RevokeOldestActiveSession(_ context.Context, _ domain.UserID) (domain.SessionID, error) {
+	if m.revokeErr != nil {
+		return domain.NilSessionID, m.revokeErr
+	}
+	if m.activeCount-m.revokedOldest <= 0 {
+		return domain.NilSessionID, nil
+	}
+	m.revokedOldest++
+	return domain.SessionID(uuid.New()), nil
 }
 
 // --- Mock EventBus ---

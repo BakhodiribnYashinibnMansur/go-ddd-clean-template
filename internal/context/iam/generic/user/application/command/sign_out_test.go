@@ -18,7 +18,7 @@ func TestSignOutHandler_Handle(t *testing.T) {
 	user, _ := domain.NewUser(phone, pw)
 	user.Approve()
 
-	session, err := user.AddSession(domain.DeviceDesktop, "10.0.0.1", "TestAgent")
+	session, err := user.AddSession(domain.DeviceDesktop, "10.0.0.1", "TestAgent", "gct-client")
 	require.NoError(t, err)
 
 	repo := &mockUserRepository{

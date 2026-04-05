@@ -103,6 +103,17 @@ func generateRSAKeyPair(t *testing.T) (*rsa.PrivateKey, *rsa.PublicKey, string) 
 	return privKey, &privKey.PublicKey, string(pubPEM)
 }
 
+// fakeResolver is a test double for IntegrationResolver returning a fixed
+// ResolvedForVerify.
+type fakeResolver struct {
+	resolved *ResolvedForVerify
+	err      error
+}
+
+func (f *fakeResolver) Resolve(_ context.Context, _ string) (*ResolvedForVerify, error) {
+	return f.resolved, f.err
+}
+
 // newTestMiddleware constructs an AuthMiddleware wired with the given fake repo
 // and a pre-parsed RSA public key (bypasses NewAuthMiddleware's config parsing).
 func newTestMiddleware(t *testing.T, repo *fakeReadRepo, pubKey *rsa.PublicKey, issuer string) *AuthMiddleware {
@@ -118,14 +129,20 @@ func newTestMiddleware(t *testing.T, repo *fakeReadRepo, pubKey *rsa.PublicKey, 
 		t.Fatalf("jwt.NewRefreshHasher: %v", err)
 	}
 
+	resolver := &fakeResolver{resolved: &ResolvedForVerify{
+		Name:      "test-aud",
+		PublicKey: pubKey,
+		KeyID:     "test-kid",
+	}}
+
 	return &AuthMiddleware{
 		findSession:     findSession,
 		findUserForAuth: findUserForAuth,
-		cfg:             &config.Config{JWT: config.JWT{Issuer: issuer, Audience: "test-aud", Leeway: 30 * time.Second}},
+		cfg:             &config.Config{JWT: config.JWT{Issuer: issuer, Leeway: 30 * time.Second}},
 		l:               l,
-		pubKey:          pubKey,
+		resolver:        resolver,
 		refreshHasher:   hasher,
-		audience:        "test-aud",
+		issuer:          issuer,
 		leeway:          30 * time.Second,
 	}
 }
@@ -180,7 +197,7 @@ func TestParseAndValidateMetadata_ValidToken(t *testing.T) {
 		t.Fatalf("GenerateAccessToken: %v", err)
 	}
 
-	claims, err := mw.parseAndValidateMetadata(tokenStr)
+	claims, err := mw.parseAndValidateMetadata(tokenStr, &ResolvedForVerify{Name: "test-aud", PublicKey: pubKey})
 	if err != nil {
 		t.Fatalf("parseAndValidateMetadata returned unexpected error: %v", err)
 	}
@@ -203,7 +220,7 @@ func TestParseAndValidateMetadata_InvalidToken(t *testing.T) {
 	repo := &fakeReadRepo{}
 	mw := newTestMiddleware(t, repo, pubKey, "test-issuer")
 
-	_, err := mw.parseAndValidateMetadata("this-is-not-a-jwt")
+	_, err := mw.parseAndValidateMetadata("this-is-not-a-jwt", &ResolvedForVerify{Name: "test-aud", PublicKey: pubKey})
 	if err == nil {
 		t.Fatal("expected error for invalid token, got nil")
 	}
@@ -230,7 +247,7 @@ func TestParseAndValidateMetadata_ExpiredToken(t *testing.T) {
 		t.Fatalf("GenerateAccessToken: %v", err)
 	}
 
-	_, err = mw.parseAndValidateMetadata(tokenStr)
+	_, err = mw.parseAndValidateMetadata(tokenStr, &ResolvedForVerify{Name: "test-aud", PublicKey: pubKey})
 	if err == nil {
 		t.Fatal("expected error for expired token, got nil")
 	}
@@ -264,6 +281,47 @@ func TestAuthClientAccess_InvalidBearerFormat(t *testing.T) {
 
 	if w.Code != http.StatusUnauthorized {
 		t.Fatalf("expected 401 for malformed bearer, got %d", w.Code)
+	}
+	if !ctx.IsAborted() {
+		t.Fatal("expected context to be aborted")
+	}
+}
+
+// TestValidateAccessToken_CrossIntegrationRejected asserts that a session
+// bound to one integration cannot be used by a token minted for a different
+// integration (audience mismatch at the session level, post-JWT-verify).
+func TestValidateAccessToken_CrossIntegrationRejected(t *testing.T) {
+	const issuer = "test-issuer"
+	privKey, pubKey, _ := generateRSAKeyPair(t)
+
+	sessUUID := uuid.New()
+	userUUID := uuid.New()
+	// Session was bound to gct-client.
+	repo := &fakeReadRepo{session: &shared.AuthSession{
+		ID: sessUUID, UserID: userUUID,
+		IntegrationName: "gct-client",
+		ExpiresAt:       time.Now().Add(1 * time.Hour),
+	}}
+	mw := newTestMiddleware(t, repo, pubKey, issuer)
+	// Swap the resolver to return a *different* audience, simulating a
+	// token presented by a crafted X-API-Key for gct-admin.
+	mw.resolver = &fakeResolver{resolved: &ResolvedForVerify{
+		Name: "gct-admin", PublicKey: pubKey, KeyID: "admin-kid",
+	}}
+
+	// Generate a valid-looking token for audience gct-admin.
+	tokenStr, err := jwt.GenerateAccessToken(userUUID.String(), sessUUID.String(), issuer, "gct-admin", "admin-kid", privKey, 5*time.Minute)
+	if err != nil {
+		t.Fatalf("GenerateAccessToken: %v", err)
+	}
+
+	ctx, w := newGinContext(http.MethodGet, "/")
+	ctx.Request.Header.Set("Authorization", "Bearer "+tokenStr)
+	ctx.Request.Header.Set(consts.HeaderXAPIKey, "some-key")
+	mw.AuthClientAccess(ctx)
+
+	if w.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401 for cross-integration token, got %d", w.Code)
 	}
 	if !ctx.IsAborted() {
 		t.Fatal("expected context to be aborted")

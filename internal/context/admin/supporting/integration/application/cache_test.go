@@ -36,6 +36,14 @@ func (m *cacheTestReadRepo) FindByAPIKey(_ context.Context, _ string) (*domain.I
 	return nil, domain.ErrIntegrationNotFound
 }
 
+func (m *cacheTestReadRepo) ListActiveJWT(_ context.Context) ([]domain.JWTIntegrationView, error) {
+	return nil, nil
+}
+
+func (m *cacheTestReadRepo) FindJWTByHash(_ context.Context, _ []byte) (*domain.JWTIntegrationView, error) {
+	return nil, domain.ErrIntegrationNotFound
+}
+
 type cacheTestLogger struct{}
 
 func (m *cacheTestLogger) Debug(args ...any)                            {}

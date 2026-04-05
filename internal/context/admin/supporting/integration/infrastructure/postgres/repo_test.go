@@ -36,6 +36,34 @@ func (m *mockRows) Values() ([]any, error)                       { return nil, n
 func (m *mockRows) RawValues() [][]byte                          { return nil }
 func (m *mockRows) Conn() *pgx.Conn                              { return nil }
 
+// populateIntegrationScan fills the base 7 columns plus the 11 JWT columns
+// with zero/NULL values. Individual tests override indices 0..6 with their
+// own values before delegating to this helper.
+func populateJWTScanDefaults(dest []any) {
+	// jwt_api_key_hash (BYTEA)
+	*dest[7].(*[]byte) = nil
+	// jwt_access_ttl_seconds (*int)
+	*dest[8].(**int) = nil
+	// jwt_refresh_ttl_seconds (*int)
+	*dest[9].(**int) = nil
+	// jwt_public_key_pem (*string)
+	*dest[10].(**string) = nil
+	// jwt_previous_public_key_pem (*string)
+	*dest[11].(**string) = nil
+	// jwt_key_id (*string)
+	*dest[12].(**string) = nil
+	// jwt_previous_key_id (*string)
+	*dest[13].(**string) = nil
+	// jwt_rotated_at (*time.Time)
+	*dest[14].(**time.Time) = nil
+	// jwt_rotate_every_days (int)
+	*dest[15].(*int) = 30
+	// jwt_binding_mode (string)
+	*dest[16].(*string) = "warn"
+	// jwt_max_sessions (int)
+	*dest[17].(*int) = 0
+}
+
 // ---------------------------------------------------------------------------
 // Constructor tests
 // ---------------------------------------------------------------------------
@@ -64,7 +92,6 @@ func TestScanIntegration_Success(t *testing.T) {
 	desc := "Slack integration"
 
 	row := &mockRow{scanFunc: func(dest ...any) error {
-		// writeColumns: id, name, description, base_url, is_active, created_at, updated_at
 		*dest[0].(*uuid.UUID) = testID
 		*dest[1].(*string) = "Slack"
 		*dest[2].(**string) = &desc
@@ -72,6 +99,7 @@ func TestScanIntegration_Success(t *testing.T) {
 		*dest[4].(*bool) = true
 		*dest[5].(*time.Time) = now
 		*dest[6].(*time.Time) = now
+		populateJWTScanDefaults(dest)
 		return nil
 	}}
 
@@ -94,6 +122,12 @@ func TestScanIntegration_Success(t *testing.T) {
 	if !i.Enabled() {
 		t.Error("expected enabled true")
 	}
+	if i.JWTBindingMode() != "warn" {
+		t.Errorf("expected binding mode 'warn', got %q", i.JWTBindingMode())
+	}
+	if i.JWTRotateEveryDays() != 30 {
+		t.Errorf("expected rotate every days 30, got %d", i.JWTRotateEveryDays())
+	}
 }
 
 func TestScanIntegration_NilDescription(t *testing.T) {
@@ -108,6 +142,7 @@ func TestScanIntegration_NilDescription(t *testing.T) {
 		*dest[4].(*bool) = false
 		*dest[5].(*time.Time) = now
 		*dest[6].(*time.Time) = now
+		populateJWTScanDefaults(dest)
 		return nil
 	}}
 
@@ -141,7 +176,6 @@ func TestScanIntegrationView_Success(t *testing.T) {
 	desc := "GitHub integration"
 
 	row := &mockRow{scanFunc: func(dest ...any) error {
-		// readColumns: id, name, description, base_url, is_active, created_at, updated_at
 		*dest[0].(*uuid.UUID) = testID
 		*dest[1].(*string) = "GitHub"
 		*dest[2].(**string) = &desc
@@ -149,6 +183,7 @@ func TestScanIntegrationView_Success(t *testing.T) {
 		*dest[4].(*bool) = true
 		*dest[5].(*time.Time) = now
 		*dest[6].(*time.Time) = now
+		populateJWTScanDefaults(dest)
 		return nil
 	}}
 
@@ -170,6 +205,9 @@ func TestScanIntegrationView_Success(t *testing.T) {
 	}
 	if !v.Enabled {
 		t.Error("expected enabled true")
+	}
+	if v.HasJWT {
+		t.Error("expected HasJWT false when hash is nil")
 	}
 }
 
@@ -200,6 +238,7 @@ func TestScanIntegrationViewFromRows_Success(t *testing.T) {
 		*dest[4].(*bool) = false
 		*dest[5].(*time.Time) = now
 		*dest[6].(*time.Time) = now
+		populateJWTScanDefaults(dest)
 		return nil
 	}}
 

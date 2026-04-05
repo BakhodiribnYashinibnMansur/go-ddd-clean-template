@@ -64,6 +64,14 @@ func (m *mockUserRepo) FindDefaultRoleID(_ context.Context) (uuid.UUID, error) {
 	return uuid.New(), nil
 }
 
+func (m *mockUserRepo) ActiveSessionCount(_ context.Context, _ domain.UserID) (int, error) {
+	return 0, nil
+}
+
+func (m *mockUserRepo) RevokeOldestActiveSession(_ context.Context, _ domain.UserID) (domain.SessionID, error) {
+	return domain.NilSessionID, nil
+}
+
 type mockEventBus struct {
 	publishedEvents []shared.DomainEvent
 }

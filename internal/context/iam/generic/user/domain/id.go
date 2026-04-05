@@ -68,6 +68,10 @@ func (id *UserID) Scan(src any) error {
 // SessionID is the typed identifier for a Session entity owned by the User aggregate.
 type SessionID uuid.UUID
 
+// NilSessionID is the zero-valued SessionID, used to signal "no session" from
+// idempotent operations (e.g. RevokeOldestActiveSession when nothing matched).
+var NilSessionID = SessionID(uuid.Nil)
+
 // NewSessionID generates a new SessionID backed by a v4 UUID.
 func NewSessionID() SessionID { return SessionID(uuid.New()) }
 

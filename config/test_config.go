@@ -1,6 +1,7 @@
 package config
 
 import (
+	"os"
 	"reflect"
 	"sync"
 	"time"
@@ -58,46 +59,13 @@ func NewTestConfig() (*Config, error) {
 				Bucket:    "test-bucket",
 			},
 			JWT: JWT{
-				AccessTTL:  15 * time.Minute,
-				RefreshTTL: 720 * time.Hour,
-				Issuer:     "auth-service-test",
-				PrivateKey: `-----BEGIN PRIVATE KEY-----
-MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDvFzRJ1otZ7BPH
-eHpFBIdfWxgFR3W5b9YZeqEZWLKAkGgiBZIpo6+wrmL7wUw6YUoAAiRkUhuEhDao
-shyzohbphughgDI2jenLETzuuTKuriRSx9fotYdPbO0lK5IDu+JFCnHGa8AYF0wY
-49wMUbp8JHnaBDlxKBCxKBuKbgHwoF5IG+TrAt9zGsJRnctGp1kFBbgE4ozcljsV
-QwyAd9GqlI/uS1z6WzoEyzBtcEH6+zOJF9OK//kOO7+Oc4qMxd1bzWkPCi/x+Pnd
-Bc7XKr1DNtstn0fmrlMvQI3vZarQxYPiMRuRyb42BFGRmrEjVk0wY6rTsw14g1J+
-vNmE59Z/AgMBAAECggEAJ1h5OWF+IzkvdBcGgA8ju/SAunWtEOwvnpfIpSQsk+2v
-xVGHYSTXx8qa7XU89yqFhATWOlAsyRz85bwR7xnQjXOvBbxUBxhJjipzDZIanhZ4
-UcsjY99juhVh3UkTSVwE+3mhiZa30P8cfcgZsUlN2Bokl1U0osOGI7FG/vvlg9R+
-4LTADWVUpjbbV42IpGnh3DVocHHKFvT+BwmTSgwt6fMamN8dsuzJKsTcM1JFYN/x
-rB0Cu0AsGgzMy17ZCj+i5kG65vRuNsUVTzb+Nneen/+qjwvO3/h/ARAY4ZHmca84
-/bekD1KMv76r7FZ6HeOpu+yWAMNxO3seK7MsS8K8aQKBgQD6NGwiay3Enf+cxvC0
-y4omddIFWAFt2KQYN352tLGvrsEoBcRCnfCbQacO2KpGJnb+O7bcpIW7gWdUaVz+
-Vg1igmFOdpXo57B8Ct6ROH7SujOp9PliPIcKwPu0aErlQ/kAry+96s2yhjbna8+z
-N5lBDPHD21RcJR+/LbjwhE19owKBgQD0oOGQphxQUmx0jSXO0jcWc/g44s29RhkW
-pCULEGjG/3sXrc9eGr/VJ08qntmrJU70MPMjeLiu6UM/rdHeJoQjEtmfAZN2prNm
-SnGM0XLBjRCE4EqblneJhvPioHXlfFVixsBJAJN1zm+7322NtXtOR1PCJXWA88Tz
-mMNYtW2ZdQKBgQCnEbQW83xXKq1REWIPR04TSl8X5GDn6V4BMaUHPLbdOZKO1/Lq
-DK5p7VfQyQpB11NjhZogENefkdPegJBw4CMF4Ut6aiLFp1eoLFXboF7G9UCkPwj6
-+LGvk5c/Kti/6DhvpYr6hLwfdhFZTBsfb4Os9SjGgED/WmatcKlqKN3ZgwKBgQCi
-HhxeaDdLY9RMSV5M+jNXxfMyf9wpG1N1FcMW2gEWICnLP3y1uLR45lwouq02Jrt0
-SRxY3aBHCn9urBrxRkU7mTpvjfPUJhWuLJej4wpSCtJvvNS017rQgYcPIZgARa2w
-kFbOCnuvDugtcZyA1UyqS8rOV1TP6L0VUp/jIhlIIQKBgEEmDV9ztio8fDwrsqev
-GGk7K3250Mf35/7AVlfftLbhOzCIp2rgaroDrE7h+07x7L2drurnNMLN8nQoadS4
-QnE2vfbCnBdOVabThW6XsSidJl/aUMeeMYUbEBYDK9h3rc6flvupbXnKvw7/x/AE
-u5J3AecG71JSRqpMXiGl53kJ
------END PRIVATE KEY-----`,
-				PublicKey: `-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA7xc0SdaLWewTx3h6RQSH
-X1sYBUd1uW/WGXqhGViygJBoIgWSKaOvsK5i+8FMOmFKAAIkZFIbhIQ2qLIcs6IW
-6YboIYAyNo3pyxE87rkyrq4kUsfX6LWHT2ztJSuSA7viRQpxxmvAGBdMGOPcDFG6
-fCR52gQ5cSgQsSgbim4B8KBeSBvk6wLfcxrCUZ3LRqdZBQW4BOKM3JY7FUMMgHfR
-qpSP7ktc+ls6BMswbXBB+vsziRfTiv/5Dju/jnOKjMXdW81pDwov8fj53QXO1yq9
-QzbbLZ9H5q5TL0CN72Wq0MWD4jEbkcm+NgRRkZqxI1ZNMGOq07MNeINSfrzZhOfW
-fwIDAQAB
------END PUBLIC KEY-----`,
+				Issuer:        "auth-service-test",
+				Leeway:        30 * time.Second,
+				CacheTTL:      30 * time.Second,
+				KeyBits:       2048, // smaller for test speed
+				KeysDir:       os.TempDir(),
+				RefreshPepper: "dGVzdC1yZWZyZXNoLXBlcHBlci1taW4tMzItYnl0ZXMtbG9uZw",
+				APIKeyPepper:  "dGVzdC1yZWZyZXNoLXBlcHBlci1taW4tMzItYnl0ZXMtbG9uZw",
 			},
 			APIKeys: APIKeys{
 				SignExpireTime: 10,

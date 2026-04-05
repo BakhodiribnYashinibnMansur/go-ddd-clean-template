@@ -72,7 +72,7 @@ func BenchmarkAddSession(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		u, _ := domain.NewUser(phone, pw)
-		_, _ = u.AddSession(domain.DeviceDesktop, "1.2.3.4", "BenchAgent")
+		_, _ = u.AddSession(domain.DeviceDesktop, "1.2.3.4", "BenchAgent", "gct-client")
 	}
 }
 
@@ -98,6 +98,6 @@ func BenchmarkSignInService(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		u, _ := domain.NewUser(phone, pw)
 		u.Approve()
-		_, _ = svc.SignIn(u, "BenchmarkP@ss1", domain.DeviceDesktop, "10.0.0.1", "BenchAgent")
+		_, _ = svc.SignIn(u, "BenchmarkP@ss1", domain.DeviceDesktop, "10.0.0.1", "BenchAgent", "gct-client")
 	}
 }

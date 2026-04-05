@@ -30,7 +30,7 @@ func TestUser_ConcurrentAddSession(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			mu.Lock()
-			_, err := u.AddSession(domain.DeviceMobile, "1.1.1.1", "Agent")
+			_, err := u.AddSession(domain.DeviceMobile, "1.1.1.1", "Agent", "gct-client")
 			mu.Unlock()
 			results <- err
 		}()
@@ -119,7 +119,7 @@ func TestSignInService_Concurrent(t *testing.T) {
 			pw := mustPassword(t, "SecureP@ss1")
 			u, _ := domain.NewUser(phone, pw)
 			u.Approve()
-			_, _ = svc.SignIn(u, "SecureP@ss1", domain.DeviceDesktop, "10.0.0.1", "Agent")
+			_, _ = svc.SignIn(u, "SecureP@ss1", domain.DeviceDesktop, "10.0.0.1", "Agent", "gct-client")
 		}()
 	}
 	wg.Wait()

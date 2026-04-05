@@ -20,6 +20,10 @@ const tableAPIKeys = consts.TableAPIKeys
 
 var readColumns = []string{
 	"id", "name", "description", "base_url", "is_active", "created_at", "updated_at",
+	"jwt_api_key_hash", "jwt_access_ttl_seconds", "jwt_refresh_ttl_seconds",
+	"jwt_public_key_pem", "jwt_previous_public_key_pem",
+	"jwt_key_id", "jwt_previous_key_id",
+	"jwt_rotated_at", "jwt_rotate_every_days", "jwt_binding_mode", "jwt_max_sessions",
 }
 
 // IntegrationReadRepo implements domain.IntegrationReadRepository for the CQRS read side.
@@ -142,7 +146,12 @@ func (r *IntegrationReadRepo) List(ctx context.Context, filter domain.Integratio
 	return views, total, nil
 }
 
-func scanIntegrationView(row pgx.Row) (*domain.IntegrationView, error) {
+// integrationViewScanner is the shared scanner row/rows abstraction.
+type integrationViewScanner interface {
+	Scan(dest ...any) error
+}
+
+func scanIntegrationViewInto(s integrationViewScanner) (*domain.IntegrationView, error) {
 	var (
 		id          uuid.UUID
 		name        string
@@ -151,61 +160,86 @@ func scanIntegrationView(row pgx.Row) (*domain.IntegrationView, error) {
 		isActive    bool
 		createdAt   time.Time
 		updatedAt   time.Time
+
+		jwtAPIKeyHash           []byte
+		jwtAccessTTLSecs        *int
+		jwtRefreshTTLSecs       *int
+		jwtPublicKeyPEM         *string
+		jwtPreviousPublicKeyPEM *string
+		jwtKeyID                *string
+		jwtPreviousKeyID        *string
+		jwtRotatedAt            *time.Time
+		jwtRotateEveryDays      int
+		jwtBindingMode          string
+		jwtMaxSessions          int
 	)
 
-	err := row.Scan(&id, &name, &description, &baseURL, &isActive, &createdAt, &updatedAt)
+	err := s.Scan(
+		&id, &name, &description, &baseURL, &isActive, &createdAt, &updatedAt,
+		&jwtAPIKeyHash, &jwtAccessTTLSecs, &jwtRefreshTTLSecs,
+		&jwtPublicKeyPEM, &jwtPreviousPublicKeyPEM,
+		&jwtKeyID, &jwtPreviousKeyID,
+		&jwtRotatedAt, &jwtRotateEveryDays, &jwtBindingMode, &jwtMaxSessions,
+	)
 	if err != nil {
-		return nil, apperrors.HandlePgError(err, tableName, map[string]any{"id": id})
+		return nil, err
 	}
 
 	desc := ""
 	if description != nil {
 		desc = *description
 	}
+	var accessTTL, refreshTTL time.Duration
+	if jwtAccessTTLSecs != nil {
+		accessTTL = time.Duration(*jwtAccessTTLSecs) * time.Second
+	}
+	if jwtRefreshTTLSecs != nil {
+		refreshTTL = time.Duration(*jwtRefreshTTLSecs) * time.Second
+	}
+	strOr := func(p *string) string {
+		if p == nil {
+			return ""
+		}
+		return *p
+	}
 
 	return &domain.IntegrationView{
-		ID:         domain.IntegrationID(id),
-		Name:       name,
-		Type:       desc,
-		APIKey:     "",
-		WebhookURL: baseURL,
-		Enabled:    isActive,
-		CreatedAt:  createdAt,
-		UpdatedAt:  updatedAt,
+		ID:                      domain.IntegrationID(id),
+		Name:                    name,
+		Type:                    desc,
+		APIKey:                  "",
+		WebhookURL:              baseURL,
+		Enabled:                 isActive,
+		CreatedAt:               createdAt,
+		UpdatedAt:               updatedAt,
+		HasJWT:                  len(jwtAPIKeyHash) > 0,
+		JWTAccessTTL:            accessTTL,
+		JWTRefreshTTL:           refreshTTL,
+		JWTPublicKeyPEM:         strOr(jwtPublicKeyPEM),
+		JWTPreviousPublicKeyPEM: strOr(jwtPreviousPublicKeyPEM),
+		JWTKeyID:                strOr(jwtKeyID),
+		JWTPreviousKeyID:        strOr(jwtPreviousKeyID),
+		JWTRotatedAt:            jwtRotatedAt,
+		JWTRotateEveryDays:      jwtRotateEveryDays,
+		JWTBindingMode:          jwtBindingMode,
+		JWTMaxSessions:          jwtMaxSessions,
 	}, nil
 }
 
-func scanIntegrationViewFromRows(rows pgx.Rows) (*domain.IntegrationView, error) {
-	var (
-		id          uuid.UUID
-		name        string
-		description *string
-		baseURL     string
-		isActive    bool
-		createdAt   time.Time
-		updatedAt   time.Time
-	)
-
-	err := rows.Scan(&id, &name, &description, &baseURL, &isActive, &createdAt, &updatedAt)
+func scanIntegrationView(row pgx.Row) (*domain.IntegrationView, error) {
+	v, err := scanIntegrationViewInto(row)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
+	return v, nil
+}
 
-	desc := ""
-	if description != nil {
-		desc = *description
+func scanIntegrationViewFromRows(rows pgx.Rows) (*domain.IntegrationView, error) {
+	v, err := scanIntegrationViewInto(rows)
+	if err != nil {
+		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
-
-	return &domain.IntegrationView{
-		ID:         domain.IntegrationID(id),
-		Name:       name,
-		Type:       desc,
-		APIKey:     "",
-		WebhookURL: baseURL,
-		Enabled:    isActive,
-		CreatedAt:  createdAt,
-		UpdatedAt:  updatedAt,
-	}, nil
+	return v, nil
 }
 
 // FindByAPIKey returns an IntegrationAPIKeyView for the given API key string.
@@ -236,4 +270,94 @@ func (r *IntegrationReadRepo) FindByAPIKey(ctx context.Context, apiKey string) (
 	}
 
 	return &view, nil
+}
+
+// jwtViewColumns is the column list for JWT-optimized hot-path lookups.
+const jwtViewSelect = `SELECT id, name, jwt_access_ttl_seconds, jwt_refresh_ttl_seconds,
+       jwt_public_key_pem, COALESCE(jwt_previous_public_key_pem, ''),
+       jwt_key_id, COALESCE(jwt_previous_key_id, ''),
+       jwt_binding_mode, jwt_max_sessions
+  FROM ` + tableName
+
+// ListActiveJWT returns all integrations that have jwt_api_key_hash set.
+func (r *IntegrationReadRepo) ListActiveJWT(ctx context.Context) (out []domain.JWTIntegrationView, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "IntegrationReadRepo.ListActiveJWT")
+	defer func() { end(err) }()
+
+	sql := jwtViewSelect + `
+ WHERE is_active = true AND deleted_at IS NULL AND jwt_api_key_hash IS NOT NULL`
+
+	rows, err := r.pool.Query(ctx, sql)
+	if err != nil {
+		return nil, apperrors.HandlePgError(err, tableName, nil)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		v, err := scanJWTIntegrationView(rows)
+		if err != nil {
+			return nil, apperrors.HandlePgError(err, tableName, nil)
+		}
+		out = append(out, *v)
+	}
+	return out, nil
+}
+
+// FindJWTByHash returns the integration whose jwt_api_key_hash exactly matches
+// the provided hash.
+func (r *IntegrationReadRepo) FindJWTByHash(ctx context.Context, hash []byte) (result *domain.JWTIntegrationView, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "IntegrationReadRepo.FindJWTByHash")
+	defer func() { end(err) }()
+
+	sql := jwtViewSelect + `
+ WHERE is_active = true AND deleted_at IS NULL AND jwt_api_key_hash = $1`
+
+	row := r.pool.QueryRow(ctx, sql, hash)
+	v, err := scanJWTIntegrationView(row)
+	if err != nil {
+		return nil, apperrors.HandlePgError(err, tableName, nil)
+	}
+	return v, nil
+}
+
+func scanJWTIntegrationView(s integrationViewScanner) (*domain.JWTIntegrationView, error) {
+	var (
+		id            uuid.UUID
+		name          string
+		accessSecs    *int
+		refreshSecs   *int
+		publicPEM     string
+		previousPEM   string
+		keyID         string
+		previousKeyID string
+		bindingMode   string
+		maxSessions   int
+	)
+	if err := s.Scan(
+		&id, &name, &accessSecs, &refreshSecs,
+		&publicPEM, &previousPEM,
+		&keyID, &previousKeyID,
+		&bindingMode, &maxSessions,
+	); err != nil {
+		return nil, err
+	}
+	var accessTTL, refreshTTL time.Duration
+	if accessSecs != nil {
+		accessTTL = time.Duration(*accessSecs) * time.Second
+	}
+	if refreshSecs != nil {
+		refreshTTL = time.Duration(*refreshSecs) * time.Second
+	}
+	return &domain.JWTIntegrationView{
+		ID:                   domain.IntegrationID(id),
+		Name:                 name,
+		AccessTTL:            accessTTL,
+		RefreshTTL:           refreshTTL,
+		PublicKeyPEM:         publicPEM,
+		PreviousPublicKeyPEM: previousPEM,
+		KeyID:                keyID,
+		PreviousKeyID:        previousKeyID,
+		BindingMode:          bindingMode,
+		MaxSessions:          maxSessions,
+	}, nil
 }

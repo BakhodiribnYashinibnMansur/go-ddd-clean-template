@@ -5,147 +5,89 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// testRSAKeyPEM generates a PEM-encoded RSA private key for testing.
-func testRSAKeyPEM(t *testing.T) (privatePEM, publicPEM string) {
+// testRSAKeyPEM generates a PEM-encoded RSA key pair for testing.
+func testRSAKeyPEM(t *testing.T) (privatePEM, publicPEM []byte) {
 	t.Helper()
 	privKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	require.NoError(t, err)
 
 	privBytes := x509.MarshalPKCS1PrivateKey(privKey)
-	privBlock := &pem.Block{Type: "RSA PRIVATE KEY", Bytes: privBytes}
-	privatePEM = string(pem.EncodeToMemory(privBlock))
+	privatePEM = pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: privBytes})
 
 	pubBytes, err := x509.MarshalPKIXPublicKey(&privKey.PublicKey)
 	require.NoError(t, err)
-	pubBlock := &pem.Block{Type: "PUBLIC KEY", Bytes: pubBytes}
-	publicPEM = string(pem.EncodeToMemory(pubBlock))
-
-	return privatePEM, publicPEM
+	publicPEM = pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: pubBytes})
+	return
 }
 
 func TestParseRSAPrivateKey(t *testing.T) {
 	validPEM, _ := testRSAKeyPEM(t)
 
-	tests := []struct {
-		name    string
-		keyStr  string
-		wantErr bool
-		errMsg  string
-	}{
-		{
-			name:    "valid_pem_key",
-			keyStr:  validPEM,
-			wantErr: false,
-		},
-		{
-			name:    "empty_string",
-			keyStr:  "",
-			wantErr: true,
-			errMsg:  "key string is empty",
-		},
-		{
-			name:    "invalid_pem_data",
-			keyStr:  "not-a-valid-pem-key",
-			wantErr: true,
-		},
-		{
-			name:    "key_with_literal_newlines",
-			keyStr:  replaceNewlines(validPEM),
-			wantErr: false,
-		},
-		{
-			name:    "key_with_surrounding_quotes",
-			keyStr:  `"` + validPEM + `"`,
-			wantErr: false,
-		},
-	}
+	t.Run("valid", func(t *testing.T) {
+		k, err := ParseRSAPrivateKey(validPEM)
+		require.NoError(t, err)
+		assert.NotNil(t, k)
+	})
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			key, err := ParseRSAPrivateKey(tt.keyStr)
-			if tt.wantErr {
-				assert.Error(t, err)
-				if tt.errMsg != "" {
-					assert.Contains(t, err.Error(), tt.errMsg)
-				}
-				assert.Nil(t, key)
-			} else {
-				assert.NoError(t, err)
-				assert.NotNil(t, key)
-			}
-		})
-	}
+	t.Run("nil_returns_ErrEmptyKey", func(t *testing.T) {
+		_, err := ParseRSAPrivateKey(nil)
+		assert.ErrorIs(t, err, ErrEmptyKey)
+	})
+
+	t.Run("empty_returns_ErrEmptyKey", func(t *testing.T) {
+		_, err := ParseRSAPrivateKey([]byte(""))
+		assert.ErrorIs(t, err, ErrEmptyKey)
+	})
+
+	t.Run("garbage_returns_error", func(t *testing.T) {
+		_, err := ParseRSAPrivateKey([]byte("not-a-pem-key"))
+		assert.Error(t, err)
+		assert.NotErrorIs(t, err, ErrEmptyKey)
+	})
+
+	// Security: the error must not echo any bytes of the input.
+	t.Run("error_does_not_leak_key_material", func(t *testing.T) {
+		// Use a distinctive, easy-to-spot marker.
+		marker := "SENSITIVE-KEY-MATERIAL-DO-NOT-LEAK-0123456789abcdef"
+		_, err := ParseRSAPrivateKey([]byte(marker))
+		require.Error(t, err)
+		assert.NotContains(t, err.Error(), marker)
+		assert.NotContains(t, err.Error(), "SENSITIVE")
+	})
 }
 
 func TestParseRSAPublicKey(t *testing.T) {
 	_, validPEM := testRSAKeyPEM(t)
 
-	tests := []struct {
-		name    string
-		keyStr  string
-		wantErr bool
-		errMsg  string
-	}{
-		{
-			name:    "valid_pem_key",
-			keyStr:  validPEM,
-			wantErr: false,
-		},
-		{
-			name:    "empty_string",
-			keyStr:  "",
-			wantErr: true,
-			errMsg:  "key string is empty",
-		},
-		{
-			name:    "invalid_pem_data",
-			keyStr:  "not-a-valid-pem-key",
-			wantErr: true,
-		},
-		{
-			name:    "key_with_literal_newlines",
-			keyStr:  replaceNewlines(validPEM),
-			wantErr: false,
-		},
-		{
-			name:    "key_with_surrounding_quotes",
-			keyStr:  `"` + validPEM + `"`,
-			wantErr: false,
-		},
-	}
+	t.Run("valid", func(t *testing.T) {
+		k, err := ParseRSAPublicKey(validPEM)
+		require.NoError(t, err)
+		assert.NotNil(t, k)
+	})
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			key, err := ParseRSAPublicKey(tt.keyStr)
-			if tt.wantErr {
-				assert.Error(t, err)
-				if tt.errMsg != "" {
-					assert.Contains(t, err.Error(), tt.errMsg)
-				}
-				assert.Nil(t, key)
-			} else {
-				assert.NoError(t, err)
-				assert.NotNil(t, key)
-			}
-		})
-	}
-}
+	t.Run("nil_returns_ErrEmptyKey", func(t *testing.T) {
+		_, err := ParseRSAPublicKey(nil)
+		assert.ErrorIs(t, err, ErrEmptyKey)
+	})
 
-// replaceNewlines replaces real newlines with literal \n to simulate env-file format.
-func replaceNewlines(s string) string {
-	result := ""
-	for _, c := range s {
-		if c == '\n' {
-			result += `\n`
-		} else {
-			result += string(c)
-		}
-	}
-	return result
+	t.Run("garbage_returns_error", func(t *testing.T) {
+		_, err := ParseRSAPublicKey([]byte("not-a-pem-key"))
+		assert.Error(t, err)
+	})
+
+	t.Run("error_does_not_leak_key_material", func(t *testing.T) {
+		marker := "PUBLIC-KEY-MARKER-DO-NOT-LEAK-ff00ff00ff00"
+		_, err := ParseRSAPublicKey([]byte(marker))
+		require.Error(t, err)
+		assert.NotContains(t, err.Error(), marker)
+		// Length is allowed; no substring of key bytes is allowed.
+		assert.NotContains(t, strings.ToLower(err.Error()), "marker")
+	})
 }

@@ -208,7 +208,7 @@ func (r *UserReadRepo) FindSessionByID(ctx context.Context, id domain.SessionID)
 	defer func() { end(err) }()
 
 	sql, args, err := r.builder.
-		Select("id", "user_id", "device_id", "refresh_token_hash", "expires_at", "revoked", "last_activity").
+		Select("id", "user_id", "device_id", "refresh_token_hash", "expires_at", "revoked", "last_activity", "integration_name").
 		From(consts.TableSession).
 		Where(squirrel.Eq{"id": id.UUID()}).
 		ToSql()
@@ -221,7 +221,7 @@ func (r *UserReadRepo) FindSessionByID(ctx context.Context, id domain.SessionID)
 	var s shared.AuthSession
 	err = row.Scan(
 		&s.ID, &s.UserID, &s.DeviceID, &s.RefreshTokenHash,
-		&s.ExpiresAt, &s.Revoked, &s.LastActivity,
+		&s.ExpiresAt, &s.Revoked, &s.LastActivity, &s.IntegrationName,
 	)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, consts.TableSession, map[string]any{"id": id})

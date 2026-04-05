@@ -3,6 +3,7 @@
 package middleware
 
 import (
+	"context"
 	"crypto/rsa"
 	"time"
 
@@ -12,6 +13,26 @@ import (
 	"gct/internal/kernel/infrastructure/security/jwt"
 )
 
+// IntegrationResolver resolves a plain X-API-Key to the verification material
+// for the matching integration. Defined here (not imported) to avoid a
+// cross-BC import cycle; the adapter is constructed in bootstrap.
+type IntegrationResolver interface {
+	Resolve(ctx context.Context, plainAPIKey string) (*ResolvedForVerify, error)
+}
+
+// ResolvedForVerify carries everything the middleware needs to cryptographically
+// verify an access token: current + previous (rotating) public keys plus the
+// audience/name and binding-mode policy.
+type ResolvedForVerify struct {
+	Name              string // = audience
+	PublicKey         *rsa.PublicKey
+	PreviousPublicKey *rsa.PublicKey // may be nil
+	KeyID             string
+	PreviousKeyID     string
+	BindingMode       string
+	MaxSessions       int
+}
+
 // AuthMiddleware manages identity verification for HTTP requests.
 // It delegates session and user lookups to User BC query handlers
 // and stores shared domain types (AuthSession, AuthUser) in the request context.
@@ -20,43 +41,31 @@ type AuthMiddleware struct {
 	findUserForAuth *query.FindUserForAuthHandler
 	cfg             *config.Config
 	l               logger.Log
-	pubKey          *rsa.PublicKey
+	resolver        IntegrationResolver
 	refreshHasher   *jwt.RefreshHasher
-	audience        string
+	issuer          string
 	leeway          time.Duration
 }
 
 // NewAuthMiddleware initializes a new authentication middleware instance.
-// It pre-parses the RSA public key and constructs the refresh hasher once
-// at startup, failing fast on misconfiguration.
+// Integration-specific RSA public keys and audiences are resolved per-request
+// via the injected resolver.
 func NewAuthMiddleware(
 	findSession *query.FindSessionHandler,
 	findUserForAuth *query.FindUserForAuthHandler,
 	cfg *config.Config,
 	l logger.Log,
+	resolver IntegrationResolver,
+	refreshHasher *jwt.RefreshHasher,
 ) *AuthMiddleware {
-	pubKey, err := jwt.ParseRSAPublicKey([]byte(cfg.JWT.PublicKey))
-	if err != nil {
-		l.Fatalw("AuthMiddleware - NewAuthMiddleware - ParseRSAPublicKey", "error", err)
-	}
-
-	pepper, err := cfg.JWT.DecodeRefreshPepper()
-	if err != nil {
-		l.Fatalw("AuthMiddleware - NewAuthMiddleware - DecodeRefreshPepper", "error", err)
-	}
-	hasher, err := jwt.NewRefreshHasher(pepper)
-	if err != nil {
-		l.Fatalw("AuthMiddleware - NewAuthMiddleware - NewRefreshHasher", "error", err)
-	}
-
 	return &AuthMiddleware{
 		findSession:     findSession,
 		findUserForAuth: findUserForAuth,
 		cfg:             cfg,
 		l:               l,
-		pubKey:          pubKey,
-		refreshHasher:   hasher,
-		audience:        cfg.JWT.Audience,
+		resolver:        resolver,
+		refreshHasher:   refreshHasher,
+		issuer:          cfg.JWT.Issuer,
 		leeway:          cfg.JWT.Leeway,
 	}
 }

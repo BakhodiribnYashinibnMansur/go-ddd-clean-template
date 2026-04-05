@@ -153,19 +153,45 @@ func CleanDB(t *testing.T) {
 	}
 }
 
+// setupKeys materialises the minimum JWT config for the e2e harness. It
+// generates per-integration RSA PEM files into a temp KeysDir and installs
+// the shared peppers expected by the JWT + Integration packages. The keyring
+// service loads these files at app boot.
 func setupKeys(cfg *config.Config) {
-	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	dir, err := os.MkdirTemp("", "gct-e2e-keys-*")
 	if err != nil {
-		log.Fatalf("rsa.GenerateKey error: %s", err)
+		log.Fatalf("e2e setupKeys: MkdirTemp: %s", err)
 	}
-	privBytes := x509.MarshalPKCS1PrivateKey(key)
-	privPem := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: privBytes})
-	cfg.JWT.PrivateKey = string(privPem)
-	pubBytes, err := x509.MarshalPKIXPublicKey(&key.PublicKey)
-	if err != nil {
-		log.Fatalf("x509.MarshalPKIXPublicKey error: %s", err)
-	}
-	pubPem := pem.EncodeToMemory(&pem.Block{Type: "RSA PUBLIC KEY", Bytes: pubBytes})
-	cfg.JWT.PublicKey = string(pubPem)
+	cfg.JWT.KeysDir = dir
 	cfg.JWT.Issuer = "gct-e2e"
+	cfg.JWT.KeyBits = 2048
+
+	// Fixed 48-byte peppers (base64 std) — valid for config validation.
+	cfg.JWT.RefreshPepper = "dGVzdC1lMmUtcmVmcmVzaC1wZXBwZXItbWluLTMyLWJ5dGVzLWxvbmctc29tZS1sbw"
+	cfg.JWT.APIKeyPepper = "dGVzdC1lMmUtYXBpLWtleS1wZXBwZXItbWluLTMyLWJ5dGVzLWxvbmctc29tZS1zbw"
+
+	// Pre-generate keys for the three seeded integrations so the keyring
+	// service finds files waiting for it.
+	for _, name := range []string{"gct-admin", "gct-client", "gct-mobile"} {
+		k, err := rsa.GenerateKey(rand.Reader, 2048)
+		if err != nil {
+			log.Fatalf("e2e setupKeys: rsa.GenerateKey: %s", err)
+		}
+		privDER, err := x509.MarshalPKCS8PrivateKey(k)
+		if err != nil {
+			log.Fatalf("e2e setupKeys: MarshalPKCS8PrivateKey: %s", err)
+		}
+		privPem := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: privDER})
+		if err := os.WriteFile(filepath.Join(dir, name+"_private.pem"), privPem, 0o600); err != nil {
+			log.Fatalf("e2e setupKeys: write private: %s", err)
+		}
+		pubDER, err := x509.MarshalPKIXPublicKey(&k.PublicKey)
+		if err != nil {
+			log.Fatalf("e2e setupKeys: MarshalPKIXPublicKey: %s", err)
+		}
+		pubPem := pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: pubDER})
+		if err := os.WriteFile(filepath.Join(dir, name+"_public.pem"), pubPem, 0o644); err != nil {
+			log.Fatalf("e2e setupKeys: write public: %s", err)
+		}
+	}
 }

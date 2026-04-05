@@ -13,7 +13,7 @@ func TestNewSession(t *testing.T) {
 	t.Parallel()
 
 	uid := domain.NewUserID()
-	s, err := domain.NewSession(uid.UUID(), domain.DeviceMobile, "10.0.0.1", "TestAgent/1.0")
+	s, err := domain.NewSession(uid.UUID(), domain.DeviceMobile, "10.0.0.1", "TestAgent/1.0", "gct-client")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -47,7 +47,7 @@ func TestNewSession(t *testing.T) {
 func TestSession_Revoke(t *testing.T) {
 	t.Parallel()
 
-	s, _ := domain.NewSession(uuid.New(), domain.DeviceDesktop, "1.1.1.1", "Agent")
+	s, _ := domain.NewSession(uuid.New(), domain.DeviceDesktop, "1.1.1.1", "Agent", "gct-client")
 	s.Revoke()
 	if !s.IsRevoked() {
 		t.Fatal("session should be revoked")
@@ -60,7 +60,7 @@ func TestSession_Revoke(t *testing.T) {
 func TestSession_UpdateActivity(t *testing.T) {
 	t.Parallel()
 
-	s, _ := domain.NewSession(uuid.New(), domain.DeviceDesktop, "1.1.1.1", "Agent")
+	s, _ := domain.NewSession(uuid.New(), domain.DeviceDesktop, "1.1.1.1", "Agent", "gct-client")
 	before := s.ExpiresAt()
 	time.Sleep(2 * time.Millisecond) // tiny pause so timestamps differ
 	s.UpdateActivity()
@@ -75,7 +75,7 @@ func TestSession_UpdateActivity(t *testing.T) {
 func TestSession_SetRefreshTokenHash(t *testing.T) {
 	t.Parallel()
 
-	s, _ := domain.NewSession(uuid.New(), domain.DeviceBot, "2.2.2.2", "Bot")
+	s, _ := domain.NewSession(uuid.New(), domain.DeviceBot, "2.2.2.2", "Bot", "gct-client")
 	s.SetRefreshTokenHash("somehash")
 	if s.RefreshTokenHash() != "somehash" {
 		t.Fatalf("expected somehash, got %s", s.RefreshTokenHash())
@@ -93,6 +93,7 @@ func TestReconstructSession(t *testing.T) {
 		uid.UUID(), "dev-123", "My Phone", domain.DeviceMobile,
 		"3.3.3.3", "Agent/2.0", "refresh_hash",
 		now.Add(7*24*time.Hour), now, false,
+		"gct-client",
 	)
 	if s.ID() != id {
 		t.Fatal("ID mismatch")

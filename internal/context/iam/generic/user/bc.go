@@ -1,6 +1,8 @@
 package user
 
 import (
+	"context"
+
 	"gct/internal/context/iam/generic/user/application/command"
 	"gct/internal/context/iam/generic/user/application/query"
 	"gct/internal/context/iam/generic/user/infrastructure/postgres"
@@ -32,7 +34,12 @@ type BoundedContext struct {
 }
 
 // NewBoundedContext creates a fully wired User bounded context.
-func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, l logger.Log, jwtCfg command.JWTConfig) *BoundedContext {
+//
+// maxSessionsFn is an optional per-user active-session cap resolver: when
+// nil, the sign-in handler falls back to a constant default. In production
+// this is wired from the SiteSetting BC so administrators can change the
+// cap at runtime without a redeploy; in tests callers typically omit it.
+func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, l logger.Log, jwtCfg command.JWTConfig, maxSessionsFn ...func(ctx context.Context) int) *BoundedContext {
 	writeRepo := postgres.NewUserWriteRepo(pool)
 	readRepo := postgres.NewUserReadRepo(pool)
 
@@ -40,7 +47,7 @@ func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, l logg
 		CreateUser:      command.NewCreateUserHandler(writeRepo, eventBus, l),
 		UpdateUser:      command.NewUpdateUserHandler(writeRepo, eventBus, l),
 		DeleteUser:      command.NewDeleteUserHandler(writeRepo, eventBus, l),
-		SignIn:          command.NewSignInHandler(writeRepo, eventBus, l, jwtCfg),
+		SignIn:          command.NewSignInHandler(writeRepo, eventBus, l, jwtCfg, maxSessionsFn...),
 		SignUp:          command.NewSignUpHandler(writeRepo, eventBus, l),
 		SignOut:         command.NewSignOutHandler(writeRepo, eventBus, l),
 		ApproveUser:     command.NewApproveUserHandler(writeRepo, eventBus, l),

@@ -44,6 +44,21 @@ func (m *AuthMiddleware) AuthClientAccess(ctx *gin.Context) {
 // is still active and not revoked. It uses cryptographic hash verification
 // to prevent token forgery.
 func (m *AuthMiddleware) AuthClientRefresh(ctx *gin.Context) {
+	// Resolve the integration up front so a missing/unknown X-API-Key is a
+	// 401 before any refresh-token work is done.
+	apiKey := httpx.GetAPIKey(ctx)
+	if apiKey == "" {
+		response.ControllerResponse(ctx, http.StatusUnauthorized, httpx.ErrUnAuth, nil, false)
+		ctx.Abort()
+		return
+	}
+	resolved, err := m.resolver.Resolve(ctx.Request.Context(), apiKey)
+	if err != nil || resolved == nil {
+		response.ControllerResponse(ctx, http.StatusUnauthorized, httpx.ErrUnAuth, nil, false)
+		ctx.Abort()
+		return
+	}
+
 	token := extractRefreshToken(ctx)
 	if token == "" {
 		response.ControllerResponse(ctx, http.StatusUnauthorized, httpx.ErrUnAuth, nil, false)
@@ -73,6 +88,20 @@ func (m *AuthMiddleware) AuthClientRefresh(ctx *gin.Context) {
 	if err != nil {
 		m.l.Errorw("AuthMiddleware - AuthClientRefresh - session not found", "error", err)
 		response.ControllerResponse(ctx, http.StatusUnauthorized, httpx.ErrInvalidRefreshSession, nil, false)
+		ctx.Abort()
+		return
+	}
+
+	// Cross-integration defence: refresh-token hash rotation must never
+	// span integrations. If someone replays a refresh token acquired under
+	// one audience into a different-audience request, reject.
+	if session.IntegrationName != resolved.Name {
+		m.l.Warnw("cross_integration_refresh_attempt",
+			"session_integration", session.IntegrationName,
+			"resolved_integration", resolved.Name,
+			"session_id", sessionID,
+		)
+		response.ControllerResponse(ctx, http.StatusUnauthorized, httpx.ErrInvalidRefreshToken, nil, false)
 		ctx.Abort()
 		return
 	}

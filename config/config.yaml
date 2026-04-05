@@ -49,6 +49,14 @@ jwt:
   access_ttl: "15m"
   refresh_ttl: "720h"
   issuer: "gct-auth"
+  audience: "gct-api"
+  # key_id: optional "kid" JWT header for future key rotation.
+  # leeway: clock-skew tolerance on exp/iat/nbf. Defaults to 30s.
+  leeway: "30s"
+  # refresh_pepper: server-side HMAC key used to hash refresh-token secrets.
+  # Must decode (base64) to at least 32 bytes. Generate via: openssl rand -base64 48
+  # Rotating this value invalidates ALL outstanding refresh tokens.
+  # Leave empty in YAML and set JWT_REFRESH_PEPPER in every environment.
 
 limiter:
   enabled: true

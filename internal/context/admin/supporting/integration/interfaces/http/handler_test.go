@@ -68,6 +68,14 @@ func (m *mockReadRepo) FindByAPIKey(_ context.Context, _ string) (*domain.Integr
 	return nil, domain.ErrIntegrationNotFound
 }
 
+func (m *mockReadRepo) ListActiveJWT(_ context.Context) ([]domain.JWTIntegrationView, error) {
+	return nil, nil
+}
+
+func (m *mockReadRepo) FindJWTByHash(_ context.Context, _ []byte) (*domain.JWTIntegrationView, error) {
+	return nil, domain.ErrIntegrationNotFound
+}
+
 type mockEventBus struct{ published []shared.DomainEvent }
 
 func (m *mockEventBus) Publish(_ context.Context, events ...shared.DomainEvent) error {

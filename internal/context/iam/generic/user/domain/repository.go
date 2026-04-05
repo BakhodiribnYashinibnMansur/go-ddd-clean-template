@@ -39,6 +39,17 @@ type UserRepository interface {
 	FindByPhone(ctx context.Context, phone Phone) (*User, error)
 	FindByEmail(ctx context.Context, email Email) (*User, error)
 	FindDefaultRoleID(ctx context.Context) (uuid.UUID, error)
+
+	// ActiveSessionCount returns the number of non-revoked, non-expired
+	// sessions for the user at the moment of the call. Used by sign-in to
+	// enforce the per-user concurrent session cap.
+	ActiveSessionCount(ctx context.Context, userID UserID) (int, error)
+
+	// RevokeOldestActiveSession revokes the user's oldest active session
+	// (ordered by last_activity ASC NULLS FIRST, created_at ASC) and returns
+	// its ID. Returns NilSessionID when the user has no active sessions to
+	// revoke. Idempotent.
+	RevokeOldestActiveSession(ctx context.Context, userID UserID) (SessionID, error)
 }
 
 // UserReadRepository provides read-only access returning lightweight UserView projections.

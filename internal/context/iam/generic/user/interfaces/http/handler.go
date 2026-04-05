@@ -224,12 +224,19 @@ func (h *Handler) SignIn(ctx *gin.Context) {
 		return
 	}
 
+	apiKey := httpx.GetAPIKey(ctx)
+	if apiKey == "" {
+		response.RespondWithError(ctx, httpx.ErrUnAuth, http.StatusUnauthorized)
+		return
+	}
+
 	result, err := h.bc.SignIn.Handle(ctx.Request.Context(), command.SignInCommand{
 		Login:      req.Login,
 		Password:   req.Password,
 		DeviceType: req.DeviceType,
 		IP:         ctx.ClientIP(),
 		UserAgent:  ctx.GetHeader("User-Agent"),
+		APIKey:     apiKey,
 	})
 	if err != nil {
 		response.HandleError(ctx, err)

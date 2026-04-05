@@ -20,6 +20,7 @@ type BoundedContext struct {
 	// Queries
 	GetSiteSetting   *query.GetSiteSettingHandler
 	ListSiteSettings *query.ListSiteSettingsHandler
+	UserMaxSessions  *query.GetUserMaxSessionsHandler
 }
 
 // NewBoundedContext creates a fully wired SiteSetting bounded context.
@@ -33,5 +34,6 @@ func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, l logg
 		DeleteSiteSetting: command.NewDeleteSiteSettingHandler(writeRepo, l),
 		GetSiteSetting:    query.NewGetSiteSettingHandler(readRepo, l),
 		ListSiteSettings:  query.NewListSiteSettingsHandler(readRepo, l),
+		UserMaxSessions:   query.NewGetUserMaxSessionsHandler(readRepo, l),
 	}
 }

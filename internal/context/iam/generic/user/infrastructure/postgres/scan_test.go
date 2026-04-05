@@ -225,6 +225,8 @@ func TestScanSessionFromRows_Success(t *testing.T) {
 			*dest[10].(*bool) = false
 			*dest[11].(*time.Time) = now
 			*dest[12].(*time.Time) = now
+			intName := "gct-client"
+			*dest[13].(**string) = &intName
 			return nil
 		},
 	}
@@ -279,6 +281,7 @@ func TestScanSessionFromRows_NilOptionalFields(t *testing.T) {
 			*dest[10].(*bool) = true
 			*dest[11].(*time.Time) = now
 			*dest[12].(*time.Time) = now
+			*dest[13].(**string) = nil
 			return nil
 		},
 	}

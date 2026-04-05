@@ -3,6 +3,7 @@ package integrationmod
 import (
 	"context"
 	"testing"
+	"time"
 
 	"gct/internal/context/admin/supporting/integration"
 	"gct/internal/context/admin/supporting/integration/application/command"
@@ -17,7 +18,7 @@ func newTestBC(t *testing.T) *integration.BoundedContext {
 	t.Helper()
 	eb := eventbus.NewInMemoryEventBus()
 	l := logger.New("error")
-	return integration.NewBoundedContext(setup.TestPG.Pool, eb, l)
+	return integration.NewBoundedContext(setup.TestPG.Pool, eb, nil, 30*time.Second, l)
 }
 
 func TestIntegration_CreateAndGetIntegration(t *testing.T) {

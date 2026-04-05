@@ -112,7 +112,7 @@ func TestUser_AddSession(t *testing.T) {
 	u := mustUser(t, phone, pw)
 	u.ClearEvents() // clear the UserCreated event
 
-	s, err := u.AddSession(domain.DeviceDesktop, "1.2.3.4", "TestAgent")
+	s, err := u.AddSession(domain.DeviceDesktop, "1.2.3.4", "TestAgent", "gct-client")
 	require.NoError(t, err)
 	if s == nil {
 		t.Fatal("session should not be nil")
@@ -139,12 +139,12 @@ func TestUser_AddSession_MaxReached(t *testing.T) {
 	u := mustUser(t, phone, pw)
 
 	for i := 0; i < 50; i++ {
-		_, err := u.AddSession(domain.DeviceMobile, "1.1.1.1", "Agent")
+		_, err := u.AddSession(domain.DeviceMobile, "1.1.1.1", "Agent", "gct-client")
 		if err != nil {
 			t.Fatalf("AddSession %d: %v", i, err)
 		}
 	}
-	_, err := u.AddSession(domain.DeviceMobile, "1.1.1.1", "Agent")
+	_, err := u.AddSession(domain.DeviceMobile, "1.1.1.1", "Agent", "gct-client")
 	if !errors.Is(err, domain.ErrMaxSessionsReached) {
 		t.Fatalf("expected ErrMaxSessionsReached, got %v", err)
 	}
@@ -157,7 +157,7 @@ func TestUser_RemoveSession(t *testing.T) {
 	pw := mustPassword(t, "SecureP@ss1")
 	u := mustUser(t, phone, pw)
 
-	s, _ := u.AddSession(domain.DeviceDesktop, "1.1.1.1", "Agent")
+	s, _ := u.AddSession(domain.DeviceDesktop, "1.1.1.1", "Agent", "gct-client")
 	if err := u.RemoveSession(s.ID()); err != nil {
 		t.Fatalf("RemoveSession: %v", err)
 	}
@@ -185,8 +185,8 @@ func TestUser_RevokeAllSessions(t *testing.T) {
 	phone := mustPhone(t, "+998901234567")
 	pw := mustPassword(t, "SecureP@ss1")
 	u := mustUser(t, phone, pw)
-	u.AddSession(domain.DeviceDesktop, "1.1.1.1", "A1")
-	u.AddSession(domain.DeviceMobile, "2.2.2.2", "A2")
+	u.AddSession(domain.DeviceDesktop, "1.1.1.1", "A1", "gct-client")
+	u.AddSession(domain.DeviceMobile, "2.2.2.2", "A2", "gct-client")
 
 	u.RevokeAllSessions()
 	for _, s := range u.Sessions() {

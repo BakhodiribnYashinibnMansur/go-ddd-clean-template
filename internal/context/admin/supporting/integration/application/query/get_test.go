@@ -39,6 +39,14 @@ func (m *mockReadRepo) FindByAPIKey(_ context.Context, _ string) (*domain.Integr
 	return nil, domain.ErrIntegrationNotFound
 }
 
+func (m *mockReadRepo) ListActiveJWT(_ context.Context) ([]domain.JWTIntegrationView, error) {
+	return nil, nil
+}
+
+func (m *mockReadRepo) FindJWTByHash(_ context.Context, _ []byte) (*domain.JWTIntegrationView, error) {
+	return nil, domain.ErrIntegrationNotFound
+}
+
 type errorReadRepo struct{ err error }
 
 func (m *errorReadRepo) FindByID(_ context.Context, _ domain.IntegrationID) (*domain.IntegrationView, error) {
@@ -50,6 +58,14 @@ func (m *errorReadRepo) List(_ context.Context, _ domain.IntegrationFilter) ([]*
 }
 
 func (m *errorReadRepo) FindByAPIKey(_ context.Context, _ string) (*domain.IntegrationAPIKeyView, error) {
+	return nil, m.err
+}
+
+func (m *errorReadRepo) ListActiveJWT(_ context.Context) ([]domain.JWTIntegrationView, error) {
+	return nil, m.err
+}
+
+func (m *errorReadRepo) FindJWTByHash(_ context.Context, _ []byte) (*domain.JWTIntegrationView, error) {
 	return nil, m.err
 }
 
