@@ -6,7 +6,7 @@ import (
 	"gct/internal/context/iam/audit"
 	"gct/internal/context/iam/audit/application/query"
 	"gct/internal/context/iam/audit/domain"
-	shared "gct/internal/kernel/domain"
+	"gct/internal/kernel/infrastructure/httpx"
 	"gct/internal/kernel/infrastructure/httpx/response"
 	"gct/internal/kernel/infrastructure/logger"
 

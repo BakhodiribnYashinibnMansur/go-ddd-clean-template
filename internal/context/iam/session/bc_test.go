@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/shared/application"
-	"gct/internal/shared/domain"
+	"gct/internal/kernel/application"
+	"gct/internal/kernel/domain"
 )
 
 type mockLogger struct{}

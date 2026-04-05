@@ -15,7 +15,7 @@ func init() {
 
 func TestHandleHealth(t *testing.T) {
 	r := gin.New()
-	r.GET("/health", handleHealth)
+	r.GET("/health", handleLive)
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/health", nil)

@@ -61,3 +61,4 @@ SCHEMATHESIS_SUMMARY.md
 *.log
 # *.txt  # Removed to avoid ignoring documentation. Added specific test files instead.
 .claude/
+docs/superpowers/

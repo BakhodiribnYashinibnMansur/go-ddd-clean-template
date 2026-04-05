@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/file/application/command"
-	"gct/internal/file/application/query"
-	"gct/internal/file/domain"
+	"gct/internal/context/content/file/application/command"
+	"gct/internal/context/content/file/application/query"
+	"gct/internal/context/content/file/domain"
 )
 
 func TestIntegration_FileCreateAndGet(t *testing.T) {

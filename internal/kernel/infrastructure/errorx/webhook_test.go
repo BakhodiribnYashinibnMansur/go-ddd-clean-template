@@ -1,4 +1,4 @@
-package errorx_test
+package errorx
 
 import (
 	"context"
@@ -9,12 +9,11 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/shared/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/logger"
 
 	"github.com/alicebob/miniredis/v2"
 	"github.com/redis/go-redis/v9"
 
-	apperrors "gct/internal/kernel/infrastructure/errorx"
 )
 
 // ---------------------------------------------------------------------------

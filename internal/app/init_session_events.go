@@ -3,12 +3,13 @@ package app
 import (
 	"context"
 
-	sessiondomain "gct/internal/session/domain"
-	"gct/internal/shared/application"
-	shareddomain "gct/internal/shared/domain"
-	"gct/internal/shared/infrastructure/logger"
-	"gct/internal/user"
-	usercommand "gct/internal/user/application/command"
+	sessiondomain "gct/internal/context/iam/session/domain"
+	"gct/internal/context/iam/user"
+	usercommand "gct/internal/context/iam/user/application/command"
+	userdomain "gct/internal/context/iam/user/domain"
+	"gct/internal/kernel/application"
+	shareddomain "gct/internal/kernel/domain"
+	"gct/internal/kernel/infrastructure/logger"
 )
 
 // subscribeSessionEvents wires session domain events to User BC handlers.
@@ -27,8 +28,8 @@ func subscribeSessionEvents(eventBus application.EventBus, userBC *user.BoundedC
 		)
 
 		return userBC.SignOut.Handle(ctx, usercommand.SignOutCommand{
-			UserID:    e.AggregateID(),
-			SessionID: e.SessionID,
+			UserID:    userdomain.UserID(e.AggregateID()),
+			SessionID: userdomain.SessionID(e.SessionID),
 		})
 	}); err != nil {
 		l.Fatalf("failed to subscribe to session.revoke_requested: %v", err)
@@ -45,7 +46,7 @@ func subscribeSessionEvents(eventBus application.EventBus, userBC *user.BoundedC
 		)
 
 		return userBC.RevokeAll.Handle(ctx, usercommand.RevokeAllSessionsCommand{
-			UserID: e.AggregateID(),
+			UserID: userdomain.UserID(e.AggregateID()),
 		})
 	}); err != nil {
 		l.Fatalf("failed to subscribe to session.revoke_all_requested: %v", err)

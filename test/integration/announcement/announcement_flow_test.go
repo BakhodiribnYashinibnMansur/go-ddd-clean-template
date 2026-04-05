@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/announcement/application/command"
-	"gct/internal/announcement/application/query"
-	"gct/internal/announcement/domain"
-	shared "gct/internal/shared/domain"
+	"gct/internal/context/content/announcement/application/command"
+	"gct/internal/context/content/announcement/application/query"
+	"gct/internal/context/content/announcement/domain"
+	shared "gct/internal/kernel/domain"
 )
 
 // TestIntegration_AnnouncementPublishFlow exercises the full lifecycle of an

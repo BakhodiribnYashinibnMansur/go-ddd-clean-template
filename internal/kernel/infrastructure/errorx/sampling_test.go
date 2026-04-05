@@ -1,11 +1,10 @@
-package errorx_test
+package errorx
 
 import (
 	"sync"
 	"testing"
 	"time"
 
-	apperrors "gct/internal/kernel/infrastructure/errorx"
 )
 
 func TestNewSampler_Defaults(t *testing.T) {

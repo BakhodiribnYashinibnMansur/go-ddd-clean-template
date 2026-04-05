@@ -3,25 +3,25 @@ package app
 import (
 	"testing"
 
-	"gct/internal/announcement"
-	"gct/internal/audit"
-	"gct/internal/authz"
-	"gct/internal/dashboard"
-	"gct/internal/dataexport"
-	"gct/internal/errorcode"
-	"gct/internal/featureflag"
-	"gct/internal/file"
-	"gct/internal/integration"
-	"gct/internal/iprule"
-	"gct/internal/metric"
-	"gct/internal/notification"
-	"gct/internal/ratelimit"
-	"gct/internal/session"
-	"gct/internal/sitesetting"
-	"gct/internal/systemerror"
-	"gct/internal/translation"
-	"gct/internal/user"
-	"gct/internal/usersetting"
+	"gct/internal/context/content/announcement"
+	"gct/internal/context/iam/audit"
+	"gct/internal/context/iam/authz"
+	"gct/internal/context/admin/statistics"
+	"gct/internal/context/admin/dataexport"
+	"gct/internal/context/admin/errorcode"
+	"gct/internal/context/admin/featureflag"
+	"gct/internal/context/content/file"
+	"gct/internal/context/admin/integration"
+	"gct/internal/context/ops/iprule"
+	"gct/internal/context/ops/metric"
+	"gct/internal/context/content/notification"
+	"gct/internal/context/ops/ratelimit"
+	"gct/internal/context/iam/session"
+	"gct/internal/context/admin/sitesetting"
+	"gct/internal/context/ops/systemerror"
+	"gct/internal/context/content/translation"
+	"gct/internal/context/iam/user"
+	"gct/internal/context/iam/usersetting"
 )
 
 func TestDDDBoundedContexts_ZeroValue(t *testing.T) {
@@ -39,8 +39,8 @@ func TestDDDBoundedContexts_ZeroValue(t *testing.T) {
 	if bc.Audit != nil {
 		t.Error("expected Audit to be nil")
 	}
-	if bc.Dashboard != nil {
-		t.Error("expected Dashboard to be nil")
+	if bc.Statistics != nil {
+		t.Error("expected Statistics to be nil")
 	}
 	if bc.SystemError != nil {
 		t.Error("expected SystemError to be nil")
@@ -91,7 +91,7 @@ func TestDDDBoundedContexts_AllFieldsAssignable(t *testing.T) {
 	authzBC := &authz.BoundedContext{}
 	sessionBC := &session.BoundedContext{}
 	auditBC := &audit.BoundedContext{}
-	dashboardBC := &dashboard.BoundedContext{}
+	statisticsBC := &statistics.BoundedContext{}
 	systemErrorBC := &systemerror.BoundedContext{}
 	metricBC := &metric.BoundedContext{}
 	featureFlagBC := &featureflag.BoundedContext{}
@@ -112,7 +112,7 @@ func TestDDDBoundedContexts_AllFieldsAssignable(t *testing.T) {
 		Authz:        authzBC,
 		Session:      sessionBC,
 		Audit:        auditBC,
-		Dashboard:    dashboardBC,
+		Statistics:    statisticsBC,
 		SystemError:  systemErrorBC,
 		Metric:       metricBC,
 		FeatureFlag:  featureFlagBC,
@@ -141,8 +141,8 @@ func TestDDDBoundedContexts_AllFieldsAssignable(t *testing.T) {
 	if bc.Audit != auditBC {
 		t.Error("Audit field mismatch")
 	}
-	if bc.Dashboard != dashboardBC {
-		t.Error("Dashboard field mismatch")
+	if bc.Statistics != statisticsBC {
+		t.Error("Statistics field mismatch")
 	}
 	if bc.SystemError != systemErrorBC {
 		t.Error("SystemError field mismatch")

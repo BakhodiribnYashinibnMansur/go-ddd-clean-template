@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"gct/internal/session/application/command"
+	"gct/internal/context/iam/session/application/command"
 	"gct/internal/kernel/application"
 	shareddomain "gct/internal/kernel/domain"
 

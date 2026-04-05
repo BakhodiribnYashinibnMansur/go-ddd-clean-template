@@ -7,7 +7,6 @@ import (
 	"gct/internal/context/iam/authz/application/command"
 	"gct/internal/context/iam/authz/application/query"
 	"gct/internal/context/iam/authz/domain"
-	shared "gct/internal/kernel/domain"
 	"gct/internal/kernel/infrastructure/httpx"
 	"gct/internal/kernel/infrastructure/httpx/response"
 	"gct/internal/kernel/infrastructure/logger"
