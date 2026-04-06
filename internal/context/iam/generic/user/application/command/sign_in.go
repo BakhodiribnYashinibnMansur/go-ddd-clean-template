@@ -11,7 +11,10 @@ import (
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
+	"gct/internal/kernel/infrastructure/security/audit"
 	jwtpkg "gct/internal/kernel/infrastructure/security/jwt"
+	"gct/internal/kernel/infrastructure/security/ratelimit"
+	"gct/internal/kernel/infrastructure/security/tbh"
 
 	"github.com/google/uuid"
 )
@@ -21,12 +24,13 @@ import (
 // DeviceType is uppercased internally to match the PostgreSQL ENUM constraint (e.g., "WEB", "MOBILE").
 // APIKey is the plain X-API-Key header value used to resolve which integration the session belongs to.
 type SignInCommand struct {
-	Login      string
-	Password   string
-	DeviceType string
-	IP         string
-	UserAgent  string
-	APIKey     string
+	Login             string
+	Password          string
+	DeviceType        string
+	IP                string
+	UserAgent         string
+	APIKey            string
+	DeviceFingerprint string
 }
 
 // SignInResult holds the output of a successful sign-in.
@@ -70,11 +74,24 @@ type SignInHandler struct {
 	signIn      domain.SignInService
 	jwtConfig   JWTConfig
 	maxSessions func(ctx context.Context) int
+
+	// Phase S1 security — all optional, nil-safe.
+	auditLogger audit.Logger
+	limiter     *ratelimit.AuthLimiter
+	tbhPepper   []byte
 }
 
 // defaultMaxSessions is the fallback cap when no dynamic resolver is wired.
 // Matches the seeded "user.max_sessions" default.
 const defaultMaxSessions = 3
+
+// SignInSecurityDeps groups optional Phase S1 security dependencies for sign-in.
+// All fields are optional — nil values disable the corresponding check.
+type SignInSecurityDeps struct {
+	AuditLogger audit.Logger
+	Limiter     *ratelimit.AuthLimiter
+	TBHPepper   []byte
+}
 
 // NewSignInHandler creates a new SignInHandler.
 //
@@ -103,7 +120,20 @@ func NewSignInHandler(
 		signIn:      domain.SignInService{},
 		jwtConfig:   jwtCfg,
 		maxSessions: fn,
+		auditLogger: audit.NoopLogger{},
 	}
+}
+
+// WithSecurityDeps injects Phase S1 security dependencies into the handler.
+// Call after NewSignInHandler; safe to omit entirely (all checks degrade
+// gracefully when deps are nil).
+func (h *SignInHandler) WithSecurityDeps(deps SignInSecurityDeps) *SignInHandler {
+	if deps.AuditLogger != nil {
+		h.auditLogger = deps.AuditLogger
+	}
+	h.limiter = deps.Limiter
+	h.tbhPepper = deps.TBHPepper
+	return h
 }
 
 // Handle executes the SignInCommand and returns SignInResult.
@@ -111,6 +141,24 @@ func (h *SignInHandler) Handle(ctx context.Context, cmd SignInCommand) (result *
 	ctx, end := pgxutil.AppSpan(ctx, "SignInHandler.Handle")
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "SignIn", "user")()
+
+	// Phase S1: rate-limit checks (IP + user).
+	if h.limiter != nil {
+		if limitErr := h.limiter.CheckIP(ctx, cmd.IP); limitErr != nil {
+			h.auditLogger.Log(ctx, audit.Entry{
+				Event: audit.EventSignInFailed, IPAddress: cmd.IP, UserAgent: cmd.UserAgent,
+				Metadata: map[string]any{"reason": "ip_rate_limited"},
+			})
+			return nil, apperrors.NewHandlerError(apperrors.ErrHandlerTooManyRequests, "")
+		}
+		if limitErr := h.limiter.CheckUser(ctx, cmd.Login); limitErr != nil {
+			h.auditLogger.Log(ctx, audit.Entry{
+				Event: audit.EventAccountLocked, IPAddress: cmd.IP, UserAgent: cmd.UserAgent,
+				Metadata: map[string]any{"login": cmd.Login},
+			})
+			return nil, apperrors.NewServiceError(apperrors.ErrServiceUnauthorized, "")
+		}
+	}
 
 	// Resolve the integration from the supplied X-API-Key. Any failure here
 	// surfaces as a generic 401 — we must never leak whether the key exists.
@@ -126,13 +174,15 @@ func (h *SignInHandler) Handle(ctx context.Context, cmd SignInCommand) (result *
 	// Find user by phone or email based on login format.
 	user, err := h.findUser(ctx, cmd.Login)
 	if err != nil {
+		h.recordFailedAttempt(ctx, cmd)
 		return nil, apperrors.MapToServiceError(err)
 	}
 
 	deviceType := domain.SessionDeviceType(strings.ToUpper(cmd.DeviceType))
 
-	session, err := h.signIn.SignIn(user, cmd.Password, deviceType, cmd.IP, cmd.UserAgent, resolved.Name)
+	session, err := h.signIn.SignIn(user, cmd.Password, deviceType, cmd.IP, cmd.UserAgent, resolved.Name, cmd.DeviceFingerprint)
 	if err != nil {
+		h.recordFailedAttempt(ctx, cmd)
 		return nil, apperrors.MapToServiceError(err)
 	}
 
@@ -190,6 +240,12 @@ func (h *SignInHandler) Handle(ctx context.Context, cmd SignInCommand) (result *
 		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "SignIn", Entity: "user", Err: err}.KV()...)
 	}
 
+	// Compute TBH claim for device-binding when pepper is configured.
+	var tbhClaim string
+	if len(h.tbhPepper) > 0 {
+		tbhClaim = tbh.Compute(h.tbhPepper, cmd.IP, cmd.UserAgent)
+	}
+
 	// Generate access token (signed JWT) using the per-integration key material.
 	accessToken, err := jwtpkg.GenerateAccessToken(
 		user.ID().String(),
@@ -199,11 +255,23 @@ func (h *SignInHandler) Handle(ctx context.Context, cmd SignInCommand) (result *
 		resolved.KeyID,
 		resolved.PrivateKey,
 		resolved.AccessTTL,
+		tbhClaim,
 	)
 	if err != nil {
 		h.logger.Errorc(ctx, "access token generation failed", logger.F{Op: "SignIn", Entity: "user", Err: err}.KV()...)
 		return nil, apperrors.MapToServiceError(err)
 	}
+
+	// Phase S1: reset rate-limit counters + audit success on successful sign-in.
+	if h.limiter != nil {
+		_ = h.limiter.ResetUser(ctx, cmd.Login)
+	}
+	uid := user.ID()
+	sid := session.ID()
+	h.auditLogger.Log(ctx, audit.Entry{
+		Event: audit.EventSignInSuccess, IPAddress: cmd.IP, UserAgent: cmd.UserAgent,
+		UserID: &uid, SessionID: &sid, IntegrationName: resolved.Name,
+	})
 
 	result = &SignInResult{
 		UserID:       user.ID(),
@@ -213,6 +281,19 @@ func (h *SignInHandler) Handle(ctx context.Context, cmd SignInCommand) (result *
 	}
 
 	return result, nil
+}
+
+// recordFailedAttempt increments rate-limit counters and emits an audit event
+// for a failed authentication attempt.
+func (h *SignInHandler) recordFailedAttempt(ctx context.Context, cmd SignInCommand) {
+	if h.limiter != nil {
+		_ = h.limiter.RecordFailedIP(ctx, cmd.IP)
+		_ = h.limiter.RecordFailedUser(ctx, cmd.Login)
+	}
+	h.auditLogger.Log(ctx, audit.Entry{
+		Event: audit.EventSignInFailed, IPAddress: cmd.IP, UserAgent: cmd.UserAgent,
+		Metadata: map[string]any{"login": cmd.Login},
+	})
 }
 
 // findUser looks up a user by phone or email depending on the login format.

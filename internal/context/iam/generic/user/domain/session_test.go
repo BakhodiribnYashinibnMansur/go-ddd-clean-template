@@ -166,3 +166,51 @@ func TestReconstructSession(t *testing.T) {
 		t.Fatal("refresh token hash mismatch")
 	}
 }
+
+func TestNewSession_WithDeviceFingerprint(t *testing.T) {
+	t.Parallel()
+
+	uid := domain.NewUserID()
+	fp := "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"
+	s, err := domain.NewSession(uid.UUID(), domain.DeviceDesktop, "1.2.3.4", "Agent/1.0", "gct-client", fp)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if s.DeviceFingerprint() != fp {
+		t.Fatalf("expected fingerprint %q, got %q", fp, s.DeviceFingerprint())
+	}
+}
+
+func TestNewSession_WithoutDeviceFingerprint(t *testing.T) {
+	t.Parallel()
+
+	uid := domain.NewUserID()
+	s, err := domain.NewSession(uid.UUID(), domain.DeviceDesktop, "1.2.3.4", "Agent/1.0", "gct-client")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if s.DeviceFingerprint() != "" {
+		t.Fatalf("expected empty fingerprint, got %q", s.DeviceFingerprint())
+	}
+}
+
+func TestReconstructSession_WithDeviceFingerprint(t *testing.T) {
+	t.Parallel()
+
+	id := uuid.New()
+	uid := domain.NewUserID()
+	now := time.Now()
+	fp := "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"
+	s := domain.ReconstructSession(
+		id, now, now, nil,
+		uid.UUID(), "dev-123", "My Phone", domain.DeviceMobile,
+		"3.3.3.3", "Agent/2.0", "current_hash",
+		now.Add(7*24*time.Hour), now, false,
+		"gct-client",
+		"previous_hash",
+		fp,
+	)
+	if s.DeviceFingerprint() != fp {
+		t.Fatalf("expected fingerprint %q, got %q", fp, s.DeviceFingerprint())
+	}
+}

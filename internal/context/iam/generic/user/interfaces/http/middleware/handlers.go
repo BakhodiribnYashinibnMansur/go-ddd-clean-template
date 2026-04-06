@@ -9,6 +9,8 @@ import (
 	"gct/internal/kernel/infrastructure/httpx"
 	"gct/internal/kernel/infrastructure/httpx/cookie"
 	"gct/internal/kernel/infrastructure/httpx/response"
+	"gct/internal/kernel/infrastructure/security/audit"
+	"gct/internal/kernel/infrastructure/security/fingerprint"
 	"gct/internal/kernel/infrastructure/security/jwt"
 
 	"github.com/gin-gonic/gin"
@@ -107,6 +109,15 @@ func (m *AuthMiddleware) AuthClientRefresh(ctx *gin.Context) {
 			"resolved_integration", resolved.Name,
 			"session_id", sessionID,
 		)
+		m.auditLogger.Log(ctx.Request.Context(), audit.Entry{
+			Event: audit.EventCrossIntegration, IPAddress: ctx.ClientIP(),
+			UserAgent: ctx.Request.UserAgent(), SessionID: &sessionID, UserID: &session.UserID,
+			Metadata: map[string]any{
+				"flow":                  "refresh",
+				"session_integration":   session.IntegrationName,
+				"resolved_integration":  resolved.Name,
+			},
+		})
 		response.ControllerResponse(ctx, http.StatusUnauthorized, httpx.ErrInvalidRefreshToken, nil, false)
 		ctx.Abort()
 		return
@@ -120,9 +131,34 @@ func (m *AuthMiddleware) AuthClientRefresh(ctx *gin.Context) {
 		return
 	}
 
+	// Device fingerprint binding: if the session was created with a fingerprint,
+	// recompute from the current request and compare. A mismatch means the
+	// refresh token is being presented from a different device — likely stolen.
+	if session.DeviceFingerprint != "" {
+		fp := fingerprint.Compute(
+			ctx.Request.UserAgent(),
+			ctx.Request.Header.Get("Accept-Language"),
+			ctx.Request.Header.Get("Sec-CH-UA"),
+		)
+		if fp != session.DeviceFingerprint {
+			m.l.Warnw("AuthMiddleware - device_fingerprint_mismatch",
+				"session_id", sessionID,
+				"user_id", session.UserID,
+			)
+			response.ControllerResponse(ctx, http.StatusUnauthorized, httpx.ErrFingerprintMismatch, nil, false)
+			ctx.Abort()
+			return
+		}
+	}
+
 	// Step 4: Try current hash — legitimate refresh.
 	if m.refreshHasher.Verify(rt.Secret, rt.ID, session.RefreshTokenHash) {
 		// Token matches current hash — proceed to downstream handler.
+		m.auditLogger.Log(ctx.Request.Context(), audit.Entry{
+			Event: audit.EventRefreshSuccess, IPAddress: ctx.ClientIP(),
+			UserAgent: ctx.Request.UserAgent(), SessionID: &sessionID, UserID: &session.UserID,
+			IntegrationName: resolved.Name,
+		})
 		ctx.Set(consts.CtxSessionID, rt.SessionID)
 		ctx.Set(consts.CtxRefreshToken, token)
 		ctx.Set(consts.CtxSession, session)
@@ -138,6 +174,11 @@ func (m *AuthMiddleware) AuthClientRefresh(ctx *gin.Context) {
 			"user_id", session.UserID,
 			"integration", session.IntegrationName,
 		)
+		m.auditLogger.Log(ctx.Request.Context(), audit.Entry{
+			Event: audit.EventRefreshReuse, IPAddress: ctx.ClientIP(),
+			UserAgent: ctx.Request.UserAgent(), SessionID: &sessionID, UserID: &session.UserID,
+			IntegrationName: session.IntegrationName,
+		})
 
 		// Revoke ALL sessions for this (user, integration) pair.
 		if m.sessionRevoker != nil {

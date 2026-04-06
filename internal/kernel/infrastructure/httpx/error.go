@@ -48,10 +48,14 @@ var (
 	ErrInvalidSession        = apperrors.NewHandlerError(apperrors.ErrHandlerUnauthorized, "invalid session id in token")
 	ErrInvalidRefreshFormat  = apperrors.NewHandlerError(apperrors.ErrHandlerUnauthorized, "invalid refresh token format")
 	ErrInvalidRefreshToken   = apperrors.NewHandlerError(apperrors.ErrHandlerUnauthorized, "invalid refresh token")
-	ErrInvalidRefreshSession = apperrors.NewHandlerError(apperrors.ErrHandlerUnauthorized, "invalid refresh session")
+	ErrInvalidRefreshSession    = apperrors.NewHandlerError(apperrors.ErrHandlerUnauthorized, "invalid refresh session")
+	ErrFingerprintMismatch      = apperrors.NewHandlerError(apperrors.ErrHandlerUnauthorized, "device fingerprint mismatch")
 	ErrApiKeyMissing         = apperrors.NewHandlerError(apperrors.ErrHandlerUnauthorized, "API key missing")
 	ErrInvalidApiKey         = apperrors.NewHandlerError(apperrors.ErrHandlerUnauthorized, "invalid API key")
 	ErrUserNotFound          = apperrors.NewHandlerError(apperrors.ErrHandlerUnauthorized, "user not found")
+
+	// Rate limiting (429)
+	ErrTooManyRequests       = apperrors.NewHandlerError(apperrors.ErrHandlerTooManyRequests, "too many requests")
 
 	// Forbidden (403) - Errors related to authorization, CSRF protection, and security policies.
 	ErrRoleNotFound            = apperrors.NewHandlerError(apperrors.ErrHandlerForbidden, "user role not found in context")

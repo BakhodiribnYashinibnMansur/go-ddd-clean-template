@@ -121,11 +121,11 @@ func ReconstructUser(
 // AddSession creates a new session and appends it to the aggregate.
 // Returns ErrMaxSessionsReached if the session cap is hit — callers should prompt the user
 // to revoke an existing session or call RevokeAllSessions first.
-func (u *User) AddSession(deviceType SessionDeviceType, ip, userAgent, integrationName string) (*Session, error) {
+func (u *User) AddSession(deviceType SessionDeviceType, ip, userAgent, integrationName string, deviceFingerprint ...string) (*Session, error) {
 	if len(u.sessions) >= maxSessions {
 		return nil, ErrMaxSessionsReached
 	}
-	s, err := NewSession(u.ID(), deviceType, ip, userAgent, integrationName)
+	s, err := NewSession(u.ID(), deviceType, ip, userAgent, integrationName, deviceFingerprint...)
 	if err != nil {
 		return nil, err
 	}

@@ -10,6 +10,7 @@ import (
 	"gct/internal/kernel/infrastructure/httpx"
 	"gct/internal/kernel/infrastructure/httpx/response"
 	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/security/fingerprint"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -230,13 +231,20 @@ func (h *Handler) SignIn(ctx *gin.Context) {
 		return
 	}
 
+	fp := fingerprint.Compute(
+		ctx.Request.UserAgent(),
+		ctx.Request.Header.Get("Accept-Language"),
+		ctx.Request.Header.Get("Sec-CH-UA"),
+	)
+
 	result, err := h.bc.SignIn.Handle(ctx.Request.Context(), command.SignInCommand{
-		Login:      req.Login,
-		Password:   req.Password,
-		DeviceType: req.DeviceType,
-		IP:         ctx.ClientIP(),
-		UserAgent:  ctx.GetHeader("User-Agent"),
-		APIKey:     apiKey,
+		Login:             req.Login,
+		Password:          req.Password,
+		DeviceType:        req.DeviceType,
+		IP:                ctx.ClientIP(),
+		UserAgent:         ctx.GetHeader("User-Agent"),
+		APIKey:            apiKey,
+		DeviceFingerprint: fp,
 	})
 	if err != nil {
 		response.HandleError(ctx, err)
@@ -286,6 +294,8 @@ func (h *Handler) SignOut(ctx *gin.Context) {
 	err := h.bc.SignOut.Handle(ctx.Request.Context(), command.SignOutCommand{
 		UserID:    userdomain.UserID(req.UserID),
 		SessionID: userdomain.SessionID(req.SessionID),
+		IP:        ctx.ClientIP(),
+		UserAgent: ctx.Request.UserAgent(),
 	})
 	if err != nil {
 		response.HandleError(ctx, err)

@@ -30,8 +30,12 @@ import (
 	"gct/internal/context/iam/generic/user/application/command"
 	usermw "gct/internal/context/iam/generic/user/interfaces/http/middleware"
 	"gct/internal/context/iam/generic/usersetting"
+	securityaudit "gct/internal/kernel/infrastructure/security/audit"
 	"gct/internal/kernel/infrastructure/security/keyring"
 	jwtpkg "gct/internal/kernel/infrastructure/security/jwt"
+	securityratelimit "gct/internal/kernel/infrastructure/security/ratelimit"
+	"gct/internal/kernel/infrastructure/security/revocation"
+	integrationdomain "gct/internal/context/admin/supporting/integration/domain"
 	integrationquery "gct/internal/context/admin/supporting/integration/application/query"
 	"crypto/rsa"
 
@@ -63,11 +67,21 @@ type DDDBoundedContexts struct {
 	ErrorCode    *errorcode.BoundedContext
 }
 
+// SecurityDeps groups Phase S1 security infrastructure that is wired into
+// bounded contexts after construction. All fields are optional — nil values
+// disable the corresponding security feature.
+type SecurityDeps struct {
+	AuditLogger securityaudit.Logger
+	RevStore    *revocation.Store
+	AuthLimiter *securityratelimit.AuthLimiter
+	TBHPepper   []byte
+}
+
 // NewDDDBoundedContexts creates all bounded contexts with their dependencies.
 // The Integration BC is constructed first so that callers can extract its
 // ResolveJWTAPIKey handler to build the sign-in/middleware resolver adapters;
 // the User BC then receives the wired JWTConfig with that resolver injected.
-func NewDDDBoundedContexts(ctx context.Context, pool *pgxpool.Pool, eventBus application.EventBus, l logger.Log, bm *metrics.BusinessMetrics, jwtCfg command.JWTConfig, cfg *config.Config, apiKeyPepper []byte, kr *keyring.Keyring) (*DDDBoundedContexts, error) {
+func NewDDDBoundedContexts(ctx context.Context, pool *pgxpool.Pool, eventBus application.EventBus, l logger.Log, bm *metrics.BusinessMetrics, jwtCfg command.JWTConfig, cfg *config.Config, apiKeyPepper []byte, kr *keyring.Keyring, secDeps SecurityDeps) (*DDDBoundedContexts, error) {
 	_ = bm // available for BC injection when needed
 	ffBC, err := featureflag.NewBoundedContext(ctx, pool, eventBus, l)
 	if err != nil {
@@ -89,8 +103,17 @@ func NewDDDBoundedContexts(ctx context.Context, pool *pgxpool.Pool, eventBus app
 		return n
 	}
 
+	userBC := user.NewBoundedContext(pool, eventBus, l, jwtCfg, maxSessionsFn)
+
+	// Phase S1: wire security deps into sign-in and sign-out handlers.
+	userBC.WireSecurityDeps(secDeps.AuditLogger, secDeps.RevStore, command.SignInSecurityDeps{
+		AuditLogger: secDeps.AuditLogger,
+		Limiter:     secDeps.AuthLimiter,
+		TBHPepper:   secDeps.TBHPepper,
+	})
+
 	return &DDDBoundedContexts{
-		User:         user.NewBoundedContext(pool, eventBus, l, jwtCfg, maxSessionsFn),
+		User:         userBC,
 		Authz:        authz.NewBoundedContext(pool, eventBus, l),
 		Audit:        audit.NewBoundedContext(pool, eventBus, l),
 		SystemError:  systemerror.NewBoundedContext(pool, eventBus, l),
@@ -186,4 +209,34 @@ func (a *middlewareResolverAdapter) Resolve(ctx context.Context, plainAPIKey str
 // returned.
 func NewMiddlewareResolver(bcs *DDDBoundedContexts) usermw.IntegrationResolver {
 	return &middlewareResolverAdapter{h: bcs.Integration.ResolveJWTAPIKey}
+}
+
+// integrationListerAdapter bridges the Integration BC's read repository to the
+// keyring.IntegrationLister interface so the rotation handler does not import
+// the Integration BC's domain package directly.
+type integrationListerAdapter struct {
+	readRepo integrationReadRepoForKeyring
+}
+
+// integrationReadRepoForKeyring is the subset of the Integration read repo
+// that the keyring rotation handler needs.
+type integrationReadRepoForKeyring interface {
+	ListActiveJWT(ctx context.Context) ([]integrationdomain.JWTIntegrationView, error)
+}
+
+func (a *integrationListerAdapter) ListActiveJWT(ctx context.Context) ([]keyring.JWTIntegrationView, error) {
+	views, err := a.readRepo.ListActiveJWT(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]keyring.JWTIntegrationView, len(views))
+	for i, v := range views {
+		out[i] = keyring.JWTIntegrationView{
+			Name:            v.Name,
+			KeyID:           v.KeyID,
+			RotatedAt:       v.RotatedAt,
+			RotateEveryDays: v.RotateEveryDays,
+		}
+	}
+	return out, nil
 }

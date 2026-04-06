@@ -12,12 +12,13 @@ import (
 	"gct/internal/kernel/infrastructure/asynq"
 	"gct/internal/kernel/infrastructure/asynq/tasks"
 	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/security/keyring"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	hibikenasynq "github.com/hibiken/asynq"
 )
 
-func initAsynqWorker(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, createAuditLog *auditcmd.CreateAuditLogHandler, l logger.Log, fcmSender tasks.FCMSender, tgSender tasks.TelegramSender) (*asynq.Worker, error) {
+func initAsynqWorker(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, createAuditLog *auditcmd.CreateAuditLogHandler, rotateHandler *keyring.RotateKeysHandler, l logger.Log, fcmSender tasks.FCMSender, tgSender tasks.TelegramSender) (*asynq.Worker, error) {
 	if !cfg.Asynq.WorkerEnabled {
 		l.Infoc(ctx, "⚠️ Asynq worker is disabled via configuration")
 		return nil, nil
@@ -45,6 +46,12 @@ func initAsynqWorker(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool
 	// BC-owned handlers register themselves through the composition root.
 	auditTaskHandler := auditasynq.NewTaskHandler(l, createAuditLog)
 	asynqWorker.RegisterHandler(auditasynq.TaskType, auditTaskHandler.Handle)
+
+	// Keyring rotation handler (generates/rotates RSA keys for JWT integrations).
+	if rotateHandler != nil {
+		asynqWorker.RegisterHandler(keyring.TaskTypeRotateKeys, rotateHandler.Handle)
+		l.Infoc(ctx, "Registered keyring rotation task handler")
+	}
 
 	// External service task handlers (Firebase, Telegram).
 	asynqWorker.RegisterExternalHandlers(fcmSender, tgSender)

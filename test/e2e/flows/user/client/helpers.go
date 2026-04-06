@@ -43,7 +43,7 @@ func startTestServer() *httptest.Server {
 	bcs, err := app.NewDDDBoundedContexts(
 		context.Background(), setup.TestPG.Pool, eventBus, l, nil,
 		command.JWTConfig{Issuer: setup.TestCfg.JWT.Issuer},
-		setup.TestCfg, apiKeyPepper, kr,
+		setup.TestCfg, apiKeyPepper, kr, app.SecurityDeps{},
 	)
 	if err != nil {
 		panic("failed to initialize DDD bounded contexts: " + err.Error())

@@ -21,10 +21,12 @@ var (
 
 // AccessTokenClaims is the body of an access token. It embeds the RFC 7519
 // registered claims so the v5 parser can validate iss/aud/exp/iat/nbf, and
-// adds two custom claims: the session ID ("sid") and token type ("typ").
+// adds custom claims: the session ID ("sid"), token type ("typ"), and an
+// optional Token-Binding Hash ("tbh") for device-binding verification.
 type AccessTokenClaims struct {
 	SessionID string `json:"sid"`
 	Type      string `json:"typ"`
+	TBH       string `json:"tbh,omitempty"`
 	jwtgo.RegisteredClaims
 }
 
@@ -32,10 +34,15 @@ type AccessTokenClaims struct {
 // All timestamps are emitted in UTC. If keyID is non-empty it is placed in
 // the JWT header under "kid" to support future key rotation without a
 // JWKS endpoint.
+//
+// An optional tbh (Token-Binding Hash) may be supplied as the last variadic
+// argument. When non-empty it is embedded in the "tbh" claim so the
+// middleware can verify the token is being used from the same device context.
 func GenerateAccessToken(
 	userID, sessionID, issuer, audience, keyID string,
 	privateKey *rsa.PrivateKey,
 	expiresIn time.Duration,
+	opts ...string,
 ) (string, error) {
 	if privateKey == nil {
 		return "", fmt.Errorf("jwt.GenerateAccessToken: private key is nil")
@@ -60,6 +67,9 @@ func GenerateAccessToken(
 			IssuedAt:  jwtgo.NewNumericDate(now),
 			ID:        uuid.NewString(),
 		},
+	}
+	if len(opts) > 0 && opts[0] != "" {
+		claims.TBH = opts[0]
 	}
 
 	token := jwtgo.NewWithClaims(jwtgo.SigningMethodRS256, claims)

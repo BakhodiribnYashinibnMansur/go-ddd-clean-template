@@ -26,6 +26,10 @@ type BoundedContext struct {
 	ValidateAPIKey   *query.ValidateAPIKeyHandler
 	ResolveJWTAPIKey *query.ResolveJWTAPIKeyHandler
 
+	// Repos — exposed for cross-cutting infrastructure (keyring bootstrap/rotation).
+	ReadRepo  *postgres.IntegrationReadRepo
+	WriteRepo *postgres.IntegrationWriteRepo
+
 	// Services
 	Cache *appl.CacheService
 }
@@ -43,6 +47,8 @@ func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, apiKey
 		ListIntegrations:  query.NewListHandler(readRepo, l),
 		ValidateAPIKey:    query.NewValidateAPIKeyHandler(readRepo, l),
 		ResolveJWTAPIKey:  query.NewResolveJWTAPIKeyHandler(readRepo, apiKeyPepper, cacheTTL, l),
+		ReadRepo:          readRepo,
+		WriteRepo:         writeRepo,
 		Cache:             appl.NewCacheService(readRepo, l),
 	}
 }

@@ -154,6 +154,10 @@ func MapToHTTPStatus(code string) int {
 	case ErrHandlerConflict, ErrServiceConflict, ErrServiceAlreadyExists, ErrRepoAlreadyExists:
 		return 409
 
+	// 429 errors
+	case ErrHandlerTooManyRequests:
+		return 429
+
 	// 500 errors
 	case ErrHandlerInternal, ErrServiceUnknown, ErrRepoDatabase, ErrRepoUnknown:
 		return 500

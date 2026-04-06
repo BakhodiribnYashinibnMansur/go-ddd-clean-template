@@ -40,6 +40,7 @@ type Session struct {
 	userAgent        shared.UserAgent
 	refreshTokenHash    string
 	previousRefreshHash string
+	deviceFingerprint   string
 	expiresAt           time.Time
 	lastActivity     time.Time
 	revoked          bool
@@ -56,7 +57,7 @@ const DefaultIntegrationName = "gct-client"
 // It validates the IP address via shared.NewIPAddress and normalises the user agent;
 // an invalid IP returns shared.ErrInvalidIPAddress and no session is created.
 // If integrationName is empty, DefaultIntegrationName is used.
-func NewSession(userID uuid.UUID, deviceType SessionDeviceType, ip, userAgent, integrationName string) (*Session, error) {
+func NewSession(userID uuid.UUID, deviceType SessionDeviceType, ip, userAgent, integrationName string, deviceFingerprint ...string) (*Session, error) {
 	ipVO, err := shared.NewIPAddress(ip)
 	if err != nil {
 		return nil, err
@@ -65,17 +66,22 @@ func NewSession(userID uuid.UUID, deviceType SessionDeviceType, ip, userAgent, i
 	if integrationName == "" {
 		integrationName = DefaultIntegrationName
 	}
+	var fp string
+	if len(deviceFingerprint) > 0 {
+		fp = deviceFingerprint[0]
+	}
 	now := time.Now()
 	return &Session{
-		BaseEntity:      shared.NewBaseEntity(),
-		userID:          userID,
-		deviceID:        uuid.New().String(),
-		deviceType:      deviceType,
-		ipAddress:       ipVO,
-		userAgent:       uaVO,
-		expiresAt:       now.Add(defaultSessionDuration),
-		lastActivity:    now,
-		integrationName: integrationName,
+		BaseEntity:        shared.NewBaseEntity(),
+		userID:            userID,
+		deviceID:          uuid.New().String(),
+		deviceType:        deviceType,
+		ipAddress:         ipVO,
+		userAgent:         uaVO,
+		deviceFingerprint: fp,
+		expiresAt:         now.Add(defaultSessionDuration),
+		lastActivity:      now,
+		integrationName:   integrationName,
 	}, nil
 }
 
@@ -91,7 +97,7 @@ func ReconstructSession(
 	expiresAt, lastActivity time.Time,
 	revoked bool,
 	integrationName string,
-	previousRefreshHash ...string,
+	opts ...string,
 ) *Session {
 	ipVO, _ := shared.NewIPAddress(ipAddress) // tolerate legacy/empty rows
 	uaVO := shared.NewUserAgent(userAgent)
@@ -99,8 +105,12 @@ func ReconstructSession(
 		integrationName = DefaultIntegrationName
 	}
 	var prevHash string
-	if len(previousRefreshHash) > 0 {
-		prevHash = previousRefreshHash[0]
+	if len(opts) > 0 {
+		prevHash = opts[0]
+	}
+	var fp string
+	if len(opts) > 1 {
+		fp = opts[1]
 	}
 	return &Session{
 		BaseEntity:          shared.NewBaseEntityWithID(id, createdAt, updatedAt, deletedAt),
@@ -112,6 +122,7 @@ func ReconstructSession(
 		userAgent:           uaVO,
 		refreshTokenHash:    refreshTokenHash,
 		previousRefreshHash: prevHash,
+		deviceFingerprint:   fp,
 		expiresAt:           expiresAt,
 		lastActivity:        lastActivity,
 		revoked:             revoked,
@@ -190,3 +201,4 @@ func (s *Session) ExpiresAt() time.Time          { return s.expiresAt }
 func (s *Session) LastActivity() time.Time       { return s.lastActivity }
 func (s *Session) IsRevoked() bool               { return s.revoked }
 func (s *Session) IntegrationName() string       { return s.integrationName }
+func (s *Session) DeviceFingerprint() string     { return s.deviceFingerprint }

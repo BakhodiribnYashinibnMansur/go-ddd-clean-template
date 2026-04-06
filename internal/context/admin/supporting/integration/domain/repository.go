@@ -75,6 +75,8 @@ type JWTIntegrationView struct {
 	PreviousKeyID        string
 	BindingMode          string
 	MaxSessions          int
+	RotatedAt            *time.Time
+	RotateEveryDays      int
 }
 
 // IntegrationReadRepository is the read-side repository returning projected views.

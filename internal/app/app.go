@@ -39,8 +39,12 @@ import (
 	"gct/internal/kernel/infrastructure/pubsub"
 	"gct/internal/kernel/infrastructure/reqlog"
 	"gct/internal/kernel/infrastructure/sse"
+	"gct/internal/kernel/infrastructure/security/apikeythrottle"
+	securityaudit "gct/internal/kernel/infrastructure/security/audit"
 	jwtpkg "gct/internal/kernel/infrastructure/security/jwt"
 	"gct/internal/kernel/infrastructure/security/keyring"
+	securityratelimit "gct/internal/kernel/infrastructure/security/ratelimit"
+	"gct/internal/kernel/infrastructure/security/revocation"
 	httpserver "gct/internal/kernel/infrastructure/server/http"
 	"gct/internal/kernel/infrastructure/tracing"
 
@@ -325,12 +329,41 @@ func Run(cfg *config.Config) {
 		businessMetrics = metrics.NewBusinessMetrics(cfg.Tracing.ServiceName)
 	}
 
+	// Phase S1: Security infrastructure
+	auditLogger := securityaudit.NewPgLogger(pg.Pool, l)
+	auditLogger.Start(ctx)
+
+	var revStore *revocation.Store
+	if redisclient != nil {
+		revStore = revocation.New(redisclient)
+	}
+
+	var authLimiter *securityratelimit.AuthLimiter
+	if redisclient != nil {
+		authLimiter = securityratelimit.New(redisclient, securityratelimit.DefaultConfig())
+	}
+
+	var apiKeyThrottle *apikeythrottle.Throttle
+	if redisclient != nil {
+		apiKeyThrottle = apikeythrottle.New(redisclient, apikeythrottle.DefaultConfig())
+	}
+
+	// TBH pepper — reuse the refresh pepper for token-binding hashes.
+	tbhPepper := refreshPepper
+
+	secDeps := SecurityDeps{
+		AuditLogger: auditLogger,
+		RevStore:    revStore,
+		AuthLimiter: authLimiter,
+		TBHPepper:   tbhPepper,
+	}
+
 	// Sign-in resolver is injected inside NewDDDBoundedContexts once the
 	// Integration BC is wired; we pass only the issuer + hasher here.
 	dddBCs, err := NewDDDBoundedContexts(ctx, pg.Pool, eventBusInstance, l, businessMetrics, command.JWTConfig{
 		Issuer:        cfg.JWT.Issuer,
 		RefreshHasher: refreshHasher,
-	}, cfg, apiKeyPepper, kr)
+	}, cfg, apiKeyPepper, kr, secDeps)
 	if err != nil {
 		l.Fatalw("failed to initialize DDD bounded contexts", "error", err)
 	}
@@ -354,14 +387,84 @@ func Run(cfg *config.Config) {
 	}
 	go pg.Listen(ctx, consts.CacheInvalidationChannel, dddBCs.Integration.Cache.InvalidateCache, l)
 
+	// 5b. Keyring — bootstrap key pairs for all active JWT integrations.
+	// The updateFn closure bridges the keyring package (which does not import
+	// the Integration BC) to the write repo's RotateJWTKey method.
+	updateKeyFn := func(ctx context.Context, name, publicKeyPEM, kid string) error {
+		views, err := dddBCs.Integration.ReadRepo.ListActiveJWT(ctx)
+		if err != nil {
+			return fmt.Errorf("lookup integration %q: %w", name, err)
+		}
+		for _, v := range views {
+			if v.Name == name {
+				return dddBCs.Integration.WriteRepo.RotateJWTKey(ctx, v.ID, publicKeyPEM, kid)
+			}
+		}
+		return fmt.Errorf("integration %q not found in active JWT list", name)
+	}
+
+	if cfg.JWT.AutoGenerateKeys {
+		views, err := dddBCs.Integration.ReadRepo.ListActiveJWT(ctx)
+		if err != nil {
+			l.Errorc(ctx, "Keyring bootstrap: failed to list active JWT integrations", "error", err)
+		} else {
+			bootstrapIntegrations := make([]keyring.BootstrapIntegration, len(views))
+			for i, v := range views {
+				bootstrapIntegrations[i] = keyring.BootstrapIntegration{Name: v.Name, KeyID: v.KeyID}
+			}
+			if err := keyring.Bootstrap(ctx, kr, bootstrapIntegrations, updateKeyFn, l); err != nil {
+				l.Errorc(ctx, "Keyring bootstrap completed with errors", "error", err)
+			}
+		}
+	}
+
+	// 5c. Keyring rotation handler — used by the asynq worker to rotate keys.
+	var rotateHandler *keyring.RotateKeysHandler
+	if cfg.JWT.AutoRotate {
+		listerAdapter := &integrationListerAdapter{readRepo: dddBCs.Integration.ReadRepo}
+		rotateHandler = keyring.NewRotateKeysHandler(kr, listerAdapter, updateKeyFn, l)
+	}
+
 	// 6. Asynq Worker
 	if cfg.Asynq.Enabled {
-		asynqWorker, err := initAsynqWorker(ctx, cfg, pg.Pool, dddBCs.Audit.CreateAuditLog, l, nil, nil)
+		asynqWorker, err := initAsynqWorker(ctx, cfg, pg.Pool, dddBCs.Audit.CreateAuditLog, rotateHandler, l, nil, nil)
 		if err != nil {
 			l.Errorc(ctx, "Failed to initialize Asynq worker", "error", err)
 		}
 		if asynqWorker != nil {
 			defer asynqWorker.Stop()
+		}
+
+		// Schedule recurring key rotation: enqueue once immediately, then every 24h.
+		if cfg.JWT.AutoRotate && asynqClient != nil {
+			go func() {
+				enqueueRotation := func() {
+					task, err := keyring.NewRotateKeysTask()
+					if err != nil {
+						l.Errorc(ctx, "Failed to create rotation task", "error", err)
+						return
+					}
+					if _, err := asynqClient.EnqueueTask(ctx, keyring.TaskTypeRotateKeys, keyring.RotateKeysPayload{}); err != nil {
+						l.Errorc(ctx, "Failed to enqueue rotation task", "error", err)
+					}
+					_ = task // payload is marshalled inside EnqueueTask
+				}
+
+				// Immediate first run to catch overdue rotations.
+				enqueueRotation()
+
+				ticker := time.NewTicker(24 * time.Hour)
+				defer ticker.Stop()
+				for {
+					select {
+					case <-ctx.Done():
+						return
+					case <-ticker.C:
+						enqueueRotation()
+					}
+				}
+			}()
+			l.Infoc(ctx, "Keyring rotation scheduler started (every 24h)")
 		}
 	} else {
 		l.Infoc(ctx, "Asynq worker is disabled in configuration")
@@ -434,7 +537,7 @@ func Run(cfg *config.Config) {
 	}
 
 	// 8. HTTP Router (pure DDD)
-	handler := initRouter(cfg, dddBCs, redisclient, pg, sseHub, metricsProvider, latencyTracker, reqLogSink, l)
+	handler := initRouter(cfg, dddBCs, redisclient, pg, sseHub, metricsProvider, latencyTracker, reqLogSink, l, auditLogger, revStore, apiKeyThrottle, tbhPepper)
 
 	httpServer := httpserver.NewServer()
 	startServer(cfg.HTTP.Port, handler, httpServer, l)
@@ -444,6 +547,10 @@ func Run(cfg *config.Config) {
 	cancel()
 
 	// 9. Graceful shutdown
+	// Phase S1: drain buffered audit entries before shutting down PostgreSQL.
+	l.Infoc(context.Background(), "Draining security audit log buffer...")
+	auditLogger.Close()
+
 	if latencyReporter != nil {
 		latencyReporter.Stop()
 	}
@@ -471,7 +578,7 @@ func Run(cfg *config.Config) {
 }
 
 // initRouter configures the Gin engine with DDD middleware and routes.
-func initRouter(cfg *config.Config, bcs *DDDBoundedContexts, redisClient *redis.Client, pg *postgres.Postgres, sseHub *sse.Hub, metricsProvider *metrics.Provider, latencyTracker *latency.Tracker, reqLogSink reqlog.Sink, l logger.Log) *gin.Engine {
+func initRouter(cfg *config.Config, bcs *DDDBoundedContexts, redisClient *redis.Client, pg *postgres.Postgres, sseHub *sse.Hub, metricsProvider *metrics.Provider, latencyTracker *latency.Tracker, reqLogSink reqlog.Sink, l logger.Log, auditLog securityaudit.Logger, revStore *revocation.Store, apiThrottle *apikeythrottle.Throttle, tbhPepper []byte) *gin.Engine {
 	gin.SetMode(cfg.HTTP.GinMode)
 
 	if cfg.Log.ShowGin {
@@ -506,7 +613,7 @@ func initRouter(cfg *config.Config, bcs *DDDBoundedContexts, redisClient *redis.
 	mwResolver := NewMiddlewareResolver(bcs)
 	refreshPepperBytes, _ := cfg.JWT.DecodeRefreshPepper()
 	mwRefreshHasher, _ := jwtpkg.NewRefreshHasher(refreshPepperBytes)
-	authMW := usermw.NewAuthMiddleware(bcs.User.FindSession, bcs.User.FindUserForAuth, cfg, l, mwResolver, mwRefreshHasher)
+	authMW := usermw.NewAuthMiddleware(bcs.User.FindSession, bcs.User.FindUserForAuth, cfg, l, mwResolver, mwRefreshHasher, auditLog, revStore, apiThrottle, usermw.TBHPepper(tbhPepper))
 	authUserLookup := userport.NewAuthLookupAdapter(bcs.User.FindUserForAuth)
 	authzMiddleware := authzmw.NewAuthzMiddleware(bcs.Authz.CheckAccess, authUserLookup, l)
 	csrfMW := sharedmw.HybridMiddleware(l, consts.CookieCsrfToken)

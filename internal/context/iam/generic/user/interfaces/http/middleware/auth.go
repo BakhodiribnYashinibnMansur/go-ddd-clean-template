@@ -10,7 +10,10 @@ import (
 	"gct/config"
 	"gct/internal/context/iam/generic/user/application/query"
 	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/security/audit"
+	"gct/internal/kernel/infrastructure/security/apikeythrottle"
 	"gct/internal/kernel/infrastructure/security/jwt"
+	"gct/internal/kernel/infrastructure/security/revocation"
 
 	"github.com/google/uuid"
 )
@@ -55,6 +58,12 @@ type AuthMiddleware struct {
 	sessionRevoker  SessionRevoker
 	issuer          string
 	leeway          time.Duration
+
+	// Phase S1 security components — all optional, nil-safe.
+	auditLogger     audit.Logger
+	revStore        *revocation.Store
+	apiKeyThrottle  *apikeythrottle.Throttle
+	tbhPepper       []byte
 }
 
 // NewAuthMiddleware initializes a new authentication middleware instance.
@@ -79,6 +88,7 @@ func NewAuthMiddleware(
 		l:               l,
 		issuer:          cfg.JWT.Issuer,
 		leeway:          cfg.JWT.Leeway,
+		auditLogger:     audit.NoopLogger{}, // default to noop
 	}
 	for _, o := range opts {
 		switch v := o.(type) {
@@ -88,7 +98,19 @@ func NewAuthMiddleware(
 			m.refreshHasher = v
 		case SessionRevoker:
 			m.sessionRevoker = v
+		case audit.Logger:
+			m.auditLogger = v
+		case *revocation.Store:
+			m.revStore = v
+		case *apikeythrottle.Throttle:
+			m.apiKeyThrottle = v
+		case TBHPepper:
+			m.tbhPepper = []byte(v)
 		}
 	}
 	return m
 }
+
+// TBHPepper is a named type used to pass the TBH pepper through the
+// variadic opts of NewAuthMiddleware without ambiguity.
+type TBHPepper []byte

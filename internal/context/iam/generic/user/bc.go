@@ -8,6 +8,8 @@ import (
 	"gct/internal/context/iam/generic/user/infrastructure/postgres"
 	"gct/internal/kernel/application"
 	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/security/audit"
+	"gct/internal/kernel/infrastructure/security/revocation"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -59,4 +61,12 @@ func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, l logg
 		FindSession:     query.NewFindSessionHandler(readRepo, l),
 		FindUserForAuth: query.NewFindUserForAuthHandler(readRepo, l),
 	}
+}
+
+// WireSecurityDeps injects Phase S1 security dependencies into the sign-in
+// and sign-out handlers. Call after NewBoundedContext; safe to omit entirely
+// — all handlers degrade gracefully when deps are nil.
+func (bc *BoundedContext) WireSecurityDeps(al audit.Logger, rs *revocation.Store, signInDeps command.SignInSecurityDeps) {
+	bc.SignIn.WithSecurityDeps(signInDeps)
+	bc.SignOut.WithSecurityDeps(al, rs)
 }

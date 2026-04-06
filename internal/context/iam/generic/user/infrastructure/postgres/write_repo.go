@@ -39,6 +39,7 @@ var sessionSelectColumns = []string{
 	"created_at", "updated_at",
 	"integration_name",
 	"previous_refresh_hash",
+	"device_fingerprint",
 }
 
 // sessionInsertColumns are the columns for INSERT queries (no cast).
@@ -49,6 +50,7 @@ var sessionInsertColumns = []string{
 	"created_at", "updated_at",
 	"integration_name",
 	"previous_refresh_hash",
+	"device_fingerprint",
 }
 
 // UserWriteRepo implements domain.UserRepository using PostgreSQL.
@@ -148,6 +150,7 @@ func (r *UserWriteRepo) insertSession(ctx context.Context, tx pgx.Tx, s *domain.
 			s.UpdatedAt(),
 			s.IntegrationName(),
 			s.PreviousRefreshHash(),
+			s.DeviceFingerprint(),
 		).
 		ToSql()
 	if err != nil {
@@ -275,6 +278,7 @@ func (r *UserWriteRepo) upsertSessions(ctx context.Context, tx pgx.Tx, sessions 
 				s.CreatedAt(), s.UpdatedAt(),
 				s.IntegrationName(),
 				s.PreviousRefreshHash(),
+				s.DeviceFingerprint(),
 			).
 			Suffix("ON CONFLICT (id) DO UPDATE SET refresh_token_hash = EXCLUDED.refresh_token_hash, previous_refresh_hash = EXCLUDED.previous_refresh_hash, last_activity = EXCLUDED.last_activity, revoked = EXCLUDED.revoked, updated_at = EXCLUDED.updated_at").
 			ToSql()
@@ -713,6 +717,7 @@ func scanSessionFromRows(rows pgx.Rows) (*domain.Session, error) {
 		updatedAt           time.Time
 		integrationName     *string
 		previousRefreshHash *string
+		deviceFingerprint   *string
 	)
 
 	err := rows.Scan(
@@ -722,6 +727,7 @@ func scanSessionFromRows(rows pgx.Rows) (*domain.Session, error) {
 		&createdAt, &updatedAt,
 		&integrationName,
 		&previousRefreshHash,
+		&deviceFingerprint,
 	)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, sessionTable, nil)
@@ -745,6 +751,7 @@ func scanSessionFromRows(rows pgx.Rows) (*domain.Session, error) {
 		revoked,
 		deref(integrationName),
 		deref(previousRefreshHash),
+		deref(deviceFingerprint),
 	)
 	return s, nil
 }

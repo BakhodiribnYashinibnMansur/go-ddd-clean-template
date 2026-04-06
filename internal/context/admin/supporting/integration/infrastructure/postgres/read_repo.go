@@ -276,7 +276,8 @@ func (r *IntegrationReadRepo) FindByAPIKey(ctx context.Context, apiKey string) (
 const jwtViewSelect = `SELECT id, name, jwt_access_ttl_seconds, jwt_refresh_ttl_seconds,
        jwt_public_key_pem, COALESCE(jwt_previous_public_key_pem, ''),
        jwt_key_id, COALESCE(jwt_previous_key_id, ''),
-       jwt_binding_mode, jwt_max_sessions
+       jwt_binding_mode, jwt_max_sessions,
+       jwt_rotated_at, jwt_rotate_every_days
   FROM ` + tableName
 
 // ListActiveJWT returns all integrations that have jwt_api_key_hash set.
@@ -322,22 +323,25 @@ func (r *IntegrationReadRepo) FindJWTByHash(ctx context.Context, hash []byte) (r
 
 func scanJWTIntegrationView(s integrationViewScanner) (*domain.JWTIntegrationView, error) {
 	var (
-		id            uuid.UUID
-		name          string
-		accessSecs    *int
-		refreshSecs   *int
-		publicPEM     string
-		previousPEM   string
-		keyID         string
-		previousKeyID string
-		bindingMode   string
-		maxSessions   int
+		id              uuid.UUID
+		name            string
+		accessSecs      *int
+		refreshSecs     *int
+		publicPEM       string
+		previousPEM     string
+		keyID           string
+		previousKeyID   string
+		bindingMode     string
+		maxSessions     int
+		rotatedAt       *time.Time
+		rotateEveryDays int
 	)
 	if err := s.Scan(
 		&id, &name, &accessSecs, &refreshSecs,
 		&publicPEM, &previousPEM,
 		&keyID, &previousKeyID,
 		&bindingMode, &maxSessions,
+		&rotatedAt, &rotateEveryDays,
 	); err != nil {
 		return nil, err
 	}
@@ -359,5 +363,7 @@ func scanJWTIntegrationView(s integrationViewScanner) (*domain.JWTIntegrationVie
 		PreviousKeyID:        previousKeyID,
 		BindingMode:          bindingMode,
 		MaxSessions:          maxSessions,
+		RotatedAt:            rotatedAt,
+		RotateEveryDays:      rotateEveryDays,
 	}, nil
 }

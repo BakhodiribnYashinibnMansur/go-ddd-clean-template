@@ -16,6 +16,8 @@ import (
 	"gct/internal/context/iam/generic/user/domain"
 	"gct/internal/kernel/consts"
 	shared "gct/internal/kernel/domain"
+	"gct/internal/kernel/infrastructure/security/audit"
+	"gct/internal/kernel/infrastructure/security/fingerprint"
 	"gct/internal/kernel/infrastructure/security/jwt"
 
 	"github.com/gin-gonic/gin"
@@ -166,6 +168,7 @@ func newTestMiddlewareWithRevoker(t *testing.T, repo *fakeReadRepo, pubKey *rsa.
 		resolver:        resolver,
 		refreshHasher:   hasher,
 		sessionRevoker:  revoker,
+		auditLogger:     audit.NoopLogger{},
 		issuer:          issuer,
 		leeway:          30 * time.Second,
 	}
@@ -510,5 +513,127 @@ func TestAuthClientRefresh_NoHashMatches(t *testing.T) {
 	}
 	if revoker.called {
 		t.Fatal("revoker should not be called when neither hash matches")
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Device fingerprint binding
+// ---------------------------------------------------------------------------
+
+func TestAuthClientRefresh_FingerprintMismatch_Returns401(t *testing.T) {
+	t.Parallel()
+	_, pubKey, _ := generateRSAKeyPair(t)
+
+	hasher, err := jwt.NewRefreshHasher([]byte("0123456789abcdef0123456789abcdef"))
+	if err != nil {
+		t.Fatalf("NewRefreshHasher: %v", err)
+	}
+
+	sessUUID := uuid.New()
+	userUUID := uuid.New()
+	tokenStr, hash := buildRefreshToken(t, hasher, sessUUID.String())
+
+	// Session was created with a specific device fingerprint.
+	originalFP := fingerprint.Compute("OriginalUA/1.0", "en-US", "Chromium")
+	repo := &fakeReadRepo{session: &shared.AuthSession{
+		ID: sessUUID, UserID: userUUID,
+		RefreshTokenHash:  hash,
+		IntegrationName:   "test-aud",
+		ExpiresAt:         time.Now().Add(1 * time.Hour),
+		DeviceFingerprint: originalFP,
+	}}
+	revoker := &fakeSessionRevoker{}
+	mw := newTestMiddlewareWithRevoker(t, repo, pubKey, "test-issuer", revoker)
+
+	ctx, w := newGinContext(http.MethodPost, "/auth/refresh")
+	ctx.Request.Header.Set(consts.HeaderXAPIKey, "some-key")
+	ctx.Request.Header.Set("Authorization", "Bearer "+tokenStr)
+	// Present a DIFFERENT user agent -> different fingerprint.
+	ctx.Request.Header.Set("User-Agent", "DifferentUA/2.0")
+	ctx.Request.Header.Set("Accept-Language", "fr-FR")
+	mw.AuthClientRefresh(ctx)
+
+	if w.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401 for fingerprint mismatch, got %d", w.Code)
+	}
+	if !ctx.IsAborted() {
+		t.Fatal("context should be aborted on fingerprint mismatch")
+	}
+}
+
+func TestAuthClientRefresh_FingerprintMatch_Passes(t *testing.T) {
+	t.Parallel()
+	_, pubKey, _ := generateRSAKeyPair(t)
+
+	hasher, err := jwt.NewRefreshHasher([]byte("0123456789abcdef0123456789abcdef"))
+	if err != nil {
+		t.Fatalf("NewRefreshHasher: %v", err)
+	}
+
+	sessUUID := uuid.New()
+	userUUID := uuid.New()
+	tokenStr, hash := buildRefreshToken(t, hasher, sessUUID.String())
+
+	// Session fingerprint matches the headers we will send.
+	fp := fingerprint.Compute("TestUA/1.0", "en-US", "")
+	repo := &fakeReadRepo{session: &shared.AuthSession{
+		ID: sessUUID, UserID: userUUID,
+		RefreshTokenHash:  hash,
+		IntegrationName:   "test-aud",
+		ExpiresAt:         time.Now().Add(1 * time.Hour),
+		DeviceFingerprint: fp,
+	}}
+	revoker := &fakeSessionRevoker{}
+	mw := newTestMiddlewareWithRevoker(t, repo, pubKey, "test-issuer", revoker)
+
+	ctx, w := newGinContext(http.MethodPost, "/auth/refresh")
+	ctx.Request.Header.Set(consts.HeaderXAPIKey, "some-key")
+	ctx.Request.Header.Set("Authorization", "Bearer "+tokenStr)
+	ctx.Request.Header.Set("User-Agent", "TestUA/1.0")
+	ctx.Request.Header.Set("Accept-Language", "en-US")
+	mw.AuthClientRefresh(ctx)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200 for matching fingerprint, got %d", w.Code)
+	}
+	if ctx.IsAborted() {
+		t.Fatal("context should not be aborted when fingerprint matches")
+	}
+}
+
+func TestAuthClientRefresh_EmptyFingerprint_Skips(t *testing.T) {
+	t.Parallel()
+	_, pubKey, _ := generateRSAKeyPair(t)
+
+	hasher, err := jwt.NewRefreshHasher([]byte("0123456789abcdef0123456789abcdef"))
+	if err != nil {
+		t.Fatalf("NewRefreshHasher: %v", err)
+	}
+
+	sessUUID := uuid.New()
+	userUUID := uuid.New()
+	tokenStr, hash := buildRefreshToken(t, hasher, sessUUID.String())
+
+	// No fingerprint stored on session — check should be skipped.
+	repo := &fakeReadRepo{session: &shared.AuthSession{
+		ID: sessUUID, UserID: userUUID,
+		RefreshTokenHash: hash,
+		IntegrationName:  "test-aud",
+		ExpiresAt:        time.Now().Add(1 * time.Hour),
+	}}
+	revoker := &fakeSessionRevoker{}
+	mw := newTestMiddlewareWithRevoker(t, repo, pubKey, "test-issuer", revoker)
+
+	ctx, w := newGinContext(http.MethodPost, "/auth/refresh")
+	ctx.Request.Header.Set(consts.HeaderXAPIKey, "some-key")
+	ctx.Request.Header.Set("Authorization", "Bearer "+tokenStr)
+	ctx.Request.Header.Set("User-Agent", "AnyAgent/99")
+	mw.AuthClientRefresh(ctx)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200 when session has no fingerprint, got %d", w.Code)
+	}
+	if ctx.IsAborted() {
+		t.Fatal("context should not be aborted when no fingerprint is stored")
 	}
 }
