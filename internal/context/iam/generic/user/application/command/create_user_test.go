@@ -87,6 +87,10 @@ func (m *mockUserRepository) RevokeOldestActiveSession(_ context.Context, _ doma
 	return domain.SessionID(uuid.New()), nil
 }
 
+func (m *mockUserRepository) RevokeSessionsByIntegration(_ context.Context, _ domain.UserID, _ string) (int, error) {
+	return 0, nil
+}
+
 // --- Mock EventBus ---
 
 type mockEventBus struct {

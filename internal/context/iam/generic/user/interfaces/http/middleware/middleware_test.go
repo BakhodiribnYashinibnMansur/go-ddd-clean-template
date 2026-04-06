@@ -114,9 +114,32 @@ func (f *fakeResolver) Resolve(_ context.Context, _ string) (*ResolvedForVerify,
 	return f.resolved, f.err
 }
 
+// fakeSessionRevoker records calls to RevokeSessionsByIntegration.
+type fakeSessionRevoker struct {
+	called          bool
+	revokedUserID   uuid.UUID
+	revokedIntName  string
+	revokedCount    int
+	err             error
+}
+
+func (f *fakeSessionRevoker) RevokeSessionsByIntegration(_ context.Context, userID uuid.UUID, integrationName string) (int, error) {
+	f.called = true
+	f.revokedUserID = userID
+	f.revokedIntName = integrationName
+	return f.revokedCount, f.err
+}
+
 // newTestMiddleware constructs an AuthMiddleware wired with the given fake repo
 // and a pre-parsed RSA public key (bypasses NewAuthMiddleware's config parsing).
 func newTestMiddleware(t *testing.T, repo *fakeReadRepo, pubKey *rsa.PublicKey, issuer string) *AuthMiddleware {
+	t.Helper()
+	return newTestMiddlewareWithRevoker(t, repo, pubKey, issuer, nil)
+}
+
+// newTestMiddlewareWithRevoker is like newTestMiddleware but accepts an optional
+// SessionRevoker for reuse detection tests.
+func newTestMiddlewareWithRevoker(t *testing.T, repo *fakeReadRepo, pubKey *rsa.PublicKey, issuer string, revoker SessionRevoker) *AuthMiddleware {
 	t.Helper()
 	l := nopLog{}
 
@@ -142,6 +165,7 @@ func newTestMiddleware(t *testing.T, repo *fakeReadRepo, pubKey *rsa.PublicKey, 
 		l:               l,
 		resolver:        resolver,
 		refreshHasher:   hasher,
+		sessionRevoker:  revoker,
 		issuer:          issuer,
 		leeway:          30 * time.Second,
 	}
@@ -341,5 +365,150 @@ func TestAuthAdmin_NoToken(t *testing.T) {
 	}
 	if !ctx.IsAborted() {
 		t.Fatal("expected context to be aborted")
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Refresh-token rotation & reuse detection
+// ---------------------------------------------------------------------------
+
+// buildRefreshToken creates a refresh token string and its hash for testing.
+func buildRefreshToken(t *testing.T, hasher *jwt.RefreshHasher, sessionID string) (tokenStr, hash string) {
+	t.Helper()
+	rt, err := jwt.GenerateRefreshToken(hasher, uuid.New().String(), sessionID, "device-1", 7*24*time.Hour)
+	if err != nil {
+		t.Fatalf("GenerateRefreshToken: %v", err)
+	}
+	return rt.String(), rt.Hashed
+}
+
+func TestAuthClientRefresh_CurrentHashMatches(t *testing.T) {
+	t.Parallel()
+	_, pubKey, _ := generateRSAKeyPair(t)
+
+	hasher, err := jwt.NewRefreshHasher([]byte("0123456789abcdef0123456789abcdef"))
+	if err != nil {
+		t.Fatalf("NewRefreshHasher: %v", err)
+	}
+
+	sessUUID := uuid.New()
+	userUUID := uuid.New()
+	tokenStr, hash := buildRefreshToken(t, hasher, sessUUID.String())
+
+	repo := &fakeReadRepo{session: &shared.AuthSession{
+		ID: sessUUID, UserID: userUUID,
+		RefreshTokenHash: hash,
+		IntegrationName:  "test-aud",
+		ExpiresAt:        time.Now().Add(1 * time.Hour),
+	}}
+	revoker := &fakeSessionRevoker{revokedCount: 3}
+	mw := newTestMiddlewareWithRevoker(t, repo, pubKey, "test-issuer", revoker)
+
+	ctx, w := newGinContext(http.MethodPost, "/auth/refresh")
+	ctx.Request.Header.Set(consts.HeaderXAPIKey, "some-key")
+	ctx.Request.Header.Set("Authorization", "Bearer "+tokenStr)
+	// AuthClientRefresh calls ctx.Next(); we need a handler registered.
+	// In the test harness ctx.Next() is a no-op, which is fine.
+	mw.AuthClientRefresh(ctx)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200 for valid current hash, got %d", w.Code)
+	}
+	if ctx.IsAborted() {
+		t.Fatal("context should not be aborted for valid refresh")
+	}
+	if revoker.called {
+		t.Fatal("revoker should not be called when current hash matches")
+	}
+	// Verify context vars were set.
+	if ctx.GetString(consts.CtxUserID) != userUUID.String() {
+		t.Fatal("CtxUserID not set correctly")
+	}
+}
+
+func TestAuthClientRefresh_PreviousHashMatches_ReuseDetected(t *testing.T) {
+	t.Parallel()
+	_, pubKey, _ := generateRSAKeyPair(t)
+
+	hasher, err := jwt.NewRefreshHasher([]byte("0123456789abcdef0123456789abcdef"))
+	if err != nil {
+		t.Fatalf("NewRefreshHasher: %v", err)
+	}
+
+	sessUUID := uuid.New()
+	userUUID := uuid.New()
+
+	// This token was already rotated: its hash is now in previous_refresh_hash,
+	// and current hash is something new.
+	tokenStr, oldHash := buildRefreshToken(t, hasher, sessUUID.String())
+
+	repo := &fakeReadRepo{session: &shared.AuthSession{
+		ID: sessUUID, UserID: userUUID,
+		RefreshTokenHash:    "new-current-hash-after-rotation",
+		PreviousRefreshHash: oldHash,
+		IntegrationName:     "test-aud",
+		ExpiresAt:           time.Now().Add(1 * time.Hour),
+	}}
+	revoker := &fakeSessionRevoker{revokedCount: 3}
+	mw := newTestMiddlewareWithRevoker(t, repo, pubKey, "test-issuer", revoker)
+
+	ctx, w := newGinContext(http.MethodPost, "/auth/refresh")
+	ctx.Request.Header.Set(consts.HeaderXAPIKey, "some-key")
+	ctx.Request.Header.Set("Authorization", "Bearer "+tokenStr)
+	mw.AuthClientRefresh(ctx)
+
+	if w.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401 for reuse detection, got %d", w.Code)
+	}
+	if !ctx.IsAborted() {
+		t.Fatal("context should be aborted on reuse detection")
+	}
+	if !revoker.called {
+		t.Fatal("revoker should have been called on reuse detection")
+	}
+	if revoker.revokedUserID != userUUID {
+		t.Fatalf("revoker received wrong user ID: got %s, want %s", revoker.revokedUserID, userUUID)
+	}
+	if revoker.revokedIntName != "test-aud" {
+		t.Fatalf("revoker received wrong integration: got %s, want test-aud", revoker.revokedIntName)
+	}
+}
+
+func TestAuthClientRefresh_NoHashMatches(t *testing.T) {
+	t.Parallel()
+	_, pubKey, _ := generateRSAKeyPair(t)
+
+	hasher, err := jwt.NewRefreshHasher([]byte("0123456789abcdef0123456789abcdef"))
+	if err != nil {
+		t.Fatalf("NewRefreshHasher: %v", err)
+	}
+
+	sessUUID := uuid.New()
+	userUUID := uuid.New()
+	tokenStr, _ := buildRefreshToken(t, hasher, sessUUID.String())
+
+	repo := &fakeReadRepo{session: &shared.AuthSession{
+		ID: sessUUID, UserID: userUUID,
+		RefreshTokenHash:    "completely-different-hash",
+		PreviousRefreshHash: "also-different-previous",
+		IntegrationName:     "test-aud",
+		ExpiresAt:           time.Now().Add(1 * time.Hour),
+	}}
+	revoker := &fakeSessionRevoker{}
+	mw := newTestMiddlewareWithRevoker(t, repo, pubKey, "test-issuer", revoker)
+
+	ctx, w := newGinContext(http.MethodPost, "/auth/refresh")
+	ctx.Request.Header.Set(consts.HeaderXAPIKey, "some-key")
+	ctx.Request.Header.Set("Authorization", "Bearer "+tokenStr)
+	mw.AuthClientRefresh(ctx)
+
+	if w.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401 for invalid token, got %d", w.Code)
+	}
+	if !ctx.IsAborted() {
+		t.Fatal("context should be aborted for invalid token")
+	}
+	if revoker.called {
+		t.Fatal("revoker should not be called when neither hash matches")
 	}
 }

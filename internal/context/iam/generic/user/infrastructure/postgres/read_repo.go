@@ -208,7 +208,7 @@ func (r *UserReadRepo) FindSessionByID(ctx context.Context, id domain.SessionID)
 	defer func() { end(err) }()
 
 	sql, args, err := r.builder.
-		Select("id", "user_id", "device_id", "refresh_token_hash", "expires_at", "revoked", "last_activity", "integration_name").
+		Select("id", "user_id", "device_id", "refresh_token_hash", "expires_at", "revoked", "last_activity", "integration_name", "previous_refresh_hash").
 		From(consts.TableSession).
 		Where(squirrel.Eq{"id": id.UUID()}).
 		ToSql()
@@ -219,12 +219,17 @@ func (r *UserReadRepo) FindSessionByID(ctx context.Context, id domain.SessionID)
 	row := r.pool.QueryRow(ctx, sql, args...)
 
 	var s shared.AuthSession
+	var prevHash *string
 	err = row.Scan(
 		&s.ID, &s.UserID, &s.DeviceID, &s.RefreshTokenHash,
 		&s.ExpiresAt, &s.Revoked, &s.LastActivity, &s.IntegrationName,
+		&prevHash,
 	)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, consts.TableSession, map[string]any{"id": id})
+	}
+	if prevHash != nil {
+		s.PreviousRefreshHash = *prevHash
 	}
 
 	return &s, nil

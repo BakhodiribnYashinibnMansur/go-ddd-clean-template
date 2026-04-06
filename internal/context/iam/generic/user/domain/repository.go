@@ -50,6 +50,10 @@ type UserRepository interface {
 	// its ID. Returns NilSessionID when the user has no active sessions to
 	// revoke. Idempotent.
 	RevokeOldestActiveSession(ctx context.Context, userID UserID) (SessionID, error)
+
+	// RevokeSessionsByIntegration revokes all active sessions for a user
+	// within a specific integration. Returns the count of revoked sessions.
+	RevokeSessionsByIntegration(ctx context.Context, userID UserID, integrationName string) (int, error)
 }
 
 // UserReadRepository provides read-only access returning lightweight UserView projections.

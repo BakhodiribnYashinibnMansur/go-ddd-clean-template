@@ -38,8 +38,9 @@ type Session struct {
 	deviceType       SessionDeviceType
 	ipAddress        shared.IPAddress
 	userAgent        shared.UserAgent
-	refreshTokenHash string
-	expiresAt        time.Time
+	refreshTokenHash    string
+	previousRefreshHash string
+	expiresAt           time.Time
 	lastActivity     time.Time
 	revoked          bool
 	integrationName  string
@@ -90,25 +91,31 @@ func ReconstructSession(
 	expiresAt, lastActivity time.Time,
 	revoked bool,
 	integrationName string,
+	previousRefreshHash ...string,
 ) *Session {
 	ipVO, _ := shared.NewIPAddress(ipAddress) // tolerate legacy/empty rows
 	uaVO := shared.NewUserAgent(userAgent)
 	if integrationName == "" {
 		integrationName = DefaultIntegrationName
 	}
+	var prevHash string
+	if len(previousRefreshHash) > 0 {
+		prevHash = previousRefreshHash[0]
+	}
 	return &Session{
-		BaseEntity:       shared.NewBaseEntityWithID(id, createdAt, updatedAt, deletedAt),
-		userID:           userID,
-		deviceID:         deviceID,
-		deviceName:       deviceName,
-		deviceType:       deviceType,
-		ipAddress:        ipVO,
-		userAgent:        uaVO,
-		refreshTokenHash: refreshTokenHash,
-		expiresAt:        expiresAt,
-		lastActivity:     lastActivity,
-		revoked:          revoked,
-		integrationName:  integrationName,
+		BaseEntity:          shared.NewBaseEntityWithID(id, createdAt, updatedAt, deletedAt),
+		userID:              userID,
+		deviceID:            deviceID,
+		deviceName:          deviceName,
+		deviceType:          deviceType,
+		ipAddress:           ipVO,
+		userAgent:           uaVO,
+		refreshTokenHash:    refreshTokenHash,
+		previousRefreshHash: prevHash,
+		expiresAt:           expiresAt,
+		lastActivity:        lastActivity,
+		revoked:             revoked,
+		integrationName:     integrationName,
 	}
 }
 
@@ -147,6 +154,17 @@ func (s *Session) SetRefreshTokenHash(hash string) {
 	s.Touch()
 }
 
+// RotateRefreshHash sets a new refresh token hash and moves the current
+// hash to the previous slot. Returns the old hash (now in previous slot).
+// This enables one-generation reuse detection.
+func (s *Session) RotateRefreshHash(newHash string) string {
+	old := s.refreshTokenHash
+	s.previousRefreshHash = old
+	s.refreshTokenHash = newHash
+	s.Touch()
+	return old
+}
+
 // SetIntegrationName assigns the integration (audience) this session is bound to.
 // It is idempotent and does not bump the modification timestamp on its own.
 func (s *Session) SetIntegrationName(name string) {
@@ -167,6 +185,7 @@ func (s *Session) DeviceType() SessionDeviceType { return s.deviceType }
 func (s *Session) IPAddress() shared.IPAddress   { return s.ipAddress }
 func (s *Session) UserAgent() shared.UserAgent   { return s.userAgent }
 func (s *Session) RefreshTokenHash() string      { return s.refreshTokenHash }
+func (s *Session) PreviousRefreshHash() string   { return s.previousRefreshHash }
 func (s *Session) ExpiresAt() time.Time          { return s.expiresAt }
 func (s *Session) LastActivity() time.Time       { return s.lastActivity }
 func (s *Session) IsRevoked() bool               { return s.revoked }

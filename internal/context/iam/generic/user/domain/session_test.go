@@ -82,6 +82,64 @@ func TestSession_SetRefreshTokenHash(t *testing.T) {
 	}
 }
 
+func TestSession_RotateRefreshHash(t *testing.T) {
+	t.Parallel()
+
+	s, _ := domain.NewSession(uuid.New(), domain.DeviceDesktop, "1.1.1.1", "Agent", "gct-client")
+	s.SetRefreshTokenHash("hash-v1")
+
+	old := s.RotateRefreshHash("hash-v2")
+
+	if old != "hash-v1" {
+		t.Fatalf("expected old hash hash-v1, got %s", old)
+	}
+	if s.RefreshTokenHash() != "hash-v2" {
+		t.Fatalf("expected current hash hash-v2, got %s", s.RefreshTokenHash())
+	}
+	if s.PreviousRefreshHash() != "hash-v1" {
+		t.Fatalf("expected previous hash hash-v1, got %s", s.PreviousRefreshHash())
+	}
+}
+
+func TestSession_RotateRefreshHash_ChainedRotation(t *testing.T) {
+	t.Parallel()
+
+	s, _ := domain.NewSession(uuid.New(), domain.DeviceDesktop, "1.1.1.1", "Agent", "gct-client")
+	s.SetRefreshTokenHash("hash-v1")
+	s.RotateRefreshHash("hash-v2")
+	s.RotateRefreshHash("hash-v3")
+
+	// After two rotations, current=v3, previous=v2 (v1 is gone).
+	if s.RefreshTokenHash() != "hash-v3" {
+		t.Fatalf("expected current hash hash-v3, got %s", s.RefreshTokenHash())
+	}
+	if s.PreviousRefreshHash() != "hash-v2" {
+		t.Fatalf("expected previous hash hash-v2, got %s", s.PreviousRefreshHash())
+	}
+}
+
+func TestReconstructSession_WithPreviousRefreshHash(t *testing.T) {
+	t.Parallel()
+
+	id := uuid.New()
+	uid := domain.NewUserID()
+	now := time.Now()
+	s := domain.ReconstructSession(
+		id, now, now, nil,
+		uid.UUID(), "dev-123", "My Phone", domain.DeviceMobile,
+		"3.3.3.3", "Agent/2.0", "current_hash",
+		now.Add(7*24*time.Hour), now, false,
+		"gct-client",
+		"previous_hash",
+	)
+	if s.RefreshTokenHash() != "current_hash" {
+		t.Fatal("current refresh token hash mismatch")
+	}
+	if s.PreviousRefreshHash() != "previous_hash" {
+		t.Fatal("previous refresh token hash mismatch")
+	}
+}
+
 func TestReconstructSession(t *testing.T) {
 	t.Parallel()
 

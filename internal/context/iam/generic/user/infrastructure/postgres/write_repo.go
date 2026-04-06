@@ -38,6 +38,7 @@ var sessionSelectColumns = []string{
 	"expires_at", "last_activity", "revoked",
 	"created_at", "updated_at",
 	"integration_name",
+	"previous_refresh_hash",
 }
 
 // sessionInsertColumns are the columns for INSERT queries (no cast).
@@ -47,6 +48,7 @@ var sessionInsertColumns = []string{
 	"expires_at", "last_activity", "revoked",
 	"created_at", "updated_at",
 	"integration_name",
+	"previous_refresh_hash",
 }
 
 // UserWriteRepo implements domain.UserRepository using PostgreSQL.
@@ -145,6 +147,7 @@ func (r *UserWriteRepo) insertSession(ctx context.Context, tx pgx.Tx, s *domain.
 			s.CreatedAt(),
 			s.UpdatedAt(),
 			s.IntegrationName(),
+			s.PreviousRefreshHash(),
 		).
 		ToSql()
 	if err != nil {
@@ -271,8 +274,9 @@ func (r *UserWriteRepo) upsertSessions(ctx context.Context, tx pgx.Tx, sessions 
 				s.ExpiresAt(), s.LastActivity(), s.IsRevoked(),
 				s.CreatedAt(), s.UpdatedAt(),
 				s.IntegrationName(),
+				s.PreviousRefreshHash(),
 			).
-			Suffix("ON CONFLICT (id) DO UPDATE SET refresh_token_hash = EXCLUDED.refresh_token_hash, last_activity = EXCLUDED.last_activity, revoked = EXCLUDED.revoked, updated_at = EXCLUDED.updated_at").
+			Suffix("ON CONFLICT (id) DO UPDATE SET refresh_token_hash = EXCLUDED.refresh_token_hash, previous_refresh_hash = EXCLUDED.previous_refresh_hash, last_activity = EXCLUDED.last_activity, revoked = EXCLUDED.revoked, updated_at = EXCLUDED.updated_at").
 			ToSql()
 		if upsertErr != nil {
 			return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildInsert)
@@ -549,6 +553,22 @@ func (r *UserWriteRepo) RevokeOldestActiveSession(ctx context.Context, userID do
 	return domain.SessionID(id), nil
 }
 
+// RevokeSessionsByIntegration revokes all active sessions for a user within a
+// specific integration. Returns the count of revoked sessions.
+func (r *UserWriteRepo) RevokeSessionsByIntegration(ctx context.Context, userID domain.UserID, integrationName string) (count int, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "UserWriteRepo.RevokeSessionsByIntegration")
+	defer func() { end(err) }()
+
+	const sql = `UPDATE ` + sessionTable + ` SET revoked = true, updated_at = NOW()
+ WHERE user_id = $1 AND integration_name = $2 AND revoked = false AND expires_at > NOW()`
+
+	tag, err := r.pool.Exec(ctx, sql, userID.UUID(), integrationName)
+	if err != nil {
+		return 0, apperrors.HandlePgError(err, sessionTable, nil)
+	}
+	return int(tag.RowsAffected()), nil
+}
+
 // FindDefaultRoleID returns the ID of the "user" role (the default role for self-registration).
 func (r *UserWriteRepo) FindDefaultRoleID(ctx context.Context) (result uuid.UUID, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "UserWriteRepo.FindDefaultRoleID")
@@ -678,20 +698,21 @@ func reconstructUserFromRow(
 // scanSessionFromRows scans a session from pgx.Rows.
 func scanSessionFromRows(rows pgx.Rows) (*domain.Session, error) {
 	var (
-		id               uuid.UUID
-		userID           uuid.UUID
-		deviceID         *string
-		deviceName       *string
-		deviceType       *string
-		ipAddress        *string
-		userAgent        *string
-		refreshTokenHash *string
-		expiresAt        time.Time
-		lastActivity     time.Time
-		revoked          bool
-		createdAt        time.Time
-		updatedAt        time.Time
-		integrationName  *string
+		id                  uuid.UUID
+		userID              uuid.UUID
+		deviceID            *string
+		deviceName          *string
+		deviceType          *string
+		ipAddress           *string
+		userAgent           *string
+		refreshTokenHash    *string
+		expiresAt           time.Time
+		lastActivity        time.Time
+		revoked             bool
+		createdAt           time.Time
+		updatedAt           time.Time
+		integrationName     *string
+		previousRefreshHash *string
 	)
 
 	err := rows.Scan(
@@ -700,6 +721,7 @@ func scanSessionFromRows(rows pgx.Rows) (*domain.Session, error) {
 		&expiresAt, &lastActivity, &revoked,
 		&createdAt, &updatedAt,
 		&integrationName,
+		&previousRefreshHash,
 	)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, sessionTable, nil)
@@ -722,6 +744,7 @@ func scanSessionFromRows(rows pgx.Rows) (*domain.Session, error) {
 		expiresAt, lastActivity,
 		revoked,
 		deref(integrationName),
+		deref(previousRefreshHash),
 	)
 	return s, nil
 }

@@ -13,7 +13,8 @@ type AuthSession struct {
 	ID               uuid.UUID `json:"id"`
 	UserID           uuid.UUID `json:"user_id"`
 	DeviceID         uuid.UUID `json:"device_id"`
-	RefreshTokenHash string    `json:"-"`
+	RefreshTokenHash    string `json:"-"`
+	PreviousRefreshHash string `json:"-"`
 	ExpiresAt        time.Time `json:"expires_at"`
 	Revoked          bool      `json:"revoked"`
 	LastActivity     time.Time `json:"last_activity"`

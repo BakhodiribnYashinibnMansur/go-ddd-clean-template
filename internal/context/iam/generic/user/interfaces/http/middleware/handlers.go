@@ -37,12 +37,18 @@ func (m *AuthMiddleware) AuthClientAccess(ctx *gin.Context) {
 	ctx.Next()
 }
 
-// AuthClientRefresh manages the verification of refresh tokens.
-// Used primarily at the token regeneration endpoint.
+// AuthClientRefresh manages the verification of refresh tokens with rotation
+// and reuse detection.
 //
-// This middleware validates refresh tokens and ensures the associated session
-// is still active and not revoked. It uses cryptographic hash verification
-// to prevent token forgery.
+// Flow:
+//  1. Resolve integration from X-API-Key.
+//  2. Parse refresh token.
+//  3. Lookup session from DB.
+//  4. Verify against current hash  -> legitimate refresh, proceed.
+//  5. Verify against previous hash -> REUSE DETECTED: the token was already
+//     rotated. Revoke ALL user sessions for this integration, log an audit
+//     event, and return 401.
+//  6. Neither hash matches -> invalid token, 401.
 func (m *AuthMiddleware) AuthClientRefresh(ctx *gin.Context) {
 	// Resolve the integration up front so a missing/unknown X-API-Key is a
 	// 401 before any refresh-token work is done.
@@ -106,15 +112,7 @@ func (m *AuthMiddleware) AuthClientRefresh(ctx *gin.Context) {
 		return
 	}
 
-	// Cryptographically verify token vs hash in DB (constant-time HMAC compare).
-	if !m.refreshHasher.Verify(rt.Secret, rt.ID, session.RefreshTokenHash) {
-		m.l.Errorw("AuthMiddleware - AuthClientRefresh - invalid refresh token hash", "session_id", sessionID)
-		response.ControllerResponse(ctx, http.StatusUnauthorized, httpx.ErrInvalidRefreshToken, nil, false)
-		ctx.Abort()
-		return
-	}
-
-	// Security check for revocation/expiry
+	// Security check for revocation/expiry (before hash comparison).
 	if session.Revoked || session.IsExpired() {
 		m.l.Errorw("AuthMiddleware - AuthClientRefresh - session revoked or expired", "session_id", sessionID)
 		response.ControllerResponse(ctx, http.StatusUnauthorized, httpx.ErrRevokedToken, nil, false)
@@ -122,13 +120,51 @@ func (m *AuthMiddleware) AuthClientRefresh(ctx *gin.Context) {
 		return
 	}
 
-	// Inject refresh context
-	ctx.Set(consts.CtxSessionID, rt.SessionID)
-	ctx.Set(consts.CtxRefreshToken, token)
-	ctx.Set(consts.CtxSession, session)
-	ctx.Set(consts.CtxUserID, session.UserID.String())
+	// Step 4: Try current hash — legitimate refresh.
+	if m.refreshHasher.Verify(rt.Secret, rt.ID, session.RefreshTokenHash) {
+		// Token matches current hash — proceed to downstream handler.
+		ctx.Set(consts.CtxSessionID, rt.SessionID)
+		ctx.Set(consts.CtxRefreshToken, token)
+		ctx.Set(consts.CtxSession, session)
+		ctx.Set(consts.CtxUserID, session.UserID.String())
+		ctx.Next()
+		return
+	}
 
-	ctx.Next()
+	// Step 5: Try previous hash — reuse detection.
+	if session.PreviousRefreshHash != "" && m.refreshHasher.Verify(rt.Secret, rt.ID, session.PreviousRefreshHash) {
+		m.l.Warnw("refresh_reuse_detected",
+			"session_id", sessionID,
+			"user_id", session.UserID,
+			"integration", session.IntegrationName,
+		)
+
+		// Revoke ALL sessions for this (user, integration) pair.
+		if m.sessionRevoker != nil {
+			count, revokeErr := m.sessionRevoker.RevokeSessionsByIntegration(
+				ctx.Request.Context(), session.UserID, session.IntegrationName,
+			)
+			if revokeErr != nil {
+				m.l.Errorw("AuthMiddleware - AuthClientRefresh - failed to revoke sessions on reuse",
+					"error", revokeErr, "session_id", sessionID)
+			} else {
+				m.l.Warnw("refresh_reuse_sessions_revoked",
+					"revoked_count", count,
+					"user_id", session.UserID,
+					"integration", session.IntegrationName,
+				)
+			}
+		}
+
+		response.ControllerResponse(ctx, http.StatusUnauthorized, httpx.ErrInvalidRefreshToken, nil, false)
+		ctx.Abort()
+		return
+	}
+
+	// Step 6: Neither hash matches — invalid token.
+	m.l.Errorw("AuthMiddleware - AuthClientRefresh - invalid refresh token hash", "session_id", sessionID)
+	response.ControllerResponse(ctx, http.StatusUnauthorized, httpx.ErrInvalidRefreshToken, nil, false)
+	ctx.Abort()
 }
 
 // extractRefreshToken reads the refresh token from the cookie, falling back to
