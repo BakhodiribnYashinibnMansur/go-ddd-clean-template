@@ -6,7 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/content/generic/notification/domain"
+	notifentity "gct/internal/context/content/generic/notification/domain/entity"
+	notifrepo "gct/internal/context/content/generic/notification/domain/repository"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -16,16 +17,16 @@ func TestListHandler_Handle(t *testing.T) {
 	t.Parallel()
 
 	readRepo := &mockReadRepo{
-		views: []*domain.NotificationView{
-			{ID: domain.NewNotificationID(), UserID: uuid.New(), Title: "N1", Type: "INFO", CreatedAt: time.Now()},
-			{ID: domain.NewNotificationID(), UserID: uuid.New(), Title: "N2", Type: "WARNING", CreatedAt: time.Now()},
+		views: []*notifrepo.NotificationView{
+			{ID: notifentity.NewNotificationID(), UserID: uuid.New(), Title: "N1", Type: "INFO", CreatedAt: time.Now()},
+			{ID: notifentity.NewNotificationID(), UserID: uuid.New(), Title: "N2", Type: "WARNING", CreatedAt: time.Now()},
 		},
 		total: 2,
 	}
 
 	handler := NewListHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListQuery{
-		Filter: domain.NotificationFilter{Limit: 10, Offset: 0},
+		Filter: notifrepo.NotificationFilter{Limit: 10, Offset: 0},
 	})
 	require.NoError(t, err)
 	if result.Total != 2 {
@@ -42,11 +43,11 @@ func TestListHandler_Handle(t *testing.T) {
 func TestListHandler_Empty(t *testing.T) {
 	t.Parallel()
 
-	readRepo := &mockReadRepo{views: []*domain.NotificationView{}, total: 0}
+	readRepo := &mockReadRepo{views: []*notifrepo.NotificationView{}, total: 0}
 
 	handler := NewListHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListQuery{
-		Filter: domain.NotificationFilter{},
+		Filter: notifrepo.NotificationFilter{},
 	})
 	require.NoError(t, err)
 	if result.Total != 0 {
@@ -62,7 +63,7 @@ func TestListHandler_RepoError(t *testing.T) {
 
 	readRepo := &errorReadRepo{err: errRepo}
 	handler := NewListHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), ListQuery{Filter: domain.NotificationFilter{}})
+	_, err := handler.Handle(context.Background(), ListQuery{Filter: notifrepo.NotificationFilter{}})
 	if err == nil {
 		t.Fatal("expected error from repo")
 	}

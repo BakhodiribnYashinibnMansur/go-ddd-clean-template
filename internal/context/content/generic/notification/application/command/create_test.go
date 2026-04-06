@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"gct/internal/context/content/generic/notification/application/command"
-	"gct/internal/context/content/generic/notification/domain"
+	notifentity "gct/internal/context/content/generic/notification/domain/entity"
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
@@ -16,24 +16,24 @@ import (
 // --- Mocks ---
 
 type mockNotificationRepo struct {
-	saved   *domain.Notification
-	deleted domain.NotificationID
+	saved   *notifentity.Notification
+	deleted notifentity.NotificationID
 }
 
-func (m *mockNotificationRepo) Save(_ context.Context, n *domain.Notification) error {
+func (m *mockNotificationRepo) Save(_ context.Context, n *notifentity.Notification) error {
 	m.saved = n
 	return nil
 }
 
-func (m *mockNotificationRepo) FindByID(_ context.Context, _ domain.NotificationID) (*domain.Notification, error) {
+func (m *mockNotificationRepo) FindByID(_ context.Context, _ notifentity.NotificationID) (*notifentity.Notification, error) {
 	return nil, nil
 }
 
-func (m *mockNotificationRepo) Update(_ context.Context, _ *domain.Notification) error {
+func (m *mockNotificationRepo) Update(_ context.Context, _ *notifentity.Notification) error {
 	return nil
 }
 
-func (m *mockNotificationRepo) Delete(_ context.Context, id domain.NotificationID) error {
+func (m *mockNotificationRepo) Delete(_ context.Context, id notifentity.NotificationID) error {
 	m.deleted = id
 	return nil
 }

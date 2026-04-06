@@ -5,7 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"gct/internal/context/admin/supporting/sitesetting/domain"
+	siteentity "gct/internal/context/admin/supporting/sitesetting/domain/entity"
+	siterepo "gct/internal/context/admin/supporting/sitesetting/domain/repository"
 
 	"github.com/google/uuid"
 )
@@ -15,29 +16,29 @@ type errorRepo struct {
 	saveErr   error
 	updateErr error
 	deleteErr error
-	findFn    func(ctx context.Context, id domain.SiteSettingID) (*domain.SiteSetting, error)
+	findFn    func(ctx context.Context, id siteentity.SiteSettingID) (*siteentity.SiteSetting, error)
 }
 
-func (m *errorRepo) Save(_ context.Context, _ *domain.SiteSetting) error {
+func (m *errorRepo) Save(_ context.Context, _ *siteentity.SiteSetting) error {
 	return m.saveErr
 }
 
-func (m *errorRepo) FindByID(ctx context.Context, id domain.SiteSettingID) (*domain.SiteSetting, error) {
+func (m *errorRepo) FindByID(ctx context.Context, id siteentity.SiteSettingID) (*siteentity.SiteSetting, error) {
 	if m.findFn != nil {
 		return m.findFn(ctx, id)
 	}
-	return nil, domain.ErrSiteSettingNotFound
+	return nil, siteentity.ErrSiteSettingNotFound
 }
 
-func (m *errorRepo) Update(_ context.Context, _ *domain.SiteSetting) error {
+func (m *errorRepo) Update(_ context.Context, _ *siteentity.SiteSetting) error {
 	return m.updateErr
 }
 
-func (m *errorRepo) Delete(_ context.Context, _ domain.SiteSettingID) error {
+func (m *errorRepo) Delete(_ context.Context, _ siteentity.SiteSettingID) error {
 	return m.deleteErr
 }
 
-func (m *errorRepo) List(_ context.Context, _ domain.SiteSettingFilter) ([]*domain.SiteSetting, int64, error) {
+func (m *errorRepo) List(_ context.Context, _ siterepo.SiteSettingFilter) ([]*siteentity.SiteSetting, int64, error) {
 	return nil, 0, nil
 }
 
@@ -73,7 +74,7 @@ func TestUpdateSiteSettingHandler_FindError(t *testing.T) {
 	handler := NewUpdateSiteSettingHandler(repo, eb, log)
 	newVal := "new"
 	err := handler.Handle(context.Background(), UpdateSiteSettingCommand{
-		ID:    domain.SiteSettingID(uuid.New()),
+		ID:    siteentity.SiteSettingID(uuid.New()),
 		Value: &newVal,
 	})
 	if err == nil {
@@ -84,10 +85,10 @@ func TestUpdateSiteSettingHandler_FindError(t *testing.T) {
 func TestUpdateSiteSettingHandler_UpdateError(t *testing.T) {
 	t.Parallel()
 
-	ss := domain.NewSiteSetting("k", "v", "t", "d")
+	ss := siteentity.NewSiteSetting("k", "v", "t", "d")
 
 	repo := &errorRepo{
-		findFn:    func(_ context.Context, _ domain.SiteSettingID) (*domain.SiteSetting, error) { return ss, nil },
+		findFn:    func(_ context.Context, _ siteentity.SiteSettingID) (*siteentity.SiteSetting, error) { return ss, nil },
 		updateErr: errUpdate,
 	}
 	eb := &mockEventBus{}
@@ -96,7 +97,7 @@ func TestUpdateSiteSettingHandler_UpdateError(t *testing.T) {
 	handler := NewUpdateSiteSettingHandler(repo, eb, log)
 	newVal := "updated"
 	err := handler.Handle(context.Background(), UpdateSiteSettingCommand{
-		ID:    domain.SiteSettingID(ss.TypedID()),
+		ID:    siteentity.SiteSettingID(ss.TypedID()),
 		Value: &newVal,
 	})
 	if !errors.Is(err, errUpdate) {
@@ -111,7 +112,7 @@ func TestDeleteSiteSettingHandler_DeleteError(t *testing.T) {
 	log := &mockLogger{}
 
 	handler := NewDeleteSiteSettingHandler(repo, log)
-	err := handler.Handle(context.Background(), DeleteSiteSettingCommand{ID: domain.SiteSettingID(uuid.New())})
+	err := handler.Handle(context.Background(), DeleteSiteSettingCommand{ID: siteentity.SiteSettingID(uuid.New())})
 	if !errors.Is(err, errDelete) {
 		t.Fatalf("expected errDelete, got: %v", err)
 	}

@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"gct/internal/context/admin/generic/featureflag/domain"
+	ffentity "gct/internal/context/admin/generic/featureflag/domain/entity"
 	"gct/internal/kernel/consts"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -17,7 +17,7 @@ import (
 const ruleGroupTable = consts.TableFeatureFlagRuleGroups
 const conditionTable = consts.TableFeatureFlagConditions
 
-// RuleGroupWriteRepo implements domain.RuleGroupRepository using PostgreSQL.
+// RuleGroupWriteRepo implements ffentity.RuleGroupRepository using PostgreSQL.
 type RuleGroupWriteRepo struct {
 	pool    *pgxpool.Pool
 	builder squirrel.StatementBuilderType
@@ -32,7 +32,7 @@ func NewRuleGroupWriteRepo(pool *pgxpool.Pool) *RuleGroupWriteRepo {
 }
 
 // Save inserts a rule group and all its conditions.
-func (r *RuleGroupWriteRepo) Save(ctx context.Context, rg *domain.RuleGroup) (err error) {
+func (r *RuleGroupWriteRepo) Save(ctx context.Context, rg *ffentity.RuleGroup) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "RuleGroupWriteRepo.Save")
 	defer func() { end(err) }()
 
@@ -67,7 +67,7 @@ func (r *RuleGroupWriteRepo) Save(ctx context.Context, rg *domain.RuleGroup) (er
 }
 
 // FindByID retrieves a rule group by ID with its conditions.
-func (r *RuleGroupWriteRepo) FindByID(ctx context.Context, id domain.RuleGroupID) (result *domain.RuleGroup, err error) {
+func (r *RuleGroupWriteRepo) FindByID(ctx context.Context, id ffentity.RuleGroupID) (result *ffentity.RuleGroup, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "RuleGroupWriteRepo.FindByID")
 	defer func() { end(err) }()
 
@@ -100,11 +100,11 @@ func (r *RuleGroupWriteRepo) FindByID(ctx context.Context, id domain.RuleGroupID
 		return nil, err
 	}
 
-	return domain.ReconstructRuleGroup(rgID, flagID, name, variation, priority, createdAt, updatedAt, conditions), nil
+	return ffentity.ReconstructRuleGroup(rgID, flagID, name, variation, priority, createdAt, updatedAt, conditions), nil
 }
 
 // Update updates a rule group's fields and replaces all conditions.
-func (r *RuleGroupWriteRepo) Update(ctx context.Context, rg *domain.RuleGroup) (err error) {
+func (r *RuleGroupWriteRepo) Update(ctx context.Context, rg *ffentity.RuleGroup) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "RuleGroupWriteRepo.Update")
 	defer func() { end(err) }()
 
@@ -139,7 +139,7 @@ func (r *RuleGroupWriteRepo) Update(ctx context.Context, rg *domain.RuleGroup) (
 }
 
 // Delete removes a rule group by ID. FK cascades handle conditions.
-func (r *RuleGroupWriteRepo) Delete(ctx context.Context, id domain.RuleGroupID) (err error) {
+func (r *RuleGroupWriteRepo) Delete(ctx context.Context, id ffentity.RuleGroupID) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "RuleGroupWriteRepo.Delete")
 	defer func() { end(err) }()
 
@@ -159,7 +159,7 @@ func (r *RuleGroupWriteRepo) Delete(ctx context.Context, id domain.RuleGroupID) 
 }
 
 // FindByFlagID retrieves all rule groups for a flag, ordered by priority.
-func (r *RuleGroupWriteRepo) FindByFlagID(ctx context.Context, flagID domain.FeatureFlagID) (result []*domain.RuleGroup, err error) {
+func (r *RuleGroupWriteRepo) FindByFlagID(ctx context.Context, flagID ffentity.FeatureFlagID) (result []*ffentity.RuleGroup, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "RuleGroupWriteRepo.FindByFlagID")
 	defer func() { end(err) }()
 
@@ -179,7 +179,7 @@ func (r *RuleGroupWriteRepo) FindByFlagID(ctx context.Context, flagID domain.Fea
 	}
 	defer rows.Close()
 
-	var ruleGroups []*domain.RuleGroup
+	var ruleGroups []*ffentity.RuleGroup
 	for rows.Next() {
 		var (
 			id        uuid.UUID
@@ -199,7 +199,7 @@ func (r *RuleGroupWriteRepo) FindByFlagID(ctx context.Context, flagID domain.Fea
 			return nil, err
 		}
 
-		rg := domain.ReconstructRuleGroup(id, fID, name, variation, priority, createdAt, updatedAt, conditions)
+		rg := ffentity.ReconstructRuleGroup(id, fID, name, variation, priority, createdAt, updatedAt, conditions)
 		ruleGroups = append(ruleGroups, rg)
 	}
 
@@ -207,7 +207,7 @@ func (r *RuleGroupWriteRepo) FindByFlagID(ctx context.Context, flagID domain.Fea
 }
 
 // SaveCondition inserts a single condition for a rule group.
-func (r *RuleGroupWriteRepo) SaveCondition(ctx context.Context, rgID domain.RuleGroupID, c domain.Condition) (err error) {
+func (r *RuleGroupWriteRepo) SaveCondition(ctx context.Context, rgID ffentity.RuleGroupID, c ffentity.Condition) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "RuleGroupWriteRepo.SaveCondition")
 	defer func() { end(err) }()
 
@@ -216,7 +216,7 @@ func (r *RuleGroupWriteRepo) SaveCondition(ctx context.Context, rgID domain.Rule
 }
 
 // DeleteConditionsByRuleGroupID removes all conditions for a rule group.
-func (r *RuleGroupWriteRepo) DeleteConditionsByRuleGroupID(ctx context.Context, rgID domain.RuleGroupID) (err error) {
+func (r *RuleGroupWriteRepo) DeleteConditionsByRuleGroupID(ctx context.Context, rgID ffentity.RuleGroupID) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "RuleGroupWriteRepo.DeleteConditionsByRuleGroupID")
 	defer func() { end(err) }()
 
@@ -239,7 +239,7 @@ func (r *RuleGroupWriteRepo) DeleteConditionsByRuleGroupID(ctx context.Context, 
 // Helpers
 // ---------------------------------------------------------------------------
 
-func (r *RuleGroupWriteRepo) saveCondition(ctx context.Context, c domain.Condition) error {
+func (r *RuleGroupWriteRepo) saveCondition(ctx context.Context, c ffentity.Condition) error {
 	sql, args, err := r.builder.
 		Insert(conditionTable).
 		Columns("id", "rule_group_id", "attribute", "operator", "value").
@@ -256,7 +256,7 @@ func (r *RuleGroupWriteRepo) saveCondition(ctx context.Context, c domain.Conditi
 	return nil
 }
 
-func (r *RuleGroupWriteRepo) loadConditions(ctx context.Context, ruleGroupID uuid.UUID) ([]domain.Condition, error) {
+func (r *RuleGroupWriteRepo) loadConditions(ctx context.Context, ruleGroupID uuid.UUID) ([]ffentity.Condition, error) {
 	sql, args, err := r.builder.
 		Select("id", "rule_group_id", "attribute", "operator", "value").
 		From(conditionTable).
@@ -272,7 +272,7 @@ func (r *RuleGroupWriteRepo) loadConditions(ctx context.Context, ruleGroupID uui
 	}
 	defer rows.Close()
 
-	var conditions []domain.Condition
+	var conditions []ffentity.Condition
 	for rows.Next() {
 		var (
 			id    uuid.UUID
@@ -284,7 +284,7 @@ func (r *RuleGroupWriteRepo) loadConditions(ctx context.Context, ruleGroupID uui
 		if err := rows.Scan(&id, &rgID, &attr, &op, &value); err != nil {
 			return nil, apperrors.HandlePgError(err, conditionTable, nil)
 		}
-		conditions = append(conditions, domain.ReconstructCondition(id, rgID, attr, op, value))
+		conditions = append(conditions, ffentity.ReconstructCondition(id, rgID, attr, op, value))
 	}
 
 	return conditions, nil

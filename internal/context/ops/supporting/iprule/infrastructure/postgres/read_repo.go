@@ -3,7 +3,8 @@ package postgres
 import (
 	"context"
 
-	"gct/internal/context/ops/supporting/iprule/domain"
+	ipruleentity "gct/internal/context/ops/supporting/iprule/domain/entity"
+	iprulerepo "gct/internal/context/ops/supporting/iprule/domain/repository"
 	"gct/internal/kernel/consts"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -18,7 +19,7 @@ var readColumns = []string{
 	"id", "ip_address", "type", "reason", "is_active", "created_at", "updated_at",
 }
 
-// IPRuleReadRepo implements domain.IPRuleReadRepository for the CQRS read side.
+// IPRuleReadRepo implements iprulerepo.IPRuleReadRepository for the CQRS read side.
 type IPRuleReadRepo struct {
 	pool    *pgxpool.Pool
 	builder squirrel.StatementBuilderType
@@ -33,7 +34,7 @@ func NewIPRuleReadRepo(pool *pgxpool.Pool) *IPRuleReadRepo {
 }
 
 // FindByID returns a single IPRuleView by ID.
-func (r *IPRuleReadRepo) FindByID(ctx context.Context, id domain.IPRuleID) (result *domain.IPRuleView, err error) {
+func (r *IPRuleReadRepo) FindByID(ctx context.Context, id ipruleentity.IPRuleID) (result *iprulerepo.IPRuleView, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "IPRuleReadRepo.FindByID")
 	defer func() { end(err) }()
 
@@ -51,7 +52,7 @@ func (r *IPRuleReadRepo) FindByID(ctx context.Context, id domain.IPRuleID) (resu
 }
 
 // List returns a paginated list of IPRuleView with optional filters.
-func (r *IPRuleReadRepo) List(ctx context.Context, filter domain.IPRuleFilter) (views []*domain.IPRuleView, total int64, err error) {
+func (r *IPRuleReadRepo) List(ctx context.Context, filter iprulerepo.IPRuleFilter) (views []*iprulerepo.IPRuleView, total int64, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "IPRuleReadRepo.List")
 	defer func() { end(err) }()
 
@@ -108,9 +109,9 @@ func (r *IPRuleReadRepo) List(ctx context.Context, filter domain.IPRuleFilter) (
 	return views, total, nil
 }
 
-func scanIPRuleView(row pgx.Row) (*domain.IPRuleView, error) {
+func scanIPRuleView(row pgx.Row) (*iprulerepo.IPRuleView, error) {
 	var (
-		v        domain.IPRuleView
+		v        iprulerepo.IPRuleView
 		rawID    uuid.UUID
 		isActive bool
 	)
@@ -119,14 +120,14 @@ func scanIPRuleView(row pgx.Row) (*domain.IPRuleView, error) {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 	_ = isActive
-	v.ID = domain.IPRuleID(rawID)
+	v.ID = ipruleentity.IPRuleID(rawID)
 	v.ExpiresAt = nil
 	return &v, nil
 }
 
-func scanIPRuleViewFromRows(rows pgx.Rows) (*domain.IPRuleView, error) {
+func scanIPRuleViewFromRows(rows pgx.Rows) (*iprulerepo.IPRuleView, error) {
 	var (
-		v        domain.IPRuleView
+		v        iprulerepo.IPRuleView
 		rawID    uuid.UUID
 		isActive bool
 	)
@@ -135,7 +136,7 @@ func scanIPRuleViewFromRows(rows pgx.Rows) (*domain.IPRuleView, error) {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 	_ = isActive
-	v.ID = domain.IPRuleID(rawID)
+	v.ID = ipruleentity.IPRuleID(rawID)
 	v.ExpiresAt = nil
 	return &v, nil
 }

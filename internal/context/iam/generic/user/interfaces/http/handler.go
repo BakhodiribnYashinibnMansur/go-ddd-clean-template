@@ -6,7 +6,7 @@ import (
 	"gct/internal/context/iam/generic/user"
 	"gct/internal/context/iam/generic/user/application/command"
 	"gct/internal/context/iam/generic/user/application/query"
-	userdomain "gct/internal/context/iam/generic/user/domain"
+	userentity "gct/internal/context/iam/generic/user/domain/entity"
 	"gct/internal/kernel/infrastructure/httpx"
 	"gct/internal/kernel/infrastructure/httpx/response"
 	"gct/internal/kernel/infrastructure/logger"
@@ -85,7 +85,7 @@ func (h *Handler) List(ctx *gin.Context) {
 		return
 	}
 
-	filter := userdomain.UsersFilter{
+	filter := userentity.UsersFilter{
 		Pagination: &pg,
 	}
 
@@ -134,7 +134,7 @@ func (h *Handler) Get(ctx *gin.Context) {
 		return
 	}
 
-	view, err := h.bc.GetUser.Handle(ctx.Request.Context(), query.GetUserQuery{ID: userdomain.UserID(id)})
+	view, err := h.bc.GetUser.Handle(ctx.Request.Context(), query.GetUserQuery{ID: userentity.UserID(id)})
 	if err != nil {
 		response.HandleError(ctx, err)
 		return
@@ -171,7 +171,7 @@ func (h *Handler) Update(ctx *gin.Context) {
 	}
 
 	err = h.bc.UpdateUser.Handle(ctx.Request.Context(), command.UpdateUserCommand{
-		ID:         userdomain.UserID(id),
+		ID:         userentity.UserID(id),
 		Email:      req.Email,
 		Username:   req.Username,
 		Attributes: req.Attributes,
@@ -204,7 +204,7 @@ func (h *Handler) Delete(ctx *gin.Context) {
 		return
 	}
 
-	err = h.bc.DeleteUser.Handle(ctx.Request.Context(), command.DeleteUserCommand{ID: userdomain.UserID(id)})
+	err = h.bc.DeleteUser.Handle(ctx.Request.Context(), command.DeleteUserCommand{ID: userentity.UserID(id)})
 	if err != nil {
 		response.HandleError(ctx, err)
 		return
@@ -233,7 +233,7 @@ func (h *Handler) Approve(ctx *gin.Context) {
 		return
 	}
 
-	err = h.bc.ApproveUser.Handle(ctx.Request.Context(), command.ApproveUserCommand{ID: userdomain.UserID(id)})
+	err = h.bc.ApproveUser.Handle(ctx.Request.Context(), command.ApproveUserCommand{ID: userentity.UserID(id)})
 	if err != nil {
 		response.HandleError(ctx, err)
 		return
@@ -270,7 +270,7 @@ func (h *Handler) ChangeRole(ctx *gin.Context) {
 	}
 
 	err = h.bc.ChangeRole.Handle(ctx.Request.Context(), command.ChangeRoleCommand{
-		UserID: userdomain.UserID(id),
+		UserID: userentity.UserID(id),
 		RoleID: req.RoleID,
 	})
 	if err != nil {
@@ -300,9 +300,9 @@ func (h *Handler) BulkAction(ctx *gin.Context) {
 		return
 	}
 
-	ids := make([]userdomain.UserID, len(req.IDs))
+	ids := make([]userentity.UserID, len(req.IDs))
 	for i, id := range req.IDs {
-		ids[i] = userdomain.UserID(id)
+		ids[i] = userentity.UserID(id)
 	}
 	err := h.bc.BulkAction.Handle(ctx.Request.Context(), command.BulkActionCommand{
 		IDs:    ids,
@@ -423,8 +423,8 @@ func (h *Handler) SignOut(ctx *gin.Context) {
 	}
 
 	err := h.bc.SignOut.Handle(ctx.Request.Context(), command.SignOutCommand{
-		UserID:    userdomain.UserID(req.UserID),
-		SessionID: userdomain.SessionID(req.SessionID),
+		UserID:    userentity.UserID(req.UserID),
+		SessionID: userentity.SessionID(req.SessionID),
 		IP:        ctx.ClientIP(),
 		UserAgent: ctx.Request.UserAgent(),
 	})

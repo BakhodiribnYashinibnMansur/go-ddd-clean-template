@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"gct/internal/context/iam/generic/user/domain"
+	userentity "gct/internal/context/iam/generic/user/domain/entity"
 
 	"github.com/stretchr/testify/require"
 )
@@ -13,20 +13,20 @@ import (
 func TestSignOutHandler_Handle(t *testing.T) {
 	t.Parallel()
 
-	phone, _ := domain.NewPhone("+998901234567")
-	pw, _ := domain.NewPasswordFromRaw("StrongP@ss123")
-	user, _ := domain.NewUser(phone, pw)
+	phone, _ := userentity.NewPhone("+998901234567")
+	pw, _ := userentity.NewPasswordFromRaw("StrongP@ss123")
+	user, _ := userentity.NewUser(phone, pw)
 	user.Approve()
 
-	session, err := user.AddSession(domain.DeviceDesktop, "10.0.0.1", "TestAgent", "gct-client")
+	session, err := user.AddSession(userentity.DeviceDesktop, "10.0.0.1", "TestAgent", "gct-client")
 	require.NoError(t, err)
 
 	repo := &mockUserRepository{
-		findByIDFn: func(_ context.Context, id domain.UserID) (*domain.User, error) {
+		findByIDFn: func(_ context.Context, id userentity.UserID) (*userentity.User, error) {
 			if id == user.TypedID() {
 				return user, nil
 			}
-			return nil, domain.ErrUserNotFound
+			return nil, userentity.ErrUserNotFound
 		},
 	}
 	eventBus := &mockEventBus{}
@@ -35,8 +35,8 @@ func TestSignOutHandler_Handle(t *testing.T) {
 	handler := NewSignOutHandler(repo, eventBus, log)
 
 	err = handler.Handle(context.Background(), SignOutCommand{
-		UserID:    domain.UserID(user.ID()),
-		SessionID: domain.SessionID(session.ID()),
+		UserID:    userentity.UserID(user.ID()),
+		SessionID: userentity.SessionID(session.ID()),
 	})
 	require.NoError(t, err)
 
@@ -55,12 +55,12 @@ func TestSignOutHandler_Handle(t *testing.T) {
 func TestSignOutHandler_SessionNotFound(t *testing.T) {
 	t.Parallel()
 
-	phone, _ := domain.NewPhone("+998901234567")
-	pw, _ := domain.NewPasswordFromRaw("StrongP@ss123")
-	user, _ := domain.NewUser(phone, pw)
+	phone, _ := userentity.NewPhone("+998901234567")
+	pw, _ := userentity.NewPasswordFromRaw("StrongP@ss123")
+	user, _ := userentity.NewUser(phone, pw)
 
 	repo := &mockUserRepository{
-		findByIDFn: func(_ context.Context, id domain.UserID) (*domain.User, error) {
+		findByIDFn: func(_ context.Context, id userentity.UserID) (*userentity.User, error) {
 			return user, nil
 		},
 	}
@@ -70,13 +70,13 @@ func TestSignOutHandler_SessionNotFound(t *testing.T) {
 	handler := NewSignOutHandler(repo, eventBus, log)
 
 	err := handler.Handle(context.Background(), SignOutCommand{
-		UserID:    domain.UserID(user.ID()),
-		SessionID: domain.NewSessionID(), // non-existent session
+		UserID:    userentity.UserID(user.ID()),
+		SessionID: userentity.NewSessionID(), // non-existent session
 	})
 	if err == nil {
 		t.Fatal("expected error for non-existent session")
 	}
-	if !errors.Is(err, domain.ErrSessionNotFound) {
+	if !errors.Is(err, userentity.ErrSessionNotFound) {
 		t.Fatalf("expected ErrSessionNotFound, got %v", err)
 	}
 }
@@ -91,8 +91,8 @@ func TestSignOutHandler_UserNotFound(t *testing.T) {
 	handler := NewSignOutHandler(repo, eventBus, log)
 
 	err := handler.Handle(context.Background(), SignOutCommand{
-		UserID:    domain.NewUserID(),
-		SessionID: domain.NewSessionID(),
+		UserID:    userentity.NewUserID(),
+		SessionID: userentity.NewSessionID(),
 	})
 	if err == nil {
 		t.Fatal("expected error for non-existent user")

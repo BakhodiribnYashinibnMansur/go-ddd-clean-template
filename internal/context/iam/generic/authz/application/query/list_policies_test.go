@@ -6,21 +6,23 @@ import (
 	"gct/internal/kernel/infrastructure/logger"
 	"testing"
 
-	"gct/internal/context/iam/generic/authz/domain"
+	authzentity "gct/internal/context/iam/generic/authz/domain/entity"
+	authzrepo "gct/internal/context/iam/generic/authz/domain/repository"
 	shared "gct/internal/kernel/domain"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
 func TestListPoliciesHandler_WithResults(t *testing.T) {
 	t.Parallel()
 
-	permID := domain.NewPermissionID()
+	permID := authzentity.NewPermissionID()
 	repo := &mockAuthzReadRepository{
-		listPoliciesFn: func(_ context.Context, _ shared.Pagination) ([]*domain.PolicyView, int64, error) {
-			return []*domain.PolicyView{
+		listPoliciesFn: func(_ context.Context, _ shared.Pagination) ([]*authzrepo.PolicyView, int64, error) {
+			return []*authzrepo.PolicyView{
 				{
-					ID:           domain.NewPolicyID(),
+					ID:           authzentity.NewPolicyID(),
 					PermissionID: permID,
 					Effect:       "ALLOW",
 					Priority:     10,
@@ -28,7 +30,7 @@ func TestListPoliciesHandler_WithResults(t *testing.T) {
 					Conditions:   map[string]any{"ip_range": "10.0.0.0/8"},
 				},
 				{
-					ID:           domain.NewPolicyID(),
+					ID:           authzentity.NewPolicyID(),
 					PermissionID: permID,
 					Effect:       "DENY",
 					Priority:     20,
@@ -60,7 +62,7 @@ func TestListPoliciesHandler_WithResults(t *testing.T) {
 	if !result.Policies[0].Active {
 		t.Error("expected first policy to be active")
 	}
-	if result.Policies[0].PermissionID != permID {
+	if result.Policies[0].PermissionID != uuid.UUID(permID) {
 		t.Errorf("expected permission_id %s, got %s", permID, result.Policies[0].PermissionID)
 	}
 	if result.Policies[1].Effect != "DENY" {
@@ -75,8 +77,8 @@ func TestListPoliciesHandler_Empty(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockAuthzReadRepository{
-		listPoliciesFn: func(_ context.Context, _ shared.Pagination) ([]*domain.PolicyView, int64, error) {
-			return []*domain.PolicyView{}, 0, nil
+		listPoliciesFn: func(_ context.Context, _ shared.Pagination) ([]*authzrepo.PolicyView, int64, error) {
+			return []*authzrepo.PolicyView{}, 0, nil
 		},
 	}
 
@@ -99,7 +101,7 @@ func TestListPoliciesHandler_RepoError(t *testing.T) {
 
 	repoErr := errors.New("policy query failed")
 	repo := &mockAuthzReadRepository{
-		listPoliciesFn: func(_ context.Context, _ shared.Pagination) ([]*domain.PolicyView, int64, error) {
+		listPoliciesFn: func(_ context.Context, _ shared.Pagination) ([]*authzrepo.PolicyView, int64, error) {
 			return nil, 0, repoErr
 		},
 	}

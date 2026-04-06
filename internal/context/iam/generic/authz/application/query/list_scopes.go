@@ -6,8 +6,8 @@ import (
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 
-	appdto "gct/internal/context/iam/generic/authz/application"
-	"gct/internal/context/iam/generic/authz/domain"
+	"gct/internal/context/iam/generic/authz/application/dto"
+	authzrepo "gct/internal/context/iam/generic/authz/domain/repository"
 	shared "gct/internal/kernel/domain"
 	"gct/internal/kernel/infrastructure/pgxutil"
 )
@@ -19,18 +19,18 @@ type ListScopesQuery struct {
 
 // ListScopesResult holds the output of the list scopes query.
 type ListScopesResult struct {
-	Scopes []*appdto.ScopeView
+	Scopes []*dto.ScopeView
 	Total  int64
 }
 
 // ListScopesHandler handles the ListScopesQuery.
 type ListScopesHandler struct {
-	readRepo domain.AuthzReadRepository
+	readRepo authzrepo.AuthzReadRepository
 	logger   logger.Log
 }
 
 // NewListScopesHandler creates a new ListScopesHandler.
-func NewListScopesHandler(readRepo domain.AuthzReadRepository, l logger.Log) *ListScopesHandler {
+func NewListScopesHandler(readRepo authzrepo.AuthzReadRepository, l logger.Log) *ListScopesHandler {
 	return &ListScopesHandler{readRepo: readRepo, logger: l}
 }
 
@@ -46,9 +46,9 @@ func (h *ListScopesHandler) Handle(ctx context.Context, q ListScopesQuery) (_ *L
 		return nil, apperrors.MapToServiceError(err)
 	}
 
-	result := make([]*appdto.ScopeView, len(views))
+	result := make([]*dto.ScopeView, len(views))
 	for i, v := range views {
-		result[i] = &appdto.ScopeView{
+		result[i] = &dto.ScopeView{
 			Path:   v.Path,
 			Method: v.Method,
 		}

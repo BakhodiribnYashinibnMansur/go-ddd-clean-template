@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"gct/internal/context/content/generic/notification/domain"
+	notifentity "gct/internal/context/content/generic/notification/domain/entity"
 	"gct/internal/kernel/consts"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -36,7 +36,7 @@ func NewNotificationWriteRepo(pool *pgxpool.Pool) *NotificationWriteRepo {
 }
 
 // Save inserts a new Notification aggregate into the database.
-func (r *NotificationWriteRepo) Save(ctx context.Context, n *domain.Notification) (err error) {
+func (r *NotificationWriteRepo) Save(ctx context.Context, n *notifentity.Notification) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "NotificationWriteRepo.Save")
 	defer func() { end(err) }()
 
@@ -66,7 +66,7 @@ func (r *NotificationWriteRepo) Save(ctx context.Context, n *domain.Notification
 }
 
 // FindByID retrieves a Notification aggregate by ID.
-func (r *NotificationWriteRepo) FindByID(ctx context.Context, id domain.NotificationID) (result *domain.Notification, err error) {
+func (r *NotificationWriteRepo) FindByID(ctx context.Context, id notifentity.NotificationID) (result *notifentity.Notification, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "NotificationWriteRepo.FindByID")
 	defer func() { end(err) }()
 
@@ -84,7 +84,7 @@ func (r *NotificationWriteRepo) FindByID(ctx context.Context, id domain.Notifica
 }
 
 // Update updates a Notification aggregate in the database.
-func (r *NotificationWriteRepo) Update(ctx context.Context, n *domain.Notification) (err error) {
+func (r *NotificationWriteRepo) Update(ctx context.Context, n *notifentity.Notification) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "NotificationWriteRepo.Update")
 	defer func() { end(err) }()
 
@@ -105,7 +105,7 @@ func (r *NotificationWriteRepo) Update(ctx context.Context, n *domain.Notificati
 }
 
 // Delete removes a Notification by ID.
-func (r *NotificationWriteRepo) Delete(ctx context.Context, id domain.NotificationID) (err error) {
+func (r *NotificationWriteRepo) Delete(ctx context.Context, id notifentity.NotificationID) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "NotificationWriteRepo.Delete")
 	defer func() { end(err) }()
 
@@ -128,7 +128,7 @@ func (r *NotificationWriteRepo) Delete(ctx context.Context, id domain.Notificati
 // Helpers
 // ---------------------------------------------------------------------------
 
-func scanNotification(row pgx.Row) (*domain.Notification, error) {
+func scanNotification(row pgx.Row) (*notifentity.Notification, error) {
 	var (
 		id         uuid.UUID
 		title      string
@@ -149,5 +149,5 @@ func scanNotification(row pgx.Row) (*domain.Notification, error) {
 	_ = isActive
 	_ = updatedAt
 
-	return domain.ReconstructNotification(id, createdAt, uuid.Nil, title, body, nType, nil), nil
+	return notifentity.ReconstructNotification(id, createdAt, uuid.Nil, title, body, nType, nil), nil
 }

@@ -3,7 +3,7 @@ package query
 import (
 	"context"
 
-	appdto "gct/internal/context/admin/supporting/statistics/application"
+	"gct/internal/context/admin/supporting/statistics/application/dto"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -24,7 +24,7 @@ func NewGetIntegrationStatsHandler(repo StatisticsReadRepository, l logger.Log) 
 }
 
 // Handle executes the GetIntegrationStatsQuery and returns an IntegrationStatsView.
-func (h *GetIntegrationStatsHandler) Handle(ctx context.Context, _ GetIntegrationStatsQuery) (_ *appdto.IntegrationStatsView, err error) {
+func (h *GetIntegrationStatsHandler) Handle(ctx context.Context, _ GetIntegrationStatsQuery) (_ *dto.IntegrationStatsView, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "GetIntegrationStatsHandler.Handle")
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.l, ctx, "GetIntegrationStats", "statistics")()

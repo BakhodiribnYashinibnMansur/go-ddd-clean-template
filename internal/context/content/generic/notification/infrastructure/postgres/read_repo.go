@@ -4,7 +4,8 @@ import (
 	"context"
 	"time"
 
-	"gct/internal/context/content/generic/notification/domain"
+	notifentity "gct/internal/context/content/generic/notification/domain/entity"
+	notifrepo "gct/internal/context/content/generic/notification/domain/repository"
 	"gct/internal/kernel/consts"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -34,7 +35,7 @@ func NewNotificationReadRepo(pool *pgxpool.Pool) *NotificationReadRepo {
 }
 
 // FindByID returns a NotificationView for the given ID.
-func (r *NotificationReadRepo) FindByID(ctx context.Context, id domain.NotificationID) (result *domain.NotificationView, err error) {
+func (r *NotificationReadRepo) FindByID(ctx context.Context, id notifentity.NotificationID) (result *notifrepo.NotificationView, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "NotificationReadRepo.FindByID")
 	defer func() { end(err) }()
 
@@ -52,7 +53,7 @@ func (r *NotificationReadRepo) FindByID(ctx context.Context, id domain.Notificat
 }
 
 // List returns a paginated list of NotificationView with optional filters.
-func (r *NotificationReadRepo) List(ctx context.Context, filter domain.NotificationFilter) (items []*domain.NotificationView, total int64, err error) {
+func (r *NotificationReadRepo) List(ctx context.Context, filter notifrepo.NotificationFilter) (items []*notifrepo.NotificationView, total int64, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "NotificationReadRepo.List")
 	defer func() { end(err) }()
 
@@ -113,7 +114,7 @@ func (r *NotificationReadRepo) List(ctx context.Context, filter domain.Notificat
 	return items, total, nil
 }
 
-func scanNotificationView(row pgx.Row) (*domain.NotificationView, error) {
+func scanNotificationView(row pgx.Row) (*notifrepo.NotificationView, error) {
 	var (
 		id         uuid.UUID
 		title      string
@@ -134,8 +135,8 @@ func scanNotificationView(row pgx.Row) (*domain.NotificationView, error) {
 	_ = isActive
 	_ = updatedAt
 
-	return &domain.NotificationView{
-		ID:        domain.NotificationID(id),
+	return &notifrepo.NotificationView{
+		ID:        notifentity.NotificationID(id),
 		UserID:    uuid.Nil,
 		Title:     title,
 		Message:   body,
@@ -145,7 +146,7 @@ func scanNotificationView(row pgx.Row) (*domain.NotificationView, error) {
 	}, nil
 }
 
-func scanNotificationViewFromRows(rows pgx.Rows) (*domain.NotificationView, error) {
+func scanNotificationViewFromRows(rows pgx.Rows) (*notifrepo.NotificationView, error) {
 	var (
 		id         uuid.UUID
 		title      string
@@ -166,8 +167,8 @@ func scanNotificationViewFromRows(rows pgx.Rows) (*domain.NotificationView, erro
 	_ = isActive
 	_ = updatedAt
 
-	return &domain.NotificationView{
-		ID:        domain.NotificationID(id),
+	return &notifrepo.NotificationView{
+		ID:        notifentity.NotificationID(id),
 		UserID:    uuid.Nil,
 		Title:     title,
 		Message:   body,

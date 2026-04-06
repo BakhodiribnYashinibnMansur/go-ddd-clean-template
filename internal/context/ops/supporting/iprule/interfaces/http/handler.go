@@ -8,7 +8,8 @@ import (
 	"gct/internal/kernel/infrastructure/httpx/response"
 	"gct/internal/context/ops/supporting/iprule/application/command"
 	"gct/internal/context/ops/supporting/iprule/application/query"
-	"gct/internal/context/ops/supporting/iprule/domain"
+	ipruleentity "gct/internal/context/ops/supporting/iprule/domain/entity"
+	iprulerepo "gct/internal/context/ops/supporting/iprule/domain/repository"
 	"gct/internal/kernel/infrastructure/logger"
 
 	"github.com/gin-gonic/gin"
@@ -77,7 +78,7 @@ func (h *Handler) List(ctx *gin.Context) {
 	}
 
 	q := query.ListIPRulesQuery{
-		Filter: domain.IPRuleFilter{Limit: pg.Limit, Offset: pg.Offset},
+		Filter: iprulerepo.IPRuleFilter{Limit: pg.Limit, Offset: pg.Offset},
 	}
 	result, err := h.bc.ListIPRules.Handle(ctx.Request.Context(), q)
 	if err != nil {
@@ -101,7 +102,7 @@ func (h *Handler) List(ctx *gin.Context) {
 // @Router /ip-rules/{id} [get]
 // Get returns a single IP rule by ID.
 func (h *Handler) Get(ctx *gin.Context) {
-	id, err := domain.ParseIPRuleID(ctx.Param("id"))
+	id, err := ipruleentity.ParseIPRuleID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
@@ -129,7 +130,7 @@ func (h *Handler) Get(ctx *gin.Context) {
 // @Router /ip-rules/{id} [patch]
 // Update updates an IP rule.
 func (h *Handler) Update(ctx *gin.Context) {
-	id, err := domain.ParseIPRuleID(ctx.Param("id"))
+	id, err := ipruleentity.ParseIPRuleID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
@@ -167,7 +168,7 @@ func (h *Handler) Update(ctx *gin.Context) {
 // @Router /ip-rules/{id} [delete]
 // Delete deletes an IP rule.
 func (h *Handler) Delete(ctx *gin.Context) {
-	id, err := domain.ParseIPRuleID(ctx.Param("id"))
+	id, err := ipruleentity.ParseIPRuleID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return

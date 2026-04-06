@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"gct/internal/context/admin/supporting/sitesetting/domain"
+	siteentity "gct/internal/context/admin/supporting/sitesetting/domain/entity"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -14,14 +14,14 @@ import (
 func TestUpdateSiteSettingHandler_Handle(t *testing.T) {
 	t.Parallel()
 
-	ss := domain.NewSiteSetting("old_key", "old_value", "general", "old desc")
+	ss := siteentity.NewSiteSetting("old_key", "old_value", "general", "old desc")
 
 	repo := &mockRepo{
-		findFn: func(_ context.Context, id domain.SiteSettingID) (*domain.SiteSetting, error) {
+		findFn: func(_ context.Context, id siteentity.SiteSettingID) (*siteentity.SiteSetting, error) {
 			if id == ss.TypedID() {
 				return ss, nil
 			}
-			return nil, domain.ErrSiteSettingNotFound
+			return nil, siteentity.ErrSiteSettingNotFound
 		},
 	}
 	eb := &mockEventBus{}
@@ -32,7 +32,7 @@ func TestUpdateSiteSettingHandler_Handle(t *testing.T) {
 	newValue := "new_value"
 	newDesc := "new desc"
 	cmd := UpdateSiteSettingCommand{
-		ID:          domain.SiteSettingID(ss.TypedID()),
+		ID:          siteentity.SiteSettingID(ss.TypedID()),
 		Value:       &newValue,
 		Description: &newDesc,
 	}
@@ -76,7 +76,7 @@ func TestUpdateSiteSettingHandler_NotFound(t *testing.T) {
 
 	newVal := "v"
 	err := handler.Handle(context.Background(), UpdateSiteSettingCommand{
-		ID:    domain.SiteSettingID(uuid.New()),
+		ID:    siteentity.SiteSettingID(uuid.New()),
 		Value: &newVal,
 	})
 	if err == nil {
@@ -87,11 +87,11 @@ func TestUpdateSiteSettingHandler_NotFound(t *testing.T) {
 func TestUpdateSiteSettingHandler_RepoUpdateError(t *testing.T) {
 	t.Parallel()
 
-	ss := domain.NewSiteSetting("k", "v", "t", "d")
+	ss := siteentity.NewSiteSetting("k", "v", "t", "d")
 	repoErr := errors.New("repo update failed")
 
 	errR := &errorRepo{
-		findFn:    func(_ context.Context, _ domain.SiteSettingID) (*domain.SiteSetting, error) { return ss, nil },
+		findFn:    func(_ context.Context, _ siteentity.SiteSettingID) (*siteentity.SiteSetting, error) { return ss, nil },
 		updateErr: repoErr,
 	}
 	eb := &mockEventBus{}
@@ -101,7 +101,7 @@ func TestUpdateSiteSettingHandler_RepoUpdateError(t *testing.T) {
 
 	newVal := "new"
 	err := handler.Handle(context.Background(), UpdateSiteSettingCommand{
-		ID:    domain.SiteSettingID(ss.TypedID()),
+		ID:    siteentity.SiteSettingID(ss.TypedID()),
 		Value: &newVal,
 	})
 	if !errors.Is(err, repoErr) {

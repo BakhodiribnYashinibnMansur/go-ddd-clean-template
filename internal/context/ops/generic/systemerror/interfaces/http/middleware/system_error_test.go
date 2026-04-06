@@ -12,7 +12,8 @@ import (
 	"gct/internal/kernel/application"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/context/ops/generic/systemerror/application/command"
-	"gct/internal/context/ops/generic/systemerror/domain"
+	syserrentity "gct/internal/context/ops/generic/systemerror/domain/entity"
+	syserrrepo "gct/internal/context/ops/generic/systemerror/domain/repository"
 
 	"github.com/gin-gonic/gin"
 )
@@ -57,26 +58,26 @@ var _ logger.Log = (*sysErrMockLog)(nil)
 
 type mockSystemErrorRepo struct {
 	mu       sync.Mutex
-	saved    []*domain.SystemError
+	saved    []*syserrentity.SystemError
 	saveErr  error
 }
 
-func (m *mockSystemErrorRepo) Save(ctx context.Context, entity *domain.SystemError) error {
+func (m *mockSystemErrorRepo) Save(ctx context.Context, entity *syserrentity.SystemError) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.saved = append(m.saved, entity)
 	return m.saveErr
 }
 
-func (m *mockSystemErrorRepo) FindByID(ctx context.Context, id domain.SystemErrorID) (*domain.SystemError, error) {
+func (m *mockSystemErrorRepo) FindByID(ctx context.Context, id syserrentity.SystemErrorID) (*syserrentity.SystemError, error) {
 	return nil, nil
 }
 
-func (m *mockSystemErrorRepo) Update(ctx context.Context, entity *domain.SystemError) error {
+func (m *mockSystemErrorRepo) Update(ctx context.Context, entity *syserrentity.SystemError) error {
 	return nil
 }
 
-func (m *mockSystemErrorRepo) List(ctx context.Context, filter domain.SystemErrorFilter) ([]*domain.SystemError, int64, error) {
+func (m *mockSystemErrorRepo) List(ctx context.Context, filter syserrrepo.SystemErrorFilter) ([]*syserrentity.SystemError, int64, error) {
 	return nil, 0, nil
 }
 

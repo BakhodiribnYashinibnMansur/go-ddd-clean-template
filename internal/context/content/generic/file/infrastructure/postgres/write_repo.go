@@ -3,7 +3,7 @@ package postgres
 import (
 	"context"
 
-	"gct/internal/context/content/generic/file/domain"
+	fileentity "gct/internal/context/content/generic/file/domain/entity"
 	"gct/internal/kernel/consts"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -19,7 +19,7 @@ var writeColumns = []string{
 	"bucket", "url", "uploaded_by", "created_at",
 }
 
-// FileWriteRepo implements domain.FileRepository using PostgreSQL.
+// FileWriteRepo implements filerepo.FileRepository using PostgreSQL.
 type FileWriteRepo struct {
 	pool    *pgxpool.Pool
 	builder squirrel.StatementBuilderType
@@ -34,7 +34,7 @@ func NewFileWriteRepo(pool *pgxpool.Pool) *FileWriteRepo {
 }
 
 // Save inserts a new File aggregate into the database.
-func (r *FileWriteRepo) Save(ctx context.Context, f *domain.File) (err error) {
+func (r *FileWriteRepo) Save(ctx context.Context, f *fileentity.File) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "FileWriteRepo.Save")
 	defer func() { end(err) }()
 

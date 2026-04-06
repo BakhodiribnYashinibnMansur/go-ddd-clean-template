@@ -6,29 +6,32 @@ import (
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 
-	appdto "gct/internal/context/content/generic/translation/application"
-	"gct/internal/context/content/generic/translation/domain"
+	"gct/internal/context/content/generic/translation/application/dto"
+	translationentity "gct/internal/context/content/generic/translation/domain/entity"
+	translationrepo "gct/internal/context/content/generic/translation/domain/repository"
 	"gct/internal/kernel/infrastructure/pgxutil"
+
+	"github.com/google/uuid"
 )
 
 // GetTranslationQuery holds the input for getting a single translation.
 type GetTranslationQuery struct {
-	ID domain.TranslationID
+	ID translationentity.TranslationID
 }
 
 // GetTranslationHandler handles the GetTranslationQuery.
 type GetTranslationHandler struct {
-	readRepo domain.TranslationReadRepository
+	readRepo translationrepo.TranslationReadRepository
 	logger   logger.Log
 }
 
 // NewGetTranslationHandler creates a new GetTranslationHandler.
-func NewGetTranslationHandler(readRepo domain.TranslationReadRepository, l logger.Log) *GetTranslationHandler {
+func NewGetTranslationHandler(readRepo translationrepo.TranslationReadRepository, l logger.Log) *GetTranslationHandler {
 	return &GetTranslationHandler{readRepo: readRepo, logger: l}
 }
 
 // Handle executes the GetTranslationQuery and returns a TranslationView.
-func (h *GetTranslationHandler) Handle(ctx context.Context, q GetTranslationQuery) (result *appdto.TranslationView, err error) {
+func (h *GetTranslationHandler) Handle(ctx context.Context, q GetTranslationQuery) (result *dto.TranslationView, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "GetTranslationHandler.Handle")
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "GetTranslation", "translation")()
@@ -39,8 +42,8 @@ func (h *GetTranslationHandler) Handle(ctx context.Context, q GetTranslationQuer
 		return nil, apperrors.MapToServiceError(err)
 	}
 
-	return &appdto.TranslationView{
-		ID:        v.ID,
+	return &dto.TranslationView{
+		ID:        uuid.UUID(v.ID),
 		Key:       v.Key,
 		Language:  v.Language,
 		Value:     v.Value,

@@ -12,7 +12,7 @@ import (
 	"gct/internal/context/admin/supporting/integration"
 	"gct/internal/context/admin/supporting/integration/application/command"
 	"gct/internal/context/admin/supporting/integration/application/query"
-	"gct/internal/context/admin/supporting/integration/domain"
+	integentity "gct/internal/context/admin/supporting/integration/domain/entity"
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
@@ -23,57 +23,57 @@ import (
 // --- Mocks ---
 
 type mockRepo struct {
-	saved   *domain.Integration
-	updated *domain.Integration
-	deleted domain.IntegrationID
-	findFn  func(ctx context.Context, id domain.IntegrationID) (*domain.Integration, error)
+	saved   *integentity.Integration
+	updated *integentity.Integration
+	deleted integentity.IntegrationID
+	findFn  func(ctx context.Context, id integentity.IntegrationID) (*integentity.Integration, error)
 }
 
-func (m *mockRepo) Save(_ context.Context, e *domain.Integration) error {
+func (m *mockRepo) Save(_ context.Context, e *integentity.Integration) error {
 	m.saved = e
 	return nil
 }
-func (m *mockRepo) FindByID(ctx context.Context, id domain.IntegrationID) (*domain.Integration, error) {
+func (m *mockRepo) FindByID(ctx context.Context, id integentity.IntegrationID) (*integentity.Integration, error) {
 	if m.findFn != nil {
 		return m.findFn(ctx, id)
 	}
-	return nil, domain.ErrIntegrationNotFound
+	return nil, integentity.ErrIntegrationNotFound
 }
-func (m *mockRepo) Update(_ context.Context, e *domain.Integration) error {
+func (m *mockRepo) Update(_ context.Context, e *integentity.Integration) error {
 	m.updated = e
 	return nil
 }
-func (m *mockRepo) Delete(_ context.Context, id domain.IntegrationID) error {
+func (m *mockRepo) Delete(_ context.Context, id integentity.IntegrationID) error {
 	m.deleted = id
 	return nil
 }
 
 type mockReadRepo struct {
-	view  *domain.IntegrationView
-	views []*domain.IntegrationView
+	view  *integentity.IntegrationView
+	views []*integentity.IntegrationView
 	total int64
 }
 
-func (m *mockReadRepo) FindByID(_ context.Context, id domain.IntegrationID) (*domain.IntegrationView, error) {
+func (m *mockReadRepo) FindByID(_ context.Context, id integentity.IntegrationID) (*integentity.IntegrationView, error) {
 	if m.view != nil && m.view.ID == id {
 		return m.view, nil
 	}
-	return nil, domain.ErrIntegrationNotFound
+	return nil, integentity.ErrIntegrationNotFound
 }
-func (m *mockReadRepo) List(_ context.Context, _ domain.IntegrationFilter) ([]*domain.IntegrationView, int64, error) {
+func (m *mockReadRepo) List(_ context.Context, _ integentity.IntegrationFilter) ([]*integentity.IntegrationView, int64, error) {
 	return m.views, m.total, nil
 }
 
-func (m *mockReadRepo) FindByAPIKey(_ context.Context, _ string) (*domain.IntegrationAPIKeyView, error) {
-	return nil, domain.ErrIntegrationNotFound
+func (m *mockReadRepo) FindByAPIKey(_ context.Context, _ string) (*integentity.IntegrationAPIKeyView, error) {
+	return nil, integentity.ErrIntegrationNotFound
 }
 
-func (m *mockReadRepo) ListActiveJWT(_ context.Context) ([]domain.JWTIntegrationView, error) {
+func (m *mockReadRepo) ListActiveJWT(_ context.Context) ([]integentity.JWTIntegrationView, error) {
 	return nil, nil
 }
 
-func (m *mockReadRepo) FindJWTByHash(_ context.Context, _ []byte) (*domain.JWTIntegrationView, error) {
-	return nil, domain.ErrIntegrationNotFound
+func (m *mockReadRepo) FindJWTByHash(_ context.Context, _ []byte) (*integentity.JWTIntegrationView, error) {
+	return nil, integentity.ErrIntegrationNotFound
 }
 
 type mockEventBus struct{ published []shared.DomainEvent }
@@ -175,8 +175,8 @@ func TestHandler_List_Success(t *testing.T) {
 	t.Parallel()
 
 	readRepo := &mockReadRepo{
-		views: []*domain.IntegrationView{
-			{ID: domain.NewIntegrationID(), Name: "Slack", Type: "messaging", APIKey: "k", Enabled: true, Config: map[string]string{}, CreatedAt: time.Now(), UpdatedAt: time.Now()},
+		views: []*integentity.IntegrationView{
+			{ID: integentity.NewIntegrationID(), Name: "Slack", Type: "messaging", APIKey: "k", Enabled: true, Config: map[string]string{}, CreatedAt: time.Now(), UpdatedAt: time.Now()},
 		},
 		total: 1,
 	}
@@ -194,9 +194,9 @@ func TestHandler_List_Success(t *testing.T) {
 func TestHandler_Get_Success(t *testing.T) {
 	t.Parallel()
 
-	id := domain.NewIntegrationID()
+	id := integentity.NewIntegrationID()
 	readRepo := &mockReadRepo{
-		view: &domain.IntegrationView{
+		view: &integentity.IntegrationView{
 			ID: id, Name: "Slack", Type: "messaging", APIKey: "k", Enabled: true, Config: map[string]string{}, CreatedAt: time.Now(), UpdatedAt: time.Now(),
 		},
 	}
@@ -228,13 +228,13 @@ func TestHandler_Get_InvalidID(t *testing.T) {
 func TestHandler_Update_Success(t *testing.T) {
 	t.Parallel()
 
-	i, _ := domain.NewIntegration("Slack", "messaging", "key", "https://url.com", true, nil)
+	i, _ := integentity.NewIntegration("Slack", "messaging", "key", "https://url.com", true, nil)
 	repo := &mockRepo{
-		findFn: func(_ context.Context, id domain.IntegrationID) (*domain.Integration, error) {
+		findFn: func(_ context.Context, id integentity.IntegrationID) (*integentity.Integration, error) {
 			if id == i.TypedID() {
 				return i, nil
 			}
-			return nil, domain.ErrIntegrationNotFound
+			return nil, integentity.ErrIntegrationNotFound
 		},
 	}
 	router := setupRouter(repo, &mockReadRepo{})
@@ -300,7 +300,7 @@ func TestHandler_Get_NotFound(t *testing.T) {
 	// readRepo has no view set, so FindByID returns ErrIntegrationNotFound
 	router := setupRouter(&mockRepo{}, &mockReadRepo{})
 
-	id := domain.NewIntegrationID()
+	id := integentity.NewIntegrationID()
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/api/v1/integrations/"+id.String(), nil)
 	router.ServeHTTP(w, req)
@@ -325,7 +325,7 @@ func TestHandler_Create_InvalidJSON(t *testing.T) {
 
 func TestHandler_List_DefaultPagination(t *testing.T) {
 	readRepo := &mockReadRepo{
-		views: []*domain.IntegrationView{},
+		views: []*integentity.IntegrationView{},
 		total: 0,
 	}
 	router := setupRouter(&mockRepo{}, readRepo)

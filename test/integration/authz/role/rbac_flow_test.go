@@ -6,7 +6,7 @@ import (
 
 	"gct/internal/context/iam/generic/authz/application/command"
 	"gct/internal/context/iam/generic/authz/application/query"
-	"gct/internal/context/iam/generic/authz/domain"
+	authzentity "gct/internal/context/iam/generic/authz/domain/entity"
 	shared "gct/internal/kernel/domain"
 	"gct/test/integration/common/setup"
 )
@@ -43,7 +43,7 @@ func TestIntegration_RBACFullFlow(t *testing.T) {
 	if roles.Total != 1 {
 		t.Fatalf("expected 1 role, got %d", roles.Total)
 	}
-	roleID := domain.RoleID(roles.Roles[0].ID)
+	roleID := authzentity.RoleID(roles.Roles[0].ID)
 
 	// --- Step 2: Create a Permission ---
 	err = bc.CreatePermission.Handle(ctx, command.CreatePermissionCommand{
@@ -62,7 +62,7 @@ func TestIntegration_RBACFullFlow(t *testing.T) {
 	if perms.Total != 1 {
 		t.Fatalf("expected 1 permission, got %d", perms.Total)
 	}
-	permID := domain.PermissionID(perms.Permissions[0].ID)
+	permID := authzentity.PermissionID(perms.Permissions[0].ID)
 
 	// --- Step 3: Create a Scope and assign it to the Permission ---
 	err = bc.CreateScope.Handle(ctx, command.CreateScopeCommand{
@@ -160,7 +160,7 @@ func TestIntegration_RBACMultiplePermissionsOnRole(t *testing.T) {
 	roles, _ := bc.ListRoles.Handle(ctx, query.ListRolesQuery{
 		Pagination: shared.Pagination{Limit: 10},
 	})
-	roleID := domain.RoleID(roles.Roles[0].ID)
+	roleID := authzentity.RoleID(roles.Roles[0].ID)
 
 	// Create two permissions.
 	for _, name := range []string{"articles.read", "articles.write"} {
@@ -180,7 +180,7 @@ func TestIntegration_RBACMultiplePermissionsOnRole(t *testing.T) {
 	for _, p := range perms.Permissions {
 		err = bc.AssignPermission.Handle(ctx, command.AssignPermissionCommand{
 			RoleID:       roleID,
-			PermissionID: domain.PermissionID(p.ID),
+			PermissionID: authzentity.PermissionID(p.ID),
 		})
 		if err != nil {
 			t.Fatalf("AssignPermission(%s): %v", p.Name, err)

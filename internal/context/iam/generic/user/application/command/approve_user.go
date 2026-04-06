@@ -3,7 +3,8 @@ package command
 import (
 	"context"
 
-	"gct/internal/context/iam/generic/user/domain"
+	userentity "gct/internal/context/iam/generic/user/domain/entity"
+	userrepo "gct/internal/context/iam/generic/user/domain/repository"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
@@ -12,19 +13,19 @@ import (
 
 // ApproveUserCommand holds the input for approving a user.
 type ApproveUserCommand struct {
-	ID domain.UserID
+	ID userentity.UserID
 }
 
 // ApproveUserHandler handles the ApproveUserCommand.
 type ApproveUserHandler struct {
-	repo     domain.UserRepository
+	repo     userrepo.UserRepository
 	eventBus application.EventBus
 	logger   commandLogger
 }
 
 // NewApproveUserHandler creates a new ApproveUserHandler.
 func NewApproveUserHandler(
-	repo domain.UserRepository,
+	repo userrepo.UserRepository,
 	eventBus application.EventBus,
 	logger commandLogger,
 ) *ApproveUserHandler {

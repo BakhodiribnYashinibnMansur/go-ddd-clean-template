@@ -4,7 +4,8 @@ import (
 	"context"
 	"time"
 
-	"gct/internal/context/iam/generic/user/domain"
+	userentity "gct/internal/context/iam/generic/user/domain/entity"
+	userrepo "gct/internal/context/iam/generic/user/domain/repository"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
@@ -17,15 +18,15 @@ import (
 
 // SignOutCommand holds the input for user sign-out.
 type SignOutCommand struct {
-	UserID    domain.UserID
-	SessionID domain.SessionID
+	UserID    userentity.UserID
+	SessionID userentity.SessionID
 	IP        string
 	UserAgent string
 }
 
 // SignOutHandler handles the SignOutCommand.
 type SignOutHandler struct {
-	repo        domain.UserRepository
+	repo        userrepo.UserRepository
 	eventBus    application.EventBus
 	logger      commandLogger
 	auditLogger audit.Logger
@@ -34,7 +35,7 @@ type SignOutHandler struct {
 
 // NewSignOutHandler creates a new SignOutHandler.
 func NewSignOutHandler(
-	repo domain.UserRepository,
+	repo userrepo.UserRepository,
 	eventBus application.EventBus,
 	logger commandLogger,
 ) *SignOutHandler {

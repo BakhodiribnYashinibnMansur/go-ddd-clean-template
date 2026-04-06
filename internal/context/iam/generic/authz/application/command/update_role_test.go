@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/iam/generic/authz/domain"
+	authzentity "gct/internal/context/iam/generic/authz/domain/entity"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -15,15 +15,15 @@ import (
 func TestUpdateRoleHandler_Rename(t *testing.T) {
 	t.Parallel()
 
-	roleID := domain.NewRoleID()
-	existingRole := domain.ReconstructRole(roleID.UUID(), time.Now(), time.Now(), nil, "old_name", nil, nil)
+	roleID := authzentity.NewRoleID()
+	existingRole := authzentity.ReconstructRole(roleID.UUID(), time.Now(), time.Now(), nil, "old_name", nil, nil)
 
 	repo := &mockRoleRepository{
-		findByIDFn: func(_ context.Context, id domain.RoleID) (*domain.Role, error) {
+		findByIDFn: func(_ context.Context, id authzentity.RoleID) (*authzentity.Role, error) {
 			if id == roleID {
 				return existingRole, nil
 			}
-			return nil, domain.ErrRoleNotFound
+			return nil, authzentity.ErrRoleNotFound
 		},
 	}
 	eventBus := &mockEventBus{}
@@ -33,7 +33,7 @@ func TestUpdateRoleHandler_Rename(t *testing.T) {
 
 	newName := "new_name"
 	cmd := UpdateRoleCommand{
-		ID:   domain.RoleID(roleID),
+		ID:   authzentity.RoleID(roleID),
 		Name: &newName,
 	}
 
@@ -52,15 +52,15 @@ func TestUpdateRoleHandler_Rename(t *testing.T) {
 func TestUpdateRoleHandler_SetDescription(t *testing.T) {
 	t.Parallel()
 
-	roleID := domain.NewRoleID()
-	existingRole := domain.ReconstructRole(roleID.UUID(), time.Now(), time.Now(), nil, "admin", nil, nil)
+	roleID := authzentity.NewRoleID()
+	existingRole := authzentity.ReconstructRole(roleID.UUID(), time.Now(), time.Now(), nil, "admin", nil, nil)
 
 	repo := &mockRoleRepository{
-		findByIDFn: func(_ context.Context, id domain.RoleID) (*domain.Role, error) {
+		findByIDFn: func(_ context.Context, id authzentity.RoleID) (*authzentity.Role, error) {
 			if id == roleID {
 				return existingRole, nil
 			}
-			return nil, domain.ErrRoleNotFound
+			return nil, authzentity.ErrRoleNotFound
 		},
 	}
 	eventBus := &mockEventBus{}
@@ -70,7 +70,7 @@ func TestUpdateRoleHandler_SetDescription(t *testing.T) {
 
 	desc := "Updated description"
 	cmd := UpdateRoleCommand{
-		ID:          domain.RoleID(roleID),
+		ID:          authzentity.RoleID(roleID),
 		Description: &desc,
 	}
 
@@ -97,12 +97,12 @@ func TestUpdateRoleHandler_NotFound(t *testing.T) {
 
 	newName := "anything"
 	cmd := UpdateRoleCommand{
-		ID:   domain.RoleID(uuid.New()),
+		ID:   authzentity.RoleID(uuid.New()),
 		Name: &newName,
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if !errors.Is(err, domain.ErrRoleNotFound) {
+	if !errors.Is(err, authzentity.ErrRoleNotFound) {
 		t.Fatalf("expected ErrRoleNotFound, got: %v", err)
 	}
 

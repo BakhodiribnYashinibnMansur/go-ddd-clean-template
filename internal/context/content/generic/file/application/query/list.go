@@ -6,30 +6,32 @@ import (
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 
-	appdto "gct/internal/context/content/generic/file/application"
-	"gct/internal/context/content/generic/file/domain"
+	"gct/internal/context/content/generic/file/application/dto"
+	filerepo "gct/internal/context/content/generic/file/domain/repository"
 	"gct/internal/kernel/infrastructure/pgxutil"
+
+	"github.com/google/uuid"
 )
 
 // ListFilesQuery holds the input for listing files with filtering.
 type ListFilesQuery struct {
-	Filter domain.FileFilter
+	Filter filerepo.FileFilter
 }
 
 // ListFilesResult holds the output of the list files query.
 type ListFilesResult struct {
-	Files []*appdto.FileView
+	Files []*dto.FileView
 	Total int64
 }
 
 // ListFilesHandler handles the ListFilesQuery.
 type ListFilesHandler struct {
-	readRepo domain.FileReadRepository
+	readRepo filerepo.FileReadRepository
 	logger   logger.Log
 }
 
 // NewListFilesHandler creates a new ListFilesHandler.
-func NewListFilesHandler(readRepo domain.FileReadRepository, l logger.Log) *ListFilesHandler {
+func NewListFilesHandler(readRepo filerepo.FileReadRepository, l logger.Log) *ListFilesHandler {
 	return &ListFilesHandler{readRepo: readRepo, logger: l}
 }
 
@@ -45,10 +47,10 @@ func (h *ListFilesHandler) Handle(ctx context.Context, q ListFilesQuery) (_ *Lis
 		return nil, apperrors.MapToServiceError(err)
 	}
 
-	result := make([]*appdto.FileView, len(views))
+	result := make([]*dto.FileView, len(views))
 	for i, v := range views {
-		result[i] = &appdto.FileView{
-			ID:           v.ID,
+		result[i] = &dto.FileView{
+			ID:           uuid.UUID(v.ID),
 			Name:         v.Name,
 			OriginalName: v.OriginalName,
 			MimeType:     v.MimeType,

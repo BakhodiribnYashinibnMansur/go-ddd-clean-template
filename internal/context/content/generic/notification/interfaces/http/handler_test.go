@@ -12,7 +12,8 @@ import (
 	"gct/internal/context/content/generic/notification"
 	"gct/internal/context/content/generic/notification/application/command"
 	"gct/internal/context/content/generic/notification/application/query"
-	"gct/internal/context/content/generic/notification/domain"
+	notifentity "gct/internal/context/content/generic/notification/domain/entity"
+	notifrepo "gct/internal/context/content/generic/notification/domain/repository"
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
@@ -23,36 +24,36 @@ import (
 // --- Mocks ---
 
 type mockRepo struct {
-	saved   *domain.Notification
-	deleted domain.NotificationID
+	saved   *notifentity.Notification
+	deleted notifentity.NotificationID
 }
 
-func (m *mockRepo) Save(_ context.Context, n *domain.Notification) error {
+func (m *mockRepo) Save(_ context.Context, n *notifentity.Notification) error {
 	m.saved = n
 	return nil
 }
-func (m *mockRepo) FindByID(_ context.Context, _ domain.NotificationID) (*domain.Notification, error) {
-	return nil, domain.ErrNotificationNotFound
+func (m *mockRepo) FindByID(_ context.Context, _ notifentity.NotificationID) (*notifentity.Notification, error) {
+	return nil, notifentity.ErrNotificationNotFound
 }
-func (m *mockRepo) Update(_ context.Context, _ *domain.Notification) error { return nil }
-func (m *mockRepo) Delete(_ context.Context, id domain.NotificationID) error {
+func (m *mockRepo) Update(_ context.Context, _ *notifentity.Notification) error { return nil }
+func (m *mockRepo) Delete(_ context.Context, id notifentity.NotificationID) error {
 	m.deleted = id
 	return nil
 }
 
 type mockReadRepo struct {
-	view  *domain.NotificationView
-	views []*domain.NotificationView
+	view  *notifrepo.NotificationView
+	views []*notifrepo.NotificationView
 	total int64
 }
 
-func (m *mockReadRepo) FindByID(_ context.Context, id domain.NotificationID) (*domain.NotificationView, error) {
+func (m *mockReadRepo) FindByID(_ context.Context, id notifentity.NotificationID) (*notifrepo.NotificationView, error) {
 	if m.view != nil && m.view.ID == id {
 		return m.view, nil
 	}
-	return nil, domain.ErrNotificationNotFound
+	return nil, notifentity.ErrNotificationNotFound
 }
-func (m *mockReadRepo) List(_ context.Context, _ domain.NotificationFilter) ([]*domain.NotificationView, int64, error) {
+func (m *mockReadRepo) List(_ context.Context, _ notifrepo.NotificationFilter) ([]*notifrepo.NotificationView, int64, error) {
 	return m.views, m.total, nil
 }
 
@@ -151,8 +152,8 @@ func TestHandler_List_Success(t *testing.T) {
 	t.Parallel()
 
 	readRepo := &mockReadRepo{
-		views: []*domain.NotificationView{
-			{ID: domain.NewNotificationID(), UserID: uuid.New(), Title: "N1", Type: "INFO", CreatedAt: time.Now()},
+		views: []*notifrepo.NotificationView{
+			{ID: notifentity.NewNotificationID(), UserID: uuid.New(), Title: "N1", Type: "INFO", CreatedAt: time.Now()},
 		},
 		total: 1,
 	}
@@ -170,9 +171,9 @@ func TestHandler_List_Success(t *testing.T) {
 func TestHandler_Get_Success(t *testing.T) {
 	t.Parallel()
 
-	id := domain.NewNotificationID()
+	id := notifentity.NewNotificationID()
 	readRepo := &mockReadRepo{
-		view: &domain.NotificationView{ID: id, UserID: uuid.New(), Title: "N", Type: "INFO", CreatedAt: time.Now()},
+		view: &notifrepo.NotificationView{ID: id, UserID: uuid.New(), Title: "N", Type: "INFO", CreatedAt: time.Now()},
 	}
 	router := setupRouter(&mockRepo{}, readRepo)
 
@@ -258,7 +259,7 @@ func TestHandler_Create_InvalidJSON(t *testing.T) {
 
 func TestHandler_List_DefaultPagination(t *testing.T) {
 	readRepo := &mockReadRepo{
-		views: []*domain.NotificationView{},
+		views: []*notifrepo.NotificationView{},
 		total: 0,
 	}
 	router := setupRouter(&mockRepo{}, readRepo)

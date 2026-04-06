@@ -6,7 +6,8 @@ import (
 	"sync"
 
 	"gct/internal/context/admin/generic/featureflag/application/query"
-	"gct/internal/context/admin/generic/featureflag/domain"
+	ffentity "gct/internal/context/admin/generic/featureflag/domain/entity"
+	ffrepo "gct/internal/context/admin/generic/featureflag/domain/repository"
 	"gct/internal/kernel/infrastructure/logger"
 )
 
@@ -14,14 +15,14 @@ import (
 // the FeatureFlagRepository. On startup all flags are loaded; the cache can be
 // invalidated (reloaded) via the Invalidate method.
 type CachedEvaluator struct {
-	repo   domain.FeatureFlagRepository
+	repo   ffrepo.FeatureFlagRepository
 	cache  sync.Map
 	loadMu sync.Mutex // serializes LoadAll to prevent interleaved clear+populate
 	log    logger.Log
 }
 
 // NewCachedEvaluator creates a CachedEvaluator and eagerly loads all flags.
-func NewCachedEvaluator(ctx context.Context, repo domain.FeatureFlagRepository, log logger.Log) (*CachedEvaluator, error) {
+func NewCachedEvaluator(ctx context.Context, repo ffrepo.FeatureFlagRepository, log logger.Log) (*CachedEvaluator, error) {
 	ce := &CachedEvaluator{repo: repo, log: log}
 	if err := ce.LoadAll(ctx); err != nil {
 		return nil, err
@@ -106,9 +107,9 @@ func (ce *CachedEvaluator) EvaluateFull(ctx context.Context, key string, userAtt
 	}
 }
 
-func (ce *CachedEvaluator) getFlag(ctx context.Context, key string) *domain.FeatureFlag {
+func (ce *CachedEvaluator) getFlag(ctx context.Context, key string) *ffentity.FeatureFlag {
 	if val, ok := ce.cache.Load(key); ok {
-		return val.(*domain.FeatureFlag)
+		return val.(*ffentity.FeatureFlag)
 	}
 	ff, err := ce.repo.FindByKey(ctx, key)
 	if err != nil {

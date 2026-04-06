@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"gct/internal/context/ops/generic/metric/application/command"
-	"gct/internal/context/ops/generic/metric/domain"
+	metricentity "gct/internal/context/ops/generic/metric/domain/entity"
+	metricrepo "gct/internal/context/ops/generic/metric/domain/repository"
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
@@ -15,15 +16,15 @@ import (
 // --- Mocks ---
 
 type mockMetricRepo struct {
-	saved *domain.FunctionMetric
+	saved *metricentity.FunctionMetric
 }
 
-func (m *mockMetricRepo) Save(_ context.Context, fm *domain.FunctionMetric) error {
+func (m *mockMetricRepo) Save(_ context.Context, fm *metricentity.FunctionMetric) error {
 	m.saved = fm
 	return nil
 }
 
-func (m *mockMetricRepo) List(_ context.Context, _ domain.MetricFilter) ([]*domain.FunctionMetric, int64, error) {
+func (m *mockMetricRepo) List(_ context.Context, _ metricrepo.MetricFilter) ([]*metricentity.FunctionMetric, int64, error) {
 	return nil, 0, nil
 }
 

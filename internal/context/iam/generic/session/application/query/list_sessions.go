@@ -5,19 +5,19 @@ import (
 
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 
-	appdto "gct/internal/context/iam/generic/session/application"
+	"gct/internal/context/iam/generic/session/application/dto"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // ListSessionsQuery holds the input for listing sessions with filtering.
 type ListSessionsQuery struct {
-	Filter appdto.SessionsFilter
+	Filter dto.SessionsFilter
 }
 
 // ListSessionsResult holds the output of the list sessions query.
 type ListSessionsResult struct {
-	Sessions []*appdto.SessionView
+	Sessions []*dto.SessionView
 	Total    int64
 }
 

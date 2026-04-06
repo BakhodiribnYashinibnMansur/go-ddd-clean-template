@@ -12,7 +12,8 @@ import (
 	"gct/internal/context/ops/generic/ratelimit"
 	"gct/internal/context/ops/generic/ratelimit/application/command"
 	"gct/internal/context/ops/generic/ratelimit/application/query"
-	"gct/internal/context/ops/generic/ratelimit/domain"
+	ratelimitentity "gct/internal/context/ops/generic/ratelimit/domain/entity"
+	ratelimitrepo "gct/internal/context/ops/generic/ratelimit/domain/repository"
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
@@ -23,47 +24,47 @@ import (
 // --- Mocks ---
 
 type mockRepo struct {
-	saved   *domain.RateLimit
-	updated *domain.RateLimit
-	deleted domain.RateLimitID
-	findFn  func(ctx context.Context, id domain.RateLimitID) (*domain.RateLimit, error)
+	saved   *ratelimitentity.RateLimit
+	updated *ratelimitentity.RateLimit
+	deleted ratelimitentity.RateLimitID
+	findFn  func(ctx context.Context, id ratelimitentity.RateLimitID) (*ratelimitentity.RateLimit, error)
 }
 
-func (m *mockRepo) Save(_ context.Context, e *domain.RateLimit) error {
+func (m *mockRepo) Save(_ context.Context, e *ratelimitentity.RateLimit) error {
 	m.saved = e
 	return nil
 }
-func (m *mockRepo) FindByID(ctx context.Context, id domain.RateLimitID) (*domain.RateLimit, error) {
+func (m *mockRepo) FindByID(ctx context.Context, id ratelimitentity.RateLimitID) (*ratelimitentity.RateLimit, error) {
 	if m.findFn != nil {
 		return m.findFn(ctx, id)
 	}
-	return nil, domain.ErrRateLimitNotFound
+	return nil, ratelimitentity.ErrRateLimitNotFound
 }
-func (m *mockRepo) Update(_ context.Context, e *domain.RateLimit) error {
+func (m *mockRepo) Update(_ context.Context, e *ratelimitentity.RateLimit) error {
 	m.updated = e
 	return nil
 }
-func (m *mockRepo) Delete(_ context.Context, id domain.RateLimitID) error {
+func (m *mockRepo) Delete(_ context.Context, id ratelimitentity.RateLimitID) error {
 	m.deleted = id
 	return nil
 }
-func (m *mockRepo) List(_ context.Context, _ domain.RateLimitFilter) ([]*domain.RateLimit, int64, error) {
+func (m *mockRepo) List(_ context.Context, _ ratelimitrepo.RateLimitFilter) ([]*ratelimitentity.RateLimit, int64, error) {
 	return nil, 0, nil
 }
 
 type mockReadRepo struct {
-	view  *domain.RateLimitView
-	views []*domain.RateLimitView
+	view  *ratelimitrepo.RateLimitView
+	views []*ratelimitrepo.RateLimitView
 	total int64
 }
 
-func (m *mockReadRepo) FindByID(_ context.Context, id domain.RateLimitID) (*domain.RateLimitView, error) {
+func (m *mockReadRepo) FindByID(_ context.Context, id ratelimitentity.RateLimitID) (*ratelimitrepo.RateLimitView, error) {
 	if m.view != nil && m.view.ID == id {
 		return m.view, nil
 	}
-	return nil, domain.ErrRateLimitNotFound
+	return nil, ratelimitentity.ErrRateLimitNotFound
 }
-func (m *mockReadRepo) List(_ context.Context, _ domain.RateLimitFilter) ([]*domain.RateLimitView, int64, error) {
+func (m *mockReadRepo) List(_ context.Context, _ ratelimitrepo.RateLimitFilter) ([]*ratelimitrepo.RateLimitView, int64, error) {
 	return m.views, m.total, nil
 }
 
@@ -167,8 +168,8 @@ func TestHandler_List_Success(t *testing.T) {
 	t.Parallel()
 
 	readRepo := &mockReadRepo{
-		views: []*domain.RateLimitView{
-			{ID: domain.NewRateLimitID(), Name: "r1", Rule: "/a", RequestsPerWindow: 10, WindowDuration: 30, Enabled: true, CreatedAt: time.Now(), UpdatedAt: time.Now()},
+		views: []*ratelimitrepo.RateLimitView{
+			{ID: ratelimitentity.NewRateLimitID(), Name: "r1", Rule: "/a", RequestsPerWindow: 10, WindowDuration: 30, Enabled: true, CreatedAt: time.Now(), UpdatedAt: time.Now()},
 		},
 		total: 1,
 	}
@@ -186,9 +187,9 @@ func TestHandler_List_Success(t *testing.T) {
 func TestHandler_Get_Success(t *testing.T) {
 	t.Parallel()
 
-	id := domain.NewRateLimitID()
+	id := ratelimitentity.NewRateLimitID()
 	readRepo := &mockReadRepo{
-		view: &domain.RateLimitView{
+		view: &ratelimitrepo.RateLimitView{
 			ID: id, Name: "r1", Rule: "/a", RequestsPerWindow: 10, WindowDuration: 30, Enabled: true, CreatedAt: time.Now(), UpdatedAt: time.Now(),
 		},
 	}
@@ -220,13 +221,13 @@ func TestHandler_Get_InvalidID(t *testing.T) {
 func TestHandler_Update_Success(t *testing.T) {
 	t.Parallel()
 
-	rl := domain.NewRateLimit("old", "/old", 10, 30, true)
+	rl := ratelimitentity.NewRateLimit("old", "/old", 10, 30, true)
 	repo := &mockRepo{
-		findFn: func(_ context.Context, id domain.RateLimitID) (*domain.RateLimit, error) {
+		findFn: func(_ context.Context, id ratelimitentity.RateLimitID) (*ratelimitentity.RateLimit, error) {
 			if id == rl.TypedID() {
 				return rl, nil
 			}
-			return nil, domain.ErrRateLimitNotFound
+			return nil, ratelimitentity.ErrRateLimitNotFound
 		},
 	}
 	router := setupRouter(repo, &mockReadRepo{})
@@ -317,7 +318,7 @@ func TestHandler_Create_InvalidJSON(t *testing.T) {
 
 func TestHandler_List_DefaultPagination(t *testing.T) {
 	readRepo := &mockReadRepo{
-		views: []*domain.RateLimitView{},
+		views: []*ratelimitrepo.RateLimitView{},
 		total: 0,
 	}
 	router := setupRouter(&mockRepo{}, readRepo)

@@ -12,7 +12,8 @@ import (
 	"gct/internal/context/content/supporting/announcement"
 	"gct/internal/context/content/supporting/announcement/application/command"
 	"gct/internal/context/content/supporting/announcement/application/query"
-	"gct/internal/context/content/supporting/announcement/domain"
+	announceentity "gct/internal/context/content/supporting/announcement/domain/entity"
+	announcerepo "gct/internal/context/content/supporting/announcement/domain/repository"
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
@@ -23,47 +24,47 @@ import (
 // --- Mocks ---
 
 type mockRepo struct {
-	saved   *domain.Announcement
-	updated *domain.Announcement
-	deleted domain.AnnouncementID
-	findFn  func(ctx context.Context, id domain.AnnouncementID) (*domain.Announcement, error)
+	saved   *announceentity.Announcement
+	updated *announceentity.Announcement
+	deleted announceentity.AnnouncementID
+	findFn  func(ctx context.Context, id announceentity.AnnouncementID) (*announceentity.Announcement, error)
 }
 
-func (m *mockRepo) Save(_ context.Context, e *domain.Announcement) error {
+func (m *mockRepo) Save(_ context.Context, e *announceentity.Announcement) error {
 	m.saved = e
 	return nil
 }
-func (m *mockRepo) FindByID(ctx context.Context, id domain.AnnouncementID) (*domain.Announcement, error) {
+func (m *mockRepo) FindByID(ctx context.Context, id announceentity.AnnouncementID) (*announceentity.Announcement, error) {
 	if m.findFn != nil {
 		return m.findFn(ctx, id)
 	}
-	return nil, domain.ErrAnnouncementNotFound
+	return nil, announceentity.ErrAnnouncementNotFound
 }
-func (m *mockRepo) Update(_ context.Context, e *domain.Announcement) error {
+func (m *mockRepo) Update(_ context.Context, e *announceentity.Announcement) error {
 	m.updated = e
 	return nil
 }
-func (m *mockRepo) Delete(_ context.Context, id domain.AnnouncementID) error {
+func (m *mockRepo) Delete(_ context.Context, id announceentity.AnnouncementID) error {
 	m.deleted = id
 	return nil
 }
-func (m *mockRepo) List(_ context.Context, _ domain.AnnouncementFilter) ([]*domain.Announcement, int64, error) {
+func (m *mockRepo) List(_ context.Context, _ announcerepo.AnnouncementFilter) ([]*announceentity.Announcement, int64, error) {
 	return nil, 0, nil
 }
 
 type mockReadRepo struct {
-	view  *domain.AnnouncementView
-	views []*domain.AnnouncementView
+	view  *announcerepo.AnnouncementView
+	views []*announcerepo.AnnouncementView
 	total int64
 }
 
-func (m *mockReadRepo) FindByID(_ context.Context, id domain.AnnouncementID) (*domain.AnnouncementView, error) {
+func (m *mockReadRepo) FindByID(_ context.Context, id announceentity.AnnouncementID) (*announcerepo.AnnouncementView, error) {
 	if m.view != nil && m.view.ID == id {
 		return m.view, nil
 	}
-	return nil, domain.ErrAnnouncementNotFound
+	return nil, announceentity.ErrAnnouncementNotFound
 }
-func (m *mockReadRepo) List(_ context.Context, _ domain.AnnouncementFilter) ([]*domain.AnnouncementView, int64, error) {
+func (m *mockReadRepo) List(_ context.Context, _ announcerepo.AnnouncementFilter) ([]*announcerepo.AnnouncementView, int64, error) {
 	return m.views, m.total, nil
 }
 
@@ -165,8 +166,8 @@ func TestHandler_List_Success(t *testing.T) {
 	t.Parallel()
 
 	readRepo := &mockReadRepo{
-		views: []*domain.AnnouncementView{
-			{ID: domain.NewAnnouncementID(), TitleEn: "A1", Priority: 1, CreatedAt: time.Now(), UpdatedAt: time.Now()},
+		views: []*announcerepo.AnnouncementView{
+			{ID: announceentity.NewAnnouncementID(), TitleEn: "A1", Priority: 1, CreatedAt: time.Now(), UpdatedAt: time.Now()},
 		},
 		total: 1,
 	}
@@ -184,9 +185,9 @@ func TestHandler_List_Success(t *testing.T) {
 func TestHandler_Get_Success(t *testing.T) {
 	t.Parallel()
 
-	id := domain.NewAnnouncementID()
+	id := announceentity.NewAnnouncementID()
 	readRepo := &mockReadRepo{
-		view: &domain.AnnouncementView{
+		view: &announcerepo.AnnouncementView{
 			ID: id, TitleEn: "A", Priority: 1, CreatedAt: time.Now(), UpdatedAt: time.Now(),
 		},
 	}
@@ -218,17 +219,17 @@ func TestHandler_Get_InvalidID(t *testing.T) {
 func TestHandler_Update_Success(t *testing.T) {
 	t.Parallel()
 
-	a, _ := domain.NewAnnouncement(
+	a, _ := announceentity.NewAnnouncement(
 		shared.Lang{Uz: "t", Ru: "t", En: "t"},
 		shared.Lang{Uz: "c", Ru: "c", En: "c"},
 		1, nil, nil,
 	)
 	repo := &mockRepo{
-		findFn: func(_ context.Context, id domain.AnnouncementID) (*domain.Announcement, error) {
+		findFn: func(_ context.Context, id announceentity.AnnouncementID) (*announceentity.Announcement, error) {
 			if id == a.TypedID() {
 				return a, nil
 			}
-			return nil, domain.ErrAnnouncementNotFound
+			return nil, announceentity.ErrAnnouncementNotFound
 		},
 	}
 	router := setupRouter(repo, &mockReadRepo{})
@@ -267,7 +268,7 @@ func TestHandler_Delete_Success(t *testing.T) {
 	repo := &mockRepo{}
 	router := setupRouter(repo, &mockReadRepo{})
 
-	id := domain.NewAnnouncementID()
+	id := announceentity.NewAnnouncementID()
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("DELETE", "/api/v1/announcements/"+id.String(), nil)
 	router.ServeHTTP(w, req)
@@ -309,7 +310,7 @@ func TestHandler_Get_NotFound(t *testing.T) {
 
 func TestHandler_List_DefaultPagination(t *testing.T) {
 	readRepo := &mockReadRepo{
-		views: []*domain.AnnouncementView{},
+		views: []*announcerepo.AnnouncementView{},
 		total: 0,
 	}
 	router := setupRouter(&mockRepo{}, readRepo)

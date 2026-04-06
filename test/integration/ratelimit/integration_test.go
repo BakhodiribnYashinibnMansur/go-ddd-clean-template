@@ -7,7 +7,8 @@ import (
 	"gct/internal/context/ops/generic/ratelimit"
 	"gct/internal/context/ops/generic/ratelimit/application/command"
 	"gct/internal/context/ops/generic/ratelimit/application/query"
-	"gct/internal/context/ops/generic/ratelimit/domain"
+	ratelimitentity "gct/internal/context/ops/generic/ratelimit/domain/entity"
+	ratelimitrepo "gct/internal/context/ops/generic/ratelimit/domain/repository"
 	"gct/internal/kernel/infrastructure/eventbus"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/test/integration/common/setup"
@@ -37,7 +38,7 @@ func TestIntegration_CreateAndGetRateLimit(t *testing.T) {
 	}
 
 	result, err := bc.ListRateLimits.Handle(ctx, query.ListRateLimitsQuery{
-		Filter: domain.RateLimitFilter{Limit: 10},
+		Filter: ratelimitrepo.RateLimitFilter{Limit: 10},
 	})
 	if err != nil {
 		t.Fatalf("ListRateLimits: %v", err)
@@ -54,7 +55,7 @@ func TestIntegration_CreateAndGetRateLimit(t *testing.T) {
 		t.Errorf("expected rule ip, got %s", rl.Rule)
 	}
 
-	view, err := bc.GetRateLimit.Handle(ctx, query.GetRateLimitQuery{ID: domain.RateLimitID(rl.ID)})
+	view, err := bc.GetRateLimit.Handle(ctx, query.GetRateLimitQuery{ID: ratelimitentity.RateLimitID(rl.ID)})
 	if err != nil {
 		t.Fatalf("GetRateLimit: %v", err)
 	}
@@ -80,9 +81,9 @@ func TestIntegration_UpdateRateLimit(t *testing.T) {
 	}
 
 	list, _ := bc.ListRateLimits.Handle(ctx, query.ListRateLimitsQuery{
-		Filter: domain.RateLimitFilter{Limit: 10},
+		Filter: ratelimitrepo.RateLimitFilter{Limit: 10},
 	})
-	rlID := domain.RateLimitID(list.RateLimits[0].ID)
+	rlID := ratelimitentity.RateLimitID(list.RateLimits[0].ID)
 
 	newName := "login_limit_v2"
 	newRequests := 10
@@ -121,9 +122,9 @@ func TestIntegration_DeleteRateLimit(t *testing.T) {
 	}
 
 	list, _ := bc.ListRateLimits.Handle(ctx, query.ListRateLimitsQuery{
-		Filter: domain.RateLimitFilter{Limit: 10},
+		Filter: ratelimitrepo.RateLimitFilter{Limit: 10},
 	})
-	rlID := domain.RateLimitID(list.RateLimits[0].ID)
+	rlID := ratelimitentity.RateLimitID(list.RateLimits[0].ID)
 
 	err = bc.DeleteRateLimit.Handle(ctx, command.DeleteRateLimitCommand{ID: rlID})
 	if err != nil {
@@ -131,7 +132,7 @@ func TestIntegration_DeleteRateLimit(t *testing.T) {
 	}
 
 	list2, _ := bc.ListRateLimits.Handle(ctx, query.ListRateLimitsQuery{
-		Filter: domain.RateLimitFilter{Limit: 10},
+		Filter: ratelimitrepo.RateLimitFilter{Limit: 10},
 	})
 	if list2.Total != 0 {
 		t.Errorf("expected 0 rate limits after delete, got %d", list2.Total)

@@ -3,7 +3,8 @@ package command
 import (
 	"context"
 
-	"gct/internal/context/content/generic/file/domain"
+	fileentity "gct/internal/context/content/generic/file/domain/entity"
+	filerepo "gct/internal/context/content/generic/file/domain/repository"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
@@ -29,14 +30,14 @@ type CreateFileCommand struct {
 // It does not handle the physical file upload — only the database record and event propagation.
 // Callers are responsible for authorization and virus/malware scanning before invoking this handler.
 type CreateFileHandler struct {
-	repo     domain.FileRepository
+	repo filerepo.FileRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
 // NewCreateFileHandler wires up the handler with its required dependencies.
 func NewCreateFileHandler(
-	repo domain.FileRepository,
+	repo filerepo.FileRepository,
 	eventBus application.EventBus,
 	logger logger.Log,
 ) *CreateFileHandler {
@@ -54,7 +55,7 @@ func (h *CreateFileHandler) Handle(ctx context.Context, cmd CreateFileCommand) (
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "CreateFile", "file")()
 
-	f := domain.NewFile(cmd.Name, cmd.OriginalName, cmd.MimeType, cmd.Size, cmd.Path, cmd.URL, cmd.UploadedBy)
+	f := fileentity.NewFile(cmd.Name, cmd.OriginalName, cmd.MimeType, cmd.Size, cmd.Path, cmd.URL, cmd.UploadedBy)
 
 	if err := h.repo.Save(ctx, f); err != nil {
 		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateFile", Entity: "file", Err: err}.KV()...)

@@ -5,7 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/ops/generic/metric/domain"
+	metricentity "gct/internal/context/ops/generic/metric/domain/entity"
+	metricrepo "gct/internal/context/ops/generic/metric/domain/repository"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -77,7 +78,7 @@ func TestNewMetricReadRepo(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestScanMetricView_Success(t *testing.T) {
-	id := domain.NewMetricID()
+	id := metricentity.NewMetricID()
 	now := time.Now().Truncate(time.Microsecond)
 
 	rows := &mockRows{scanFunc: func(dest ...any) error {
@@ -119,7 +120,7 @@ func TestScanMetricView_Error(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestScanMetricFromRows_Success(t *testing.T) {
-	id := domain.NewMetricID()
+	id := metricentity.NewMetricID()
 	now := time.Now().Truncate(time.Microsecond)
 
 	rows := &mockRows{scanFunc: func(dest ...any) error {
@@ -156,7 +157,7 @@ func TestScanMetricFromRows_Error(t *testing.T) {
 
 func TestApplyFilters_NoFilters(t *testing.T) {
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.MetricFilter{})
+	result := applyFilters(conds, metricrepo.MetricFilter{})
 	if len(result) != 0 {
 		t.Errorf("expected 0 conditions, got %d", len(result))
 	}
@@ -165,7 +166,7 @@ func TestApplyFilters_NoFilters(t *testing.T) {
 func TestApplyFilters_WithName(t *testing.T) {
 	name := "handleRequest"
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.MetricFilter{Name: &name})
+	result := applyFilters(conds, metricrepo.MetricFilter{Name: &name})
 	if len(result) != 1 {
 		t.Errorf("expected 1 condition, got %d", len(result))
 	}
@@ -174,7 +175,7 @@ func TestApplyFilters_WithName(t *testing.T) {
 func TestApplyFilters_WithIsPanic(t *testing.T) {
 	isPanic := true
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.MetricFilter{IsPanic: &isPanic})
+	result := applyFilters(conds, metricrepo.MetricFilter{IsPanic: &isPanic})
 	if len(result) != 1 {
 		t.Errorf("expected 1 condition, got %d", len(result))
 	}
@@ -183,7 +184,7 @@ func TestApplyFilters_WithIsPanic(t *testing.T) {
 func TestApplyFilters_WithFromDate(t *testing.T) {
 	from := time.Now().Add(-24 * time.Hour)
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.MetricFilter{FromDate: &from})
+	result := applyFilters(conds, metricrepo.MetricFilter{FromDate: &from})
 	if len(result) != 1 {
 		t.Errorf("expected 1 condition, got %d", len(result))
 	}
@@ -192,7 +193,7 @@ func TestApplyFilters_WithFromDate(t *testing.T) {
 func TestApplyFilters_WithToDate(t *testing.T) {
 	to := time.Now()
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.MetricFilter{ToDate: &to})
+	result := applyFilters(conds, metricrepo.MetricFilter{ToDate: &to})
 	if len(result) != 1 {
 		t.Errorf("expected 1 condition, got %d", len(result))
 	}
@@ -204,7 +205,7 @@ func TestApplyFilters_AllFilters(t *testing.T) {
 	from := time.Now().Add(-24 * time.Hour)
 	to := time.Now()
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.MetricFilter{Name: &name, IsPanic: &isPanic, FromDate: &from, ToDate: &to})
+	result := applyFilters(conds, metricrepo.MetricFilter{Name: &name, IsPanic: &isPanic, FromDate: &from, ToDate: &to})
 	if len(result) != 4 {
 		t.Errorf("expected 4 conditions, got %d", len(result))
 	}

@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"gct/internal/context/admin/supporting/dataexport/application/command"
-	"gct/internal/context/admin/supporting/dataexport/domain"
+	exportentity "gct/internal/context/admin/supporting/dataexport/domain/entity"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -19,8 +19,8 @@ func TestDeleteDataExportHandler_Success(t *testing.T) {
 	l := &mockLogger{}
 	h := command.NewDeleteDataExportHandler(repo, l)
 
-	exportID := domain.NewDataExportID()
-	cmd := command.DeleteDataExportCommand{ID: domain.DataExportID(exportID)}
+	exportID := exportentity.NewDataExportID()
+	cmd := command.DeleteDataExportCommand{ID: exportentity.DataExportID(exportID)}
 
 	err := h.Handle(context.Background(), cmd)
 	require.NoError(t, err)
@@ -34,14 +34,14 @@ func TestDeleteDataExportHandler_RepoError(t *testing.T) {
 
 	repoErr := errors.New("delete failed")
 	repo := &mockWriteRepo{
-		deleteFn: func(_ context.Context, _ domain.DataExportID) error {
+		deleteFn: func(_ context.Context, _ exportentity.DataExportID) error {
 			return repoErr
 		},
 	}
 	l := &mockLogger{}
 	h := command.NewDeleteDataExportHandler(repo, l)
 
-	cmd := command.DeleteDataExportCommand{ID: domain.DataExportID(uuid.New())}
+	cmd := command.DeleteDataExportCommand{ID: exportentity.DataExportID(uuid.New())}
 
 	err := h.Handle(context.Background(), cmd)
 	if err == nil {

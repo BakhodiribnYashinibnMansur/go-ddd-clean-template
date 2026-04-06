@@ -7,7 +7,8 @@ import (
 	"gct/internal/context/admin/generic/featureflag"
 	"gct/internal/context/admin/generic/featureflag/application/command"
 	"gct/internal/context/admin/generic/featureflag/application/query"
-	"gct/internal/context/admin/generic/featureflag/domain"
+	ffentity "gct/internal/context/admin/generic/featureflag/domain/entity"
+	ffrepo "gct/internal/context/admin/generic/featureflag/domain/repository"
 	"gct/internal/kernel/infrastructure/eventbus"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/test/integration/common/setup"
@@ -43,7 +44,7 @@ func TestIntegration_CreateAndGetFeatureFlag(t *testing.T) {
 	}
 
 	result, err := bc.ListFlags.Handle(ctx, query.ListQuery{
-		Filter: domain.FeatureFlagFilter{Limit: 10},
+		Filter: ffrepo.FeatureFlagFilter{Limit: 10},
 	})
 	if err != nil {
 		t.Fatalf("ListFlags: %v", err)
@@ -69,7 +70,7 @@ func TestIntegration_CreateAndGetFeatureFlag(t *testing.T) {
 		t.Error("expected flag to be active")
 	}
 
-	view, err := bc.GetFlag.Handle(ctx, query.GetQuery{ID: f.ID})
+	view, err := bc.GetFlag.Handle(ctx, query.GetQuery{ID: ffentity.FeatureFlagID(f.ID)})
 	if err != nil {
 		t.Fatalf("GetFlag: %v", err)
 	}
@@ -97,7 +98,7 @@ func TestIntegration_UpdateFeatureFlag(t *testing.T) {
 	}
 
 	list, err := bc.ListFlags.Handle(ctx, query.ListQuery{
-		Filter: domain.FeatureFlagFilter{Limit: 10},
+		Filter: ffrepo.FeatureFlagFilter{Limit: 10},
 	})
 	if err != nil {
 		t.Fatalf("ListFlags: %v", err)
@@ -108,7 +109,7 @@ func TestIntegration_UpdateFeatureFlag(t *testing.T) {
 	newActive := true
 	newRollout := 75
 	err = bc.UpdateFlag.Handle(ctx, command.UpdateCommand{
-		ID:                domain.FeatureFlagID(fID),
+		ID:                ffentity.FeatureFlagID(fID),
 		Name:              &newName,
 		IsActive:          &newActive,
 		RolloutPercentage: &newRollout,
@@ -117,7 +118,7 @@ func TestIntegration_UpdateFeatureFlag(t *testing.T) {
 		t.Fatalf("UpdateFlag: %v", err)
 	}
 
-	view, err := bc.GetFlag.Handle(ctx, query.GetQuery{ID: fID})
+	view, err := bc.GetFlag.Handle(ctx, query.GetQuery{ID: ffentity.FeatureFlagID(fID)})
 	if err != nil {
 		t.Fatalf("GetFlag after update: %v", err)
 	}
@@ -148,20 +149,20 @@ func TestIntegration_DeleteFeatureFlag(t *testing.T) {
 	}
 
 	list, err := bc.ListFlags.Handle(ctx, query.ListQuery{
-		Filter: domain.FeatureFlagFilter{Limit: 10},
+		Filter: ffrepo.FeatureFlagFilter{Limit: 10},
 	})
 	if err != nil {
 		t.Fatalf("ListFlags: %v", err)
 	}
 	fID := list.Flags[0].ID
 
-	err = bc.DeleteFlag.Handle(ctx, command.DeleteCommand{ID: domain.FeatureFlagID(fID)})
+	err = bc.DeleteFlag.Handle(ctx, command.DeleteCommand{ID: ffentity.FeatureFlagID(fID)})
 	if err != nil {
 		t.Fatalf("DeleteFlag: %v", err)
 	}
 
 	list2, err := bc.ListFlags.Handle(ctx, query.ListQuery{
-		Filter: domain.FeatureFlagFilter{Limit: 10},
+		Filter: ffrepo.FeatureFlagFilter{Limit: 10},
 	})
 	if err != nil {
 		t.Fatalf("ListFlags after delete: %v", err)
@@ -190,16 +191,16 @@ func TestIntegration_RuleGroupCRUD(t *testing.T) {
 	}
 
 	list, err := bc.ListFlags.Handle(ctx, query.ListQuery{
-		Filter: domain.FeatureFlagFilter{Limit: 10},
+		Filter: ffrepo.FeatureFlagFilter{Limit: 10},
 	})
 	if err != nil {
 		t.Fatalf("ListFlags: %v", err)
 	}
-	flagID := domain.FeatureFlagID(list.Flags[0].ID)
+	flagID := ffentity.FeatureFlagID(list.Flags[0].ID)
 
 	// Create a rule group with 2 conditions.
 	err = bc.CreateRuleGroup.Handle(ctx, command.CreateRuleGroupCommand{
-		FlagID:    domain.FeatureFlagID(flagID),
+		FlagID:    ffentity.FeatureFlagID(flagID),
 		Name:      "premium_users",
 		Variation: "true",
 		Priority:  1,
@@ -232,7 +233,7 @@ func TestIntegration_RuleGroupCRUD(t *testing.T) {
 	}
 
 	// Delete the rule group.
-	err = bc.DeleteRuleGroup.Handle(ctx, command.DeleteRuleGroupCommand{ID: domain.RuleGroupID(rg.ID)})
+	err = bc.DeleteRuleGroup.Handle(ctx, command.DeleteRuleGroupCommand{ID: ffentity.RuleGroupID(rg.ID)})
 	if err != nil {
 		t.Fatalf("DeleteRuleGroup: %v", err)
 	}
@@ -266,15 +267,15 @@ func TestIntegration_Evaluator(t *testing.T) {
 	}
 
 	list, err := bc.ListFlags.Handle(ctx, query.ListQuery{
-		Filter: domain.FeatureFlagFilter{Limit: 10},
+		Filter: ffrepo.FeatureFlagFilter{Limit: 10},
 	})
 	if err != nil {
 		t.Fatalf("ListFlags: %v", err)
 	}
-	flagID := domain.FeatureFlagID(list.Flags[0].ID)
+	flagID := ffentity.FeatureFlagID(list.Flags[0].ID)
 
 	err = bc.CreateRuleGroup.Handle(ctx, command.CreateRuleGroupCommand{
-		FlagID:    domain.FeatureFlagID(flagID),
+		FlagID:    ffentity.FeatureFlagID(flagID),
 		Name:      "premium_rule",
 		Variation: "true",
 		Priority:  1,
@@ -324,12 +325,12 @@ func TestIntegration_EvaluateFlag(t *testing.T) {
 	}
 
 	list, err := bc.ListFlags.Handle(ctx, query.ListQuery{
-		Filter: domain.FeatureFlagFilter{Limit: 10},
+		Filter: ffrepo.FeatureFlagFilter{Limit: 10},
 	})
 	if err != nil {
 		t.Fatalf("ListFlags: %v", err)
 	}
-	flagID := domain.FeatureFlagID(list.Flags[0].ID)
+	flagID := ffentity.FeatureFlagID(list.Flags[0].ID)
 
 	err = bc.CreateRuleGroup.Handle(ctx, command.CreateRuleGroupCommand{
 		FlagID:    flagID,
@@ -466,12 +467,12 @@ func TestIntegration_UpdateRuleGroup(t *testing.T) {
 	}
 
 	list, err := bc.ListFlags.Handle(ctx, query.ListQuery{
-		Filter: domain.FeatureFlagFilter{Limit: 10},
+		Filter: ffrepo.FeatureFlagFilter{Limit: 10},
 	})
 	if err != nil {
 		t.Fatalf("ListFlags: %v", err)
 	}
-	flagID := domain.FeatureFlagID(list.Flags[0].ID)
+	flagID := ffentity.FeatureFlagID(list.Flags[0].ID)
 
 	err = bc.CreateRuleGroup.Handle(ctx, command.CreateRuleGroupCommand{
 		FlagID:    flagID,
@@ -494,7 +495,7 @@ func TestIntegration_UpdateRuleGroup(t *testing.T) {
 	if len(view.RuleGroups) != 1 {
 		t.Fatalf("expected 1 rule group, got %d", len(view.RuleGroups))
 	}
-	rgID := domain.RuleGroupID(view.RuleGroups[0].ID)
+	rgID := ffentity.RuleGroupID(view.RuleGroups[0].ID)
 
 	// Update rule group name and variation.
 	newName := "updated_name"

@@ -4,7 +4,8 @@ import (
 	"context"
 	"time"
 
-	"gct/internal/context/content/supporting/announcement/domain"
+	announceentity "gct/internal/context/content/supporting/announcement/domain/entity"
+	announcerepo "gct/internal/context/content/supporting/announcement/domain/repository"
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
@@ -16,7 +17,7 @@ import (
 // Nil pointer fields are skipped (no change), while Publish triggers a one-way state transition
 // from draft to published — already-published announcements ignore this flag.
 type UpdateAnnouncementCommand struct {
-	ID        domain.AnnouncementID
+	ID        announceentity.AnnouncementID
 	Title     *shared.Lang
 	Content   *shared.Lang
 	Priority  *int
@@ -28,14 +29,14 @@ type UpdateAnnouncementCommand struct {
 // UpdateAnnouncementHandler applies partial updates and optional publication to an announcement.
 // Event publish failures are logged but do not cause the handler to return an error.
 type UpdateAnnouncementHandler struct {
-	repo     domain.AnnouncementRepository
+	repo     announcerepo.AnnouncementRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
 // NewUpdateAnnouncementHandler wires dependencies for announcement updates.
 func NewUpdateAnnouncementHandler(
-	repo domain.AnnouncementRepository,
+	repo announcerepo.AnnouncementRepository,
 	eventBus application.EventBus,
 	logger logger.Log,
 ) *UpdateAnnouncementHandler {

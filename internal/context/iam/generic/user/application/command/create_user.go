@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"gct/internal/context/iam/generic/user/domain"
+	userentity "gct/internal/context/iam/generic/user/domain/entity"
+	userrepo "gct/internal/context/iam/generic/user/domain/repository"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
@@ -28,14 +29,14 @@ type CreateUserCommand struct {
 // CreateUserHandler orchestrates user creation with domain validation (phone format, email format, password strength).
 // Domain events are published after a successful save; event bus failures are logged but do not roll back the write.
 type CreateUserHandler struct {
-	repo     domain.UserRepository
+	repo     userrepo.UserRepository
 	eventBus application.EventBus
 	logger   commandLogger
 }
 
 // NewCreateUserHandler creates a new CreateUserHandler.
 func NewCreateUserHandler(
-	repo domain.UserRepository,
+	repo userrepo.UserRepository,
 	eventBus application.EventBus,
 	logger commandLogger,
 ) *CreateUserHandler {
@@ -53,39 +54,39 @@ func (h *CreateUserHandler) Handle(ctx context.Context, cmd CreateUserCommand) (
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "CreateUser", "user")()
 
-	phone, err := domain.NewPhone(cmd.Phone)
+	phone, err := userentity.NewPhone(cmd.Phone)
 	if err != nil {
 		return apperrors.MapToServiceError(err)
 	}
 
-	password, err := domain.NewPasswordFromRaw(cmd.Password)
+	password, err := userentity.NewPasswordFromRaw(cmd.Password)
 	if err != nil {
 		return apperrors.MapToServiceError(err)
 	}
 
-	var opts []domain.UserOption
+	var opts []userentity.UserOption
 
 	if cmd.Email != nil {
-		email, err := domain.NewEmail(*cmd.Email)
+		email, err := userentity.NewEmail(*cmd.Email)
 		if err != nil {
 			return apperrors.MapToServiceError(err)
 		}
-		opts = append(opts, domain.WithEmail(email))
+		opts = append(opts, userentity.WithEmail(email))
 	}
 
 	if cmd.Username != nil {
-		opts = append(opts, domain.WithUsername(*cmd.Username))
+		opts = append(opts, userentity.WithUsername(*cmd.Username))
 	}
 
 	if cmd.RoleID != nil {
-		opts = append(opts, domain.WithRoleID(*cmd.RoleID))
+		opts = append(opts, userentity.WithRoleID(*cmd.RoleID))
 	}
 
 	if cmd.Attributes != nil {
-		opts = append(opts, domain.WithAttributes(cmd.Attributes))
+		opts = append(opts, userentity.WithAttributes(cmd.Attributes))
 	}
 
-	user, err := domain.NewUser(phone, password, opts...)
+	user, err := userentity.NewUser(phone, password, opts...)
 	if err != nil {
 		return fmt.Errorf("create_user: %w", err)
 	}

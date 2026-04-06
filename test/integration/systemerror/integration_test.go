@@ -9,7 +9,8 @@ import (
 	"gct/internal/context/ops/generic/systemerror"
 	"gct/internal/context/ops/generic/systemerror/application/command"
 	"gct/internal/context/ops/generic/systemerror/application/query"
-	"gct/internal/context/ops/generic/systemerror/domain"
+	syserrentity "gct/internal/context/ops/generic/systemerror/domain/entity"
+	syserrrepo "gct/internal/context/ops/generic/systemerror/domain/repository"
 	"gct/test/integration/common/setup"
 
 	"github.com/google/uuid"
@@ -39,7 +40,7 @@ func TestIntegration_CreateAndGetSystemError(t *testing.T) {
 	}
 
 	result, err := bc.ListSystemErrors.Handle(ctx, query.ListSystemErrorsQuery{
-		Filter: domain.SystemErrorFilter{Limit: 10},
+		Filter: syserrrepo.SystemErrorFilter{Limit: 10},
 	})
 	if err != nil {
 		t.Fatalf("ListSystemErrors: %v", err)
@@ -59,7 +60,7 @@ func TestIntegration_CreateAndGetSystemError(t *testing.T) {
 		t.Errorf("new system error should not be resolved")
 	}
 
-	view, err := bc.GetSystemError.Handle(ctx, query.GetSystemErrorQuery{ID: domain.SystemErrorID(se.ID)})
+	view, err := bc.GetSystemError.Handle(ctx, query.GetSystemErrorQuery{ID: syserrentity.SystemErrorID(se.ID)})
 	if err != nil {
 		t.Fatalf("GetSystemError: %v", err)
 	}
@@ -83,20 +84,20 @@ func TestIntegration_ResolveSystemError(t *testing.T) {
 	}
 
 	list, _ := bc.ListSystemErrors.Handle(ctx, query.ListSystemErrorsQuery{
-		Filter: domain.SystemErrorFilter{Limit: 10},
+		Filter: syserrrepo.SystemErrorFilter{Limit: 10},
 	})
 	seID := list.Errors[0].ID
 
 	resolvedBy := uuid.New()
 	err = bc.ResolveError.Handle(ctx, command.ResolveErrorCommand{
-		ID:         domain.SystemErrorID(seID),
+		ID:         syserrentity.SystemErrorID(seID),
 		ResolvedBy: resolvedBy,
 	})
 	if err != nil {
 		t.Fatalf("ResolveError: %v", err)
 	}
 
-	view, _ := bc.GetSystemError.Handle(ctx, query.GetSystemErrorQuery{ID: domain.SystemErrorID(seID)})
+	view, _ := bc.GetSystemError.Handle(ctx, query.GetSystemErrorQuery{ID: syserrentity.SystemErrorID(seID)})
 	if !view.IsResolved {
 		t.Error("system error should be resolved")
 	}
@@ -120,7 +121,7 @@ func TestIntegration_MultipleSystemErrors(t *testing.T) {
 	}
 
 	result, err := bc.ListSystemErrors.Handle(ctx, query.ListSystemErrorsQuery{
-		Filter: domain.SystemErrorFilter{Limit: 10},
+		Filter: syserrrepo.SystemErrorFilter{Limit: 10},
 	})
 	if err != nil {
 		t.Fatalf("ListSystemErrors: %v", err)

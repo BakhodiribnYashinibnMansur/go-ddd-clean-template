@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/context/iam/generic/authz/domain"
+	authzentity "gct/internal/context/iam/generic/authz/domain/entity"
 
 	"github.com/stretchr/testify/require"
 )
@@ -18,8 +18,8 @@ func TestDeleteRoleHandler_Success(t *testing.T) {
 
 	handler := NewDeleteRoleHandler(repo, eventBus, log)
 
-	roleID := domain.NewRoleID()
-	cmd := DeleteRoleCommand{ID: domain.RoleID(roleID)}
+	roleID := authzentity.NewRoleID()
+	cmd := DeleteRoleCommand{ID: authzentity.RoleID(roleID)}
 
 	err := handler.Handle(context.Background(), cmd)
 	require.NoError(t, err)

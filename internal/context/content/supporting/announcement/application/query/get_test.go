@@ -7,7 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/content/supporting/announcement/domain"
+	announceentity "gct/internal/context/content/supporting/announcement/domain/entity"
+	announcerepo "gct/internal/context/content/supporting/announcement/domain/repository"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -16,29 +17,29 @@ import (
 // --- Mocks ---
 
 type mockReadRepo struct {
-	view  *domain.AnnouncementView
-	views []*domain.AnnouncementView
+	view  *announcerepo.AnnouncementView
+	views []*announcerepo.AnnouncementView
 	total int64
 }
 
-func (m *mockReadRepo) FindByID(_ context.Context, id domain.AnnouncementID) (*domain.AnnouncementView, error) {
+func (m *mockReadRepo) FindByID(_ context.Context, id announceentity.AnnouncementID) (*announcerepo.AnnouncementView, error) {
 	if m.view != nil && m.view.ID == id {
 		return m.view, nil
 	}
-	return nil, domain.ErrAnnouncementNotFound
+	return nil, announceentity.ErrAnnouncementNotFound
 }
 
-func (m *mockReadRepo) List(_ context.Context, _ domain.AnnouncementFilter) ([]*domain.AnnouncementView, int64, error) {
+func (m *mockReadRepo) List(_ context.Context, _ announcerepo.AnnouncementFilter) ([]*announcerepo.AnnouncementView, int64, error) {
 	return m.views, m.total, nil
 }
 
 type errorReadRepo struct{ err error }
 
-func (m *errorReadRepo) FindByID(_ context.Context, _ domain.AnnouncementID) (*domain.AnnouncementView, error) {
+func (m *errorReadRepo) FindByID(_ context.Context, _ announceentity.AnnouncementID) (*announcerepo.AnnouncementView, error) {
 	return nil, m.err
 }
 
-func (m *errorReadRepo) List(_ context.Context, _ domain.AnnouncementFilter) ([]*domain.AnnouncementView, int64, error) {
+func (m *errorReadRepo) List(_ context.Context, _ announcerepo.AnnouncementFilter) ([]*announcerepo.AnnouncementView, int64, error) {
 	return nil, 0, m.err
 }
 
@@ -49,10 +50,10 @@ var errRepo = errors.New("repo failure")
 func TestGetAnnouncementHandler_Handle(t *testing.T) {
 	t.Parallel()
 
-	id := domain.NewAnnouncementID()
+	id := announceentity.NewAnnouncementID()
 	now := time.Now()
 	readRepo := &mockReadRepo{
-		view: &domain.AnnouncementView{
+		view: &announcerepo.AnnouncementView{
 			ID:        id,
 			TitleUz:   "title_uz",
 			TitleRu:   "title_ru",
@@ -68,7 +69,7 @@ func TestGetAnnouncementHandler_Handle(t *testing.T) {
 	}
 
 	handler := NewGetAnnouncementHandler(readRepo, logger.Noop())
-	result, err := handler.Handle(context.Background(), GetAnnouncementQuery{ID: domain.AnnouncementID(id)})
+	result, err := handler.Handle(context.Background(), GetAnnouncementQuery{ID: announceentity.AnnouncementID(id)})
 	require.NoError(t, err)
 	if result == nil {
 		t.Fatal("expected result")
@@ -92,7 +93,7 @@ func TestGetAnnouncementHandler_NotFound(t *testing.T) {
 
 	readRepo := &mockReadRepo{}
 	handler := NewGetAnnouncementHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), GetAnnouncementQuery{ID: domain.AnnouncementID(uuid.New())})
+	_, err := handler.Handle(context.Background(), GetAnnouncementQuery{ID: announceentity.AnnouncementID(uuid.New())})
 	if err == nil {
 		t.Fatal("expected error for not found")
 	}
@@ -103,7 +104,7 @@ func TestGetAnnouncementHandler_RepoError(t *testing.T) {
 
 	readRepo := &errorReadRepo{err: errRepo}
 	handler := NewGetAnnouncementHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), GetAnnouncementQuery{ID: domain.AnnouncementID(uuid.New())})
+	_, err := handler.Handle(context.Background(), GetAnnouncementQuery{ID: announceentity.AnnouncementID(uuid.New())})
 	if err == nil {
 		t.Fatal("expected error from repo")
 	}
@@ -112,10 +113,10 @@ func TestGetAnnouncementHandler_RepoError(t *testing.T) {
 func TestGetAnnouncementHandler_AllFieldsMapped(t *testing.T) {
 	t.Parallel()
 
-	id := domain.NewAnnouncementID()
+	id := announceentity.NewAnnouncementID()
 	now := time.Now()
 	readRepo := &mockReadRepo{
-		view: &domain.AnnouncementView{
+		view: &announcerepo.AnnouncementView{
 			ID:          id,
 			TitleUz:     "uz",
 			TitleRu:     "ru",
@@ -134,7 +135,7 @@ func TestGetAnnouncementHandler_AllFieldsMapped(t *testing.T) {
 	}
 
 	handler := NewGetAnnouncementHandler(readRepo, logger.Noop())
-	result, err := handler.Handle(context.Background(), GetAnnouncementQuery{ID: domain.AnnouncementID(id)})
+	result, err := handler.Handle(context.Background(), GetAnnouncementQuery{ID: announceentity.AnnouncementID(id)})
 	require.NoError(t, err)
 	if !result.Published {
 		t.Error("expected published")

@@ -4,8 +4,7 @@ import (
 	"testing"
 	"time"
 
-	appdto "gct/internal/context/iam/generic/session/application"
-	sessiondomain "gct/internal/context/iam/generic/session/domain"
+	"gct/internal/context/iam/generic/session/application/dto"
 
 	"github.com/google/uuid"
 )
@@ -33,7 +32,7 @@ func TestNewSessionReadRepo_PoolIsNil(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestSessionsFilter_NoFilters(t *testing.T) {
-	f := appdto.SessionsFilter{}
+	f := dto.SessionsFilter{}
 	if f.UserID != nil {
 		t.Error("expected nil UserID")
 	}
@@ -43,8 +42,8 @@ func TestSessionsFilter_NoFilters(t *testing.T) {
 }
 
 func TestSessionsFilter_UserIDOnly(t *testing.T) {
-	uid := sessiondomain.NewUserID()
-	f := appdto.SessionsFilter{UserID: &uid, Limit: 10}
+	uid := uuid.New()
+	f := dto.SessionsFilter{UserID: &uid, Limit: 10}
 	if f.UserID == nil || *f.UserID != uid {
 		t.Errorf("expected user_id %v", uid)
 	}
@@ -55,16 +54,16 @@ func TestSessionsFilter_UserIDOnly(t *testing.T) {
 
 func TestSessionsFilter_RevokedOnly(t *testing.T) {
 	rev := false
-	f := appdto.SessionsFilter{Revoked: &rev}
+	f := dto.SessionsFilter{Revoked: &rev}
 	if f.Revoked == nil || *f.Revoked != false {
 		t.Error("expected revoked false")
 	}
 }
 
 func TestSessionsFilter_AllFilters(t *testing.T) {
-	uid := sessiondomain.NewUserID()
+	uid := uuid.New()
 	rev := true
-	f := appdto.SessionsFilter{UserID: &uid, Revoked: &rev, Limit: 20, Offset: 5}
+	f := dto.SessionsFilter{UserID: &uid, Revoked: &rev, Limit: 20, Offset: 5}
 	if *f.UserID != uid {
 		t.Error("wrong user_id")
 	}
@@ -85,7 +84,7 @@ func TestSessionView_Fields(t *testing.T) {
 	sid := uuid.New()
 	uid := uuid.New()
 
-	v := appdto.SessionView{
+	v := dto.SessionView{
 		ID:           sid,
 		UserID:       uid,
 		DeviceID:     "device-1",

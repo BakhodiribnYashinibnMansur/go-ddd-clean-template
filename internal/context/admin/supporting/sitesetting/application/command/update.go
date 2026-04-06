@@ -3,7 +3,8 @@ package command
 import (
 	"context"
 
-	"gct/internal/context/admin/supporting/sitesetting/domain"
+	siteentity "gct/internal/context/admin/supporting/sitesetting/domain/entity"
+	siterepo "gct/internal/context/admin/supporting/sitesetting/domain/repository"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
@@ -13,7 +14,7 @@ import (
 // UpdateSiteSettingCommand represents a partial update to an existing site setting.
 // Pointer fields use nil-means-unchanged semantics, so callers only populate the fields they want to modify.
 type UpdateSiteSettingCommand struct {
-	ID          domain.SiteSettingID
+	ID          siteentity.SiteSettingID
 	Key         *string
 	Value       *string
 	Type        *string
@@ -23,14 +24,14 @@ type UpdateSiteSettingCommand struct {
 // UpdateSiteSettingHandler applies partial updates to site settings via a load-modify-save cycle.
 // Event bus failures are logged but do not cause the handler to return an error.
 type UpdateSiteSettingHandler struct {
-	repo     domain.SiteSettingRepository
+	repo     siterepo.SiteSettingRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
 // NewUpdateSiteSettingHandler creates a new UpdateSiteSettingHandler.
 func NewUpdateSiteSettingHandler(
-	repo domain.SiteSettingRepository,
+	repo siterepo.SiteSettingRepository,
 	eventBus application.EventBus,
 	logger logger.Log,
 ) *UpdateSiteSettingHandler {

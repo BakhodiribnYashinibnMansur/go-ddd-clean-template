@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"gct/internal/context/admin/supporting/statistics"
-	appdto "gct/internal/context/admin/supporting/statistics/application"
+	"gct/internal/context/admin/supporting/statistics/application/dto"
 	"gct/internal/context/admin/supporting/statistics/application/query"
 	"gct/internal/kernel/infrastructure/logger"
 
@@ -16,32 +16,32 @@ import (
 
 type mockReadRepo struct{}
 
-func (m *mockReadRepo) GetOverview(_ context.Context) (*appdto.OverviewView, error) {
-	return &appdto.OverviewView{TotalUsers: 1}, nil
+func (m *mockReadRepo) GetOverview(_ context.Context) (*dto.OverviewView, error) {
+	return &dto.OverviewView{TotalUsers: 1}, nil
 }
-func (m *mockReadRepo) GetUserStats(_ context.Context) (*appdto.UserStatsView, error) {
-	return &appdto.UserStatsView{Total: 1, ByRole: map[string]int64{}}, nil
+func (m *mockReadRepo) GetUserStats(_ context.Context) (*dto.UserStatsView, error) {
+	return &dto.UserStatsView{Total: 1, ByRole: map[string]int64{}}, nil
 }
-func (m *mockReadRepo) GetSessionStats(_ context.Context) (*appdto.SessionStatsView, error) {
-	return &appdto.SessionStatsView{}, nil
+func (m *mockReadRepo) GetSessionStats(_ context.Context) (*dto.SessionStatsView, error) {
+	return &dto.SessionStatsView{}, nil
 }
-func (m *mockReadRepo) GetErrorStats(_ context.Context) (*appdto.ErrorStatsView, error) {
-	return &appdto.ErrorStatsView{}, nil
+func (m *mockReadRepo) GetErrorStats(_ context.Context) (*dto.ErrorStatsView, error) {
+	return &dto.ErrorStatsView{}, nil
 }
-func (m *mockReadRepo) GetAuditStats(_ context.Context) (*appdto.AuditStatsView, error) {
-	return &appdto.AuditStatsView{}, nil
+func (m *mockReadRepo) GetAuditStats(_ context.Context) (*dto.AuditStatsView, error) {
+	return &dto.AuditStatsView{}, nil
 }
-func (m *mockReadRepo) GetSecurityStats(_ context.Context) (*appdto.SecurityStatsView, error) {
-	return &appdto.SecurityStatsView{}, nil
+func (m *mockReadRepo) GetSecurityStats(_ context.Context) (*dto.SecurityStatsView, error) {
+	return &dto.SecurityStatsView{}, nil
 }
-func (m *mockReadRepo) GetFeatureFlagStats(_ context.Context) (*appdto.FeatureFlagStatsView, error) {
-	return &appdto.FeatureFlagStatsView{}, nil
+func (m *mockReadRepo) GetFeatureFlagStats(_ context.Context) (*dto.FeatureFlagStatsView, error) {
+	return &dto.FeatureFlagStatsView{}, nil
 }
-func (m *mockReadRepo) GetContentStats(_ context.Context) (*appdto.ContentStatsView, error) {
-	return &appdto.ContentStatsView{}, nil
+func (m *mockReadRepo) GetContentStats(_ context.Context) (*dto.ContentStatsView, error) {
+	return &dto.ContentStatsView{}, nil
 }
-func (m *mockReadRepo) GetIntegrationStats(_ context.Context) (*appdto.IntegrationStatsView, error) {
-	return &appdto.IntegrationStatsView{}, nil
+func (m *mockReadRepo) GetIntegrationStats(_ context.Context) (*dto.IntegrationStatsView, error) {
+	return &dto.IntegrationStatsView{}, nil
 }
 
 func setupRouter() *gin.Engine {

@@ -3,7 +3,8 @@ package command
 import (
 	"context"
 
-	"gct/internal/context/admin/supporting/errorcode/domain"
+	errcodeentity "gct/internal/context/admin/supporting/errorcode/domain/entity"
+	errcoderepo "gct/internal/context/admin/supporting/errorcode/domain/repository"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
@@ -29,14 +30,14 @@ type CreateErrorCodeCommand struct {
 // CreateErrorCodeHandler orchestrates error code creation and emits domain events for downstream consumers.
 // Event publish failures are logged but do not roll back the persisted error code.
 type CreateErrorCodeHandler struct {
-	repo     domain.ErrorCodeRepository
+	repo     errcoderepo.ErrorCodeRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
 // NewCreateErrorCodeHandler wires dependencies for error code creation.
 func NewCreateErrorCodeHandler(
-	repo domain.ErrorCodeRepository,
+	repo errcoderepo.ErrorCodeRepository,
 	eventBus application.EventBus,
 	logger logger.Log,
 ) *CreateErrorCodeHandler {
@@ -54,7 +55,7 @@ func (h *CreateErrorCodeHandler) Handle(ctx context.Context, cmd CreateErrorCode
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "CreateErrorCode", "error_code")()
 
-	ec := domain.NewErrorCode(
+	ec := errcodeentity.NewErrorCode(
 		cmd.Code, cmd.Message, cmd.HTTPStatus,
 		cmd.Category, cmd.Severity,
 		cmd.Retryable, cmd.RetryAfter, cmd.Suggestion,

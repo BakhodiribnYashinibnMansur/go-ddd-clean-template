@@ -5,7 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/content/generic/file/domain"
+	fileentity "gct/internal/context/content/generic/file/domain/entity"
+	filerepo "gct/internal/context/content/generic/file/domain/repository"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -82,7 +83,7 @@ func TestScanFileView_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if v.ID != domain.FileID(testID) {
+	if v.ID != fileentity.FileID(testID) {
 		t.Errorf("expected ID %v, got %v", testID, v.ID)
 	}
 	if v.Name != "abc123.pdf" {
@@ -170,7 +171,7 @@ func TestScanFileViewFromRows_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if v.ID != domain.FileID(testID) {
+	if v.ID != fileentity.FileID(testID) {
 		t.Errorf("expected ID %v, got %v", testID, v.ID)
 	}
 	if v.Size != 4096 {
@@ -195,7 +196,7 @@ func TestScanFileViewFromRows_Error(t *testing.T) {
 
 func TestApplyFilters_NoFilters(t *testing.T) {
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.FileFilter{})
+	result := applyFilters(conds, filerepo.FileFilter{})
 	if len(result) != 0 {
 		t.Errorf("expected 0 conditions, got %d", len(result))
 	}
@@ -204,7 +205,7 @@ func TestApplyFilters_NoFilters(t *testing.T) {
 func TestApplyFilters_NameOnly(t *testing.T) {
 	name := "report"
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.FileFilter{Name: &name})
+	result := applyFilters(conds, filerepo.FileFilter{Name: &name})
 	if len(result) != 1 {
 		t.Errorf("expected 1 condition, got %d", len(result))
 	}
@@ -213,7 +214,7 @@ func TestApplyFilters_NameOnly(t *testing.T) {
 func TestApplyFilters_MimeTypeOnly(t *testing.T) {
 	mt := "application/pdf"
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.FileFilter{MimeType: &mt})
+	result := applyFilters(conds, filerepo.FileFilter{MimeType: &mt})
 	if len(result) != 1 {
 		t.Errorf("expected 1 condition, got %d", len(result))
 	}
@@ -223,7 +224,7 @@ func TestApplyFilters_AllFilters(t *testing.T) {
 	name := "invoice"
 	mt := "text/csv"
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.FileFilter{Name: &name, MimeType: &mt})
+	result := applyFilters(conds, filerepo.FileFilter{Name: &name, MimeType: &mt})
 	if len(result) != 2 {
 		t.Errorf("expected 2 conditions, got %d", len(result))
 	}

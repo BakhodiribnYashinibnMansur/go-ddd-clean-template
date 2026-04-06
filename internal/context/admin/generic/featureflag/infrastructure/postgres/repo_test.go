@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/admin/generic/featureflag/domain"
+	ffrepo "gct/internal/context/admin/generic/featureflag/domain/repository"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -192,7 +192,7 @@ func TestScanFeatureFlagFromRows_Error(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestFeatureFlagFilter_NoFilters(t *testing.T) {
-	filter := domain.FeatureFlagFilter{}
+	filter := ffrepo.FeatureFlagFilter{}
 	// No search, no enabled — should produce no extra conditions.
 	if filter.Search != nil {
 		t.Error("expected nil Search")
@@ -204,7 +204,7 @@ func TestFeatureFlagFilter_NoFilters(t *testing.T) {
 
 func TestFeatureFlagFilter_SearchOnly(t *testing.T) {
 	s := "test"
-	filter := domain.FeatureFlagFilter{Search: &s, Limit: 10, Offset: 0}
+	filter := ffrepo.FeatureFlagFilter{Search: &s, Limit: 10, Offset: 0}
 	if filter.Search == nil || *filter.Search != "test" {
 		t.Error("expected search 'test'")
 	}
@@ -215,7 +215,7 @@ func TestFeatureFlagFilter_SearchOnly(t *testing.T) {
 
 func TestFeatureFlagFilter_EnabledOnly(t *testing.T) {
 	enabled := true
-	filter := domain.FeatureFlagFilter{Enabled: &enabled, Limit: 5}
+	filter := ffrepo.FeatureFlagFilter{Enabled: &enabled, Limit: 5}
 	if filter.Enabled == nil || !*filter.Enabled {
 		t.Error("expected enabled true")
 	}
@@ -224,7 +224,7 @@ func TestFeatureFlagFilter_EnabledOnly(t *testing.T) {
 func TestFeatureFlagFilter_AllFilters(t *testing.T) {
 	s := "flag"
 	enabled := false
-	filter := domain.FeatureFlagFilter{Search: &s, Enabled: &enabled, Limit: 20, Offset: 5}
+	filter := ffrepo.FeatureFlagFilter{Search: &s, Enabled: &enabled, Limit: 20, Offset: 5}
 	if *filter.Search != "flag" {
 		t.Error("expected search 'flag'")
 	}

@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/admin/generic/featureflag/domain"
+	ffentity "gct/internal/context/admin/generic/featureflag/domain/entity"
 	"gct/internal/kernel/infrastructure/logger"
 
 	"github.com/google/uuid"
@@ -17,13 +17,13 @@ import (
 // ---------------------------------------------------------------------------
 
 type mockRepo struct {
-	flags    map[string]*domain.FeatureFlag
-	allFlags []*domain.FeatureFlag
+	flags    map[string]*ffentity.FeatureFlag
+	allFlags []*ffentity.FeatureFlag
 	findErr  error
 	allErr   error
 }
 
-func (m *mockRepo) FindByKey(_ context.Context, key string) (*domain.FeatureFlag, error) {
+func (m *mockRepo) FindByKey(_ context.Context, key string) (*ffentity.FeatureFlag, error) {
 	if m.findErr != nil {
 		return nil, m.findErr
 	}
@@ -34,23 +34,23 @@ func (m *mockRepo) FindByKey(_ context.Context, key string) (*domain.FeatureFlag
 	return ff, nil
 }
 
-func (m *mockRepo) FindAll(context.Context) ([]*domain.FeatureFlag, error) {
+func (m *mockRepo) FindAll(context.Context) ([]*ffentity.FeatureFlag, error) {
 	if m.allErr != nil {
 		return nil, m.allErr
 	}
 	return m.allFlags, nil
 }
 
-func (m *mockRepo) Save(context.Context, *domain.FeatureFlag) error {
+func (m *mockRepo) Save(context.Context, *ffentity.FeatureFlag) error {
 	panic("not implemented")
 }
-func (m *mockRepo) FindByID(context.Context, domain.FeatureFlagID) (*domain.FeatureFlag, error) {
+func (m *mockRepo) FindByID(context.Context, ffentity.FeatureFlagID) (*ffentity.FeatureFlag, error) {
 	panic("not implemented")
 }
-func (m *mockRepo) Update(context.Context, *domain.FeatureFlag) error {
+func (m *mockRepo) Update(context.Context, *ffentity.FeatureFlag) error {
 	panic("not implemented")
 }
-func (m *mockRepo) Delete(context.Context, domain.FeatureFlagID) error {
+func (m *mockRepo) Delete(context.Context, ffentity.FeatureFlagID) error {
 	panic("not implemented")
 }
 
@@ -58,18 +58,18 @@ func (m *mockRepo) Delete(context.Context, domain.FeatureFlagID) error {
 // Helpers
 // ---------------------------------------------------------------------------
 
-func newFlag(key, flagType, defaultValue string, active bool) *domain.FeatureFlag {
+func newFlag(key, flagType, defaultValue string, active bool) *ffentity.FeatureFlag {
 	now := time.Now()
-	return domain.ReconstructFeatureFlag(
+	return ffentity.ReconstructFeatureFlag(
 		uuid.New(), now, now, nil,
 		"Test Flag", key, "test description", flagType, defaultValue,
 		0, active, nil,
 	)
 }
 
-func buildRepo(flags ...*domain.FeatureFlag) *mockRepo {
+func buildRepo(flags ...*ffentity.FeatureFlag) *mockRepo {
 	m := &mockRepo{
-		flags:    make(map[string]*domain.FeatureFlag),
+		flags:    make(map[string]*ffentity.FeatureFlag),
 		allFlags: flags,
 	}
 	for _, ff := range flags {
@@ -148,7 +148,7 @@ func TestCachedEvaluator_IsEnabled(t *testing.T) {
 func TestCachedEvaluator_IsEnabled_FallbackToRepo(t *testing.T) {
 	extra := newFlag("extra", "bool", "true", true)
 	repo := &mockRepo{
-		flags:    map[string]*domain.FeatureFlag{"extra": extra},
+		flags:    map[string]*ffentity.FeatureFlag{"extra": extra},
 		allFlags: nil,
 	}
 
@@ -264,7 +264,7 @@ func TestCachedEvaluator_Invalidate(t *testing.T) {
 	}
 
 	flag2 := newFlag("a", "string", "v2", true)
-	repo.allFlags = []*domain.FeatureFlag{flag2}
+	repo.allFlags = []*ffentity.FeatureFlag{flag2}
 	repo.flags["a"] = flag2
 
 	ce.Invalidate(context.Background())
@@ -292,7 +292,7 @@ func TestCachedEvaluator_LoadAll_ClearsOldEntries(t *testing.T) {
 		t.Fatal("flag 'b' should be in cache")
 	}
 
-	repo.allFlags = []*domain.FeatureFlag{flagB}
+	repo.allFlags = []*ffentity.FeatureFlag{flagB}
 	if err := ce.LoadAll(context.Background()); err != nil {
 		t.Fatalf("LoadAll error: %v", err)
 	}

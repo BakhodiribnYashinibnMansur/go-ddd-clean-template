@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/context/iam/generic/authz/domain"
+	authzentity "gct/internal/context/iam/generic/authz/domain/entity"
 	shared "gct/internal/kernel/domain"
 
 	"github.com/google/uuid"
@@ -14,15 +14,15 @@ import (
 // --- Mock PolicyRepository ---
 
 type mockPolicyRepository struct {
-	savedPolicy   *domain.Policy
-	updatedPolicy *domain.Policy
-	findByIDFn    func(ctx context.Context, id domain.PolicyID) (*domain.Policy, error)
-	saveFn        func(ctx context.Context, policy *domain.Policy) error
-	updateFn      func(ctx context.Context, policy *domain.Policy) error
-	deleteFn      func(ctx context.Context, id domain.PolicyID) error
+	savedPolicy   *authzentity.Policy
+	updatedPolicy *authzentity.Policy
+	findByIDFn    func(ctx context.Context, id authzentity.PolicyID) (*authzentity.Policy, error)
+	saveFn        func(ctx context.Context, policy *authzentity.Policy) error
+	updateFn      func(ctx context.Context, policy *authzentity.Policy) error
+	deleteFn      func(ctx context.Context, id authzentity.PolicyID) error
 }
 
-func (m *mockPolicyRepository) Save(ctx context.Context, policy *domain.Policy) error {
+func (m *mockPolicyRepository) Save(ctx context.Context, policy *authzentity.Policy) error {
 	if m.saveFn != nil {
 		return m.saveFn(ctx, policy)
 	}
@@ -30,14 +30,14 @@ func (m *mockPolicyRepository) Save(ctx context.Context, policy *domain.Policy) 
 	return nil
 }
 
-func (m *mockPolicyRepository) FindByID(ctx context.Context, id domain.PolicyID) (*domain.Policy, error) {
+func (m *mockPolicyRepository) FindByID(ctx context.Context, id authzentity.PolicyID) (*authzentity.Policy, error) {
 	if m.findByIDFn != nil {
 		return m.findByIDFn(ctx, id)
 	}
-	return nil, domain.ErrPolicyNotFound
+	return nil, authzentity.ErrPolicyNotFound
 }
 
-func (m *mockPolicyRepository) Update(ctx context.Context, policy *domain.Policy) error {
+func (m *mockPolicyRepository) Update(ctx context.Context, policy *authzentity.Policy) error {
 	if m.updateFn != nil {
 		return m.updateFn(ctx, policy)
 	}
@@ -45,18 +45,18 @@ func (m *mockPolicyRepository) Update(ctx context.Context, policy *domain.Policy
 	return nil
 }
 
-func (m *mockPolicyRepository) Delete(ctx context.Context, id domain.PolicyID) error {
+func (m *mockPolicyRepository) Delete(ctx context.Context, id authzentity.PolicyID) error {
 	if m.deleteFn != nil {
 		return m.deleteFn(ctx, id)
 	}
 	return nil
 }
 
-func (m *mockPolicyRepository) List(ctx context.Context, pagination shared.Pagination) ([]*domain.Policy, int64, error) {
+func (m *mockPolicyRepository) List(ctx context.Context, pagination shared.Pagination) ([]*authzentity.Policy, int64, error) {
 	return nil, 0, nil
 }
 
-func (m *mockPolicyRepository) FindByPermissionID(ctx context.Context, permissionID domain.PermissionID) ([]*domain.Policy, error) {
+func (m *mockPolicyRepository) FindByPermissionID(ctx context.Context, permissionID authzentity.PermissionID) ([]*authzentity.Policy, error) {
 	return nil, nil
 }
 
@@ -70,10 +70,10 @@ func TestCreatePolicyHandler_AllowEffect(t *testing.T) {
 
 	handler := NewCreatePolicyHandler(repo, log)
 
-	permID := domain.NewPermissionID()
+	permID := authzentity.NewPermissionID()
 	cmd := CreatePolicyCommand{
-		PermissionID: domain.PermissionID(permID),
-		Effect:       domain.PolicyAllow,
+		PermissionID: authzentity.PermissionID(permID),
+		Effect:       authzentity.PolicyAllow,
 		Priority:     10,
 	}
 
@@ -84,7 +84,7 @@ func TestCreatePolicyHandler_AllowEffect(t *testing.T) {
 		t.Fatal("expected policy to be saved")
 	}
 
-	if repo.savedPolicy.Effect() != domain.PolicyAllow {
+	if repo.savedPolicy.Effect() != authzentity.PolicyAllow {
 		t.Errorf("expected effect ALLOW, got '%s'", repo.savedPolicy.Effect())
 	}
 
@@ -110,8 +110,8 @@ func TestCreatePolicyHandler_DenyEffect(t *testing.T) {
 	handler := NewCreatePolicyHandler(repo, log)
 
 	cmd := CreatePolicyCommand{
-		PermissionID: domain.PermissionID(uuid.New()),
-		Effect:       domain.PolicyDeny,
+		PermissionID: authzentity.PermissionID(uuid.New()),
+		Effect:       authzentity.PolicyDeny,
 		Priority:     5,
 	}
 
@@ -122,7 +122,7 @@ func TestCreatePolicyHandler_DenyEffect(t *testing.T) {
 		t.Fatal("expected policy to be saved")
 	}
 
-	if repo.savedPolicy.Effect() != domain.PolicyDeny {
+	if repo.savedPolicy.Effect() != authzentity.PolicyDeny {
 		t.Errorf("expected effect DENY, got '%s'", repo.savedPolicy.Effect())
 	}
 }
@@ -141,8 +141,8 @@ func TestCreatePolicyHandler_WithConditions(t *testing.T) {
 	}
 
 	cmd := CreatePolicyCommand{
-		PermissionID: domain.PermissionID(uuid.New()),
-		Effect:       domain.PolicyAllow,
+		PermissionID: authzentity.PermissionID(uuid.New()),
+		Effect:       authzentity.PolicyAllow,
 		Priority:     1,
 		Conditions:   conditions,
 	}
@@ -177,8 +177,8 @@ func TestCreatePolicyHandler_NilConditions(t *testing.T) {
 	handler := NewCreatePolicyHandler(repo, log)
 
 	cmd := CreatePolicyCommand{
-		PermissionID: domain.PermissionID(uuid.New()),
-		Effect:       domain.PolicyAllow,
+		PermissionID: authzentity.PermissionID(uuid.New()),
+		Effect:       authzentity.PolicyAllow,
 		Priority:     0,
 		Conditions:   nil,
 	}

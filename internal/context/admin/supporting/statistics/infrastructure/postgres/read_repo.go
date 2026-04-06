@@ -3,7 +3,7 @@ package postgres
 import (
 	"context"
 
-	appdto "gct/internal/context/admin/supporting/statistics/application"
+	"gct/internal/context/admin/supporting/statistics/application/dto"
 	"gct/internal/kernel/consts"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -22,11 +22,11 @@ func NewStatisticsReadRepo(pool *pgxpool.Pool) *StatisticsReadRepo {
 }
 
 // GetOverview returns the top-level aggregated counts.
-func (r *StatisticsReadRepo) GetOverview(ctx context.Context) (result *appdto.OverviewView, err error) {
+func (r *StatisticsReadRepo) GetOverview(ctx context.Context) (result *dto.OverviewView, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "StatisticsReadRepo.GetOverview")
 	defer func() { end(err) }()
 
-	view := &appdto.OverviewView{}
+	view := &dto.OverviewView{}
 
 	if err := r.pool.QueryRow(ctx,
 		"SELECT COUNT(*) FROM "+consts.TableUsers+" WHERE deleted_at = 0",
@@ -62,11 +62,11 @@ func (r *StatisticsReadRepo) GetOverview(ctx context.Context) (result *appdto.Ov
 }
 
 // GetUserStats returns the user lifecycle and role breakdown.
-func (r *StatisticsReadRepo) GetUserStats(ctx context.Context) (result *appdto.UserStatsView, err error) {
+func (r *StatisticsReadRepo) GetUserStats(ctx context.Context) (result *dto.UserStatsView, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "StatisticsReadRepo.GetUserStats")
 	defer func() { end(err) }()
 
-	view := &appdto.UserStatsView{ByRole: make(map[string]int64)}
+	view := &dto.UserStatsView{ByRole: make(map[string]int64)}
 
 	if err := r.pool.QueryRow(ctx,
 		"SELECT COUNT(*) FROM "+consts.TableUsers+" WHERE deleted_at = 0",
@@ -106,11 +106,11 @@ func (r *StatisticsReadRepo) GetUserStats(ctx context.Context) (result *appdto.U
 }
 
 // GetSessionStats returns the session state breakdown.
-func (r *StatisticsReadRepo) GetSessionStats(ctx context.Context) (result *appdto.SessionStatsView, err error) {
+func (r *StatisticsReadRepo) GetSessionStats(ctx context.Context) (result *dto.SessionStatsView, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "StatisticsReadRepo.GetSessionStats")
 	defer func() { end(err) }()
 
-	view := &appdto.SessionStatsView{}
+	view := &dto.SessionStatsView{}
 
 	if err := r.pool.QueryRow(ctx,
 		"SELECT COUNT(*) FROM "+consts.TableSession+" WHERE revoked = false AND expires_at > NOW()",
@@ -134,11 +134,11 @@ func (r *StatisticsReadRepo) GetSessionStats(ctx context.Context) (result *appdt
 }
 
 // GetErrorStats returns the system error breakdown.
-func (r *StatisticsReadRepo) GetErrorStats(ctx context.Context) (result *appdto.ErrorStatsView, err error) {
+func (r *StatisticsReadRepo) GetErrorStats(ctx context.Context) (result *dto.ErrorStatsView, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "StatisticsReadRepo.GetErrorStats")
 	defer func() { end(err) }()
 
-	view := &appdto.ErrorStatsView{}
+	view := &dto.ErrorStatsView{}
 
 	if err := r.pool.QueryRow(ctx,
 		"SELECT COUNT(*) FROM "+consts.TableSystemError+" WHERE is_resolved = false",
@@ -162,11 +162,11 @@ func (r *StatisticsReadRepo) GetErrorStats(ctx context.Context) (result *appdto.
 }
 
 // GetAuditStats returns the audit log recency breakdown.
-func (r *StatisticsReadRepo) GetAuditStats(ctx context.Context) (result *appdto.AuditStatsView, err error) {
+func (r *StatisticsReadRepo) GetAuditStats(ctx context.Context) (result *dto.AuditStatsView, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "StatisticsReadRepo.GetAuditStats")
 	defer func() { end(err) }()
 
-	view := &appdto.AuditStatsView{}
+	view := &dto.AuditStatsView{}
 
 	if err := r.pool.QueryRow(ctx,
 		"SELECT COUNT(*) FROM "+consts.TableAuditLog+" WHERE created_at >= CURRENT_DATE",
@@ -190,11 +190,11 @@ func (r *StatisticsReadRepo) GetAuditStats(ctx context.Context) (result *appdto.
 }
 
 // GetSecurityStats returns counts for ip_rules and rate_limits.
-func (r *StatisticsReadRepo) GetSecurityStats(ctx context.Context) (result *appdto.SecurityStatsView, err error) {
+func (r *StatisticsReadRepo) GetSecurityStats(ctx context.Context) (result *dto.SecurityStatsView, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "StatisticsReadRepo.GetSecurityStats")
 	defer func() { end(err) }()
 
-	view := &appdto.SecurityStatsView{}
+	view := &dto.SecurityStatsView{}
 
 	if err := r.pool.QueryRow(ctx,
 		"SELECT COUNT(*) FROM "+consts.TableIPRules,
@@ -213,11 +213,11 @@ func (r *StatisticsReadRepo) GetSecurityStats(ctx context.Context) (result *appd
 
 // GetFeatureFlagStats returns the feature flag active-state breakdown.
 // Note: feature_flags uses is_active as the enable flag.
-func (r *StatisticsReadRepo) GetFeatureFlagStats(ctx context.Context) (result *appdto.FeatureFlagStatsView, err error) {
+func (r *StatisticsReadRepo) GetFeatureFlagStats(ctx context.Context) (result *dto.FeatureFlagStatsView, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "StatisticsReadRepo.GetFeatureFlagStats")
 	defer func() { end(err) }()
 
-	view := &appdto.FeatureFlagStatsView{}
+	view := &dto.FeatureFlagStatsView{}
 
 	if err := r.pool.QueryRow(ctx,
 		"SELECT COUNT(*) FROM "+consts.TableFeatureFlags,
@@ -241,11 +241,11 @@ func (r *StatisticsReadRepo) GetFeatureFlagStats(ctx context.Context) (result *a
 }
 
 // GetContentStats returns counts for content tables.
-func (r *StatisticsReadRepo) GetContentStats(ctx context.Context) (result *appdto.ContentStatsView, err error) {
+func (r *StatisticsReadRepo) GetContentStats(ctx context.Context) (result *dto.ContentStatsView, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "StatisticsReadRepo.GetContentStats")
 	defer func() { end(err) }()
 
-	view := &appdto.ContentStatsView{}
+	view := &dto.ContentStatsView{}
 
 	if err := r.pool.QueryRow(ctx,
 		"SELECT COUNT(*) FROM "+consts.TableAnnouncements,
@@ -275,11 +275,11 @@ func (r *StatisticsReadRepo) GetContentStats(ctx context.Context) (result *appdt
 }
 
 // GetIntegrationStats returns counts for integrations and api_keys (soft-delete aware).
-func (r *StatisticsReadRepo) GetIntegrationStats(ctx context.Context) (result *appdto.IntegrationStatsView, err error) {
+func (r *StatisticsReadRepo) GetIntegrationStats(ctx context.Context) (result *dto.IntegrationStatsView, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "StatisticsReadRepo.GetIntegrationStats")
 	defer func() { end(err) }()
 
-	view := &appdto.IntegrationStatsView{}
+	view := &dto.IntegrationStatsView{}
 
 	if err := r.pool.QueryRow(ctx,
 		"SELECT COUNT(*) FROM "+consts.TableIntegrations+" WHERE deleted_at IS NULL",

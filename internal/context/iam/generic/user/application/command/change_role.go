@@ -3,7 +3,8 @@ package command
 import (
 	"context"
 
-	"gct/internal/context/iam/generic/user/domain"
+	userentity "gct/internal/context/iam/generic/user/domain/entity"
+	userrepo "gct/internal/context/iam/generic/user/domain/repository"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
@@ -14,21 +15,21 @@ import (
 
 // ChangeRoleCommand holds the input for changing a user's role.
 type ChangeRoleCommand struct {
-	UserID domain.UserID
+	UserID userentity.UserID
 	// RoleID is owned by the Authz BC and stays as uuid.UUID at this boundary.
 	RoleID uuid.UUID
 }
 
 // ChangeRoleHandler handles the ChangeRoleCommand.
 type ChangeRoleHandler struct {
-	repo     domain.UserRepository
+	repo     userrepo.UserRepository
 	eventBus application.EventBus
 	logger   commandLogger
 }
 
 // NewChangeRoleHandler creates a new ChangeRoleHandler.
 func NewChangeRoleHandler(
-	repo domain.UserRepository,
+	repo userrepo.UserRepository,
 	eventBus application.EventBus,
 	logger commandLogger,
 ) *ChangeRoleHandler {

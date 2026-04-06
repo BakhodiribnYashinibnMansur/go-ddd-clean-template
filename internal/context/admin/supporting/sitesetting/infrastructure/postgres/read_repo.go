@@ -3,7 +3,8 @@ package postgres
 import (
 	"context"
 
-	"gct/internal/context/admin/supporting/sitesetting/domain"
+	siteentity "gct/internal/context/admin/supporting/sitesetting/domain/entity"
+	siterepo "gct/internal/context/admin/supporting/sitesetting/domain/repository"
 	"gct/internal/kernel/consts"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -33,7 +34,7 @@ func NewSiteSettingReadRepo(pool *pgxpool.Pool) *SiteSettingReadRepo {
 }
 
 // FindByID returns a single SiteSettingView by ID.
-func (r *SiteSettingReadRepo) FindByID(ctx context.Context, id domain.SiteSettingID) (result *domain.SiteSettingView, err error) {
+func (r *SiteSettingReadRepo) FindByID(ctx context.Context, id siteentity.SiteSettingID) (result *siterepo.SiteSettingView, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "SiteSettingReadRepo.FindByID")
 	defer func() { end(err) }()
 
@@ -51,7 +52,7 @@ func (r *SiteSettingReadRepo) FindByID(ctx context.Context, id domain.SiteSettin
 }
 
 // List returns a paginated list of SiteSettingView with optional filters.
-func (r *SiteSettingReadRepo) List(ctx context.Context, filter domain.SiteSettingFilter) (views []*domain.SiteSettingView, total int64, err error) {
+func (r *SiteSettingReadRepo) List(ctx context.Context, filter siterepo.SiteSettingFilter) (views []*siterepo.SiteSettingView, total int64, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "SiteSettingReadRepo.List")
 	defer func() { end(err) }()
 
@@ -108,28 +109,28 @@ func (r *SiteSettingReadRepo) List(ctx context.Context, filter domain.SiteSettin
 	return views, total, nil
 }
 
-func scanSiteSettingView(row pgx.Row) (*domain.SiteSettingView, error) {
+func scanSiteSettingView(row pgx.Row) (*siterepo.SiteSettingView, error) {
 	var (
-		v     domain.SiteSettingView
+		v     siterepo.SiteSettingView
 		rawID uuid.UUID
 	)
 	err := row.Scan(&rawID, &v.Key, &v.Value, &v.Type, &v.Description, &v.CreatedAt, &v.UpdatedAt)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
-	v.ID = domain.SiteSettingID(rawID)
+	v.ID = siteentity.SiteSettingID(rawID)
 	return &v, nil
 }
 
-func scanSiteSettingViewFromRows(rows pgx.Rows) (*domain.SiteSettingView, error) {
+func scanSiteSettingViewFromRows(rows pgx.Rows) (*siterepo.SiteSettingView, error) {
 	var (
-		v     domain.SiteSettingView
+		v     siterepo.SiteSettingView
 		rawID uuid.UUID
 	)
 	err := rows.Scan(&rawID, &v.Key, &v.Value, &v.Type, &v.Description, &v.CreatedAt, &v.UpdatedAt)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
-	v.ID = domain.SiteSettingID(rawID)
+	v.ID = siteentity.SiteSettingID(rawID)
 	return &v, nil
 }

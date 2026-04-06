@@ -7,7 +7,7 @@ import (
 	"gct/internal/context/ops/generic/metric"
 	"gct/internal/context/ops/generic/metric/application/command"
 	"gct/internal/context/ops/generic/metric/application/query"
-	"gct/internal/context/ops/generic/metric/domain"
+	metricrepo "gct/internal/context/ops/generic/metric/domain/repository"
 	"gct/internal/kernel/infrastructure/eventbus"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/test/integration/common/setup"
@@ -35,7 +35,7 @@ func TestIntegration_RecordAndListMetrics(t *testing.T) {
 	}
 
 	result, err := bc.ListMetrics.Handle(ctx, query.ListMetricsQuery{
-		Filter: domain.MetricFilter{Limit: 10},
+		Filter: metricrepo.MetricFilter{Limit: 10},
 	})
 	if err != nil {
 		t.Fatalf("ListMetrics: %v", err)
@@ -75,7 +75,7 @@ func TestIntegration_MultipleRecords(t *testing.T) {
 	}
 
 	result, err := bc.ListMetrics.Handle(ctx, query.ListMetricsQuery{
-		Filter: domain.MetricFilter{Limit: 10},
+		Filter: metricrepo.MetricFilter{Limit: 10},
 	})
 	if err != nil {
 		t.Fatalf("ListMetrics: %v", err)
@@ -104,7 +104,7 @@ func TestIntegration_ListMetrics_FilterByName(t *testing.T) {
 
 	nameFilter := "GetUser"
 	result, err := bc.ListMetrics.Handle(ctx, query.ListMetricsQuery{
-		Filter: domain.MetricFilter{
+		Filter: metricrepo.MetricFilter{
 			Name:  &nameFilter,
 			Limit: 10,
 		},
@@ -139,7 +139,7 @@ func TestIntegration_ListMetrics_Pagination(t *testing.T) {
 	}
 
 	result, err := bc.ListMetrics.Handle(ctx, query.ListMetricsQuery{
-		Filter: domain.MetricFilter{
+		Filter: metricrepo.MetricFilter{
 			Limit:  2,
 			Offset: 0,
 		},
@@ -183,7 +183,7 @@ func TestIntegration_RecordPanicMetric(t *testing.T) {
 
 	isPanic := true
 	result, err := bc.ListMetrics.Handle(ctx, query.ListMetricsQuery{
-		Filter: domain.MetricFilter{
+		Filter: metricrepo.MetricFilter{
 			IsPanic: &isPanic,
 			Limit:   10,
 		},

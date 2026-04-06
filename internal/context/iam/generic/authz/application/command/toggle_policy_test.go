@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/iam/generic/authz/domain"
+	authzentity "gct/internal/context/iam/generic/authz/domain/entity"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -15,27 +15,27 @@ import (
 func TestTogglePolicyHandler_ToggleActive(t *testing.T) {
 	t.Parallel()
 
-	policyID := domain.NewPolicyID()
-	permID := domain.NewPermissionID()
+	policyID := authzentity.NewPolicyID()
+	permID := authzentity.NewPermissionID()
 	// Start with active=true
-	existingPolicy := domain.ReconstructPolicy(
+	existingPolicy := authzentity.ReconstructPolicy(
 		policyID.UUID(), time.Now(), time.Now(), nil,
-		permID.UUID(), domain.PolicyAllow, 1, true, nil,
+		permID.UUID(), authzentity.PolicyAllow, 1, true, nil,
 	)
 
 	repo := &mockPolicyRepository{
-		findByIDFn: func(_ context.Context, id domain.PolicyID) (*domain.Policy, error) {
+		findByIDFn: func(_ context.Context, id authzentity.PolicyID) (*authzentity.Policy, error) {
 			if id == policyID {
 				return existingPolicy, nil
 			}
-			return nil, domain.ErrPolicyNotFound
+			return nil, authzentity.ErrPolicyNotFound
 		},
 	}
 	log := &mockLogger{}
 
 	handler := NewTogglePolicyHandler(repo, log)
 
-	cmd := TogglePolicyCommand{ID: domain.PolicyID(policyID)}
+	cmd := TogglePolicyCommand{ID: authzentity.PolicyID(policyID)}
 
 	err := handler.Handle(context.Background(), cmd)
 	require.NoError(t, err)
@@ -53,27 +53,27 @@ func TestTogglePolicyHandler_ToggleActive(t *testing.T) {
 func TestTogglePolicyHandler_ToggleInactiveToActive(t *testing.T) {
 	t.Parallel()
 
-	policyID := domain.NewPolicyID()
-	permID := domain.NewPermissionID()
+	policyID := authzentity.NewPolicyID()
+	permID := authzentity.NewPermissionID()
 	// Start with active=false
-	existingPolicy := domain.ReconstructPolicy(
+	existingPolicy := authzentity.ReconstructPolicy(
 		policyID.UUID(), time.Now(), time.Now(), nil,
-		permID.UUID(), domain.PolicyDeny, 5, false, nil,
+		permID.UUID(), authzentity.PolicyDeny, 5, false, nil,
 	)
 
 	repo := &mockPolicyRepository{
-		findByIDFn: func(_ context.Context, id domain.PolicyID) (*domain.Policy, error) {
+		findByIDFn: func(_ context.Context, id authzentity.PolicyID) (*authzentity.Policy, error) {
 			if id == policyID {
 				return existingPolicy, nil
 			}
-			return nil, domain.ErrPolicyNotFound
+			return nil, authzentity.ErrPolicyNotFound
 		},
 	}
 	log := &mockLogger{}
 
 	handler := NewTogglePolicyHandler(repo, log)
 
-	cmd := TogglePolicyCommand{ID: domain.PolicyID(policyID)}
+	cmd := TogglePolicyCommand{ID: authzentity.PolicyID(policyID)}
 
 	err := handler.Handle(context.Background(), cmd)
 	require.NoError(t, err)
@@ -95,10 +95,10 @@ func TestTogglePolicyHandler_NotFound(t *testing.T) {
 
 	handler := NewTogglePolicyHandler(repo, log)
 
-	cmd := TogglePolicyCommand{ID: domain.PolicyID(uuid.New())}
+	cmd := TogglePolicyCommand{ID: authzentity.PolicyID(uuid.New())}
 
 	err := handler.Handle(context.Background(), cmd)
-	if !errors.Is(err, domain.ErrPolicyNotFound) {
+	if !errors.Is(err, authzentity.ErrPolicyNotFound) {
 		t.Fatalf("expected ErrPolicyNotFound, got: %v", err)
 	}
 

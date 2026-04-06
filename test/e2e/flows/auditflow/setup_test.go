@@ -16,7 +16,6 @@ import (
 	"gct/internal/kernel/infrastructure/eventbus"
 	"gct/internal/kernel/infrastructure/logger"
 	sharedmw "gct/internal/kernel/infrastructure/middleware"
-	jwtpkg "gct/internal/kernel/infrastructure/security/jwt"
 	"gct/test/e2e/common/setup"
 
 	"github.com/gin-gonic/gin"
@@ -49,18 +48,12 @@ func startAuditTestServer(t *testing.T) *testServer {
 	l := logger.New("debug")
 	eventBus := eventbus.NewInMemoryEventBus()
 
-	jwtPrivateKey, err := jwtpkg.ParseRSAPrivateKey(setup.TestCfg.JWT.PrivateKey)
-	if err != nil {
-		t.Fatalf("failed to parse RSA private key: %s", err)
+	jwtCfg := command.JWTConfig{
+		Issuer: setup.TestCfg.JWT.Issuer,
 	}
 
 	bcs, err := app.NewDDDBoundedContexts(
-		context.Background(), setup.TestPG.Pool, eventBus, l, nil, command.JWTConfig{
-			PrivateKey: jwtPrivateKey,
-			Issuer:     setup.TestCfg.JWT.Issuer,
-			AccessTTL:  setup.TestCfg.JWT.AccessTTL,
-			RefreshTTL: setup.TestCfg.JWT.RefreshTTL,
-		},
+		context.Background(), setup.TestPG.Pool, eventBus, l, nil, jwtCfg, setup.TestCfg, nil, nil, app.SecurityDeps{},
 	)
 	if err != nil {
 		t.Fatalf("failed to initialize DDD bounded contexts: %s", err)

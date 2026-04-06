@@ -3,7 +3,8 @@ package command
 import (
 	"context"
 
-	"gct/internal/context/iam/generic/authz/domain"
+	authzentity "gct/internal/context/iam/generic/authz/domain/entity"
+	authzrepo "gct/internal/context/iam/generic/authz/domain/repository"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -12,8 +13,8 @@ import (
 // UpdatePolicyCommand represents a partial update to an existing authorization policy.
 // Nil pointer fields are left unchanged. Conditions use a full-replace strategy — pass nil to keep existing, pass a map to overwrite.
 type UpdatePolicyCommand struct {
-	ID         domain.PolicyID
-	Effect     *domain.PolicyEffect
+	ID         authzentity.PolicyID
+	Effect     *authzentity.PolicyEffect
 	Priority   *int
 	Conditions map[string]any
 }
@@ -21,13 +22,13 @@ type UpdatePolicyCommand struct {
 // UpdatePolicyHandler applies partial modifications to an existing policy using a fetch-mutate-persist pattern.
 // Callers should be aware that policy changes take effect immediately on the next authorization evaluation.
 type UpdatePolicyHandler struct {
-	repo   domain.PolicyRepository
+	repo   authzrepo.PolicyRepository
 	logger logger.Log
 }
 
 // NewUpdatePolicyHandler wires dependencies for policy updates.
 func NewUpdatePolicyHandler(
-	repo domain.PolicyRepository,
+	repo authzrepo.PolicyRepository,
 	logger logger.Log,
 ) *UpdatePolicyHandler {
 	return &UpdatePolicyHandler{

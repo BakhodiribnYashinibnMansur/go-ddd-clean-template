@@ -2,7 +2,7 @@ package postgres
 
 import (
 	"errors"
-	"gct/internal/context/iam/generic/authz/domain"
+	authzentity "gct/internal/context/iam/generic/authz/domain/entity"
 	"testing"
 	"time"
 
@@ -332,7 +332,7 @@ func TestScanPermissionFromRows_Error(t *testing.T) {
 
 func TestScanPolicy_Success(t *testing.T) {
 	id := uuid.New()
-	permID := domain.NewPermissionID()
+	permID := authzentity.NewPermissionID()
 	now := time.Now()
 
 	row := &authzMockRow{
@@ -376,7 +376,7 @@ func TestScanPolicy_Success(t *testing.T) {
 
 func TestScanPolicy_EmptyConditions(t *testing.T) {
 	id := uuid.New()
-	permID := domain.NewPermissionID()
+	permID := authzentity.NewPermissionID()
 	now := time.Now()
 
 	row := &authzMockRow{
@@ -423,7 +423,7 @@ func TestScanPolicy_Error(t *testing.T) {
 
 func TestScanPolicyFromRows_Success(t *testing.T) {
 	id := uuid.New()
-	permID := domain.NewPermissionID()
+	permID := authzentity.NewPermissionID()
 	now := time.Now()
 
 	rows := &authzMockRows{

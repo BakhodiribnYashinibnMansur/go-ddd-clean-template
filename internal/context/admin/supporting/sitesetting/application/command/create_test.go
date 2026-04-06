@@ -5,7 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"gct/internal/context/admin/supporting/sitesetting/domain"
+	siteentity "gct/internal/context/admin/supporting/sitesetting/domain/entity"
+	siterepo "gct/internal/context/admin/supporting/sitesetting/domain/repository"
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
@@ -15,33 +16,33 @@ import (
 // --- Mocks ---
 
 type mockRepo struct {
-	saved   *domain.SiteSetting
-	updated *domain.SiteSetting
-	findFn  func(ctx context.Context, id domain.SiteSettingID) (*domain.SiteSetting, error)
+	saved   *siteentity.SiteSetting
+	updated *siteentity.SiteSetting
+	findFn  func(ctx context.Context, id siteentity.SiteSettingID) (*siteentity.SiteSetting, error)
 }
 
-func (m *mockRepo) Save(_ context.Context, e *domain.SiteSetting) error {
+func (m *mockRepo) Save(_ context.Context, e *siteentity.SiteSetting) error {
 	m.saved = e
 	return nil
 }
 
-func (m *mockRepo) FindByID(ctx context.Context, id domain.SiteSettingID) (*domain.SiteSetting, error) {
+func (m *mockRepo) FindByID(ctx context.Context, id siteentity.SiteSettingID) (*siteentity.SiteSetting, error) {
 	if m.findFn != nil {
 		return m.findFn(ctx, id)
 	}
-	return nil, domain.ErrSiteSettingNotFound
+	return nil, siteentity.ErrSiteSettingNotFound
 }
 
-func (m *mockRepo) Update(_ context.Context, e *domain.SiteSetting) error {
+func (m *mockRepo) Update(_ context.Context, e *siteentity.SiteSetting) error {
 	m.updated = e
 	return nil
 }
 
-func (m *mockRepo) Delete(_ context.Context, _ domain.SiteSettingID) error {
+func (m *mockRepo) Delete(_ context.Context, _ siteentity.SiteSettingID) error {
 	return nil
 }
 
-func (m *mockRepo) List(_ context.Context, _ domain.SiteSettingFilter) ([]*domain.SiteSetting, int64, error) {
+func (m *mockRepo) List(_ context.Context, _ siterepo.SiteSettingFilter) ([]*siteentity.SiteSetting, int64, error) {
 	return nil, 0, nil
 }
 

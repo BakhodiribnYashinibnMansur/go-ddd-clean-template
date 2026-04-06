@@ -6,7 +6,8 @@ import (
 	"gct/internal/kernel/infrastructure/logger"
 	"testing"
 
-	"gct/internal/context/iam/generic/authz/domain"
+	authzentity "gct/internal/context/iam/generic/authz/domain/entity"
+	authzrepo "gct/internal/context/iam/generic/authz/domain/repository"
 	shared "gct/internal/kernel/domain"
 
 	"github.com/stretchr/testify/require"
@@ -17,10 +18,10 @@ func TestListRolesHandler_WithResults(t *testing.T) {
 
 	desc := "Editor role"
 	repo := &mockAuthzReadRepository{
-		listRolesFn: func(_ context.Context, _ shared.Pagination) ([]*domain.RoleView, int64, error) {
-			return []*domain.RoleView{
-				{ID: domain.NewRoleID(), Name: "admin", Description: nil},
-				{ID: domain.NewRoleID(), Name: "editor", Description: &desc},
+		listRolesFn: func(_ context.Context, _ shared.Pagination) ([]*authzrepo.RoleView, int64, error) {
+			return []*authzrepo.RoleView{
+				{ID: authzentity.NewRoleID(), Name: "admin", Description: nil},
+				{ID: authzentity.NewRoleID(), Name: "editor", Description: &desc},
 			}, 2, nil
 		},
 	}
@@ -52,8 +53,8 @@ func TestListRolesHandler_Empty(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockAuthzReadRepository{
-		listRolesFn: func(_ context.Context, _ shared.Pagination) ([]*domain.RoleView, int64, error) {
-			return []*domain.RoleView{}, 0, nil
+		listRolesFn: func(_ context.Context, _ shared.Pagination) ([]*authzrepo.RoleView, int64, error) {
+			return []*authzrepo.RoleView{}, 0, nil
 		},
 	}
 
@@ -76,10 +77,10 @@ func TestListRolesHandler_Pagination(t *testing.T) {
 
 	var capturedPagination shared.Pagination
 	repo := &mockAuthzReadRepository{
-		listRolesFn: func(_ context.Context, p shared.Pagination) ([]*domain.RoleView, int64, error) {
+		listRolesFn: func(_ context.Context, p shared.Pagination) ([]*authzrepo.RoleView, int64, error) {
 			capturedPagination = p
-			return []*domain.RoleView{
-				{ID: domain.NewRoleID(), Name: "viewer"},
+			return []*authzrepo.RoleView{
+				{ID: authzentity.NewRoleID(), Name: "viewer"},
 			}, 15, nil
 		},
 	}
@@ -109,7 +110,7 @@ func TestListRolesHandler_RepoError(t *testing.T) {
 
 	repoErr := errors.New("database timeout")
 	repo := &mockAuthzReadRepository{
-		listRolesFn: func(_ context.Context, _ shared.Pagination) ([]*domain.RoleView, int64, error) {
+		listRolesFn: func(_ context.Context, _ shared.Pagination) ([]*authzrepo.RoleView, int64, error) {
 			return nil, 0, repoErr
 		},
 	}

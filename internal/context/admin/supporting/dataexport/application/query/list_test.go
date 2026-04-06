@@ -7,7 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/admin/supporting/dataexport/domain"
+	exportentity "gct/internal/context/admin/supporting/dataexport/domain/entity"
+	exportrepo "gct/internal/context/admin/supporting/dataexport/domain/repository"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -20,9 +21,9 @@ func TestListDataExportsHandler_Success(t *testing.T) {
 	now := time.Now()
 
 	readRepo := &mockDataExportReadRepository{
-		listViews: []*domain.DataExportView{
+		listViews: []*exportrepo.DataExportView{
 			{
-				ID:        domain.NewDataExportID(),
+				ID:        exportentity.NewDataExportID(),
 				UserID:    userID,
 				DataType:  "users",
 				Format:    "csv",
@@ -31,7 +32,7 @@ func TestListDataExportsHandler_Success(t *testing.T) {
 				UpdatedAt: now,
 			},
 			{
-				ID:        domain.NewDataExportID(),
+				ID:        exportentity.NewDataExportID(),
 				UserID:    userID,
 				DataType:  "audit_logs",
 				Format:    "json",
@@ -46,7 +47,7 @@ func TestListDataExportsHandler_Success(t *testing.T) {
 	handler := NewListDataExportsHandler(readRepo, logger.Noop())
 
 	q := ListDataExportsQuery{
-		Filter: domain.DataExportFilter{},
+		Filter: exportrepo.DataExportFilter{},
 	}
 
 	result, err := handler.Handle(context.Background(), q)
@@ -77,14 +78,14 @@ func TestListDataExportsHandler_Empty(t *testing.T) {
 	t.Parallel()
 
 	readRepo := &mockDataExportReadRepository{
-		listViews: []*domain.DataExportView{},
+		listViews: []*exportrepo.DataExportView{},
 		listTotal: 0,
 	}
 
 	handler := NewListDataExportsHandler(readRepo, logger.Noop())
 
 	q := ListDataExportsQuery{
-		Filter: domain.DataExportFilter{},
+		Filter: exportrepo.DataExportFilter{},
 	}
 
 	result, err := handler.Handle(context.Background(), q)
@@ -109,7 +110,7 @@ func TestListDataExportsHandler_RepoError(t *testing.T) {
 	handler := NewListDataExportsHandler(readRepo, logger.Noop())
 
 	q := ListDataExportsQuery{
-		Filter: domain.DataExportFilter{},
+		Filter: exportrepo.DataExportFilter{},
 	}
 
 	result, err := handler.Handle(context.Background(), q)

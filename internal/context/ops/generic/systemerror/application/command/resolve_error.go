@@ -7,7 +7,8 @@ import (
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
-	"gct/internal/context/ops/generic/systemerror/domain"
+	syserrentity "gct/internal/context/ops/generic/systemerror/domain/entity"
+	syserrrepo "gct/internal/context/ops/generic/systemerror/domain/repository"
 
 	"github.com/google/uuid"
 )
@@ -15,21 +16,21 @@ import (
 // ResolveErrorCommand represents an intent to mark a system error as resolved by a specific user.
 // This is an irreversible status transition — once resolved, the error cannot be re-opened.
 type ResolveErrorCommand struct {
-	ID         domain.SystemErrorID
+	ID         syserrentity.SystemErrorID
 	ResolvedBy uuid.UUID
 }
 
 // ResolveErrorHandler transitions a system error to the resolved state via a load-modify-save cycle.
 // Callers are responsible for verifying that ResolvedBy refers to a user with sufficient privileges.
 type ResolveErrorHandler struct {
-	repo     domain.SystemErrorRepository
+	repo     syserrrepo.SystemErrorRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
 // NewResolveErrorHandler creates a new ResolveErrorHandler.
 func NewResolveErrorHandler(
-	repo domain.SystemErrorRepository,
+	repo syserrrepo.SystemErrorRepository,
 	eventBus application.EventBus,
 	logger logger.Log,
 ) *ResolveErrorHandler {

@@ -6,7 +6,8 @@ import (
 
 	"gct/internal/context/content/generic/file/application/command"
 	"gct/internal/context/content/generic/file/application/query"
-	"gct/internal/context/content/generic/file/domain"
+	fileentity "gct/internal/context/content/generic/file/domain/entity"
+	filerepo "gct/internal/context/content/generic/file/domain/repository"
 )
 
 func TestIntegration_FileCreateAndGet(t *testing.T) {
@@ -30,7 +31,7 @@ func TestIntegration_FileCreateAndGet(t *testing.T) {
 
 	// List to find the created file
 	result, err := bc.ListFiles.Handle(ctx, query.ListFilesQuery{
-		Filter: domain.FileFilter{Limit: 10},
+		Filter: filerepo.FileFilter{Limit: 10},
 	})
 	if err != nil {
 		t.Fatalf("ListFiles failed: %v", err)
@@ -42,7 +43,7 @@ func TestIntegration_FileCreateAndGet(t *testing.T) {
 	created := result.Files[0]
 
 	// Get by ID
-	got, err := bc.GetFile.Handle(ctx, query.GetFileQuery{ID: domain.FileID(created.ID)})
+	got, err := bc.GetFile.Handle(ctx, query.GetFileQuery{ID: fileentity.FileID(created.ID)})
 	if err != nil {
 		t.Fatalf("GetFile failed: %v", err)
 	}
@@ -116,7 +117,7 @@ func TestIntegration_FileListPagination(t *testing.T) {
 
 	// List with limit=2 (first page)
 	page1, err := bc.ListFiles.Handle(ctx, query.ListFilesQuery{
-		Filter: domain.FileFilter{Limit: 2, Offset: 0},
+		Filter: filerepo.FileFilter{Limit: 2, Offset: 0},
 	})
 	if err != nil {
 		t.Fatalf("ListFiles page 1: %v", err)
@@ -130,7 +131,7 @@ func TestIntegration_FileListPagination(t *testing.T) {
 
 	// List with limit=2, offset=2 (second page)
 	page2, err := bc.ListFiles.Handle(ctx, query.ListFilesQuery{
-		Filter: domain.FileFilter{Limit: 2, Offset: 2},
+		Filter: filerepo.FileFilter{Limit: 2, Offset: 2},
 	})
 	if err != nil {
 		t.Fatalf("ListFiles page 2: %v", err)

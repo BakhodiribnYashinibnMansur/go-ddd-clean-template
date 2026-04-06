@@ -8,7 +8,8 @@ import (
 
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
-	"gct/internal/context/ops/generic/systemerror/domain"
+	syserrentity "gct/internal/context/ops/generic/systemerror/domain/entity"
+	syserrrepo "gct/internal/context/ops/generic/systemerror/domain/repository"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -17,29 +18,29 @@ import (
 // --- Mocks ---
 
 type mockSystemErrorRepo struct {
-	saved   *domain.SystemError
-	updated *domain.SystemError
-	findFn  func(ctx context.Context, id domain.SystemErrorID) (*domain.SystemError, error)
+	saved   *syserrentity.SystemError
+	updated *syserrentity.SystemError
+	findFn  func(ctx context.Context, id syserrentity.SystemErrorID) (*syserrentity.SystemError, error)
 }
 
-func (m *mockSystemErrorRepo) Save(_ context.Context, e *domain.SystemError) error {
+func (m *mockSystemErrorRepo) Save(_ context.Context, e *syserrentity.SystemError) error {
 	m.saved = e
 	return nil
 }
 
-func (m *mockSystemErrorRepo) FindByID(ctx context.Context, id domain.SystemErrorID) (*domain.SystemError, error) {
+func (m *mockSystemErrorRepo) FindByID(ctx context.Context, id syserrentity.SystemErrorID) (*syserrentity.SystemError, error) {
 	if m.findFn != nil {
 		return m.findFn(ctx, id)
 	}
-	return nil, domain.ErrSystemErrorNotFound
+	return nil, syserrentity.ErrSystemErrorNotFound
 }
 
-func (m *mockSystemErrorRepo) Update(_ context.Context, e *domain.SystemError) error {
+func (m *mockSystemErrorRepo) Update(_ context.Context, e *syserrentity.SystemError) error {
 	m.updated = e
 	return nil
 }
 
-func (m *mockSystemErrorRepo) List(_ context.Context, _ domain.SystemErrorFilter) ([]*domain.SystemError, int64, error) {
+func (m *mockSystemErrorRepo) List(_ context.Context, _ syserrrepo.SystemErrorFilter) ([]*syserrentity.SystemError, int64, error) {
 	return nil, 0, nil
 }
 
@@ -165,14 +166,14 @@ func TestCreateSystemErrorHandler_MinimalFields(t *testing.T) {
 func TestResolveErrorHandler_Handle(t *testing.T) {
 	t.Parallel()
 
-	se := domain.NewSystemError("ERR_500", "test error", "critical")
+	se := syserrentity.NewSystemError("ERR_500", "test error", "critical")
 
 	repo := &mockSystemErrorRepo{
-		findFn: func(_ context.Context, id domain.SystemErrorID) (*domain.SystemError, error) {
+		findFn: func(_ context.Context, id syserrentity.SystemErrorID) (*syserrentity.SystemError, error) {
 			if id == se.TypedID() {
 				return se, nil
 			}
-			return nil, domain.ErrSystemErrorNotFound
+			return nil, syserrentity.ErrSystemErrorNotFound
 		},
 	}
 	eb := &mockEventBus{}
@@ -221,7 +222,7 @@ func TestResolveErrorHandler_NotFound(t *testing.T) {
 	handler := NewResolveErrorHandler(repo, eb, log)
 
 	err := handler.Handle(context.Background(), ResolveErrorCommand{
-		ID:         domain.NewSystemErrorID(),
+		ID:         syserrentity.NewSystemErrorID(),
 		ResolvedBy: uuid.New(),
 	})
 	if err == nil {
@@ -234,7 +235,7 @@ func TestResolveErrorHandler_AlreadyResolved(t *testing.T) {
 
 	resolverID := uuid.New()
 	now := time.Now()
-	se := domain.ReconstructSystemError(
+	se := syserrentity.ReconstructSystemError(
 		uuid.New(), time.Now(),
 		"ERR_500", "test", nil, nil, "critical",
 		nil, nil, nil, nil, nil, nil,
@@ -242,7 +243,7 @@ func TestResolveErrorHandler_AlreadyResolved(t *testing.T) {
 	)
 
 	repo := &mockSystemErrorRepo{
-		findFn: func(_ context.Context, id domain.SystemErrorID) (*domain.SystemError, error) {
+		findFn: func(_ context.Context, id syserrentity.SystemErrorID) (*syserrentity.SystemError, error) {
 			return se, nil
 		},
 	}
@@ -286,10 +287,10 @@ func TestCreateSystemErrorHandler_RepoError(t *testing.T) {
 func TestResolveErrorHandler_RepoUpdateError(t *testing.T) {
 	t.Parallel()
 
-	se := domain.NewSystemError("ERR", "test", "low")
+	se := syserrentity.NewSystemError("ERR", "test", "low")
 
 	repo := &errorSystemErrorRepo{
-		findFn:    func(_ context.Context, _ domain.SystemErrorID) (*domain.SystemError, error) { return se, nil },
+		findFn:    func(_ context.Context, _ syserrentity.SystemErrorID) (*syserrentity.SystemError, error) { return se, nil },
 		updateErr: errRepoUpdate,
 	}
 	eb := &mockEventBus{}
@@ -307,24 +308,24 @@ func TestResolveErrorHandler_RepoUpdateError(t *testing.T) {
 type errorSystemErrorRepo struct {
 	saveErr   error
 	updateErr error
-	findFn    func(ctx context.Context, id domain.SystemErrorID) (*domain.SystemError, error)
+	findFn    func(ctx context.Context, id syserrentity.SystemErrorID) (*syserrentity.SystemError, error)
 }
 
-func (m *errorSystemErrorRepo) Save(_ context.Context, _ *domain.SystemError) error {
+func (m *errorSystemErrorRepo) Save(_ context.Context, _ *syserrentity.SystemError) error {
 	return m.saveErr
 }
 
-func (m *errorSystemErrorRepo) FindByID(ctx context.Context, id domain.SystemErrorID) (*domain.SystemError, error) {
+func (m *errorSystemErrorRepo) FindByID(ctx context.Context, id syserrentity.SystemErrorID) (*syserrentity.SystemError, error) {
 	if m.findFn != nil {
 		return m.findFn(ctx, id)
 	}
-	return nil, domain.ErrSystemErrorNotFound
+	return nil, syserrentity.ErrSystemErrorNotFound
 }
 
-func (m *errorSystemErrorRepo) Update(_ context.Context, _ *domain.SystemError) error {
+func (m *errorSystemErrorRepo) Update(_ context.Context, _ *syserrentity.SystemError) error {
 	return m.updateErr
 }
 
-func (m *errorSystemErrorRepo) List(_ context.Context, _ domain.SystemErrorFilter) ([]*domain.SystemError, int64, error) {
+func (m *errorSystemErrorRepo) List(_ context.Context, _ syserrrepo.SystemErrorFilter) ([]*syserrentity.SystemError, int64, error) {
 	return nil, 0, nil
 }

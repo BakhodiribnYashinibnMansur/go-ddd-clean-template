@@ -9,7 +9,7 @@ import (
 	"fmt"
 
 	"gct/internal/context/iam/generic/user/application/query"
-	"gct/internal/context/iam/generic/user/domain"
+	userentity "gct/internal/context/iam/generic/user/domain/entity"
 	"gct/internal/contract/ports"
 	shared "gct/internal/kernel/domain"
 
@@ -32,7 +32,7 @@ func NewAuthLookupAdapter(h *query.FindUserForAuthHandler) *AuthLookupAdapter {
 // FindForAuth resolves the user's minimal auth projection by delegating to
 // the query handler.
 func (a *AuthLookupAdapter) FindForAuth(ctx context.Context, userID uuid.UUID) (*shared.AuthUser, error) {
-	u, err := a.h.Handle(ctx, query.FindUserForAuthQuery{UserID: domain.UserID(userID)})
+	u, err := a.h.Handle(ctx, query.FindUserForAuthQuery{UserID: userentity.UserID(userID)})
 	if err != nil {
 		return nil, fmt.Errorf("user.port.AuthLookupAdapter.FindForAuth: %w", err)
 	}

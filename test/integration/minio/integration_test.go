@@ -7,7 +7,8 @@ import (
 	"gct/internal/context/content/generic/file"
 	"gct/internal/context/content/generic/file/application/command"
 	"gct/internal/context/content/generic/file/application/query"
-	"gct/internal/context/content/generic/file/domain"
+	fileentity "gct/internal/context/content/generic/file/domain/entity"
+	filerepo "gct/internal/context/content/generic/file/domain/repository"
 	"gct/internal/kernel/infrastructure/eventbus"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/test/integration/common/setup"
@@ -38,7 +39,7 @@ func TestIntegration_CreateAndGetFile(t *testing.T) {
 	}
 
 	result, err := bc.ListFiles.Handle(ctx, query.ListFilesQuery{
-		Filter: domain.FileFilter{Limit: 10},
+		Filter: filerepo.FileFilter{Limit: 10},
 	})
 	if err != nil {
 		t.Fatalf("ListFiles: %v", err)
@@ -55,7 +56,7 @@ func TestIntegration_CreateAndGetFile(t *testing.T) {
 		t.Errorf("expected mime image/jpeg, got %s", f.MimeType)
 	}
 
-	view, err := bc.GetFile.Handle(ctx, query.GetFileQuery{ID: domain.FileID(f.ID)})
+	view, err := bc.GetFile.Handle(ctx, query.GetFileQuery{ID: fileentity.FileID(f.ID)})
 	if err != nil {
 		t.Fatalf("GetFile: %v", err)
 	}
@@ -88,7 +89,7 @@ func TestIntegration_ListFilesWithFilter(t *testing.T) {
 	})
 
 	result, err := bc.ListFiles.Handle(ctx, query.ListFilesQuery{
-		Filter: domain.FileFilter{Limit: 10},
+		Filter: filerepo.FileFilter{Limit: 10},
 	})
 	if err != nil {
 		t.Fatalf("ListFiles: %v", err)

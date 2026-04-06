@@ -3,7 +3,8 @@ package command
 import (
 	"context"
 
-	"gct/internal/context/iam/generic/authz/domain"
+	authzentity "gct/internal/context/iam/generic/authz/domain/entity"
+	authzrepo "gct/internal/context/iam/generic/authz/domain/repository"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
@@ -13,7 +14,7 @@ import (
 // UpdateRoleCommand represents a partial update to an existing role.
 // Nil pointer fields are left unchanged, enabling callers to modify name or description independently.
 type UpdateRoleCommand struct {
-	ID          domain.RoleID
+	ID          authzentity.RoleID
 	Name        *string
 	Description *string
 }
@@ -21,14 +22,14 @@ type UpdateRoleCommand struct {
 // UpdateRoleHandler applies partial modifications to an existing role and emits domain events.
 // The handler follows a fetch-mutate-persist pattern; event publish failures are non-fatal.
 type UpdateRoleHandler struct {
-	repo     domain.RoleRepository
+	repo     authzrepo.RoleRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
 // NewUpdateRoleHandler wires dependencies for role updates.
 func NewUpdateRoleHandler(
-	repo domain.RoleRepository,
+	repo authzrepo.RoleRepository,
 	eventBus application.EventBus,
 	logger logger.Log,
 ) *UpdateRoleHandler {

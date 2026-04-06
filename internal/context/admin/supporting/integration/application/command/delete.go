@@ -3,7 +3,8 @@ package command
 import (
 	"context"
 
-	"gct/internal/context/admin/supporting/integration/domain"
+	integentity "gct/internal/context/admin/supporting/integration/domain/entity"
+	integrepo "gct/internal/context/admin/supporting/integration/domain/repository"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
@@ -13,21 +14,21 @@ import (
 // DeleteCommand represents an intent to permanently remove an integration by its unique identifier.
 // Once deleted, any webhooks or API keys associated with this integration become inoperative.
 type DeleteCommand struct {
-	ID domain.IntegrationID
+	ID integentity.IntegrationID
 }
 
 // DeleteHandler orchestrates integration deletion through the repository layer.
 // It enforces a hard-delete strategy — no soft-delete or event emission is performed.
 // Callers are responsible for authorization checks before invoking this handler.
 type DeleteHandler struct {
-	repo     domain.IntegrationRepository
+	repo     integrepo.IntegrationRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
 // NewDeleteHandler wires up the handler with its required dependencies.
 func NewDeleteHandler(
-	repo domain.IntegrationRepository,
+	repo integrepo.IntegrationRepository,
 	eventBus application.EventBus,
 	logger logger.Log,
 ) *DeleteHandler {

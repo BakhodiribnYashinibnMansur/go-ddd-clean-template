@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/context/admin/supporting/integration/domain"
+	integentity "gct/internal/context/admin/supporting/integration/domain/entity"
 
 	"github.com/stretchr/testify/require"
 )
@@ -15,7 +15,7 @@ func TestDeleteHandler_Handle(t *testing.T) {
 	repo := &mockIntegrationRepo{}
 	handler := NewDeleteHandler(repo, &mockEventBus{}, &mockLogger{})
 
-	id := domain.NewIntegrationID()
+	id := integentity.NewIntegrationID()
 	err := handler.Handle(context.Background(), DeleteCommand{ID: id})
 	require.NoError(t, err)
 	if repo.deleted != id {

@@ -5,7 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/ops/generic/ratelimit/domain"
+	ratelimitentity "gct/internal/context/ops/generic/ratelimit/domain/entity"
+	ratelimitrepo "gct/internal/context/ops/generic/ratelimit/domain/repository"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -78,7 +79,7 @@ func TestNewRateLimitReadRepo(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestScanRateLimitView_Success(t *testing.T) {
-	id := domain.NewRateLimitID()
+	id := ratelimitentity.NewRateLimitID()
 	now := time.Now().Truncate(time.Microsecond)
 
 	row := &mockRow{scanFunc: func(dest ...any) error {
@@ -123,7 +124,7 @@ func TestScanRateLimitView_Error(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestScanRateLimitViewFromRows_Success(t *testing.T) {
-	id := domain.NewRateLimitID()
+	id := ratelimitentity.NewRateLimitID()
 	now := time.Now().Truncate(time.Microsecond)
 
 	rows := &mockRows{scanFunc: func(dest ...any) error {
@@ -153,7 +154,7 @@ func TestScanRateLimitViewFromRows_Error(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestScanRateLimit_Success(t *testing.T) {
-	id := domain.NewRateLimitID()
+	id := ratelimitentity.NewRateLimitID()
 	now := time.Now().Truncate(time.Microsecond)
 
 	row := &mockRow{scanFunc: func(dest ...any) error {
@@ -198,7 +199,7 @@ func TestScanRateLimit_Error(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestScanRateLimitFromRows_Success(t *testing.T) {
-	id := domain.NewRateLimitID()
+	id := ratelimitentity.NewRateLimitID()
 	now := time.Now().Truncate(time.Microsecond)
 
 	rows := &mockRows{scanFunc: func(dest ...any) error {
@@ -229,7 +230,7 @@ func TestScanRateLimitFromRows_Error(t *testing.T) {
 
 func TestApplyFilters_NoFilters(t *testing.T) {
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.RateLimitFilter{})
+	result := applyFilters(conds, ratelimitrepo.RateLimitFilter{})
 	if len(result) != 0 {
 		t.Errorf("expected 0 conditions, got %d", len(result))
 	}
@@ -238,7 +239,7 @@ func TestApplyFilters_NoFilters(t *testing.T) {
 func TestApplyFilters_WithName(t *testing.T) {
 	name := "api-global"
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.RateLimitFilter{Name: &name})
+	result := applyFilters(conds, ratelimitrepo.RateLimitFilter{Name: &name})
 	if len(result) != 1 {
 		t.Errorf("expected 1 condition, got %d", len(result))
 	}
@@ -247,7 +248,7 @@ func TestApplyFilters_WithName(t *testing.T) {
 func TestApplyFilters_WithEnabled(t *testing.T) {
 	enabled := true
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.RateLimitFilter{Enabled: &enabled})
+	result := applyFilters(conds, ratelimitrepo.RateLimitFilter{Enabled: &enabled})
 	if len(result) != 1 {
 		t.Errorf("expected 1 condition, got %d", len(result))
 	}
@@ -257,7 +258,7 @@ func TestApplyFilters_AllFilters(t *testing.T) {
 	name := "api-global"
 	enabled := false
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.RateLimitFilter{Name: &name, Enabled: &enabled})
+	result := applyFilters(conds, ratelimitrepo.RateLimitFilter{Name: &name, Enabled: &enabled})
 	if len(result) != 2 {
 		t.Errorf("expected 2 conditions, got %d", len(result))
 	}

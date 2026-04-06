@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/admin/generic/featureflag/domain"
+	ffentity "gct/internal/context/admin/generic/featureflag/domain/entity"
 
 	"github.com/google/uuid"
 )
@@ -16,11 +16,11 @@ import (
 // ---------------------------------------------------------------------------
 
 type mockRepo struct {
-	flags map[string]*domain.FeatureFlag
+	flags map[string]*ffentity.FeatureFlag
 	err   error
 }
 
-func (m *mockRepo) FindByKey(_ context.Context, key string) (*domain.FeatureFlag, error) {
+func (m *mockRepo) FindByKey(_ context.Context, key string) (*ffentity.FeatureFlag, error) {
 	if m.err != nil {
 		return nil, m.err
 	}
@@ -31,19 +31,19 @@ func (m *mockRepo) FindByKey(_ context.Context, key string) (*domain.FeatureFlag
 	return ff, nil
 }
 
-func (m *mockRepo) Save(context.Context, *domain.FeatureFlag) error {
+func (m *mockRepo) Save(context.Context, *ffentity.FeatureFlag) error {
 	panic("not implemented")
 }
-func (m *mockRepo) FindByID(context.Context, domain.FeatureFlagID) (*domain.FeatureFlag, error) {
+func (m *mockRepo) FindByID(context.Context, ffentity.FeatureFlagID) (*ffentity.FeatureFlag, error) {
 	panic("not implemented")
 }
-func (m *mockRepo) Update(context.Context, *domain.FeatureFlag) error {
+func (m *mockRepo) Update(context.Context, *ffentity.FeatureFlag) error {
 	panic("not implemented")
 }
-func (m *mockRepo) Delete(context.Context, domain.FeatureFlagID) error {
+func (m *mockRepo) Delete(context.Context, ffentity.FeatureFlagID) error {
 	panic("not implemented")
 }
-func (m *mockRepo) FindAll(context.Context) ([]*domain.FeatureFlag, error) {
+func (m *mockRepo) FindAll(context.Context) ([]*ffentity.FeatureFlag, error) {
 	panic("not implemented")
 }
 
@@ -51,17 +51,17 @@ func (m *mockRepo) FindAll(context.Context) ([]*domain.FeatureFlag, error) {
 // Helpers
 // ---------------------------------------------------------------------------
 
-func newFlag(key, flagType, defaultValue string, active bool) *domain.FeatureFlag {
+func newFlag(key, flagType, defaultValue string, active bool) *ffentity.FeatureFlag {
 	now := time.Now()
-	return domain.ReconstructFeatureFlag(
+	return ffentity.ReconstructFeatureFlag(
 		uuid.New(), now, now, nil,
 		"Test Flag", key, "test description", flagType, defaultValue,
 		0, active, nil,
 	)
 }
 
-func repoWith(flags ...*domain.FeatureFlag) *mockRepo {
-	m := &mockRepo{flags: make(map[string]*domain.FeatureFlag)}
+func repoWith(flags ...*ffentity.FeatureFlag) *mockRepo {
+	m := &mockRepo{flags: make(map[string]*ffentity.FeatureFlag)}
 	for _, ff := range flags {
 		m.flags[ff.Key()] = ff
 	}

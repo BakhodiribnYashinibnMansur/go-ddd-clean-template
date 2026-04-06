@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/context/iam/generic/user/domain"
+	userentity "gct/internal/context/iam/generic/user/domain/entity"
 
 	"github.com/stretchr/testify/require"
 )
@@ -15,14 +15,14 @@ func TestBulkActionHandler_Activate(t *testing.T) {
 	user := makeTestUser(t)
 	user.Deactivate()
 
-	repo := &bulkMockRepo{users: map[domain.UserID]*domain.User{user.TypedID(): user}}
+	repo := &bulkMockRepo{users: map[userentity.UserID]*userentity.User{user.TypedID(): user}}
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
 	handler := NewBulkActionHandler(repo, eventBus, log)
 
 	err := handler.Handle(context.Background(), BulkActionCommand{
-		IDs:    []domain.UserID{domain.UserID(user.ID())},
+		IDs:    []userentity.UserID{userentity.UserID(user.ID())},
 		Action: BulkActionActivate,
 	})
 	require.NoError(t, err)
@@ -41,14 +41,14 @@ func TestBulkActionHandler_Deactivate(t *testing.T) {
 
 	user := makeTestUser(t)
 
-	repo := &bulkMockRepo{users: map[domain.UserID]*domain.User{user.TypedID(): user}}
+	repo := &bulkMockRepo{users: map[userentity.UserID]*userentity.User{user.TypedID(): user}}
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
 	handler := NewBulkActionHandler(repo, eventBus, log)
 
 	err := handler.Handle(context.Background(), BulkActionCommand{
-		IDs:    []domain.UserID{domain.UserID(user.ID())},
+		IDs:    []userentity.UserID{userentity.UserID(user.ID())},
 		Action: BulkActionDeactivate,
 	})
 	require.NoError(t, err)
@@ -67,14 +67,14 @@ func TestBulkActionHandler_Delete(t *testing.T) {
 
 	user := makeTestUser(t)
 
-	repo := &bulkMockRepo{users: map[domain.UserID]*domain.User{user.TypedID(): user}}
+	repo := &bulkMockRepo{users: map[userentity.UserID]*userentity.User{user.TypedID(): user}}
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
 	handler := NewBulkActionHandler(repo, eventBus, log)
 
 	err := handler.Handle(context.Background(), BulkActionCommand{
-		IDs:    []domain.UserID{domain.UserID(user.ID())},
+		IDs:    []userentity.UserID{userentity.UserID(user.ID())},
 		Action: BulkActionDelete,
 	})
 	require.NoError(t, err)
@@ -96,14 +96,14 @@ func TestBulkActionHandler_UnknownAction(t *testing.T) {
 
 	user := makeTestUser(t)
 
-	repo := &bulkMockRepo{users: map[domain.UserID]*domain.User{user.TypedID(): user}}
+	repo := &bulkMockRepo{users: map[userentity.UserID]*userentity.User{user.TypedID(): user}}
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
 	handler := NewBulkActionHandler(repo, eventBus, log)
 
 	err := handler.Handle(context.Background(), BulkActionCommand{
-		IDs:    []domain.UserID{domain.UserID(user.ID())},
+		IDs:    []userentity.UserID{userentity.UserID(user.ID())},
 		Action: "unknown_action",
 	})
 	if err == nil {
@@ -117,7 +117,7 @@ func TestBulkActionHandler_MultipleUsers(t *testing.T) {
 	user1 := makeTestUser(t)
 	user2 := makeTestUser(t)
 
-	repo := &bulkMockRepo{users: map[domain.UserID]*domain.User{
+	repo := &bulkMockRepo{users: map[userentity.UserID]*userentity.User{
 		user1.TypedID(): user1,
 		user2.TypedID(): user2,
 	}}
@@ -127,7 +127,7 @@ func TestBulkActionHandler_MultipleUsers(t *testing.T) {
 	handler := NewBulkActionHandler(repo, eventBus, log)
 
 	err := handler.Handle(context.Background(), BulkActionCommand{
-		IDs:    []domain.UserID{domain.UserID(user1.TypedID()), domain.UserID(user2.TypedID())},
+		IDs:    []userentity.UserID{userentity.UserID(user1.TypedID()), userentity.UserID(user2.TypedID())},
 		Action: BulkActionDeactivate,
 	})
 	require.NoError(t, err)
@@ -142,14 +142,14 @@ func TestBulkActionHandler_SkipsMissing(t *testing.T) {
 
 	user := makeTestUser(t)
 
-	repo := &bulkMockRepo{users: map[domain.UserID]*domain.User{user.TypedID(): user}}
+	repo := &bulkMockRepo{users: map[userentity.UserID]*userentity.User{user.TypedID(): user}}
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
 	handler := NewBulkActionHandler(repo, eventBus, log)
 
 	err := handler.Handle(context.Background(), BulkActionCommand{
-		IDs:    []domain.UserID{domain.UserID(user.ID()), domain.NewUserID()}, // second ID doesn't exist
+		IDs:    []userentity.UserID{userentity.UserID(user.ID()), userentity.NewUserID()}, // second ID doesn't exist
 		Action: BulkActionActivate,
 	})
 	require.NoError(t, err)
@@ -162,20 +162,20 @@ func TestBulkActionHandler_SkipsMissing(t *testing.T) {
 // bulkMockRepo supports multiple users for bulk action testing.
 type bulkMockRepo struct {
 	mockUserRepository
-	users        map[domain.UserID]*domain.User
-	updatedUsers map[domain.UserID]*domain.User
+	users        map[userentity.UserID]*userentity.User
+	updatedUsers map[userentity.UserID]*userentity.User
 }
 
-func (m *bulkMockRepo) FindByID(_ context.Context, id domain.UserID) (*domain.User, error) {
+func (m *bulkMockRepo) FindByID(_ context.Context, id userentity.UserID) (*userentity.User, error) {
 	if u, ok := m.users[id]; ok {
 		return u, nil
 	}
-	return nil, domain.ErrUserNotFound
+	return nil, userentity.ErrUserNotFound
 }
 
-func (m *bulkMockRepo) Update(_ context.Context, entity *domain.User) error {
+func (m *bulkMockRepo) Update(_ context.Context, entity *userentity.User) error {
 	if m.updatedUsers == nil {
-		m.updatedUsers = make(map[domain.UserID]*domain.User)
+		m.updatedUsers = make(map[userentity.UserID]*userentity.User)
 	}
 	m.updatedUsers[entity.TypedID()] = entity
 	return nil

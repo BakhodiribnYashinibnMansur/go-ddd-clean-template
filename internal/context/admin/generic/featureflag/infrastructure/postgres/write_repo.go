@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"gct/internal/context/admin/generic/featureflag/domain"
+	ffentity "gct/internal/context/admin/generic/featureflag/domain/entity"
 	"gct/internal/kernel/consts"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -27,7 +27,7 @@ var selectColumns = []string{
 	"description", "rollout_percentage", "is_active", "created_at", "updated_at",
 }
 
-// FeatureFlagWriteRepo implements domain.FeatureFlagRepository using PostgreSQL.
+// FeatureFlagWriteRepo implements ffentity.FeatureFlagRepository using PostgreSQL.
 type FeatureFlagWriteRepo struct {
 	pool    *pgxpool.Pool
 	builder squirrel.StatementBuilderType
@@ -42,7 +42,7 @@ func NewFeatureFlagWriteRepo(pool *pgxpool.Pool) *FeatureFlagWriteRepo {
 }
 
 // Save inserts a new FeatureFlag aggregate into the database.
-func (r *FeatureFlagWriteRepo) Save(ctx context.Context, ff *domain.FeatureFlag) (err error) {
+func (r *FeatureFlagWriteRepo) Save(ctx context.Context, ff *ffentity.FeatureFlag) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "FeatureFlagWriteRepo.Save")
 	defer func() { end(err) }()
 
@@ -75,7 +75,7 @@ func (r *FeatureFlagWriteRepo) Save(ctx context.Context, ff *domain.FeatureFlag)
 }
 
 // FindByID retrieves a FeatureFlag aggregate by ID.
-func (r *FeatureFlagWriteRepo) FindByID(ctx context.Context, id domain.FeatureFlagID) (result *domain.FeatureFlag, err error) {
+func (r *FeatureFlagWriteRepo) FindByID(ctx context.Context, id ffentity.FeatureFlagID) (result *ffentity.FeatureFlag, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "FeatureFlagWriteRepo.FindByID")
 	defer func() { end(err) }()
 
@@ -106,7 +106,7 @@ func (r *FeatureFlagWriteRepo) FindByID(ctx context.Context, id domain.FeatureFl
 }
 
 // FindByKey retrieves a FeatureFlag aggregate by its unique key.
-func (r *FeatureFlagWriteRepo) FindByKey(ctx context.Context, key string) (result *domain.FeatureFlag, err error) {
+func (r *FeatureFlagWriteRepo) FindByKey(ctx context.Context, key string) (result *ffentity.FeatureFlag, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "FeatureFlagWriteRepo.FindByKey")
 	defer func() { end(err) }()
 
@@ -137,7 +137,7 @@ func (r *FeatureFlagWriteRepo) FindByKey(ctx context.Context, key string) (resul
 }
 
 // FindAll retrieves all non-deleted FeatureFlag aggregates.
-func (r *FeatureFlagWriteRepo) FindAll(ctx context.Context) (result []*domain.FeatureFlag, err error) {
+func (r *FeatureFlagWriteRepo) FindAll(ctx context.Context) (result []*ffentity.FeatureFlag, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "FeatureFlagWriteRepo.FindAll")
 	defer func() { end(err) }()
 
@@ -157,7 +157,7 @@ func (r *FeatureFlagWriteRepo) FindAll(ctx context.Context) (result []*domain.Fe
 	}
 	defer rows.Close()
 
-	var flags []*domain.FeatureFlag
+	var flags []*ffentity.FeatureFlag
 	for rows.Next() {
 		ff, err := scanFeatureFlagFromRows(rows)
 		if err != nil {
@@ -180,7 +180,7 @@ func (r *FeatureFlagWriteRepo) FindAll(ctx context.Context) (result []*domain.Fe
 }
 
 // Update updates a FeatureFlag aggregate in the database.
-func (r *FeatureFlagWriteRepo) Update(ctx context.Context, ff *domain.FeatureFlag) (err error) {
+func (r *FeatureFlagWriteRepo) Update(ctx context.Context, ff *ffentity.FeatureFlag) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "FeatureFlagWriteRepo.Update")
 	defer func() { end(err) }()
 
@@ -209,7 +209,7 @@ func (r *FeatureFlagWriteRepo) Update(ctx context.Context, ff *domain.FeatureFla
 }
 
 // Delete removes a FeatureFlag by ID.
-func (r *FeatureFlagWriteRepo) Delete(ctx context.Context, id domain.FeatureFlagID) (err error) {
+func (r *FeatureFlagWriteRepo) Delete(ctx context.Context, id ffentity.FeatureFlagID) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "FeatureFlagWriteRepo.Delete")
 	defer func() { end(err) }()
 
@@ -232,7 +232,7 @@ func (r *FeatureFlagWriteRepo) Delete(ctx context.Context, id domain.FeatureFlag
 // Rule group / condition loaders
 // ---------------------------------------------------------------------------
 
-func (r *FeatureFlagWriteRepo) loadRuleGroups(ctx context.Context, flagID uuid.UUID) ([]*domain.RuleGroup, error) {
+func (r *FeatureFlagWriteRepo) loadRuleGroups(ctx context.Context, flagID uuid.UUID) ([]*ffentity.RuleGroup, error) {
 	sql, args, err := r.builder.
 		Select("id", "flag_id", "name", "variation", "priority", "created_at", "updated_at").
 		From(consts.TableFeatureFlagRuleGroups).
@@ -249,7 +249,7 @@ func (r *FeatureFlagWriteRepo) loadRuleGroups(ctx context.Context, flagID uuid.U
 	}
 	defer rows.Close()
 
-	var ruleGroups []*domain.RuleGroup
+	var ruleGroups []*ffentity.RuleGroup
 	for rows.Next() {
 		var (
 			id        uuid.UUID
@@ -269,14 +269,14 @@ func (r *FeatureFlagWriteRepo) loadRuleGroups(ctx context.Context, flagID uuid.U
 			return nil, err
 		}
 
-		rg := domain.ReconstructRuleGroup(id, fID, name, variation, priority, createdAt, updatedAt, conditions)
+		rg := ffentity.ReconstructRuleGroup(id, fID, name, variation, priority, createdAt, updatedAt, conditions)
 		ruleGroups = append(ruleGroups, rg)
 	}
 
 	return ruleGroups, nil
 }
 
-func (r *FeatureFlagWriteRepo) loadConditions(ctx context.Context, ruleGroupID uuid.UUID) ([]domain.Condition, error) {
+func (r *FeatureFlagWriteRepo) loadConditions(ctx context.Context, ruleGroupID uuid.UUID) ([]ffentity.Condition, error) {
 	sql, args, err := r.builder.
 		Select("id", "rule_group_id", "attribute", "operator", "value").
 		From(consts.TableFeatureFlagConditions).
@@ -292,7 +292,7 @@ func (r *FeatureFlagWriteRepo) loadConditions(ctx context.Context, ruleGroupID u
 	}
 	defer rows.Close()
 
-	var conditions []domain.Condition
+	var conditions []ffentity.Condition
 	for rows.Next() {
 		var (
 			id    uuid.UUID
@@ -304,7 +304,7 @@ func (r *FeatureFlagWriteRepo) loadConditions(ctx context.Context, ruleGroupID u
 		if err := rows.Scan(&id, &rgID, &attr, &op, &value); err != nil {
 			return nil, apperrors.HandlePgError(err, consts.TableFeatureFlagConditions, nil)
 		}
-		conditions = append(conditions, domain.ReconstructCondition(id, rgID, attr, op, value))
+		conditions = append(conditions, ffentity.ReconstructCondition(id, rgID, attr, op, value))
 	}
 
 	return conditions, nil
@@ -314,7 +314,7 @@ func (r *FeatureFlagWriteRepo) loadConditions(ctx context.Context, ruleGroupID u
 // Scanners
 // ---------------------------------------------------------------------------
 
-func scanFeatureFlag(row pgx.Row) (*domain.FeatureFlag, error) {
+func scanFeatureFlag(row pgx.Row) (*ffentity.FeatureFlag, error) {
 	var (
 		id                uuid.UUID
 		key               string
@@ -333,10 +333,10 @@ func scanFeatureFlag(row pgx.Row) (*domain.FeatureFlag, error) {
 		return nil, apperrors.HandlePgError(err, tableName, map[string]any{"id": id})
 	}
 
-	return domain.ReconstructFeatureFlag(id, createdAt, updatedAt, nil, name, key, description, flagType, defaultValue, rolloutPercentage, isActive, nil), nil
+	return ffentity.ReconstructFeatureFlag(id, createdAt, updatedAt, nil, name, key, description, flagType, defaultValue, rolloutPercentage, isActive, nil), nil
 }
 
-func scanFeatureFlagFromRows(rows pgx.Rows) (*domain.FeatureFlag, error) {
+func scanFeatureFlagFromRows(rows pgx.Rows) (*ffentity.FeatureFlag, error) {
 	var (
 		id                uuid.UUID
 		key               string
@@ -355,5 +355,5 @@ func scanFeatureFlagFromRows(rows pgx.Rows) (*domain.FeatureFlag, error) {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 
-	return domain.ReconstructFeatureFlag(id, createdAt, updatedAt, nil, name, key, description, flagType, defaultValue, rolloutPercentage, isActive, nil), nil
+	return ffentity.ReconstructFeatureFlag(id, createdAt, updatedAt, nil, name, key, description, flagType, defaultValue, rolloutPercentage, isActive, nil), nil
 }

@@ -4,7 +4,8 @@ import (
 	"context"
 	"time"
 
-	"gct/internal/context/content/supporting/announcement/domain"
+	announceentity "gct/internal/context/content/supporting/announcement/domain/entity"
+	announcerepo "gct/internal/context/content/supporting/announcement/domain/repository"
 	"gct/internal/kernel/consts"
 	shared "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
@@ -38,7 +39,7 @@ func NewAnnouncementWriteRepo(pool *pgxpool.Pool) *AnnouncementWriteRepo {
 }
 
 // Save inserts a new Announcement aggregate into the database.
-func (r *AnnouncementWriteRepo) Save(ctx context.Context, a *domain.Announcement) (err error) {
+func (r *AnnouncementWriteRepo) Save(ctx context.Context, a *announceentity.Announcement) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "AnnouncementWriteRepo.Save")
 	defer func() { end(err) }()
 
@@ -68,7 +69,7 @@ func (r *AnnouncementWriteRepo) Save(ctx context.Context, a *domain.Announcement
 }
 
 // FindByID retrieves an Announcement aggregate by its ID.
-func (r *AnnouncementWriteRepo) FindByID(ctx context.Context, id domain.AnnouncementID) (result *domain.Announcement, err error) {
+func (r *AnnouncementWriteRepo) FindByID(ctx context.Context, id announceentity.AnnouncementID) (result *announceentity.Announcement, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "AnnouncementWriteRepo.FindByID")
 	defer func() { end(err) }()
 
@@ -86,7 +87,7 @@ func (r *AnnouncementWriteRepo) FindByID(ctx context.Context, id domain.Announce
 }
 
 // Update updates an existing Announcement aggregate in the database.
-func (r *AnnouncementWriteRepo) Update(ctx context.Context, a *domain.Announcement) (err error) {
+func (r *AnnouncementWriteRepo) Update(ctx context.Context, a *announceentity.Announcement) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "AnnouncementWriteRepo.Update")
 	defer func() { end(err) }()
 
@@ -113,7 +114,7 @@ func (r *AnnouncementWriteRepo) Update(ctx context.Context, a *domain.Announceme
 }
 
 // Delete removes an Announcement by its ID.
-func (r *AnnouncementWriteRepo) Delete(ctx context.Context, id domain.AnnouncementID) (err error) {
+func (r *AnnouncementWriteRepo) Delete(ctx context.Context, id announceentity.AnnouncementID) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "AnnouncementWriteRepo.Delete")
 	defer func() { end(err) }()
 
@@ -133,7 +134,7 @@ func (r *AnnouncementWriteRepo) Delete(ctx context.Context, id domain.Announceme
 }
 
 // List retrieves a paginated list of Announcement aggregates with optional filters.
-func (r *AnnouncementWriteRepo) List(ctx context.Context, filter domain.AnnouncementFilter) (results []*domain.Announcement, total int64, err error) {
+func (r *AnnouncementWriteRepo) List(ctx context.Context, filter announcerepo.AnnouncementFilter) (results []*announceentity.Announcement, total int64, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "AnnouncementWriteRepo.List")
 	defer func() { end(err) }()
 
@@ -194,14 +195,14 @@ func (r *AnnouncementWriteRepo) List(ctx context.Context, filter domain.Announce
 // Helpers
 // ---------------------------------------------------------------------------
 
-func applyFilters(conds squirrel.And, filter domain.AnnouncementFilter) squirrel.And {
+func applyFilters(conds squirrel.And, filter announcerepo.AnnouncementFilter) squirrel.And {
 	if filter.Published != nil {
 		conds = append(conds, squirrel.Eq{"is_active": *filter.Published})
 	}
 	return conds
 }
 
-func scanAnnouncement(row pgx.Row) (*domain.Announcement, error) {
+func scanAnnouncement(row pgx.Row) (*announceentity.Announcement, error) {
 	var (
 		id        uuid.UUID
 		title     string
@@ -222,7 +223,7 @@ func scanAnnouncement(row pgx.Row) (*domain.Announcement, error) {
 
 	_ = aType
 
-	return domain.ReconstructAnnouncement(
+	return announceentity.ReconstructAnnouncement(
 		id, createdAt, updatedAt,
 		shared.Lang{Uz: title, Ru: title, En: title},
 		shared.Lang{Uz: content, Ru: content, En: content},
@@ -230,7 +231,7 @@ func scanAnnouncement(row pgx.Row) (*domain.Announcement, error) {
 	), nil
 }
 
-func scanAnnouncementFromRows(rows pgx.Rows) (*domain.Announcement, error) {
+func scanAnnouncementFromRows(rows pgx.Rows) (*announceentity.Announcement, error) {
 	var (
 		id        uuid.UUID
 		title     string
@@ -251,7 +252,7 @@ func scanAnnouncementFromRows(rows pgx.Rows) (*domain.Announcement, error) {
 
 	_ = aType
 
-	return domain.ReconstructAnnouncement(
+	return announceentity.ReconstructAnnouncement(
 		id, createdAt, updatedAt,
 		shared.Lang{Uz: title, Ru: title, En: title},
 		shared.Lang{Uz: content, Ru: content, En: content},

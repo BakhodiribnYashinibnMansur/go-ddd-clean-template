@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/context/ops/generic/ratelimit/domain"
+	ratelimitentity "gct/internal/context/ops/generic/ratelimit/domain/entity"
 
 	"github.com/stretchr/testify/require"
 )
@@ -15,7 +15,7 @@ func TestDeleteRateLimitHandler_Handle(t *testing.T) {
 	repo := &mockRateLimitRepo{}
 	handler := NewDeleteRateLimitHandler(repo, &mockLogger{})
 
-	id := domain.NewRateLimitID()
+	id := ratelimitentity.NewRateLimitID()
 	err := handler.Handle(context.Background(), DeleteRateLimitCommand{ID: id})
 	require.NoError(t, err)
 	if repo.deleted != id {

@@ -5,27 +5,28 @@ import (
 
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 
-	"gct/internal/context/iam/generic/authz/domain"
+	authzentity "gct/internal/context/iam/generic/authz/domain/entity"
+	authzrepo "gct/internal/context/iam/generic/authz/domain/repository"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // CheckAccessQuery holds the input for checking whether a role has access to a specific endpoint.
 type CheckAccessQuery struct {
-	RoleID  domain.RoleID
+	RoleID  authzentity.RoleID
 	Path    string
 	Method  string
-	EvalCtx domain.EvaluationContext
+	EvalCtx authzentity.EvaluationContext
 }
 
 // CheckAccessHandler handles the CheckAccessQuery by delegating to the read repository.
 type CheckAccessHandler struct {
-	readRepo domain.AuthzReadRepository
+	readRepo authzrepo.AuthzReadRepository
 	logger   logger.Log
 }
 
 // NewCheckAccessHandler creates a new CheckAccessHandler.
-func NewCheckAccessHandler(readRepo domain.AuthzReadRepository, l logger.Log) *CheckAccessHandler {
+func NewCheckAccessHandler(readRepo authzrepo.AuthzReadRepository, l logger.Log) *CheckAccessHandler {
 	return &CheckAccessHandler{readRepo: readRepo, logger: l}
 }
 

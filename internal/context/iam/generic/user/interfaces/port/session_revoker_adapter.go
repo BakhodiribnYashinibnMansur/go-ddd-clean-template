@@ -3,7 +3,8 @@ package port
 import (
 	"context"
 
-	"gct/internal/context/iam/generic/user/domain"
+	userentity "gct/internal/context/iam/generic/user/domain/entity"
+	userrepo "gct/internal/context/iam/generic/user/domain/repository"
 	"gct/internal/context/iam/generic/user/interfaces/http/middleware"
 
 	"github.com/google/uuid"
@@ -13,18 +14,18 @@ import (
 // RevokeSessionsByIntegration with uuid.UUID parameters so it satisfies
 // the middleware.SessionRevoker interface without a cross-layer coupling.
 type SessionRevokerAdapter struct {
-	repo domain.UserRepository
+	repo userrepo.UserRepository
 }
 
 // NewSessionRevokerAdapter builds the adapter. Construct once in bootstrap.
-func NewSessionRevokerAdapter(repo domain.UserRepository) *SessionRevokerAdapter {
+func NewSessionRevokerAdapter(repo userrepo.UserRepository) *SessionRevokerAdapter {
 	return &SessionRevokerAdapter{repo: repo}
 }
 
 // RevokeSessionsByIntegration delegates to the domain repository, converting
-// the raw uuid.UUID to domain.UserID.
+// the raw uuid.UUID to userentity.UserID.
 func (a *SessionRevokerAdapter) RevokeSessionsByIntegration(ctx context.Context, userID uuid.UUID, integrationName string) (int, error) {
-	return a.repo.RevokeSessionsByIntegration(ctx, domain.UserID(userID), integrationName)
+	return a.repo.RevokeSessionsByIntegration(ctx, userentity.UserID(userID), integrationName)
 }
 
 // Compile-time assertion.

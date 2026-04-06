@@ -7,7 +7,8 @@ import (
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 	"gct/internal/context/ops/generic/systemerror/application/command"
-	"gct/internal/context/ops/generic/systemerror/domain"
+	syserrentity "gct/internal/context/ops/generic/systemerror/domain/entity"
+	syserrrepo "gct/internal/context/ops/generic/systemerror/domain/repository"
 
 	"github.com/stretchr/testify/require"
 )
@@ -15,23 +16,23 @@ import (
 // --- Mocks ---
 
 type mockSystemErrorRepo struct {
-	saved *domain.SystemError
+	saved *syserrentity.SystemError
 }
 
-func (m *mockSystemErrorRepo) Save(_ context.Context, se *domain.SystemError) error {
+func (m *mockSystemErrorRepo) Save(_ context.Context, se *syserrentity.SystemError) error {
 	m.saved = se
 	return nil
 }
 
-func (m *mockSystemErrorRepo) FindByID(_ context.Context, _ domain.SystemErrorID) (*domain.SystemError, error) {
+func (m *mockSystemErrorRepo) FindByID(_ context.Context, _ syserrentity.SystemErrorID) (*syserrentity.SystemError, error) {
 	return nil, nil
 }
 
-func (m *mockSystemErrorRepo) Update(_ context.Context, _ *domain.SystemError) error {
+func (m *mockSystemErrorRepo) Update(_ context.Context, _ *syserrentity.SystemError) error {
 	return nil
 }
 
-func (m *mockSystemErrorRepo) List(_ context.Context, _ domain.SystemErrorFilter) ([]*domain.SystemError, int64, error) {
+func (m *mockSystemErrorRepo) List(_ context.Context, _ syserrrepo.SystemErrorFilter) ([]*syserrentity.SystemError, int64, error) {
 	return nil, 0, nil
 }
 

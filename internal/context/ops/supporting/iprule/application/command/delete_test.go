@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/context/ops/supporting/iprule/domain"
+	ipruleentity "gct/internal/context/ops/supporting/iprule/domain/entity"
 	"github.com/stretchr/testify/require"
 )
 
@@ -14,7 +14,7 @@ func TestDeleteIPRuleHandler_Handle(t *testing.T) {
 	repo := &mockIPRuleRepo{}
 	handler := NewDeleteIPRuleHandler(repo, &mockLogger{})
 
-	id := domain.NewIPRuleID()
+	id := ipruleentity.NewIPRuleID()
 	err := handler.Handle(context.Background(), DeleteIPRuleCommand{ID: id})
 	require.NoError(t, err)
 	if repo.deleted != id {

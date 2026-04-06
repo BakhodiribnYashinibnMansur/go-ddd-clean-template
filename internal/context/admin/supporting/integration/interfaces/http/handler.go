@@ -6,7 +6,7 @@ import (
 	"gct/internal/context/admin/supporting/integration"
 	"gct/internal/context/admin/supporting/integration/application/command"
 	"gct/internal/context/admin/supporting/integration/application/query"
-	"gct/internal/context/admin/supporting/integration/domain"
+	integentity "gct/internal/context/admin/supporting/integration/domain/entity"
 	"gct/internal/kernel/infrastructure/httpx"
 	"gct/internal/kernel/infrastructure/httpx/response"
 	"gct/internal/kernel/infrastructure/logger"
@@ -79,7 +79,7 @@ func (h *Handler) List(ctx *gin.Context) {
 	}
 
 	q := query.ListQuery{
-		Filter: domain.IntegrationFilter{Limit: pg.Limit, Offset: pg.Offset},
+		Filter: integentity.IntegrationFilter{Limit: pg.Limit, Offset: pg.Offset},
 	}
 	result, err := h.bc.ListIntegrations.Handle(ctx.Request.Context(), q)
 	if err != nil {
@@ -103,7 +103,7 @@ func (h *Handler) List(ctx *gin.Context) {
 // @Router /integrations/{id} [get]
 // Get returns a single integration by ID.
 func (h *Handler) Get(ctx *gin.Context) {
-	id, err := domain.ParseIntegrationID(ctx.Param("id"))
+	id, err := integentity.ParseIntegrationID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
@@ -131,7 +131,7 @@ func (h *Handler) Get(ctx *gin.Context) {
 // @Router /integrations/{id} [patch]
 // Update updates an integration.
 func (h *Handler) Update(ctx *gin.Context) {
-	id, err := domain.ParseIntegrationID(ctx.Param("id"))
+	id, err := integentity.ParseIntegrationID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
@@ -171,7 +171,7 @@ func (h *Handler) Update(ctx *gin.Context) {
 // @Router /integrations/{id} [delete]
 // Delete deletes an integration.
 func (h *Handler) Delete(ctx *gin.Context) {
-	id, err := domain.ParseIntegrationID(ctx.Param("id"))
+	id, err := integentity.ParseIntegrationID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return

@@ -4,7 +4,8 @@ import (
 	"context"
 	"time"
 
-	"gct/internal/context/admin/supporting/errorcode/domain"
+	errcodeentity "gct/internal/context/admin/supporting/errorcode/domain/entity"
+	errcoderepo "gct/internal/context/admin/supporting/errorcode/domain/repository"
 	"gct/internal/kernel/consts"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -20,7 +21,7 @@ var readColumns = []string{
 	"retryable", "retry_after", "suggestion", "created_at", "updated_at",
 }
 
-// ErrorCodeReadRepo implements domain.ErrorCodeReadRepository for the CQRS read side.
+// ErrorCodeReadRepo implements errcoderepo.ErrorCodeReadRepository for the CQRS read side.
 type ErrorCodeReadRepo struct {
 	pool    *pgxpool.Pool
 	builder squirrel.StatementBuilderType
@@ -35,7 +36,7 @@ func NewErrorCodeReadRepo(pool *pgxpool.Pool) *ErrorCodeReadRepo {
 }
 
 // FindByID returns a single ErrorCodeView by its ID.
-func (r *ErrorCodeReadRepo) FindByID(ctx context.Context, id domain.ErrorCodeID) (result *domain.ErrorCodeView, err error) {
+func (r *ErrorCodeReadRepo) FindByID(ctx context.Context, id errcodeentity.ErrorCodeID) (result *errcoderepo.ErrorCodeView, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "ErrorCodeReadRepo.FindByID")
 	defer func() { end(err) }()
 
@@ -53,7 +54,7 @@ func (r *ErrorCodeReadRepo) FindByID(ctx context.Context, id domain.ErrorCodeID)
 }
 
 // List returns a paginated list of ErrorCodeView with optional filters.
-func (r *ErrorCodeReadRepo) List(ctx context.Context, filter domain.ErrorCodeFilter) (items []*domain.ErrorCodeView, total int64, err error) {
+func (r *ErrorCodeReadRepo) List(ctx context.Context, filter errcoderepo.ErrorCodeFilter) (items []*errcoderepo.ErrorCodeView, total int64, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "ErrorCodeReadRepo.List")
 	defer func() { end(err) }()
 
@@ -101,7 +102,7 @@ func (r *ErrorCodeReadRepo) List(ctx context.Context, filter domain.ErrorCodeFil
 	}
 	defer rows.Close()
 
-	var views []*domain.ErrorCodeView
+	var views []*errcoderepo.ErrorCodeView
 	for rows.Next() {
 		v, err := scanErrorCodeViewFromRows(rows)
 		if err != nil {
@@ -113,7 +114,7 @@ func (r *ErrorCodeReadRepo) List(ctx context.Context, filter domain.ErrorCodeFil
 	return views, total, nil
 }
 
-func applyFilters(conds squirrel.And, filter domain.ErrorCodeFilter) squirrel.And {
+func applyFilters(conds squirrel.And, filter errcoderepo.ErrorCodeFilter) squirrel.And {
 	if filter.Code != nil {
 		conds = append(conds, squirrel.Eq{"code": *filter.Code})
 	}
@@ -126,7 +127,7 @@ func applyFilters(conds squirrel.And, filter domain.ErrorCodeFilter) squirrel.An
 	return conds
 }
 
-func scanErrorCodeView(row pgx.Row) (*domain.ErrorCodeView, error) {
+func scanErrorCodeView(row pgx.Row) (*errcoderepo.ErrorCodeView, error) {
 	var (
 		id         uuid.UUID
 		code       string
@@ -151,8 +152,8 @@ func scanErrorCodeView(row pgx.Row) (*domain.ErrorCodeView, error) {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 
-	return &domain.ErrorCodeView{
-		ID:         domain.ErrorCodeID(id),
+	return &errcoderepo.ErrorCodeView{
+		ID:         errcodeentity.ErrorCodeID(id),
 		Code:       code,
 		Message:    message,
 		MessageUz:  messageUz,
@@ -168,7 +169,7 @@ func scanErrorCodeView(row pgx.Row) (*domain.ErrorCodeView, error) {
 	}, nil
 }
 
-func scanErrorCodeViewFromRows(rows pgx.Rows) (*domain.ErrorCodeView, error) {
+func scanErrorCodeViewFromRows(rows pgx.Rows) (*errcoderepo.ErrorCodeView, error) {
 	var (
 		id         uuid.UUID
 		code       string
@@ -193,8 +194,8 @@ func scanErrorCodeViewFromRows(rows pgx.Rows) (*domain.ErrorCodeView, error) {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 
-	return &domain.ErrorCodeView{
-		ID:         domain.ErrorCodeID(id),
+	return &errcoderepo.ErrorCodeView{
+		ID:         errcodeentity.ErrorCodeID(id),
 		Code:       code,
 		Message:    message,
 		MessageUz:  messageUz,

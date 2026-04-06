@@ -3,7 +3,8 @@ package command
 import (
 	"context"
 
-	"gct/internal/context/iam/generic/authz/domain"
+	authzentity "gct/internal/context/iam/generic/authz/domain/entity"
+	authzrepo "gct/internal/context/iam/generic/authz/domain/repository"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -12,7 +13,7 @@ import (
 // AssignScopeCommand represents an intent to bind an API scope (path + method) to a permission.
 // This mapping determines which API endpoints a permission protects during authorization evaluation.
 type AssignScopeCommand struct {
-	PermissionID domain.PermissionID
+	PermissionID authzentity.PermissionID
 	Path         string
 	Method       string
 }
@@ -20,13 +21,13 @@ type AssignScopeCommand struct {
 // AssignScopeHandler binds a scope to a permission via the permission-scope repository.
 // No domain events are emitted — scope assignments are structural and take effect on the next authorization check.
 type AssignScopeHandler struct {
-	permScopeRepo domain.PermissionScopeRepository
+	permScopeRepo authzrepo.PermissionScopeRepository
 	logger        logger.Log
 }
 
 // NewAssignScopeHandler wires dependencies for scope assignment.
 func NewAssignScopeHandler(
-	permScopeRepo domain.PermissionScopeRepository,
+	permScopeRepo authzrepo.PermissionScopeRepository,
 	logger logger.Log,
 ) *AssignScopeHandler {
 	return &AssignScopeHandler{

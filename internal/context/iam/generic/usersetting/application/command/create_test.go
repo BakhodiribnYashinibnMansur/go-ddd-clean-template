@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"gct/internal/context/iam/generic/usersetting/application/command"
-	"gct/internal/context/iam/generic/usersetting/domain"
+	settingentity "gct/internal/context/iam/generic/usersetting/domain/entity"
+	settingrepo "gct/internal/context/iam/generic/usersetting/domain/repository"
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
@@ -16,27 +17,30 @@ import (
 // --- Mocks ---
 
 type mockUserSettingRepo struct {
-	upserted *domain.UserSetting
-	deleted  domain.UserSettingID
-	findFn   func(ctx context.Context, userID uuid.UUID, key string) (*domain.UserSetting, error)
+	upserted *settingentity.UserSetting
+	deleted  settingentity.UserSettingID
+	findFn   func(ctx context.Context, userID uuid.UUID, key string) (*settingentity.UserSetting, error)
 }
 
-func (m *mockUserSettingRepo) Upsert(_ context.Context, us *domain.UserSetting) error {
+func (m *mockUserSettingRepo) Upsert(_ context.Context, us *settingentity.UserSetting) error {
 	m.upserted = us
 	return nil
 }
 
-func (m *mockUserSettingRepo) FindByUserIDAndKey(ctx context.Context, userID uuid.UUID, key string) (*domain.UserSetting, error) {
+func (m *mockUserSettingRepo) FindByUserIDAndKey(ctx context.Context, userID uuid.UUID, key string) (*settingentity.UserSetting, error) {
 	if m.findFn != nil {
 		return m.findFn(ctx, userID, key)
 	}
-	return nil, domain.ErrUserSettingNotFound
+	return nil, settingentity.ErrUserSettingNotFound
 }
 
-func (m *mockUserSettingRepo) Delete(_ context.Context, id domain.UserSettingID) error {
+func (m *mockUserSettingRepo) Delete(_ context.Context, id settingentity.UserSettingID) error {
 	m.deleted = id
 	return nil
 }
+
+// Ensure mockUserSettingRepo implements the repository interface.
+var _ settingrepo.UserSettingRepository = (*mockUserSettingRepo)(nil)
 
 type mockEventBus struct{}
 
@@ -102,14 +106,14 @@ func TestUpsertUserSettingHandler_Update(t *testing.T) {
 	t.Parallel()
 
 	userID := uuid.New()
-	existing := domain.NewUserSetting(userID, "theme", "light")
+	existing := settingentity.NewUserSetting(userID, "theme", "light")
 
 	repo := &mockUserSettingRepo{
-		findFn: func(_ context.Context, uid uuid.UUID, key string) (*domain.UserSetting, error) {
+		findFn: func(_ context.Context, uid uuid.UUID, key string) (*settingentity.UserSetting, error) {
 			if uid == userID && key == "theme" {
 				return existing, nil
 			}
-			return nil, domain.ErrUserSettingNotFound
+			return nil, settingentity.ErrUserSettingNotFound
 		},
 	}
 	handler := command.NewUpsertUserSettingHandler(repo, &mockEventBus{}, &mockLogger{})

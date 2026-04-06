@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/context/iam/generic/authz/domain"
+	authzentity "gct/internal/context/iam/generic/authz/domain/entity"
 	shared "gct/internal/kernel/domain"
 
 	"github.com/google/uuid"
@@ -14,14 +14,14 @@ import (
 // --- Mock PermissionRepository ---
 
 type mockPermissionRepository struct {
-	savedPerm   *domain.Permission
-	updatedPerm *domain.Permission
-	findByIDFn  func(ctx context.Context, id domain.PermissionID) (*domain.Permission, error)
-	saveFn      func(ctx context.Context, perm *domain.Permission) error
-	deleteFn    func(ctx context.Context, id domain.PermissionID) error
+	savedPerm   *authzentity.Permission
+	updatedPerm *authzentity.Permission
+	findByIDFn  func(ctx context.Context, id authzentity.PermissionID) (*authzentity.Permission, error)
+	saveFn      func(ctx context.Context, perm *authzentity.Permission) error
+	deleteFn    func(ctx context.Context, id authzentity.PermissionID) error
 }
 
-func (m *mockPermissionRepository) Save(ctx context.Context, perm *domain.Permission) error {
+func (m *mockPermissionRepository) Save(ctx context.Context, perm *authzentity.Permission) error {
 	if m.saveFn != nil {
 		return m.saveFn(ctx, perm)
 	}
@@ -29,26 +29,26 @@ func (m *mockPermissionRepository) Save(ctx context.Context, perm *domain.Permis
 	return nil
 }
 
-func (m *mockPermissionRepository) FindByID(ctx context.Context, id domain.PermissionID) (*domain.Permission, error) {
+func (m *mockPermissionRepository) FindByID(ctx context.Context, id authzentity.PermissionID) (*authzentity.Permission, error) {
 	if m.findByIDFn != nil {
 		return m.findByIDFn(ctx, id)
 	}
-	return nil, domain.ErrPermissionNotFound
+	return nil, authzentity.ErrPermissionNotFound
 }
 
-func (m *mockPermissionRepository) Update(ctx context.Context, perm *domain.Permission) error {
+func (m *mockPermissionRepository) Update(ctx context.Context, perm *authzentity.Permission) error {
 	m.updatedPerm = perm
 	return nil
 }
 
-func (m *mockPermissionRepository) Delete(ctx context.Context, id domain.PermissionID) error {
+func (m *mockPermissionRepository) Delete(ctx context.Context, id authzentity.PermissionID) error {
 	if m.deleteFn != nil {
 		return m.deleteFn(ctx, id)
 	}
 	return nil
 }
 
-func (m *mockPermissionRepository) List(ctx context.Context, pagination shared.Pagination) ([]*domain.Permission, int64, error) {
+func (m *mockPermissionRepository) List(ctx context.Context, pagination shared.Pagination) ([]*authzentity.Permission, int64, error) {
 	return nil, 0, nil
 }
 
@@ -97,7 +97,7 @@ func TestCreatePermissionHandler_WithParent(t *testing.T) {
 	handler := NewCreatePermissionHandler(repo, log)
 
 	parentUUID := uuid.New()
-	parentID := domain.PermissionID(parentUUID)
+	parentID := authzentity.PermissionID(parentUUID)
 	cmd := CreatePermissionCommand{
 		Name:     "read_users",
 		ParentID: &parentID,

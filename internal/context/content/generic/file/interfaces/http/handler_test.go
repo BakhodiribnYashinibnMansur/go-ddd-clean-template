@@ -12,7 +12,8 @@ import (
 	"gct/internal/context/content/generic/file"
 	"gct/internal/context/content/generic/file/application/command"
 	"gct/internal/context/content/generic/file/application/query"
-	"gct/internal/context/content/generic/file/domain"
+	fileentity "gct/internal/context/content/generic/file/domain/entity"
+	filerepo "gct/internal/context/content/generic/file/domain/repository"
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
@@ -23,27 +24,27 @@ import (
 // --- Mocks ---
 
 type mockRepo struct {
-	saved *domain.File
+	saved *fileentity.File
 }
 
-func (m *mockRepo) Save(_ context.Context, f *domain.File) error {
+func (m *mockRepo) Save(_ context.Context, f *fileentity.File) error {
 	m.saved = f
 	return nil
 }
 
 type mockReadRepo struct {
-	view  *domain.FileView
-	views []*domain.FileView
+	view  *filerepo.FileView
+	views []*filerepo.FileView
 	total int64
 }
 
-func (m *mockReadRepo) FindByID(_ context.Context, id domain.FileID) (*domain.FileView, error) {
+func (m *mockReadRepo) FindByID(_ context.Context, id fileentity.FileID) (*filerepo.FileView, error) {
 	if m.view != nil && m.view.ID == id {
 		return m.view, nil
 	}
-	return nil, domain.ErrFileNotFound
+	return nil, fileentity.ErrFileNotFound
 }
-func (m *mockReadRepo) List(_ context.Context, _ domain.FileFilter) ([]*domain.FileView, int64, error) {
+func (m *mockReadRepo) List(_ context.Context, _ filerepo.FileFilter) ([]*filerepo.FileView, int64, error) {
 	return m.views, m.total, nil
 }
 
@@ -147,8 +148,8 @@ func TestHandler_List_Success(t *testing.T) {
 	t.Parallel()
 
 	readRepo := &mockReadRepo{
-		views: []*domain.FileView{
-			{ID: domain.NewFileID(), Name: "file1.png", MimeType: "image/png", Size: 100, CreatedAt: time.Now()},
+		views: []*filerepo.FileView{
+			{ID: fileentity.NewFileID(), Name: "file1.png", MimeType: "image/png", Size: 100, CreatedAt: time.Now()},
 		},
 		total: 1,
 	}
@@ -166,9 +167,9 @@ func TestHandler_List_Success(t *testing.T) {
 func TestHandler_Get_Success(t *testing.T) {
 	t.Parallel()
 
-	id := domain.NewFileID()
+	id := fileentity.NewFileID()
 	readRepo := &mockReadRepo{
-		view: &domain.FileView{ID: id, Name: "doc.pdf", MimeType: "application/pdf", Size: 2048, CreatedAt: time.Now()},
+		view: &filerepo.FileView{ID: id, Name: "doc.pdf", MimeType: "application/pdf", Size: 2048, CreatedAt: time.Now()},
 	}
 	router := setupRouter(&mockRepo{}, readRepo)
 
@@ -196,7 +197,7 @@ func TestHandler_Get_InvalidID(t *testing.T) {
 }
 
 func TestHandler_Get_NotFound(t *testing.T) {
-	// readRepo has no view set, so FindByID returns domain.ErrFileNotFound
+	// readRepo has no view set, so FindByID returns fileentity.ErrFileNotFound
 	readRepo := &mockReadRepo{}
 	router := setupRouter(&mockRepo{}, readRepo)
 
@@ -225,7 +226,7 @@ func TestHandler_Create_InvalidJSON(t *testing.T) {
 
 func TestHandler_List_DefaultPagination(t *testing.T) {
 	readRepo := &mockReadRepo{
-		views: []*domain.FileView{},
+		views: []*filerepo.FileView{},
 		total: 0,
 	}
 	router := setupRouter(&mockRepo{}, readRepo)

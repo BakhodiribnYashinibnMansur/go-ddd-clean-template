@@ -7,37 +7,39 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/content/generic/translation/domain"
+	translationentity "gct/internal/context/content/generic/translation/domain/entity"
+	translationrepo "gct/internal/context/content/generic/translation/domain/repository"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
 // --- Mocks ---
 
 type mockReadRepo struct {
-	view  *domain.TranslationView
-	views []*domain.TranslationView
+	view  *translationrepo.TranslationView
+	views []*translationrepo.TranslationView
 	total int64
 }
 
-func (m *mockReadRepo) FindByID(_ context.Context, id domain.TranslationID) (*domain.TranslationView, error) {
+func (m *mockReadRepo) FindByID(_ context.Context, id translationentity.TranslationID) (*translationrepo.TranslationView, error) {
 	if m.view != nil && m.view.ID == id {
 		return m.view, nil
 	}
-	return nil, domain.ErrTranslationNotFound
+	return nil, translationentity.ErrTranslationNotFound
 }
 
-func (m *mockReadRepo) List(_ context.Context, _ domain.TranslationFilter) ([]*domain.TranslationView, int64, error) {
+func (m *mockReadRepo) List(_ context.Context, _ translationrepo.TranslationFilter) ([]*translationrepo.TranslationView, int64, error) {
 	return m.views, m.total, nil
 }
 
 type errorReadRepo struct{ err error }
 
-func (m *errorReadRepo) FindByID(_ context.Context, _ domain.TranslationID) (*domain.TranslationView, error) {
+func (m *errorReadRepo) FindByID(_ context.Context, _ translationentity.TranslationID) (*translationrepo.TranslationView, error) {
 	return nil, m.err
 }
 
-func (m *errorReadRepo) List(_ context.Context, _ domain.TranslationFilter) ([]*domain.TranslationView, int64, error) {
+func (m *errorReadRepo) List(_ context.Context, _ translationrepo.TranslationFilter) ([]*translationrepo.TranslationView, int64, error) {
 	return nil, 0, m.err
 }
 
@@ -48,10 +50,10 @@ var errRepo = errors.New("repo failure")
 func TestGetTranslationHandler_Handle(t *testing.T) {
 	t.Parallel()
 
-	id := domain.NewTranslationID()
+	id := translationentity.NewTranslationID()
 	now := time.Now()
 	readRepo := &mockReadRepo{
-		view: &domain.TranslationView{
+		view: &translationrepo.TranslationView{
 			ID:        id,
 			Key:       "welcome",
 			Language:  "en",
@@ -63,7 +65,7 @@ func TestGetTranslationHandler_Handle(t *testing.T) {
 	}
 
 	handler := NewGetTranslationHandler(readRepo, logger.Noop())
-	result, err := handler.Handle(context.Background(), GetTranslationQuery{ID: domain.TranslationID(id)})
+	result, err := handler.Handle(context.Background(), GetTranslationQuery{ID: translationentity.TranslationID(id)})
 	require.NoError(t, err)
 	if result == nil {
 		t.Fatal("expected result")
@@ -87,7 +89,7 @@ func TestGetTranslationHandler_NotFound(t *testing.T) {
 
 	readRepo := &mockReadRepo{}
 	handler := NewGetTranslationHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), GetTranslationQuery{ID: domain.NewTranslationID()})
+	_, err := handler.Handle(context.Background(), GetTranslationQuery{ID: translationentity.NewTranslationID()})
 	if err == nil {
 		t.Fatal("expected error for not found")
 	}
@@ -98,7 +100,7 @@ func TestGetTranslationHandler_RepoError(t *testing.T) {
 
 	readRepo := &errorReadRepo{err: errRepo}
 	handler := NewGetTranslationHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), GetTranslationQuery{ID: domain.NewTranslationID()})
+	_, err := handler.Handle(context.Background(), GetTranslationQuery{ID: translationentity.NewTranslationID()})
 	if err == nil {
 		t.Fatal("expected error from repo")
 	}
@@ -107,11 +109,11 @@ func TestGetTranslationHandler_RepoError(t *testing.T) {
 func TestGetTranslationHandler_AllFieldsMapped(t *testing.T) {
 	t.Parallel()
 
-	id := domain.NewTranslationID()
+	id := translationentity.NewTranslationID()
 	now := time.Now()
 
 	readRepo := &mockReadRepo{
-		view: &domain.TranslationView{
+		view: &translationrepo.TranslationView{
 			ID:        id,
 			Key:       "btn_submit",
 			Language:  "de",
@@ -123,9 +125,9 @@ func TestGetTranslationHandler_AllFieldsMapped(t *testing.T) {
 	}
 
 	handler := NewGetTranslationHandler(readRepo, logger.Noop())
-	result, err := handler.Handle(context.Background(), GetTranslationQuery{ID: domain.TranslationID(id)})
+	result, err := handler.Handle(context.Background(), GetTranslationQuery{ID: translationentity.TranslationID(id)})
 	require.NoError(t, err)
-	if result.ID != id {
+	if result.ID != uuid.UUID(id) {
 		t.Error("ID not mapped correctly")
 	}
 	if result.Key != "btn_submit" {

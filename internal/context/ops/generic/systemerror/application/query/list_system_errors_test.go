@@ -6,7 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/ops/generic/systemerror/domain"
+	syserrentity "gct/internal/context/ops/generic/systemerror/domain/entity"
+	syserrrepo "gct/internal/context/ops/generic/systemerror/domain/repository"
 
 	"github.com/stretchr/testify/require"
 )
@@ -15,16 +16,16 @@ func TestListSystemErrorsHandler_Handle(t *testing.T) {
 	t.Parallel()
 
 	readRepo := &mockReadRepo{
-		views: []*domain.SystemErrorView{
-			{ID: domain.NewSystemErrorID(), Code: "ERR_1", Severity: "high", CreatedAt: time.Now()},
-			{ID: domain.NewSystemErrorID(), Code: "ERR_2", Severity: "low", CreatedAt: time.Now()},
+		views: []*syserrrepo.SystemErrorView{
+			{ID: syserrentity.NewSystemErrorID(), Code: "ERR_1", Severity: "high", CreatedAt: time.Now()},
+			{ID: syserrentity.NewSystemErrorID(), Code: "ERR_2", Severity: "low", CreatedAt: time.Now()},
 		},
 		total: 2,
 	}
 
 	handler := NewListSystemErrorsHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListSystemErrorsQuery{
-		Filter: domain.SystemErrorFilter{Limit: 10, Offset: 0},
+		Filter: syserrrepo.SystemErrorFilter{Limit: 10, Offset: 0},
 	})
 	require.NoError(t, err)
 	if result.Total != 2 {
@@ -41,11 +42,11 @@ func TestListSystemErrorsHandler_Handle(t *testing.T) {
 func TestListSystemErrorsHandler_Empty(t *testing.T) {
 	t.Parallel()
 
-	readRepo := &mockReadRepo{views: []*domain.SystemErrorView{}, total: 0}
+	readRepo := &mockReadRepo{views: []*syserrrepo.SystemErrorView{}, total: 0}
 
 	handler := NewListSystemErrorsHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListSystemErrorsQuery{
-		Filter: domain.SystemErrorFilter{},
+		Filter: syserrrepo.SystemErrorFilter{},
 	})
 	require.NoError(t, err)
 	if result.Total != 0 {
@@ -60,8 +61,8 @@ func TestListSystemErrorsHandler_WithFilters(t *testing.T) {
 	t.Parallel()
 
 	readRepo := &mockReadRepo{
-		views: []*domain.SystemErrorView{
-			{ID: domain.NewSystemErrorID(), Code: "ERR_500", Severity: "critical", IsResolved: false, CreatedAt: time.Now()},
+		views: []*syserrrepo.SystemErrorView{
+			{ID: syserrentity.NewSystemErrorID(), Code: "ERR_500", Severity: "critical", IsResolved: false, CreatedAt: time.Now()},
 		},
 		total: 1,
 	}
@@ -72,7 +73,7 @@ func TestListSystemErrorsHandler_WithFilters(t *testing.T) {
 	resolved := false
 
 	result, err := handler.Handle(context.Background(), ListSystemErrorsQuery{
-		Filter: domain.SystemErrorFilter{
+		Filter: syserrrepo.SystemErrorFilter{
 			Code:       &code,
 			Severity:   &severity,
 			IsResolved: &resolved,
@@ -90,7 +91,7 @@ func TestListSystemErrorsHandler_RepoError(t *testing.T) {
 
 	readRepo := &errorReadRepo{err: errRepo}
 	handler := NewListSystemErrorsHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), ListSystemErrorsQuery{Filter: domain.SystemErrorFilter{}})
+	_, err := handler.Handle(context.Background(), ListSystemErrorsQuery{Filter: syserrrepo.SystemErrorFilter{}})
 	if err == nil {
 		t.Fatal("expected error from repo")
 	}

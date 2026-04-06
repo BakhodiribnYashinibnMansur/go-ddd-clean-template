@@ -6,31 +6,33 @@ import (
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 
-	appdto "gct/internal/context/content/supporting/announcement/application"
-	"gct/internal/context/content/supporting/announcement/domain"
+	"gct/internal/context/content/supporting/announcement/application/dto"
+	announcerepo "gct/internal/context/content/supporting/announcement/domain/repository"
 	shared "gct/internal/kernel/domain"
 	"gct/internal/kernel/infrastructure/pgxutil"
+
+	"github.com/google/uuid"
 )
 
 // ListAnnouncementsQuery holds the input for listing announcements.
 type ListAnnouncementsQuery struct {
-	Filter domain.AnnouncementFilter
+	Filter announcerepo.AnnouncementFilter
 }
 
 // ListAnnouncementsResult holds the output of the list announcements query.
 type ListAnnouncementsResult struct {
-	Announcements []*appdto.AnnouncementView
+	Announcements []*dto.AnnouncementView
 	Total         int64
 }
 
 // ListAnnouncementsHandler handles the ListAnnouncementsQuery.
 type ListAnnouncementsHandler struct {
-	readRepo domain.AnnouncementReadRepository
+	readRepo announcerepo.AnnouncementReadRepository
 	logger   logger.Log
 }
 
 // NewListAnnouncementsHandler creates a new ListAnnouncementsHandler.
-func NewListAnnouncementsHandler(readRepo domain.AnnouncementReadRepository, l logger.Log) *ListAnnouncementsHandler {
+func NewListAnnouncementsHandler(readRepo announcerepo.AnnouncementReadRepository, l logger.Log) *ListAnnouncementsHandler {
 	return &ListAnnouncementsHandler{readRepo: readRepo, logger: l}
 }
 
@@ -46,7 +48,7 @@ func (h *ListAnnouncementsHandler) Handle(ctx context.Context, q ListAnnouncemen
 		return nil, apperrors.MapToServiceError(err)
 	}
 
-	items := make([]*appdto.AnnouncementView, len(views))
+	items := make([]*dto.AnnouncementView, len(views))
 	for i, v := range views {
 		items[i] = toAppView(v)
 	}
@@ -57,9 +59,9 @@ func (h *ListAnnouncementsHandler) Handle(ctx context.Context, q ListAnnouncemen
 	}, nil
 }
 
-func toAppView(v *domain.AnnouncementView) *appdto.AnnouncementView {
-	return &appdto.AnnouncementView{
-		ID:          v.ID,
+func toAppView(v *announcerepo.AnnouncementView) *dto.AnnouncementView {
+	return &dto.AnnouncementView{
+		ID:          uuid.UUID(v.ID),
 		Title:       shared.Lang{Uz: v.TitleUz, Ru: v.TitleRu, En: v.TitleEn},
 		Content:     shared.Lang{Uz: v.ContentUz, Ru: v.ContentRu, En: v.ContentEn},
 		Published:   v.Published,

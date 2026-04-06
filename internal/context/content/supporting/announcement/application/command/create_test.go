@@ -5,7 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/content/supporting/announcement/domain"
+	announceentity "gct/internal/context/content/supporting/announcement/domain/entity"
+	announcerepo "gct/internal/context/content/supporting/announcement/domain/repository"
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
@@ -15,35 +16,35 @@ import (
 // --- Mocks ---
 
 type mockAnnouncementRepo struct {
-	saved   *domain.Announcement
-	updated *domain.Announcement
-	deleted domain.AnnouncementID
-	findFn  func(ctx context.Context, id domain.AnnouncementID) (*domain.Announcement, error)
+	saved   *announceentity.Announcement
+	updated *announceentity.Announcement
+	deleted announceentity.AnnouncementID
+	findFn  func(ctx context.Context, id announceentity.AnnouncementID) (*announceentity.Announcement, error)
 }
 
-func (m *mockAnnouncementRepo) Save(_ context.Context, e *domain.Announcement) error {
+func (m *mockAnnouncementRepo) Save(_ context.Context, e *announceentity.Announcement) error {
 	m.saved = e
 	return nil
 }
 
-func (m *mockAnnouncementRepo) FindByID(ctx context.Context, id domain.AnnouncementID) (*domain.Announcement, error) {
+func (m *mockAnnouncementRepo) FindByID(ctx context.Context, id announceentity.AnnouncementID) (*announceentity.Announcement, error) {
 	if m.findFn != nil {
 		return m.findFn(ctx, id)
 	}
-	return nil, domain.ErrAnnouncementNotFound
+	return nil, announceentity.ErrAnnouncementNotFound
 }
 
-func (m *mockAnnouncementRepo) Update(_ context.Context, e *domain.Announcement) error {
+func (m *mockAnnouncementRepo) Update(_ context.Context, e *announceentity.Announcement) error {
 	m.updated = e
 	return nil
 }
 
-func (m *mockAnnouncementRepo) Delete(_ context.Context, id domain.AnnouncementID) error {
+func (m *mockAnnouncementRepo) Delete(_ context.Context, id announceentity.AnnouncementID) error {
 	m.deleted = id
 	return nil
 }
 
-func (m *mockAnnouncementRepo) List(_ context.Context, _ domain.AnnouncementFilter) ([]*domain.Announcement, int64, error) {
+func (m *mockAnnouncementRepo) List(_ context.Context, _ announcerepo.AnnouncementFilter) ([]*announceentity.Announcement, int64, error) {
 	return nil, 0, nil
 }
 

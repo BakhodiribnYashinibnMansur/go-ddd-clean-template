@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/context/iam/generic/user/domain"
+	userentity "gct/internal/context/iam/generic/user/domain/entity"
 
 	"github.com/stretchr/testify/require"
 )
@@ -14,11 +14,11 @@ func TestApproveUserHandler_Handle(t *testing.T) {
 
 	user := makeTestUser(t) // not approved by default
 	repo := &mockUserRepository{
-		findByIDFn: func(_ context.Context, id domain.UserID) (*domain.User, error) {
+		findByIDFn: func(_ context.Context, id userentity.UserID) (*userentity.User, error) {
 			if id == user.TypedID() {
 				return user, nil
 			}
-			return nil, domain.ErrUserNotFound
+			return nil, userentity.ErrUserNotFound
 		},
 	}
 	eventBus := &mockEventBus{}
@@ -26,7 +26,7 @@ func TestApproveUserHandler_Handle(t *testing.T) {
 
 	handler := NewApproveUserHandler(repo, eventBus, log)
 
-	err := handler.Handle(context.Background(), ApproveUserCommand{ID: domain.UserID(user.ID())})
+	err := handler.Handle(context.Background(), ApproveUserCommand{ID: userentity.UserID(user.ID())})
 	require.NoError(t, err)
 
 	if repo.updatedUser == nil {
@@ -57,7 +57,7 @@ func TestApproveUserHandler_NotFound(t *testing.T) {
 
 	handler := NewApproveUserHandler(repo, eventBus, log)
 
-	err := handler.Handle(context.Background(), ApproveUserCommand{ID: domain.NewUserID()})
+	err := handler.Handle(context.Background(), ApproveUserCommand{ID: userentity.NewUserID()})
 	if err == nil {
 		t.Fatal("expected error for non-existent user")
 	}

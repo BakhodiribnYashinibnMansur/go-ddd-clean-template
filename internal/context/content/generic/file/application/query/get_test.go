@@ -7,7 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/content/generic/file/domain"
+	fileentity "gct/internal/context/content/generic/file/domain/entity"
+	filerepo "gct/internal/context/content/generic/file/domain/repository"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -16,29 +17,29 @@ import (
 // --- Mocks ---
 
 type mockReadRepo struct {
-	view  *domain.FileView
-	views []*domain.FileView
+	view  *filerepo.FileView
+	views []*filerepo.FileView
 	total int64
 }
 
-func (m *mockReadRepo) FindByID(_ context.Context, id domain.FileID) (*domain.FileView, error) {
+func (m *mockReadRepo) FindByID(_ context.Context, id fileentity.FileID) (*filerepo.FileView, error) {
 	if m.view != nil && m.view.ID == id {
 		return m.view, nil
 	}
-	return nil, domain.ErrFileNotFound
+	return nil, fileentity.ErrFileNotFound
 }
 
-func (m *mockReadRepo) List(_ context.Context, _ domain.FileFilter) ([]*domain.FileView, int64, error) {
+func (m *mockReadRepo) List(_ context.Context, _ filerepo.FileFilter) ([]*filerepo.FileView, int64, error) {
 	return m.views, m.total, nil
 }
 
 type errorReadRepo struct{ err error }
 
-func (m *errorReadRepo) FindByID(_ context.Context, _ domain.FileID) (*domain.FileView, error) {
+func (m *errorReadRepo) FindByID(_ context.Context, _ fileentity.FileID) (*filerepo.FileView, error) {
 	return nil, m.err
 }
 
-func (m *errorReadRepo) List(_ context.Context, _ domain.FileFilter) ([]*domain.FileView, int64, error) {
+func (m *errorReadRepo) List(_ context.Context, _ filerepo.FileFilter) ([]*filerepo.FileView, int64, error) {
 	return nil, 0, m.err
 }
 
@@ -49,11 +50,11 @@ var errRepo = errors.New("repo failure")
 func TestGetFileHandler_Handle(t *testing.T) {
 	t.Parallel()
 
-	id := domain.NewFileID()
+	id := fileentity.NewFileID()
 	uploaderID := uuid.New()
 	now := time.Now()
 	readRepo := &mockReadRepo{
-		view: &domain.FileView{
+		view: &filerepo.FileView{
 			ID:           id,
 			Name:         "avatar.png",
 			OriginalName: "my-avatar.png",
@@ -91,7 +92,7 @@ func TestGetFileHandler_NotFound(t *testing.T) {
 
 	readRepo := &mockReadRepo{}
 	handler := NewGetFileHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), GetFileQuery{ID: domain.NewFileID()})
+	_, err := handler.Handle(context.Background(), GetFileQuery{ID: fileentity.NewFileID()})
 	if err == nil {
 		t.Fatal("expected error for not found")
 	}
@@ -102,7 +103,7 @@ func TestGetFileHandler_RepoError(t *testing.T) {
 
 	readRepo := &errorReadRepo{err: errRepo}
 	handler := NewGetFileHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), GetFileQuery{ID: domain.NewFileID()})
+	_, err := handler.Handle(context.Background(), GetFileQuery{ID: fileentity.NewFileID()})
 	if err == nil {
 		t.Fatal("expected error from repo")
 	}
@@ -111,12 +112,12 @@ func TestGetFileHandler_RepoError(t *testing.T) {
 func TestGetFileHandler_AllFieldsMapped(t *testing.T) {
 	t.Parallel()
 
-	id := domain.NewFileID()
+	id := fileentity.NewFileID()
 	uploaderID := uuid.New()
 	now := time.Now()
 
 	readRepo := &mockReadRepo{
-		view: &domain.FileView{
+		view: &filerepo.FileView{
 			ID:           id,
 			Name:         "report.pdf",
 			OriginalName: "annual-report.pdf",

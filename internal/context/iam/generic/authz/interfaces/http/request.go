@@ -1,7 +1,7 @@
 package http
 
 import (
-	"gct/internal/context/iam/generic/authz/domain"
+	authzentity "gct/internal/context/iam/generic/authz/domain/entity"
 )
 
 // CreateRoleRequest is the request DTO for creating a role.
@@ -19,21 +19,21 @@ type UpdateRoleRequest struct {
 // CreatePermissionRequest is the request DTO for creating a permission.
 type CreatePermissionRequest struct {
 	Name        string               `json:"name" binding:"required"`
-	ParentID    *domain.PermissionID `json:"parent_id,omitempty"`
+	ParentID    *authzentity.PermissionID `json:"parent_id,omitempty"`
 	Description *string              `json:"description,omitempty"`
 }
 
 // CreatePolicyRequest is the request DTO for creating a policy.
 type CreatePolicyRequest struct {
-	PermissionID domain.PermissionID `json:"permission_id" binding:"required"`
-	Effect       domain.PolicyEffect `json:"effect" binding:"required"`
+	PermissionID authzentity.PermissionID `json:"permission_id" binding:"required"`
+	Effect       authzentity.PolicyEffect `json:"effect" binding:"required"`
 	Priority     int                 `json:"priority"`
 	Conditions   map[string]any      `json:"conditions,omitempty"`
 }
 
 // UpdatePolicyRequest is the request DTO for updating a policy.
 type UpdatePolicyRequest struct {
-	Effect     *domain.PolicyEffect `json:"effect,omitempty"`
+	Effect     *authzentity.PolicyEffect `json:"effect,omitempty"`
 	Priority   *int                 `json:"priority,omitempty"`
 	Conditions map[string]any       `json:"conditions,omitempty"`
 }
@@ -52,7 +52,7 @@ type DeleteScopeRequest struct {
 
 // AssignPermissionRequest is the request DTO for assigning a permission to a role.
 type AssignPermissionRequest struct {
-	PermissionID domain.PermissionID `json:"permission_id" binding:"required"`
+	PermissionID authzentity.PermissionID `json:"permission_id" binding:"required"`
 }
 
 // AssignScopeRequest is the request DTO for assigning a scope to a permission.

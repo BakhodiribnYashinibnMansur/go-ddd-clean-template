@@ -6,10 +6,12 @@ import (
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 
-	appdto "gct/internal/context/iam/generic/authz/application"
-	"gct/internal/context/iam/generic/authz/domain"
+	"gct/internal/context/iam/generic/authz/application/dto"
+	authzrepo "gct/internal/context/iam/generic/authz/domain/repository"
 	shared "gct/internal/kernel/domain"
 	"gct/internal/kernel/infrastructure/pgxutil"
+
+	"github.com/google/uuid"
 )
 
 // ListPoliciesQuery holds the input for listing policies.
@@ -19,18 +21,18 @@ type ListPoliciesQuery struct {
 
 // ListPoliciesResult holds the output of the list policies query.
 type ListPoliciesResult struct {
-	Policies []*appdto.PolicyView
+	Policies []*dto.PolicyView
 	Total    int64
 }
 
 // ListPoliciesHandler handles the ListPoliciesQuery.
 type ListPoliciesHandler struct {
-	readRepo domain.AuthzReadRepository
+	readRepo authzrepo.AuthzReadRepository
 	logger   logger.Log
 }
 
 // NewListPoliciesHandler creates a new ListPoliciesHandler.
-func NewListPoliciesHandler(readRepo domain.AuthzReadRepository, l logger.Log) *ListPoliciesHandler {
+func NewListPoliciesHandler(readRepo authzrepo.AuthzReadRepository, l logger.Log) *ListPoliciesHandler {
 	return &ListPoliciesHandler{readRepo: readRepo, logger: l}
 }
 
@@ -46,11 +48,11 @@ func (h *ListPoliciesHandler) Handle(ctx context.Context, q ListPoliciesQuery) (
 		return nil, apperrors.MapToServiceError(err)
 	}
 
-	result := make([]*appdto.PolicyView, len(views))
+	result := make([]*dto.PolicyView, len(views))
 	for i, v := range views {
-		result[i] = &appdto.PolicyView{
-			ID:           v.ID,
-			PermissionID: v.PermissionID,
+		result[i] = &dto.PolicyView{
+			ID:           uuid.UUID(v.ID),
+			PermissionID: uuid.UUID(v.PermissionID),
 			Effect:       v.Effect,
 			Priority:     v.Priority,
 			Active:       v.Active,

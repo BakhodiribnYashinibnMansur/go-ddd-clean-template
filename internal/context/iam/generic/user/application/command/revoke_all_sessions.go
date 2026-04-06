@@ -3,7 +3,8 @@ package command
 import (
 	"context"
 
-	"gct/internal/context/iam/generic/user/domain"
+	userentity "gct/internal/context/iam/generic/user/domain/entity"
+	userrepo "gct/internal/context/iam/generic/user/domain/repository"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
@@ -12,19 +13,19 @@ import (
 
 // RevokeAllSessionsCommand holds the input for revoking all user sessions.
 type RevokeAllSessionsCommand struct {
-	UserID domain.UserID
+	UserID userentity.UserID
 }
 
 // RevokeAllSessionsHandler handles the RevokeAllSessionsCommand.
 type RevokeAllSessionsHandler struct {
-	repo     domain.UserRepository
+	repo     userrepo.UserRepository
 	eventBus application.EventBus
 	logger   commandLogger
 }
 
 // NewRevokeAllSessionsHandler creates a new RevokeAllSessionsHandler.
 func NewRevokeAllSessionsHandler(
-	repo domain.UserRepository,
+	repo userrepo.UserRepository,
 	eventBus application.EventBus,
 	logger commandLogger,
 ) *RevokeAllSessionsHandler {

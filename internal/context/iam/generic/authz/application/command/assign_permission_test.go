@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/context/iam/generic/authz/domain"
+	authzentity "gct/internal/context/iam/generic/authz/domain/entity"
 
 	"github.com/stretchr/testify/require"
 )
@@ -12,12 +12,12 @@ import (
 // --- Mock RolePermissionRepository ---
 
 type mockRolePermissionRepository struct {
-	assignedRoleID domain.RoleID
-	assignedPermID domain.PermissionID
-	assignFn       func(ctx context.Context, roleID domain.RoleID, permissionID domain.PermissionID) error
+	assignedRoleID authzentity.RoleID
+	assignedPermID authzentity.PermissionID
+	assignFn       func(ctx context.Context, roleID authzentity.RoleID, permissionID authzentity.PermissionID) error
 }
 
-func (m *mockRolePermissionRepository) Assign(ctx context.Context, roleID domain.RoleID, permissionID domain.PermissionID) error {
+func (m *mockRolePermissionRepository) Assign(ctx context.Context, roleID authzentity.RoleID, permissionID authzentity.PermissionID) error {
 	if m.assignFn != nil {
 		return m.assignFn(ctx, roleID, permissionID)
 	}
@@ -26,7 +26,7 @@ func (m *mockRolePermissionRepository) Assign(ctx context.Context, roleID domain
 	return nil
 }
 
-func (m *mockRolePermissionRepository) Revoke(ctx context.Context, roleID domain.RoleID, permissionID domain.PermissionID) error {
+func (m *mockRolePermissionRepository) Revoke(ctx context.Context, roleID authzentity.RoleID, permissionID authzentity.PermissionID) error {
 	return nil
 }
 
@@ -41,8 +41,8 @@ func TestAssignPermissionHandler_Success(t *testing.T) {
 
 	handler := NewAssignPermissionHandler(repo, eventBus, log)
 
-	roleID := domain.NewRoleID()
-	permID := domain.NewPermissionID()
+	roleID := authzentity.NewRoleID()
+	permID := authzentity.NewPermissionID()
 	cmd := AssignPermissionCommand{
 		RoleID:       roleID,
 		PermissionID: permID,

@@ -6,30 +6,32 @@ import (
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 
-	appdto "gct/internal/context/admin/supporting/dataexport/application"
-	"gct/internal/context/admin/supporting/dataexport/domain"
+	"gct/internal/context/admin/supporting/dataexport/application/dto"
+	exportrepo "gct/internal/context/admin/supporting/dataexport/domain/repository"
 	"gct/internal/kernel/infrastructure/pgxutil"
+
+	"github.com/google/uuid"
 )
 
 // ListDataExportsQuery holds the input for listing data exports with filtering.
 type ListDataExportsQuery struct {
-	Filter domain.DataExportFilter
+	Filter exportrepo.DataExportFilter
 }
 
 // ListDataExportsResult holds the output of the list data exports query.
 type ListDataExportsResult struct {
-	Exports []*appdto.DataExportView
+	Exports []*dto.DataExportView
 	Total   int64
 }
 
 // ListDataExportsHandler handles the ListDataExportsQuery.
 type ListDataExportsHandler struct {
-	readRepo domain.DataExportReadRepository
+	readRepo exportrepo.DataExportReadRepository
 	logger   logger.Log
 }
 
 // NewListDataExportsHandler creates a new ListDataExportsHandler.
-func NewListDataExportsHandler(readRepo domain.DataExportReadRepository, l logger.Log) *ListDataExportsHandler {
+func NewListDataExportsHandler(readRepo exportrepo.DataExportReadRepository, l logger.Log) *ListDataExportsHandler {
 	return &ListDataExportsHandler{readRepo: readRepo, logger: l}
 }
 
@@ -45,10 +47,10 @@ func (h *ListDataExportsHandler) Handle(ctx context.Context, q ListDataExportsQu
 		return nil, apperrors.MapToServiceError(err)
 	}
 
-	result := make([]*appdto.DataExportView, len(views))
+	result := make([]*dto.DataExportView, len(views))
 	for i, v := range views {
-		result[i] = &appdto.DataExportView{
-			ID:        v.ID,
+		result[i] = &dto.DataExportView{
+			ID:        uuid.UUID(v.ID),
 			UserID:    v.UserID,
 			DataType:  v.DataType,
 			Format:    v.Format,

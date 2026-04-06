@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/admin/supporting/integration/domain"
+	integentity "gct/internal/context/admin/supporting/integration/domain/entity"
 	"gct/internal/kernel/infrastructure/logger"
 
 	"github.com/stretchr/testify/assert"
@@ -16,24 +16,24 @@ import (
 // jwtResolverRepo is a recording mock implementing IntegrationReadRepository
 // with a programmable response for FindJWTByHash.
 type jwtResolverRepo struct {
-	view      *domain.JWTIntegrationView
+	view      *integentity.JWTIntegrationView
 	findErr   error
 	findCalls int
 }
 
-func (r *jwtResolverRepo) FindByID(_ context.Context, _ domain.IntegrationID) (*domain.IntegrationView, error) {
-	return nil, domain.ErrIntegrationNotFound
+func (r *jwtResolverRepo) FindByID(_ context.Context, _ integentity.IntegrationID) (*integentity.IntegrationView, error) {
+	return nil, integentity.ErrIntegrationNotFound
 }
-func (r *jwtResolverRepo) List(_ context.Context, _ domain.IntegrationFilter) ([]*domain.IntegrationView, int64, error) {
+func (r *jwtResolverRepo) List(_ context.Context, _ integentity.IntegrationFilter) ([]*integentity.IntegrationView, int64, error) {
 	return nil, 0, nil
 }
-func (r *jwtResolverRepo) FindByAPIKey(_ context.Context, _ string) (*domain.IntegrationAPIKeyView, error) {
-	return nil, domain.ErrIntegrationNotFound
+func (r *jwtResolverRepo) FindByAPIKey(_ context.Context, _ string) (*integentity.IntegrationAPIKeyView, error) {
+	return nil, integentity.ErrIntegrationNotFound
 }
-func (r *jwtResolverRepo) ListActiveJWT(_ context.Context) ([]domain.JWTIntegrationView, error) {
+func (r *jwtResolverRepo) ListActiveJWT(_ context.Context) ([]integentity.JWTIntegrationView, error) {
 	return nil, nil
 }
-func (r *jwtResolverRepo) FindJWTByHash(_ context.Context, _ []byte) (*domain.JWTIntegrationView, error) {
+func (r *jwtResolverRepo) FindJWTByHash(_ context.Context, _ []byte) (*integentity.JWTIntegrationView, error) {
 	r.findCalls++
 	if r.findErr != nil {
 		return nil, r.findErr
@@ -48,10 +48,10 @@ const (
 
 func TestResolveJWTAPIKeyHandler_HappyPath(t *testing.T) {
 	t.Parallel()
-	expected := &domain.JWTIntegrationView{
-		ID:          domain.NewIntegrationID(),
+	expected := &integentity.JWTIntegrationView{
+		ID:          integentity.NewIntegrationID(),
 		Name:        "stripe",
-		BindingMode: domain.BindingModeWarn,
+		BindingMode: integentity.BindingModeWarn,
 	}
 	repo := &jwtResolverRepo{view: expected}
 	h := NewResolveJWTAPIKeyHandler(repo, []byte("pepper-secret-000000"), 30*time.Second, logger.Noop())
@@ -64,7 +64,7 @@ func TestResolveJWTAPIKeyHandler_HappyPath(t *testing.T) {
 
 func TestResolveJWTAPIKeyHandler_CacheHit(t *testing.T) {
 	t.Parallel()
-	expected := &domain.JWTIntegrationView{ID: domain.NewIntegrationID(), Name: "cached"}
+	expected := &integentity.JWTIntegrationView{ID: integentity.NewIntegrationID(), Name: "cached"}
 	repo := &jwtResolverRepo{view: expected}
 	h := NewResolveJWTAPIKeyHandler(repo, []byte("pepper-secret-000000"), 30*time.Second, logger.Noop())
 
@@ -78,7 +78,7 @@ func TestResolveJWTAPIKeyHandler_CacheHit(t *testing.T) {
 
 func TestResolveJWTAPIKeyHandler_Invalidate(t *testing.T) {
 	t.Parallel()
-	expected := &domain.JWTIntegrationView{ID: domain.NewIntegrationID(), Name: "ephemeral"}
+	expected := &integentity.JWTIntegrationView{ID: integentity.NewIntegrationID(), Name: "ephemeral"}
 	repo := &jwtResolverRepo{view: expected}
 	h := NewResolveJWTAPIKeyHandler(repo, []byte("pepper-secret-000000"), 30*time.Second, logger.Noop())
 
@@ -91,12 +91,12 @@ func TestResolveJWTAPIKeyHandler_Invalidate(t *testing.T) {
 
 func TestResolveJWTAPIKeyHandler_WrongKeyReturnsNotFound(t *testing.T) {
 	t.Parallel()
-	repo := &jwtResolverRepo{findErr: domain.ErrIntegrationNotFound}
+	repo := &jwtResolverRepo{findErr: integentity.ErrIntegrationNotFound}
 	h := NewResolveJWTAPIKeyHandler(repo, []byte("pepper-secret-000000"), 30*time.Second, logger.Noop())
 
 	got, err := h.Handle(context.Background(), ResolveJWTAPIKeyQuery{PlainAPIKey: anotherPlaintext})
 	require.Error(t, err)
-	require.True(t, errors.Is(err, domain.ErrAPIKeyNotFound))
+	require.True(t, errors.Is(err, integentity.ErrAPIKeyNotFound))
 	assert.Nil(t, got)
 }
 
@@ -107,6 +107,6 @@ func TestResolveJWTAPIKeyHandler_RejectsShortKey(t *testing.T) {
 
 	_, err := h.Handle(context.Background(), ResolveJWTAPIKeyQuery{PlainAPIKey: "too-short"})
 	require.Error(t, err)
-	require.True(t, errors.Is(err, domain.ErrInvalidJWTAPIKey))
+	require.True(t, errors.Is(err, integentity.ErrInvalidJWTAPIKey))
 	assert.Equal(t, 0, repo.findCalls, "should not hit repo for invalid input")
 }

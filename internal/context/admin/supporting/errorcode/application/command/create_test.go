@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/context/admin/supporting/errorcode/domain"
+	errcodeentity "gct/internal/context/admin/supporting/errorcode/domain/entity"
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
@@ -14,30 +14,30 @@ import (
 // --- Mocks ---
 
 type mockErrorCodeRepo struct {
-	saved   *domain.ErrorCode
-	updated *domain.ErrorCode
-	deleted domain.ErrorCodeID
-	findFn  func(ctx context.Context, id domain.ErrorCodeID) (*domain.ErrorCode, error)
+	saved   *errcodeentity.ErrorCode
+	updated *errcodeentity.ErrorCode
+	deleted errcodeentity.ErrorCodeID
+	findFn  func(ctx context.Context, id errcodeentity.ErrorCodeID) (*errcodeentity.ErrorCode, error)
 }
 
-func (m *mockErrorCodeRepo) Save(_ context.Context, e *domain.ErrorCode) error {
+func (m *mockErrorCodeRepo) Save(_ context.Context, e *errcodeentity.ErrorCode) error {
 	m.saved = e
 	return nil
 }
 
-func (m *mockErrorCodeRepo) FindByID(ctx context.Context, id domain.ErrorCodeID) (*domain.ErrorCode, error) {
+func (m *mockErrorCodeRepo) FindByID(ctx context.Context, id errcodeentity.ErrorCodeID) (*errcodeentity.ErrorCode, error) {
 	if m.findFn != nil {
 		return m.findFn(ctx, id)
 	}
-	return nil, domain.ErrErrorCodeNotFound
+	return nil, errcodeentity.ErrErrorCodeNotFound
 }
 
-func (m *mockErrorCodeRepo) Update(_ context.Context, e *domain.ErrorCode) error {
+func (m *mockErrorCodeRepo) Update(_ context.Context, e *errcodeentity.ErrorCode) error {
 	m.updated = e
 	return nil
 }
 
-func (m *mockErrorCodeRepo) Delete(_ context.Context, id domain.ErrorCodeID) error {
+func (m *mockErrorCodeRepo) Delete(_ context.Context, id errcodeentity.ErrorCodeID) error {
 	m.deleted = id
 	return nil
 }

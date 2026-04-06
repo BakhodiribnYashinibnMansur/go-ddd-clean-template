@@ -3,7 +3,9 @@ package command
 import (
 	"context"
 
-	"gct/internal/context/iam/generic/authz/domain"
+	authzentity "gct/internal/context/iam/generic/authz/domain/entity"
+	authzrepo "gct/internal/context/iam/generic/authz/domain/repository"
+	authzevent "gct/internal/context/iam/generic/authz/domain/event"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
@@ -13,20 +15,20 @@ import (
 // DeleteRoleCommand represents an intent to permanently remove a role from the authorization system.
 // Callers must ensure no users are still assigned this role before deletion.
 type DeleteRoleCommand struct {
-	ID domain.RoleID
+	ID authzentity.RoleID
 }
 
 // DeleteRoleHandler performs hard deletion of a role and emits a RoleDeleted event.
 // The event enables downstream consumers (e.g., cache invalidation, user-role cleanup) to react accordingly.
 type DeleteRoleHandler struct {
-	repo     domain.RoleRepository
+	repo     authzrepo.RoleRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
 // NewDeleteRoleHandler wires dependencies for role deletion.
 func NewDeleteRoleHandler(
-	repo domain.RoleRepository,
+	repo authzrepo.RoleRepository,
 	eventBus application.EventBus,
 	logger logger.Log,
 ) *DeleteRoleHandler {
@@ -49,7 +51,7 @@ func (h *DeleteRoleHandler) Handle(ctx context.Context, cmd DeleteRoleCommand) (
 		return apperrors.MapToServiceError(err)
 	}
 
-	event := domain.NewRoleDeleted(cmd.ID.UUID())
+	event := authzevent.NewRoleDeleted(cmd.ID.UUID())
 	if err := h.eventBus.Publish(ctx, event); err != nil {
 		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "DeleteRole", Entity: "role", EntityID: cmd.ID, Err: err}.KV()...)
 	}

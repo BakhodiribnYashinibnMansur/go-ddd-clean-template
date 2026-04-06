@@ -4,7 +4,8 @@ import (
 	"context"
 	"time"
 
-	"gct/internal/context/ops/supporting/iprule/domain"
+	ipruleentity "gct/internal/context/ops/supporting/iprule/domain/entity"
+	iprulerepo "gct/internal/context/ops/supporting/iprule/domain/repository"
 	"gct/internal/kernel/consts"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -21,7 +22,7 @@ var writeColumns = []string{
 	"id", "ip_address", "type", "reason", "is_active", "created_at", "updated_at",
 }
 
-// IPRuleWriteRepo implements domain.IPRuleRepository using PostgreSQL.
+// IPRuleWriteRepo implements iprulerepo.IPRuleRepository using PostgreSQL.
 type IPRuleWriteRepo struct {
 	pool    *pgxpool.Pool
 	builder squirrel.StatementBuilderType
@@ -36,7 +37,7 @@ func NewIPRuleWriteRepo(pool *pgxpool.Pool) *IPRuleWriteRepo {
 }
 
 // Save inserts a new IPRule aggregate into the database.
-func (r *IPRuleWriteRepo) Save(ctx context.Context, rule *domain.IPRule) (err error) {
+func (r *IPRuleWriteRepo) Save(ctx context.Context, rule *ipruleentity.IPRule) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "IPRuleWriteRepo.Save")
 	defer func() { end(err) }()
 
@@ -60,7 +61,7 @@ func (r *IPRuleWriteRepo) Save(ctx context.Context, rule *domain.IPRule) (err er
 }
 
 // FindByID retrieves an IPRule aggregate by its ID.
-func (r *IPRuleWriteRepo) FindByID(ctx context.Context, id domain.IPRuleID) (result *domain.IPRule, err error) {
+func (r *IPRuleWriteRepo) FindByID(ctx context.Context, id ipruleentity.IPRuleID) (result *ipruleentity.IPRule, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "IPRuleWriteRepo.FindByID")
 	defer func() { end(err) }()
 
@@ -78,7 +79,7 @@ func (r *IPRuleWriteRepo) FindByID(ctx context.Context, id domain.IPRuleID) (res
 }
 
 // Update updates an existing IPRule aggregate in the database.
-func (r *IPRuleWriteRepo) Update(ctx context.Context, rule *domain.IPRule) (err error) {
+func (r *IPRuleWriteRepo) Update(ctx context.Context, rule *ipruleentity.IPRule) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "IPRuleWriteRepo.Update")
 	defer func() { end(err) }()
 
@@ -102,7 +103,7 @@ func (r *IPRuleWriteRepo) Update(ctx context.Context, rule *domain.IPRule) (err 
 }
 
 // Delete removes an IPRule by its ID.
-func (r *IPRuleWriteRepo) Delete(ctx context.Context, id domain.IPRuleID) (err error) {
+func (r *IPRuleWriteRepo) Delete(ctx context.Context, id ipruleentity.IPRuleID) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "IPRuleWriteRepo.Delete")
 	defer func() { end(err) }()
 
@@ -122,7 +123,7 @@ func (r *IPRuleWriteRepo) Delete(ctx context.Context, id domain.IPRuleID) (err e
 }
 
 // List retrieves a paginated list of IPRule aggregates with optional filters.
-func (r *IPRuleWriteRepo) List(ctx context.Context, filter domain.IPRuleFilter) (results []*domain.IPRule, total int64, err error) {
+func (r *IPRuleWriteRepo) List(ctx context.Context, filter iprulerepo.IPRuleFilter) (results []*ipruleentity.IPRule, total int64, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "IPRuleWriteRepo.List")
 	defer func() { end(err) }()
 
@@ -183,7 +184,7 @@ func (r *IPRuleWriteRepo) List(ctx context.Context, filter domain.IPRuleFilter) 
 // Helpers
 // ---------------------------------------------------------------------------
 
-func applyFilters(conds squirrel.And, filter domain.IPRuleFilter) squirrel.And {
+func applyFilters(conds squirrel.And, filter iprulerepo.IPRuleFilter) squirrel.And {
 	if filter.IPAddress != nil {
 		conds = append(conds, squirrel.Eq{"ip_address": *filter.IPAddress})
 	}
@@ -193,7 +194,7 @@ func applyFilters(conds squirrel.And, filter domain.IPRuleFilter) squirrel.And {
 	return conds
 }
 
-func scanIPRule(row pgx.Row) (*domain.IPRule, error) {
+func scanIPRule(row pgx.Row) (*ipruleentity.IPRule, error) {
 	var (
 		id        uuid.UUID
 		ipAddress string
@@ -211,10 +212,10 @@ func scanIPRule(row pgx.Row) (*domain.IPRule, error) {
 
 	_ = isActive
 
-	return domain.ReconstructIPRule(id, createdAt, updatedAt, ipAddress, ruleType, reason, nil), nil
+	return ipruleentity.ReconstructIPRule(id, createdAt, updatedAt, ipAddress, ruleType, reason, nil), nil
 }
 
-func scanIPRuleFromRows(rows pgx.Rows) (*domain.IPRule, error) {
+func scanIPRuleFromRows(rows pgx.Rows) (*ipruleentity.IPRule, error) {
 	var (
 		id        uuid.UUID
 		ipAddress string
@@ -232,5 +233,5 @@ func scanIPRuleFromRows(rows pgx.Rows) (*domain.IPRule, error) {
 
 	_ = isActive
 
-	return domain.ReconstructIPRule(id, createdAt, updatedAt, ipAddress, ruleType, reason, nil), nil
+	return ipruleentity.ReconstructIPRule(id, createdAt, updatedAt, ipAddress, ruleType, reason, nil), nil
 }

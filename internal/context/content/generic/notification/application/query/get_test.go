@@ -7,7 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/content/generic/notification/domain"
+	notifentity "gct/internal/context/content/generic/notification/domain/entity"
+	notifrepo "gct/internal/context/content/generic/notification/domain/repository"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -16,29 +17,29 @@ import (
 // --- Mocks ---
 
 type mockReadRepo struct {
-	view  *domain.NotificationView
-	views []*domain.NotificationView
+	view  *notifrepo.NotificationView
+	views []*notifrepo.NotificationView
 	total int64
 }
 
-func (m *mockReadRepo) FindByID(_ context.Context, id domain.NotificationID) (*domain.NotificationView, error) {
+func (m *mockReadRepo) FindByID(_ context.Context, id notifentity.NotificationID) (*notifrepo.NotificationView, error) {
 	if m.view != nil && m.view.ID == id {
 		return m.view, nil
 	}
-	return nil, domain.ErrNotificationNotFound
+	return nil, notifentity.ErrNotificationNotFound
 }
 
-func (m *mockReadRepo) List(_ context.Context, _ domain.NotificationFilter) ([]*domain.NotificationView, int64, error) {
+func (m *mockReadRepo) List(_ context.Context, _ notifrepo.NotificationFilter) ([]*notifrepo.NotificationView, int64, error) {
 	return m.views, m.total, nil
 }
 
 type errorReadRepo struct{ err error }
 
-func (m *errorReadRepo) FindByID(_ context.Context, _ domain.NotificationID) (*domain.NotificationView, error) {
+func (m *errorReadRepo) FindByID(_ context.Context, _ notifentity.NotificationID) (*notifrepo.NotificationView, error) {
 	return nil, m.err
 }
 
-func (m *errorReadRepo) List(_ context.Context, _ domain.NotificationFilter) ([]*domain.NotificationView, int64, error) {
+func (m *errorReadRepo) List(_ context.Context, _ notifrepo.NotificationFilter) ([]*notifrepo.NotificationView, int64, error) {
 	return nil, 0, m.err
 }
 
@@ -49,11 +50,11 @@ var errRepo = errors.New("repo failure")
 func TestGetHandler_Handle(t *testing.T) {
 	t.Parallel()
 
-	id := domain.NewNotificationID()
+	id := notifentity.NewNotificationID()
 	userID := uuid.New()
 	now := time.Now()
 	readRepo := &mockReadRepo{
-		view: &domain.NotificationView{
+		view: &notifrepo.NotificationView{
 			ID:        id,
 			UserID:    userID,
 			Title:     "Test Notification",
@@ -85,7 +86,7 @@ func TestGetHandler_NotFound(t *testing.T) {
 
 	readRepo := &mockReadRepo{}
 	handler := NewGetHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), GetQuery{ID: domain.NewNotificationID()})
+	_, err := handler.Handle(context.Background(), GetQuery{ID: notifentity.NewNotificationID()})
 	if err == nil {
 		t.Fatal("expected error for not found")
 	}
@@ -96,7 +97,7 @@ func TestGetHandler_RepoError(t *testing.T) {
 
 	readRepo := &errorReadRepo{err: errRepo}
 	handler := NewGetHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), GetQuery{ID: domain.NewNotificationID()})
+	_, err := handler.Handle(context.Background(), GetQuery{ID: notifentity.NewNotificationID()})
 	if err == nil {
 		t.Fatal("expected error from repo")
 	}
@@ -105,13 +106,13 @@ func TestGetHandler_RepoError(t *testing.T) {
 func TestGetHandler_AllFieldsMapped(t *testing.T) {
 	t.Parallel()
 
-	id := domain.NewNotificationID()
+	id := notifentity.NewNotificationID()
 	userID := uuid.New()
 	now := time.Now()
 	readAt := time.Now()
 
 	readRepo := &mockReadRepo{
-		view: &domain.NotificationView{
+		view: &notifrepo.NotificationView{
 			ID:        id,
 			UserID:    userID,
 			Title:     "Alert",

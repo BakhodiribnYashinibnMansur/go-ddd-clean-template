@@ -3,7 +3,8 @@ package command
 import (
 	"context"
 
-	"gct/internal/context/content/generic/translation/domain"
+	translationentity "gct/internal/context/content/generic/translation/domain/entity"
+	translationrepo "gct/internal/context/content/generic/translation/domain/repository"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
@@ -22,14 +23,14 @@ type CreateTranslationCommand struct {
 // CreateTranslationHandler orchestrates translation creation and domain event publication.
 // Event bus failures are logged but do not roll back the persisted translation.
 type CreateTranslationHandler struct {
-	repo     domain.TranslationRepository
+	repo     translationrepo.TranslationRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
 // NewCreateTranslationHandler creates a new CreateTranslationHandler.
 func NewCreateTranslationHandler(
-	repo domain.TranslationRepository,
+	repo translationrepo.TranslationRepository,
 	eventBus application.EventBus,
 	logger logger.Log,
 ) *CreateTranslationHandler {
@@ -47,7 +48,7 @@ func (h *CreateTranslationHandler) Handle(ctx context.Context, cmd CreateTransla
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "CreateTranslation", "translation")()
 
-	t := domain.NewTranslation(cmd.Key, cmd.Language, cmd.Value, cmd.Group)
+	t := translationentity.NewTranslation(cmd.Key, cmd.Language, cmd.Value, cmd.Group)
 
 	if err := h.repo.Save(ctx, t); err != nil {
 		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateTranslation", Entity: "translation", Err: err}.KV()...)

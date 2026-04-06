@@ -3,7 +3,8 @@ package command
 import (
 	"context"
 
-	"gct/internal/context/iam/generic/authz/domain"
+	authzentity "gct/internal/context/iam/generic/authz/domain/entity"
+	authzrepo "gct/internal/context/iam/generic/authz/domain/repository"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -12,8 +13,8 @@ import (
 // CreatePolicyCommand represents an intent to create an authorization policy binding a permission to an effect.
 // Priority determines evaluation order when multiple policies match; Conditions enable attribute-based access control (ABAC).
 type CreatePolicyCommand struct {
-	PermissionID domain.PermissionID
-	Effect       domain.PolicyEffect
+	PermissionID authzentity.PermissionID
+	Effect       authzentity.PolicyEffect
 	Priority     int
 	Conditions   map[string]any
 }
@@ -21,13 +22,13 @@ type CreatePolicyCommand struct {
 // CreatePolicyHandler persists new authorization policies via the repository.
 // No domain events are emitted — policy evaluation relies on direct repository reads.
 type CreatePolicyHandler struct {
-	repo   domain.PolicyRepository
+	repo   authzrepo.PolicyRepository
 	logger logger.Log
 }
 
 // NewCreatePolicyHandler wires dependencies for policy creation.
 func NewCreatePolicyHandler(
-	repo domain.PolicyRepository,
+	repo authzrepo.PolicyRepository,
 	logger logger.Log,
 ) *CreatePolicyHandler {
 	return &CreatePolicyHandler{
@@ -43,7 +44,7 @@ func (h *CreatePolicyHandler) Handle(ctx context.Context, cmd CreatePolicyComman
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "CreatePolicy", "policy")()
 
-	policy := domain.NewPolicy(cmd.PermissionID.UUID(), cmd.Effect)
+	policy := authzentity.NewPolicy(cmd.PermissionID.UUID(), cmd.Effect)
 	policy.SetPriority(cmd.Priority)
 	if cmd.Conditions != nil {
 		policy.SetConditions(cmd.Conditions)

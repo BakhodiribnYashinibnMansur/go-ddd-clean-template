@@ -3,7 +3,8 @@ package command
 import (
 	"context"
 
-	"gct/internal/context/content/generic/notification/domain"
+	notifentity "gct/internal/context/content/generic/notification/domain/entity"
+	notifrepo "gct/internal/context/content/generic/notification/domain/repository"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
@@ -12,19 +13,19 @@ import (
 
 // DeleteCommand holds the input for deleting a notification.
 type DeleteCommand struct {
-	ID domain.NotificationID
+	ID notifentity.NotificationID
 }
 
 // DeleteHandler handles the DeleteCommand.
 type DeleteHandler struct {
-	repo     domain.NotificationRepository
+	repo     notifrepo.NotificationRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
 // NewDeleteHandler creates a new DeleteHandler.
 func NewDeleteHandler(
-	repo domain.NotificationRepository,
+	repo notifrepo.NotificationRepository,
 	eventBus application.EventBus,
 	logger logger.Log,
 ) *DeleteHandler {

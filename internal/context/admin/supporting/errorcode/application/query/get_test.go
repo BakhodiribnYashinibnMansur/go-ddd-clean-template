@@ -7,7 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/admin/supporting/errorcode/domain"
+	errcodeentity "gct/internal/context/admin/supporting/errorcode/domain/entity"
+	errcoderepo "gct/internal/context/admin/supporting/errorcode/domain/repository"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -16,29 +17,29 @@ import (
 // --- Mocks ---
 
 type mockReadRepo struct {
-	view  *domain.ErrorCodeView
-	views []*domain.ErrorCodeView
+	view  *errcoderepo.ErrorCodeView
+	views []*errcoderepo.ErrorCodeView
 	total int64
 }
 
-func (m *mockReadRepo) FindByID(_ context.Context, id domain.ErrorCodeID) (*domain.ErrorCodeView, error) {
+func (m *mockReadRepo) FindByID(_ context.Context, id errcodeentity.ErrorCodeID) (*errcoderepo.ErrorCodeView, error) {
 	if m.view != nil && m.view.ID == id {
 		return m.view, nil
 	}
-	return nil, domain.ErrErrorCodeNotFound
+	return nil, errcodeentity.ErrErrorCodeNotFound
 }
 
-func (m *mockReadRepo) List(_ context.Context, _ domain.ErrorCodeFilter) ([]*domain.ErrorCodeView, int64, error) {
+func (m *mockReadRepo) List(_ context.Context, _ errcoderepo.ErrorCodeFilter) ([]*errcoderepo.ErrorCodeView, int64, error) {
 	return m.views, m.total, nil
 }
 
 type errorReadRepo struct{ err error }
 
-func (m *errorReadRepo) FindByID(_ context.Context, _ domain.ErrorCodeID) (*domain.ErrorCodeView, error) {
+func (m *errorReadRepo) FindByID(_ context.Context, _ errcodeentity.ErrorCodeID) (*errcoderepo.ErrorCodeView, error) {
 	return nil, m.err
 }
 
-func (m *errorReadRepo) List(_ context.Context, _ domain.ErrorCodeFilter) ([]*domain.ErrorCodeView, int64, error) {
+func (m *errorReadRepo) List(_ context.Context, _ errcoderepo.ErrorCodeFilter) ([]*errcoderepo.ErrorCodeView, int64, error) {
 	return nil, 0, m.err
 }
 
@@ -49,10 +50,10 @@ var errRepo = errors.New("repo failure")
 func TestGetErrorCodeHandler_Handle(t *testing.T) {
 	t.Parallel()
 
-	id := domain.NewErrorCodeID()
+	id := errcodeentity.NewErrorCodeID()
 	now := time.Now()
 	readRepo := &mockReadRepo{
-		view: &domain.ErrorCodeView{
+		view: &errcoderepo.ErrorCodeView{
 			ID:         id,
 			Code:       "AUTH_001",
 			Message:    "unauthorized",
@@ -68,7 +69,7 @@ func TestGetErrorCodeHandler_Handle(t *testing.T) {
 	}
 
 	handler := NewGetErrorCodeHandler(readRepo, logger.Noop())
-	result, err := handler.Handle(context.Background(), GetErrorCodeQuery{ID: domain.ErrorCodeID(id)})
+	result, err := handler.Handle(context.Background(), GetErrorCodeQuery{ID: errcodeentity.ErrorCodeID(id)})
 	require.NoError(t, err)
 	if result == nil {
 		t.Fatal("expected result")
@@ -89,7 +90,7 @@ func TestGetErrorCodeHandler_NotFound(t *testing.T) {
 
 	readRepo := &mockReadRepo{}
 	handler := NewGetErrorCodeHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), GetErrorCodeQuery{ID: domain.ErrorCodeID(uuid.New())})
+	_, err := handler.Handle(context.Background(), GetErrorCodeQuery{ID: errcodeentity.ErrorCodeID(uuid.New())})
 	if err == nil {
 		t.Fatal("expected error for not found")
 	}
@@ -100,7 +101,7 @@ func TestGetErrorCodeHandler_RepoError(t *testing.T) {
 
 	readRepo := &errorReadRepo{err: errRepo}
 	handler := NewGetErrorCodeHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), GetErrorCodeQuery{ID: domain.ErrorCodeID(uuid.New())})
+	_, err := handler.Handle(context.Background(), GetErrorCodeQuery{ID: errcodeentity.ErrorCodeID(uuid.New())})
 	if err == nil {
 		t.Fatal("expected error from repo")
 	}
@@ -109,10 +110,10 @@ func TestGetErrorCodeHandler_RepoError(t *testing.T) {
 func TestGetErrorCodeHandler_AllFieldsMapped(t *testing.T) {
 	t.Parallel()
 
-	id := domain.NewErrorCodeID()
+	id := errcodeentity.NewErrorCodeID()
 	now := time.Now()
 	readRepo := &mockReadRepo{
-		view: &domain.ErrorCodeView{
+		view: &errcoderepo.ErrorCodeView{
 			ID:         id,
 			Code:       "DB_001",
 			Message:    "connection failed",
@@ -128,7 +129,7 @@ func TestGetErrorCodeHandler_AllFieldsMapped(t *testing.T) {
 	}
 
 	handler := NewGetErrorCodeHandler(readRepo, logger.Noop())
-	result, err := handler.Handle(context.Background(), GetErrorCodeQuery{ID: domain.ErrorCodeID(id)})
+	result, err := handler.Handle(context.Background(), GetErrorCodeQuery{ID: errcodeentity.ErrorCodeID(id)})
 	require.NoError(t, err)
 	if !result.Retryable {
 		t.Error("expected retryable true")

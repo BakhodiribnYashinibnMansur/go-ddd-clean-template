@@ -3,7 +3,8 @@ package command
 import (
 	"context"
 
-	"gct/internal/context/admin/supporting/sitesetting/domain"
+	siteentity "gct/internal/context/admin/supporting/sitesetting/domain/entity"
+	siterepo "gct/internal/context/admin/supporting/sitesetting/domain/repository"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -12,19 +13,19 @@ import (
 // DeleteSiteSettingCommand represents an intent to permanently remove a site setting.
 // Once deleted, any feature relying on this setting will fall back to its default behavior.
 type DeleteSiteSettingCommand struct {
-	ID domain.SiteSettingID
+	ID siteentity.SiteSettingID
 }
 
 // DeleteSiteSettingHandler performs hard-delete of site settings through the repository.
 // No domain events are emitted — callers needing audit trails should handle that separately.
 type DeleteSiteSettingHandler struct {
-	repo   domain.SiteSettingRepository
+	repo   siterepo.SiteSettingRepository
 	logger logger.Log
 }
 
 // NewDeleteSiteSettingHandler creates a new DeleteSiteSettingHandler.
 func NewDeleteSiteSettingHandler(
-	repo domain.SiteSettingRepository,
+	repo siterepo.SiteSettingRepository,
 	logger logger.Log,
 ) *DeleteSiteSettingHandler {
 	return &DeleteSiteSettingHandler{

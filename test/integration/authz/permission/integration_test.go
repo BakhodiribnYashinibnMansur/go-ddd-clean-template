@@ -7,7 +7,7 @@ import (
 	"gct/internal/context/iam/generic/authz"
 	"gct/internal/context/iam/generic/authz/application/command"
 	"gct/internal/context/iam/generic/authz/application/query"
-	"gct/internal/context/iam/generic/authz/domain"
+	authzentity "gct/internal/context/iam/generic/authz/domain/entity"
 	shared "gct/internal/kernel/domain"
 	"gct/internal/kernel/infrastructure/eventbus"
 	"gct/internal/kernel/infrastructure/logger"
@@ -64,7 +64,7 @@ func TestIntegration_HierarchicalPermission(t *testing.T) {
 	list, _ := bc.ListPermissions.Handle(ctx, query.ListPermissionsQuery{
 		Pagination: shared.Pagination{Limit: 10},
 	})
-	parentID := domain.PermissionID(list.Permissions[0].ID)
+	parentID := authzentity.PermissionID(list.Permissions[0].ID)
 
 	err = bc.CreatePermission.Handle(ctx, command.CreatePermissionCommand{
 		Name:     "articles.write",
@@ -95,7 +95,7 @@ func TestIntegration_DeletePermission(t *testing.T) {
 	list, _ := bc.ListPermissions.Handle(ctx, query.ListPermissionsQuery{
 		Pagination: shared.Pagination{Limit: 10},
 	})
-	permID := domain.PermissionID(list.Permissions[0].ID)
+	permID := authzentity.PermissionID(list.Permissions[0].ID)
 
 	err = bc.DeletePermission.Handle(ctx, command.DeletePermissionCommand{ID: permID})
 	if err != nil {

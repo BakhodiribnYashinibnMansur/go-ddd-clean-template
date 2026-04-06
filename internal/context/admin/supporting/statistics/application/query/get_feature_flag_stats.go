@@ -3,7 +3,7 @@ package query
 import (
 	"context"
 
-	appdto "gct/internal/context/admin/supporting/statistics/application"
+	"gct/internal/context/admin/supporting/statistics/application/dto"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -24,7 +24,7 @@ func NewGetFeatureFlagStatsHandler(repo StatisticsReadRepository, l logger.Log) 
 }
 
 // Handle executes the GetFeatureFlagStatsQuery and returns a FeatureFlagStatsView.
-func (h *GetFeatureFlagStatsHandler) Handle(ctx context.Context, _ GetFeatureFlagStatsQuery) (_ *appdto.FeatureFlagStatsView, err error) {
+func (h *GetFeatureFlagStatsHandler) Handle(ctx context.Context, _ GetFeatureFlagStatsQuery) (_ *dto.FeatureFlagStatsView, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "GetFeatureFlagStatsHandler.Handle")
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.l, ctx, "GetFeatureFlagStats", "statistics")()

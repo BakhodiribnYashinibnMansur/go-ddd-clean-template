@@ -6,7 +6,8 @@ import (
 	"gct/internal/context/admin/supporting/sitesetting"
 	"gct/internal/context/admin/supporting/sitesetting/application/command"
 	"gct/internal/context/admin/supporting/sitesetting/application/query"
-	"gct/internal/context/admin/supporting/sitesetting/domain"
+	siteentity "gct/internal/context/admin/supporting/sitesetting/domain/entity"
+	siterepo "gct/internal/context/admin/supporting/sitesetting/domain/repository"
 	"gct/internal/kernel/infrastructure/httpx"
 	"gct/internal/kernel/infrastructure/httpx/response"
 	"gct/internal/kernel/infrastructure/logger"
@@ -77,7 +78,7 @@ func (h *Handler) List(ctx *gin.Context) {
 	}
 
 	q := query.ListSiteSettingsQuery{
-		Filter: domain.SiteSettingFilter{Limit: pg.Limit, Offset: pg.Offset},
+		Filter: siterepo.SiteSettingFilter{Limit: pg.Limit, Offset: pg.Offset},
 	}
 	result, err := h.bc.ListSiteSettings.Handle(ctx.Request.Context(), q)
 	if err != nil {
@@ -101,7 +102,7 @@ func (h *Handler) List(ctx *gin.Context) {
 // @Router /site-settings/{id} [get]
 // Get returns a single site setting by ID.
 func (h *Handler) Get(ctx *gin.Context) {
-	id, err := domain.ParseSiteSettingID(ctx.Param("id"))
+	id, err := siteentity.ParseSiteSettingID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
@@ -129,7 +130,7 @@ func (h *Handler) Get(ctx *gin.Context) {
 // @Router /site-settings/{id} [patch]
 // Update updates a site setting.
 func (h *Handler) Update(ctx *gin.Context) {
-	id, err := domain.ParseSiteSettingID(ctx.Param("id"))
+	id, err := siteentity.ParseSiteSettingID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
@@ -167,7 +168,7 @@ func (h *Handler) Update(ctx *gin.Context) {
 // @Router /site-settings/{id} [delete]
 // Delete deletes a site setting.
 func (h *Handler) Delete(ctx *gin.Context) {
-	id, err := domain.ParseSiteSettingID(ctx.Param("id"))
+	id, err := siteentity.ParseSiteSettingID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return

@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"gct/internal/context/content/supporting/announcement/domain"
+	announceentity "gct/internal/context/content/supporting/announcement/domain/entity"
+	announcerepo "gct/internal/context/content/supporting/announcement/domain/repository"
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
@@ -27,14 +28,14 @@ type CreateAnnouncementCommand struct {
 // CreateAnnouncementHandler orchestrates announcement creation through the repository layer.
 // It emits domain events after a successful save; event publish failures are logged but do not roll back the save.
 type CreateAnnouncementHandler struct {
-	repo     domain.AnnouncementRepository
+	repo     announcerepo.AnnouncementRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
 // NewCreateAnnouncementHandler wires dependencies for announcement creation.
 func NewCreateAnnouncementHandler(
-	repo domain.AnnouncementRepository,
+	repo announcerepo.AnnouncementRepository,
 	eventBus application.EventBus,
 	logger logger.Log,
 ) *CreateAnnouncementHandler {
@@ -52,7 +53,7 @@ func (h *CreateAnnouncementHandler) Handle(ctx context.Context, cmd CreateAnnoun
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "CreateAnnouncement", "announcement")()
 
-	a, err := domain.NewAnnouncement(cmd.Title, cmd.Content, cmd.Priority, cmd.StartDate, cmd.EndDate)
+	a, err := announceentity.NewAnnouncement(cmd.Title, cmd.Content, cmd.Priority, cmd.StartDate, cmd.EndDate)
 	if err != nil {
 		return fmt.Errorf("create_announcement: %w", err)
 	}

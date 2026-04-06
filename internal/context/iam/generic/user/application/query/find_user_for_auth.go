@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"gct/internal/context/iam/generic/user/domain"
+	userentity "gct/internal/context/iam/generic/user/domain/entity"
+	userrepo "gct/internal/context/iam/generic/user/domain/repository"
 	shared "gct/internal/kernel/domain"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -12,17 +13,17 @@ import (
 
 // FindUserForAuthQuery holds the input for fetching minimal user data for auth.
 type FindUserForAuthQuery struct {
-	UserID domain.UserID
+	UserID userentity.UserID
 }
 
 // FindUserForAuthHandler handles the FindUserForAuthQuery.
 type FindUserForAuthHandler struct {
-	readRepo domain.UserReadRepository
+	readRepo userrepo.UserReadRepository
 	logger   queryLogger
 }
 
 // NewFindUserForAuthHandler creates a new FindUserForAuthHandler.
-func NewFindUserForAuthHandler(readRepo domain.UserReadRepository, l logger.Log) *FindUserForAuthHandler {
+func NewFindUserForAuthHandler(readRepo userrepo.UserReadRepository, l logger.Log) *FindUserForAuthHandler {
 	return &FindUserForAuthHandler{readRepo: readRepo, logger: l}
 }
 

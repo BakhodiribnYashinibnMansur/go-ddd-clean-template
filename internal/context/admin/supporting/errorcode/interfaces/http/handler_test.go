@@ -12,7 +12,8 @@ import (
 	"gct/internal/context/admin/supporting/errorcode"
 	"gct/internal/context/admin/supporting/errorcode/application/command"
 	"gct/internal/context/admin/supporting/errorcode/application/query"
-	"gct/internal/context/admin/supporting/errorcode/domain"
+	errcodeentity "gct/internal/context/admin/supporting/errorcode/domain/entity"
+	errcoderepo "gct/internal/context/admin/supporting/errorcode/domain/repository"
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
@@ -23,44 +24,44 @@ import (
 // --- Mocks ---
 
 type mockRepo struct {
-	saved   *domain.ErrorCode
-	updated *domain.ErrorCode
-	deleted domain.ErrorCodeID
-	findFn  func(ctx context.Context, id domain.ErrorCodeID) (*domain.ErrorCode, error)
+	saved   *errcodeentity.ErrorCode
+	updated *errcodeentity.ErrorCode
+	deleted errcodeentity.ErrorCodeID
+	findFn  func(ctx context.Context, id errcodeentity.ErrorCodeID) (*errcodeentity.ErrorCode, error)
 }
 
-func (m *mockRepo) Save(_ context.Context, e *domain.ErrorCode) error {
+func (m *mockRepo) Save(_ context.Context, e *errcodeentity.ErrorCode) error {
 	m.saved = e
 	return nil
 }
-func (m *mockRepo) FindByID(ctx context.Context, id domain.ErrorCodeID) (*domain.ErrorCode, error) {
+func (m *mockRepo) FindByID(ctx context.Context, id errcodeentity.ErrorCodeID) (*errcodeentity.ErrorCode, error) {
 	if m.findFn != nil {
 		return m.findFn(ctx, id)
 	}
-	return nil, domain.ErrErrorCodeNotFound
+	return nil, errcodeentity.ErrErrorCodeNotFound
 }
-func (m *mockRepo) Update(_ context.Context, e *domain.ErrorCode) error {
+func (m *mockRepo) Update(_ context.Context, e *errcodeentity.ErrorCode) error {
 	m.updated = e
 	return nil
 }
-func (m *mockRepo) Delete(_ context.Context, id domain.ErrorCodeID) error {
+func (m *mockRepo) Delete(_ context.Context, id errcodeentity.ErrorCodeID) error {
 	m.deleted = id
 	return nil
 }
 
 type mockReadRepo struct {
-	view  *domain.ErrorCodeView
-	views []*domain.ErrorCodeView
+	view  *errcoderepo.ErrorCodeView
+	views []*errcoderepo.ErrorCodeView
 	total int64
 }
 
-func (m *mockReadRepo) FindByID(_ context.Context, id domain.ErrorCodeID) (*domain.ErrorCodeView, error) {
+func (m *mockReadRepo) FindByID(_ context.Context, id errcodeentity.ErrorCodeID) (*errcoderepo.ErrorCodeView, error) {
 	if m.view != nil && m.view.ID == id {
 		return m.view, nil
 	}
-	return nil, domain.ErrErrorCodeNotFound
+	return nil, errcodeentity.ErrErrorCodeNotFound
 }
-func (m *mockReadRepo) List(_ context.Context, _ domain.ErrorCodeFilter) ([]*domain.ErrorCodeView, int64, error) {
+func (m *mockReadRepo) List(_ context.Context, _ errcoderepo.ErrorCodeFilter) ([]*errcoderepo.ErrorCodeView, int64, error) {
 	return m.views, m.total, nil
 }
 
@@ -162,8 +163,8 @@ func TestHandler_List_Success(t *testing.T) {
 	t.Parallel()
 
 	readRepo := &mockReadRepo{
-		views: []*domain.ErrorCodeView{
-			{ID: domain.NewErrorCodeID(), Code: "ERR_1", HTTPStatus: 400, Category: "c", Severity: "low", CreatedAt: time.Now(), UpdatedAt: time.Now()},
+		views: []*errcoderepo.ErrorCodeView{
+			{ID: errcodeentity.NewErrorCodeID(), Code: "ERR_1", HTTPStatus: 400, Category: "c", Severity: "low", CreatedAt: time.Now(), UpdatedAt: time.Now()},
 		},
 		total: 1,
 	}
@@ -181,9 +182,9 @@ func TestHandler_List_Success(t *testing.T) {
 func TestHandler_Get_Success(t *testing.T) {
 	t.Parallel()
 
-	id := domain.NewErrorCodeID()
+	id := errcodeentity.NewErrorCodeID()
 	readRepo := &mockReadRepo{
-		view: &domain.ErrorCodeView{
+		view: &errcoderepo.ErrorCodeView{
 			ID: id, Code: "ERR", HTTPStatus: 500, Category: "c", Severity: "s", CreatedAt: time.Now(), UpdatedAt: time.Now(),
 		},
 	}
@@ -215,13 +216,13 @@ func TestHandler_Get_InvalidID(t *testing.T) {
 func TestHandler_Update_Success(t *testing.T) {
 	t.Parallel()
 
-	ec := domain.NewErrorCode("AUTH_001", "old", 401, "auth", "high", false, 0, "")
+	ec := errcodeentity.NewErrorCode("AUTH_001", "old", 401, "auth", "high", false, 0, "")
 	repo := &mockRepo{
-		findFn: func(_ context.Context, id domain.ErrorCodeID) (*domain.ErrorCode, error) {
+		findFn: func(_ context.Context, id errcodeentity.ErrorCodeID) (*errcodeentity.ErrorCode, error) {
 			if id == ec.TypedID() {
 				return ec, nil
 			}
-			return nil, domain.ErrErrorCodeNotFound
+			return nil, errcodeentity.ErrErrorCodeNotFound
 		},
 	}
 	router := setupRouter(repo, &mockReadRepo{})
@@ -274,13 +275,13 @@ func TestHandler_Update_BadRequest(t *testing.T) {
 func TestHandler_Delete_Success(t *testing.T) {
 	t.Parallel()
 
-	ec := domain.NewErrorCode("ERR_DEL", "test", 500, "SYSTEM", "LOW", false, 0, "")
+	ec := errcodeentity.NewErrorCode("ERR_DEL", "test", 500, "SYSTEM", "LOW", false, 0, "")
 	repo := &mockRepo{
-		findFn: func(_ context.Context, id domain.ErrorCodeID) (*domain.ErrorCode, error) {
+		findFn: func(_ context.Context, id errcodeentity.ErrorCodeID) (*errcodeentity.ErrorCode, error) {
 			if id == ec.TypedID() {
 				return ec, nil
 			}
-			return nil, domain.ErrErrorCodeNotFound
+			return nil, errcodeentity.ErrErrorCodeNotFound
 		},
 	}
 	router := setupRouter(repo, &mockReadRepo{})
@@ -340,7 +341,7 @@ func TestHandler_Create_InvalidJSON(t *testing.T) {
 
 func TestHandler_List_DefaultPagination(t *testing.T) {
 	readRepo := &mockReadRepo{
-		views: []*domain.ErrorCodeView{},
+		views: []*errcoderepo.ErrorCodeView{},
 		total: 0,
 	}
 	router := setupRouter(&mockRepo{}, readRepo)

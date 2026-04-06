@@ -8,7 +8,8 @@ import (
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/metadata"
 	"gct/internal/kernel/infrastructure/pgxutil"
-	"gct/internal/context/ops/generic/systemerror/domain"
+	syserrentity "gct/internal/context/ops/generic/systemerror/domain/entity"
+	syserrrepo "gct/internal/context/ops/generic/systemerror/domain/repository"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -42,7 +43,7 @@ func NewSystemErrorWriteRepo(pool *pgxpool.Pool) *SystemErrorWriteRepo {
 }
 
 // Save inserts a new SystemError aggregate into the database.
-func (r *SystemErrorWriteRepo) Save(ctx context.Context, se *domain.SystemError) (err error) {
+func (r *SystemErrorWriteRepo) Save(ctx context.Context, se *syserrentity.SystemError) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "SystemErrorWriteRepo.Save")
 	defer func() { end(err) }()
 
@@ -83,7 +84,7 @@ func (r *SystemErrorWriteRepo) Save(ctx context.Context, se *domain.SystemError)
 }
 
 // FindByID retrieves a SystemError aggregate by ID.
-func (r *SystemErrorWriteRepo) FindByID(ctx context.Context, id domain.SystemErrorID) (result *domain.SystemError, err error) {
+func (r *SystemErrorWriteRepo) FindByID(ctx context.Context, id syserrentity.SystemErrorID) (result *syserrentity.SystemError, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "SystemErrorWriteRepo.FindByID")
 	defer func() { end(err) }()
 
@@ -113,7 +114,7 @@ func (r *SystemErrorWriteRepo) FindByID(ctx context.Context, id domain.SystemErr
 }
 
 // Update updates the SystemError aggregate in the database.
-func (r *SystemErrorWriteRepo) Update(ctx context.Context, se *domain.SystemError) (err error) {
+func (r *SystemErrorWriteRepo) Update(ctx context.Context, se *syserrentity.SystemError) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "SystemErrorWriteRepo.Update")
 	defer func() { end(err) }()
 
@@ -150,7 +151,7 @@ func (r *SystemErrorWriteRepo) Update(ctx context.Context, se *domain.SystemErro
 }
 
 // List retrieves a paginated list of SystemError aggregates with optional filters.
-func (r *SystemErrorWriteRepo) List(ctx context.Context, filter domain.SystemErrorFilter) (items []*domain.SystemError, total int64, err error) {
+func (r *SystemErrorWriteRepo) List(ctx context.Context, filter syserrrepo.SystemErrorFilter) (items []*syserrentity.SystemError, total int64, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "SystemErrorWriteRepo.List")
 	defer func() { end(err) }()
 
@@ -198,7 +199,7 @@ func (r *SystemErrorWriteRepo) List(ctx context.Context, filter domain.SystemErr
 	}
 	defer rows.Close()
 
-	var results []*domain.SystemError
+	var results []*syserrentity.SystemError
 	for rows.Next() {
 		se, err := scanSystemErrorFromRows(rows)
 		if err != nil {
@@ -219,7 +220,7 @@ func (r *SystemErrorWriteRepo) List(ctx context.Context, filter domain.SystemErr
 // Helpers
 // ---------------------------------------------------------------------------
 
-func applyFilters(conds squirrel.And, filter domain.SystemErrorFilter) squirrel.And {
+func applyFilters(conds squirrel.And, filter syserrrepo.SystemErrorFilter) squirrel.And {
 	if filter.Code != nil {
 		conds = append(conds, squirrel.Eq{"code": *filter.Code})
 	}
@@ -244,7 +245,7 @@ func applyFilters(conds squirrel.And, filter domain.SystemErrorFilter) squirrel.
 	return conds
 }
 
-func scanSystemError(row pgx.Row) (*domain.SystemError, error) {
+func scanSystemError(row pgx.Row) (*syserrentity.SystemError, error) {
 	var (
 		id          uuid.UUID
 		code        string
@@ -281,7 +282,7 @@ func scanSystemError(row pgx.Row) (*domain.SystemError, error) {
 	), nil
 }
 
-func scanSystemErrorFromRows(rows pgx.Rows) (*domain.SystemError, error) {
+func scanSystemErrorFromRows(rows pgx.Rows) (*syserrentity.SystemError, error) {
 	var (
 		id          uuid.UUID
 		code        string
@@ -333,8 +334,8 @@ func reconstructFromRow(
 	isResolved bool,
 	resolvedAt *time.Time,
 	resolvedBy *uuid.UUID,
-) *domain.SystemError {
-	return domain.ReconstructSystemError(
+) *syserrentity.SystemError {
+	return syserrentity.ReconstructSystemError(
 		id, createdAt,
 		code, message, stackTrace, nil,
 		severity, serviceName, requestID, userID,

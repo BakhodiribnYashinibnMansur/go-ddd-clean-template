@@ -4,16 +4,16 @@ import (
 	"context"
 	"strconv"
 
-	"gct/internal/context/admin/generic/featureflag/domain"
+	ffrepo "gct/internal/context/admin/generic/featureflag/domain/repository"
 )
 
 // PgEvaluator evaluates feature flags by querying PostgreSQL on every call.
 type PgEvaluator struct {
-	repo domain.FeatureFlagRepository
+	repo ffrepo.FeatureFlagRepository
 }
 
 // NewPgEvaluator creates a new PostgreSQL-backed Evaluator.
-func NewPgEvaluator(repo domain.FeatureFlagRepository) *PgEvaluator {
+func NewPgEvaluator(repo ffrepo.FeatureFlagRepository) *PgEvaluator {
 	return &PgEvaluator{repo: repo}
 }
 

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"gct/internal/context/admin/supporting/integration/domain"
+	integentity "gct/internal/context/admin/supporting/integration/domain/entity"
 	"gct/internal/kernel/consts"
 
 	"github.com/stretchr/testify/require"
@@ -16,32 +16,32 @@ import (
 // ---------------------------------------------------------------------------
 
 type cacheTestReadRepo struct {
-	views []*domain.IntegrationView
+	views []*integentity.IntegrationView
 	total int64
 	err   error
 }
 
-func (m *cacheTestReadRepo) FindByID(_ context.Context, _ domain.IntegrationID) (*domain.IntegrationView, error) {
-	return nil, domain.ErrIntegrationNotFound
+func (m *cacheTestReadRepo) FindByID(_ context.Context, _ integentity.IntegrationID) (*integentity.IntegrationView, error) {
+	return nil, integentity.ErrIntegrationNotFound
 }
 
-func (m *cacheTestReadRepo) List(_ context.Context, _ domain.IntegrationFilter) ([]*domain.IntegrationView, int64, error) {
+func (m *cacheTestReadRepo) List(_ context.Context, _ integentity.IntegrationFilter) ([]*integentity.IntegrationView, int64, error) {
 	if m.err != nil {
 		return nil, 0, m.err
 	}
 	return m.views, m.total, nil
 }
 
-func (m *cacheTestReadRepo) FindByAPIKey(_ context.Context, _ string) (*domain.IntegrationAPIKeyView, error) {
-	return nil, domain.ErrIntegrationNotFound
+func (m *cacheTestReadRepo) FindByAPIKey(_ context.Context, _ string) (*integentity.IntegrationAPIKeyView, error) {
+	return nil, integentity.ErrIntegrationNotFound
 }
 
-func (m *cacheTestReadRepo) ListActiveJWT(_ context.Context) ([]domain.JWTIntegrationView, error) {
+func (m *cacheTestReadRepo) ListActiveJWT(_ context.Context) ([]integentity.JWTIntegrationView, error) {
 	return nil, nil
 }
 
-func (m *cacheTestReadRepo) FindJWTByHash(_ context.Context, _ []byte) (*domain.JWTIntegrationView, error) {
-	return nil, domain.ErrIntegrationNotFound
+func (m *cacheTestReadRepo) FindJWTByHash(_ context.Context, _ []byte) (*integentity.JWTIntegrationView, error) {
+	return nil, integentity.ErrIntegrationNotFound
 }
 
 type cacheTestLogger struct{}
@@ -74,10 +74,10 @@ func (m *cacheTestLogger) Fatalc(_ context.Context, _ string, _ ...any) {}
 func TestCacheService_InitCache_Success(t *testing.T) {
 	t.Parallel()
 
-	id1 := domain.NewIntegrationID()
-	id2 := domain.NewIntegrationID()
+	id1 := integentity.NewIntegrationID()
+	id2 := integentity.NewIntegrationID()
 	repo := &cacheTestReadRepo{
-		views: []*domain.IntegrationView{
+		views: []*integentity.IntegrationView{
 			{
 				ID:      id1,
 				Name:    "Slack",
@@ -145,7 +145,7 @@ func TestCacheService_InitCache_Empty(t *testing.T) {
 	t.Parallel()
 
 	repo := &cacheTestReadRepo{
-		views: []*domain.IntegrationView{},
+		views: []*integentity.IntegrationView{},
 		total: 0,
 	}
 	l := &cacheTestLogger{}
@@ -154,7 +154,7 @@ func TestCacheService_InitCache_Empty(t *testing.T) {
 	err := svc.InitCache(context.Background())
 	require.NoError(t, err)
 
-	_, ok := svc.FindByID(domain.NewIntegrationID())
+	_, ok := svc.FindByID(integentity.NewIntegrationID())
 	if ok {
 		t.Error("expected not found for random ID on empty cache")
 	}
@@ -185,9 +185,9 @@ func TestCacheService_InitCache_RepoError(t *testing.T) {
 func TestCacheService_InitCache_EmptyAPIKeySkipped(t *testing.T) {
 	t.Parallel()
 
-	id := domain.NewIntegrationID()
+	id := integentity.NewIntegrationID()
 	repo := &cacheTestReadRepo{
-		views: []*domain.IntegrationView{
+		views: []*integentity.IntegrationView{
 			{
 				ID:      id,
 				Name:    "WebhookOnly",
@@ -227,7 +227,7 @@ func TestCacheService_InitCache_EmptyAPIKeySkipped(t *testing.T) {
 func TestCacheService_FindByAPIKey_NotFound(t *testing.T) {
 	t.Parallel()
 
-	repo := &cacheTestReadRepo{views: []*domain.IntegrationView{}}
+	repo := &cacheTestReadRepo{views: []*integentity.IntegrationView{}}
 	l := &cacheTestLogger{}
 	svc := NewCacheService(repo, l)
 	_ = svc.InitCache(context.Background())
@@ -241,12 +241,12 @@ func TestCacheService_FindByAPIKey_NotFound(t *testing.T) {
 func TestCacheService_FindByID_NotFound(t *testing.T) {
 	t.Parallel()
 
-	repo := &cacheTestReadRepo{views: []*domain.IntegrationView{}}
+	repo := &cacheTestReadRepo{views: []*integentity.IntegrationView{}}
 	l := &cacheTestLogger{}
 	svc := NewCacheService(repo, l)
 	_ = svc.InitCache(context.Background())
 
-	_, ok := svc.FindByID(domain.NewIntegrationID())
+	_, ok := svc.FindByID(integentity.NewIntegrationID())
 	if ok {
 		t.Error("expected not found")
 	}
@@ -259,9 +259,9 @@ func TestCacheService_FindByID_NotFound(t *testing.T) {
 func TestCacheService_InvalidateCache_IntegrationsTable(t *testing.T) {
 	t.Parallel()
 
-	id := domain.NewIntegrationID()
+	id := integentity.NewIntegrationID()
 	repo := &cacheTestReadRepo{
-		views: []*domain.IntegrationView{
+		views: []*integentity.IntegrationView{
 			{ID: id, Name: "Slack", APIKey: "key-1", Enabled: true},
 		},
 		total: 1,
@@ -285,9 +285,9 @@ func TestCacheService_InvalidateCache_IntegrationsTable(t *testing.T) {
 func TestCacheService_InvalidateCache_APIKeysTable(t *testing.T) {
 	t.Parallel()
 
-	id := domain.NewIntegrationID()
+	id := integentity.NewIntegrationID()
 	repo := &cacheTestReadRepo{
-		views: []*domain.IntegrationView{
+		views: []*integentity.IntegrationView{
 			{ID: id, Name: "SMTP", APIKey: "smtp-key", Enabled: true},
 		},
 		total: 1,
@@ -311,7 +311,7 @@ func TestCacheService_InvalidateCache_UnrelatedTable(t *testing.T) {
 	t.Parallel()
 
 	repo := &cacheTestReadRepo{
-		views: []*domain.IntegrationView{},
+		views: []*integentity.IntegrationView{},
 		total: 0,
 	}
 	l := &cacheTestLogger{}

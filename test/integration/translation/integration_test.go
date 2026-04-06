@@ -9,7 +9,8 @@ import (
 	"gct/internal/context/content/generic/translation"
 	"gct/internal/context/content/generic/translation/application/command"
 	"gct/internal/context/content/generic/translation/application/query"
-	"gct/internal/context/content/generic/translation/domain"
+	translationentity "gct/internal/context/content/generic/translation/domain/entity"
+	translationrepo "gct/internal/context/content/generic/translation/domain/repository"
 	"gct/test/integration/common/setup"
 )
 
@@ -37,7 +38,7 @@ func TestIntegration_CreateAndGetTranslation(t *testing.T) {
 	}
 
 	result, err := bc.ListTranslations.Handle(ctx, query.ListTranslationsQuery{
-		Filter: domain.TranslationFilter{Limit: 10},
+		Filter: translationrepo.TranslationFilter{Limit: 10},
 	})
 	if err != nil {
 		t.Fatalf("ListTranslations: %v", err)
@@ -57,7 +58,7 @@ func TestIntegration_CreateAndGetTranslation(t *testing.T) {
 		t.Errorf("expected value 'Welcome!', got %s", tr.Value)
 	}
 
-	view, err := bc.GetTranslation.Handle(ctx, query.GetTranslationQuery{ID: domain.TranslationID(tr.ID)})
+	view, err := bc.GetTranslation.Handle(ctx, query.GetTranslationQuery{ID: translationentity.TranslationID(tr.ID)})
 	if err != nil {
 		t.Fatalf("GetTranslation: %v", err)
 	}
@@ -83,9 +84,9 @@ func TestIntegration_UpdateTranslation(t *testing.T) {
 	}
 
 	list, _ := bc.ListTranslations.Handle(ctx, query.ListTranslationsQuery{
-		Filter: domain.TranslationFilter{Limit: 10},
+		Filter: translationrepo.TranslationFilter{Limit: 10},
 	})
-	trID := domain.TranslationID(list.Translations[0].ID)
+	trID := translationentity.TranslationID(list.Translations[0].ID)
 
 	newValue := "Xush kelibsiz"
 	err = bc.UpdateTranslation.Handle(ctx, command.UpdateTranslationCommand{
@@ -119,9 +120,9 @@ func TestIntegration_DeleteTranslation(t *testing.T) {
 	}
 
 	list, _ := bc.ListTranslations.Handle(ctx, query.ListTranslationsQuery{
-		Filter: domain.TranslationFilter{Limit: 10},
+		Filter: translationrepo.TranslationFilter{Limit: 10},
 	})
-	trID := domain.TranslationID(list.Translations[0].ID)
+	trID := translationentity.TranslationID(list.Translations[0].ID)
 
 	err = bc.DeleteTranslation.Handle(ctx, command.DeleteTranslationCommand{ID: trID})
 	if err != nil {
@@ -129,7 +130,7 @@ func TestIntegration_DeleteTranslation(t *testing.T) {
 	}
 
 	list2, _ := bc.ListTranslations.Handle(ctx, query.ListTranslationsQuery{
-		Filter: domain.TranslationFilter{Limit: 10},
+		Filter: translationrepo.TranslationFilter{Limit: 10},
 	})
 	if list2.Total != 0 {
 		t.Errorf("expected 0 translations after delete, got %d", list2.Total)

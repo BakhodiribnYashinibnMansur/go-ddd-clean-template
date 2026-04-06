@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/context/iam/generic/authz/domain"
+	authzentity "gct/internal/context/iam/generic/authz/domain/entity"
 	shared "gct/internal/kernel/domain"
 
 	"github.com/stretchr/testify/require"
@@ -13,12 +13,12 @@ import (
 // --- Mock ScopeRepository ---
 
 type mockScopeRepository struct {
-	savedScope *domain.Scope
-	saveFn     func(ctx context.Context, scope domain.Scope) error
+	savedScope *authzentity.Scope
+	saveFn     func(ctx context.Context, scope authzentity.Scope) error
 	deleteFn   func(ctx context.Context, path, method string) error
 }
 
-func (m *mockScopeRepository) Save(ctx context.Context, scope domain.Scope) error {
+func (m *mockScopeRepository) Save(ctx context.Context, scope authzentity.Scope) error {
 	if m.saveFn != nil {
 		return m.saveFn(ctx, scope)
 	}
@@ -33,7 +33,7 @@ func (m *mockScopeRepository) Delete(ctx context.Context, path, method string) e
 	return nil
 }
 
-func (m *mockScopeRepository) List(ctx context.Context, pagination shared.Pagination) ([]domain.Scope, int64, error) {
+func (m *mockScopeRepository) List(ctx context.Context, pagination shared.Pagination) ([]authzentity.Scope, int64, error) {
 	return nil, 0, nil
 }
 

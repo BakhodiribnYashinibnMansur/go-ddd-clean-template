@@ -3,7 +3,8 @@ package postgres
 import (
 	"context"
 
-	"gct/internal/context/ops/generic/ratelimit/domain"
+	ratelimitentity "gct/internal/context/ops/generic/ratelimit/domain/entity"
+	ratelimitrepo "gct/internal/context/ops/generic/ratelimit/domain/repository"
 	"gct/internal/kernel/consts"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -34,7 +35,7 @@ func NewRateLimitReadRepo(pool *pgxpool.Pool) *RateLimitReadRepo {
 }
 
 // FindByID returns a single RateLimitView by ID.
-func (r *RateLimitReadRepo) FindByID(ctx context.Context, id domain.RateLimitID) (result *domain.RateLimitView, err error) {
+func (r *RateLimitReadRepo) FindByID(ctx context.Context, id ratelimitentity.RateLimitID) (result *ratelimitrepo.RateLimitView, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "RateLimitReadRepo.FindByID")
 	defer func() { end(err) }()
 
@@ -52,7 +53,7 @@ func (r *RateLimitReadRepo) FindByID(ctx context.Context, id domain.RateLimitID)
 }
 
 // List returns a paginated list of RateLimitView with optional filters.
-func (r *RateLimitReadRepo) List(ctx context.Context, filter domain.RateLimitFilter) (views []*domain.RateLimitView, total int64, err error) {
+func (r *RateLimitReadRepo) List(ctx context.Context, filter ratelimitrepo.RateLimitFilter) (views []*ratelimitrepo.RateLimitView, total int64, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "RateLimitReadRepo.List")
 	defer func() { end(err) }()
 
@@ -109,28 +110,28 @@ func (r *RateLimitReadRepo) List(ctx context.Context, filter domain.RateLimitFil
 	return views, total, nil
 }
 
-func scanRateLimitView(row pgx.Row) (*domain.RateLimitView, error) {
+func scanRateLimitView(row pgx.Row) (*ratelimitrepo.RateLimitView, error) {
 	var (
-		v     domain.RateLimitView
+		v     ratelimitrepo.RateLimitView
 		rawID uuid.UUID
 	)
 	err := row.Scan(&rawID, &v.Name, &v.Rule, &v.RequestsPerWindow, &v.WindowDuration, &v.Enabled, &v.CreatedAt, &v.UpdatedAt)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
-	v.ID = domain.RateLimitID(rawID)
+	v.ID = ratelimitentity.RateLimitID(rawID)
 	return &v, nil
 }
 
-func scanRateLimitViewFromRows(rows pgx.Rows) (*domain.RateLimitView, error) {
+func scanRateLimitViewFromRows(rows pgx.Rows) (*ratelimitrepo.RateLimitView, error) {
 	var (
-		v     domain.RateLimitView
+		v     ratelimitrepo.RateLimitView
 		rawID uuid.UUID
 	)
 	err := rows.Scan(&rawID, &v.Name, &v.Rule, &v.RequestsPerWindow, &v.WindowDuration, &v.Enabled, &v.CreatedAt, &v.UpdatedAt)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
-	v.ID = domain.RateLimitID(rawID)
+	v.ID = ratelimitentity.RateLimitID(rawID)
 	return &v, nil
 }

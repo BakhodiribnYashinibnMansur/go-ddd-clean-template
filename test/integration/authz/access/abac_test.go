@@ -6,7 +6,7 @@ import (
 
 	"gct/internal/context/iam/generic/authz/application/command"
 	"gct/internal/context/iam/generic/authz/application/query"
-	"gct/internal/context/iam/generic/authz/domain"
+	authzentity "gct/internal/context/iam/generic/authz/domain/entity"
 	shared "gct/internal/kernel/domain"
 )
 
@@ -24,13 +24,13 @@ func TestIntegration_ABAC_RBACPassNoPolicies_Allowed(t *testing.T) {
 	seedRoleWithScope(t, bc, "viewer", "docs.read", "/api/v1/docs", "GET")
 
 	roles, _ := bc.ListRoles.Handle(ctx, query.ListRolesQuery{Pagination: shared.Pagination{Limit: 10}})
-	roleID := domain.RoleID(roles.Roles[0].ID)
+	roleID := authzentity.RoleID(roles.Roles[0].ID)
 
 	allowed, err := bc.CheckAccess.Handle(ctx, query.CheckAccessQuery{
 		RoleID:  roleID,
 		Path:    "/api/v1/docs",
 		Method:  "GET",
-		EvalCtx: domain.EvaluationContext{Attrs: map[string]map[string]any{}},
+		EvalCtx: authzentity.EvaluationContext{Attrs: map[string]map[string]any{}},
 	})
 	if err != nil {
 		t.Fatalf("CheckAccess: %v", err)
@@ -51,8 +51,8 @@ func TestIntegration_ABAC_DenyPolicy_Denied(t *testing.T) {
 
 	roles, _ := bc.ListRoles.Handle(ctx, query.ListRolesQuery{Pagination: shared.Pagination{Limit: 10}})
 	perms, _ := bc.ListPermissions.Handle(ctx, query.ListPermissionsQuery{Pagination: shared.Pagination{Limit: 10}})
-	roleID := domain.RoleID(roles.Roles[0].ID)
-	permID := domain.PermissionID(perms.Permissions[0].ID)
+	roleID := authzentity.RoleID(roles.Roles[0].ID)
+	permID := authzentity.PermissionID(perms.Permissions[0].ID)
 
 	// Create DENY policy: deny when env.ip is in the blocked list.
 	if err := bc.CreatePolicy.Handle(ctx, command.CreatePolicyCommand{
@@ -69,7 +69,7 @@ func TestIntegration_ABAC_DenyPolicy_Denied(t *testing.T) {
 		RoleID: roleID,
 		Path:   "/api/v1/reports",
 		Method: "GET",
-		EvalCtx: domain.EvaluationContext{Attrs: map[string]map[string]any{
+		EvalCtx: authzentity.EvaluationContext{Attrs: map[string]map[string]any{
 			"env": {"ip": "192.168.1.100"},
 		}},
 	})
@@ -92,8 +92,8 @@ func TestIntegration_ABAC_DenyPolicy_DifferentIP_Allowed(t *testing.T) {
 
 	roles, _ := bc.ListRoles.Handle(ctx, query.ListRolesQuery{Pagination: shared.Pagination{Limit: 10}})
 	perms, _ := bc.ListPermissions.Handle(ctx, query.ListPermissionsQuery{Pagination: shared.Pagination{Limit: 10}})
-	roleID := domain.RoleID(roles.Roles[0].ID)
-	permID := domain.PermissionID(perms.Permissions[0].ID)
+	roleID := authzentity.RoleID(roles.Roles[0].ID)
+	permID := authzentity.PermissionID(perms.Permissions[0].ID)
 
 	// Create DENY policy: deny when env.ip is in the blocked list.
 	if err := bc.CreatePolicy.Handle(ctx, command.CreatePolicyCommand{
@@ -110,7 +110,7 @@ func TestIntegration_ABAC_DenyPolicy_DifferentIP_Allowed(t *testing.T) {
 		RoleID: roleID,
 		Path:   "/api/v1/reports",
 		Method: "GET",
-		EvalCtx: domain.EvaluationContext{Attrs: map[string]map[string]any{
+		EvalCtx: authzentity.EvaluationContext{Attrs: map[string]map[string]any{
 			"env": {"ip": "10.0.0.1"},
 		}},
 	})
@@ -134,8 +134,8 @@ func TestIntegration_ABAC_AllowPolicy_Matches(t *testing.T) {
 
 	roles, _ := bc.ListRoles.Handle(ctx, query.ListRolesQuery{Pagination: shared.Pagination{Limit: 10}})
 	perms, _ := bc.ListPermissions.Handle(ctx, query.ListPermissionsQuery{Pagination: shared.Pagination{Limit: 10}})
-	roleID := domain.RoleID(roles.Roles[0].ID)
-	permID := domain.PermissionID(perms.Permissions[0].ID)
+	roleID := authzentity.RoleID(roles.Roles[0].ID)
+	permID := authzentity.PermissionID(perms.Permissions[0].ID)
 
 	// Create ALLOW policy: allow when user.role_name equals "auditor".
 	if err := bc.CreatePolicy.Handle(ctx, command.CreatePolicyCommand{
@@ -151,7 +151,7 @@ func TestIntegration_ABAC_AllowPolicy_Matches(t *testing.T) {
 		RoleID:  roleID,
 		Path:    "/api/v1/audit",
 		Method:  "GET",
-		EvalCtx: domain.EvaluationContext{Attrs: map[string]map[string]any{}},
+		EvalCtx: authzentity.EvaluationContext{Attrs: map[string]map[string]any{}},
 	})
 	if err != nil {
 		t.Fatalf("CheckAccess: %v", err)
@@ -171,14 +171,14 @@ func TestIntegration_ABAC_RBACFail_PoliciesNotConsulted(t *testing.T) {
 	seedRoleWithScope(t, bc, "narrow", "items.read", "/api/v1/items", "GET")
 
 	roles, _ := bc.ListRoles.Handle(ctx, query.ListRolesQuery{Pagination: shared.Pagination{Limit: 10}})
-	roleID := domain.RoleID(roles.Roles[0].ID)
+	roleID := authzentity.RoleID(roles.Roles[0].ID)
 
 	// Try accessing a different path — RBAC should deny before policies are checked.
 	allowed, err := bc.CheckAccess.Handle(ctx, query.CheckAccessQuery{
 		RoleID:  roleID,
 		Path:    "/api/v1/other",
 		Method:  "GET",
-		EvalCtx: domain.EvaluationContext{Attrs: map[string]map[string]any{}},
+		EvalCtx: authzentity.EvaluationContext{Attrs: map[string]map[string]any{}},
 	})
 	if err != nil {
 		t.Fatalf("CheckAccess: %v", err)
@@ -199,8 +199,8 @@ func TestIntegration_ABAC_InactivePolicy_Ignored(t *testing.T) {
 
 	roles, _ := bc.ListRoles.Handle(ctx, query.ListRolesQuery{Pagination: shared.Pagination{Limit: 10}})
 	perms, _ := bc.ListPermissions.Handle(ctx, query.ListPermissionsQuery{Pagination: shared.Pagination{Limit: 10}})
-	roleID := domain.RoleID(roles.Roles[0].ID)
-	permID := domain.PermissionID(perms.Permissions[0].ID)
+	roleID := authzentity.RoleID(roles.Roles[0].ID)
+	permID := authzentity.PermissionID(perms.Permissions[0].ID)
 
 	// Create DENY policy that would block access.
 	if err := bc.CreatePolicy.Handle(ctx, command.CreatePolicyCommand{
@@ -217,7 +217,7 @@ func TestIntegration_ABAC_InactivePolicy_Ignored(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ListPolicies: %v", err)
 	}
-	policyID := domain.PolicyID(policies.Policies[0].ID)
+	policyID := authzentity.PolicyID(policies.Policies[0].ID)
 
 	if err := bc.TogglePolicy.Handle(ctx, command.TogglePolicyCommand{ID: policyID}); err != nil {
 		t.Fatalf("TogglePolicy: %v", err)
@@ -228,7 +228,7 @@ func TestIntegration_ABAC_InactivePolicy_Ignored(t *testing.T) {
 		RoleID: roleID,
 		Path:   "/api/v1/data",
 		Method: "GET",
-		EvalCtx: domain.EvaluationContext{Attrs: map[string]map[string]any{
+		EvalCtx: authzentity.EvaluationContext{Attrs: map[string]map[string]any{
 			"env": {"ip": "192.168.1.100"},
 		}},
 	})
@@ -255,8 +255,8 @@ func TestIntegration_ABAC_TimeBetween_Allowed(t *testing.T) {
 
 	roles, _ := bc.ListRoles.Handle(ctx, query.ListRolesQuery{Pagination: shared.Pagination{Limit: 10}})
 	perms, _ := bc.ListPermissions.Handle(ctx, query.ListPermissionsQuery{Pagination: shared.Pagination{Limit: 10}})
-	roleID := domain.RoleID(roles.Roles[0].ID)
-	permID := domain.PermissionID(perms.Permissions[0].ID)
+	roleID := authzentity.RoleID(roles.Roles[0].ID)
+	permID := authzentity.PermissionID(perms.Permissions[0].ID)
 
 	// ALLOW only between 02:00 and 17:00.
 	if err := bc.CreatePolicy.Handle(ctx, command.CreatePolicyCommand{
@@ -273,7 +273,7 @@ func TestIntegration_ABAC_TimeBetween_Allowed(t *testing.T) {
 		RoleID: roleID,
 		Path:   "/api/v1/tasks",
 		Method: "POST",
-		EvalCtx: domain.EvaluationContext{Attrs: map[string]map[string]any{
+		EvalCtx: authzentity.EvaluationContext{Attrs: map[string]map[string]any{
 			"user": {},
 			"env":  {"time": "10:30"},
 		}},
@@ -297,8 +297,8 @@ func TestIntegration_ABAC_TimeBetween_DenyOutsideHours(t *testing.T) {
 
 	roles, _ := bc.ListRoles.Handle(ctx, query.ListRolesQuery{Pagination: shared.Pagination{Limit: 10}})
 	perms, _ := bc.ListPermissions.Handle(ctx, query.ListPermissionsQuery{Pagination: shared.Pagination{Limit: 10}})
-	roleID := domain.RoleID(roles.Roles[0].ID)
-	permID := domain.PermissionID(perms.Permissions[0].ID)
+	roleID := authzentity.RoleID(roles.Roles[0].ID)
+	permID := authzentity.PermissionID(perms.Permissions[0].ID)
 
 	// DENY between 17:00 and 23:59 (off-hours).
 	if err := bc.CreatePolicy.Handle(ctx, command.CreatePolicyCommand{
@@ -315,7 +315,7 @@ func TestIntegration_ABAC_TimeBetween_DenyOutsideHours(t *testing.T) {
 		RoleID: roleID,
 		Path:   "/api/v1/tasks",
 		Method: "POST",
-		EvalCtx: domain.EvaluationContext{Attrs: map[string]map[string]any{
+		EvalCtx: authzentity.EvaluationContext{Attrs: map[string]map[string]any{
 			"user": {},
 			"env":  {"time": "23:00"},
 		}},
@@ -332,7 +332,7 @@ func TestIntegration_ABAC_TimeBetween_DenyOutsideHours(t *testing.T) {
 		RoleID: roleID,
 		Path:   "/api/v1/tasks",
 		Method: "POST",
-		EvalCtx: domain.EvaluationContext{Attrs: map[string]map[string]any{
+		EvalCtx: authzentity.EvaluationContext{Attrs: map[string]map[string]any{
 			"user": {},
 			"env":  {"time": "10:30"},
 		}},
@@ -356,8 +356,8 @@ func TestIntegration_ABAC_TimeBetween_WorkingHours(t *testing.T) {
 
 	roles, _ := bc.ListRoles.Handle(ctx, query.ListRolesQuery{Pagination: shared.Pagination{Limit: 10}})
 	perms, _ := bc.ListPermissions.Handle(ctx, query.ListPermissionsQuery{Pagination: shared.Pagination{Limit: 10}})
-	roleID := domain.RoleID(roles.Roles[0].ID)
-	permID := domain.PermissionID(perms.Permissions[0].ID)
+	roleID := authzentity.RoleID(roles.Roles[0].ID)
+	permID := authzentity.PermissionID(perms.Permissions[0].ID)
 
 	// Pattern: "only allow 02:00–05:00" = two DENY policies covering the outside.
 	// DENY 00:00–01:59 (before window).
@@ -398,7 +398,7 @@ func TestIntegration_ABAC_TimeBetween_WorkingHours(t *testing.T) {
 				RoleID: roleID,
 				Path:   "/api/v1/gates",
 				Method: "POST",
-				EvalCtx: domain.EvaluationContext{Attrs: map[string]map[string]any{
+				EvalCtx: authzentity.EvaluationContext{Attrs: map[string]map[string]any{
 					"user": {},
 					"env":  {"time": tt.time},
 				}},

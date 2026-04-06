@@ -5,7 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/content/generic/translation/domain"
+	translationentity "gct/internal/context/content/generic/translation/domain/entity"
+	translationrepo "gct/internal/context/content/generic/translation/domain/repository"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -63,7 +64,7 @@ func TestNewTranslationReadRepo(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestScanTranslationView_Success(t *testing.T) {
-	id := domain.NewTranslationID()
+	id := translationentity.NewTranslationID()
 	now := time.Now().Truncate(time.Microsecond)
 
 	// read_repo scanTranslationView scans: &v.ID, &v.Key, &v.Language, &v.Value, &v.Group, &v.CreatedAt, &v.UpdatedAt
@@ -82,7 +83,7 @@ func TestScanTranslationView_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if v.ID != domain.TranslationID(id) {
+	if v.ID != translationentity.TranslationID(id) {
 		t.Errorf("ID = %v, want %v", v.ID, id)
 	}
 	if v.Key != "greeting" {
@@ -112,7 +113,7 @@ func TestScanTranslationView_Error(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestScanTranslationViewFromRows_Success(t *testing.T) {
-	id := domain.NewTranslationID()
+	id := translationentity.NewTranslationID()
 	now := time.Now().Truncate(time.Microsecond)
 
 	rows := &mockRows{scanFunc: func(dest ...any) error {
@@ -130,7 +131,7 @@ func TestScanTranslationViewFromRows_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if v.ID != domain.TranslationID(id) {
+	if v.ID != translationentity.TranslationID(id) {
 		t.Errorf("ID = %v, want %v", v.ID, id)
 	}
 }
@@ -149,7 +150,7 @@ func TestScanTranslationViewFromRows_Error(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestScanTranslation_Success(t *testing.T) {
-	id := domain.NewTranslationID()
+	id := translationentity.NewTranslationID()
 	entityID := uuid.New()
 	now := time.Now().Truncate(time.Microsecond)
 
@@ -198,7 +199,7 @@ func TestScanTranslation_Error(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestScanTranslationFromRows_Success(t *testing.T) {
-	id := domain.NewTranslationID()
+	id := translationentity.NewTranslationID()
 	entityID := uuid.New()
 	now := time.Now().Truncate(time.Microsecond)
 
@@ -236,7 +237,7 @@ func TestScanTranslationFromRows_Error(t *testing.T) {
 
 func TestApplyFilters_NoFilters(t *testing.T) {
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.TranslationFilter{})
+	result := applyFilters(conds, translationrepo.TranslationFilter{})
 	if len(result) != 0 {
 		t.Errorf("expected 0 conditions, got %d", len(result))
 	}
@@ -245,7 +246,7 @@ func TestApplyFilters_NoFilters(t *testing.T) {
 func TestApplyFilters_WithKey(t *testing.T) {
 	key := "greeting"
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.TranslationFilter{Key: &key})
+	result := applyFilters(conds, translationrepo.TranslationFilter{Key: &key})
 	if len(result) != 1 {
 		t.Errorf("expected 1 condition, got %d", len(result))
 	}
@@ -254,7 +255,7 @@ func TestApplyFilters_WithKey(t *testing.T) {
 func TestApplyFilters_WithLanguage(t *testing.T) {
 	lang := "en"
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.TranslationFilter{Language: &lang})
+	result := applyFilters(conds, translationrepo.TranslationFilter{Language: &lang})
 	if len(result) != 1 {
 		t.Errorf("expected 1 condition, got %d", len(result))
 	}
@@ -263,7 +264,7 @@ func TestApplyFilters_WithLanguage(t *testing.T) {
 func TestApplyFilters_WithGroup(t *testing.T) {
 	group := "auth"
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.TranslationFilter{Group: &group})
+	result := applyFilters(conds, translationrepo.TranslationFilter{Group: &group})
 	if len(result) != 1 {
 		t.Errorf("expected 1 condition, got %d", len(result))
 	}
@@ -274,7 +275,7 @@ func TestApplyFilters_AllFilters(t *testing.T) {
 	lang := "en"
 	group := "g"
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.TranslationFilter{Key: &key, Language: &lang, Group: &group})
+	result := applyFilters(conds, translationrepo.TranslationFilter{Key: &key, Language: &lang, Group: &group})
 	if len(result) != 3 {
 		t.Errorf("expected 3 conditions, got %d", len(result))
 	}

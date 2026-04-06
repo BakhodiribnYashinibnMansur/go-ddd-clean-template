@@ -6,7 +6,8 @@ import (
 	"gct/internal/context/admin/supporting/dataexport"
 	"gct/internal/context/admin/supporting/dataexport/application/command"
 	"gct/internal/context/admin/supporting/dataexport/application/query"
-	"gct/internal/context/admin/supporting/dataexport/domain"
+	exportentity "gct/internal/context/admin/supporting/dataexport/domain/entity"
+	exportrepo "gct/internal/context/admin/supporting/dataexport/domain/repository"
 	"gct/internal/kernel/infrastructure/httpx"
 	"gct/internal/kernel/infrastructure/httpx/response"
 	"gct/internal/kernel/infrastructure/logger"
@@ -76,7 +77,7 @@ func (h *Handler) List(ctx *gin.Context) {
 	}
 
 	q := query.ListDataExportsQuery{
-		Filter: domain.DataExportFilter{Limit: pg.Limit, Offset: pg.Offset},
+		Filter: exportrepo.DataExportFilter{Limit: pg.Limit, Offset: pg.Offset},
 	}
 	result, err := h.bc.ListDataExports.Handle(ctx.Request.Context(), q)
 	if err != nil {
@@ -100,7 +101,7 @@ func (h *Handler) List(ctx *gin.Context) {
 // @Router /data-exports/{id} [get]
 // Get returns a single data export by ID.
 func (h *Handler) Get(ctx *gin.Context) {
-	id, err := domain.ParseDataExportID(ctx.Param("id"))
+	id, err := exportentity.ParseDataExportID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
@@ -128,7 +129,7 @@ func (h *Handler) Get(ctx *gin.Context) {
 // @Router /data-exports/{id} [patch]
 // Update updates a data export.
 func (h *Handler) Update(ctx *gin.Context) {
-	id, err := domain.ParseDataExportID(ctx.Param("id"))
+	id, err := exportentity.ParseDataExportID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
@@ -165,7 +166,7 @@ func (h *Handler) Update(ctx *gin.Context) {
 // @Router /data-exports/{id} [delete]
 // Delete deletes a data export.
 func (h *Handler) Delete(ctx *gin.Context) {
-	id, err := domain.ParseDataExportID(ctx.Param("id"))
+	id, err := exportentity.ParseDataExportID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return

@@ -4,7 +4,8 @@ import (
 	"context"
 	"time"
 
-	"gct/internal/context/admin/generic/featureflag/domain"
+	ffentity "gct/internal/context/admin/generic/featureflag/domain/entity"
+	ffrepo "gct/internal/context/admin/generic/featureflag/domain/repository"
 	"gct/internal/kernel/consts"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -34,7 +35,7 @@ func NewFeatureFlagReadRepo(pool *pgxpool.Pool) *FeatureFlagReadRepo {
 }
 
 // FindByID returns a FeatureFlagView for the given ID.
-func (r *FeatureFlagReadRepo) FindByID(ctx context.Context, id domain.FeatureFlagID) (result *domain.FeatureFlagView, err error) {
+func (r *FeatureFlagReadRepo) FindByID(ctx context.Context, id ffentity.FeatureFlagID) (result *ffrepo.FeatureFlagView, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "FeatureFlagReadRepo.FindByID")
 	defer func() { end(err) }()
 
@@ -70,8 +71,8 @@ func (r *FeatureFlagReadRepo) FindByID(ctx context.Context, id domain.FeatureFla
 		return nil, err
 	}
 
-	return &domain.FeatureFlagView{
-		ID:                domain.FeatureFlagID(ffID),
+	return &ffrepo.FeatureFlagView{
+		ID:                ffentity.FeatureFlagID(ffID),
 		Name:              name,
 		Key:               key,
 		Description:       description,
@@ -86,7 +87,7 @@ func (r *FeatureFlagReadRepo) FindByID(ctx context.Context, id domain.FeatureFla
 }
 
 // List returns a paginated list of FeatureFlagView with optional filters.
-func (r *FeatureFlagReadRepo) List(ctx context.Context, filter domain.FeatureFlagFilter) (items []*domain.FeatureFlagView, total int64, err error) {
+func (r *FeatureFlagReadRepo) List(ctx context.Context, filter ffrepo.FeatureFlagFilter) (items []*ffrepo.FeatureFlagView, total int64, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "FeatureFlagReadRepo.List")
 	defer func() { end(err) }()
 
@@ -133,7 +134,7 @@ func (r *FeatureFlagReadRepo) List(ctx context.Context, filter domain.FeatureFla
 	}
 	defer rows.Close()
 
-	var views []*domain.FeatureFlagView
+	var views []*ffrepo.FeatureFlagView
 	for rows.Next() {
 		var (
 			id                uuid.UUID
@@ -157,8 +158,8 @@ func (r *FeatureFlagReadRepo) List(ctx context.Context, filter domain.FeatureFla
 			return nil, 0, err
 		}
 
-		views = append(views, &domain.FeatureFlagView{
-			ID:                domain.FeatureFlagID(id),
+		views = append(views, &ffrepo.FeatureFlagView{
+			ID:                ffentity.FeatureFlagID(id),
 			Name:              name,
 			Key:               key,
 			Description:       description,
@@ -179,7 +180,7 @@ func (r *FeatureFlagReadRepo) List(ctx context.Context, filter domain.FeatureFla
 // View loaders
 // ---------------------------------------------------------------------------
 
-func (r *FeatureFlagReadRepo) loadRuleGroupViews(ctx context.Context, flagID uuid.UUID) ([]domain.RuleGroupView, error) {
+func (r *FeatureFlagReadRepo) loadRuleGroupViews(ctx context.Context, flagID uuid.UUID) ([]ffrepo.RuleGroupView, error) {
 	sql, args, err := r.builder.
 		Select("id", "name", "variation", "priority", "created_at", "updated_at").
 		From(consts.TableFeatureFlagRuleGroups).
@@ -196,7 +197,7 @@ func (r *FeatureFlagReadRepo) loadRuleGroupViews(ctx context.Context, flagID uui
 	}
 	defer rows.Close()
 
-	var views []domain.RuleGroupView
+	var views []ffrepo.RuleGroupView
 	for rows.Next() {
 		var (
 			id        uuid.UUID
@@ -215,8 +216,8 @@ func (r *FeatureFlagReadRepo) loadRuleGroupViews(ctx context.Context, flagID uui
 			return nil, err
 		}
 
-		views = append(views, domain.RuleGroupView{
-			ID:         domain.RuleGroupID(id),
+		views = append(views, ffrepo.RuleGroupView{
+			ID:         ffentity.RuleGroupID(id),
 			Name:       name,
 			Variation:  variation,
 			Priority:   priority,
@@ -229,7 +230,7 @@ func (r *FeatureFlagReadRepo) loadRuleGroupViews(ctx context.Context, flagID uui
 	return views, nil
 }
 
-func (r *FeatureFlagReadRepo) loadConditionViews(ctx context.Context, ruleGroupID uuid.UUID) ([]domain.ConditionView, error) {
+func (r *FeatureFlagReadRepo) loadConditionViews(ctx context.Context, ruleGroupID uuid.UUID) ([]ffrepo.ConditionView, error) {
 	sql, args, err := r.builder.
 		Select("id", "attribute", "operator", "value").
 		From(consts.TableFeatureFlagConditions).
@@ -245,7 +246,7 @@ func (r *FeatureFlagReadRepo) loadConditionViews(ctx context.Context, ruleGroupI
 	}
 	defer rows.Close()
 
-	var views []domain.ConditionView
+	var views []ffrepo.ConditionView
 	for rows.Next() {
 		var (
 			id    uuid.UUID
@@ -256,7 +257,7 @@ func (r *FeatureFlagReadRepo) loadConditionViews(ctx context.Context, ruleGroupI
 		if err := rows.Scan(&id, &attr, &op, &value); err != nil {
 			return nil, apperrors.HandlePgError(err, consts.TableFeatureFlagConditions, nil)
 		}
-		views = append(views, domain.ConditionView{
+		views = append(views, ffrepo.ConditionView{
 			ID:        id,
 			Attribute: attr,
 			Operator:  op,

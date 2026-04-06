@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"gct/internal/context/iam/generic/session"
-	appdto "gct/internal/context/iam/generic/session/application"
+	"gct/internal/context/iam/generic/session/application/dto"
 	"gct/internal/context/iam/generic/session/application/query"
 
 	"github.com/gin-gonic/gin"
@@ -19,13 +19,13 @@ import (
 // --- Mocks ---
 
 type mockReadRepo struct {
-	view    *appdto.SessionView
-	views   []*appdto.SessionView
+	view    *dto.SessionView
+	views   []*dto.SessionView
 	total   int64
 	findErr error
 }
 
-func (m *mockReadRepo) FindByID(_ context.Context, id uuid.UUID) (*appdto.SessionView, error) {
+func (m *mockReadRepo) FindByID(_ context.Context, id uuid.UUID) (*dto.SessionView, error) {
 	if m.findErr != nil {
 		return nil, m.findErr
 	}
@@ -35,7 +35,7 @@ func (m *mockReadRepo) FindByID(_ context.Context, id uuid.UUID) (*appdto.Sessio
 	return nil, nil
 }
 
-func (m *mockReadRepo) List(_ context.Context, _ appdto.SessionsFilter) ([]*appdto.SessionView, int64, error) {
+func (m *mockReadRepo) List(_ context.Context, _ dto.SessionsFilter) ([]*dto.SessionView, int64, error) {
 	return m.views, m.total, nil
 }
 
@@ -88,7 +88,7 @@ func TestHandler_List_Success(t *testing.T) {
 
 	now := time.Now()
 	readRepo := &mockReadRepo{
-		views: []*appdto.SessionView{
+		views: []*dto.SessionView{
 			{
 				ID:           uuid.New(),
 				UserID:       uuid.New(),
@@ -122,7 +122,7 @@ func TestHandler_Get_Success(t *testing.T) {
 	id := uuid.New()
 	now := time.Now()
 	readRepo := &mockReadRepo{
-		view: &appdto.SessionView{
+		view: &dto.SessionView{
 			ID:           id,
 			UserID:       uuid.New(),
 			DeviceID:     "device-1",
@@ -165,7 +165,7 @@ func TestHandler_List_WithUserIDFilter(t *testing.T) {
 	t.Parallel()
 
 	readRepo := &mockReadRepo{
-		views: []*appdto.SessionView{},
+		views: []*dto.SessionView{},
 		total: 0,
 	}
 	router := setupRouter(readRepo)
@@ -224,7 +224,7 @@ func TestHandler_Get_InvalidUUID(t *testing.T) {
 
 func TestHandler_List_DefaultPagination(t *testing.T) {
 	readRepo := &mockReadRepo{
-		views: []*appdto.SessionView{},
+		views: []*dto.SessionView{},
 		total: 0,
 	}
 	router := setupRouter(readRepo)

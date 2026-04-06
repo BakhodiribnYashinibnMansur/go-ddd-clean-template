@@ -6,29 +6,30 @@ import (
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 
-	appdto "gct/internal/context/content/supporting/announcement/application"
-	"gct/internal/context/content/supporting/announcement/domain"
+	"gct/internal/context/content/supporting/announcement/application/dto"
+	announceentity "gct/internal/context/content/supporting/announcement/domain/entity"
+	announcerepo "gct/internal/context/content/supporting/announcement/domain/repository"
 	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // GetAnnouncementQuery holds the input for getting a single announcement.
 type GetAnnouncementQuery struct {
-	ID domain.AnnouncementID
+	ID announceentity.AnnouncementID
 }
 
 // GetAnnouncementHandler handles the GetAnnouncementQuery.
 type GetAnnouncementHandler struct {
-	readRepo domain.AnnouncementReadRepository
+	readRepo announcerepo.AnnouncementReadRepository
 	logger   logger.Log
 }
 
 // NewGetAnnouncementHandler creates a new GetAnnouncementHandler.
-func NewGetAnnouncementHandler(readRepo domain.AnnouncementReadRepository, l logger.Log) *GetAnnouncementHandler {
+func NewGetAnnouncementHandler(readRepo announcerepo.AnnouncementReadRepository, l logger.Log) *GetAnnouncementHandler {
 	return &GetAnnouncementHandler{readRepo: readRepo, logger: l}
 }
 
 // Handle executes the GetAnnouncementQuery and returns an AnnouncementView.
-func (h *GetAnnouncementHandler) Handle(ctx context.Context, q GetAnnouncementQuery) (result *appdto.AnnouncementView, err error) {
+func (h *GetAnnouncementHandler) Handle(ctx context.Context, q GetAnnouncementQuery) (result *dto.AnnouncementView, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "GetAnnouncementHandler.Handle")
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "GetAnnouncement", "announcement")()

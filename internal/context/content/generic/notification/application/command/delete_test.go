@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"gct/internal/context/content/generic/notification/application/command"
-	"gct/internal/context/content/generic/notification/domain"
+	notifentity "gct/internal/context/content/generic/notification/domain/entity"
 
 	"github.com/stretchr/testify/require"
 )
@@ -16,7 +16,7 @@ func TestDeleteHandler_Handle(t *testing.T) {
 	repo := &mockNotificationRepo{}
 	handler := command.NewDeleteHandler(repo, &mockEventBus{}, &mockLogger{})
 
-	id := domain.NewNotificationID()
+	id := notifentity.NewNotificationID()
 	cmd := command.DeleteCommand{ID: id}
 
 	err := handler.Handle(context.Background(), cmd)

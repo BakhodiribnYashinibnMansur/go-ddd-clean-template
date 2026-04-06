@@ -6,29 +6,32 @@ import (
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 
-	appdto "gct/internal/context/content/generic/file/application"
-	"gct/internal/context/content/generic/file/domain"
+	"gct/internal/context/content/generic/file/application/dto"
+	fileentity "gct/internal/context/content/generic/file/domain/entity"
+	filerepo "gct/internal/context/content/generic/file/domain/repository"
 	"gct/internal/kernel/infrastructure/pgxutil"
+
+	"github.com/google/uuid"
 )
 
 // GetFileQuery holds the input for getting a single file.
 type GetFileQuery struct {
-	ID domain.FileID
+	ID fileentity.FileID
 }
 
 // GetFileHandler handles the GetFileQuery.
 type GetFileHandler struct {
-	readRepo domain.FileReadRepository
+	readRepo filerepo.FileReadRepository
 	logger   logger.Log
 }
 
 // NewGetFileHandler creates a new GetFileHandler.
-func NewGetFileHandler(readRepo domain.FileReadRepository, l logger.Log) *GetFileHandler {
+func NewGetFileHandler(readRepo filerepo.FileReadRepository, l logger.Log) *GetFileHandler {
 	return &GetFileHandler{readRepo: readRepo, logger: l}
 }
 
 // Handle executes the GetFileQuery and returns a FileView.
-func (h *GetFileHandler) Handle(ctx context.Context, q GetFileQuery) (result *appdto.FileView, err error) {
+func (h *GetFileHandler) Handle(ctx context.Context, q GetFileQuery) (result *dto.FileView, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "GetFileHandler.Handle")
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "GetFile", "file")()
@@ -39,8 +42,8 @@ func (h *GetFileHandler) Handle(ctx context.Context, q GetFileQuery) (result *ap
 		return nil, apperrors.MapToServiceError(err)
 	}
 
-	return &appdto.FileView{
-		ID:           v.ID,
+	return &dto.FileView{
+		ID:           uuid.UUID(v.ID),
 		Name:         v.Name,
 		OriginalName: v.OriginalName,
 		MimeType:     v.MimeType,

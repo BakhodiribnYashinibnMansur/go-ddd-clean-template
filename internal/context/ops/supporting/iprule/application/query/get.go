@@ -6,29 +6,32 @@ import (
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 
-	appdto "gct/internal/context/ops/supporting/iprule/application"
-	"gct/internal/context/ops/supporting/iprule/domain"
+	"gct/internal/context/ops/supporting/iprule/application/dto"
+	ipruleentity "gct/internal/context/ops/supporting/iprule/domain/entity"
+	iprulerepo "gct/internal/context/ops/supporting/iprule/domain/repository"
 	"gct/internal/kernel/infrastructure/pgxutil"
+
+	"github.com/google/uuid"
 )
 
 // GetIPRuleQuery holds the input for getting a single IP rule.
 type GetIPRuleQuery struct {
-	ID domain.IPRuleID
+	ID ipruleentity.IPRuleID
 }
 
 // GetIPRuleHandler handles the GetIPRuleQuery.
 type GetIPRuleHandler struct {
-	readRepo domain.IPRuleReadRepository
+	readRepo iprulerepo.IPRuleReadRepository
 	logger   logger.Log
 }
 
 // NewGetIPRuleHandler creates a new GetIPRuleHandler.
-func NewGetIPRuleHandler(readRepo domain.IPRuleReadRepository, l logger.Log) *GetIPRuleHandler {
+func NewGetIPRuleHandler(readRepo iprulerepo.IPRuleReadRepository, l logger.Log) *GetIPRuleHandler {
 	return &GetIPRuleHandler{readRepo: readRepo, logger: l}
 }
 
 // Handle executes the GetIPRuleQuery and returns an IPRuleView.
-func (h *GetIPRuleHandler) Handle(ctx context.Context, q GetIPRuleQuery) (result *appdto.IPRuleView, err error) {
+func (h *GetIPRuleHandler) Handle(ctx context.Context, q GetIPRuleQuery) (result *dto.IPRuleView, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "GetIPRuleHandler.Handle")
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "GetIPRule", "ip_rule")()
@@ -39,8 +42,8 @@ func (h *GetIPRuleHandler) Handle(ctx context.Context, q GetIPRuleQuery) (result
 		return nil, apperrors.MapToServiceError(err)
 	}
 
-	return &appdto.IPRuleView{
-		ID:        v.ID,
+	return &dto.IPRuleView{
+		ID:        uuid.UUID(v.ID),
 		IPAddress: v.IPAddress,
 		Action:    v.Action,
 		Reason:    v.Reason,

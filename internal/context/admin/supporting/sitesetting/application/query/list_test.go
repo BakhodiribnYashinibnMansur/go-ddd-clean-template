@@ -6,7 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/admin/supporting/sitesetting/domain"
+	siteentity "gct/internal/context/admin/supporting/sitesetting/domain/entity"
+	siterepo "gct/internal/context/admin/supporting/sitesetting/domain/repository"
 
 	"github.com/stretchr/testify/require"
 )
@@ -16,16 +17,16 @@ func TestListSiteSettingsHandler_Handle(t *testing.T) {
 
 	now := time.Now()
 	readRepo := &mockReadRepo{
-		views: []*domain.SiteSettingView{
-			{ID: domain.NewSiteSettingID(), Key: "site_name", Value: "My Site", Type: "general", Description: "Name", CreatedAt: now, UpdatedAt: now},
-			{ID: domain.NewSiteSettingID(), Key: "maintenance", Value: "false", Type: "system", Description: "Maint", CreatedAt: now, UpdatedAt: now},
+		views: []*siterepo.SiteSettingView{
+			{ID: siteentity.NewSiteSettingID(), Key: "site_name", Value: "My Site", Type: "general", Description: "Name", CreatedAt: now, UpdatedAt: now},
+			{ID: siteentity.NewSiteSettingID(), Key: "maintenance", Value: "false", Type: "system", Description: "Maint", CreatedAt: now, UpdatedAt: now},
 		},
 		total: 2,
 	}
 
 	handler := NewListSiteSettingsHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListSiteSettingsQuery{
-		Filter: domain.SiteSettingFilter{Limit: 10, Offset: 0},
+		Filter: siterepo.SiteSettingFilter{Limit: 10, Offset: 0},
 	})
 	require.NoError(t, err)
 	if result.Total != 2 {
@@ -42,11 +43,11 @@ func TestListSiteSettingsHandler_Handle(t *testing.T) {
 func TestListSiteSettingsHandler_Empty(t *testing.T) {
 	t.Parallel()
 
-	readRepo := &mockReadRepo{views: []*domain.SiteSettingView{}, total: 0}
+	readRepo := &mockReadRepo{views: []*siterepo.SiteSettingView{}, total: 0}
 
 	handler := NewListSiteSettingsHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListSiteSettingsQuery{
-		Filter: domain.SiteSettingFilter{},
+		Filter: siterepo.SiteSettingFilter{},
 	})
 	require.NoError(t, err)
 	if result.Total != 0 {
@@ -62,8 +63,8 @@ func TestListSiteSettingsHandler_WithFilters(t *testing.T) {
 
 	now := time.Now()
 	readRepo := &mockReadRepo{
-		views: []*domain.SiteSettingView{
-			{ID: domain.NewSiteSettingID(), Key: "site_name", Value: "My Site", Type: "general", CreatedAt: now, UpdatedAt: now},
+		views: []*siterepo.SiteSettingView{
+			{ID: siteentity.NewSiteSettingID(), Key: "site_name", Value: "My Site", Type: "general", CreatedAt: now, UpdatedAt: now},
 		},
 		total: 1,
 	}
@@ -72,7 +73,7 @@ func TestListSiteSettingsHandler_WithFilters(t *testing.T) {
 	settingType := "general"
 
 	result, err := handler.Handle(context.Background(), ListSiteSettingsQuery{
-		Filter: domain.SiteSettingFilter{
+		Filter: siterepo.SiteSettingFilter{
 			Type:  &settingType,
 			Limit: 10,
 		},
@@ -88,7 +89,7 @@ func TestListSiteSettingsHandler_RepoError(t *testing.T) {
 
 	readRepo := &errorReadRepo{err: errRepo}
 	handler := NewListSiteSettingsHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), ListSiteSettingsQuery{Filter: domain.SiteSettingFilter{}})
+	_, err := handler.Handle(context.Background(), ListSiteSettingsQuery{Filter: siterepo.SiteSettingFilter{}})
 	if err == nil {
 		t.Fatal("expected error from repo")
 	}

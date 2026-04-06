@@ -7,7 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/iam/generic/usersetting/domain"
+	settingentity "gct/internal/context/iam/generic/usersetting/domain/entity"
+	settingrepo "gct/internal/context/iam/generic/usersetting/domain/repository"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -16,29 +17,29 @@ import (
 // --- Mocks ---
 
 type mockReadRepo struct {
-	view  *domain.UserSettingView
-	views []*domain.UserSettingView
+	view  *settingrepo.UserSettingView
+	views []*settingrepo.UserSettingView
 	total int64
 }
 
-func (m *mockReadRepo) FindByID(_ context.Context, id domain.UserSettingID) (*domain.UserSettingView, error) {
+func (m *mockReadRepo) FindByID(_ context.Context, id settingentity.UserSettingID) (*settingrepo.UserSettingView, error) {
 	if m.view != nil && m.view.ID == id {
 		return m.view, nil
 	}
-	return nil, domain.ErrUserSettingNotFound
+	return nil, settingentity.ErrUserSettingNotFound
 }
 
-func (m *mockReadRepo) List(_ context.Context, _ domain.UserSettingFilter) ([]*domain.UserSettingView, int64, error) {
+func (m *mockReadRepo) List(_ context.Context, _ settingrepo.UserSettingFilter) ([]*settingrepo.UserSettingView, int64, error) {
 	return m.views, m.total, nil
 }
 
 type errorReadRepo struct{ err error }
 
-func (m *errorReadRepo) FindByID(_ context.Context, _ domain.UserSettingID) (*domain.UserSettingView, error) {
+func (m *errorReadRepo) FindByID(_ context.Context, _ settingentity.UserSettingID) (*settingrepo.UserSettingView, error) {
 	return nil, m.err
 }
 
-func (m *errorReadRepo) List(_ context.Context, _ domain.UserSettingFilter) ([]*domain.UserSettingView, int64, error) {
+func (m *errorReadRepo) List(_ context.Context, _ settingrepo.UserSettingFilter) ([]*settingrepo.UserSettingView, int64, error) {
 	return nil, 0, m.err
 }
 
@@ -49,11 +50,11 @@ var errRepo = errors.New("repo failure")
 func TestGetUserSettingHandler_Handle(t *testing.T) {
 	t.Parallel()
 
-	id := domain.NewUserSettingID()
+	id := settingentity.NewUserSettingID()
 	userID := uuid.New()
 	now := time.Now()
 	readRepo := &mockReadRepo{
-		view: &domain.UserSettingView{
+		view: &settingrepo.UserSettingView{
 			ID:        id,
 			UserID:    userID,
 			Key:       "theme",
@@ -64,7 +65,7 @@ func TestGetUserSettingHandler_Handle(t *testing.T) {
 	}
 
 	handler := NewGetUserSettingHandler(readRepo, logger.Noop())
-	result, err := handler.Handle(context.Background(), GetUserSettingQuery{ID: domain.UserSettingID(id)})
+	result, err := handler.Handle(context.Background(), GetUserSettingQuery{ID: settingentity.UserSettingID(id)})
 	require.NoError(t, err)
 	if result == nil {
 		t.Fatal("expected result")
@@ -85,7 +86,7 @@ func TestGetUserSettingHandler_NotFound(t *testing.T) {
 
 	readRepo := &mockReadRepo{}
 	handler := NewGetUserSettingHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), GetUserSettingQuery{ID: domain.NewUserSettingID()})
+	_, err := handler.Handle(context.Background(), GetUserSettingQuery{ID: settingentity.NewUserSettingID()})
 	if err == nil {
 		t.Fatal("expected error for not found")
 	}
@@ -96,7 +97,7 @@ func TestGetUserSettingHandler_RepoError(t *testing.T) {
 
 	readRepo := &errorReadRepo{err: errRepo}
 	handler := NewGetUserSettingHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), GetUserSettingQuery{ID: domain.NewUserSettingID()})
+	_, err := handler.Handle(context.Background(), GetUserSettingQuery{ID: settingentity.NewUserSettingID()})
 	if err == nil {
 		t.Fatal("expected error from repo")
 	}

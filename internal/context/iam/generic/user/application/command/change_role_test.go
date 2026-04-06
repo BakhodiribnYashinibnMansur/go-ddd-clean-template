@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/context/iam/generic/user/domain"
+	userentity "gct/internal/context/iam/generic/user/domain/entity"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -15,11 +15,11 @@ func TestChangeRoleHandler_Handle(t *testing.T) {
 
 	user := makeTestUser(t)
 	repo := &mockUserRepository{
-		findByIDFn: func(_ context.Context, id domain.UserID) (*domain.User, error) {
+		findByIDFn: func(_ context.Context, id userentity.UserID) (*userentity.User, error) {
 			if id == user.TypedID() {
 				return user, nil
 			}
-			return nil, domain.ErrUserNotFound
+			return nil, userentity.ErrUserNotFound
 		},
 	}
 	eventBus := &mockEventBus{}
@@ -29,7 +29,7 @@ func TestChangeRoleHandler_Handle(t *testing.T) {
 
 	newRoleID := uuid.New()
 	err := handler.Handle(context.Background(), ChangeRoleCommand{
-		UserID: domain.UserID(user.ID()),
+		UserID: userentity.UserID(user.ID()),
 		RoleID: newRoleID,
 	})
 	require.NoError(t, err)
@@ -63,7 +63,7 @@ func TestChangeRoleHandler_NotFound(t *testing.T) {
 	handler := NewChangeRoleHandler(repo, eventBus, log)
 
 	err := handler.Handle(context.Background(), ChangeRoleCommand{
-		UserID: domain.NewUserID(),
+		UserID: userentity.NewUserID(),
 		RoleID: uuid.New(),
 	})
 	if err == nil {

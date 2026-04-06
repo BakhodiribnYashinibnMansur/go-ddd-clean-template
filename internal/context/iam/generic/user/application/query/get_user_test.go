@@ -6,7 +6,7 @@ import (
 	"gct/internal/kernel/infrastructure/logger"
 	"testing"
 
-	"gct/internal/context/iam/generic/user/domain"
+	userentity "gct/internal/context/iam/generic/user/domain/entity"
 	shared "gct/internal/kernel/domain"
 
 	"github.com/google/uuid"
@@ -16,8 +16,8 @@ import (
 // --- Mock Read Repository ---
 
 type mockUserReadRepository struct {
-	view     *domain.UserView
-	views    []*domain.UserView
+	view     *userentity.UserView
+	views    []*userentity.UserView
 	total    int64
 	session  *shared.AuthSession
 	authUser *shared.AuthUser
@@ -28,47 +28,47 @@ type errorReadRepo struct {
 	err error
 }
 
-func (m *errorReadRepo) FindByID(_ context.Context, _ domain.UserID) (*domain.UserView, error) {
+func (m *errorReadRepo) FindByID(_ context.Context, _ userentity.UserID) (*userentity.UserView, error) {
 	return nil, m.err
 }
 
-func (m *errorReadRepo) List(_ context.Context, _ domain.UsersFilter) ([]*domain.UserView, int64, error) {
+func (m *errorReadRepo) List(_ context.Context, _ userentity.UsersFilter) ([]*userentity.UserView, int64, error) {
 	return nil, 0, m.err
 }
 
-func (m *errorReadRepo) FindSessionByID(_ context.Context, _ domain.SessionID) (*shared.AuthSession, error) {
+func (m *errorReadRepo) FindSessionByID(_ context.Context, _ userentity.SessionID) (*shared.AuthSession, error) {
 	return nil, m.err
 }
 
-func (m *errorReadRepo) FindUserForAuth(_ context.Context, _ domain.UserID) (*shared.AuthUser, error) {
+func (m *errorReadRepo) FindUserForAuth(_ context.Context, _ userentity.UserID) (*shared.AuthUser, error) {
 	return nil, m.err
 }
 
 var errRepoFailure = errors.New("repository failure")
 
-func (m *mockUserReadRepository) FindByID(_ context.Context, id domain.UserID) (*domain.UserView, error) {
+func (m *mockUserReadRepository) FindByID(_ context.Context, id userentity.UserID) (*userentity.UserView, error) {
 	if m.view != nil && m.view.ID == id {
 		return m.view, nil
 	}
-	return nil, domain.ErrUserNotFound
+	return nil, userentity.ErrUserNotFound
 }
 
-func (m *mockUserReadRepository) List(_ context.Context, _ domain.UsersFilter) ([]*domain.UserView, int64, error) {
+func (m *mockUserReadRepository) List(_ context.Context, _ userentity.UsersFilter) ([]*userentity.UserView, int64, error) {
 	return m.views, m.total, nil
 }
 
-func (m *mockUserReadRepository) FindSessionByID(_ context.Context, _ domain.SessionID) (*shared.AuthSession, error) {
+func (m *mockUserReadRepository) FindSessionByID(_ context.Context, _ userentity.SessionID) (*shared.AuthSession, error) {
 	if m.session != nil {
 		return m.session, nil
 	}
-	return nil, domain.ErrUserNotFound
+	return nil, userentity.ErrUserNotFound
 }
 
-func (m *mockUserReadRepository) FindUserForAuth(_ context.Context, _ domain.UserID) (*shared.AuthUser, error) {
+func (m *mockUserReadRepository) FindUserForAuth(_ context.Context, _ userentity.UserID) (*shared.AuthUser, error) {
 	if m.authUser != nil {
 		return m.authUser, nil
 	}
-	return nil, domain.ErrUserNotFound
+	return nil, userentity.ErrUserNotFound
 }
 
 // --- Tests ---
@@ -76,12 +76,12 @@ func (m *mockUserReadRepository) FindUserForAuth(_ context.Context, _ domain.Use
 func TestGetUserHandler_Handle(t *testing.T) {
 	t.Parallel()
 
-	userID := domain.NewUserID()
+	userID := userentity.NewUserID()
 	phone := "+998901234567"
 	email := "test@example.com"
 
 	readRepo := &mockUserReadRepository{
-		view: &domain.UserView{
+		view: &userentity.UserView{
 			ID:         userID,
 			Phone:      phone,
 			Email:      &email,
@@ -92,7 +92,7 @@ func TestGetUserHandler_Handle(t *testing.T) {
 
 	handler := NewGetUserHandler(readRepo, logger.Noop())
 
-	q := GetUserQuery{ID: domain.UserID(userID)}
+	q := GetUserQuery{ID: userentity.UserID(userID)}
 	result, err := handler.Handle(context.Background(), q)
 	require.NoError(t, err)
 
@@ -100,7 +100,7 @@ func TestGetUserHandler_Handle(t *testing.T) {
 		t.Fatal("expected user view, got nil")
 	}
 
-	if result.ID != userID {
+	if result.ID != uuid.UUID(userID) {
 		t.Errorf("expected ID %s, got %s", userID, result.ID)
 	}
 
@@ -128,7 +128,7 @@ func TestGetUserHandler_NotFound(t *testing.T) {
 
 	handler := NewGetUserHandler(readRepo, logger.Noop())
 
-	q := GetUserQuery{ID: domain.NewUserID()}
+	q := GetUserQuery{ID: userentity.NewUserID()}
 	_, err := handler.Handle(context.Background(), q)
 	if err == nil {
 		t.Fatal("expected error for non-existent user, got nil")
@@ -138,14 +138,14 @@ func TestGetUserHandler_NotFound(t *testing.T) {
 func TestGetUserHandler_AllFieldsMapped(t *testing.T) {
 	t.Parallel()
 
-	userID := domain.NewUserID()
+	userID := userentity.NewUserID()
 	roleID := uuid.New()
 	phone := "+998901234567"
 	email := "full@example.com"
 	username := "fulluser"
 
 	readRepo := &mockUserReadRepository{
-		view: &domain.UserView{
+		view: &userentity.UserView{
 			ID:         userID,
 			Phone:      phone,
 			Email:      &email,
@@ -158,7 +158,7 @@ func TestGetUserHandler_AllFieldsMapped(t *testing.T) {
 	}
 
 	handler := NewGetUserHandler(readRepo, logger.Noop())
-	result, err := handler.Handle(context.Background(), GetUserQuery{ID: domain.UserID(userID)})
+	result, err := handler.Handle(context.Background(), GetUserQuery{ID: userentity.UserID(userID)})
 	require.NoError(t, err)
 
 	if result.RoleID == nil || *result.RoleID != roleID {
@@ -175,10 +175,10 @@ func TestGetUserHandler_AllFieldsMapped(t *testing.T) {
 func TestGetUserHandler_NilOptionalFields(t *testing.T) {
 	t.Parallel()
 
-	userID := domain.NewUserID()
+	userID := userentity.NewUserID()
 
 	readRepo := &mockUserReadRepository{
-		view: &domain.UserView{
+		view: &userentity.UserView{
 			ID:     userID,
 			Phone:  "+998900000000",
 			Active: false,
@@ -186,7 +186,7 @@ func TestGetUserHandler_NilOptionalFields(t *testing.T) {
 	}
 
 	handler := NewGetUserHandler(readRepo, logger.Noop())
-	result, err := handler.Handle(context.Background(), GetUserQuery{ID: domain.UserID(userID)})
+	result, err := handler.Handle(context.Background(), GetUserQuery{ID: userentity.UserID(userID)})
 	require.NoError(t, err)
 
 	if result.Email != nil {
@@ -209,7 +209,7 @@ func TestGetUserHandler_RepoError(t *testing.T) {
 	readRepo := &errorReadRepo{err: errRepoFailure}
 
 	handler := NewGetUserHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), GetUserQuery{ID: domain.NewUserID()})
+	_, err := handler.Handle(context.Background(), GetUserQuery{ID: userentity.NewUserID()})
 	if err == nil {
 		t.Fatal("expected error from repo")
 	}

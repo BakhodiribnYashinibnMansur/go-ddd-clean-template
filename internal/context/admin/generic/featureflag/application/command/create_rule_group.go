@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"gct/internal/context/admin/generic/featureflag/domain"
+	ffentity "gct/internal/context/admin/generic/featureflag/domain/entity"
+	ffevent "gct/internal/context/admin/generic/featureflag/domain/event"
+	ffrepo "gct/internal/context/admin/generic/featureflag/domain/repository"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
@@ -20,7 +22,7 @@ type ConditionInput struct {
 
 // CreateRuleGroupCommand represents an intent to add a rule group to a feature flag.
 type CreateRuleGroupCommand struct {
-	FlagID     domain.FeatureFlagID
+	FlagID     ffentity.FeatureFlagID
 	Name       string
 	Variation  string
 	Priority   int
@@ -29,16 +31,16 @@ type CreateRuleGroupCommand struct {
 
 // CreateRuleGroupHandler orchestrates rule group creation.
 type CreateRuleGroupHandler struct {
-	flagRepo domain.FeatureFlagRepository
-	rgRepo   domain.RuleGroupRepository
+	flagRepo ffrepo.FeatureFlagRepository
+	rgRepo   ffrepo.RuleGroupRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
 // NewCreateRuleGroupHandler wires dependencies for rule group creation.
 func NewCreateRuleGroupHandler(
-	flagRepo domain.FeatureFlagRepository,
-	rgRepo domain.RuleGroupRepository,
+	flagRepo ffrepo.FeatureFlagRepository,
+	rgRepo ffrepo.RuleGroupRepository,
 	eventBus application.EventBus,
 	logger logger.Log,
 ) *CreateRuleGroupHandler {
@@ -63,15 +65,15 @@ func (h *CreateRuleGroupHandler) Handle(ctx context.Context, cmd CreateRuleGroup
 
 	// Validate operators.
 	for _, c := range cmd.Conditions {
-		if !domain.IsValidOperator(c.Operator) {
-			return apperrors.MapToServiceError(fmt.Errorf("%w: %s", domain.ErrInvalidOperator, c.Operator))
+		if !ffentity.IsValidOperator(c.Operator) {
+			return apperrors.MapToServiceError(fmt.Errorf("%w: %s", ffentity.ErrInvalidOperator, c.Operator))
 		}
 	}
 
-	rg := domain.NewRuleGroup(cmd.FlagID.UUID(), cmd.Name, cmd.Variation, cmd.Priority)
+	rg := ffentity.NewRuleGroup(cmd.FlagID.UUID(), cmd.Name, cmd.Variation, cmd.Priority)
 
 	for _, c := range cmd.Conditions {
-		rg.AddCondition(domain.NewCondition(c.Attribute, c.Operator, c.Value))
+		rg.AddCondition(ffentity.NewCondition(c.Attribute, c.Operator, c.Value))
 	}
 
 	if err := h.rgRepo.Save(ctx, rg); err != nil {
@@ -79,7 +81,7 @@ func (h *CreateRuleGroupHandler) Handle(ctx context.Context, cmd CreateRuleGroup
 		return apperrors.MapToServiceError(err)
 	}
 
-	if err := h.eventBus.Publish(ctx, domain.NewFlagUpdated(cmd.FlagID.UUID())); err != nil {
+	if err := h.eventBus.Publish(ctx, ffevent.NewFlagUpdated(cmd.FlagID.UUID())); err != nil {
 		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "CreateRuleGroup", Entity: "rule_group", Err: err}.KV()...)
 	}
 

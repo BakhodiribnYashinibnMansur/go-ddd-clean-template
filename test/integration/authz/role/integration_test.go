@@ -7,7 +7,7 @@ import (
 	"gct/internal/context/iam/generic/authz"
 	"gct/internal/context/iam/generic/authz/application/command"
 	"gct/internal/context/iam/generic/authz/application/query"
-	"gct/internal/context/iam/generic/authz/domain"
+	authzentity "gct/internal/context/iam/generic/authz/domain/entity"
 	shared "gct/internal/kernel/domain"
 	"gct/internal/kernel/infrastructure/eventbus"
 	"gct/internal/kernel/infrastructure/logger"
@@ -53,7 +53,7 @@ func TestIntegration_CreateAndGetRole(t *testing.T) {
 		t.Error("expected description 'Admin role'")
 	}
 
-	view, err := bc.GetRole.Handle(ctx, query.GetRoleQuery{ID: domain.RoleID(role.ID)})
+	view, err := bc.GetRole.Handle(ctx, query.GetRoleQuery{ID: authzentity.RoleID(role.ID)})
 	if err != nil {
 		t.Fatalf("GetRole: %v", err)
 	}
@@ -75,7 +75,7 @@ func TestIntegration_DeleteRole(t *testing.T) {
 	list, _ := bc.ListRoles.Handle(ctx, query.ListRolesQuery{
 		Pagination: shared.Pagination{Limit: 10},
 	})
-	roleID := domain.RoleID(list.Roles[0].ID)
+	roleID := authzentity.RoleID(list.Roles[0].ID)
 
 	err = bc.DeleteRole.Handle(ctx, command.DeleteRoleCommand{ID: roleID})
 	if err != nil {
@@ -113,8 +113,8 @@ func TestIntegration_AssignPermissionToRole(t *testing.T) {
 	})
 
 	err = bc.AssignPermission.Handle(ctx, command.AssignPermissionCommand{
-		RoleID:       domain.RoleID(roles.Roles[0].ID),
-		PermissionID: domain.PermissionID(perms.Permissions[0].ID),
+		RoleID:       authzentity.RoleID(roles.Roles[0].ID),
+		PermissionID: authzentity.PermissionID(perms.Permissions[0].ID),
 	})
 	if err != nil {
 		t.Fatalf("AssignPermission: %v", err)

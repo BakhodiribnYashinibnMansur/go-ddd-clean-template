@@ -3,7 +3,9 @@ package command
 import (
 	"context"
 
-	"gct/internal/context/admin/generic/featureflag/domain"
+	ffentity "gct/internal/context/admin/generic/featureflag/domain/entity"
+	ffevent "gct/internal/context/admin/generic/featureflag/domain/event"
+	ffrepo "gct/internal/context/admin/generic/featureflag/domain/repository"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
@@ -12,19 +14,19 @@ import (
 
 // DeleteRuleGroupCommand represents an intent to remove a rule group.
 type DeleteRuleGroupCommand struct {
-	ID domain.RuleGroupID
+	ID ffentity.RuleGroupID
 }
 
 // DeleteRuleGroupHandler performs deletion of a rule group.
 type DeleteRuleGroupHandler struct {
-	rgRepo   domain.RuleGroupRepository
+	rgRepo   ffrepo.RuleGroupRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
 // NewDeleteRuleGroupHandler wires dependencies for rule group deletion.
 func NewDeleteRuleGroupHandler(
-	rgRepo domain.RuleGroupRepository,
+	rgRepo ffrepo.RuleGroupRepository,
 	eventBus application.EventBus,
 	logger logger.Log,
 ) *DeleteRuleGroupHandler {
@@ -54,7 +56,7 @@ func (h *DeleteRuleGroupHandler) Handle(ctx context.Context, cmd DeleteRuleGroup
 		return apperrors.MapToServiceError(err)
 	}
 
-	if err := h.eventBus.Publish(ctx, domain.NewFlagUpdated(flagID)); err != nil {
+	if err := h.eventBus.Publish(ctx, ffevent.NewFlagUpdated(flagID)); err != nil {
 		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "DeleteRuleGroup", Entity: "rule_group", EntityID: cmd.ID, Err: err}.KV()...)
 	}
 

@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"gct/internal/context/iam/generic/user/application/query"
-	userdomain "gct/internal/context/iam/generic/user/domain"
+	userentity "gct/internal/context/iam/generic/user/domain/entity"
 	"gct/internal/kernel/consts"
 	"gct/internal/kernel/infrastructure/httpx"
 	"gct/internal/kernel/infrastructure/httpx/cookie"
@@ -92,7 +92,7 @@ func (m *AuthMiddleware) AuthClientRefresh(ctx *gin.Context) {
 		return
 	}
 
-	session, err := m.findSession.Handle(ctx.Request.Context(), query.FindSessionQuery{SessionID: userdomain.SessionID(sessionID)})
+	session, err := m.findSession.Handle(ctx.Request.Context(), query.FindSessionQuery{SessionID: userentity.SessionID(sessionID)})
 	if err != nil {
 		m.l.Errorw("AuthMiddleware - AuthClientRefresh - session not found", "error", err)
 		response.ControllerResponse(ctx, http.StatusUnauthorized, httpx.ErrInvalidRefreshSession, nil, false)
@@ -231,7 +231,7 @@ func (m *AuthMiddleware) AuthAdmin(ctx *gin.Context) {
 	}
 
 	// Fetch user to verify administrative status
-	user, err := m.findUserForAuth.Handle(ctx.Request.Context(), query.FindUserForAuthQuery{UserID: userdomain.UserID(session.UserID)})
+	user, err := m.findUserForAuth.Handle(ctx.Request.Context(), query.FindUserForAuthQuery{UserID: userentity.UserID(session.UserID)})
 	if err != nil {
 		m.l.Errorw("AuthMiddleware - AuthAdmin - FindUserForAuth", "error", err)
 		response.ControllerResponse(ctx, http.StatusUnauthorized, httpx.ErrUserNotFound, nil, false)

@@ -3,7 +3,8 @@ package command
 import (
 	"context"
 
-	"gct/internal/context/iam/generic/usersetting/domain"
+	settingentity "gct/internal/context/iam/generic/usersetting/domain/entity"
+	settingrepo "gct/internal/context/iam/generic/usersetting/domain/repository"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
@@ -21,14 +22,14 @@ type UpsertUserSettingCommand struct {
 
 // UpsertUserSettingHandler handles the UpsertUserSettingCommand.
 type UpsertUserSettingHandler struct {
-	repo     domain.UserSettingRepository
+	repo     settingrepo.UserSettingRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
 // NewUpsertUserSettingHandler creates a new UpsertUserSettingHandler.
 func NewUpsertUserSettingHandler(
-	repo domain.UserSettingRepository,
+	repo settingrepo.UserSettingRepository,
 	eventBus application.EventBus,
 	logger logger.Log,
 ) *UpsertUserSettingHandler {
@@ -48,12 +49,12 @@ func (h *UpsertUserSettingHandler) Handle(ctx context.Context, cmd UpsertUserSet
 	// Try to find existing setting by user+key.
 	existing, _ := h.repo.FindByUserIDAndKey(ctx, cmd.UserID, cmd.Key)
 
-	var us *domain.UserSetting
+	var us *settingentity.UserSetting
 	if existing != nil {
 		existing.ChangeValue(cmd.Value)
 		us = existing
 	} else {
-		us = domain.NewUserSetting(cmd.UserID, cmd.Key, cmd.Value)
+		us = settingentity.NewUserSetting(cmd.UserID, cmd.Key, cmd.Value)
 	}
 
 	if err := h.repo.Upsert(ctx, us); err != nil {

@@ -6,7 +6,8 @@ import (
 	"gct/internal/context/ops/generic/ratelimit"
 	"gct/internal/context/ops/generic/ratelimit/application/command"
 	"gct/internal/context/ops/generic/ratelimit/application/query"
-	"gct/internal/context/ops/generic/ratelimit/domain"
+	ratelimitentity "gct/internal/context/ops/generic/ratelimit/domain/entity"
+	ratelimitrepo "gct/internal/context/ops/generic/ratelimit/domain/repository"
 	"gct/internal/kernel/infrastructure/httpx"
 	"gct/internal/kernel/infrastructure/httpx/response"
 	"gct/internal/kernel/infrastructure/logger"
@@ -78,7 +79,7 @@ func (h *Handler) List(ctx *gin.Context) {
 	}
 
 	q := query.ListRateLimitsQuery{
-		Filter: domain.RateLimitFilter{Limit: pg.Limit, Offset: pg.Offset},
+		Filter: ratelimitrepo.RateLimitFilter{Limit: pg.Limit, Offset: pg.Offset},
 	}
 	result, err := h.bc.ListRateLimits.Handle(ctx.Request.Context(), q)
 	if err != nil {
@@ -102,7 +103,7 @@ func (h *Handler) List(ctx *gin.Context) {
 // @Router /rate-limits/{id} [get]
 // Get returns a single rate limit rule by ID.
 func (h *Handler) Get(ctx *gin.Context) {
-	id, err := domain.ParseRateLimitID(ctx.Param("id"))
+	id, err := ratelimitentity.ParseRateLimitID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
@@ -130,7 +131,7 @@ func (h *Handler) Get(ctx *gin.Context) {
 // @Router /rate-limits/{id} [patch]
 // Update updates a rate limit rule.
 func (h *Handler) Update(ctx *gin.Context) {
-	id, err := domain.ParseRateLimitID(ctx.Param("id"))
+	id, err := ratelimitentity.ParseRateLimitID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
@@ -141,7 +142,7 @@ func (h *Handler) Update(ctx *gin.Context) {
 		return
 	}
 	cmd := command.UpdateRateLimitCommand{
-		ID:                domain.RateLimitID(id),
+		ID:                ratelimitentity.RateLimitID(id),
 		Name:              req.Name,
 		Rule:              req.Rule,
 		RequestsPerWindow: req.RequestsPerWindow,
@@ -169,7 +170,7 @@ func (h *Handler) Update(ctx *gin.Context) {
 // @Router /rate-limits/{id} [delete]
 // Delete deletes a rate limit rule.
 func (h *Handler) Delete(ctx *gin.Context) {
-	id, err := domain.ParseRateLimitID(ctx.Param("id"))
+	id, err := ratelimitentity.ParseRateLimitID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return

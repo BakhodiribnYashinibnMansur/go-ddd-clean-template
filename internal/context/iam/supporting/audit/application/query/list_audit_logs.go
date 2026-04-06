@@ -6,7 +6,7 @@ import (
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 
-	appdto "gct/internal/context/iam/supporting/audit/application"
+	"gct/internal/context/iam/supporting/audit/application/dto"
 	"gct/internal/context/iam/supporting/audit/domain"
 	"gct/internal/kernel/infrastructure/pgxutil"
 )
@@ -18,7 +18,7 @@ type ListAuditLogsQuery struct {
 
 // ListAuditLogsResult holds the output of the list audit logs query.
 type ListAuditLogsResult struct {
-	AuditLogs []*appdto.AuditLogView
+	AuditLogs []*dto.AuditLogView
 	Total     int64
 }
 
@@ -45,10 +45,10 @@ func (h *ListAuditLogsHandler) Handle(ctx context.Context, q ListAuditLogsQuery)
 		return nil, apperrors.MapToServiceError(err)
 	}
 
-	result := make([]*appdto.AuditLogView, len(views))
+	result := make([]*dto.AuditLogView, len(views))
 	for i, v := range views {
-		result[i] = &appdto.AuditLogView{
-			ID:           v.ID,
+		result[i] = &dto.AuditLogView{
+			ID:           v.ID.UUID(),
 			UserID:       v.UserID,
 			SessionID:    v.SessionID,
 			Action:       string(v.Action),

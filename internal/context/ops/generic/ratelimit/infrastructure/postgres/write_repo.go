@@ -4,7 +4,8 @@ import (
 	"context"
 	"time"
 
-	"gct/internal/context/ops/generic/ratelimit/domain"
+	ratelimitentity "gct/internal/context/ops/generic/ratelimit/domain/entity"
+	ratelimitrepo "gct/internal/context/ops/generic/ratelimit/domain/repository"
 	"gct/internal/kernel/consts"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -22,7 +23,7 @@ var writeColumns = []string{
 	"is_active", "created_at", "updated_at",
 }
 
-// RateLimitWriteRepo implements domain.RateLimitRepository using PostgreSQL.
+// RateLimitWriteRepo implements ratelimitrepo.RateLimitRepository using PostgreSQL.
 type RateLimitWriteRepo struct {
 	pool    *pgxpool.Pool
 	builder squirrel.StatementBuilderType
@@ -37,7 +38,7 @@ func NewRateLimitWriteRepo(pool *pgxpool.Pool) *RateLimitWriteRepo {
 }
 
 // Save inserts a new RateLimit aggregate into the database.
-func (r *RateLimitWriteRepo) Save(ctx context.Context, rl *domain.RateLimit) (err error) {
+func (r *RateLimitWriteRepo) Save(ctx context.Context, rl *ratelimitentity.RateLimit) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "RateLimitWriteRepo.Save")
 	defer func() { end(err) }()
 
@@ -62,7 +63,7 @@ func (r *RateLimitWriteRepo) Save(ctx context.Context, rl *domain.RateLimit) (er
 }
 
 // FindByID retrieves a RateLimit aggregate by its ID.
-func (r *RateLimitWriteRepo) FindByID(ctx context.Context, id domain.RateLimitID) (result *domain.RateLimit, err error) {
+func (r *RateLimitWriteRepo) FindByID(ctx context.Context, id ratelimitentity.RateLimitID) (result *ratelimitentity.RateLimit, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "RateLimitWriteRepo.FindByID")
 	defer func() { end(err) }()
 
@@ -80,7 +81,7 @@ func (r *RateLimitWriteRepo) FindByID(ctx context.Context, id domain.RateLimitID
 }
 
 // Update updates an existing RateLimit aggregate in the database.
-func (r *RateLimitWriteRepo) Update(ctx context.Context, rl *domain.RateLimit) (err error) {
+func (r *RateLimitWriteRepo) Update(ctx context.Context, rl *ratelimitentity.RateLimit) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "RateLimitWriteRepo.Update")
 	defer func() { end(err) }()
 
@@ -106,7 +107,7 @@ func (r *RateLimitWriteRepo) Update(ctx context.Context, rl *domain.RateLimit) (
 }
 
 // Delete removes a RateLimit by its ID.
-func (r *RateLimitWriteRepo) Delete(ctx context.Context, id domain.RateLimitID) (err error) {
+func (r *RateLimitWriteRepo) Delete(ctx context.Context, id ratelimitentity.RateLimitID) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "RateLimitWriteRepo.Delete")
 	defer func() { end(err) }()
 
@@ -126,7 +127,7 @@ func (r *RateLimitWriteRepo) Delete(ctx context.Context, id domain.RateLimitID) 
 }
 
 // List retrieves a paginated list of RateLimit aggregates with optional filters.
-func (r *RateLimitWriteRepo) List(ctx context.Context, filter domain.RateLimitFilter) (results []*domain.RateLimit, total int64, err error) {
+func (r *RateLimitWriteRepo) List(ctx context.Context, filter ratelimitrepo.RateLimitFilter) (results []*ratelimitentity.RateLimit, total int64, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "RateLimitWriteRepo.List")
 	defer func() { end(err) }()
 
@@ -187,7 +188,7 @@ func (r *RateLimitWriteRepo) List(ctx context.Context, filter domain.RateLimitFi
 // Helpers
 // ---------------------------------------------------------------------------
 
-func applyFilters(conds squirrel.And, filter domain.RateLimitFilter) squirrel.And {
+func applyFilters(conds squirrel.And, filter ratelimitrepo.RateLimitFilter) squirrel.And {
 	if filter.Name != nil {
 		conds = append(conds, squirrel.Eq{"name": *filter.Name})
 	}
@@ -197,7 +198,7 @@ func applyFilters(conds squirrel.And, filter domain.RateLimitFilter) squirrel.An
 	return conds
 }
 
-func scanRateLimit(row pgx.Row) (*domain.RateLimit, error) {
+func scanRateLimit(row pgx.Row) (*ratelimitentity.RateLimit, error) {
 	var (
 		id                uuid.UUID
 		name              string
@@ -214,10 +215,10 @@ func scanRateLimit(row pgx.Row) (*domain.RateLimit, error) {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 
-	return domain.ReconstructRateLimit(id, createdAt, updatedAt, name, rule, requestsPerWindow, windowDuration, enabled), nil
+	return ratelimitentity.ReconstructRateLimit(id, createdAt, updatedAt, name, rule, requestsPerWindow, windowDuration, enabled), nil
 }
 
-func scanRateLimitFromRows(rows pgx.Rows) (*domain.RateLimit, error) {
+func scanRateLimitFromRows(rows pgx.Rows) (*ratelimitentity.RateLimit, error) {
 	var (
 		id                uuid.UUID
 		name              string
@@ -234,5 +235,5 @@ func scanRateLimitFromRows(rows pgx.Rows) (*domain.RateLimit, error) {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 
-	return domain.ReconstructRateLimit(id, createdAt, updatedAt, name, rule, requestsPerWindow, windowDuration, enabled), nil
+	return ratelimitentity.ReconstructRateLimit(id, createdAt, updatedAt, name, rule, requestsPerWindow, windowDuration, enabled), nil
 }

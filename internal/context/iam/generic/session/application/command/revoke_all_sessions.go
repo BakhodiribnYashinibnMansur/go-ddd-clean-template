@@ -3,7 +3,7 @@ package command
 import (
 	"context"
 
-	"gct/internal/context/iam/generic/session/domain"
+	sessionevent "gct/internal/context/iam/generic/session/domain/event"
 	"gct/internal/kernel/application"
 	"gct/internal/kernel/infrastructure/logger"
 
@@ -29,7 +29,7 @@ func NewRevokeAllSessionsHandler(eventBus application.EventBus, l logger.Log) *R
 
 // Handle publishes a revoke-all-requested event for all user sessions.
 func (h *RevokeAllSessionsHandler) Handle(ctx context.Context, cmd RevokeAllSessionsCommand) error {
-	event := domain.NewSessionRevokeAllRequested(cmd.UserID)
+	event := sessionevent.NewSessionRevokeAllRequested(cmd.UserID)
 
 	if err := h.eventBus.Publish(ctx, event); err != nil {
 		h.logger.Errorc(ctx, "failed to publish session.revoke_all_requested",

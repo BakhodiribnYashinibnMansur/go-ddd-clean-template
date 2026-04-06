@@ -6,7 +6,7 @@ import (
 	"gct/internal/context/iam/generic/authz"
 	"gct/internal/context/iam/generic/authz/application/command"
 	"gct/internal/context/iam/generic/authz/application/query"
-	"gct/internal/context/iam/generic/authz/domain"
+	authzentity "gct/internal/context/iam/generic/authz/domain/entity"
 	"gct/internal/kernel/infrastructure/httpx"
 	"gct/internal/kernel/infrastructure/httpx/response"
 	"gct/internal/kernel/infrastructure/logger"
@@ -113,7 +113,7 @@ func (h *Handler) GetRole(ctx *gin.Context) {
 		return
 	}
 
-	view, err := h.bc.GetRole.Handle(ctx.Request.Context(), query.GetRoleQuery{ID: domain.RoleID(id)})
+	view, err := h.bc.GetRole.Handle(ctx.Request.Context(), query.GetRoleQuery{ID: authzentity.RoleID(id)})
 	if err != nil {
 		response.HandleError(ctx, err)
 		return
@@ -150,7 +150,7 @@ func (h *Handler) UpdateRole(ctx *gin.Context) {
 	}
 
 	err = h.bc.UpdateRole.Handle(ctx.Request.Context(), command.UpdateRoleCommand{
-		ID:          domain.RoleID(id),
+		ID:          authzentity.RoleID(id),
 		Name:        req.Name,
 		Description: req.Description,
 	})
@@ -182,7 +182,7 @@ func (h *Handler) DeleteRole(ctx *gin.Context) {
 		return
 	}
 
-	err = h.bc.DeleteRole.Handle(ctx.Request.Context(), command.DeleteRoleCommand{ID: domain.RoleID(id)})
+	err = h.bc.DeleteRole.Handle(ctx.Request.Context(), command.DeleteRoleCommand{ID: authzentity.RoleID(id)})
 	if err != nil {
 		response.HandleError(ctx, err)
 		return
@@ -212,9 +212,9 @@ func (h *Handler) CreatePermission(ctx *gin.Context) {
 		return
 	}
 
-	var parentID *domain.PermissionID
+	var parentID *authzentity.PermissionID
 	if req.ParentID != nil {
-		pid := domain.PermissionID(*req.ParentID)
+		pid := authzentity.PermissionID(*req.ParentID)
 		parentID = &pid
 	}
 	err := h.bc.CreatePermission.Handle(ctx.Request.Context(), command.CreatePermissionCommand{
@@ -284,7 +284,7 @@ func (h *Handler) DeletePermission(ctx *gin.Context) {
 		return
 	}
 
-	err = h.bc.DeletePermission.Handle(ctx.Request.Context(), command.DeletePermissionCommand{ID: domain.PermissionID(id)})
+	err = h.bc.DeletePermission.Handle(ctx.Request.Context(), command.DeletePermissionCommand{ID: authzentity.PermissionID(id)})
 	if err != nil {
 		response.HandleError(ctx, err)
 		return
@@ -390,7 +390,7 @@ func (h *Handler) UpdatePolicy(ctx *gin.Context) {
 	}
 
 	err = h.bc.UpdatePolicy.Handle(ctx.Request.Context(), command.UpdatePolicyCommand{
-		ID:         domain.PolicyID(id),
+		ID:         authzentity.PolicyID(id),
 		Effect:     req.Effect,
 		Priority:   req.Priority,
 		Conditions: req.Conditions,
@@ -423,7 +423,7 @@ func (h *Handler) DeletePolicy(ctx *gin.Context) {
 		return
 	}
 
-	err = h.bc.DeletePolicy.Handle(ctx.Request.Context(), command.DeletePolicyCommand{ID: domain.PolicyID(id)})
+	err = h.bc.DeletePolicy.Handle(ctx.Request.Context(), command.DeletePolicyCommand{ID: authzentity.PolicyID(id)})
 	if err != nil {
 		response.HandleError(ctx, err)
 		return
@@ -452,7 +452,7 @@ func (h *Handler) TogglePolicy(ctx *gin.Context) {
 		return
 	}
 
-	err = h.bc.TogglePolicy.Handle(ctx.Request.Context(), command.TogglePolicyCommand{ID: domain.PolicyID(id)})
+	err = h.bc.TogglePolicy.Handle(ctx.Request.Context(), command.TogglePolicyCommand{ID: authzentity.PolicyID(id)})
 	if err != nil {
 		response.HandleError(ctx, err)
 		return
@@ -589,7 +589,7 @@ func (h *Handler) AssignPermission(ctx *gin.Context) {
 	}
 
 	err = h.bc.AssignPermission.Handle(ctx.Request.Context(), command.AssignPermissionCommand{
-		RoleID:       domain.RoleID(roleID),
+		RoleID:       authzentity.RoleID(roleID),
 		PermissionID: req.PermissionID,
 	})
 	if err != nil {
@@ -628,7 +628,7 @@ func (h *Handler) AssignScope(ctx *gin.Context) {
 	}
 
 	err = h.bc.AssignScope.Handle(ctx.Request.Context(), command.AssignScopeCommand{
-		PermissionID: domain.PermissionID(permID),
+		PermissionID: authzentity.PermissionID(permID),
 		Path:         req.Path,
 		Method:       req.Method,
 	})

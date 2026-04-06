@@ -12,7 +12,8 @@ import (
 	"gct/internal/context/content/generic/file"
 	"gct/internal/context/content/generic/file/application/command"
 	"gct/internal/context/content/generic/file/application/query"
-	"gct/internal/context/content/generic/file/domain"
+	fileentity "gct/internal/context/content/generic/file/domain/entity"
+	filerepo "gct/internal/context/content/generic/file/domain/repository"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/httpx"
 	"gct/internal/kernel/infrastructure/httpx/response"
@@ -99,7 +100,7 @@ func (h *Handler) List(ctx *gin.Context) {
 	}
 
 	q := query.ListFilesQuery{
-		Filter: domain.FileFilter{Limit: pg.Limit, Offset: pg.Offset},
+		Filter: filerepo.FileFilter{Limit: pg.Limit, Offset: pg.Offset},
 	}
 	result, err := h.bc.ListFiles.Handle(ctx.Request.Context(), q)
 	if err != nil {
@@ -123,7 +124,7 @@ func (h *Handler) List(ctx *gin.Context) {
 // @Router /files/{id} [get]
 // Get returns a single file by ID.
 func (h *Handler) Get(ctx *gin.Context) {
-	id, err := domain.ParseFileID(ctx.Param("id"))
+	id, err := fileentity.ParseFileID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"gct/internal/context/iam/generic/usersetting/application/command"
-	"gct/internal/context/iam/generic/usersetting/domain"
+	settingentity "gct/internal/context/iam/generic/usersetting/domain/entity"
 
 	"github.com/stretchr/testify/require"
 )
@@ -16,7 +16,7 @@ func TestDeleteUserSettingHandler_Handle(t *testing.T) {
 	repo := &mockUserSettingRepo{}
 	handler := command.NewDeleteUserSettingHandler(repo, &mockLogger{})
 
-	id := domain.NewUserSettingID()
+	id := settingentity.NewUserSettingID()
 	cmd := command.DeleteUserSettingCommand{ID: id}
 
 	err := handler.Handle(context.Background(), cmd)

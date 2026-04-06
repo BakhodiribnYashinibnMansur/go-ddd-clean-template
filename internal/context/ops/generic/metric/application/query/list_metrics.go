@@ -6,30 +6,32 @@ import (
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 
-	appdto "gct/internal/context/ops/generic/metric/application"
-	"gct/internal/context/ops/generic/metric/domain"
+	"gct/internal/context/ops/generic/metric/application/dto"
+	metricrepo "gct/internal/context/ops/generic/metric/domain/repository"
 	"gct/internal/kernel/infrastructure/pgxutil"
+
+	"github.com/google/uuid"
 )
 
 // ListMetricsQuery holds the input for listing function metrics with filtering.
 type ListMetricsQuery struct {
-	Filter domain.MetricFilter
+	Filter metricrepo.MetricFilter
 }
 
 // ListMetricsResult holds the output of the list metrics query.
 type ListMetricsResult struct {
-	Metrics []*appdto.MetricView
+	Metrics []*dto.MetricView
 	Total   int64
 }
 
 // ListMetricsHandler handles the ListMetricsQuery.
 type ListMetricsHandler struct {
-	readRepo domain.MetricReadRepository
+	readRepo metricrepo.MetricReadRepository
 	logger   logger.Log
 }
 
 // NewListMetricsHandler creates a new ListMetricsHandler.
-func NewListMetricsHandler(readRepo domain.MetricReadRepository, l logger.Log) *ListMetricsHandler {
+func NewListMetricsHandler(readRepo metricrepo.MetricReadRepository, l logger.Log) *ListMetricsHandler {
 	return &ListMetricsHandler{readRepo: readRepo, logger: l}
 }
 
@@ -45,10 +47,10 @@ func (h *ListMetricsHandler) Handle(ctx context.Context, q ListMetricsQuery) (_ 
 		return nil, apperrors.MapToServiceError(err)
 	}
 
-	result := make([]*appdto.MetricView, len(views))
+	result := make([]*dto.MetricView, len(views))
 	for i, v := range views {
-		result[i] = &appdto.MetricView{
-			ID:         v.ID,
+		result[i] = &dto.MetricView{
+			ID:         uuid.UUID(v.ID),
 			Name:       v.Name,
 			LatencyMs:  v.LatencyMs,
 			IsPanic:    v.IsPanic,

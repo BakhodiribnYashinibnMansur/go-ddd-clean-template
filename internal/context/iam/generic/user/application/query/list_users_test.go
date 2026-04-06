@@ -5,7 +5,7 @@ import (
 	"gct/internal/kernel/infrastructure/logger"
 	"testing"
 
-	"gct/internal/context/iam/generic/user/domain"
+	userentity "gct/internal/context/iam/generic/user/domain/entity"
 	shared "gct/internal/kernel/domain"
 
 	"github.com/google/uuid"
@@ -15,13 +15,13 @@ import (
 func TestListUsersHandler_Handle(t *testing.T) {
 	t.Parallel()
 
-	id1 := domain.NewUserID()
-	id2 := domain.NewUserID()
+	id1 := userentity.NewUserID()
+	id2 := userentity.NewUserID()
 	phone1 := "+998901111111"
 	phone2 := "+998902222222"
 
 	readRepo := &mockUserReadRepository{
-		views: []*domain.UserView{
+		views: []*userentity.UserView{
 			{ID: id1, Phone: phone1, Active: true, IsApproved: true},
 			{ID: id2, Phone: phone2, Active: true, IsApproved: false},
 		},
@@ -31,7 +31,7 @@ func TestListUsersHandler_Handle(t *testing.T) {
 	handler := NewListUsersHandler(readRepo, logger.Noop())
 
 	result, err := handler.Handle(context.Background(), ListUsersQuery{
-		Filter: domain.UsersFilter{},
+		Filter: userentity.UsersFilter{},
 	})
 	require.NoError(t, err)
 
@@ -47,7 +47,7 @@ func TestListUsersHandler_Handle(t *testing.T) {
 		t.Fatalf("expected 2 users, got %d", len(result.Users))
 	}
 
-	if result.Users[0].ID != id1 {
+	if result.Users[0].ID != uuid.UUID(id1) {
 		t.Errorf("expected first user ID %s, got %s", id1, result.Users[0].ID)
 	}
 
@@ -60,14 +60,14 @@ func TestListUsersHandler_Empty(t *testing.T) {
 	t.Parallel()
 
 	readRepo := &mockUserReadRepository{
-		views: []*domain.UserView{},
+		views: []*userentity.UserView{},
 		total: 0,
 	}
 
 	handler := NewListUsersHandler(readRepo, logger.Noop())
 
 	result, err := handler.Handle(context.Background(), ListUsersQuery{
-		Filter: domain.UsersFilter{},
+		Filter: userentity.UsersFilter{},
 	})
 	require.NoError(t, err)
 
@@ -84,8 +84,8 @@ func TestListUsersHandler_WithPagination(t *testing.T) {
 	t.Parallel()
 
 	readRepo := &mockUserReadRepository{
-		views: []*domain.UserView{
-			{ID: domain.NewUserID(), Phone: "+998901111111", Active: true},
+		views: []*userentity.UserView{
+			{ID: userentity.NewUserID(), Phone: "+998901111111", Active: true},
 		},
 		total: 5, // total is 5 but only 1 returned (limit=1)
 	}
@@ -93,7 +93,7 @@ func TestListUsersHandler_WithPagination(t *testing.T) {
 	handler := NewListUsersHandler(readRepo, logger.Noop())
 
 	result, err := handler.Handle(context.Background(), ListUsersQuery{
-		Filter: domain.UsersFilter{
+		Filter: userentity.UsersFilter{
 			Pagination: &shared.Pagination{Limit: 1, Offset: 0},
 		},
 	})
@@ -110,10 +110,10 @@ func TestListUsersHandler_WithPagination(t *testing.T) {
 func TestListUsersHandler_WithFilters(t *testing.T) {
 	t.Parallel()
 
-	activeUser := &domain.UserView{ID: domain.NewUserID(), Phone: "+998901111111", Active: true, IsApproved: true}
+	activeUser := &userentity.UserView{ID: userentity.NewUserID(), Phone: "+998901111111", Active: true, IsApproved: true}
 
 	readRepo := &mockUserReadRepository{
-		views: []*domain.UserView{activeUser},
+		views: []*userentity.UserView{activeUser},
 		total: 1,
 	}
 
@@ -125,7 +125,7 @@ func TestListUsersHandler_WithFilters(t *testing.T) {
 	email := "test@example.com"
 
 	result, err := handler.Handle(context.Background(), ListUsersQuery{
-		Filter: domain.UsersFilter{
+		Filter: userentity.UsersFilter{
 			Phone:      &phone,
 			Email:      &email,
 			Active:     &active,
@@ -154,9 +154,9 @@ func TestListUsersHandler_AllFieldsMapped(t *testing.T) {
 	username := "mappeduser"
 
 	readRepo := &mockUserReadRepository{
-		views: []*domain.UserView{
+		views: []*userentity.UserView{
 			{
-				ID:         domain.NewUserID(),
+				ID:         userentity.NewUserID(),
 				Phone:      "+998901234567",
 				Email:      &email,
 				Username:   &username,
@@ -170,7 +170,7 @@ func TestListUsersHandler_AllFieldsMapped(t *testing.T) {
 	}
 
 	handler := NewListUsersHandler(readRepo, logger.Noop())
-	result, err := handler.Handle(context.Background(), ListUsersQuery{Filter: domain.UsersFilter{}})
+	result, err := handler.Handle(context.Background(), ListUsersQuery{Filter: userentity.UsersFilter{}})
 	require.NoError(t, err)
 
 	u := result.Users[0]
@@ -194,7 +194,7 @@ func TestListUsersHandler_RepoError(t *testing.T) {
 	readRepo := &errorReadRepo{err: errRepoFailure}
 
 	handler := NewListUsersHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), ListUsersQuery{Filter: domain.UsersFilter{}})
+	_, err := handler.Handle(context.Background(), ListUsersQuery{Filter: userentity.UsersFilter{}})
 	if err == nil {
 		t.Fatal("expected error from repo")
 	}

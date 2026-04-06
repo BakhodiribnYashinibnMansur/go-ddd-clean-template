@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/context/admin/supporting/integration/domain"
+	integentity "gct/internal/context/admin/supporting/integration/domain/entity"
 
 	"github.com/stretchr/testify/require"
 )
@@ -12,14 +12,14 @@ import (
 func TestUpdateHandler_Handle(t *testing.T) {
 	t.Parallel()
 
-	i, _ := domain.NewIntegration("Slack", "messaging", "old-key", "https://old.com", true, nil)
+	i, _ := integentity.NewIntegration("Slack", "messaging", "old-key", "https://old.com", true, nil)
 
 	repo := &mockIntegrationRepo{
-		findFn: func(_ context.Context, id domain.IntegrationID) (*domain.Integration, error) {
+		findFn: func(_ context.Context, id integentity.IntegrationID) (*integentity.Integration, error) {
 			if id == i.TypedID() {
 				return i, nil
 			}
-			return nil, domain.ErrIntegrationNotFound
+			return nil, integentity.ErrIntegrationNotFound
 		},
 	}
 	eb := &mockEventBus{}
@@ -29,7 +29,7 @@ func TestUpdateHandler_Handle(t *testing.T) {
 	newKey := "new-key"
 	newEnabled := false
 	cmd := UpdateCommand{
-		ID:      domain.IntegrationID(i.ID()),
+		ID:      integentity.IntegrationID(i.ID()),
 		Name:    &newName,
 		APIKey:  &newKey,
 		Enabled: &newEnabled,
@@ -58,10 +58,10 @@ func TestUpdateHandler_Handle(t *testing.T) {
 func TestUpdateHandler_PartialUpdate(t *testing.T) {
 	t.Parallel()
 
-	i, _ := domain.NewIntegration("Name", "type", "key", "https://url.com", true, map[string]string{"k": "v"})
+	i, _ := integentity.NewIntegration("Name", "type", "key", "https://url.com", true, map[string]string{"k": "v"})
 
 	repo := &mockIntegrationRepo{
-		findFn: func(_ context.Context, _ domain.IntegrationID) (*domain.Integration, error) {
+		findFn: func(_ context.Context, _ integentity.IntegrationID) (*integentity.Integration, error) {
 			return i, nil
 		},
 	}
@@ -69,7 +69,7 @@ func TestUpdateHandler_PartialUpdate(t *testing.T) {
 
 	newURL := "https://new.com"
 	err := handler.Handle(context.Background(), UpdateCommand{
-		ID:         domain.IntegrationID(i.ID()),
+		ID:         integentity.IntegrationID(i.ID()),
 		WebhookURL: &newURL,
 	})
 	require.NoError(t, err)
@@ -84,10 +84,10 @@ func TestUpdateHandler_PartialUpdate(t *testing.T) {
 func TestUpdateHandler_WithConfig(t *testing.T) {
 	t.Parallel()
 
-	i, _ := domain.NewIntegration("Name", "type", "key", "url", true, nil)
+	i, _ := integentity.NewIntegration("Name", "type", "key", "url", true, nil)
 
 	repo := &mockIntegrationRepo{
-		findFn: func(_ context.Context, _ domain.IntegrationID) (*domain.Integration, error) {
+		findFn: func(_ context.Context, _ integentity.IntegrationID) (*integentity.Integration, error) {
 			return i, nil
 		},
 	}
@@ -95,7 +95,7 @@ func TestUpdateHandler_WithConfig(t *testing.T) {
 
 	newConfig := map[string]string{"channel": "#alerts", "priority": "high"}
 	err := handler.Handle(context.Background(), UpdateCommand{
-		ID:     domain.IntegrationID(i.ID()),
+		ID:     integentity.IntegrationID(i.ID()),
 		Config: &newConfig,
 	})
 	require.NoError(t, err)
@@ -110,7 +110,7 @@ func TestUpdateHandler_NotFound(t *testing.T) {
 	repo := &mockIntegrationRepo{}
 	handler := NewUpdateHandler(repo, &mockEventBus{}, &mockLogger{})
 
-	err := handler.Handle(context.Background(), UpdateCommand{ID: domain.NewIntegrationID()})
+	err := handler.Handle(context.Background(), UpdateCommand{ID: integentity.NewIntegrationID()})
 	if err == nil {
 		t.Fatal("expected error for not found")
 	}

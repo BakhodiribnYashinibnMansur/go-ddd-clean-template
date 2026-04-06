@@ -8,7 +8,8 @@ import (
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/metadata"
 	"gct/internal/kernel/infrastructure/pgxutil"
-	"gct/internal/context/ops/generic/systemerror/domain"
+	syserrentity "gct/internal/context/ops/generic/systemerror/domain/entity"
+	syserrrepo "gct/internal/context/ops/generic/systemerror/domain/repository"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -39,7 +40,7 @@ func NewSystemErrorReadRepo(pool *pgxpool.Pool) *SystemErrorReadRepo {
 }
 
 // FindByID returns a SystemErrorView for the given ID.
-func (r *SystemErrorReadRepo) FindByID(ctx context.Context, id domain.SystemErrorID) (result *domain.SystemErrorView, err error) {
+func (r *SystemErrorReadRepo) FindByID(ctx context.Context, id syserrentity.SystemErrorID) (result *syserrrepo.SystemErrorView, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "SystemErrorReadRepo.FindByID")
 	defer func() { end(err) }()
 
@@ -68,7 +69,7 @@ func (r *SystemErrorReadRepo) FindByID(ctx context.Context, id domain.SystemErro
 }
 
 // List returns a paginated list of SystemErrorView with optional filters.
-func (r *SystemErrorReadRepo) List(ctx context.Context, filter domain.SystemErrorFilter) (items []*domain.SystemErrorView, total int64, err error) {
+func (r *SystemErrorReadRepo) List(ctx context.Context, filter syserrrepo.SystemErrorFilter) (items []*syserrrepo.SystemErrorView, total int64, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "SystemErrorReadRepo.List")
 	defer func() { end(err) }()
 
@@ -116,7 +117,7 @@ func (r *SystemErrorReadRepo) List(ctx context.Context, filter domain.SystemErro
 	}
 	defer rows.Close()
 
-	var views []*domain.SystemErrorView
+	var views []*syserrrepo.SystemErrorView
 	for rows.Next() {
 		v, err := scanViewFromRows(rows)
 		if err != nil {
@@ -141,7 +142,7 @@ type rowScanner interface {
 	Scan(dest ...any) error
 }
 
-func scanViewFields(s rowScanner) (*domain.SystemErrorView, error) {
+func scanViewFields(s rowScanner) (*syserrrepo.SystemErrorView, error) {
 	var (
 		id          uuid.UUID
 		code        string
@@ -170,8 +171,8 @@ func scanViewFields(s rowScanner) (*domain.SystemErrorView, error) {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 
-	return &domain.SystemErrorView{
-		ID:          domain.SystemErrorID(id),
+	return &syserrrepo.SystemErrorView{
+		ID:          syserrentity.SystemErrorID(id),
 		Code:        code,
 		Message:     message,
 		StackTrace:  stackTrace,
@@ -189,7 +190,7 @@ func scanViewFields(s rowScanner) (*domain.SystemErrorView, error) {
 	}, nil
 }
 
-func scanView(row rowScanner) (*domain.SystemErrorView, error) {
+func scanView(row rowScanner) (*syserrrepo.SystemErrorView, error) {
 	v, err := scanViewFields(row)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
@@ -197,6 +198,6 @@ func scanView(row rowScanner) (*domain.SystemErrorView, error) {
 	return v, nil
 }
 
-func scanViewFromRows(rows rowScanner) (*domain.SystemErrorView, error) {
+func scanViewFromRows(rows rowScanner) (*syserrrepo.SystemErrorView, error) {
 	return scanViewFields(rows)
 }

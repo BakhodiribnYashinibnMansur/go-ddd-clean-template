@@ -7,7 +7,7 @@ import (
 	"time"
 
 	access "gct/internal/context/iam/generic/authz/application/query"
-	"gct/internal/context/iam/generic/authz/domain"
+	authzentity "gct/internal/context/iam/generic/authz/domain/entity"
 	"gct/internal/contract/ports"
 	"gct/internal/kernel/consts"
 	shared "gct/internal/kernel/domain"
@@ -80,7 +80,7 @@ func (m *AuthzMiddleware) Authz(ctx *gin.Context) {
 	method := ctx.Request.Method
 
 	// 5. Build ABAC evaluation context.
-	evalCtx := domain.EvaluationContext{
+	evalCtx := authzentity.EvaluationContext{
 		Attrs: map[string]map[string]any{
 			"user":     buildUserAttrs(user),
 			"env":      buildEnvAttrs(ctx),
@@ -91,7 +91,7 @@ func (m *AuthzMiddleware) Authz(ctx *gin.Context) {
 
 	// 6. Check access via the Authz BC query handler.
 	allowed, err := m.checkAccess.Handle(ctx.Request.Context(), access.CheckAccessQuery{
-		RoleID:  domain.RoleID(*user.RoleID),
+		RoleID:  authzentity.RoleID(*user.RoleID),
 		Path:    path,
 		Method:  strings.ToUpper(method),
 		EvalCtx: evalCtx,

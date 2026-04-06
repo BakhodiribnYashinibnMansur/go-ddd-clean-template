@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"gct/internal/context/admin/generic/featureflag/domain"
+	ffentity "gct/internal/context/admin/generic/featureflag/domain/entity"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -14,13 +14,13 @@ import (
 func TestUpdateHandler_Handle(t *testing.T) {
 	t.Parallel()
 
-	flagID := domain.NewFeatureFlagID()
+	flagID := ffentity.NewFeatureFlagID()
 	flagRepo := &mockFeatureFlagRepo{
-		findFn: func(_ context.Context, id domain.FeatureFlagID) (*domain.FeatureFlag, error) {
+		findFn: func(_ context.Context, id ffentity.FeatureFlagID) (*ffentity.FeatureFlag, error) {
 			if id == flagID {
 				return newReconstructedFlag(flagID), nil
 			}
-			return nil, domain.ErrFeatureFlagNotFound
+			return nil, ffentity.ErrFeatureFlagNotFound
 		},
 	}
 	eb := &mockEventBus{}
@@ -29,7 +29,7 @@ func TestUpdateHandler_Handle(t *testing.T) {
 	newName := "updated-name"
 	newKey := "updated_key"
 	cmd := UpdateCommand{
-		ID:   domain.FeatureFlagID(flagID),
+		ID:   ffentity.FeatureFlagID(flagID),
 		Name: &newName,
 		Key:  &newKey,
 	}
@@ -54,9 +54,9 @@ func TestUpdateHandler_Handle(t *testing.T) {
 func TestUpdateHandler_Handle_PartialUpdate(t *testing.T) {
 	t.Parallel()
 
-	flagID := domain.NewFeatureFlagID()
+	flagID := ffentity.NewFeatureFlagID()
 	flagRepo := &mockFeatureFlagRepo{
-		findFn: func(_ context.Context, _ domain.FeatureFlagID) (*domain.FeatureFlag, error) {
+		findFn: func(_ context.Context, _ ffentity.FeatureFlagID) (*ffentity.FeatureFlag, error) {
 			return newReconstructedFlag(flagID), nil
 		},
 	}
@@ -64,7 +64,7 @@ func TestUpdateHandler_Handle_PartialUpdate(t *testing.T) {
 
 	newDesc := "new description"
 	err := handler.Handle(context.Background(), UpdateCommand{
-		ID:          domain.FeatureFlagID(flagID),
+		ID:          ffentity.FeatureFlagID(flagID),
 		Description: &newDesc,
 	})
 	require.NoError(t, err)
@@ -87,11 +87,11 @@ func TestUpdateHandler_Handle_NotFound(t *testing.T) {
 	flagRepo := &mockFeatureFlagRepo{} // default returns ErrFeatureFlagNotFound
 	handler := NewUpdateHandler(flagRepo, &mockEventBus{}, &mockLogger{})
 
-	err := handler.Handle(context.Background(), UpdateCommand{ID: domain.FeatureFlagID(uuid.New())})
+	err := handler.Handle(context.Background(), UpdateCommand{ID: ffentity.FeatureFlagID(uuid.New())})
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
-	if !errors.Is(err, domain.ErrFeatureFlagNotFound) {
+	if !errors.Is(err, ffentity.ErrFeatureFlagNotFound) {
 		t.Fatalf("expected ErrFeatureFlagNotFound, got: %v", err)
 	}
 }
@@ -99,19 +99,19 @@ func TestUpdateHandler_Handle_NotFound(t *testing.T) {
 func TestUpdateHandler_Handle_UpdateRepoError(t *testing.T) {
 	t.Parallel()
 
-	flagID := domain.NewFeatureFlagID()
+	flagID := ffentity.NewFeatureFlagID()
 	repoErr := errors.New("update failed")
 	flagRepo := &mockFeatureFlagRepo{
-		findFn: func(_ context.Context, _ domain.FeatureFlagID) (*domain.FeatureFlag, error) {
+		findFn: func(_ context.Context, _ ffentity.FeatureFlagID) (*ffentity.FeatureFlag, error) {
 			return newReconstructedFlag(flagID), nil
 		},
-		updateFn: func(_ context.Context, _ *domain.FeatureFlag) error {
+		updateFn: func(_ context.Context, _ *ffentity.FeatureFlag) error {
 			return repoErr
 		},
 	}
 	handler := NewUpdateHandler(flagRepo, &mockEventBus{}, &mockLogger{})
 
-	err := handler.Handle(context.Background(), UpdateCommand{ID: domain.FeatureFlagID(flagID)})
+	err := handler.Handle(context.Background(), UpdateCommand{ID: ffentity.FeatureFlagID(flagID)})
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
@@ -123,9 +123,9 @@ func TestUpdateHandler_Handle_UpdateRepoError(t *testing.T) {
 func TestUpdateHandler_Handle_ToggleActive(t *testing.T) {
 	t.Parallel()
 
-	flagID := domain.NewFeatureFlagID()
+	flagID := ffentity.NewFeatureFlagID()
 	flagRepo := &mockFeatureFlagRepo{
-		findFn: func(_ context.Context, _ domain.FeatureFlagID) (*domain.FeatureFlag, error) {
+		findFn: func(_ context.Context, _ ffentity.FeatureFlagID) (*ffentity.FeatureFlag, error) {
 			return newReconstructedFlag(flagID), nil
 		},
 	}
@@ -133,7 +133,7 @@ func TestUpdateHandler_Handle_ToggleActive(t *testing.T) {
 
 	isActive := false
 	err := handler.Handle(context.Background(), UpdateCommand{
-		ID:       domain.FeatureFlagID(flagID),
+		ID:       ffentity.FeatureFlagID(flagID),
 		IsActive: &isActive,
 	})
 	require.NoError(t, err)

@@ -6,7 +6,7 @@ import (
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 
-	appdto "gct/internal/context/iam/supporting/audit/application"
+	"gct/internal/context/iam/supporting/audit/application/dto"
 	"gct/internal/context/iam/supporting/audit/domain"
 	"gct/internal/kernel/infrastructure/pgxutil"
 )
@@ -18,7 +18,7 @@ type ListEndpointHistoryQuery struct {
 
 // ListEndpointHistoryResult holds the output of the list endpoint history query.
 type ListEndpointHistoryResult struct {
-	Entries []*appdto.EndpointHistoryView
+	Entries []*dto.EndpointHistoryView
 	Total   int64
 }
 
@@ -45,10 +45,10 @@ func (h *ListEndpointHistoryHandler) Handle(ctx context.Context, q ListEndpointH
 		return nil, apperrors.MapToServiceError(err)
 	}
 
-	result := make([]*appdto.EndpointHistoryView, len(views))
+	result := make([]*dto.EndpointHistoryView, len(views))
 	for i, v := range views {
-		result[i] = &appdto.EndpointHistoryView{
-			ID:         v.ID,
+		result[i] = &dto.EndpointHistoryView{
+			ID:         v.ID.UUID(),
 			UserID:     v.UserID,
 			Endpoint:   v.Endpoint,
 			Method:     v.Method,

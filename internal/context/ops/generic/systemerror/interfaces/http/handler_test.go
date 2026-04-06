@@ -14,7 +14,8 @@ import (
 	"gct/internal/context/ops/generic/systemerror"
 	"gct/internal/context/ops/generic/systemerror/application/command"
 	"gct/internal/context/ops/generic/systemerror/application/query"
-	"gct/internal/context/ops/generic/systemerror/domain"
+	syserrentity "gct/internal/context/ops/generic/systemerror/domain/entity"
+	syserrrepo "gct/internal/context/ops/generic/systemerror/domain/repository"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -23,42 +24,42 @@ import (
 // --- Mocks ---
 
 type mockRepo struct {
-	saved   *domain.SystemError
-	updated *domain.SystemError
-	findFn  func(ctx context.Context, id domain.SystemErrorID) (*domain.SystemError, error)
+	saved   *syserrentity.SystemError
+	updated *syserrentity.SystemError
+	findFn  func(ctx context.Context, id syserrentity.SystemErrorID) (*syserrentity.SystemError, error)
 }
 
-func (m *mockRepo) Save(_ context.Context, e *domain.SystemError) error {
+func (m *mockRepo) Save(_ context.Context, e *syserrentity.SystemError) error {
 	m.saved = e
 	return nil
 }
-func (m *mockRepo) FindByID(ctx context.Context, id domain.SystemErrorID) (*domain.SystemError, error) {
+func (m *mockRepo) FindByID(ctx context.Context, id syserrentity.SystemErrorID) (*syserrentity.SystemError, error) {
 	if m.findFn != nil {
 		return m.findFn(ctx, id)
 	}
-	return nil, domain.ErrSystemErrorNotFound
+	return nil, syserrentity.ErrSystemErrorNotFound
 }
-func (m *mockRepo) Update(_ context.Context, e *domain.SystemError) error {
+func (m *mockRepo) Update(_ context.Context, e *syserrentity.SystemError) error {
 	m.updated = e
 	return nil
 }
-func (m *mockRepo) List(_ context.Context, _ domain.SystemErrorFilter) ([]*domain.SystemError, int64, error) {
+func (m *mockRepo) List(_ context.Context, _ syserrrepo.SystemErrorFilter) ([]*syserrentity.SystemError, int64, error) {
 	return nil, 0, nil
 }
 
 type mockReadRepo struct {
-	view  *domain.SystemErrorView
-	views []*domain.SystemErrorView
+	view  *syserrrepo.SystemErrorView
+	views []*syserrrepo.SystemErrorView
 	total int64
 }
 
-func (m *mockReadRepo) FindByID(_ context.Context, id domain.SystemErrorID) (*domain.SystemErrorView, error) {
+func (m *mockReadRepo) FindByID(_ context.Context, id syserrentity.SystemErrorID) (*syserrrepo.SystemErrorView, error) {
 	if m.view != nil && m.view.ID == id {
 		return m.view, nil
 	}
-	return nil, domain.ErrSystemErrorNotFound
+	return nil, syserrentity.ErrSystemErrorNotFound
 }
-func (m *mockReadRepo) List(_ context.Context, _ domain.SystemErrorFilter) ([]*domain.SystemErrorView, int64, error) {
+func (m *mockReadRepo) List(_ context.Context, _ syserrrepo.SystemErrorFilter) ([]*syserrrepo.SystemErrorView, int64, error) {
 	return m.views, m.total, nil
 }
 
@@ -156,8 +157,8 @@ func TestHandler_List_Success(t *testing.T) {
 	t.Parallel()
 
 	readRepo := &mockReadRepo{
-		views: []*domain.SystemErrorView{
-			{ID: domain.NewSystemErrorID(), Code: "ERR_1", Severity: "high", CreatedAt: time.Now()},
+		views: []*syserrrepo.SystemErrorView{
+			{ID: syserrentity.NewSystemErrorID(), Code: "ERR_1", Severity: "high", CreatedAt: time.Now()},
 		},
 		total: 1,
 	}
@@ -175,9 +176,9 @@ func TestHandler_List_Success(t *testing.T) {
 func TestHandler_Get_Success(t *testing.T) {
 	t.Parallel()
 
-	id := domain.NewSystemErrorID()
+	id := syserrentity.NewSystemErrorID()
 	readRepo := &mockReadRepo{
-		view: &domain.SystemErrorView{ID: id, Code: "ERR", Severity: "low", CreatedAt: time.Now()},
+		view: &syserrrepo.SystemErrorView{ID: id, Code: "ERR", Severity: "low", CreatedAt: time.Now()},
 	}
 	router := setupRouter(&mockRepo{}, readRepo)
 
@@ -207,13 +208,13 @@ func TestHandler_Get_InvalidID(t *testing.T) {
 func TestHandler_Resolve_Success(t *testing.T) {
 	t.Parallel()
 
-	se := domain.NewSystemError("ERR", "test", "low")
+	se := syserrentity.NewSystemError("ERR", "test", "low")
 	repo := &mockRepo{
-		findFn: func(_ context.Context, id domain.SystemErrorID) (*domain.SystemError, error) {
+		findFn: func(_ context.Context, id syserrentity.SystemErrorID) (*syserrentity.SystemError, error) {
 			if id == se.TypedID() {
 				return se, nil
 			}
-			return nil, domain.ErrSystemErrorNotFound
+			return nil, syserrentity.ErrSystemErrorNotFound
 		},
 	}
 	router := setupRouter(repo, &mockReadRepo{})

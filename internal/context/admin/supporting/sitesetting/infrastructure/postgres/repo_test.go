@@ -5,7 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/admin/supporting/sitesetting/domain"
+	siteentity "gct/internal/context/admin/supporting/sitesetting/domain/entity"
+	siterepo "gct/internal/context/admin/supporting/sitesetting/domain/repository"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -63,7 +64,7 @@ func TestNewSiteSettingReadRepo(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestScanSiteSettingView_Success(t *testing.T) {
-	id := domain.NewSiteSettingID()
+	id := siteentity.NewSiteSettingID()
 	now := time.Now().Truncate(time.Microsecond)
 
 	row := &mockRow{
@@ -123,7 +124,7 @@ func TestScanSiteSettingView_Error(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestScanSiteSettingViewFromRows_Success(t *testing.T) {
-	id := domain.NewSiteSettingID()
+	id := siteentity.NewSiteSettingID()
 	now := time.Now().Truncate(time.Microsecond)
 
 	rows := &mockRows{
@@ -165,7 +166,7 @@ func TestScanSiteSettingViewFromRows_Error(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestScanSiteSetting_Success(t *testing.T) {
-	id := domain.NewSiteSettingID()
+	id := siteentity.NewSiteSettingID()
 	now := time.Now().Truncate(time.Microsecond)
 
 	row := &mockRow{
@@ -219,7 +220,7 @@ func TestScanSiteSetting_Error(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestScanSiteSettingFromRows_Success(t *testing.T) {
-	id := domain.NewSiteSettingID()
+	id := siteentity.NewSiteSettingID()
 	now := time.Now().Truncate(time.Microsecond)
 
 	rows := &mockRows{
@@ -262,7 +263,7 @@ func TestScanSiteSettingFromRows_Error(t *testing.T) {
 
 func TestApplyFilters_NoFilters(t *testing.T) {
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.SiteSettingFilter{})
+	result := applyFilters(conds, siterepo.SiteSettingFilter{})
 	if len(result) != 0 {
 		t.Errorf("expected 0 conditions, got %d", len(result))
 	}
@@ -271,7 +272,7 @@ func TestApplyFilters_NoFilters(t *testing.T) {
 func TestApplyFilters_WithKey(t *testing.T) {
 	key := "site_name"
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.SiteSettingFilter{Key: &key})
+	result := applyFilters(conds, siterepo.SiteSettingFilter{Key: &key})
 	if len(result) != 1 {
 		t.Errorf("expected 1 condition, got %d", len(result))
 	}
@@ -280,7 +281,7 @@ func TestApplyFilters_WithKey(t *testing.T) {
 func TestApplyFilters_WithType(t *testing.T) {
 	sType := "general"
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.SiteSettingFilter{Type: &sType})
+	result := applyFilters(conds, siterepo.SiteSettingFilter{Type: &sType})
 	if len(result) != 1 {
 		t.Errorf("expected 1 condition, got %d", len(result))
 	}
@@ -290,7 +291,7 @@ func TestApplyFilters_WithAllFilters(t *testing.T) {
 	key := "site_name"
 	sType := "general"
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.SiteSettingFilter{Key: &key, Type: &sType})
+	result := applyFilters(conds, siterepo.SiteSettingFilter{Key: &key, Type: &sType})
 	if len(result) != 2 {
 		t.Errorf("expected 2 conditions, got %d", len(result))
 	}

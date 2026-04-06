@@ -7,7 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/admin/supporting/sitesetting/domain"
+	siteentity "gct/internal/context/admin/supporting/sitesetting/domain/entity"
+	siterepo "gct/internal/context/admin/supporting/sitesetting/domain/repository"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -16,29 +17,29 @@ import (
 // --- Mocks ---
 
 type mockReadRepo struct {
-	view  *domain.SiteSettingView
-	views []*domain.SiteSettingView
+	view  *siterepo.SiteSettingView
+	views []*siterepo.SiteSettingView
 	total int64
 }
 
-func (m *mockReadRepo) FindByID(_ context.Context, id domain.SiteSettingID) (*domain.SiteSettingView, error) {
+func (m *mockReadRepo) FindByID(_ context.Context, id siteentity.SiteSettingID) (*siterepo.SiteSettingView, error) {
 	if m.view != nil && m.view.ID == id {
 		return m.view, nil
 	}
-	return nil, domain.ErrSiteSettingNotFound
+	return nil, siteentity.ErrSiteSettingNotFound
 }
 
-func (m *mockReadRepo) List(_ context.Context, _ domain.SiteSettingFilter) ([]*domain.SiteSettingView, int64, error) {
+func (m *mockReadRepo) List(_ context.Context, _ siterepo.SiteSettingFilter) ([]*siterepo.SiteSettingView, int64, error) {
 	return m.views, m.total, nil
 }
 
 type errorReadRepo struct{ err error }
 
-func (m *errorReadRepo) FindByID(_ context.Context, _ domain.SiteSettingID) (*domain.SiteSettingView, error) {
+func (m *errorReadRepo) FindByID(_ context.Context, _ siteentity.SiteSettingID) (*siterepo.SiteSettingView, error) {
 	return nil, m.err
 }
 
-func (m *errorReadRepo) List(_ context.Context, _ domain.SiteSettingFilter) ([]*domain.SiteSettingView, int64, error) {
+func (m *errorReadRepo) List(_ context.Context, _ siterepo.SiteSettingFilter) ([]*siterepo.SiteSettingView, int64, error) {
 	return nil, 0, m.err
 }
 
@@ -49,10 +50,10 @@ var errRepo = errors.New("repo failure")
 func TestGetSiteSettingHandler_Handle(t *testing.T) {
 	t.Parallel()
 
-	id := domain.NewSiteSettingID()
+	id := siteentity.NewSiteSettingID()
 	now := time.Now()
 	readRepo := &mockReadRepo{
-		view: &domain.SiteSettingView{
+		view: &siterepo.SiteSettingView{
 			ID:          id,
 			Key:         "site_name",
 			Value:       "My Site",
@@ -88,7 +89,7 @@ func TestGetSiteSettingHandler_NotFound(t *testing.T) {
 
 	readRepo := &mockReadRepo{}
 	handler := NewGetSiteSettingHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), GetSiteSettingQuery{ID: domain.SiteSettingID(uuid.New())})
+	_, err := handler.Handle(context.Background(), GetSiteSettingQuery{ID: siteentity.SiteSettingID(uuid.New())})
 	if err == nil {
 		t.Fatal("expected error for not found")
 	}
@@ -99,7 +100,7 @@ func TestGetSiteSettingHandler_RepoError(t *testing.T) {
 
 	readRepo := &errorReadRepo{err: errRepo}
 	handler := NewGetSiteSettingHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), GetSiteSettingQuery{ID: domain.SiteSettingID(uuid.New())})
+	_, err := handler.Handle(context.Background(), GetSiteSettingQuery{ID: siteentity.SiteSettingID(uuid.New())})
 	if err == nil {
 		t.Fatal("expected error from repo")
 	}
@@ -108,11 +109,11 @@ func TestGetSiteSettingHandler_RepoError(t *testing.T) {
 func TestGetSiteSettingHandler_AllFieldsMapped(t *testing.T) {
 	t.Parallel()
 
-	id := domain.NewSiteSettingID()
+	id := siteentity.NewSiteSettingID()
 	now := time.Now()
 
 	readRepo := &mockReadRepo{
-		view: &domain.SiteSettingView{
+		view: &siterepo.SiteSettingView{
 			ID:          id,
 			Key:         "maintenance_mode",
 			Value:       "true",
@@ -126,7 +127,7 @@ func TestGetSiteSettingHandler_AllFieldsMapped(t *testing.T) {
 	handler := NewGetSiteSettingHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), GetSiteSettingQuery{ID: id})
 	require.NoError(t, err)
-	if result.ID != id {
+	if result.ID != uuid.UUID(id) {
 		t.Error("ID not mapped correctly")
 	}
 	if result.Key != "maintenance_mode" {

@@ -7,7 +7,8 @@ import (
 	"gct/internal/context/admin/supporting/dataexport"
 	"gct/internal/context/admin/supporting/dataexport/application/command"
 	"gct/internal/context/admin/supporting/dataexport/application/query"
-	"gct/internal/context/admin/supporting/dataexport/domain"
+	exportentity "gct/internal/context/admin/supporting/dataexport/domain/entity"
+	exportrepo "gct/internal/context/admin/supporting/dataexport/domain/repository"
 	"gct/internal/kernel/infrastructure/eventbus"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/test/integration/common/setup"
@@ -38,7 +39,7 @@ func TestIntegration_CreateAndGetDataExport(t *testing.T) {
 	}
 
 	result, err := bc.ListDataExports.Handle(ctx, query.ListDataExportsQuery{
-		Filter: domain.DataExportFilter{Limit: 10},
+		Filter: exportrepo.DataExportFilter{Limit: 10},
 	})
 	if err != nil {
 		t.Fatalf("ListDataExports: %v", err)
@@ -55,7 +56,7 @@ func TestIntegration_CreateAndGetDataExport(t *testing.T) {
 		t.Errorf("expected status PENDING, got %s", de.Status)
 	}
 
-	view, err := bc.GetDataExport.Handle(ctx, query.GetDataExportQuery{ID: domain.DataExportID(de.ID)})
+	view, err := bc.GetDataExport.Handle(ctx, query.GetDataExportQuery{ID: exportentity.DataExportID(de.ID)})
 	if err != nil {
 		t.Fatalf("GetDataExport: %v", err)
 	}
@@ -80,28 +81,28 @@ func TestIntegration_UpdateDataExport(t *testing.T) {
 	}
 
 	list, _ := bc.ListDataExports.Handle(ctx, query.ListDataExportsQuery{
-		Filter: domain.DataExportFilter{Limit: 10},
+		Filter: exportrepo.DataExportFilter{Limit: 10},
 	})
-	deID := domain.DataExportID(list.Exports[0].ID)
+	deID := exportentity.DataExportID(list.Exports[0].ID)
 
-	processing := domain.ExportStatusProcessing
+	processing := exportentity.ExportStatusProcessing
 	err = bc.UpdateDataExport.Handle(ctx, command.UpdateDataExportCommand{
-		ID:     domain.DataExportID(deID),
+		ID:     exportentity.DataExportID(deID),
 		Status: &processing,
 	})
 	if err != nil {
 		t.Fatalf("UpdateDataExport (processing): %v", err)
 	}
 
-	view, _ := bc.GetDataExport.Handle(ctx, query.GetDataExportQuery{ID: domain.DataExportID(deID)})
+	view, _ := bc.GetDataExport.Handle(ctx, query.GetDataExportQuery{ID: exportentity.DataExportID(deID)})
 	if view.Status != "PROCESSING" {
 		t.Errorf("expected status PROCESSING, got %s", view.Status)
 	}
 
-	completed := domain.ExportStatusCompleted
+	completed := exportentity.ExportStatusCompleted
 	fileURL := "https://storage.example.com/exports/audit_logs.json"
 	err = bc.UpdateDataExport.Handle(ctx, command.UpdateDataExportCommand{
-		ID:      domain.DataExportID(deID),
+		ID:      exportentity.DataExportID(deID),
 		Status:  &completed,
 		FileURL: &fileURL,
 	})
@@ -109,7 +110,7 @@ func TestIntegration_UpdateDataExport(t *testing.T) {
 		t.Fatalf("UpdateDataExport (completed): %v", err)
 	}
 
-	view, _ = bc.GetDataExport.Handle(ctx, query.GetDataExportQuery{ID: domain.DataExportID(deID)})
+	view, _ = bc.GetDataExport.Handle(ctx, query.GetDataExportQuery{ID: exportentity.DataExportID(deID)})
 	if view.Status != "COMPLETED" {
 		t.Errorf("expected status COMPLETED, got %s", view.Status)
 	}
@@ -131,17 +132,17 @@ func TestIntegration_DeleteDataExport(t *testing.T) {
 	}
 
 	list, _ := bc.ListDataExports.Handle(ctx, query.ListDataExportsQuery{
-		Filter: domain.DataExportFilter{Limit: 10},
+		Filter: exportrepo.DataExportFilter{Limit: 10},
 	})
-	deID := domain.DataExportID(list.Exports[0].ID)
+	deID := exportentity.DataExportID(list.Exports[0].ID)
 
-	err = bc.DeleteDataExport.Handle(ctx, command.DeleteDataExportCommand{ID: domain.DataExportID(deID)})
+	err = bc.DeleteDataExport.Handle(ctx, command.DeleteDataExportCommand{ID: exportentity.DataExportID(deID)})
 	if err != nil {
 		t.Fatalf("DeleteDataExport: %v", err)
 	}
 
 	list2, _ := bc.ListDataExports.Handle(ctx, query.ListDataExportsQuery{
-		Filter: domain.DataExportFilter{Limit: 10},
+		Filter: exportrepo.DataExportFilter{Limit: 10},
 	})
 	if list2.Total != 0 {
 		t.Errorf("expected 0 data exports after delete, got %d", list2.Total)
@@ -165,7 +166,7 @@ func TestIntegration_DataExportStateMachine(t *testing.T) {
 	}
 
 	list, err := bc.ListDataExports.Handle(ctx, query.ListDataExportsQuery{
-		Filter: domain.DataExportFilter{Limit: 10},
+		Filter: exportrepo.DataExportFilter{Limit: 10},
 	})
 	if err != nil {
 		t.Fatalf("ListDataExports: %v", err)
@@ -173,7 +174,7 @@ func TestIntegration_DataExportStateMachine(t *testing.T) {
 	if list.Total != 1 {
 		t.Fatalf("expected 1 data export, got %d", list.Total)
 	}
-	deID := domain.DataExportID(list.Exports[0].ID)
+	deID := exportentity.DataExportID(list.Exports[0].ID)
 
 	view, err := bc.GetDataExport.Handle(ctx, query.GetDataExportQuery{ID: deID})
 	if err != nil {
@@ -184,7 +185,7 @@ func TestIntegration_DataExportStateMachine(t *testing.T) {
 	}
 
 	// Step 2: Update to PROCESSING
-	processing := domain.ExportStatusProcessing
+	processing := exportentity.ExportStatusProcessing
 	err = bc.UpdateDataExport.Handle(ctx, command.UpdateDataExportCommand{
 		ID:     deID,
 		Status: &processing,
@@ -202,7 +203,7 @@ func TestIntegration_DataExportStateMachine(t *testing.T) {
 	}
 
 	// Step 3: Update to COMPLETED with fileURL
-	completed := domain.ExportStatusCompleted
+	completed := exportentity.ExportStatusCompleted
 	fileURL := "https://storage.example.com/exports/users.csv"
 	err = bc.UpdateDataExport.Handle(ctx, command.UpdateDataExportCommand{
 		ID:      deID,
@@ -246,15 +247,15 @@ func TestIntegration_DataExportFail(t *testing.T) {
 	}
 
 	list, err := bc.ListDataExports.Handle(ctx, query.ListDataExportsQuery{
-		Filter: domain.DataExportFilter{Limit: 10},
+		Filter: exportrepo.DataExportFilter{Limit: 10},
 	})
 	if err != nil {
 		t.Fatalf("ListDataExports: %v", err)
 	}
-	deID := domain.DataExportID(list.Exports[0].ID)
+	deID := exportentity.DataExportID(list.Exports[0].ID)
 
 	// Step 2: Update to PROCESSING
-	processing := domain.ExportStatusProcessing
+	processing := exportentity.ExportStatusProcessing
 	err = bc.UpdateDataExport.Handle(ctx, command.UpdateDataExportCommand{
 		ID:     deID,
 		Status: &processing,
@@ -264,7 +265,7 @@ func TestIntegration_DataExportFail(t *testing.T) {
 	}
 
 	// Step 3: Update to FAILED with error message
-	failed := domain.ExportStatusFailed
+	failed := exportentity.ExportStatusFailed
 	errMsg := "disk quota exceeded"
 	err = bc.UpdateDataExport.Handle(ctx, command.UpdateDataExportCommand{
 		ID:     deID,

@@ -5,21 +5,21 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/iam/generic/user/domain"
+	userentity "gct/internal/context/iam/generic/user/domain/entity"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
-func makeTestUser(t *testing.T) *domain.User {
+func makeTestUser(t *testing.T) *userentity.User {
 	t.Helper()
-	phone, err := domain.NewPhone("+998901234567")
+	phone, err := userentity.NewPhone("+998901234567")
 	require.NoError(t, err)
-	pw, err := domain.NewPasswordFromRaw("StrongP@ss123")
+	pw, err := userentity.NewPasswordFromRaw("StrongP@ss123")
 	require.NoError(t, err)
-	email, _ := domain.NewEmail("old@example.com")
+	email, _ := userentity.NewEmail("old@example.com")
 	username := "olduser"
-	return domain.ReconstructUser(
+	return userentity.ReconstructUser(
 		uuid.New(),
 		time.Now(), time.Now(), nil,
 		phone, &email, &username, pw,
@@ -33,11 +33,11 @@ func TestUpdateUserHandler_Handle(t *testing.T) {
 
 	user := makeTestUser(t)
 	repo := &mockUserRepository{
-		findByIDFn: func(_ context.Context, id domain.UserID) (*domain.User, error) {
+		findByIDFn: func(_ context.Context, id userentity.UserID) (*userentity.User, error) {
 			if id == user.TypedID() {
 				return user, nil
 			}
-			return nil, domain.ErrUserNotFound
+			return nil, userentity.ErrUserNotFound
 		},
 	}
 	eventBus := &mockEventBus{}
@@ -48,7 +48,7 @@ func TestUpdateUserHandler_Handle(t *testing.T) {
 	newEmail := "new@example.com"
 	newUsername := "newuser"
 	cmd := UpdateUserCommand{
-		ID:       domain.UserID(user.ID()),
+		ID:       userentity.UserID(user.ID()),
 		Email:    &newEmail,
 		Username: &newUsername,
 	}
@@ -78,7 +78,7 @@ func TestUpdateUserHandler_NotFound(t *testing.T) {
 
 	handler := NewUpdateUserHandler(repo, eventBus, log)
 
-	cmd := UpdateUserCommand{ID: domain.NewUserID()}
+	cmd := UpdateUserCommand{ID: userentity.NewUserID()}
 	err := handler.Handle(context.Background(), cmd)
 	if err == nil {
 		t.Fatal("expected error for non-existent user")
@@ -90,7 +90,7 @@ func TestUpdateUserHandler_InvalidEmail(t *testing.T) {
 
 	user := makeTestUser(t)
 	repo := &mockUserRepository{
-		findByIDFn: func(_ context.Context, id domain.UserID) (*domain.User, error) {
+		findByIDFn: func(_ context.Context, id userentity.UserID) (*userentity.User, error) {
 			return user, nil
 		},
 	}
@@ -101,7 +101,7 @@ func TestUpdateUserHandler_InvalidEmail(t *testing.T) {
 
 	badEmail := "not-an-email"
 	cmd := UpdateUserCommand{
-		ID:    domain.UserID(user.ID()),
+		ID:    userentity.UserID(user.ID()),
 		Email: &badEmail,
 	}
 
@@ -116,7 +116,7 @@ func TestUpdateUserHandler_OnlyAttributes(t *testing.T) {
 
 	user := makeTestUser(t)
 	repo := &mockUserRepository{
-		findByIDFn: func(_ context.Context, id domain.UserID) (*domain.User, error) {
+		findByIDFn: func(_ context.Context, id userentity.UserID) (*userentity.User, error) {
 			return user, nil
 		},
 	}
@@ -126,7 +126,7 @@ func TestUpdateUserHandler_OnlyAttributes(t *testing.T) {
 	handler := NewUpdateUserHandler(repo, eventBus, log)
 
 	cmd := UpdateUserCommand{
-		ID:         domain.UserID(user.ID()),
+		ID:         userentity.UserID(user.ID()),
 		Attributes: map[string]string{"new_key": "new_val"},
 	}
 

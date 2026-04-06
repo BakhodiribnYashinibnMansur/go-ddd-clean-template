@@ -6,29 +6,32 @@ import (
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 
-	appdto "gct/internal/context/content/generic/notification/application"
-	"gct/internal/context/content/generic/notification/domain"
+	"gct/internal/context/content/generic/notification/application/dto"
+	notifentity "gct/internal/context/content/generic/notification/domain/entity"
+	notifrepo "gct/internal/context/content/generic/notification/domain/repository"
 	"gct/internal/kernel/infrastructure/pgxutil"
+
+	"github.com/google/uuid"
 )
 
 // GetQuery holds the input for fetching a single notification.
 type GetQuery struct {
-	ID domain.NotificationID
+	ID notifentity.NotificationID
 }
 
 // GetHandler handles the GetQuery.
 type GetHandler struct {
-	readRepo domain.NotificationReadRepository
+	readRepo notifrepo.NotificationReadRepository
 	logger   logger.Log
 }
 
 // NewGetHandler creates a new GetHandler.
-func NewGetHandler(readRepo domain.NotificationReadRepository, l logger.Log) *GetHandler {
+func NewGetHandler(readRepo notifrepo.NotificationReadRepository, l logger.Log) *GetHandler {
 	return &GetHandler{readRepo: readRepo, logger: l}
 }
 
 // Handle executes the GetQuery and returns a NotificationView.
-func (h *GetHandler) Handle(ctx context.Context, q GetQuery) (result *appdto.NotificationView, err error) {
+func (h *GetHandler) Handle(ctx context.Context, q GetQuery) (result *dto.NotificationView, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "GetHandler.Handle")
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "GetNotification", "notification")()
@@ -39,8 +42,8 @@ func (h *GetHandler) Handle(ctx context.Context, q GetQuery) (result *appdto.Not
 		return nil, apperrors.MapToServiceError(err)
 	}
 
-	return &appdto.NotificationView{
-		ID:        view.ID,
+	return &dto.NotificationView{
+		ID:        uuid.UUID(view.ID),
 		UserID:    view.UserID,
 		Title:     view.Title,
 		Message:   view.Message,

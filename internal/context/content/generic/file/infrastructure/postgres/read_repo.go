@@ -4,7 +4,8 @@ import (
 	"context"
 	"time"
 
-	"gct/internal/context/content/generic/file/domain"
+	fileentity "gct/internal/context/content/generic/file/domain/entity"
+	filerepo "gct/internal/context/content/generic/file/domain/repository"
 	"gct/internal/kernel/consts"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -20,7 +21,7 @@ var readColumns = []string{
 	"bucket", "url", "uploaded_by", "created_at",
 }
 
-// FileReadRepo implements domain.FileReadRepository for the CQRS read side.
+// FileReadRepo implements filerepo.FileReadRepository for the CQRS read side.
 type FileReadRepo struct {
 	pool    *pgxpool.Pool
 	builder squirrel.StatementBuilderType
@@ -35,7 +36,7 @@ func NewFileReadRepo(pool *pgxpool.Pool) *FileReadRepo {
 }
 
 // FindByID returns a single FileView by its ID.
-func (r *FileReadRepo) FindByID(ctx context.Context, id domain.FileID) (result *domain.FileView, err error) {
+func (r *FileReadRepo) FindByID(ctx context.Context, id fileentity.FileID) (result *filerepo.FileView, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "FileReadRepo.FindByID")
 	defer func() { end(err) }()
 
@@ -53,7 +54,7 @@ func (r *FileReadRepo) FindByID(ctx context.Context, id domain.FileID) (result *
 }
 
 // List returns a paginated list of FileView with optional filters.
-func (r *FileReadRepo) List(ctx context.Context, filter domain.FileFilter) (items []*domain.FileView, total int64, err error) {
+func (r *FileReadRepo) List(ctx context.Context, filter filerepo.FileFilter) (items []*filerepo.FileView, total int64, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "FileReadRepo.List")
 	defer func() { end(err) }()
 
@@ -101,7 +102,7 @@ func (r *FileReadRepo) List(ctx context.Context, filter domain.FileFilter) (item
 	}
 	defer rows.Close()
 
-	var views []*domain.FileView
+	var views []*filerepo.FileView
 	for rows.Next() {
 		v, err := scanFileViewFromRows(rows)
 		if err != nil {
@@ -113,7 +114,7 @@ func (r *FileReadRepo) List(ctx context.Context, filter domain.FileFilter) (item
 	return views, total, nil
 }
 
-func applyFilters(conds squirrel.And, filter domain.FileFilter) squirrel.And {
+func applyFilters(conds squirrel.And, filter filerepo.FileFilter) squirrel.And {
 	if filter.Name != nil {
 		conds = append(conds, squirrel.ILike{"original_name": "%" + *filter.Name + "%"})
 	}
@@ -123,7 +124,7 @@ func applyFilters(conds squirrel.And, filter domain.FileFilter) squirrel.And {
 	return conds
 }
 
-func scanFileView(row pgx.Row) (*domain.FileView, error) {
+func scanFileView(row pgx.Row) (*filerepo.FileView, error) {
 	var (
 		rawID        uuid.UUID
 		name         string
@@ -141,8 +142,8 @@ func scanFileView(row pgx.Row) (*domain.FileView, error) {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 
-	return &domain.FileView{
-		ID:           domain.FileID(rawID),
+	return &filerepo.FileView{
+		ID:           fileentity.FileID(rawID),
 		Name:         name,
 		OriginalName: originalName,
 		MimeType:     mimeType,
@@ -154,7 +155,7 @@ func scanFileView(row pgx.Row) (*domain.FileView, error) {
 	}, nil
 }
 
-func scanFileViewFromRows(rows pgx.Rows) (*domain.FileView, error) {
+func scanFileViewFromRows(rows pgx.Rows) (*filerepo.FileView, error) {
 	var (
 		rawID        uuid.UUID
 		name         string
@@ -172,8 +173,8 @@ func scanFileViewFromRows(rows pgx.Rows) (*domain.FileView, error) {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 
-	return &domain.FileView{
-		ID:           domain.FileID(rawID),
+	return &filerepo.FileView{
+		ID:           fileentity.FileID(rawID),
 		Name:         name,
 		OriginalName: originalName,
 		MimeType:     mimeType,

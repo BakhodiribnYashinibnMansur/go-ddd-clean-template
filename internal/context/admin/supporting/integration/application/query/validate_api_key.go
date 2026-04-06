@@ -5,8 +5,9 @@ import (
 
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 
-	appdto "gct/internal/context/admin/supporting/integration/application"
-	"gct/internal/context/admin/supporting/integration/domain"
+	"gct/internal/context/admin/supporting/integration/application/dto"
+	integentity "gct/internal/context/admin/supporting/integration/domain/entity"
+	integrepo "gct/internal/context/admin/supporting/integration/domain/repository"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
 )
@@ -18,18 +19,18 @@ type ValidateAPIKeyQuery struct {
 
 // ValidateAPIKeyHandler handles the ValidateAPIKeyQuery.
 type ValidateAPIKeyHandler struct {
-	readRepo domain.IntegrationReadRepository
+	readRepo integrepo.IntegrationReadRepository
 	logger   logger.Log
 	l        logger.Log
 }
 
 // NewValidateAPIKeyHandler creates a new ValidateAPIKeyHandler.
-func NewValidateAPIKeyHandler(readRepo domain.IntegrationReadRepository, l logger.Log) *ValidateAPIKeyHandler {
+func NewValidateAPIKeyHandler(readRepo integrepo.IntegrationReadRepository, l logger.Log) *ValidateAPIKeyHandler {
 	return &ValidateAPIKeyHandler{readRepo: readRepo, l: l}
 }
 
 // Handle executes the ValidateAPIKeyQuery and returns an APIKeyView if the key is valid and active.
-func (h *ValidateAPIKeyHandler) Handle(ctx context.Context, q ValidateAPIKeyQuery) (result *appdto.APIKeyView, err error) {
+func (h *ValidateAPIKeyHandler) Handle(ctx context.Context, q ValidateAPIKeyQuery) (result *dto.APIKeyView, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "ValidateAPIKeyHandler.Handle")
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "ValidateApiKey", "integration")()
@@ -42,12 +43,12 @@ func (h *ValidateAPIKeyHandler) Handle(ctx context.Context, q ValidateAPIKeyQuer
 
 	if !view.Active {
 		h.l.Warnw("api key is inactive", "api_key_id", view.ID)
-		return nil, domain.ErrAPIKeyInactive
+		return nil, integentity.ErrAPIKeyInactive
 	}
 
-	return &appdto.APIKeyView{
+	return &dto.APIKeyView{
 		ID:            view.ID,
-		IntegrationID: view.IntegrationID,
+		IntegrationID: view.IntegrationID.UUID(),
 		Key:           view.Key,
 		Active:        view.Active,
 	}, nil

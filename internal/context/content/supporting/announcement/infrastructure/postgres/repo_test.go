@@ -5,7 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/content/supporting/announcement/domain"
+	announceentity "gct/internal/context/content/supporting/announcement/domain/entity"
+	announcerepo "gct/internal/context/content/supporting/announcement/domain/repository"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -81,7 +82,7 @@ func TestNewAnnouncementReadRepo(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestScanAnnouncementView_Success(t *testing.T) {
-	id := domain.NewAnnouncementID()
+	id := announceentity.NewAnnouncementID()
 	now := time.Now().Truncate(time.Microsecond)
 
 	row := &mockRow{scanFunc: func(dest ...any) error {
@@ -120,7 +121,7 @@ func TestScanAnnouncementView_Error(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestScanAnnouncementViewFromRows_Success(t *testing.T) {
-	id := domain.NewAnnouncementID()
+	id := announceentity.NewAnnouncementID()
 	now := time.Now().Truncate(time.Microsecond)
 
 	rows := &mockRows{scanFunc: func(dest ...any) error {
@@ -150,7 +151,7 @@ func TestScanAnnouncementViewFromRows_Error(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestScanAnnouncement_Success(t *testing.T) {
-	id := domain.NewAnnouncementID()
+	id := announceentity.NewAnnouncementID()
 	now := time.Now().Truncate(time.Microsecond)
 
 	row := &mockRow{scanFunc: func(dest ...any) error {
@@ -186,7 +187,7 @@ func TestScanAnnouncement_Error(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestScanAnnouncementFromRows_Success(t *testing.T) {
-	id := domain.NewAnnouncementID()
+	id := announceentity.NewAnnouncementID()
 	now := time.Now().Truncate(time.Microsecond)
 
 	rows := &mockRows{scanFunc: func(dest ...any) error {
@@ -217,7 +218,7 @@ func TestScanAnnouncementFromRows_Error(t *testing.T) {
 
 func TestApplyFilters_NoFilters(t *testing.T) {
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.AnnouncementFilter{})
+	result := applyFilters(conds, announcerepo.AnnouncementFilter{})
 	if len(result) != 0 {
 		t.Errorf("expected 0 conditions, got %d", len(result))
 	}
@@ -226,7 +227,7 @@ func TestApplyFilters_NoFilters(t *testing.T) {
 func TestApplyFilters_WithPublished(t *testing.T) {
 	pub := true
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.AnnouncementFilter{Published: &pub})
+	result := applyFilters(conds, announcerepo.AnnouncementFilter{Published: &pub})
 	if len(result) != 1 {
 		t.Errorf("expected 1 condition, got %d", len(result))
 	}

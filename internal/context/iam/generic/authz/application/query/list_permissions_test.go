@@ -6,22 +6,24 @@ import (
 	"gct/internal/kernel/infrastructure/logger"
 	"testing"
 
-	"gct/internal/context/iam/generic/authz/domain"
+	authzentity "gct/internal/context/iam/generic/authz/domain/entity"
+	authzrepo "gct/internal/context/iam/generic/authz/domain/repository"
 	shared "gct/internal/kernel/domain"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
 func TestListPermissionsHandler_WithResults(t *testing.T) {
 	t.Parallel()
 
-	parentID := domain.NewPermissionID()
+	parentID := authzentity.NewPermissionID()
 	desc := "Read-only access"
 	repo := &mockAuthzReadRepository{
-		listPermsFn: func(_ context.Context, _ shared.Pagination) ([]*domain.PermissionView, int64, error) {
-			return []*domain.PermissionView{
-				{ID: domain.NewPermissionID(), Name: "users.read", Description: &desc},
-				{ID: domain.NewPermissionID(), ParentID: &parentID, Name: "users.read.self"},
+		listPermsFn: func(_ context.Context, _ shared.Pagination) ([]*authzrepo.PermissionView, int64, error) {
+			return []*authzrepo.PermissionView{
+				{ID: authzentity.NewPermissionID(), Name: "users.read", Description: &desc},
+				{ID: authzentity.NewPermissionID(), ParentID: &parentID, Name: "users.read.self"},
 			}, 2, nil
 		},
 	}
@@ -44,7 +46,7 @@ func TestListPermissionsHandler_WithResults(t *testing.T) {
 	if result.Permissions[0].Description == nil || *result.Permissions[0].Description != "Read-only access" {
 		t.Error("expected first perm description 'Read-only access'")
 	}
-	if result.Permissions[1].ParentID == nil || *result.Permissions[1].ParentID != parentID {
+	if result.Permissions[1].ParentID == nil || *result.Permissions[1].ParentID != uuid.UUID(parentID) {
 		t.Error("expected second perm to have correct parent_id")
 	}
 }
@@ -53,8 +55,8 @@ func TestListPermissionsHandler_Empty(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockAuthzReadRepository{
-		listPermsFn: func(_ context.Context, _ shared.Pagination) ([]*domain.PermissionView, int64, error) {
-			return []*domain.PermissionView{}, 0, nil
+		listPermsFn: func(_ context.Context, _ shared.Pagination) ([]*authzrepo.PermissionView, int64, error) {
+			return []*authzrepo.PermissionView{}, 0, nil
 		},
 	}
 
@@ -77,7 +79,7 @@ func TestListPermissionsHandler_RepoError(t *testing.T) {
 
 	repoErr := errors.New("query failed")
 	repo := &mockAuthzReadRepository{
-		listPermsFn: func(_ context.Context, _ shared.Pagination) ([]*domain.PermissionView, int64, error) {
+		listPermsFn: func(_ context.Context, _ shared.Pagination) ([]*authzrepo.PermissionView, int64, error) {
 			return nil, 0, repoErr
 		},
 	}

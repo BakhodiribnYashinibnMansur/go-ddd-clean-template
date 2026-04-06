@@ -5,7 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/ops/generic/systemerror/domain"
+	syserrentity "gct/internal/context/ops/generic/systemerror/domain/entity"
+	syserrrepo "gct/internal/context/ops/generic/systemerror/domain/repository"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -208,7 +209,7 @@ func TestScanView_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if v.ID != domain.SystemErrorID(testID) {
+	if v.ID != syserrentity.SystemErrorID(testID) {
 		t.Errorf("expected ID %v, got %v", testID, v.ID)
 	}
 	if v.Code != "ERR_404" {
@@ -271,7 +272,7 @@ func TestScanViewFromRows_Error(t *testing.T) {
 
 func TestApplyFilters_NoFilters(t *testing.T) {
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.SystemErrorFilter{})
+	result := applyFilters(conds, syserrrepo.SystemErrorFilter{})
 	if len(result) != 0 {
 		t.Errorf("expected 0 conditions, got %d", len(result))
 	}
@@ -280,7 +281,7 @@ func TestApplyFilters_NoFilters(t *testing.T) {
 func TestApplyFilters_CodeOnly(t *testing.T) {
 	code := "ERR_500"
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.SystemErrorFilter{Code: &code})
+	result := applyFilters(conds, syserrrepo.SystemErrorFilter{Code: &code})
 	if len(result) != 1 {
 		t.Errorf("expected 1 condition, got %d", len(result))
 	}
@@ -289,7 +290,7 @@ func TestApplyFilters_CodeOnly(t *testing.T) {
 func TestApplyFilters_SeverityOnly(t *testing.T) {
 	sev := "critical"
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.SystemErrorFilter{Severity: &sev})
+	result := applyFilters(conds, syserrrepo.SystemErrorFilter{Severity: &sev})
 	if len(result) != 1 {
 		t.Errorf("expected 1 condition, got %d", len(result))
 	}
@@ -298,7 +299,7 @@ func TestApplyFilters_SeverityOnly(t *testing.T) {
 func TestApplyFilters_IsResolvedOnly(t *testing.T) {
 	resolved := false
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.SystemErrorFilter{IsResolved: &resolved})
+	result := applyFilters(conds, syserrrepo.SystemErrorFilter{IsResolved: &resolved})
 	if len(result) != 1 {
 		t.Errorf("expected 1 condition, got %d", len(result))
 	}
@@ -307,7 +308,7 @@ func TestApplyFilters_IsResolvedOnly(t *testing.T) {
 func TestApplyFilters_FromDateOnly(t *testing.T) {
 	from := time.Now().Add(-24 * time.Hour)
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.SystemErrorFilter{FromDate: &from})
+	result := applyFilters(conds, syserrrepo.SystemErrorFilter{FromDate: &from})
 	if len(result) != 1 {
 		t.Errorf("expected 1 condition, got %d", len(result))
 	}
@@ -316,7 +317,7 @@ func TestApplyFilters_FromDateOnly(t *testing.T) {
 func TestApplyFilters_ToDateOnly(t *testing.T) {
 	to := time.Now()
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.SystemErrorFilter{ToDate: &to})
+	result := applyFilters(conds, syserrrepo.SystemErrorFilter{ToDate: &to})
 	if len(result) != 1 {
 		t.Errorf("expected 1 condition, got %d", len(result))
 	}
@@ -325,7 +326,7 @@ func TestApplyFilters_ToDateOnly(t *testing.T) {
 func TestApplyFilters_RequestIDOnly(t *testing.T) {
 	rid := uuid.New()
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.SystemErrorFilter{RequestID: &rid})
+	result := applyFilters(conds, syserrrepo.SystemErrorFilter{RequestID: &rid})
 	if len(result) != 1 {
 		t.Errorf("expected 1 condition, got %d", len(result))
 	}
@@ -334,7 +335,7 @@ func TestApplyFilters_RequestIDOnly(t *testing.T) {
 func TestApplyFilters_UserIDOnly(t *testing.T) {
 	uid := uuid.New()
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.SystemErrorFilter{UserID: &uid})
+	result := applyFilters(conds, syserrrepo.SystemErrorFilter{UserID: &uid})
 	if len(result) != 1 {
 		t.Errorf("expected 1 condition, got %d", len(result))
 	}
@@ -350,7 +351,7 @@ func TestApplyFilters_AllFilters(t *testing.T) {
 	uid := uuid.New()
 
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.SystemErrorFilter{
+	result := applyFilters(conds, syserrrepo.SystemErrorFilter{
 		Code:       &code,
 		Severity:   &sev,
 		IsResolved: &resolved,

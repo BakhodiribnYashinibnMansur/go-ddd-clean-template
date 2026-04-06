@@ -3,7 +3,7 @@ package command
 import (
 	"context"
 
-	"gct/internal/context/iam/generic/session/domain"
+	sessionevent "gct/internal/context/iam/generic/session/domain/event"
 	"gct/internal/kernel/application"
 	"gct/internal/kernel/infrastructure/logger"
 
@@ -30,7 +30,7 @@ func NewRevokeSessionHandler(eventBus application.EventBus, l logger.Log) *Revok
 
 // Handle publishes a revoke-requested event for a single session.
 func (h *RevokeSessionHandler) Handle(ctx context.Context, cmd RevokeSessionCommand) error {
-	event := domain.NewSessionRevokeRequested(cmd.UserID, cmd.SessionID)
+	event := sessionevent.NewSessionRevokeRequested(cmd.UserID, cmd.SessionID)
 
 	if err := h.eventBus.Publish(ctx, event); err != nil {
 		h.logger.Errorc(ctx, "failed to publish session.revoke_requested",

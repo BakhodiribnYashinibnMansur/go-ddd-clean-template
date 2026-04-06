@@ -6,10 +6,12 @@ import (
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 
-	appdto "gct/internal/context/iam/generic/authz/application"
-	"gct/internal/context/iam/generic/authz/domain"
+	"gct/internal/context/iam/generic/authz/application/dto"
+	authzrepo "gct/internal/context/iam/generic/authz/domain/repository"
 	shared "gct/internal/kernel/domain"
 	"gct/internal/kernel/infrastructure/pgxutil"
+
+	"github.com/google/uuid"
 )
 
 // ListRolesQuery holds the input for listing roles.
@@ -19,18 +21,18 @@ type ListRolesQuery struct {
 
 // ListRolesResult holds the output of the list roles query.
 type ListRolesResult struct {
-	Roles []*appdto.RoleView
+	Roles []*dto.RoleView
 	Total int64
 }
 
 // ListRolesHandler handles the ListRolesQuery.
 type ListRolesHandler struct {
-	readRepo domain.AuthzReadRepository
+	readRepo authzrepo.AuthzReadRepository
 	logger   logger.Log
 }
 
 // NewListRolesHandler creates a new ListRolesHandler.
-func NewListRolesHandler(readRepo domain.AuthzReadRepository, l logger.Log) *ListRolesHandler {
+func NewListRolesHandler(readRepo authzrepo.AuthzReadRepository, l logger.Log) *ListRolesHandler {
 	return &ListRolesHandler{readRepo: readRepo, logger: l}
 }
 
@@ -46,10 +48,10 @@ func (h *ListRolesHandler) Handle(ctx context.Context, q ListRolesQuery) (_ *Lis
 		return nil, apperrors.MapToServiceError(err)
 	}
 
-	result := make([]*appdto.RoleView, len(views))
+	result := make([]*dto.RoleView, len(views))
 	for i, v := range views {
-		result[i] = &appdto.RoleView{
-			ID:          v.ID,
+		result[i] = &dto.RoleView{
+			ID:          uuid.UUID(v.ID),
 			Name:        v.Name,
 			Description: v.Description,
 		}

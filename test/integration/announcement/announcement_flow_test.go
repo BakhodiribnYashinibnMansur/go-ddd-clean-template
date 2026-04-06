@@ -6,7 +6,8 @@ import (
 
 	"gct/internal/context/content/supporting/announcement/application/command"
 	"gct/internal/context/content/supporting/announcement/application/query"
-	"gct/internal/context/content/supporting/announcement/domain"
+	announceentity "gct/internal/context/content/supporting/announcement/domain/entity"
+	announcerepo "gct/internal/context/content/supporting/announcement/domain/repository"
 	shared "gct/internal/kernel/domain"
 )
 
@@ -31,7 +32,7 @@ func TestIntegration_AnnouncementPublishFlow(t *testing.T) {
 
 	// Step 2: Verify it starts as unpublished.
 	list, err := bc.ListAnnouncements.Handle(ctx, query.ListAnnouncementsQuery{
-		Filter: domain.AnnouncementFilter{Limit: 10},
+		Filter: announcerepo.AnnouncementFilter{Limit: 10},
 	})
 	if err != nil {
 		t.Fatalf("ListAnnouncements: %v", err)
@@ -50,7 +51,7 @@ func TestIntegration_AnnouncementPublishFlow(t *testing.T) {
 
 	// Step 3: Publish the announcement.
 	err = bc.UpdateAnnouncement.Handle(ctx, command.UpdateAnnouncementCommand{
-		ID:      domain.AnnouncementID(draft.ID),
+		ID:      announceentity.AnnouncementID(draft.ID),
 		Publish: true,
 	})
 	if err != nil {
@@ -58,7 +59,7 @@ func TestIntegration_AnnouncementPublishFlow(t *testing.T) {
 	}
 
 	// Step 4: Verify it is now published with a non-nil PublishedAt.
-	view, err := bc.GetAnnouncement.Handle(ctx, query.GetAnnouncementQuery{ID: domain.AnnouncementID(draft.ID)})
+	view, err := bc.GetAnnouncement.Handle(ctx, query.GetAnnouncementQuery{ID: announceentity.AnnouncementID(draft.ID)})
 	if err != nil {
 		t.Fatalf("GetAnnouncement: %v", err)
 	}
@@ -100,7 +101,7 @@ func TestIntegration_AnnouncementPriority(t *testing.T) {
 
 	// List all announcements.
 	result, err := bc.ListAnnouncements.Handle(ctx, query.ListAnnouncementsQuery{
-		Filter: domain.AnnouncementFilter{Limit: 20},
+		Filter: announcerepo.AnnouncementFilter{Limit: 20},
 	})
 	if err != nil {
 		t.Fatalf("ListAnnouncements: %v", err)
@@ -158,7 +159,7 @@ func TestIntegration_AnnouncementFilterByPublished(t *testing.T) {
 
 	// Publish the first one.
 	all, err := bc.ListAnnouncements.Handle(ctx, query.ListAnnouncementsQuery{
-		Filter: domain.AnnouncementFilter{Limit: 10},
+		Filter: announcerepo.AnnouncementFilter{Limit: 10},
 	})
 	if err != nil {
 		t.Fatalf("ListAnnouncements: %v", err)
@@ -168,7 +169,7 @@ func TestIntegration_AnnouncementFilterByPublished(t *testing.T) {
 	}
 
 	err = bc.UpdateAnnouncement.Handle(ctx, command.UpdateAnnouncementCommand{
-		ID:      domain.AnnouncementID(all.Announcements[0].ID),
+		ID:      announceentity.AnnouncementID(all.Announcements[0].ID),
 		Publish: true,
 	})
 	if err != nil {
@@ -178,7 +179,7 @@ func TestIntegration_AnnouncementFilterByPublished(t *testing.T) {
 	// Filter for published only.
 	publishedTrue := true
 	pubResult, err := bc.ListAnnouncements.Handle(ctx, query.ListAnnouncementsQuery{
-		Filter: domain.AnnouncementFilter{
+		Filter: announcerepo.AnnouncementFilter{
 			Published: &publishedTrue,
 			Limit:     10,
 		},
@@ -196,7 +197,7 @@ func TestIntegration_AnnouncementFilterByPublished(t *testing.T) {
 	// Filter for unpublished only.
 	publishedFalse := false
 	unpubResult, err := bc.ListAnnouncements.Handle(ctx, query.ListAnnouncementsQuery{
-		Filter: domain.AnnouncementFilter{
+		Filter: announcerepo.AnnouncementFilter{
 			Published: &publishedFalse,
 			Limit:     10,
 		},

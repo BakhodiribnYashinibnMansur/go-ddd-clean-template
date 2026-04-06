@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"gct/internal/context/iam/generic/usersetting/domain"
+	settingentity "gct/internal/context/iam/generic/usersetting/domain/entity"
 	"gct/internal/kernel/consts"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -21,7 +21,7 @@ var writeColumns = []string{
 	"id", "user_id", "key", "value", "created_at", "updated_at",
 }
 
-// UserSettingWriteRepo implements domain.UserSettingRepository using PostgreSQL.
+// UserSettingWriteRepo implements repository.UserSettingRepository using PostgreSQL.
 type UserSettingWriteRepo struct {
 	pool    *pgxpool.Pool
 	builder squirrel.StatementBuilderType
@@ -36,7 +36,7 @@ func NewUserSettingWriteRepo(pool *pgxpool.Pool) *UserSettingWriteRepo {
 }
 
 // Upsert inserts or updates a UserSetting aggregate in the database.
-func (r *UserSettingWriteRepo) Upsert(ctx context.Context, us *domain.UserSetting) (err error) {
+func (r *UserSettingWriteRepo) Upsert(ctx context.Context, us *settingentity.UserSetting) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "UserSettingWriteRepo.Upsert")
 	defer func() { end(err) }()
 
@@ -65,7 +65,7 @@ func (r *UserSettingWriteRepo) Upsert(ctx context.Context, us *domain.UserSettin
 }
 
 // FindByUserIDAndKey retrieves a UserSetting aggregate by user ID and key.
-func (r *UserSettingWriteRepo) FindByUserIDAndKey(ctx context.Context, userID uuid.UUID, key string) (result *domain.UserSetting, err error) {
+func (r *UserSettingWriteRepo) FindByUserIDAndKey(ctx context.Context, userID uuid.UUID, key string) (result *settingentity.UserSetting, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "UserSettingWriteRepo.FindByUserIDAndKey")
 	defer func() { end(err) }()
 
@@ -83,7 +83,7 @@ func (r *UserSettingWriteRepo) FindByUserIDAndKey(ctx context.Context, userID uu
 }
 
 // Delete removes a user setting by its ID.
-func (r *UserSettingWriteRepo) Delete(ctx context.Context, id domain.UserSettingID) (err error) {
+func (r *UserSettingWriteRepo) Delete(ctx context.Context, id settingentity.UserSettingID) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "UserSettingWriteRepo.Delete")
 	defer func() { end(err) }()
 
@@ -102,7 +102,7 @@ func (r *UserSettingWriteRepo) Delete(ctx context.Context, id domain.UserSetting
 	return nil
 }
 
-func scanUserSetting(row pgx.Row) (*domain.UserSetting, error) {
+func scanUserSetting(row pgx.Row) (*settingentity.UserSetting, error) {
 	var (
 		id        uuid.UUID
 		userID    uuid.UUID
@@ -117,5 +117,5 @@ func scanUserSetting(row pgx.Row) (*domain.UserSetting, error) {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 
-	return domain.ReconstructUserSetting(id, createdAt, updatedAt, userID, key, value), nil
+	return settingentity.ReconstructUserSetting(id, createdAt, updatedAt, userID, key, value), nil
 }

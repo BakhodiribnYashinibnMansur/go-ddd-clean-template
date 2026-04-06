@@ -3,7 +3,9 @@ package command
 import (
 	"context"
 
-	"gct/internal/context/iam/generic/authz/domain"
+	authzentity "gct/internal/context/iam/generic/authz/domain/entity"
+	authzrepo "gct/internal/context/iam/generic/authz/domain/repository"
+	authzevent "gct/internal/context/iam/generic/authz/domain/event"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
@@ -13,22 +15,22 @@ import (
 // AssignPermissionCommand represents an intent to grant a permission to a role in the RBAC hierarchy.
 // This creates a role-permission binding; all users holding this role gain the permission immediately.
 type AssignPermissionCommand struct {
-	RoleID       domain.RoleID
-	PermissionID domain.PermissionID
+	RoleID       authzentity.RoleID
+	PermissionID authzentity.PermissionID
 }
 
 // AssignPermissionHandler binds a permission to a role and emits a PermissionGranted event.
 // The event enables downstream consumers (e.g., cache invalidation, real-time authorization updates) to react.
 // Event publish failures are logged but do not roll back the assignment.
 type AssignPermissionHandler struct {
-	rolePermRepo domain.RolePermissionRepository
+	rolePermRepo authzrepo.RolePermissionRepository
 	eventBus     application.EventBus
 	logger       logger.Log
 }
 
 // NewAssignPermissionHandler wires dependencies for permission assignment.
 func NewAssignPermissionHandler(
-	rolePermRepo domain.RolePermissionRepository,
+	rolePermRepo authzrepo.RolePermissionRepository,
 	eventBus application.EventBus,
 	logger logger.Log,
 ) *AssignPermissionHandler {
@@ -51,7 +53,7 @@ func (h *AssignPermissionHandler) Handle(ctx context.Context, cmd AssignPermissi
 		return apperrors.MapToServiceError(err)
 	}
 
-	event := domain.NewPermissionGranted(cmd.RoleID.UUID(), cmd.PermissionID.UUID())
+	event := authzevent.NewPermissionGranted(cmd.RoleID.UUID(), cmd.PermissionID.UUID())
 	if err := h.eventBus.Publish(ctx, event); err != nil {
 		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "AssignPermission", Entity: "role", EntityID: cmd.RoleID, Err: err}.KV()...)
 	}

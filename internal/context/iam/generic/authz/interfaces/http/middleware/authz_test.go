@@ -9,7 +9,8 @@ import (
 	"time"
 
 	access "gct/internal/context/iam/generic/authz/application/query"
-	"gct/internal/context/iam/generic/authz/domain"
+	authzentity "gct/internal/context/iam/generic/authz/domain/entity"
+	authzrepo "gct/internal/context/iam/generic/authz/domain/repository"
 	"gct/internal/contract/ports"
 	"gct/internal/kernel/consts"
 	shared "gct/internal/kernel/domain"
@@ -46,35 +47,35 @@ func (m *mockLogger) Errorc(_ context.Context, _ string, _ ...any) {}
 func (m *mockLogger) Fatalc(_ context.Context, _ string, _ ...any) {}
 
 type mockAuthzReadRepository struct {
-	checkAccessFn func(ctx context.Context, roleID domain.RoleID, path, method string, evalCtx domain.EvaluationContext) (bool, error)
+	checkAccessFn func(ctx context.Context, roleID authzentity.RoleID, path, method string, evalCtx authzentity.EvaluationContext) (bool, error)
 }
 
-func (m *mockAuthzReadRepository) GetRole(context.Context, domain.RoleID) (*domain.RoleView, error) {
+func (m *mockAuthzReadRepository) GetRole(context.Context, authzentity.RoleID) (*authzrepo.RoleView, error) {
 	return nil, nil
 }
-func (m *mockAuthzReadRepository) ListRoles(context.Context, shared.Pagination) ([]*domain.RoleView, int64, error) {
+func (m *mockAuthzReadRepository) ListRoles(context.Context, shared.Pagination) ([]*authzrepo.RoleView, int64, error) {
 	return nil, 0, nil
 }
-func (m *mockAuthzReadRepository) GetPermission(context.Context, domain.PermissionID) (*domain.PermissionView, error) {
+func (m *mockAuthzReadRepository) GetPermission(context.Context, authzentity.PermissionID) (*authzrepo.PermissionView, error) {
 	return nil, nil
 }
-func (m *mockAuthzReadRepository) ListPermissions(context.Context, shared.Pagination) ([]*domain.PermissionView, int64, error) {
+func (m *mockAuthzReadRepository) ListPermissions(context.Context, shared.Pagination) ([]*authzrepo.PermissionView, int64, error) {
 	return nil, 0, nil
 }
-func (m *mockAuthzReadRepository) ListPolicies(context.Context, shared.Pagination) ([]*domain.PolicyView, int64, error) {
+func (m *mockAuthzReadRepository) ListPolicies(context.Context, shared.Pagination) ([]*authzrepo.PolicyView, int64, error) {
 	return nil, 0, nil
 }
-func (m *mockAuthzReadRepository) ListScopes(context.Context, shared.Pagination) ([]*domain.ScopeView, int64, error) {
+func (m *mockAuthzReadRepository) ListScopes(context.Context, shared.Pagination) ([]*authzrepo.ScopeView, int64, error) {
 	return nil, 0, nil
 }
-func (m *mockAuthzReadRepository) CheckAccess(ctx context.Context, roleID domain.RoleID, path, method string, evalCtx domain.EvaluationContext) (bool, error) {
+func (m *mockAuthzReadRepository) CheckAccess(ctx context.Context, roleID authzentity.RoleID, path, method string, evalCtx authzentity.EvaluationContext) (bool, error) {
 	if m.checkAccessFn != nil {
 		return m.checkAccessFn(ctx, roleID, path, method, evalCtx)
 	}
 	return false, nil
 }
 
-func (m *mockAuthzReadRepository) FindPoliciesByPermissionIDs(_ context.Context, _ []domain.PermissionID) ([]*domain.Policy, error) {
+func (m *mockAuthzReadRepository) FindPoliciesByPermissionIDs(_ context.Context, _ []authzentity.PermissionID) ([]*authzentity.Policy, error) {
 	return nil, nil
 }
 
@@ -98,7 +99,7 @@ var _ ports.AuthUserLookup = (*fakeAuthUserLookup)(nil)
 // ---------------------------------------------------------------------------
 
 func setupMiddleware(
-	checkAccessFn func(ctx context.Context, roleID domain.RoleID, path, method string, evalCtx domain.EvaluationContext) (bool, error),
+	checkAccessFn func(ctx context.Context, roleID authzentity.RoleID, path, method string, evalCtx authzentity.EvaluationContext) (bool, error),
 	findUserFn func(ctx context.Context, userID uuid.UUID) (*shared.AuthUser, error),
 ) *AuthzMiddleware {
 	l := &mockLogger{}
@@ -217,11 +218,11 @@ func TestAuthzMiddleware_AccessAllowed(t *testing.T) {
 	t.Parallel()
 
 	session := validSession()
-	roleID := domain.NewRoleID()
+	roleID := authzentity.NewRoleID()
 	rawRoleID := roleID.UUID()
 
 	mw := setupMiddleware(
-		func(_ context.Context, _ domain.RoleID, _ string, _ string, _ domain.EvaluationContext) (bool, error) {
+		func(_ context.Context, _ authzentity.RoleID, _ string, _ string, _ authzentity.EvaluationContext) (bool, error) {
 			return true, nil
 		},
 		func(_ context.Context, userID uuid.UUID) (*shared.AuthUser, error) {
@@ -246,11 +247,11 @@ func TestAuthzMiddleware_AccessDenied(t *testing.T) {
 	t.Parallel()
 
 	session := validSession()
-	roleID := domain.NewRoleID()
+	roleID := authzentity.NewRoleID()
 	rawRoleID := roleID.UUID()
 
 	mw := setupMiddleware(
-		func(_ context.Context, _ domain.RoleID, _ string, _ string, _ domain.EvaluationContext) (bool, error) {
+		func(_ context.Context, _ authzentity.RoleID, _ string, _ string, _ authzentity.EvaluationContext) (bool, error) {
 			return false, nil
 		},
 		func(_ context.Context, userID uuid.UUID) (*shared.AuthUser, error) {
@@ -275,11 +276,11 @@ func TestAuthzMiddleware_CheckAccessError(t *testing.T) {
 	t.Parallel()
 
 	session := validSession()
-	roleID := domain.NewRoleID()
+	roleID := authzentity.NewRoleID()
 	rawRoleID := roleID.UUID()
 
 	mw := setupMiddleware(
-		func(_ context.Context, _ domain.RoleID, _ string, _ string, _ domain.EvaluationContext) (bool, error) {
+		func(_ context.Context, _ authzentity.RoleID, _ string, _ string, _ authzentity.EvaluationContext) (bool, error) {
 			return false, errors.New("db connection error")
 		},
 		func(_ context.Context, userID uuid.UUID) (*shared.AuthUser, error) {
@@ -304,14 +305,14 @@ func TestAuthzMiddleware_CorrectRoleIDPassedToCheckAccess(t *testing.T) {
 	t.Parallel()
 
 	session := validSession()
-	roleID := domain.NewRoleID()
+	roleID := authzentity.NewRoleID()
 	rawRoleID := roleID.UUID()
-	var capturedRoleID domain.RoleID
+	var capturedRoleID authzentity.RoleID
 	var capturedPath string
 	var capturedMethod string
 
 	mw := setupMiddleware(
-		func(_ context.Context, rID domain.RoleID, path string, method string, _ domain.EvaluationContext) (bool, error) {
+		func(_ context.Context, rID authzentity.RoleID, path string, method string, _ authzentity.EvaluationContext) (bool, error) {
 			capturedRoleID = rID
 			capturedPath = path
 			capturedMethod = method
@@ -368,7 +369,7 @@ func TestAuthzMiddleware_DifferentHTTPMethods(t *testing.T) {
 	t.Parallel()
 
 	session := validSession()
-	roleID := domain.NewRoleID()
+	roleID := authzentity.NewRoleID()
 	rawRoleID := roleID.UUID()
 
 	methods := []string{"GET", "POST", "PUT", "PATCH", "DELETE"}
@@ -379,7 +380,7 @@ func TestAuthzMiddleware_DifferentHTTPMethods(t *testing.T) {
 			var capturedMethod string
 
 			mw := setupMiddleware(
-				func(_ context.Context, _ domain.RoleID, _ string, m string, _ domain.EvaluationContext) (bool, error) {
+				func(_ context.Context, _ authzentity.RoleID, _ string, m string, _ authzentity.EvaluationContext) (bool, error) {
 					capturedMethod = m
 					return true, nil
 				},
@@ -410,7 +411,7 @@ func TestAuthzMiddleware_AbortsPipelineOnDenied(t *testing.T) {
 	t.Parallel()
 
 	session := validSession()
-	roleID := domain.NewRoleID()
+	roleID := authzentity.NewRoleID()
 	rawRoleID := roleID.UUID()
 	handlerCalled := false
 
@@ -423,7 +424,7 @@ func TestAuthzMiddleware_AbortsPipelineOnDenied(t *testing.T) {
 	})
 
 	mw := setupMiddleware(
-		func(_ context.Context, _ domain.RoleID, _ string, _ string, _ domain.EvaluationContext) (bool, error) {
+		func(_ context.Context, _ authzentity.RoleID, _ string, _ string, _ authzentity.EvaluationContext) (bool, error) {
 			return false, nil
 		},
 		func(_ context.Context, userID uuid.UUID) (*shared.AuthUser, error) {
@@ -457,7 +458,7 @@ func TestAuthzMiddleware_AllowsPipelineOnGranted(t *testing.T) {
 	t.Parallel()
 
 	session := validSession()
-	roleID := domain.NewRoleID()
+	roleID := authzentity.NewRoleID()
 	rawRoleID := roleID.UUID()
 	handlerCalled := false
 
@@ -470,7 +471,7 @@ func TestAuthzMiddleware_AllowsPipelineOnGranted(t *testing.T) {
 	})
 
 	mw := setupMiddleware(
-		func(_ context.Context, _ domain.RoleID, _ string, _ string, _ domain.EvaluationContext) (bool, error) {
+		func(_ context.Context, _ authzentity.RoleID, _ string, _ string, _ authzentity.EvaluationContext) (bool, error) {
 			return true, nil
 		},
 		func(_ context.Context, userID uuid.UUID) (*shared.AuthUser, error) {

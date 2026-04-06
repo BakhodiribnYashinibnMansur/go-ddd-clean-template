@@ -3,7 +3,8 @@ package command
 import (
 	"context"
 
-	"gct/internal/context/admin/supporting/errorcode/domain"
+	errcodeentity "gct/internal/context/admin/supporting/errorcode/domain/entity"
+	errcoderepo "gct/internal/context/admin/supporting/errorcode/domain/repository"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
@@ -14,7 +15,7 @@ import (
 // The Code field is immutable after creation — only Message, HTTPStatus, and behavioral hints can be changed.
 // All fields are required (non-pointer), so every update is a full overwrite of the mutable attributes.
 type UpdateErrorCodeCommand struct {
-	ID         domain.ErrorCodeID
+	ID         errcodeentity.ErrorCodeID
 	Message    string
 	MessageUz  string
 	MessageRu  string
@@ -29,14 +30,14 @@ type UpdateErrorCodeCommand struct {
 // UpdateErrorCodeHandler applies a full replacement of an error code's mutable fields using a fetch-mutate-persist pattern.
 // Event publish failures are logged but do not roll back the persisted changes.
 type UpdateErrorCodeHandler struct {
-	repo     domain.ErrorCodeRepository
+	repo     errcoderepo.ErrorCodeRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
 // NewUpdateErrorCodeHandler wires dependencies for error code updates.
 func NewUpdateErrorCodeHandler(
-	repo domain.ErrorCodeRepository,
+	repo errcoderepo.ErrorCodeRepository,
 	eventBus application.EventBus,
 	logger logger.Log,
 ) *UpdateErrorCodeHandler {

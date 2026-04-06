@@ -6,7 +6,7 @@ import (
 	"gct/internal/kernel/infrastructure/logger"
 	"testing"
 
-	"gct/internal/context/iam/generic/authz/domain"
+	authzentity "gct/internal/context/iam/generic/authz/domain/entity"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -46,9 +46,9 @@ func (ml *mockLogger) Fatalc(_ context.Context, _ string, _ ...any) {}
 func TestCheckAccessHandler_Allowed(t *testing.T) {
 	t.Parallel()
 
-	roleID := domain.NewRoleID()
+	roleID := authzentity.NewRoleID()
 	repo := &mockAuthzReadRepository{
-		checkAccessFn: func(_ context.Context, rid domain.RoleID, path, method string, _ domain.EvaluationContext) (bool, error) {
+		checkAccessFn: func(_ context.Context, rid authzentity.RoleID, path, method string, _ authzentity.EvaluationContext) (bool, error) {
 			if rid == roleID && path == "/api/v1/users" && method == "GET" {
 				return true, nil
 			}
@@ -59,10 +59,10 @@ func TestCheckAccessHandler_Allowed(t *testing.T) {
 	handler := NewCheckAccessHandler(repo, logger.Noop())
 
 	allowed, err := handler.Handle(context.Background(), CheckAccessQuery{
-		RoleID:  domain.RoleID(roleID),
+		RoleID:  authzentity.RoleID(roleID),
 		Path:    "/api/v1/users",
 		Method:  "GET",
-		EvalCtx: domain.EvaluationContext{},
+		EvalCtx: authzentity.EvaluationContext{},
 	})
 	require.NoError(t, err)
 
@@ -74,9 +74,9 @@ func TestCheckAccessHandler_Allowed(t *testing.T) {
 func TestCheckAccessHandler_Denied(t *testing.T) {
 	t.Parallel()
 
-	roleID := domain.NewRoleID()
+	roleID := authzentity.NewRoleID()
 	repo := &mockAuthzReadRepository{
-		checkAccessFn: func(_ context.Context, _ domain.RoleID, _, _ string, _ domain.EvaluationContext) (bool, error) {
+		checkAccessFn: func(_ context.Context, _ authzentity.RoleID, _, _ string, _ authzentity.EvaluationContext) (bool, error) {
 			return false, nil
 		},
 	}
@@ -84,10 +84,10 @@ func TestCheckAccessHandler_Denied(t *testing.T) {
 	handler := NewCheckAccessHandler(repo, logger.Noop())
 
 	allowed, err := handler.Handle(context.Background(), CheckAccessQuery{
-		RoleID:  domain.RoleID(roleID),
+		RoleID:  authzentity.RoleID(roleID),
 		Path:    "/api/v1/admin",
 		Method:  "DELETE",
-		EvalCtx: domain.EvaluationContext{},
+		EvalCtx: authzentity.EvaluationContext{},
 	})
 	require.NoError(t, err)
 
@@ -101,7 +101,7 @@ func TestCheckAccessHandler_RepoError(t *testing.T) {
 
 	repoErr := errors.New("database connection failed")
 	repo := &mockAuthzReadRepository{
-		checkAccessFn: func(_ context.Context, _ domain.RoleID, _, _ string, _ domain.EvaluationContext) (bool, error) {
+		checkAccessFn: func(_ context.Context, _ authzentity.RoleID, _, _ string, _ authzentity.EvaluationContext) (bool, error) {
 			return false, repoErr
 		},
 	}
@@ -109,10 +109,10 @@ func TestCheckAccessHandler_RepoError(t *testing.T) {
 	handler := NewCheckAccessHandler(repo, logger.Noop())
 
 	allowed, err := handler.Handle(context.Background(), CheckAccessQuery{
-		RoleID:  domain.RoleID(uuid.New()),
+		RoleID:  authzentity.RoleID(uuid.New()),
 		Path:    "/api/v1/users",
 		Method:  "GET",
-		EvalCtx: domain.EvaluationContext{},
+		EvalCtx: authzentity.EvaluationContext{},
 	})
 	if err == nil {
 		t.Fatal("expected error, got nil")

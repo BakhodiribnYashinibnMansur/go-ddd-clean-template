@@ -3,7 +3,8 @@ package command
 import (
 	"context"
 
-	"gct/internal/context/iam/generic/user/domain"
+	userentity "gct/internal/context/iam/generic/user/domain/entity"
+	userrepo "gct/internal/context/iam/generic/user/domain/repository"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
@@ -13,20 +14,20 @@ import (
 // DeleteUserCommand represents an intent to soft-delete a user by their unique identifier.
 // The user is deactivated and marked as deleted but not physically removed from the database.
 type DeleteUserCommand struct {
-	ID domain.UserID
+	ID userentity.UserID
 }
 
 // DeleteUserHandler performs a two-step soft-delete: deactivation followed by a soft-delete timestamp.
 // The user record is preserved for audit/recovery; domain events are emitted for downstream cleanup.
 type DeleteUserHandler struct {
-	repo     domain.UserRepository
+	repo     userrepo.UserRepository
 	eventBus application.EventBus
 	logger   commandLogger
 }
 
 // NewDeleteUserHandler creates a new DeleteUserHandler.
 func NewDeleteUserHandler(
-	repo domain.UserRepository,
+	repo userrepo.UserRepository,
 	eventBus application.EventBus,
 	logger commandLogger,
 ) *DeleteUserHandler {

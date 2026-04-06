@@ -6,30 +6,32 @@ import (
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 
+	"gct/internal/context/ops/generic/systemerror/application/dto"
+	syserrrepo "gct/internal/context/ops/generic/systemerror/domain/repository"
 	"gct/internal/kernel/infrastructure/pgxutil"
-	appdto "gct/internal/context/ops/generic/systemerror/application"
-	"gct/internal/context/ops/generic/systemerror/domain"
+
+	"github.com/google/uuid"
 )
 
 // ListSystemErrorsQuery holds the input for listing system errors with filtering.
 type ListSystemErrorsQuery struct {
-	Filter domain.SystemErrorFilter
+	Filter syserrrepo.SystemErrorFilter
 }
 
 // ListSystemErrorsResult holds the output of the list system errors query.
 type ListSystemErrorsResult struct {
-	Errors []*appdto.SystemErrorView
+	Errors []*dto.SystemErrorView
 	Total  int64
 }
 
 // ListSystemErrorsHandler handles the ListSystemErrorsQuery.
 type ListSystemErrorsHandler struct {
-	readRepo domain.SystemErrorReadRepository
+	readRepo syserrrepo.SystemErrorReadRepository
 	logger   logger.Log
 }
 
 // NewListSystemErrorsHandler creates a new ListSystemErrorsHandler.
-func NewListSystemErrorsHandler(readRepo domain.SystemErrorReadRepository, l logger.Log) *ListSystemErrorsHandler {
+func NewListSystemErrorsHandler(readRepo syserrrepo.SystemErrorReadRepository, l logger.Log) *ListSystemErrorsHandler {
 	return &ListSystemErrorsHandler{readRepo: readRepo, logger: l}
 }
 
@@ -45,10 +47,10 @@ func (h *ListSystemErrorsHandler) Handle(ctx context.Context, q ListSystemErrors
 		return nil, apperrors.MapToServiceError(err)
 	}
 
-	result := make([]*appdto.SystemErrorView, len(views))
+	result := make([]*dto.SystemErrorView, len(views))
 	for i, v := range views {
-		result[i] = &appdto.SystemErrorView{
-			ID:          v.ID,
+		result[i] = &dto.SystemErrorView{
+			ID:          uuid.UUID(v.ID),
 			Code:        v.Code,
 			Message:     v.Message,
 			StackTrace:  v.StackTrace,

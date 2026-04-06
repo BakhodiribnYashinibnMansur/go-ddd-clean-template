@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/context/content/supporting/announcement/domain"
+	announceentity "gct/internal/context/content/supporting/announcement/domain/entity"
 
 	"github.com/stretchr/testify/require"
 )
@@ -15,7 +15,7 @@ func TestDeleteAnnouncementHandler_Handle(t *testing.T) {
 	repo := &mockAnnouncementRepo{}
 	handler := NewDeleteAnnouncementHandler(repo, &mockLogger{})
 
-	id := domain.NewAnnouncementID()
+	id := announceentity.NewAnnouncementID()
 	err := handler.Handle(context.Background(), DeleteAnnouncementCommand{ID: id})
 	require.NoError(t, err)
 	if repo.deleted != id {

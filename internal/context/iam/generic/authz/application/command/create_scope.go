@@ -3,7 +3,8 @@ package command
 import (
 	"context"
 
-	"gct/internal/context/iam/generic/authz/domain"
+	authzentity "gct/internal/context/iam/generic/authz/domain/entity"
+	authzrepo "gct/internal/context/iam/generic/authz/domain/repository"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -19,13 +20,13 @@ type CreateScopeCommand struct {
 // CreateScopeHandler persists new API scopes via the repository.
 // No domain events are emitted — scopes are structural metadata consumed during authorization evaluation.
 type CreateScopeHandler struct {
-	repo   domain.ScopeRepository
+	repo   authzrepo.ScopeRepository
 	logger logger.Log
 }
 
 // NewCreateScopeHandler wires dependencies for scope creation.
 func NewCreateScopeHandler(
-	repo domain.ScopeRepository,
+	repo authzrepo.ScopeRepository,
 	logger logger.Log,
 ) *CreateScopeHandler {
 	return &CreateScopeHandler{
@@ -41,7 +42,7 @@ func (h *CreateScopeHandler) Handle(ctx context.Context, cmd CreateScopeCommand)
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "CreateScope", "scope")()
 
-	scope := domain.Scope{
+	scope := authzentity.Scope{
 		Path:   cmd.Path,
 		Method: cmd.Method,
 	}

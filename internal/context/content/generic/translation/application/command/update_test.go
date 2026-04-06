@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"gct/internal/context/content/generic/translation/domain"
+	translationentity "gct/internal/context/content/generic/translation/domain/entity"
 
 	"github.com/stretchr/testify/require"
 )
@@ -13,14 +13,14 @@ import (
 func TestUpdateTranslationHandler_Handle(t *testing.T) {
 	t.Parallel()
 
-	tr := domain.NewTranslation("old_key", "en", "Old Value", "general")
+	tr := translationentity.NewTranslation("old_key", "en", "Old Value", "general")
 
 	repo := &mockRepo{
-		findFn: func(_ context.Context, id domain.TranslationID) (*domain.Translation, error) {
+		findFn: func(_ context.Context, id translationentity.TranslationID) (*translationentity.Translation, error) {
 			if id == tr.TypedID() {
 				return tr, nil
 			}
-			return nil, domain.ErrTranslationNotFound
+			return nil, translationentity.ErrTranslationNotFound
 		},
 	}
 	eb := &mockEventBus{}
@@ -31,7 +31,7 @@ func TestUpdateTranslationHandler_Handle(t *testing.T) {
 	newKey := "new_key"
 	newValue := "New Value"
 	cmd := UpdateTranslationCommand{
-		ID:    domain.TranslationID(tr.ID()),
+		ID:    translationentity.TranslationID(tr.ID()),
 		Key:   &newKey,
 		Value: &newValue,
 	}
@@ -75,7 +75,7 @@ func TestUpdateTranslationHandler_NotFound(t *testing.T) {
 
 	newKey := "k"
 	err := handler.Handle(context.Background(), UpdateTranslationCommand{
-		ID:  domain.NewTranslationID(),
+		ID:  translationentity.NewTranslationID(),
 		Key: &newKey,
 	})
 	if err == nil {
@@ -86,11 +86,11 @@ func TestUpdateTranslationHandler_NotFound(t *testing.T) {
 func TestUpdateTranslationHandler_RepoUpdateError(t *testing.T) {
 	t.Parallel()
 
-	tr := domain.NewTranslation("k", "en", "v", "g")
+	tr := translationentity.NewTranslation("k", "en", "v", "g")
 	repoErr := errors.New("repo update failed")
 
 	errR := &errorRepo{
-		findFn:    func(_ context.Context, _ domain.TranslationID) (*domain.Translation, error) { return tr, nil },
+		findFn:    func(_ context.Context, _ translationentity.TranslationID) (*translationentity.Translation, error) { return tr, nil },
 		updateErr: repoErr,
 	}
 	eb := &mockEventBus{}
@@ -100,7 +100,7 @@ func TestUpdateTranslationHandler_RepoUpdateError(t *testing.T) {
 
 	newVal := "new"
 	err := handler.Handle(context.Background(), UpdateTranslationCommand{
-		ID:    domain.TranslationID(tr.ID()),
+		ID:    translationentity.TranslationID(tr.ID()),
 		Value: &newVal,
 	})
 	if !errors.Is(err, repoErr) {

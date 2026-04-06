@@ -3,10 +3,10 @@ package app
 import (
 	"context"
 
-	sessiondomain "gct/internal/context/iam/generic/session/domain"
+	sessionevent "gct/internal/context/iam/generic/session/domain/event"
 	"gct/internal/context/iam/generic/user"
 	usercommand "gct/internal/context/iam/generic/user/application/command"
-	userdomain "gct/internal/context/iam/generic/user/domain"
+	userentity "gct/internal/context/iam/generic/user/domain/entity"
 	"gct/internal/kernel/application"
 	shareddomain "gct/internal/kernel/domain"
 	"gct/internal/kernel/infrastructure/logger"
@@ -17,7 +17,7 @@ import (
 // revocation on the user aggregate — keeping both BCs decoupled.
 func subscribeSessionEvents(eventBus application.EventBus, userBC *user.BoundedContext, l logger.Log) {
 	if err := eventBus.Subscribe("session.revoke_requested", func(ctx context.Context, event shareddomain.DomainEvent) error {
-		e, ok := event.(sessiondomain.SessionRevokeRequested)
+		e, ok := event.(sessionevent.SessionRevokeRequested)
 		if !ok {
 			return nil
 		}
@@ -28,15 +28,15 @@ func subscribeSessionEvents(eventBus application.EventBus, userBC *user.BoundedC
 		)
 
 		return userBC.SignOut.Handle(ctx, usercommand.SignOutCommand{
-			UserID:    userdomain.UserID(e.AggregateID()),
-			SessionID: userdomain.SessionID(e.SessionID),
+			UserID:    userentity.UserID(e.AggregateID()),
+			SessionID: userentity.SessionID(e.SessionID),
 		})
 	}); err != nil {
 		l.Fatalf("failed to subscribe to session.revoke_requested: %v", err)
 	}
 
 	if err := eventBus.Subscribe("session.revoke_all_requested", func(ctx context.Context, event shareddomain.DomainEvent) error {
-		e, ok := event.(sessiondomain.SessionRevokeAllRequested)
+		e, ok := event.(sessionevent.SessionRevokeAllRequested)
 		if !ok {
 			return nil
 		}
@@ -46,7 +46,7 @@ func subscribeSessionEvents(eventBus application.EventBus, userBC *user.BoundedC
 		)
 
 		return userBC.RevokeAll.Handle(ctx, usercommand.RevokeAllSessionsCommand{
-			UserID: userdomain.UserID(e.AggregateID()),
+			UserID: userentity.UserID(e.AggregateID()),
 		})
 	}); err != nil {
 		l.Fatalf("failed to subscribe to session.revoke_all_requested: %v", err)

@@ -3,7 +3,8 @@ package command
 import (
 	"context"
 
-	"gct/internal/context/iam/generic/authz/domain"
+	authzentity "gct/internal/context/iam/generic/authz/domain/entity"
+	authzrepo "gct/internal/context/iam/generic/authz/domain/repository"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -12,19 +13,19 @@ import (
 // DeletePolicyCommand represents an intent to permanently remove an authorization policy.
 // Once deleted, any access previously governed by this policy falls through to the next matching policy or default deny.
 type DeletePolicyCommand struct {
-	ID domain.PolicyID
+	ID authzentity.PolicyID
 }
 
 // DeletePolicyHandler performs hard deletion of an authorization policy via the repository.
 // Callers are responsible for verifying that removing this policy does not inadvertently grant or deny critical access.
 type DeletePolicyHandler struct {
-	repo   domain.PolicyRepository
+	repo   authzrepo.PolicyRepository
 	logger logger.Log
 }
 
 // NewDeletePolicyHandler wires dependencies for policy deletion.
 func NewDeletePolicyHandler(
-	repo domain.PolicyRepository,
+	repo authzrepo.PolicyRepository,
 	logger logger.Log,
 ) *DeletePolicyHandler {
 	return &DeletePolicyHandler{

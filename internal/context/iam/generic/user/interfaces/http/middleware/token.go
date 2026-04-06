@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"gct/internal/context/iam/generic/user/application/query"
-	userdomain "gct/internal/context/iam/generic/user/domain"
+	userentity "gct/internal/context/iam/generic/user/domain/entity"
 	"gct/internal/kernel/consts"
 	shared "gct/internal/kernel/domain"
 	"gct/internal/kernel/infrastructure/httpx"
@@ -106,7 +106,7 @@ func (m *AuthMiddleware) validateAccessToken(ctx *gin.Context) (*shared.AuthSess
 		return nil, httpx.ErrRevokedToken
 	}
 
-	session, err := m.findSession.Handle(ctx.Request.Context(), query.FindSessionQuery{SessionID: userdomain.SessionID(sessionID)})
+	session, err := m.findSession.Handle(ctx.Request.Context(), query.FindSessionQuery{SessionID: userentity.SessionID(sessionID)})
 	if err != nil || session.Revoked || session.IsExpired() {
 		m.l.Errorw("AuthMiddleware - validateAccessToken - FindSession", "error", err)
 		return nil, httpx.ErrRevokedToken

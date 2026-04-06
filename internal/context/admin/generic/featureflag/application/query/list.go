@@ -6,30 +6,30 @@ import (
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 
-	appdto "gct/internal/context/admin/generic/featureflag/application"
-	"gct/internal/context/admin/generic/featureflag/domain"
+	"gct/internal/context/admin/generic/featureflag/application/dto"
+	ffrepo "gct/internal/context/admin/generic/featureflag/domain/repository"
 	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // ListQuery holds the input for listing feature flags with filtering.
 type ListQuery struct {
-	Filter domain.FeatureFlagFilter
+	Filter ffrepo.FeatureFlagFilter
 }
 
 // ListResult holds the output of the list feature flags query.
 type ListResult struct {
-	Flags []*appdto.FeatureFlagView
+	Flags []*dto.FeatureFlagView
 	Total int64
 }
 
 // ListHandler handles the ListQuery.
 type ListHandler struct {
-	readRepo domain.FeatureFlagReadRepository
+	readRepo ffrepo.FeatureFlagReadRepository
 	logger   logger.Log
 }
 
 // NewListHandler creates a new ListHandler.
-func NewListHandler(readRepo domain.FeatureFlagReadRepository, l logger.Log) *ListHandler {
+func NewListHandler(readRepo ffrepo.FeatureFlagReadRepository, l logger.Log) *ListHandler {
 	return &ListHandler{readRepo: readRepo, logger: l}
 }
 
@@ -45,7 +45,7 @@ func (h *ListHandler) Handle(ctx context.Context, q ListQuery) (_ *ListResult, e
 		return nil, apperrors.MapToServiceError(err)
 	}
 
-	result := make([]*appdto.FeatureFlagView, len(views))
+	result := make([]*dto.FeatureFlagView, len(views))
 	for i, v := range views {
 		result[i] = mapToAppView(v)
 	}

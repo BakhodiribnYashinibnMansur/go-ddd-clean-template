@@ -5,7 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/admin/supporting/dataexport/domain"
+	exportentity "gct/internal/context/admin/supporting/dataexport/domain/entity"
+	exportrepo "gct/internal/context/admin/supporting/dataexport/domain/repository"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
@@ -153,7 +154,7 @@ func TestScanDataExportView_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if v.ID != domain.DataExportID(testID) {
+	if v.ID != exportentity.DataExportID(testID) {
 		t.Errorf("expected ID %v, got %v", testID, v.ID)
 	}
 	if v.DataType != "logs" {
@@ -226,7 +227,7 @@ func TestScanDataExportViewFromRows_Error(t *testing.T) {
 
 func TestApplyFilters_NoFilters(t *testing.T) {
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.DataExportFilter{})
+	result := applyFilters(conds, exportrepo.DataExportFilter{})
 	if len(result) != 0 {
 		t.Errorf("expected 0 conditions, got %d", len(result))
 	}
@@ -235,7 +236,7 @@ func TestApplyFilters_NoFilters(t *testing.T) {
 func TestApplyFilters_UserIDOnly(t *testing.T) {
 	uid := uuid.New()
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.DataExportFilter{UserID: &uid})
+	result := applyFilters(conds, exportrepo.DataExportFilter{UserID: &uid})
 	if len(result) != 1 {
 		t.Errorf("expected 1 condition, got %d", len(result))
 	}
@@ -244,7 +245,7 @@ func TestApplyFilters_UserIDOnly(t *testing.T) {
 func TestApplyFilters_DataTypeOnly(t *testing.T) {
 	dt := "users"
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.DataExportFilter{DataType: &dt})
+	result := applyFilters(conds, exportrepo.DataExportFilter{DataType: &dt})
 	if len(result) != 1 {
 		t.Errorf("expected 1 condition, got %d", len(result))
 	}
@@ -253,7 +254,7 @@ func TestApplyFilters_DataTypeOnly(t *testing.T) {
 func TestApplyFilters_StatusOnly(t *testing.T) {
 	s := "COMPLETED"
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.DataExportFilter{Status: &s})
+	result := applyFilters(conds, exportrepo.DataExportFilter{Status: &s})
 	if len(result) != 1 {
 		t.Errorf("expected 1 condition, got %d", len(result))
 	}
@@ -264,7 +265,7 @@ func TestApplyFilters_AllFilters(t *testing.T) {
 	dt := "orders"
 	s := "PENDING"
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.DataExportFilter{UserID: &uid, DataType: &dt, Status: &s})
+	result := applyFilters(conds, exportrepo.DataExportFilter{UserID: &uid, DataType: &dt, Status: &s})
 	if len(result) != 3 {
 		t.Errorf("expected 3 conditions, got %d", len(result))
 	}

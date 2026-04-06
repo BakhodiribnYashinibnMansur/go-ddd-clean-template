@@ -6,7 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/content/generic/file/domain"
+	fileentity "gct/internal/context/content/generic/file/domain/entity"
+	filerepo "gct/internal/context/content/generic/file/domain/repository"
 
 	"github.com/stretchr/testify/require"
 )
@@ -16,16 +17,16 @@ func TestListFilesHandler_Handle(t *testing.T) {
 
 	now := time.Now()
 	readRepo := &mockReadRepo{
-		views: []*domain.FileView{
-			{ID: domain.NewFileID(), Name: "file1.png", OriginalName: "f1.png", MimeType: "image/png", Size: 100, CreatedAt: now},
-			{ID: domain.NewFileID(), Name: "file2.pdf", OriginalName: "f2.pdf", MimeType: "application/pdf", Size: 200, CreatedAt: now},
+		views: []*filerepo.FileView{
+			{ID: fileentity.NewFileID(), Name: "file1.png", OriginalName: "f1.png", MimeType: "image/png", Size: 100, CreatedAt: now},
+			{ID: fileentity.NewFileID(), Name: "file2.pdf", OriginalName: "f2.pdf", MimeType: "application/pdf", Size: 200, CreatedAt: now},
 		},
 		total: 2,
 	}
 
 	handler := NewListFilesHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListFilesQuery{
-		Filter: domain.FileFilter{Limit: 10, Offset: 0},
+		Filter: filerepo.FileFilter{Limit: 10, Offset: 0},
 	})
 	require.NoError(t, err)
 	if result.Total != 2 {
@@ -42,11 +43,11 @@ func TestListFilesHandler_Handle(t *testing.T) {
 func TestListFilesHandler_Empty(t *testing.T) {
 	t.Parallel()
 
-	readRepo := &mockReadRepo{views: []*domain.FileView{}, total: 0}
+	readRepo := &mockReadRepo{views: []*filerepo.FileView{}, total: 0}
 
 	handler := NewListFilesHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListFilesQuery{
-		Filter: domain.FileFilter{},
+		Filter: filerepo.FileFilter{},
 	})
 	require.NoError(t, err)
 	if result.Total != 0 {
@@ -62,7 +63,7 @@ func TestListFilesHandler_RepoError(t *testing.T) {
 
 	readRepo := &errorReadRepo{err: errRepo}
 	handler := NewListFilesHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), ListFilesQuery{Filter: domain.FileFilter{}})
+	_, err := handler.Handle(context.Background(), ListFilesQuery{Filter: filerepo.FileFilter{}})
 	if err == nil {
 		t.Fatal("expected error from repo")
 	}

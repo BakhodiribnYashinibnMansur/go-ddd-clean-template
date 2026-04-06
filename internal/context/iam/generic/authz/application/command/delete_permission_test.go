@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/context/iam/generic/authz/domain"
+	authzentity "gct/internal/context/iam/generic/authz/domain/entity"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -18,7 +18,7 @@ func TestDeletePermissionHandler_Success(t *testing.T) {
 
 	handler := NewDeletePermissionHandler(repo, log)
 
-	cmd := DeletePermissionCommand{ID: domain.PermissionID(uuid.New())}
+	cmd := DeletePermissionCommand{ID: authzentity.PermissionID(uuid.New())}
 
 	err := handler.Handle(context.Background(), cmd)
 	require.NoError(t, err)

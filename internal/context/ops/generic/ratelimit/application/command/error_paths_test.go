@@ -5,7 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"gct/internal/context/ops/generic/ratelimit/domain"
+	ratelimitentity "gct/internal/context/ops/generic/ratelimit/domain/entity"
+	ratelimitrepo "gct/internal/context/ops/generic/ratelimit/domain/repository"
 )
 
 // --- Error mocks ---
@@ -18,29 +19,29 @@ type errorRateLimitRepo struct {
 	saveErr   error
 	updateErr error
 	deleteErr error
-	findFn    func(ctx context.Context, id domain.RateLimitID) (*domain.RateLimit, error)
+	findFn    func(ctx context.Context, id ratelimitentity.RateLimitID) (*ratelimitentity.RateLimit, error)
 }
 
-func (m *errorRateLimitRepo) Save(_ context.Context, _ *domain.RateLimit) error {
+func (m *errorRateLimitRepo) Save(_ context.Context, _ *ratelimitentity.RateLimit) error {
 	return m.saveErr
 }
 
-func (m *errorRateLimitRepo) FindByID(ctx context.Context, id domain.RateLimitID) (*domain.RateLimit, error) {
+func (m *errorRateLimitRepo) FindByID(ctx context.Context, id ratelimitentity.RateLimitID) (*ratelimitentity.RateLimit, error) {
 	if m.findFn != nil {
 		return m.findFn(ctx, id)
 	}
-	return nil, domain.ErrRateLimitNotFound
+	return nil, ratelimitentity.ErrRateLimitNotFound
 }
 
-func (m *errorRateLimitRepo) Update(_ context.Context, _ *domain.RateLimit) error {
+func (m *errorRateLimitRepo) Update(_ context.Context, _ *ratelimitentity.RateLimit) error {
 	return m.updateErr
 }
 
-func (m *errorRateLimitRepo) Delete(_ context.Context, _ domain.RateLimitID) error {
+func (m *errorRateLimitRepo) Delete(_ context.Context, _ ratelimitentity.RateLimitID) error {
 	return m.deleteErr
 }
 
-func (m *errorRateLimitRepo) List(_ context.Context, _ domain.RateLimitFilter) ([]*domain.RateLimit, int64, error) {
+func (m *errorRateLimitRepo) List(_ context.Context, _ ratelimitrepo.RateLimitFilter) ([]*ratelimitentity.RateLimit, int64, error) {
 	return nil, 0, nil
 }
 
@@ -63,15 +64,15 @@ func TestCreateRateLimitHandler_RepoError(t *testing.T) {
 func TestUpdateRateLimitHandler_RepoUpdateError(t *testing.T) {
 	t.Parallel()
 
-	rl := domain.NewRateLimit("n", "/r", 10, 30, true)
+	rl := ratelimitentity.NewRateLimit("n", "/r", 10, 30, true)
 
 	repo := &errorRateLimitRepo{
-		findFn:    func(_ context.Context, _ domain.RateLimitID) (*domain.RateLimit, error) { return rl, nil },
+		findFn:    func(_ context.Context, _ ratelimitentity.RateLimitID) (*ratelimitentity.RateLimit, error) { return rl, nil },
 		updateErr: errRepoUpdate,
 	}
 	handler := NewUpdateRateLimitHandler(repo, &mockEventBus{}, &mockLogger{})
 
-	err := handler.Handle(context.Background(), UpdateRateLimitCommand{ID: domain.RateLimitID(rl.ID())})
+	err := handler.Handle(context.Background(), UpdateRateLimitCommand{ID: ratelimitentity.RateLimitID(rl.ID())})
 	if !errors.Is(err, errRepoUpdate) {
 		t.Fatalf("expected errRepoUpdate, got: %v", err)
 	}
@@ -83,7 +84,7 @@ func TestDeleteRateLimitHandler_RepoError(t *testing.T) {
 	repo := &errorRateLimitRepo{deleteErr: errRepoDelete}
 	handler := NewDeleteRateLimitHandler(repo, &mockLogger{})
 
-	err := handler.Handle(context.Background(), DeleteRateLimitCommand{ID: domain.NewRateLimitID()})
+	err := handler.Handle(context.Background(), DeleteRateLimitCommand{ID: ratelimitentity.NewRateLimitID()})
 	if !errors.Is(err, errRepoDelete) {
 		t.Fatalf("expected errRepoDelete, got: %v", err)
 	}

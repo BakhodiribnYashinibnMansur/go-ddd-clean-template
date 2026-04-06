@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/context/iam/generic/authz/domain"
+	authzentity "gct/internal/context/iam/generic/authz/domain/entity"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -18,7 +18,7 @@ func TestDeletePolicyHandler_Success(t *testing.T) {
 
 	handler := NewDeletePolicyHandler(repo, log)
 
-	cmd := DeletePolicyCommand{ID: domain.PolicyID(uuid.New())}
+	cmd := DeletePolicyCommand{ID: authzentity.PolicyID(uuid.New())}
 
 	err := handler.Handle(context.Background(), cmd)
 	require.NoError(t, err)

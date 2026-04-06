@@ -2,7 +2,6 @@ package e2e
 
 import (
 	"testing"
-	"time"
 
 	"gct/config"
 
@@ -48,8 +47,8 @@ func TestNewTestConfig(t *testing.T) {
 
 	// Verify JWT settings
 	assert.Equal(t, "auth-service-test", cfg.JWT.Issuer)
-	assert.Equal(t, 15*time.Minute, cfg.JWT.AccessTTL)
-	assert.Equal(t, 720*time.Hour, cfg.JWT.RefreshTTL)
+	assert.NotEmpty(t, cfg.JWT.KeysDir)
+	assert.NotEmpty(t, cfg.JWT.Leeway)
 
 	// Verify API keys
 	assert.Equal(t, int64(10), cfg.APIKeys.SignExpireTime)

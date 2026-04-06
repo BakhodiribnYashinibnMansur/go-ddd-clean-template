@@ -7,7 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/admin/generic/featureflag/domain"
+	ffentity "gct/internal/context/admin/generic/featureflag/domain/entity"
+	ffrepo "gct/internal/context/admin/generic/featureflag/domain/repository"
 
 	"github.com/stretchr/testify/require"
 )
@@ -16,8 +17,8 @@ func TestListHandler_Handle(t *testing.T) {
 	t.Parallel()
 
 	now := time.Now().Format(time.RFC3339)
-	flag1 := &domain.FeatureFlagView{
-		ID:        domain.NewFeatureFlagID(),
+	flag1 := &ffrepo.FeatureFlagView{
+		ID:        ffentity.NewFeatureFlagID(),
 		Name:      "flag-1",
 		Key:       "flag_1",
 		FlagType:  "bool",
@@ -25,8 +26,8 @@ func TestListHandler_Handle(t *testing.T) {
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
-	flag2 := &domain.FeatureFlagView{
-		ID:        domain.NewFeatureFlagID(),
+	flag2 := &ffrepo.FeatureFlagView{
+		ID:        ffentity.NewFeatureFlagID(),
 		Name:      "flag-2",
 		Key:       "flag_2",
 		FlagType:  "string",
@@ -36,14 +37,14 @@ func TestListHandler_Handle(t *testing.T) {
 	}
 
 	readRepo := &mockReadRepo{
-		listFn: func(_ context.Context, _ domain.FeatureFlagFilter) ([]*domain.FeatureFlagView, int64, error) {
-			return []*domain.FeatureFlagView{flag1, flag2}, 2, nil
+		listFn: func(_ context.Context, _ ffrepo.FeatureFlagFilter) ([]*ffrepo.FeatureFlagView, int64, error) {
+			return []*ffrepo.FeatureFlagView{flag1, flag2}, 2, nil
 		},
 	}
 
 	handler := NewListHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListQuery{
-		Filter: domain.FeatureFlagFilter{Limit: 10, Offset: 0},
+		Filter: ffrepo.FeatureFlagFilter{Limit: 10, Offset: 0},
 	})
 	require.NoError(t, err)
 
@@ -68,8 +69,8 @@ func TestListHandler_Handle_Empty(t *testing.T) {
 	t.Parallel()
 
 	readRepo := &mockReadRepo{
-		listFn: func(_ context.Context, _ domain.FeatureFlagFilter) ([]*domain.FeatureFlagView, int64, error) {
-			return []*domain.FeatureFlagView{}, 0, nil
+		listFn: func(_ context.Context, _ ffrepo.FeatureFlagFilter) ([]*ffrepo.FeatureFlagView, int64, error) {
+			return []*ffrepo.FeatureFlagView{}, 0, nil
 		},
 	}
 
@@ -88,13 +89,13 @@ func TestListHandler_Handle_WithFilter(t *testing.T) {
 	t.Parallel()
 
 	now := time.Now().Format(time.RFC3339)
-	var capturedFilter domain.FeatureFlagFilter
+	var capturedFilter ffrepo.FeatureFlagFilter
 
 	readRepo := &mockReadRepo{
-		listFn: func(_ context.Context, filter domain.FeatureFlagFilter) ([]*domain.FeatureFlagView, int64, error) {
+		listFn: func(_ context.Context, filter ffrepo.FeatureFlagFilter) ([]*ffrepo.FeatureFlagView, int64, error) {
 			capturedFilter = filter
-			return []*domain.FeatureFlagView{
-				{ID: domain.NewFeatureFlagID(), Name: "active-flag", Key: "active", FlagType: "bool", IsActive: true, CreatedAt: now, UpdatedAt: now},
+			return []*ffrepo.FeatureFlagView{
+				{ID: ffentity.NewFeatureFlagID(), Name: "active-flag", Key: "active", FlagType: "bool", IsActive: true, CreatedAt: now, UpdatedAt: now},
 			}, 1, nil
 		},
 	}
@@ -103,7 +104,7 @@ func TestListHandler_Handle_WithFilter(t *testing.T) {
 	search := "active"
 	enabled := true
 	result, err := handler.Handle(context.Background(), ListQuery{
-		Filter: domain.FeatureFlagFilter{
+		Filter: ffrepo.FeatureFlagFilter{
 			Search:  &search,
 			Enabled: &enabled,
 			Limit:   20,
@@ -134,7 +135,7 @@ func TestListHandler_Handle_RepoError(t *testing.T) {
 
 	repoErr := errors.New("db failure")
 	readRepo := &mockReadRepo{
-		listFn: func(_ context.Context, _ domain.FeatureFlagFilter) ([]*domain.FeatureFlagView, int64, error) {
+		listFn: func(_ context.Context, _ ffrepo.FeatureFlagFilter) ([]*ffrepo.FeatureFlagView, int64, error) {
 			return nil, 0, repoErr
 		},
 	}

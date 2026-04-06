@@ -5,7 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/ops/supporting/iprule/domain"
+	ipruleentity "gct/internal/context/ops/supporting/iprule/domain/entity"
+	iprulerepo "gct/internal/context/ops/supporting/iprule/domain/repository"
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
@@ -15,35 +16,35 @@ import (
 // --- Mocks ---
 
 type mockIPRuleRepo struct {
-	saved   *domain.IPRule
-	updated *domain.IPRule
-	deleted domain.IPRuleID
-	findFn  func(ctx context.Context, id domain.IPRuleID) (*domain.IPRule, error)
+	saved   *ipruleentity.IPRule
+	updated *ipruleentity.IPRule
+	deleted ipruleentity.IPRuleID
+	findFn  func(ctx context.Context, id ipruleentity.IPRuleID) (*ipruleentity.IPRule, error)
 }
 
-func (m *mockIPRuleRepo) Save(_ context.Context, e *domain.IPRule) error {
+func (m *mockIPRuleRepo) Save(_ context.Context, e *ipruleentity.IPRule) error {
 	m.saved = e
 	return nil
 }
 
-func (m *mockIPRuleRepo) FindByID(ctx context.Context, id domain.IPRuleID) (*domain.IPRule, error) {
+func (m *mockIPRuleRepo) FindByID(ctx context.Context, id ipruleentity.IPRuleID) (*ipruleentity.IPRule, error) {
 	if m.findFn != nil {
 		return m.findFn(ctx, id)
 	}
-	return nil, domain.ErrIPRuleNotFound
+	return nil, ipruleentity.ErrIPRuleNotFound
 }
 
-func (m *mockIPRuleRepo) Update(_ context.Context, e *domain.IPRule) error {
+func (m *mockIPRuleRepo) Update(_ context.Context, e *ipruleentity.IPRule) error {
 	m.updated = e
 	return nil
 }
 
-func (m *mockIPRuleRepo) Delete(_ context.Context, id domain.IPRuleID) error {
+func (m *mockIPRuleRepo) Delete(_ context.Context, id ipruleentity.IPRuleID) error {
 	m.deleted = id
 	return nil
 }
 
-func (m *mockIPRuleRepo) List(_ context.Context, _ domain.IPRuleFilter) ([]*domain.IPRule, int64, error) {
+func (m *mockIPRuleRepo) List(_ context.Context, _ iprulerepo.IPRuleFilter) ([]*ipruleentity.IPRule, int64, error) {
 	return nil, 0, nil
 }
 

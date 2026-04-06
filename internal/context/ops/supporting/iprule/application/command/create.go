@@ -4,7 +4,8 @@ import (
 	"context"
 	"time"
 
-	"gct/internal/context/ops/supporting/iprule/domain"
+	ipruleentity "gct/internal/context/ops/supporting/iprule/domain/entity"
+	iprulerepo "gct/internal/context/ops/supporting/iprule/domain/repository"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
@@ -24,14 +25,14 @@ type CreateIPRuleCommand struct {
 // CreateIPRuleHandler persists a new IP rule and emits domain events for downstream enforcement.
 // Callers are responsible for validating IP format and ensuring no conflicting rule already exists.
 type CreateIPRuleHandler struct {
-	repo     domain.IPRuleRepository
+	repo     iprulerepo.IPRuleRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
 // NewCreateIPRuleHandler wires up the handler with its required dependencies.
 func NewCreateIPRuleHandler(
-	repo domain.IPRuleRepository,
+	repo iprulerepo.IPRuleRepository,
 	eventBus application.EventBus,
 	logger logger.Log,
 ) *CreateIPRuleHandler {
@@ -49,7 +50,7 @@ func (h *CreateIPRuleHandler) Handle(ctx context.Context, cmd CreateIPRuleComman
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "CreateIPRule", "ip_rule")()
 
-	r := domain.NewIPRule(cmd.IPAddress, cmd.Action, cmd.Reason, cmd.ExpiresAt)
+	r := ipruleentity.NewIPRule(cmd.IPAddress, cmd.Action, cmd.Reason, cmd.ExpiresAt)
 
 	if err := h.repo.Save(ctx, r); err != nil {
 		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateIPRule", Entity: "ip_rule", Err: err}.KV()...)

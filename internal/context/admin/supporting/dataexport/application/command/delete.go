@@ -3,7 +3,8 @@ package command
 import (
 	"context"
 
-	"gct/internal/context/admin/supporting/dataexport/domain"
+	exportentity "gct/internal/context/admin/supporting/dataexport/domain/entity"
+	exportrepo "gct/internal/context/admin/supporting/dataexport/domain/repository"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -12,19 +13,19 @@ import (
 // DeleteDataExportCommand represents an intent to permanently remove a data export record.
 // This deletes the metadata only — callers are responsible for cleaning up the exported file from storage.
 type DeleteDataExportCommand struct {
-	ID domain.DataExportID
+	ID exportentity.DataExportID
 }
 
 // DeleteDataExportHandler performs hard deletion of a data export record via the repository.
 // No domain events are emitted — callers needing file cleanup should handle that at a higher layer.
 type DeleteDataExportHandler struct {
-	repo   domain.DataExportRepository
+	repo   exportrepo.DataExportRepository
 	logger logger.Log
 }
 
 // NewDeleteDataExportHandler wires dependencies for data export deletion.
 func NewDeleteDataExportHandler(
-	repo domain.DataExportRepository,
+	repo exportrepo.DataExportRepository,
 	logger logger.Log,
 ) *DeleteDataExportHandler {
 	return &DeleteDataExportHandler{

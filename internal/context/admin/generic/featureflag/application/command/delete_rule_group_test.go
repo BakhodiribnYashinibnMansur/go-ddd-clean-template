@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/admin/generic/featureflag/domain"
+	ffentity "gct/internal/context/admin/generic/featureflag/domain/entity"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -15,22 +15,22 @@ import (
 func TestDeleteRuleGroupHandler_Handle(t *testing.T) {
 	t.Parallel()
 
-	rgID := domain.NewRuleGroupID()
-	flagID := domain.NewFeatureFlagID()
-	rg := domain.ReconstructRuleGroup(rgID.UUID(), flagID.UUID(), "test-rg", "true", 1, time.Now(), time.Now(), nil)
+	rgID := ffentity.NewRuleGroupID()
+	flagID := ffentity.NewFeatureFlagID()
+	rg := ffentity.ReconstructRuleGroup(rgID.UUID(), flagID.UUID(), "test-rg", "true", 1, time.Now(), time.Now(), nil)
 
 	rgRepo := &mockRuleGroupRepo{
-		findFn: func(_ context.Context, id domain.RuleGroupID) (*domain.RuleGroup, error) {
+		findFn: func(_ context.Context, id ffentity.RuleGroupID) (*ffentity.RuleGroup, error) {
 			if id == rgID {
 				return rg, nil
 			}
-			return nil, domain.ErrRuleGroupNotFound
+			return nil, ffentity.ErrRuleGroupNotFound
 		},
 	}
 	eb := &mockEventBus{}
 	handler := NewDeleteRuleGroupHandler(rgRepo, eb, &mockLogger{})
 
-	err := handler.Handle(context.Background(), DeleteRuleGroupCommand{ID: domain.RuleGroupID(rgID)})
+	err := handler.Handle(context.Background(), DeleteRuleGroupCommand{ID: ffentity.RuleGroupID(rgID)})
 	require.NoError(t, err)
 
 	if rgRepo.deleted != rgID {
@@ -50,11 +50,11 @@ func TestDeleteRuleGroupHandler_Handle_NotFound(t *testing.T) {
 	rgRepo := &mockRuleGroupRepo{} // default returns ErrRuleGroupNotFound
 	handler := NewDeleteRuleGroupHandler(rgRepo, &mockEventBus{}, &mockLogger{})
 
-	err := handler.Handle(context.Background(), DeleteRuleGroupCommand{ID: domain.RuleGroupID(uuid.New())})
+	err := handler.Handle(context.Background(), DeleteRuleGroupCommand{ID: ffentity.RuleGroupID(uuid.New())})
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
-	if !errors.Is(err, domain.ErrRuleGroupNotFound) {
+	if !errors.Is(err, ffentity.ErrRuleGroupNotFound) {
 		t.Fatalf("expected ErrRuleGroupNotFound, got: %v", err)
 	}
 }
@@ -62,22 +62,22 @@ func TestDeleteRuleGroupHandler_Handle_NotFound(t *testing.T) {
 func TestDeleteRuleGroupHandler_Handle_DeleteRepoError(t *testing.T) {
 	t.Parallel()
 
-	rgID := domain.NewRuleGroupID()
-	flagID := domain.NewFeatureFlagID()
-	rg := domain.ReconstructRuleGroup(rgID.UUID(), flagID.UUID(), "test-rg", "true", 1, time.Now(), time.Now(), nil)
+	rgID := ffentity.NewRuleGroupID()
+	flagID := ffentity.NewFeatureFlagID()
+	rg := ffentity.ReconstructRuleGroup(rgID.UUID(), flagID.UUID(), "test-rg", "true", 1, time.Now(), time.Now(), nil)
 
 	repoErr := errors.New("delete failed")
 	rgRepo := &mockRuleGroupRepo{
-		findFn: func(_ context.Context, _ domain.RuleGroupID) (*domain.RuleGroup, error) {
+		findFn: func(_ context.Context, _ ffentity.RuleGroupID) (*ffentity.RuleGroup, error) {
 			return rg, nil
 		},
-		deleteFn: func(_ context.Context, _ domain.RuleGroupID) error {
+		deleteFn: func(_ context.Context, _ ffentity.RuleGroupID) error {
 			return repoErr
 		},
 	}
 	handler := NewDeleteRuleGroupHandler(rgRepo, &mockEventBus{}, &mockLogger{})
 
-	err := handler.Handle(context.Background(), DeleteRuleGroupCommand{ID: domain.RuleGroupID(rgID)})
+	err := handler.Handle(context.Background(), DeleteRuleGroupCommand{ID: ffentity.RuleGroupID(rgID)})
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}

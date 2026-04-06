@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"gct/internal/context/iam/generic/user/domain"
+	userentity "gct/internal/context/iam/generic/user/domain/entity"
 	"gct/internal/kernel/consts"
 	shared "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
@@ -53,7 +53,7 @@ var sessionInsertColumns = []string{
 	"device_fingerprint",
 }
 
-// UserWriteRepo implements domain.UserRepository using PostgreSQL.
+// UserWriteRepo implements userrepo.UserRepository using PostgreSQL.
 type UserWriteRepo struct {
 	pool     *pgxpool.Pool
 	builder  squirrel.StatementBuilderType
@@ -70,7 +70,7 @@ func NewUserWriteRepo(pool *pgxpool.Pool) *UserWriteRepo {
 }
 
 // Save inserts a new User aggregate (and its sessions) into the database.
-func (r *UserWriteRepo) Save(ctx context.Context, user *domain.User) (err error) {
+func (r *UserWriteRepo) Save(ctx context.Context, user *userentity.User) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "UserWriteRepo.Save")
 	defer func() { end(err) }()
 
@@ -130,7 +130,7 @@ func (r *UserWriteRepo) Save(ctx context.Context, user *domain.User) (err error)
 }
 
 // insertSession inserts a single session row within an existing transaction.
-func (r *UserWriteRepo) insertSession(ctx context.Context, tx pgx.Tx, s *domain.Session) error {
+func (r *UserWriteRepo) insertSession(ctx context.Context, tx pgx.Tx, s *userentity.Session) error {
 	sql, args, err := r.builder.
 		Insert(sessionTable).
 		Columns(sessionInsertColumns...).
@@ -164,7 +164,7 @@ func (r *UserWriteRepo) insertSession(ctx context.Context, tx pgx.Tx, s *domain.
 }
 
 // FindByID retrieves a User aggregate by ID, including its sessions.
-func (r *UserWriteRepo) FindByID(ctx context.Context, id domain.UserID) (result *domain.User, err error) {
+func (r *UserWriteRepo) FindByID(ctx context.Context, id userentity.UserID) (result *userentity.User, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "UserWriteRepo.FindByID")
 	defer func() { end(err) }()
 
@@ -198,7 +198,7 @@ func (r *UserWriteRepo) FindByID(ctx context.Context, id domain.UserID) (result 
 	}
 
 	// Reconstruct with sessions and attributes.
-	return domain.ReconstructUser(
+	return userentity.ReconstructUser(
 		user.ID(),
 		user.CreatedAt(),
 		user.UpdatedAt(),
@@ -217,7 +217,7 @@ func (r *UserWriteRepo) FindByID(ctx context.Context, id domain.UserID) (result 
 }
 
 // Update updates the User aggregate in the database.
-func (r *UserWriteRepo) Update(ctx context.Context, user *domain.User) (err error) {
+func (r *UserWriteRepo) Update(ctx context.Context, user *userentity.User) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "UserWriteRepo.Update")
 	defer func() { end(err) }()
 
@@ -266,7 +266,7 @@ func (r *UserWriteRepo) Update(ctx context.Context, user *domain.User) (err erro
 
 // upsertSessions inserts new sessions or updates existing ones in a single tx,
 // using ON CONFLICT to avoid FK violations on replay.
-func (r *UserWriteRepo) upsertSessions(ctx context.Context, tx pgx.Tx, sessions []domain.Session) error {
+func (r *UserWriteRepo) upsertSessions(ctx context.Context, tx pgx.Tx, sessions []userentity.Session) error {
 	for _, s := range sessions {
 		upsertSQL, upsertArgs, upsertErr := r.builder.
 			Insert(sessionTable).
@@ -293,7 +293,7 @@ func (r *UserWriteRepo) upsertSessions(ctx context.Context, tx pgx.Tx, sessions 
 }
 
 // Delete performs a soft delete on the user by setting deleted_at to the current unix timestamp.
-func (r *UserWriteRepo) Delete(ctx context.Context, id domain.UserID) (err error) {
+func (r *UserWriteRepo) Delete(ctx context.Context, id userentity.UserID) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "UserWriteRepo.Delete")
 	defer func() { end(err) }()
 
@@ -313,7 +313,7 @@ func (r *UserWriteRepo) Delete(ctx context.Context, id domain.UserID) (err error
 }
 
 // List retrieves a paginated list of users (without sessions).
-func (r *UserWriteRepo) List(ctx context.Context, filter shared.Pagination) (items []*domain.User, total int64, err error) {
+func (r *UserWriteRepo) List(ctx context.Context, filter shared.Pagination) (items []*userentity.User, total int64, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "UserWriteRepo.List")
 	defer func() { end(err) }()
 
@@ -358,7 +358,7 @@ func (r *UserWriteRepo) List(ctx context.Context, filter shared.Pagination) (ite
 	}
 	defer rows.Close()
 
-	var users []*domain.User
+	var users []*userentity.User
 	for rows.Next() {
 		u, err := scanUserFromRows(rows)
 		if err != nil {
@@ -373,7 +373,7 @@ func (r *UserWriteRepo) List(ctx context.Context, filter shared.Pagination) (ite
 		if err != nil {
 			return nil, 0, err
 		}
-		users[i] = domain.ReconstructUser(
+		users[i] = userentity.ReconstructUser(
 			u.ID(), u.CreatedAt(), u.UpdatedAt(), u.DeletedAt(),
 			u.Phone(), u.Email(), u.Username(), u.Password(), u.RoleID(),
 			attrs, u.IsActive(), u.IsApproved(), u.LastSeen(), nil,
@@ -384,7 +384,7 @@ func (r *UserWriteRepo) List(ctx context.Context, filter shared.Pagination) (ite
 }
 
 // FindByPhone finds a user by phone number.
-func (r *UserWriteRepo) FindByPhone(ctx context.Context, phone domain.Phone) (result *domain.User, err error) {
+func (r *UserWriteRepo) FindByPhone(ctx context.Context, phone userentity.Phone) (result *userentity.User, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "UserWriteRepo.FindByPhone")
 	defer func() { end(err) }()
 
@@ -414,7 +414,7 @@ func (r *UserWriteRepo) FindByPhone(ctx context.Context, phone domain.Phone) (re
 		return nil, err
 	}
 
-	return domain.ReconstructUser(
+	return userentity.ReconstructUser(
 		user.ID(),
 		user.CreatedAt(),
 		user.UpdatedAt(),
@@ -433,7 +433,7 @@ func (r *UserWriteRepo) FindByPhone(ctx context.Context, phone domain.Phone) (re
 }
 
 // FindByEmail finds a user by email address.
-func (r *UserWriteRepo) FindByEmail(ctx context.Context, email domain.Email) (result *domain.User, err error) {
+func (r *UserWriteRepo) FindByEmail(ctx context.Context, email userentity.Email) (result *userentity.User, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "UserWriteRepo.FindByEmail")
 	defer func() { end(err) }()
 
@@ -463,7 +463,7 @@ func (r *UserWriteRepo) FindByEmail(ctx context.Context, email domain.Email) (re
 		return nil, err
 	}
 
-	return domain.ReconstructUser(
+	return userentity.ReconstructUser(
 		user.ID(),
 		user.CreatedAt(),
 		user.UpdatedAt(),
@@ -486,7 +486,7 @@ func (r *UserWriteRepo) FindByEmail(ctx context.Context, email domain.Email) (re
 // ---------------------------------------------------------------------------
 
 // findSessionsByUserID returns all sessions for a given user ID.
-func (r *UserWriteRepo) findSessionsByUserID(ctx context.Context, userID uuid.UUID) ([]domain.Session, error) {
+func (r *UserWriteRepo) findSessionsByUserID(ctx context.Context, userID uuid.UUID) ([]userentity.Session, error) {
 	sql, args, err := r.builder.
 		Select(sessionSelectColumns...).
 		From(sessionTable).
@@ -502,7 +502,7 @@ func (r *UserWriteRepo) findSessionsByUserID(ctx context.Context, userID uuid.UU
 	}
 	defer rows.Close()
 
-	var sessions []domain.Session
+	var sessions []userentity.Session
 	for rows.Next() {
 		s, err := scanSessionFromRows(rows)
 		if err != nil {
@@ -517,7 +517,7 @@ func (r *UserWriteRepo) findSessionsByUserID(ctx context.Context, userID uuid.UU
 // ActiveSessionCount returns the number of non-revoked, non-expired sessions
 // for the given user. Consulted during sign-in to decide whether to evict an
 // old session before admitting a new one.
-func (r *UserWriteRepo) ActiveSessionCount(ctx context.Context, userID domain.UserID) (count int, err error) {
+func (r *UserWriteRepo) ActiveSessionCount(ctx context.Context, userID userentity.UserID) (count int, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "UserWriteRepo.ActiveSessionCount")
 	defer func() { end(err) }()
 
@@ -534,7 +534,7 @@ func (r *UserWriteRepo) ActiveSessionCount(ctx context.Context, userID domain.Us
 // user, ordered by last_activity ASC NULLS FIRST, created_at ASC. Returns the
 // revoked session ID, or NilSessionID when no active session was available to
 // revoke (idempotent — safe to call in a loop).
-func (r *UserWriteRepo) RevokeOldestActiveSession(ctx context.Context, userID domain.UserID) (result domain.SessionID, err error) {
+func (r *UserWriteRepo) RevokeOldestActiveSession(ctx context.Context, userID userentity.UserID) (result userentity.SessionID, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "UserWriteRepo.RevokeOldestActiveSession")
 	defer func() { end(err) }()
 
@@ -550,16 +550,16 @@ func (r *UserWriteRepo) RevokeOldestActiveSession(ctx context.Context, userID do
 	var id uuid.UUID
 	if err = r.pool.QueryRow(ctx, sql, userID.UUID()).Scan(&id); err != nil {
 		if err == pgx.ErrNoRows {
-			return domain.NilSessionID, nil
+			return userentity.NilSessionID, nil
 		}
-		return domain.NilSessionID, apperrors.HandlePgError(err, sessionTable, nil)
+		return userentity.NilSessionID, apperrors.HandlePgError(err, sessionTable, nil)
 	}
-	return domain.SessionID(id), nil
+	return userentity.SessionID(id), nil
 }
 
 // RevokeSessionsByIntegration revokes all active sessions for a user within a
 // specific integration. Returns the count of revoked sessions.
-func (r *UserWriteRepo) RevokeSessionsByIntegration(ctx context.Context, userID domain.UserID, integrationName string) (count int, err error) {
+func (r *UserWriteRepo) RevokeSessionsByIntegration(ctx context.Context, userID userentity.UserID, integrationName string) (count int, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "UserWriteRepo.RevokeSessionsByIntegration")
 	defer func() { end(err) }()
 
@@ -587,7 +587,7 @@ func (r *UserWriteRepo) FindDefaultRoleID(ctx context.Context) (result uuid.UUID
 }
 
 // scanUser scans a single user row (pgx.Row) and returns a User aggregate without sessions.
-func scanUser(row pgx.Row) (*domain.User, error) {
+func scanUser(row pgx.Row) (*userentity.User, error) {
 	var (
 		id         uuid.UUID
 		roleID     *uuid.UUID
@@ -621,7 +621,7 @@ func scanUser(row pgx.Row) (*domain.User, error) {
 }
 
 // scanUserFromRows scans a user from pgx.Rows.
-func scanUserFromRows(rows pgx.Rows) (*domain.User, error) {
+func scanUserFromRows(rows pgx.Rows) (*userentity.User, error) {
 	var (
 		id         uuid.UUID
 		roleID     *uuid.UUID
@@ -654,7 +654,7 @@ func scanUserFromRows(rows pgx.Rows) (*domain.User, error) {
 	), nil
 }
 
-// reconstructUserFromRow builds a domain.User from raw scanned values.
+// reconstructUserFromRow builds a userentity.User from raw scanned values.
 // Attributes are loaded separately via the metadata repo; nil is passed here.
 func reconstructUserFromRow(
 	id uuid.UUID,
@@ -666,13 +666,13 @@ func reconstructUserFromRow(
 	createdAt, updatedAt time.Time,
 	deletedAtUnix int64,
 	lastSeen *time.Time,
-) *domain.User {
-	phonVO, _ := domain.NewPhone(phone)
-	password := domain.NewPasswordFromHash(pwHash)
+) *userentity.User {
+	phonVO, _ := userentity.NewPhone(phone)
+	password := userentity.NewPasswordFromHash(pwHash)
 
-	var emailVO *domain.Email
+	var emailVO *userentity.Email
 	if emailStr != nil {
-		e, err := domain.NewEmail(*emailStr)
+		e, err := userentity.NewEmail(*emailStr)
 		if err == nil {
 			emailVO = &e
 		}
@@ -684,7 +684,7 @@ func reconstructUserFromRow(
 		deletedAt = &t
 	}
 
-	return domain.ReconstructUser(
+	return userentity.ReconstructUser(
 		id,
 		createdAt, updatedAt, deletedAt,
 		phonVO,
@@ -700,7 +700,7 @@ func reconstructUserFromRow(
 }
 
 // scanSessionFromRows scans a session from pgx.Rows.
-func scanSessionFromRows(rows pgx.Rows) (*domain.Session, error) {
+func scanSessionFromRows(rows pgx.Rows) (*userentity.Session, error) {
 	var (
 		id                  uuid.UUID
 		userID              uuid.UUID
@@ -740,12 +740,12 @@ func scanSessionFromRows(rows pgx.Rows) (*domain.Session, error) {
 		return *s
 	}
 
-	s := domain.ReconstructSession(
+	s := userentity.ReconstructSession(
 		id,
 		createdAt, updatedAt, nil,
 		userID,
 		deref(deviceID), deref(deviceName),
-		domain.SessionDeviceType(deref(deviceType)),
+		userentity.SessionDeviceType(deref(deviceType)),
 		deref(ipAddress), deref(userAgent), deref(refreshTokenHash),
 		expiresAt, lastActivity,
 		revoked,

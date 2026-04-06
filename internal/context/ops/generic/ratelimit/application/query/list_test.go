@@ -6,7 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/ops/generic/ratelimit/domain"
+	ratelimitentity "gct/internal/context/ops/generic/ratelimit/domain/entity"
+	ratelimitrepo "gct/internal/context/ops/generic/ratelimit/domain/repository"
 
 	"github.com/stretchr/testify/require"
 )
@@ -15,16 +16,16 @@ func TestListRateLimitsHandler_Handle(t *testing.T) {
 	t.Parallel()
 
 	readRepo := &mockReadRepo{
-		views: []*domain.RateLimitView{
-			{ID: domain.NewRateLimitID(), Name: "r1", Rule: "/a", RequestsPerWindow: 10, WindowDuration: 30, Enabled: true, CreatedAt: time.Now(), UpdatedAt: time.Now()},
-			{ID: domain.NewRateLimitID(), Name: "r2", Rule: "/b", RequestsPerWindow: 20, WindowDuration: 60, Enabled: false, CreatedAt: time.Now(), UpdatedAt: time.Now()},
+		views: []*ratelimitrepo.RateLimitView{
+			{ID: ratelimitentity.NewRateLimitID(), Name: "r1", Rule: "/a", RequestsPerWindow: 10, WindowDuration: 30, Enabled: true, CreatedAt: time.Now(), UpdatedAt: time.Now()},
+			{ID: ratelimitentity.NewRateLimitID(), Name: "r2", Rule: "/b", RequestsPerWindow: 20, WindowDuration: 60, Enabled: false, CreatedAt: time.Now(), UpdatedAt: time.Now()},
 		},
 		total: 2,
 	}
 
 	handler := NewListRateLimitsHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListRateLimitsQuery{
-		Filter: domain.RateLimitFilter{Limit: 10, Offset: 0},
+		Filter: ratelimitrepo.RateLimitFilter{Limit: 10, Offset: 0},
 	})
 	require.NoError(t, err)
 	if result.Total != 2 {
@@ -41,11 +42,11 @@ func TestListRateLimitsHandler_Handle(t *testing.T) {
 func TestListRateLimitsHandler_Empty(t *testing.T) {
 	t.Parallel()
 
-	readRepo := &mockReadRepo{views: []*domain.RateLimitView{}, total: 0}
+	readRepo := &mockReadRepo{views: []*ratelimitrepo.RateLimitView{}, total: 0}
 
 	handler := NewListRateLimitsHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListRateLimitsQuery{
-		Filter: domain.RateLimitFilter{},
+		Filter: ratelimitrepo.RateLimitFilter{},
 	})
 	require.NoError(t, err)
 	if result.Total != 0 {
@@ -62,15 +63,15 @@ func TestListRateLimitsHandler_WithFilters(t *testing.T) {
 	enabled := true
 	name := "api"
 	readRepo := &mockReadRepo{
-		views: []*domain.RateLimitView{
-			{ID: domain.NewRateLimitID(), Name: "api-rule", Rule: "/api", RequestsPerWindow: 100, WindowDuration: 60, Enabled: true, CreatedAt: time.Now(), UpdatedAt: time.Now()},
+		views: []*ratelimitrepo.RateLimitView{
+			{ID: ratelimitentity.NewRateLimitID(), Name: "api-rule", Rule: "/api", RequestsPerWindow: 100, WindowDuration: 60, Enabled: true, CreatedAt: time.Now(), UpdatedAt: time.Now()},
 		},
 		total: 1,
 	}
 
 	handler := NewListRateLimitsHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListRateLimitsQuery{
-		Filter: domain.RateLimitFilter{Name: &name, Enabled: &enabled, Limit: 10},
+		Filter: ratelimitrepo.RateLimitFilter{Name: &name, Enabled: &enabled, Limit: 10},
 	})
 	require.NoError(t, err)
 	if result.Total != 1 {
@@ -83,7 +84,7 @@ func TestListRateLimitsHandler_RepoError(t *testing.T) {
 
 	readRepo := &errorReadRepo{err: errRepo}
 	handler := NewListRateLimitsHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), ListRateLimitsQuery{Filter: domain.RateLimitFilter{}})
+	_, err := handler.Handle(context.Background(), ListRateLimitsQuery{Filter: ratelimitrepo.RateLimitFilter{}})
 	if err == nil {
 		t.Fatal("expected error from repo")
 	}

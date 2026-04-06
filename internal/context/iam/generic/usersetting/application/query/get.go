@@ -6,29 +6,32 @@ import (
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 
-	appdto "gct/internal/context/iam/generic/usersetting/application"
-	"gct/internal/context/iam/generic/usersetting/domain"
+	"gct/internal/context/iam/generic/usersetting/application/dto"
+	settingentity "gct/internal/context/iam/generic/usersetting/domain/entity"
+	settingrepo "gct/internal/context/iam/generic/usersetting/domain/repository"
 	"gct/internal/kernel/infrastructure/pgxutil"
+
+	"github.com/google/uuid"
 )
 
 // GetUserSettingQuery holds the input for getting a single user setting.
 type GetUserSettingQuery struct {
-	ID domain.UserSettingID
+	ID settingentity.UserSettingID
 }
 
 // GetUserSettingHandler handles the GetUserSettingQuery.
 type GetUserSettingHandler struct {
-	readRepo domain.UserSettingReadRepository
+	readRepo settingrepo.UserSettingReadRepository
 	logger   logger.Log
 }
 
 // NewGetUserSettingHandler creates a new GetUserSettingHandler.
-func NewGetUserSettingHandler(readRepo domain.UserSettingReadRepository, l logger.Log) *GetUserSettingHandler {
+func NewGetUserSettingHandler(readRepo settingrepo.UserSettingReadRepository, l logger.Log) *GetUserSettingHandler {
 	return &GetUserSettingHandler{readRepo: readRepo, logger: l}
 }
 
 // Handle executes the GetUserSettingQuery and returns a UserSettingView.
-func (h *GetUserSettingHandler) Handle(ctx context.Context, q GetUserSettingQuery) (result *appdto.UserSettingView, err error) {
+func (h *GetUserSettingHandler) Handle(ctx context.Context, q GetUserSettingQuery) (result *dto.UserSettingView, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "GetUserSettingHandler.Handle")
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "GetUserSetting", "user_setting")()
@@ -39,8 +42,8 @@ func (h *GetUserSettingHandler) Handle(ctx context.Context, q GetUserSettingQuer
 		return nil, apperrors.MapToServiceError(err)
 	}
 
-	return &appdto.UserSettingView{
-		ID:        v.ID,
+	return &dto.UserSettingView{
+		ID:        uuid.UUID(v.ID),
 		UserID:    v.UserID,
 		Key:       v.Key,
 		Value:     v.Value,

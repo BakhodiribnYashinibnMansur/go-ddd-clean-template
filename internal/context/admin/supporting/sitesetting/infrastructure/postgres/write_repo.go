@@ -4,7 +4,8 @@ import (
 	"context"
 	"time"
 
-	"gct/internal/context/admin/supporting/sitesetting/domain"
+	siteentity "gct/internal/context/admin/supporting/sitesetting/domain/entity"
+	siterepo "gct/internal/context/admin/supporting/sitesetting/domain/repository"
 	"gct/internal/kernel/consts"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -36,7 +37,7 @@ func NewSiteSettingWriteRepo(pool *pgxpool.Pool) *SiteSettingWriteRepo {
 }
 
 // Save inserts a new SiteSetting aggregate into the database.
-func (r *SiteSettingWriteRepo) Save(ctx context.Context, s *domain.SiteSetting) (err error) {
+func (r *SiteSettingWriteRepo) Save(ctx context.Context, s *siteentity.SiteSetting) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "SiteSettingWriteRepo.Save")
 	defer func() { end(err) }()
 
@@ -60,7 +61,7 @@ func (r *SiteSettingWriteRepo) Save(ctx context.Context, s *domain.SiteSetting) 
 }
 
 // FindByID retrieves a SiteSetting aggregate by its ID.
-func (r *SiteSettingWriteRepo) FindByID(ctx context.Context, id domain.SiteSettingID) (result *domain.SiteSetting, err error) {
+func (r *SiteSettingWriteRepo) FindByID(ctx context.Context, id siteentity.SiteSettingID) (result *siteentity.SiteSetting, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "SiteSettingWriteRepo.FindByID")
 	defer func() { end(err) }()
 
@@ -78,7 +79,7 @@ func (r *SiteSettingWriteRepo) FindByID(ctx context.Context, id domain.SiteSetti
 }
 
 // Update updates an existing SiteSetting aggregate in the database.
-func (r *SiteSettingWriteRepo) Update(ctx context.Context, s *domain.SiteSetting) (err error) {
+func (r *SiteSettingWriteRepo) Update(ctx context.Context, s *siteentity.SiteSetting) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "SiteSettingWriteRepo.Update")
 	defer func() { end(err) }()
 
@@ -103,7 +104,7 @@ func (r *SiteSettingWriteRepo) Update(ctx context.Context, s *domain.SiteSetting
 }
 
 // Delete removes a SiteSetting by its ID.
-func (r *SiteSettingWriteRepo) Delete(ctx context.Context, id domain.SiteSettingID) (err error) {
+func (r *SiteSettingWriteRepo) Delete(ctx context.Context, id siteentity.SiteSettingID) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "SiteSettingWriteRepo.Delete")
 	defer func() { end(err) }()
 
@@ -123,7 +124,7 @@ func (r *SiteSettingWriteRepo) Delete(ctx context.Context, id domain.SiteSetting
 }
 
 // List retrieves a paginated list of SiteSetting aggregates with optional filters.
-func (r *SiteSettingWriteRepo) List(ctx context.Context, filter domain.SiteSettingFilter) (results []*domain.SiteSetting, total int64, err error) {
+func (r *SiteSettingWriteRepo) List(ctx context.Context, filter siterepo.SiteSettingFilter) (results []*siteentity.SiteSetting, total int64, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "SiteSettingWriteRepo.List")
 	defer func() { end(err) }()
 
@@ -184,7 +185,7 @@ func (r *SiteSettingWriteRepo) List(ctx context.Context, filter domain.SiteSetti
 // Helpers
 // ---------------------------------------------------------------------------
 
-func applyFilters(conds squirrel.And, filter domain.SiteSettingFilter) squirrel.And {
+func applyFilters(conds squirrel.And, filter siterepo.SiteSettingFilter) squirrel.And {
 	if filter.Key != nil {
 		conds = append(conds, squirrel.Eq{"key": *filter.Key})
 	}
@@ -194,7 +195,7 @@ func applyFilters(conds squirrel.And, filter domain.SiteSettingFilter) squirrel.
 	return conds
 }
 
-func scanSiteSetting(row pgx.Row) (*domain.SiteSetting, error) {
+func scanSiteSetting(row pgx.Row) (*siteentity.SiteSetting, error) {
 	var (
 		id          uuid.UUID
 		key         string
@@ -210,10 +211,10 @@ func scanSiteSetting(row pgx.Row) (*domain.SiteSetting, error) {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 
-	return domain.ReconstructSiteSetting(id, createdAt, updatedAt, key, value, sType, description), nil
+	return siteentity.ReconstructSiteSetting(id, createdAt, updatedAt, key, value, sType, description), nil
 }
 
-func scanSiteSettingFromRows(rows pgx.Rows) (*domain.SiteSetting, error) {
+func scanSiteSettingFromRows(rows pgx.Rows) (*siteentity.SiteSetting, error) {
 	var (
 		id          uuid.UUID
 		key         string
@@ -229,5 +230,5 @@ func scanSiteSettingFromRows(rows pgx.Rows) (*domain.SiteSetting, error) {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 
-	return domain.ReconstructSiteSetting(id, createdAt, updatedAt, key, value, sType, description), nil
+	return siteentity.ReconstructSiteSetting(id, createdAt, updatedAt, key, value, sType, description), nil
 }

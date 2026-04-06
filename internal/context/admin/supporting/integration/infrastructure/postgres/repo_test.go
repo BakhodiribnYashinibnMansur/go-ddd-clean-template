@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/admin/supporting/integration/domain"
+	integentity "gct/internal/context/admin/supporting/integration/domain/entity"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -191,7 +191,7 @@ func TestScanIntegrationView_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if v.ID != domain.IntegrationID(testID) {
+	if v.ID != integentity.IntegrationID(testID) {
 		t.Errorf("expected ID %v, got %v", testID, v.ID)
 	}
 	if v.Name != "GitHub" {

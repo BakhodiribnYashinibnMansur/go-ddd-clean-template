@@ -9,7 +9,8 @@ import (
 	"gct/internal/context/iam/generic/usersetting"
 	"gct/internal/context/iam/generic/usersetting/application/command"
 	"gct/internal/context/iam/generic/usersetting/application/query"
-	"gct/internal/context/iam/generic/usersetting/domain"
+	settingentity "gct/internal/context/iam/generic/usersetting/domain/entity"
+	settingrepo "gct/internal/context/iam/generic/usersetting/domain/repository"
 	"gct/test/integration/common/setup"
 
 	"github.com/google/uuid"
@@ -38,7 +39,7 @@ func TestIntegration_CreateAndGetUserSetting(t *testing.T) {
 	}
 
 	result, err := bc.ListUserSettings.Handle(ctx, query.ListUserSettingsQuery{
-		Filter: domain.UserSettingFilter{Limit: 10},
+		Filter: settingrepo.UserSettingFilter{Limit: 10},
 	})
 	if err != nil {
 		t.Fatalf("ListUserSettings: %v", err)
@@ -55,7 +56,7 @@ func TestIntegration_CreateAndGetUserSetting(t *testing.T) {
 		t.Errorf("expected value dark, got %s", s.Value)
 	}
 
-	view, err := bc.GetUserSetting.Handle(ctx, query.GetUserSettingQuery{ID: domain.UserSettingID(s.ID)})
+	view, err := bc.GetUserSetting.Handle(ctx, query.GetUserSettingQuery{ID: settingentity.UserSettingID(s.ID)})
 	if err != nil {
 		t.Fatalf("GetUserSetting: %v", err)
 	}
@@ -90,7 +91,7 @@ func TestIntegration_UpsertUserSetting(t *testing.T) {
 	}
 
 	result, err := bc.ListUserSettings.Handle(ctx, query.ListUserSettingsQuery{
-		Filter: domain.UserSettingFilter{Limit: 10},
+		Filter: settingrepo.UserSettingFilter{Limit: 10},
 	})
 	if err != nil {
 		t.Fatalf("ListUserSettings: %v", err)
@@ -120,9 +121,9 @@ func TestIntegration_DeleteUserSetting(t *testing.T) {
 	}
 
 	list, _ := bc.ListUserSettings.Handle(ctx, query.ListUserSettingsQuery{
-		Filter: domain.UserSettingFilter{Limit: 10},
+		Filter: settingrepo.UserSettingFilter{Limit: 10},
 	})
-	sID := domain.UserSettingID(list.Settings[0].ID)
+	sID := settingentity.UserSettingID(list.Settings[0].ID)
 
 	err = bc.DeleteUserSetting.Handle(ctx, command.DeleteUserSettingCommand{ID: sID})
 	if err != nil {
@@ -130,7 +131,7 @@ func TestIntegration_DeleteUserSetting(t *testing.T) {
 	}
 
 	list2, _ := bc.ListUserSettings.Handle(ctx, query.ListUserSettingsQuery{
-		Filter: domain.UserSettingFilter{Limit: 10},
+		Filter: settingrepo.UserSettingFilter{Limit: 10},
 	})
 	if list2.Total != 0 {
 		t.Errorf("expected 0 user settings after delete, got %d", list2.Total)

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"gct/internal/context/admin/generic/featureflag/domain"
+	ffentity "gct/internal/context/admin/generic/featureflag/domain/entity"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -18,8 +18,8 @@ func TestDeleteHandler_Handle(t *testing.T) {
 	eb := &mockEventBus{}
 	handler := NewDeleteHandler(repo, eb, &mockLogger{})
 
-	id := domain.NewFeatureFlagID()
-	err := handler.Handle(context.Background(), DeleteCommand{ID: domain.FeatureFlagID(id)})
+	id := ffentity.NewFeatureFlagID()
+	err := handler.Handle(context.Background(), DeleteCommand{ID: ffentity.FeatureFlagID(id)})
 	require.NoError(t, err)
 
 	if repo.deleted != id {
@@ -38,13 +38,13 @@ func TestDeleteHandler_Handle_RepoError(t *testing.T) {
 
 	repoErr := errors.New("delete failed")
 	repo := &mockFeatureFlagRepo{
-		deleteFn: func(_ context.Context, _ domain.FeatureFlagID) error {
+		deleteFn: func(_ context.Context, _ ffentity.FeatureFlagID) error {
 			return repoErr
 		},
 	}
 	handler := NewDeleteHandler(repo, &mockEventBus{}, &mockLogger{})
 
-	err := handler.Handle(context.Background(), DeleteCommand{ID: domain.FeatureFlagID(uuid.New())})
+	err := handler.Handle(context.Background(), DeleteCommand{ID: ffentity.FeatureFlagID(uuid.New())})
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}

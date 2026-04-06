@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"gct/internal/context/admin/supporting/errorcode/domain"
+	errcodeentity "gct/internal/context/admin/supporting/errorcode/domain/entity"
 	"gct/internal/kernel/consts"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -37,7 +37,7 @@ func NewErrorCodeWriteRepo(pool *pgxpool.Pool) *ErrorCodeWriteRepo {
 }
 
 // Save inserts a new ErrorCode aggregate into the database.
-func (r *ErrorCodeWriteRepo) Save(ctx context.Context, ec *domain.ErrorCode) (err error) {
+func (r *ErrorCodeWriteRepo) Save(ctx context.Context, ec *errcodeentity.ErrorCode) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "ErrorCodeWriteRepo.Save")
 	defer func() { end(err) }()
 
@@ -72,7 +72,7 @@ func (r *ErrorCodeWriteRepo) Save(ctx context.Context, ec *domain.ErrorCode) (er
 }
 
 // Update updates an existing ErrorCode aggregate in the database.
-func (r *ErrorCodeWriteRepo) Update(ctx context.Context, ec *domain.ErrorCode) (err error) {
+func (r *ErrorCodeWriteRepo) Update(ctx context.Context, ec *errcodeentity.ErrorCode) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "ErrorCodeWriteRepo.Update")
 	defer func() { end(err) }()
 
@@ -102,7 +102,7 @@ func (r *ErrorCodeWriteRepo) Update(ctx context.Context, ec *domain.ErrorCode) (
 }
 
 // FindByID retrieves an ErrorCode aggregate by its ID.
-func (r *ErrorCodeWriteRepo) FindByID(ctx context.Context, id domain.ErrorCodeID) (result *domain.ErrorCode, err error) {
+func (r *ErrorCodeWriteRepo) FindByID(ctx context.Context, id errcodeentity.ErrorCodeID) (result *errcodeentity.ErrorCode, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "ErrorCodeWriteRepo.FindByID")
 	defer func() { end(err) }()
 
@@ -120,7 +120,7 @@ func (r *ErrorCodeWriteRepo) FindByID(ctx context.Context, id domain.ErrorCodeID
 }
 
 // Delete removes an error code by its ID.
-func (r *ErrorCodeWriteRepo) Delete(ctx context.Context, id domain.ErrorCodeID) (err error) {
+func (r *ErrorCodeWriteRepo) Delete(ctx context.Context, id errcodeentity.ErrorCodeID) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "ErrorCodeWriteRepo.Delete")
 	defer func() { end(err) }()
 
@@ -139,7 +139,7 @@ func (r *ErrorCodeWriteRepo) Delete(ctx context.Context, id domain.ErrorCodeID) 
 	return nil
 }
 
-func scanErrorCode(row pgx.Row) (*domain.ErrorCode, error) {
+func scanErrorCode(row pgx.Row) (*errcodeentity.ErrorCode, error) {
 	var (
 		id         uuid.UUID
 		code       string
@@ -164,7 +164,7 @@ func scanErrorCode(row pgx.Row) (*domain.ErrorCode, error) {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 
-	return domain.ReconstructErrorCode(
+	return errcodeentity.ReconstructErrorCode(
 		id, createdAt, updatedAt,
 		code, message, messageUz, messageRu, httpStatus,
 		category, severity, retryable,

@@ -6,7 +6,8 @@ import (
 	"gct/internal/context/admin/supporting/errorcode"
 	"gct/internal/context/admin/supporting/errorcode/application/command"
 	"gct/internal/context/admin/supporting/errorcode/application/query"
-	"gct/internal/context/admin/supporting/errorcode/domain"
+	errcodeentity "gct/internal/context/admin/supporting/errorcode/domain/entity"
+	errcoderepo "gct/internal/context/admin/supporting/errorcode/domain/repository"
 	"gct/internal/kernel/infrastructure/httpx"
 	"gct/internal/kernel/infrastructure/httpx/response"
 	"gct/internal/kernel/infrastructure/logger"
@@ -83,7 +84,7 @@ func (h *Handler) List(ctx *gin.Context) {
 	}
 
 	q := query.ListErrorCodesQuery{
-		Filter: domain.ErrorCodeFilter{Limit: pg.Limit, Offset: pg.Offset},
+		Filter: errcoderepo.ErrorCodeFilter{Limit: pg.Limit, Offset: pg.Offset},
 	}
 	result, err := h.bc.ListErrorCodes.Handle(ctx.Request.Context(), q)
 	if err != nil {
@@ -107,7 +108,7 @@ func (h *Handler) List(ctx *gin.Context) {
 // @Router /error-codes/{id} [get]
 // Get returns a single error code by ID.
 func (h *Handler) Get(ctx *gin.Context) {
-	id, err := domain.ParseErrorCodeID(ctx.Param("id"))
+	id, err := errcodeentity.ParseErrorCodeID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
@@ -135,7 +136,7 @@ func (h *Handler) Get(ctx *gin.Context) {
 // @Router /error-codes/{id} [patch]
 // Update updates an error code.
 func (h *Handler) Update(ctx *gin.Context) {
-	id, err := domain.ParseErrorCodeID(ctx.Param("id"))
+	id, err := errcodeentity.ParseErrorCodeID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
@@ -178,7 +179,7 @@ func (h *Handler) Update(ctx *gin.Context) {
 // @Router /error-codes/{id} [delete]
 // Delete deletes an error code.
 func (h *Handler) Delete(ctx *gin.Context) {
-	id, err := domain.ParseErrorCodeID(ctx.Param("id"))
+	id, err := errcodeentity.ParseErrorCodeID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return

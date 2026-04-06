@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/iam/generic/user/domain"
+	userentity "gct/internal/context/iam/generic/user/domain/entity"
 	shared "gct/internal/kernel/domain"
 	"gct/internal/kernel/infrastructure/logger"
 
@@ -16,8 +16,8 @@ import (
 func TestFindSessionHandler_Success(t *testing.T) {
 	t.Parallel()
 
-	sessionID := domain.NewSessionID()
-	userID := domain.NewUserID()
+	sessionID := userentity.NewSessionID()
+	userID := userentity.NewUserID()
 	deviceID := uuid.New()
 	now := time.Now()
 
@@ -66,7 +66,7 @@ func TestFindSessionHandler_NotFound(t *testing.T) {
 
 	handler := NewFindSessionHandler(readRepo, logger.Noop())
 
-	_, err := handler.Handle(context.Background(), FindSessionQuery{SessionID: domain.NewSessionID()})
+	_, err := handler.Handle(context.Background(), FindSessionQuery{SessionID: userentity.NewSessionID()})
 	if err == nil {
 		t.Fatal("expected error for non-existent session, got nil")
 	}
@@ -79,7 +79,7 @@ func TestFindSessionHandler_RepoError(t *testing.T) {
 
 	handler := NewFindSessionHandler(readRepo, logger.Noop())
 
-	_, err := handler.Handle(context.Background(), FindSessionQuery{SessionID: domain.NewSessionID()})
+	_, err := handler.Handle(context.Background(), FindSessionQuery{SessionID: userentity.NewSessionID()})
 	if err == nil {
 		t.Fatal("expected error from repo")
 	}

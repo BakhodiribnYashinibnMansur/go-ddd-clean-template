@@ -3,7 +3,7 @@ package query
 import (
 	"context"
 
-	appdto "gct/internal/context/admin/supporting/statistics/application"
+	"gct/internal/context/admin/supporting/statistics/application/dto"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -24,7 +24,7 @@ func NewGetUserStatsHandler(repo StatisticsReadRepository, l logger.Log) *GetUse
 }
 
 // Handle executes the GetUserStatsQuery and returns a UserStatsView.
-func (h *GetUserStatsHandler) Handle(ctx context.Context, _ GetUserStatsQuery) (_ *appdto.UserStatsView, err error) {
+func (h *GetUserStatsHandler) Handle(ctx context.Context, _ GetUserStatsQuery) (_ *dto.UserStatsView, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "GetUserStatsHandler.Handle")
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.l, ctx, "GetUserStats", "statistics")()

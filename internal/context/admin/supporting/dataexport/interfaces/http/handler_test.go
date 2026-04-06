@@ -12,7 +12,8 @@ import (
 	"gct/internal/context/admin/supporting/dataexport"
 	"gct/internal/context/admin/supporting/dataexport/application/command"
 	"gct/internal/context/admin/supporting/dataexport/application/query"
-	"gct/internal/context/admin/supporting/dataexport/domain"
+	exportentity "gct/internal/context/admin/supporting/dataexport/domain/entity"
+	exportrepo "gct/internal/context/admin/supporting/dataexport/domain/repository"
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
@@ -23,44 +24,44 @@ import (
 // --- Mocks ---
 
 type mockRepo struct {
-	saved   *domain.DataExport
-	updated *domain.DataExport
-	deleted domain.DataExportID
-	findFn  func(ctx context.Context, id domain.DataExportID) (*domain.DataExport, error)
+	saved   *exportentity.DataExport
+	updated *exportentity.DataExport
+	deleted exportentity.DataExportID
+	findFn  func(ctx context.Context, id exportentity.DataExportID) (*exportentity.DataExport, error)
 }
 
-func (m *mockRepo) Save(_ context.Context, e *domain.DataExport) error {
+func (m *mockRepo) Save(_ context.Context, e *exportentity.DataExport) error {
 	m.saved = e
 	return nil
 }
-func (m *mockRepo) FindByID(ctx context.Context, id domain.DataExportID) (*domain.DataExport, error) {
+func (m *mockRepo) FindByID(ctx context.Context, id exportentity.DataExportID) (*exportentity.DataExport, error) {
 	if m.findFn != nil {
 		return m.findFn(ctx, id)
 	}
-	return nil, domain.ErrDataExportNotFound
+	return nil, exportentity.ErrDataExportNotFound
 }
-func (m *mockRepo) Update(_ context.Context, e *domain.DataExport) error {
+func (m *mockRepo) Update(_ context.Context, e *exportentity.DataExport) error {
 	m.updated = e
 	return nil
 }
-func (m *mockRepo) Delete(_ context.Context, id domain.DataExportID) error {
+func (m *mockRepo) Delete(_ context.Context, id exportentity.DataExportID) error {
 	m.deleted = id
 	return nil
 }
 
 type mockReadRepo struct {
-	view  *domain.DataExportView
-	views []*domain.DataExportView
+	view  *exportrepo.DataExportView
+	views []*exportrepo.DataExportView
 	total int64
 }
 
-func (m *mockReadRepo) FindByID(_ context.Context, id domain.DataExportID) (*domain.DataExportView, error) {
+func (m *mockReadRepo) FindByID(_ context.Context, id exportentity.DataExportID) (*exportrepo.DataExportView, error) {
 	if m.view != nil && m.view.ID == id {
 		return m.view, nil
 	}
-	return nil, domain.ErrDataExportNotFound
+	return nil, exportentity.ErrDataExportNotFound
 }
-func (m *mockReadRepo) List(_ context.Context, _ domain.DataExportFilter) ([]*domain.DataExportView, int64, error) {
+func (m *mockReadRepo) List(_ context.Context, _ exportrepo.DataExportFilter) ([]*exportrepo.DataExportView, int64, error) {
 	return m.views, m.total, nil
 }
 
@@ -163,8 +164,8 @@ func TestHandler_List_Success(t *testing.T) {
 	t.Parallel()
 
 	readRepo := &mockReadRepo{
-		views: []*domain.DataExportView{
-			{ID: domain.NewDataExportID(), UserID: uuid.New(), DataType: "users", Format: "csv", Status: "PENDING", CreatedAt: time.Now(), UpdatedAt: time.Now()},
+		views: []*exportrepo.DataExportView{
+			{ID: exportentity.NewDataExportID(), UserID: uuid.New(), DataType: "users", Format: "csv", Status: "PENDING", CreatedAt: time.Now(), UpdatedAt: time.Now()},
 		},
 		total: 1,
 	}
@@ -182,9 +183,9 @@ func TestHandler_List_Success(t *testing.T) {
 func TestHandler_Get_Success(t *testing.T) {
 	t.Parallel()
 
-	id := domain.NewDataExportID()
+	id := exportentity.NewDataExportID()
 	readRepo := &mockReadRepo{
-		view: &domain.DataExportView{
+		view: &exportrepo.DataExportView{
 			ID: id, UserID: uuid.New(), DataType: "users", Format: "csv", Status: "COMPLETED", CreatedAt: time.Now(), UpdatedAt: time.Now(),
 		},
 	}
@@ -219,7 +220,7 @@ func TestHandler_Delete_Success(t *testing.T) {
 	repo := &mockRepo{}
 	router := setupRouter(repo, &mockReadRepo{})
 
-	id := domain.NewDataExportID()
+	id := exportentity.NewDataExportID()
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("DELETE", "/api/v1/data-exports/"+id.String(), nil)
 	router.ServeHTTP(w, req)
@@ -247,7 +248,7 @@ func TestHandler_Get_NotFound(t *testing.T) {
 	// readRepo has no view set, so FindByID returns ErrDataExportNotFound
 	router := setupRouter(&mockRepo{}, &mockReadRepo{})
 
-	id := domain.NewDataExportID()
+	id := exportentity.NewDataExportID()
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/api/v1/data-exports/"+id.String(), nil)
 	router.ServeHTTP(w, req)
@@ -272,7 +273,7 @@ func TestHandler_Create_InvalidJSON(t *testing.T) {
 
 func TestHandler_List_DefaultPagination(t *testing.T) {
 	readRepo := &mockReadRepo{
-		views: []*domain.DataExportView{},
+		views: []*exportrepo.DataExportView{},
 		total: 0,
 	}
 	router := setupRouter(&mockRepo{}, readRepo)

@@ -3,7 +3,8 @@ package command
 import (
 	"context"
 
-	"gct/internal/context/content/supporting/announcement/domain"
+	announceentity "gct/internal/context/content/supporting/announcement/domain/entity"
+	announcerepo "gct/internal/context/content/supporting/announcement/domain/repository"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -12,19 +13,19 @@ import (
 // DeleteAnnouncementCommand represents an intent to permanently remove an announcement.
 // Once deleted, the announcement is no longer visible to any audience.
 type DeleteAnnouncementCommand struct {
-	ID domain.AnnouncementID
+	ID announceentity.AnnouncementID
 }
 
 // DeleteAnnouncementHandler performs hard deletion of announcements via the repository.
 // No domain events are emitted — callers needing audit trails should record them separately.
 type DeleteAnnouncementHandler struct {
-	repo   domain.AnnouncementRepository
+	repo   announcerepo.AnnouncementRepository
 	logger logger.Log
 }
 
 // NewDeleteAnnouncementHandler wires dependencies for announcement deletion.
 func NewDeleteAnnouncementHandler(
-	repo domain.AnnouncementRepository,
+	repo announcerepo.AnnouncementRepository,
 	logger logger.Log,
 ) *DeleteAnnouncementHandler {
 	return &DeleteAnnouncementHandler{

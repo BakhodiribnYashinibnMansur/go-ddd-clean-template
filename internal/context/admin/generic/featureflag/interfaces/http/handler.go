@@ -6,7 +6,8 @@ import (
 	"gct/internal/context/admin/generic/featureflag"
 	"gct/internal/context/admin/generic/featureflag/application/command"
 	"gct/internal/context/admin/generic/featureflag/application/query"
-	"gct/internal/context/admin/generic/featureflag/domain"
+	ffentity "gct/internal/context/admin/generic/featureflag/domain/entity"
+	ffrepo "gct/internal/context/admin/generic/featureflag/domain/repository"
 	"gct/internal/kernel/infrastructure/httpx"
 	"gct/internal/kernel/infrastructure/httpx/response"
 	"gct/internal/kernel/infrastructure/logger"
@@ -81,7 +82,7 @@ func (h *Handler) List(ctx *gin.Context) {
 	}
 
 	q := query.ListQuery{
-		Filter: domain.FeatureFlagFilter{Limit: pg.Limit, Offset: pg.Offset},
+		Filter: ffrepo.FeatureFlagFilter{Limit: pg.Limit, Offset: pg.Offset},
 	}
 	result, err := h.bc.ListFlags.Handle(ctx.Request.Context(), q)
 	if err != nil {
@@ -105,7 +106,7 @@ func (h *Handler) List(ctx *gin.Context) {
 // @Router /feature-flags/{id} [get]
 // Get returns a single feature flag by ID.
 func (h *Handler) Get(ctx *gin.Context) {
-	id, err := domain.ParseFeatureFlagID(ctx.Param("id"))
+	id, err := ffentity.ParseFeatureFlagID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
@@ -133,7 +134,7 @@ func (h *Handler) Get(ctx *gin.Context) {
 // @Router /feature-flags/{id} [patch]
 // Update updates a feature flag.
 func (h *Handler) Update(ctx *gin.Context) {
-	id, err := domain.ParseFeatureFlagID(ctx.Param("id"))
+	id, err := ffentity.ParseFeatureFlagID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
@@ -174,7 +175,7 @@ func (h *Handler) Update(ctx *gin.Context) {
 // @Router /feature-flags/{id} [delete]
 // Delete deletes a feature flag.
 func (h *Handler) Delete(ctx *gin.Context) {
-	id, err := domain.ParseFeatureFlagID(ctx.Param("id"))
+	id, err := ffentity.ParseFeatureFlagID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
@@ -201,7 +202,7 @@ func (h *Handler) Delete(ctx *gin.Context) {
 // @Router /feature-flags/{id}/rule-groups [post]
 // CreateRuleGroup adds a rule group to a feature flag.
 func (h *Handler) CreateRuleGroup(ctx *gin.Context) {
-	flagID, err := domain.ParseFeatureFlagID(ctx.Param("id"))
+	flagID, err := ffentity.ParseFeatureFlagID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
@@ -222,7 +223,7 @@ func (h *Handler) CreateRuleGroup(ctx *gin.Context) {
 	}
 
 	cmd := command.CreateRuleGroupCommand{
-		FlagID:     domain.FeatureFlagID(flagID),
+		FlagID:     ffentity.FeatureFlagID(flagID),
 		Name:       req.Name,
 		Variation:  req.Variation,
 		Priority:   req.Priority,
@@ -263,7 +264,7 @@ func (h *Handler) UpdateRuleGroup(ctx *gin.Context) {
 	}
 
 	cmd := command.UpdateRuleGroupCommand{
-		ID:        domain.RuleGroupID(groupID),
+		ID:        ffentity.RuleGroupID(groupID),
 		Name:      req.Name,
 		Variation: req.Variation,
 		Priority:  req.Priority,
@@ -308,7 +309,7 @@ func (h *Handler) DeleteRuleGroup(ctx *gin.Context) {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
 	}
-	if err := h.bc.DeleteRuleGroup.Handle(ctx.Request.Context(), command.DeleteRuleGroupCommand{ID: domain.RuleGroupID(groupID)}); err != nil {
+	if err := h.bc.DeleteRuleGroup.Handle(ctx.Request.Context(), command.DeleteRuleGroupCommand{ID: ffentity.RuleGroupID(groupID)}); err != nil {
 		response.HandleError(ctx, err)
 		return
 	}

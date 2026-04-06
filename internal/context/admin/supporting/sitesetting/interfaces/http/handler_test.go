@@ -12,7 +12,8 @@ import (
 	"gct/internal/context/admin/supporting/sitesetting"
 	"gct/internal/context/admin/supporting/sitesetting/application/command"
 	"gct/internal/context/admin/supporting/sitesetting/application/query"
-	"gct/internal/context/admin/supporting/sitesetting/domain"
+	siteentity "gct/internal/context/admin/supporting/sitesetting/domain/entity"
+	siterepo "gct/internal/context/admin/supporting/sitesetting/domain/repository"
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
@@ -23,45 +24,45 @@ import (
 // --- Mocks ---
 
 type mockRepo struct {
-	saved   *domain.SiteSetting
-	updated *domain.SiteSetting
-	findFn  func(ctx context.Context, id domain.SiteSettingID) (*domain.SiteSetting, error)
+	saved   *siteentity.SiteSetting
+	updated *siteentity.SiteSetting
+	findFn  func(ctx context.Context, id siteentity.SiteSettingID) (*siteentity.SiteSetting, error)
 }
 
-func (m *mockRepo) Save(_ context.Context, e *domain.SiteSetting) error {
+func (m *mockRepo) Save(_ context.Context, e *siteentity.SiteSetting) error {
 	m.saved = e
 	return nil
 }
-func (m *mockRepo) FindByID(ctx context.Context, id domain.SiteSettingID) (*domain.SiteSetting, error) {
+func (m *mockRepo) FindByID(ctx context.Context, id siteentity.SiteSettingID) (*siteentity.SiteSetting, error) {
 	if m.findFn != nil {
 		return m.findFn(ctx, id)
 	}
-	return nil, domain.ErrSiteSettingNotFound
+	return nil, siteentity.ErrSiteSettingNotFound
 }
-func (m *mockRepo) Update(_ context.Context, e *domain.SiteSetting) error {
+func (m *mockRepo) Update(_ context.Context, e *siteentity.SiteSetting) error {
 	m.updated = e
 	return nil
 }
-func (m *mockRepo) Delete(_ context.Context, _ domain.SiteSettingID) error {
+func (m *mockRepo) Delete(_ context.Context, _ siteentity.SiteSettingID) error {
 	return nil
 }
-func (m *mockRepo) List(_ context.Context, _ domain.SiteSettingFilter) ([]*domain.SiteSetting, int64, error) {
+func (m *mockRepo) List(_ context.Context, _ siterepo.SiteSettingFilter) ([]*siteentity.SiteSetting, int64, error) {
 	return nil, 0, nil
 }
 
 type mockReadRepo struct {
-	view  *domain.SiteSettingView
-	views []*domain.SiteSettingView
+	view  *siterepo.SiteSettingView
+	views []*siterepo.SiteSettingView
 	total int64
 }
 
-func (m *mockReadRepo) FindByID(_ context.Context, id domain.SiteSettingID) (*domain.SiteSettingView, error) {
+func (m *mockReadRepo) FindByID(_ context.Context, id siteentity.SiteSettingID) (*siterepo.SiteSettingView, error) {
 	if m.view != nil && m.view.ID == id {
 		return m.view, nil
 	}
-	return nil, domain.ErrSiteSettingNotFound
+	return nil, siteentity.ErrSiteSettingNotFound
 }
-func (m *mockReadRepo) List(_ context.Context, _ domain.SiteSettingFilter) ([]*domain.SiteSettingView, int64, error) {
+func (m *mockReadRepo) List(_ context.Context, _ siterepo.SiteSettingFilter) ([]*siterepo.SiteSettingView, int64, error) {
 	return m.views, m.total, nil
 }
 
@@ -161,8 +162,8 @@ func TestHandler_List_Success(t *testing.T) {
 
 	now := time.Now()
 	readRepo := &mockReadRepo{
-		views: []*domain.SiteSettingView{
-			{ID: domain.NewSiteSettingID(), Key: "site_name", Value: "My Site", Type: "general", CreatedAt: now, UpdatedAt: now},
+		views: []*siterepo.SiteSettingView{
+			{ID: siteentity.NewSiteSettingID(), Key: "site_name", Value: "My Site", Type: "general", CreatedAt: now, UpdatedAt: now},
 		},
 		total: 1,
 	}
@@ -180,10 +181,10 @@ func TestHandler_List_Success(t *testing.T) {
 func TestHandler_Get_Success(t *testing.T) {
 	t.Parallel()
 
-	id := domain.NewSiteSettingID()
+	id := siteentity.NewSiteSettingID()
 	now := time.Now()
 	readRepo := &mockReadRepo{
-		view: &domain.SiteSettingView{ID: id, Key: "k", Value: "v", Type: "t", CreatedAt: now, UpdatedAt: now},
+		view: &siterepo.SiteSettingView{ID: id, Key: "k", Value: "v", Type: "t", CreatedAt: now, UpdatedAt: now},
 	}
 	router := setupRouter(&mockRepo{}, readRepo)
 
@@ -213,13 +214,13 @@ func TestHandler_Get_InvalidID(t *testing.T) {
 func TestHandler_Update_Success(t *testing.T) {
 	t.Parallel()
 
-	ss := domain.NewSiteSetting("old_key", "old_val", "general", "desc")
+	ss := siteentity.NewSiteSetting("old_key", "old_val", "general", "desc")
 	repo := &mockRepo{
-		findFn: func(_ context.Context, id domain.SiteSettingID) (*domain.SiteSetting, error) {
+		findFn: func(_ context.Context, id siteentity.SiteSettingID) (*siteentity.SiteSetting, error) {
 			if id == ss.TypedID() {
 				return ss, nil
 			}
-			return nil, domain.ErrSiteSettingNotFound
+			return nil, siteentity.ErrSiteSettingNotFound
 		},
 	}
 	router := setupRouter(repo, &mockReadRepo{})
@@ -313,7 +314,7 @@ func TestHandler_Create_InvalidJSON(t *testing.T) {
 
 func TestHandler_List_DefaultPagination(t *testing.T) {
 	readRepo := &mockReadRepo{
-		views: []*domain.SiteSettingView{},
+		views: []*siterepo.SiteSettingView{},
 		total: 0,
 	}
 	router := setupRouter(&mockRepo{}, readRepo)

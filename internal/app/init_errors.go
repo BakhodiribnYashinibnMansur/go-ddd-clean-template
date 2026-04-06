@@ -6,7 +6,8 @@ import (
 	"gct/internal/context/admin/supporting/errorcode"
 	"gct/internal/context/admin/supporting/errorcode/application/command"
 	"gct/internal/context/admin/supporting/errorcode/application/query"
-	"gct/internal/context/admin/supporting/errorcode/domain"
+	errcodeevent "gct/internal/context/admin/supporting/errorcode/domain/event"
+	errcoderepo "gct/internal/context/admin/supporting/errorcode/domain/repository"
 	"gct/internal/kernel/application"
 	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
@@ -20,7 +21,7 @@ func initErrorCodes(ctx context.Context, ec *errorcode.BoundedContext, eventBus 
 
 	// 1. Load existing codes from DB
 	result, err := ec.ListErrorCodes.Handle(ctx, query.ListErrorCodesQuery{
-		Filter: domain.ErrorCodeFilter{Limit: 10000},
+		Filter: errcoderepo.ErrorCodeFilter{Limit: 10000},
 	})
 	if err != nil {
 		l.Errorc(ctx, "failed to load error codes from database", "error", err)
@@ -83,13 +84,13 @@ func initErrorCodes(ctx context.Context, ec *errorcode.BoundedContext, eventBus 
 func configureErrorHandler(l logger.Log) application.EventHandler {
 	return func(_ context.Context, event shareddomain.DomainEvent) error {
 		switch e := event.(type) {
-		case domain.ErrorCodeCreated:
+		case errcodeevent.ErrorCodeCreated:
 			apperrors.ConfigureError(e.Code, apperrors.ErrorDetailConfig{
 				Message:    apperrors.UserMessage{En: e.Message},
 				HTTPStatus: e.HTTPStatus,
 			})
 			l.Infof("error code cache configured: %s", e.Code)
-		case domain.ErrorCodeUpdated:
+		case errcodeevent.ErrorCodeUpdated:
 			apperrors.ConfigureError(e.Code, apperrors.ErrorDetailConfig{
 				Message:    apperrors.UserMessage{En: e.Message},
 				HTTPStatus: e.HTTPStatus,
@@ -114,7 +115,7 @@ func subscribeErrorCodeEvents(eventBus application.EventBus, l logger.Log) {
 	}
 
 	if err := eventBus.Subscribe("errorcode.deleted", func(_ context.Context, event shareddomain.DomainEvent) error {
-		e, ok := event.(domain.ErrorCodeDeleted)
+		e, ok := event.(errcodeevent.ErrorCodeDeleted)
 		if !ok {
 			return nil
 		}

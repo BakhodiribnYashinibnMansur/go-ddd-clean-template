@@ -5,7 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"gct/internal/context/content/generic/translation/domain"
+	translationentity "gct/internal/context/content/generic/translation/domain/entity"
+	translationrepo "gct/internal/context/content/generic/translation/domain/repository"
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
@@ -15,33 +16,33 @@ import (
 // --- Mocks ---
 
 type mockRepo struct {
-	saved   *domain.Translation
-	updated *domain.Translation
-	findFn  func(ctx context.Context, id domain.TranslationID) (*domain.Translation, error)
+	saved   *translationentity.Translation
+	updated *translationentity.Translation
+	findFn  func(ctx context.Context, id translationentity.TranslationID) (*translationentity.Translation, error)
 }
 
-func (m *mockRepo) Save(_ context.Context, e *domain.Translation) error {
+func (m *mockRepo) Save(_ context.Context, e *translationentity.Translation) error {
 	m.saved = e
 	return nil
 }
 
-func (m *mockRepo) FindByID(ctx context.Context, id domain.TranslationID) (*domain.Translation, error) {
+func (m *mockRepo) FindByID(ctx context.Context, id translationentity.TranslationID) (*translationentity.Translation, error) {
 	if m.findFn != nil {
 		return m.findFn(ctx, id)
 	}
-	return nil, domain.ErrTranslationNotFound
+	return nil, translationentity.ErrTranslationNotFound
 }
 
-func (m *mockRepo) Update(_ context.Context, e *domain.Translation) error {
+func (m *mockRepo) Update(_ context.Context, e *translationentity.Translation) error {
 	m.updated = e
 	return nil
 }
 
-func (m *mockRepo) Delete(_ context.Context, _ domain.TranslationID) error {
+func (m *mockRepo) Delete(_ context.Context, _ translationentity.TranslationID) error {
 	return nil
 }
 
-func (m *mockRepo) List(_ context.Context, _ domain.TranslationFilter) ([]*domain.Translation, int64, error) {
+func (m *mockRepo) List(_ context.Context, _ translationrepo.TranslationFilter) ([]*translationentity.Translation, int64, error) {
 	return nil, 0, nil
 }
 

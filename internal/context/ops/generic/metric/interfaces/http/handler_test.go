@@ -12,7 +12,8 @@ import (
 	"gct/internal/context/ops/generic/metric"
 	"gct/internal/context/ops/generic/metric/application/command"
 	"gct/internal/context/ops/generic/metric/application/query"
-	"gct/internal/context/ops/generic/metric/domain"
+	metricentity "gct/internal/context/ops/generic/metric/domain/entity"
+	metricrepo "gct/internal/context/ops/generic/metric/domain/repository"
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
@@ -22,23 +23,23 @@ import (
 // --- Mocks ---
 
 type mockRepo struct {
-	saved *domain.FunctionMetric
+	saved *metricentity.FunctionMetric
 }
 
-func (m *mockRepo) Save(_ context.Context, fm *domain.FunctionMetric) error {
+func (m *mockRepo) Save(_ context.Context, fm *metricentity.FunctionMetric) error {
 	m.saved = fm
 	return nil
 }
-func (m *mockRepo) List(_ context.Context, _ domain.MetricFilter) ([]*domain.FunctionMetric, int64, error) {
+func (m *mockRepo) List(_ context.Context, _ metricrepo.MetricFilter) ([]*metricentity.FunctionMetric, int64, error) {
 	return nil, 0, nil
 }
 
 type mockReadRepo struct {
-	views []*domain.MetricView
+	views []*metricrepo.MetricView
 	total int64
 }
 
-func (m *mockReadRepo) List(_ context.Context, _ domain.MetricFilter) ([]*domain.MetricView, int64, error) {
+func (m *mockReadRepo) List(_ context.Context, _ metricrepo.MetricFilter) ([]*metricrepo.MetricView, int64, error) {
 	return m.views, m.total, nil
 }
 
@@ -138,8 +139,8 @@ func TestHandler_List_Success(t *testing.T) {
 	t.Parallel()
 
 	readRepo := &mockReadRepo{
-		views: []*domain.MetricView{
-			{ID: domain.NewMetricID(), Name: "UserService.Create", LatencyMs: 150.5, IsPanic: false, CreatedAt: time.Now()},
+		views: []*metricrepo.MetricView{
+			{ID: metricentity.NewMetricID(), Name: "UserService.Create", LatencyMs: 150.5, IsPanic: false, CreatedAt: time.Now()},
 		},
 		total: 1,
 	}
@@ -169,7 +170,7 @@ func TestHandler_Create_InvalidJSON(t *testing.T) {
 
 func TestHandler_List_DefaultPagination(t *testing.T) {
 	readRepo := &mockReadRepo{
-		views: []*domain.MetricView{},
+		views: []*metricrepo.MetricView{},
 		total: 0,
 	}
 	router := setupRouter(&mockRepo{}, readRepo)

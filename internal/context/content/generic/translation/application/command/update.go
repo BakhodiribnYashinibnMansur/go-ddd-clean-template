@@ -3,7 +3,8 @@ package command
 import (
 	"context"
 
-	"gct/internal/context/content/generic/translation/domain"
+	translationentity "gct/internal/context/content/generic/translation/domain/entity"
+	translationrepo "gct/internal/context/content/generic/translation/domain/repository"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
@@ -13,7 +14,7 @@ import (
 // UpdateTranslationCommand represents a partial update to an existing translation record.
 // Pointer fields use nil-means-unchanged semantics, so callers only set the fields they want to modify.
 type UpdateTranslationCommand struct {
-	ID       domain.TranslationID
+	ID       translationentity.TranslationID
 	Key      *string
 	Language *string
 	Value    *string
@@ -23,14 +24,14 @@ type UpdateTranslationCommand struct {
 // UpdateTranslationHandler applies partial updates to translations via a load-modify-save cycle.
 // Event bus failures are logged but do not cause the handler to return an error.
 type UpdateTranslationHandler struct {
-	repo     domain.TranslationRepository
+	repo     translationrepo.TranslationRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
 // NewUpdateTranslationHandler creates a new UpdateTranslationHandler.
 func NewUpdateTranslationHandler(
-	repo domain.TranslationRepository,
+	repo translationrepo.TranslationRepository,
 	eventBus application.EventBus,
 	logger logger.Log,
 ) *UpdateTranslationHandler {

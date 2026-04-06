@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/context/iam/generic/authz/domain"
+	authzentity "gct/internal/context/iam/generic/authz/domain/entity"
 
 	"github.com/stretchr/testify/require"
 )
@@ -12,13 +12,13 @@ import (
 // --- Mock PermissionScopeRepository ---
 
 type mockPermissionScopeRepository struct {
-	assignedPermID domain.PermissionID
+	assignedPermID authzentity.PermissionID
 	assignedPath   string
 	assignedMethod string
-	assignFn       func(ctx context.Context, permissionID domain.PermissionID, path, method string) error
+	assignFn       func(ctx context.Context, permissionID authzentity.PermissionID, path, method string) error
 }
 
-func (m *mockPermissionScopeRepository) Assign(ctx context.Context, permissionID domain.PermissionID, path, method string) error {
+func (m *mockPermissionScopeRepository) Assign(ctx context.Context, permissionID authzentity.PermissionID, path, method string) error {
 	if m.assignFn != nil {
 		return m.assignFn(ctx, permissionID, path, method)
 	}
@@ -28,7 +28,7 @@ func (m *mockPermissionScopeRepository) Assign(ctx context.Context, permissionID
 	return nil
 }
 
-func (m *mockPermissionScopeRepository) Revoke(ctx context.Context, permissionID domain.PermissionID, path, method string) error {
+func (m *mockPermissionScopeRepository) Revoke(ctx context.Context, permissionID authzentity.PermissionID, path, method string) error {
 	return nil
 }
 
@@ -42,9 +42,9 @@ func TestAssignScopeHandler_Success(t *testing.T) {
 
 	handler := NewAssignScopeHandler(repo, log)
 
-	permID := domain.NewPermissionID()
+	permID := authzentity.NewPermissionID()
 	cmd := AssignScopeCommand{
-		PermissionID: domain.PermissionID(permID),
+		PermissionID: authzentity.PermissionID(permID),
 		Path:         "/api/v1/orders",
 		Method:       "POST",
 	}

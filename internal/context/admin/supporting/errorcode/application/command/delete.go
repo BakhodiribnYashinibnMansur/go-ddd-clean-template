@@ -3,7 +3,9 @@ package command
 import (
 	"context"
 
-	"gct/internal/context/admin/supporting/errorcode/domain"
+	errcodeentity "gct/internal/context/admin/supporting/errorcode/domain/entity"
+	errcodeevent "gct/internal/context/admin/supporting/errorcode/domain/event"
+	errcoderepo "gct/internal/context/admin/supporting/errorcode/domain/repository"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
@@ -13,20 +15,20 @@ import (
 // DeleteErrorCodeCommand represents an intent to permanently remove a standardized error code.
 // Callers should ensure no API handlers still reference this code before deletion to avoid runtime lookup failures.
 type DeleteErrorCodeCommand struct {
-	ID domain.ErrorCodeID
+	ID errcodeentity.ErrorCodeID
 }
 
 // DeleteErrorCodeHandler performs hard deletion of an error code via the repository.
 // Publishes an ErrorCodeDeleted event so subscribers can evict the code from in-memory caches.
 type DeleteErrorCodeHandler struct {
-	repo     domain.ErrorCodeRepository
+	repo     errcoderepo.ErrorCodeRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
 // NewDeleteErrorCodeHandler wires dependencies for error code deletion.
 func NewDeleteErrorCodeHandler(
-	repo domain.ErrorCodeRepository,
+	repo errcoderepo.ErrorCodeRepository,
 	eventBus application.EventBus,
 	logger logger.Log,
 ) *DeleteErrorCodeHandler {
@@ -54,7 +56,7 @@ func (h *DeleteErrorCodeHandler) Handle(ctx context.Context, cmd DeleteErrorCode
 		return apperrors.MapToServiceError(err)
 	}
 
-	event := domain.NewErrorCodeDeleted(cmd.ID.UUID(), ec.Code())
+	event := errcodeevent.NewErrorCodeDeleted(cmd.ID.UUID(), ec.Code())
 	if pubErr := h.eventBus.Publish(ctx, event); pubErr != nil {
 		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "DeleteErrorCode", Entity: "error_code", EntityID: cmd.ID.String(), Err: pubErr}.KV()...)
 	}

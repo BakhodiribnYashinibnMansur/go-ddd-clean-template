@@ -6,7 +6,7 @@ import (
 	"gct/internal/kernel/infrastructure/logger"
 	"testing"
 
-	"gct/internal/context/iam/generic/authz/domain"
+	authzrepo "gct/internal/context/iam/generic/authz/domain/repository"
 	shared "gct/internal/kernel/domain"
 
 	"github.com/stretchr/testify/require"
@@ -16,8 +16,8 @@ func TestListScopesHandler_WithResults(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockAuthzReadRepository{
-		listScopesFn: func(_ context.Context, _ shared.Pagination) ([]*domain.ScopeView, int64, error) {
-			return []*domain.ScopeView{
+		listScopesFn: func(_ context.Context, _ shared.Pagination) ([]*authzrepo.ScopeView, int64, error) {
+			return []*authzrepo.ScopeView{
 				{Path: "/api/v1/users", Method: "GET"},
 				{Path: "/api/v1/users", Method: "POST"},
 				{Path: "/api/v1/roles", Method: "GET"},
@@ -52,8 +52,8 @@ func TestListScopesHandler_Empty(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockAuthzReadRepository{
-		listScopesFn: func(_ context.Context, _ shared.Pagination) ([]*domain.ScopeView, int64, error) {
-			return []*domain.ScopeView{}, 0, nil
+		listScopesFn: func(_ context.Context, _ shared.Pagination) ([]*authzrepo.ScopeView, int64, error) {
+			return []*authzrepo.ScopeView{}, 0, nil
 		},
 	}
 
@@ -76,7 +76,7 @@ func TestListScopesHandler_RepoError(t *testing.T) {
 
 	repoErr := errors.New("scope query failed")
 	repo := &mockAuthzReadRepository{
-		listScopesFn: func(_ context.Context, _ shared.Pagination) ([]*domain.ScopeView, int64, error) {
+		listScopesFn: func(_ context.Context, _ shared.Pagination) ([]*authzrepo.ScopeView, int64, error) {
 			return nil, 0, repoErr
 		},
 	}

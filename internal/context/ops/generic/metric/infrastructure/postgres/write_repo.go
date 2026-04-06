@@ -4,7 +4,8 @@ import (
 	"context"
 	"time"
 
-	"gct/internal/context/ops/generic/metric/domain"
+	metricentity "gct/internal/context/ops/generic/metric/domain/entity"
+	metricrepo "gct/internal/context/ops/generic/metric/domain/repository"
 	"gct/internal/kernel/consts"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -36,7 +37,7 @@ func NewMetricWriteRepo(pool *pgxpool.Pool) *MetricWriteRepo {
 }
 
 // Save inserts a new FunctionMetric aggregate into the database.
-func (r *MetricWriteRepo) Save(ctx context.Context, fm *domain.FunctionMetric) (err error) {
+func (r *MetricWriteRepo) Save(ctx context.Context, fm *metricentity.FunctionMetric) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "MetricWriteRepo.Save")
 	defer func() { end(err) }()
 
@@ -64,7 +65,7 @@ func (r *MetricWriteRepo) Save(ctx context.Context, fm *domain.FunctionMetric) (
 }
 
 // List retrieves a paginated list of FunctionMetric aggregates with optional filters.
-func (r *MetricWriteRepo) List(ctx context.Context, filter domain.MetricFilter) (items []*domain.FunctionMetric, total int64, err error) {
+func (r *MetricWriteRepo) List(ctx context.Context, filter metricrepo.MetricFilter) (items []*metricentity.FunctionMetric, total int64, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "MetricWriteRepo.List")
 	defer func() { end(err) }()
 
@@ -112,7 +113,7 @@ func (r *MetricWriteRepo) List(ctx context.Context, filter domain.MetricFilter) 
 	}
 	defer rows.Close()
 
-	var results []*domain.FunctionMetric
+	var results []*metricentity.FunctionMetric
 	for rows.Next() {
 		fm, err := scanMetricFromRows(rows)
 		if err != nil {
@@ -128,7 +129,7 @@ func (r *MetricWriteRepo) List(ctx context.Context, filter domain.MetricFilter) 
 // Helpers
 // ---------------------------------------------------------------------------
 
-func applyFilters(conds squirrel.And, filter domain.MetricFilter) squirrel.And {
+func applyFilters(conds squirrel.And, filter metricrepo.MetricFilter) squirrel.And {
 	if filter.Name != nil {
 		conds = append(conds, squirrel.Eq{"name": *filter.Name})
 	}
@@ -144,7 +145,7 @@ func applyFilters(conds squirrel.And, filter domain.MetricFilter) squirrel.And {
 	return conds
 }
 
-func scanMetricFromRows(rows pgx.Rows) (*domain.FunctionMetric, error) {
+func scanMetricFromRows(rows pgx.Rows) (*metricentity.FunctionMetric, error) {
 	var (
 		id         uuid.UUID
 		name       string
@@ -159,5 +160,5 @@ func scanMetricFromRows(rows pgx.Rows) (*domain.FunctionMetric, error) {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 
-	return domain.ReconstructFunctionMetric(id, createdAt, name, latencyMs, isPanic, panicError), nil
+	return metricentity.ReconstructFunctionMetric(id, createdAt, name, latencyMs, isPanic, panicError), nil
 }

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	appdto "gct/internal/context/admin/supporting/statistics/application"
+	"gct/internal/context/admin/supporting/statistics/application/dto"
 	"gct/internal/kernel/infrastructure/logger"
 	"github.com/stretchr/testify/require"
 )
@@ -14,7 +14,7 @@ func TestGetOverviewHandler(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockStatisticsReadRepository{
-		overview: &appdto.OverviewView{
+		overview: &dto.OverviewView{
 			TotalUsers:        10,
 			ActiveSessions:    2,
 			AuditLogsToday:    5,
@@ -44,7 +44,7 @@ func TestGetUserStatsHandler(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockStatisticsReadRepository{
-		userStats: &appdto.UserStatsView{Total: 7, Deleted: 1, ByRole: map[string]int64{"admin": 2}},
+		userStats: &dto.UserStatsView{Total: 7, Deleted: 1, ByRole: map[string]int64{"admin": 2}},
 	}
 	h := NewGetUserStatsHandler(repo, logger.Noop())
 	got, err := h.Handle(context.Background(), GetUserStatsQuery{})
@@ -68,7 +68,7 @@ func TestGetSessionStatsHandler(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockStatisticsReadRepository{
-		sessionStats: &appdto.SessionStatsView{Active: 3, Expired: 1, Revoked: 2},
+		sessionStats: &dto.SessionStatsView{Active: 3, Expired: 1, Revoked: 2},
 	}
 	h := NewGetSessionStatsHandler(repo, logger.Noop())
 	got, err := h.Handle(context.Background(), GetSessionStatsQuery{})
@@ -92,7 +92,7 @@ func TestGetErrorStatsHandler(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockStatisticsReadRepository{
-		errorStats: &appdto.ErrorStatsView{Unresolved: 4, Resolved: 6, Last24h: 2},
+		errorStats: &dto.ErrorStatsView{Unresolved: 4, Resolved: 6, Last24h: 2},
 	}
 	h := NewGetErrorStatsHandler(repo, logger.Noop())
 	got, err := h.Handle(context.Background(), GetErrorStatsQuery{})
@@ -116,7 +116,7 @@ func TestGetAuditStatsHandler(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockStatisticsReadRepository{
-		auditStats: &appdto.AuditStatsView{Today: 1, Last7Days: 7, Total: 100},
+		auditStats: &dto.AuditStatsView{Today: 1, Last7Days: 7, Total: 100},
 	}
 	h := NewGetAuditStatsHandler(repo, logger.Noop())
 	got, err := h.Handle(context.Background(), GetAuditStatsQuery{})
@@ -140,7 +140,7 @@ func TestGetSecurityStatsHandler(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockStatisticsReadRepository{
-		securityStats: &appdto.SecurityStatsView{IPRules: 5, RateLimits: 3},
+		securityStats: &dto.SecurityStatsView{IPRules: 5, RateLimits: 3},
 	}
 	h := NewGetSecurityStatsHandler(repo, logger.Noop())
 	got, err := h.Handle(context.Background(), GetSecurityStatsQuery{})
@@ -164,7 +164,7 @@ func TestGetFeatureFlagStatsHandler(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockStatisticsReadRepository{
-		ffStats: &appdto.FeatureFlagStatsView{Total: 8, Enabled: 5, Disabled: 3},
+		ffStats: &dto.FeatureFlagStatsView{Total: 8, Enabled: 5, Disabled: 3},
 	}
 	h := NewGetFeatureFlagStatsHandler(repo, logger.Noop())
 	got, err := h.Handle(context.Background(), GetFeatureFlagStatsQuery{})
@@ -188,7 +188,7 @@ func TestGetContentStatsHandler(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockStatisticsReadRepository{
-		contentStats: &appdto.ContentStatsView{Announcements: 1, Notifications: 2, FileMetadata: 3, Translations: 4},
+		contentStats: &dto.ContentStatsView{Announcements: 1, Notifications: 2, FileMetadata: 3, Translations: 4},
 	}
 	h := NewGetContentStatsHandler(repo, logger.Noop())
 	got, err := h.Handle(context.Background(), GetContentStatsQuery{})
@@ -212,7 +212,7 @@ func TestGetIntegrationStatsHandler(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockStatisticsReadRepository{
-		integrationStats: &appdto.IntegrationStatsView{Integrations: 2, APIKeys: 3},
+		integrationStats: &dto.IntegrationStatsView{Integrations: 2, APIKeys: 3},
 	}
 	h := NewGetIntegrationStatsHandler(repo, logger.Noop())
 	got, err := h.Handle(context.Background(), GetIntegrationStatsQuery{})

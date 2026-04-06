@@ -3,7 +3,8 @@ package command
 import (
 	"context"
 
-	"gct/internal/context/admin/supporting/dataexport/domain"
+	exportentity "gct/internal/context/admin/supporting/dataexport/domain/entity"
+	exportrepo "gct/internal/context/admin/supporting/dataexport/domain/repository"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
@@ -14,7 +15,7 @@ import (
 // Status drives the export through its lifecycle: pending -> processing -> completed|failed.
 // FileURL is required when completing; Error is required when failing. Nil fields are ignored.
 type UpdateDataExportCommand struct {
-	ID      domain.DataExportID
+	ID      exportentity.DataExportID
 	Status  *string
 	FileURL *string
 	Error   *string
@@ -24,14 +25,14 @@ type UpdateDataExportCommand struct {
 // The handler delegates state-machine logic to the domain aggregate (StartProcessing, Complete, Fail).
 // Event publish failures are logged but do not roll back the status change.
 type UpdateDataExportHandler struct {
-	repo     domain.DataExportRepository
+	repo     exportrepo.DataExportRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
 // NewUpdateDataExportHandler wires dependencies for data export status updates.
 func NewUpdateDataExportHandler(
-	repo domain.DataExportRepository,
+	repo exportrepo.DataExportRepository,
 	eventBus application.EventBus,
 	logger logger.Log,
 ) *UpdateDataExportHandler {
@@ -56,15 +57,15 @@ func (h *UpdateDataExportHandler) Handle(ctx context.Context, cmd UpdateDataExpo
 
 	if cmd.Status != nil {
 		switch *cmd.Status {
-		case domain.ExportStatusProcessing:
+		case exportentity.ExportStatusProcessing:
 			de.StartProcessing()
-		case domain.ExportStatusCompleted:
+		case exportentity.ExportStatusCompleted:
 			fileURL := ""
 			if cmd.FileURL != nil {
 				fileURL = *cmd.FileURL
 			}
 			de.Complete(fileURL)
-		case domain.ExportStatusFailed:
+		case exportentity.ExportStatusFailed:
 			errMsg := ""
 			if cmd.Error != nil {
 				errMsg = *cmd.Error

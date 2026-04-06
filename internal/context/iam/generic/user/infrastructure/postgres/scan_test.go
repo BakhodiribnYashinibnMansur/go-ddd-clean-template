@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/iam/generic/user/domain"
+	userentity "gct/internal/context/iam/generic/user/domain/entity"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -200,7 +200,7 @@ func TestScanUserFromRows_Error(t *testing.T) {
 
 func TestScanSessionFromRows_Success(t *testing.T) {
 	id := uuid.New()
-	userID := domain.NewUserID()
+	userID := userentity.NewUserID()
 	now := time.Now()
 	deviceID := "dev-123"
 	deviceName := "iPhone"
@@ -263,7 +263,7 @@ func TestScanSessionFromRows_Success(t *testing.T) {
 
 func TestScanSessionFromRows_NilOptionalFields(t *testing.T) {
 	id := uuid.New()
-	userID := domain.NewUserID()
+	userID := userentity.NewUserID()
 	now := time.Now()
 
 	rows := &userScanMockRows{

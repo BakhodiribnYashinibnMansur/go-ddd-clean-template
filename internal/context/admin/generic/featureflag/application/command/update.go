@@ -3,7 +3,9 @@ package command
 import (
 	"context"
 
-	"gct/internal/context/admin/generic/featureflag/domain"
+	ffentity "gct/internal/context/admin/generic/featureflag/domain/entity"
+	ffevent "gct/internal/context/admin/generic/featureflag/domain/event"
+	ffrepo "gct/internal/context/admin/generic/featureflag/domain/repository"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
@@ -12,7 +14,7 @@ import (
 
 // UpdateCommand represents a partial update to an existing feature flag.
 type UpdateCommand struct {
-	ID                domain.FeatureFlagID
+	ID                ffentity.FeatureFlagID
 	Name              *string
 	Key               *string
 	Description       *string
@@ -24,14 +26,14 @@ type UpdateCommand struct {
 
 // UpdateHandler applies partial modifications to an existing feature flag.
 type UpdateHandler struct {
-	repo     domain.FeatureFlagRepository
+	repo     ffrepo.FeatureFlagRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
 // NewUpdateHandler wires dependencies for feature flag updates.
 func NewUpdateHandler(
-	repo domain.FeatureFlagRepository,
+	repo ffrepo.FeatureFlagRepository,
 	eventBus application.EventBus,
 	logger logger.Log,
 ) *UpdateHandler {
@@ -60,7 +62,7 @@ func (h *UpdateHandler) Handle(ctx context.Context, cmd UpdateCommand) (err erro
 		return apperrors.MapToServiceError(err)
 	}
 
-	ff.AddEvent(domain.NewFlagUpdated(ff.ID()))
+	ff.AddEvent(ffevent.NewFlagUpdated(ff.ID()))
 
 	if err := h.eventBus.Publish(ctx, ff.Events()...); err != nil {
 		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "UpdateFeatureFlag", Entity: "feature_flag", Err: err}.KV()...)

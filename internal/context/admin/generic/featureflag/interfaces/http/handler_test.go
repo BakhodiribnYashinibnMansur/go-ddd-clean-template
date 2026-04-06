@@ -12,7 +12,8 @@ import (
 	"gct/internal/context/admin/generic/featureflag"
 	"gct/internal/context/admin/generic/featureflag/application/command"
 	"gct/internal/context/admin/generic/featureflag/application/query"
-	"gct/internal/context/admin/generic/featureflag/domain"
+	ffentity "gct/internal/context/admin/generic/featureflag/domain/entity"
+	ffrepo "gct/internal/context/admin/generic/featureflag/domain/repository"
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
@@ -23,86 +24,86 @@ import (
 // --- Mocks ---
 
 type mockFeatureFlagRepo struct {
-	saved   *domain.FeatureFlag
-	updated *domain.FeatureFlag
+	saved   *ffentity.FeatureFlag
+	updated *ffentity.FeatureFlag
 	deleted bool
-	findFn  func(ctx context.Context, id domain.FeatureFlagID) (*domain.FeatureFlag, error)
-	listFn  func(ctx context.Context, f domain.FeatureFlagFilter) ([]*domain.FeatureFlag, int64, error)
+	findFn  func(ctx context.Context, id ffentity.FeatureFlagID) (*ffentity.FeatureFlag, error)
+	listFn  func(ctx context.Context, f ffrepo.FeatureFlagFilter) ([]*ffentity.FeatureFlag, int64, error)
 }
 
-func (m *mockFeatureFlagRepo) Save(_ context.Context, e *domain.FeatureFlag) error {
+func (m *mockFeatureFlagRepo) Save(_ context.Context, e *ffentity.FeatureFlag) error {
 	m.saved = e
 	return nil
 }
-func (m *mockFeatureFlagRepo) FindByID(ctx context.Context, id domain.FeatureFlagID) (*domain.FeatureFlag, error) {
+func (m *mockFeatureFlagRepo) FindByID(ctx context.Context, id ffentity.FeatureFlagID) (*ffentity.FeatureFlag, error) {
 	if m.findFn != nil {
 		return m.findFn(ctx, id)
 	}
-	return nil, domain.ErrFeatureFlagNotFound
+	return nil, ffentity.ErrFeatureFlagNotFound
 }
-func (m *mockFeatureFlagRepo) FindByKey(_ context.Context, _ string) (*domain.FeatureFlag, error) {
-	return nil, domain.ErrFeatureFlagNotFound
+func (m *mockFeatureFlagRepo) FindByKey(_ context.Context, _ string) (*ffentity.FeatureFlag, error) {
+	return nil, ffentity.ErrFeatureFlagNotFound
 }
-func (m *mockFeatureFlagRepo) Update(_ context.Context, e *domain.FeatureFlag) error {
+func (m *mockFeatureFlagRepo) Update(_ context.Context, e *ffentity.FeatureFlag) error {
 	m.updated = e
 	return nil
 }
-func (m *mockFeatureFlagRepo) Delete(_ context.Context, _ domain.FeatureFlagID) error {
+func (m *mockFeatureFlagRepo) Delete(_ context.Context, _ ffentity.FeatureFlagID) error {
 	m.deleted = true
 	return nil
 }
-func (m *mockFeatureFlagRepo) FindAll(_ context.Context) ([]*domain.FeatureFlag, error) {
+func (m *mockFeatureFlagRepo) FindAll(_ context.Context) ([]*ffentity.FeatureFlag, error) {
 	return nil, nil
 }
 
 type mockRuleGroupRepo struct {
-	saved   *domain.RuleGroup
-	updated *domain.RuleGroup
+	saved   *ffentity.RuleGroup
+	updated *ffentity.RuleGroup
 	deleted bool
-	findFn  func(ctx context.Context, id domain.RuleGroupID) (*domain.RuleGroup, error)
+	findFn  func(ctx context.Context, id ffentity.RuleGroupID) (*ffentity.RuleGroup, error)
 }
 
-func (m *mockRuleGroupRepo) Save(_ context.Context, e *domain.RuleGroup) error {
+func (m *mockRuleGroupRepo) Save(_ context.Context, e *ffentity.RuleGroup) error {
 	m.saved = e
 	return nil
 }
-func (m *mockRuleGroupRepo) FindByID(ctx context.Context, id domain.RuleGroupID) (*domain.RuleGroup, error) {
+func (m *mockRuleGroupRepo) FindByID(ctx context.Context, id ffentity.RuleGroupID) (*ffentity.RuleGroup, error) {
 	if m.findFn != nil {
 		return m.findFn(ctx, id)
 	}
-	return nil, domain.ErrRuleGroupNotFound
+	return nil, ffentity.ErrRuleGroupNotFound
 }
-func (m *mockRuleGroupRepo) Update(_ context.Context, e *domain.RuleGroup) error {
+func (m *mockRuleGroupRepo) Update(_ context.Context, e *ffentity.RuleGroup) error {
 	m.updated = e
 	return nil
 }
-func (m *mockRuleGroupRepo) Delete(_ context.Context, _ domain.RuleGroupID) error {
+func (m *mockRuleGroupRepo) Delete(_ context.Context, _ ffentity.RuleGroupID) error {
 	m.deleted = true
 	return nil
 }
-func (m *mockRuleGroupRepo) FindByFlagID(_ context.Context, _ domain.FeatureFlagID) ([]*domain.RuleGroup, error) {
+func (m *mockRuleGroupRepo) FindByFlagID(_ context.Context, _ ffentity.FeatureFlagID) ([]*ffentity.RuleGroup, error) {
 	return nil, nil
 }
-func (m *mockRuleGroupRepo) SaveCondition(_ context.Context, _ domain.RuleGroupID, _ domain.Condition) error {
+func (m *mockRuleGroupRepo) SaveCondition(_ context.Context, _ ffentity.RuleGroupID, _ ffentity.Condition) error {
 	return nil
 }
-func (m *mockRuleGroupRepo) DeleteConditionsByRuleGroupID(_ context.Context, _ domain.RuleGroupID) error {
+func (m *mockRuleGroupRepo) DeleteConditionsByRuleGroupID(_ context.Context, _ ffentity.RuleGroupID) error {
 	return nil
 }
 
 type mockReadRepo struct {
-	view  *domain.FeatureFlagView
-	views []*domain.FeatureFlagView
+	view  *ffrepo.FeatureFlagView
+	views []*ffrepo.FeatureFlagView
 	total int64
 }
 
-func (m *mockReadRepo) FindByID(_ context.Context, id domain.FeatureFlagID) (*domain.FeatureFlagView, error) {
+func (m *mockReadRepo) FindByID(_ context.Context, id ffentity.FeatureFlagID) (*ffrepo.FeatureFlagView, error) {
 	if m.view != nil && m.view.ID == id {
 		return m.view, nil
 	}
-	return nil, domain.ErrFeatureFlagNotFound
+	return nil, ffentity.ErrFeatureFlagNotFound
 }
-func (m *mockReadRepo) List(_ context.Context, _ domain.FeatureFlagFilter) ([]*domain.FeatureFlagView, int64, error) {
+func (m *mockReadRepo) List(_ context.Context, _ ffrepo.FeatureFlagFilter) ([]*ffrepo.FeatureFlagView, int64, error) {
 	return m.views, m.total, nil
 }
 
@@ -221,8 +222,8 @@ func TestHandler_List_Success(t *testing.T) {
 	t.Parallel()
 
 	readRepo := &mockReadRepo{
-		views: []*domain.FeatureFlagView{
-			{ID: domain.NewFeatureFlagID(), Name: "Flag 1", Key: "flag_1"},
+		views: []*ffrepo.FeatureFlagView{
+			{ID: ffentity.NewFeatureFlagID(), Name: "Flag 1", Key: "flag_1"},
 		},
 		total: 1,
 	}
@@ -240,9 +241,9 @@ func TestHandler_List_Success(t *testing.T) {
 func TestHandler_Get_Success(t *testing.T) {
 	t.Parallel()
 
-	id := domain.NewFeatureFlagID()
+	id := ffentity.NewFeatureFlagID()
 	readRepo := &mockReadRepo{
-		view: &domain.FeatureFlagView{ID: id, Name: "Flag", Key: "flag"},
+		view: &ffrepo.FeatureFlagView{ID: id, Name: "Flag", Key: "flag"},
 	}
 	router := setupRouter(&mockFeatureFlagRepo{}, &mockRuleGroupRepo{}, readRepo)
 
@@ -272,11 +273,11 @@ func TestHandler_Get_InvalidID(t *testing.T) {
 func TestHandler_Delete_Success(t *testing.T) {
 	t.Parallel()
 
-	id := domain.NewFeatureFlagID()
+	id := ffentity.NewFeatureFlagID()
 	repo := &mockFeatureFlagRepo{
-		findFn: func(_ context.Context, fid domain.FeatureFlagID) (*domain.FeatureFlag, error) {
+		findFn: func(_ context.Context, fid ffentity.FeatureFlagID) (*ffentity.FeatureFlag, error) {
 			now := time.Now()
-			return domain.ReconstructFeatureFlag(fid.UUID(), now, now, nil, "flag", "flag_key", "", "boolean", "false", 0, true, nil), nil
+			return ffentity.ReconstructFeatureFlag(fid.UUID(), now, now, nil, "flag", "flag_key", "", "boolean", "false", 0, true, nil), nil
 		},
 	}
 	router := setupRouter(repo, &mockRuleGroupRepo{}, &mockReadRepo{})
@@ -322,11 +323,11 @@ func TestHandler_Update_BadRequest(t *testing.T) {
 func TestHandler_CreateRuleGroup_Success(t *testing.T) {
 	t.Parallel()
 
-	flagID := domain.NewFeatureFlagID()
+	flagID := ffentity.NewFeatureFlagID()
 	repo := &mockFeatureFlagRepo{
-		findFn: func(_ context.Context, id domain.FeatureFlagID) (*domain.FeatureFlag, error) {
+		findFn: func(_ context.Context, id ffentity.FeatureFlagID) (*ffentity.FeatureFlag, error) {
 			now := time.Now()
-			return domain.ReconstructFeatureFlag(id.UUID(), now, now, nil, "flag", "key", "", "boolean", "false", 0, true, nil), nil
+			return ffentity.ReconstructFeatureFlag(id.UUID(), now, now, nil, "flag", "key", "", "boolean", "false", 0, true, nil), nil
 		},
 	}
 	rgRepo := &mockRuleGroupRepo{}
@@ -551,7 +552,7 @@ func TestHandler_GetFlag_NotFound(t *testing.T) {
 
 func TestHandler_ListFlags_DefaultPagination(t *testing.T) {
 	readRepo := &mockReadRepo{
-		views: []*domain.FeatureFlagView{},
+		views: []*ffrepo.FeatureFlagView{},
 		total: 0,
 	}
 	router := setupRouter(&mockFeatureFlagRepo{}, &mockRuleGroupRepo{}, readRepo)

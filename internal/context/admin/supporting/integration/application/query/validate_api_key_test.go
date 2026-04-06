@@ -6,7 +6,7 @@ import (
 	"gct/internal/kernel/infrastructure/logger"
 	"testing"
 
-	"gct/internal/context/admin/supporting/integration/domain"
+	integentity "gct/internal/context/admin/supporting/integration/domain/entity"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -16,10 +16,10 @@ func TestValidateAPIKeyHandler_Success(t *testing.T) {
 	t.Parallel()
 
 	keyID := uuid.New()
-	integrationID := domain.NewIntegrationID()
+	integrationID := integentity.NewIntegrationID()
 
 	readRepo := &mockReadRepo{
-		apiKeyView: &domain.IntegrationAPIKeyView{
+		apiKeyView: &integentity.IntegrationAPIKeyView{
 			ID:            keyID,
 			IntegrationID: integrationID,
 			Key:           "sk-test-key-123",
@@ -40,7 +40,7 @@ func TestValidateAPIKeyHandler_Success(t *testing.T) {
 	if result.ID != keyID {
 		t.Errorf("expected ID %s, got %s", keyID, result.ID)
 	}
-	if result.IntegrationID != integrationID {
+	if result.IntegrationID != integrationID.UUID() {
 		t.Errorf("expected integration ID %s, got %s", integrationID, result.IntegrationID)
 	}
 	if result.Key != "sk-test-key-123" {
@@ -74,9 +74,9 @@ func TestValidateAPIKeyHandler_Inactive(t *testing.T) {
 	t.Parallel()
 
 	readRepo := &mockReadRepo{
-		apiKeyView: &domain.IntegrationAPIKeyView{
+		apiKeyView: &integentity.IntegrationAPIKeyView{
 			ID:            uuid.New(),
-			IntegrationID: domain.NewIntegrationID(),
+			IntegrationID: integentity.NewIntegrationID(),
 			Key:           "sk-inactive-key",
 			Active:        false,
 		},
@@ -91,7 +91,7 @@ func TestValidateAPIKeyHandler_Inactive(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error for inactive key, got nil")
 	}
-	if !errors.Is(err, domain.ErrAPIKeyInactive) {
+	if !errors.Is(err, integentity.ErrAPIKeyInactive) {
 		t.Fatalf("expected ErrAPIKeyInactive, got %v", err)
 	}
 	if result != nil {

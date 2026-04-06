@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"gct/internal/context/admin/supporting/integration/domain"
+	integentity "gct/internal/context/admin/supporting/integration/domain/entity"
+	integrepo "gct/internal/context/admin/supporting/integration/domain/repository"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
@@ -26,14 +27,14 @@ type CreateCommand struct {
 // CreateHandler orchestrates integration creation through the repository and event bus.
 // Domain events are emitted on success so downstream listeners can initialize provider connections.
 type CreateHandler struct {
-	repo     domain.IntegrationRepository
+	repo     integrepo.IntegrationRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
 // NewCreateHandler wires up the handler with its required dependencies.
 func NewCreateHandler(
-	repo domain.IntegrationRepository,
+	repo integrepo.IntegrationRepository,
 	eventBus application.EventBus,
 	logger logger.Log,
 ) *CreateHandler {
@@ -51,7 +52,7 @@ func (h *CreateHandler) Handle(ctx context.Context, cmd CreateCommand) (err erro
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "CreateIntegration", "integration")()
 
-	i, err := domain.NewIntegration(cmd.Name, cmd.Type, cmd.APIKey, cmd.WebhookURL, cmd.Enabled, cmd.Config)
+	i, err := integentity.NewIntegration(cmd.Name, cmd.Type, cmd.APIKey, cmd.WebhookURL, cmd.Enabled, cmd.Config)
 	if err != nil {
 		return fmt.Errorf("create_integration: %w", err)
 	}

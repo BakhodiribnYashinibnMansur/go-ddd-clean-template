@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"gct/internal/context/admin/generic/featureflag/domain"
+	ffentity "gct/internal/context/admin/generic/featureflag/domain/entity"
+	ffevent "gct/internal/context/admin/generic/featureflag/domain/event"
+	ffrepo "gct/internal/context/admin/generic/featureflag/domain/repository"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
@@ -13,7 +15,7 @@ import (
 
 // UpdateRuleGroupCommand represents a partial update to an existing rule group.
 type UpdateRuleGroupCommand struct {
-	ID         domain.RuleGroupID
+	ID         ffentity.RuleGroupID
 	Name       *string
 	Variation  *string
 	Priority   *int
@@ -22,14 +24,14 @@ type UpdateRuleGroupCommand struct {
 
 // UpdateRuleGroupHandler applies modifications to an existing rule group.
 type UpdateRuleGroupHandler struct {
-	rgRepo   domain.RuleGroupRepository
+	rgRepo   ffrepo.RuleGroupRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
 // NewUpdateRuleGroupHandler wires dependencies for rule group updates.
 func NewUpdateRuleGroupHandler(
-	rgRepo domain.RuleGroupRepository,
+	rgRepo ffrepo.RuleGroupRepository,
 	eventBus application.EventBus,
 	logger logger.Log,
 ) *UpdateRuleGroupHandler {
@@ -56,18 +58,18 @@ func (h *UpdateRuleGroupHandler) Handle(ctx context.Context, cmd UpdateRuleGroup
 	if cmd.Conditions != nil {
 		// Validate operators.
 		for _, c := range *cmd.Conditions {
-			if !domain.IsValidOperator(c.Operator) {
-				return apperrors.MapToServiceError(fmt.Errorf("%w: %s", domain.ErrInvalidOperator, c.Operator))
+			if !ffentity.IsValidOperator(c.Operator) {
+				return apperrors.MapToServiceError(fmt.Errorf("%w: %s", ffentity.ErrInvalidOperator, c.Operator))
 			}
 		}
 
 		// Build new conditions and reconstruct the rule group with them.
-		var newConditions []domain.Condition
+		var newConditions []ffentity.Condition
 		for _, c := range *cmd.Conditions {
-			newConditions = append(newConditions, domain.NewCondition(c.Attribute, c.Operator, c.Value))
+			newConditions = append(newConditions, ffentity.NewCondition(c.Attribute, c.Operator, c.Value))
 		}
 
-		rg = domain.ReconstructRuleGroup(
+		rg = ffentity.ReconstructRuleGroup(
 			rg.ID(), rg.FlagID(), rg.Name(), rg.Variation(), rg.Priority(),
 			rg.CreatedAt(), rg.UpdatedAt(), newConditions,
 		)
@@ -78,7 +80,7 @@ func (h *UpdateRuleGroupHandler) Handle(ctx context.Context, cmd UpdateRuleGroup
 		return apperrors.MapToServiceError(err)
 	}
 
-	if err := h.eventBus.Publish(ctx, domain.NewFlagUpdated(rg.FlagID())); err != nil {
+	if err := h.eventBus.Publish(ctx, ffevent.NewFlagUpdated(rg.FlagID())); err != nil {
 		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "UpdateRuleGroup", Entity: "rule_group", Err: err}.KV()...)
 	}
 

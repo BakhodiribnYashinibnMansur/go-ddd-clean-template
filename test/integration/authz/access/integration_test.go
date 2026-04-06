@@ -7,7 +7,7 @@ import (
 	"gct/internal/context/iam/generic/authz"
 	"gct/internal/context/iam/generic/authz/application/command"
 	"gct/internal/context/iam/generic/authz/application/query"
-	"gct/internal/context/iam/generic/authz/domain"
+	authzentity "gct/internal/context/iam/generic/authz/domain/entity"
 	shared "gct/internal/kernel/domain"
 	"gct/internal/kernel/infrastructure/eventbus"
 	"gct/internal/kernel/infrastructure/logger"
@@ -40,7 +40,7 @@ func seedRoleWithScope(t *testing.T, bc *authz.BoundedContext, roleName, permNam
 	roles, _ := bc.ListRoles.Handle(ctx, query.ListRolesQuery{Pagination: shared.Pagination{Limit: 100}})
 	perms, _ := bc.ListPermissions.Handle(ctx, query.ListPermissionsQuery{Pagination: shared.Pagination{Limit: 100}})
 
-	var roleID = domain.RoleID(roles.Roles[len(roles.Roles)-1].ID); var permID = domain.PermissionID(perms.Permissions[len(perms.Permissions)-1].ID)
+	var roleID = authzentity.RoleID(roles.Roles[len(roles.Roles)-1].ID); var permID = authzentity.PermissionID(perms.Permissions[len(perms.Permissions)-1].ID)
 
 	if err := bc.AssignPermission.Handle(ctx, command.AssignPermissionCommand{RoleID: roleID, PermissionID: permID}); err != nil {
 		t.Fatalf("AssignPermission: %v", err)
@@ -62,13 +62,13 @@ func TestIntegration_CheckAccess_ExactMatch_Allowed(t *testing.T) {
 	seedRoleWithScope(t, bc, "editor", "articles.read", "/api/v1/articles", "GET")
 
 	roles, _ := bc.ListRoles.Handle(ctx, query.ListRolesQuery{Pagination: shared.Pagination{Limit: 10}})
-	roleID := domain.RoleID(roles.Roles[0].ID)
+	roleID := authzentity.RoleID(roles.Roles[0].ID)
 
 	allowed, err := bc.CheckAccess.Handle(ctx, query.CheckAccessQuery{
 		RoleID:  roleID,
 		Path:    "/api/v1/articles",
 		Method:  "GET",
-		EvalCtx: domain.EvaluationContext{Attrs: map[string]map[string]any{}},
+		EvalCtx: authzentity.EvaluationContext{Attrs: map[string]map[string]any{}},
 	})
 	if err != nil {
 		t.Fatalf("CheckAccess: %v", err)
@@ -86,13 +86,13 @@ func TestIntegration_CheckAccess_ExactMatch_DeniedWrongPath(t *testing.T) {
 	seedRoleWithScope(t, bc, "editor", "articles.read", "/api/v1/articles", "GET")
 
 	roles, _ := bc.ListRoles.Handle(ctx, query.ListRolesQuery{Pagination: shared.Pagination{Limit: 10}})
-	roleID := domain.RoleID(roles.Roles[0].ID)
+	roleID := authzentity.RoleID(roles.Roles[0].ID)
 
 	allowed, err := bc.CheckAccess.Handle(ctx, query.CheckAccessQuery{
 		RoleID:  roleID,
 		Path:    "/api/v1/users",
 		Method:  "GET",
-		EvalCtx: domain.EvaluationContext{Attrs: map[string]map[string]any{}},
+		EvalCtx: authzentity.EvaluationContext{Attrs: map[string]map[string]any{}},
 	})
 	if err != nil {
 		t.Fatalf("CheckAccess: %v", err)
@@ -110,13 +110,13 @@ func TestIntegration_CheckAccess_ExactMatch_DeniedWrongMethod(t *testing.T) {
 	seedRoleWithScope(t, bc, "editor", "articles.read", "/api/v1/articles", "GET")
 
 	roles, _ := bc.ListRoles.Handle(ctx, query.ListRolesQuery{Pagination: shared.Pagination{Limit: 10}})
-	roleID := domain.RoleID(roles.Roles[0].ID)
+	roleID := authzentity.RoleID(roles.Roles[0].ID)
 
 	allowed, err := bc.CheckAccess.Handle(ctx, query.CheckAccessQuery{
 		RoleID:  roleID,
 		Path:    "/api/v1/articles",
 		Method:  "POST",
-		EvalCtx: domain.EvaluationContext{Attrs: map[string]map[string]any{}},
+		EvalCtx: authzentity.EvaluationContext{Attrs: map[string]map[string]any{}},
 	})
 	if err != nil {
 		t.Fatalf("CheckAccess: %v", err)
@@ -141,13 +141,13 @@ func TestIntegration_CheckAccess_SuperAdminBypass(t *testing.T) {
 	}
 
 	roles, _ := bc.ListRoles.Handle(ctx, query.ListRolesQuery{Pagination: shared.Pagination{Limit: 10}})
-	roleID := domain.RoleID(roles.Roles[0].ID)
+	roleID := authzentity.RoleID(roles.Roles[0].ID)
 
 	allowed, err := bc.CheckAccess.Handle(ctx, query.CheckAccessQuery{
 		RoleID:  roleID,
 		Path:    "/api/v1/anything/at/all",
 		Method:  "DELETE",
-		EvalCtx: domain.EvaluationContext{Attrs: map[string]map[string]any{}},
+		EvalCtx: authzentity.EvaluationContext{Attrs: map[string]map[string]any{}},
 	})
 	if err != nil {
 		t.Fatalf("CheckAccess: %v", err)
@@ -169,7 +169,7 @@ func TestIntegration_CheckAccess_WildcardMethod(t *testing.T) {
 	seedRoleWithScope(t, bc, "admin", "users.all", "/api/v1/users", "*")
 
 	roles, _ := bc.ListRoles.Handle(ctx, query.ListRolesQuery{Pagination: shared.Pagination{Limit: 10}})
-	roleID := domain.RoleID(roles.Roles[0].ID)
+	roleID := authzentity.RoleID(roles.Roles[0].ID)
 
 	for _, method := range []string{"GET", "POST", "PUT", "PATCH", "DELETE"} {
 		t.Run(method, func(t *testing.T) {
@@ -177,7 +177,7 @@ func TestIntegration_CheckAccess_WildcardMethod(t *testing.T) {
 				RoleID:  roleID,
 				Path:    "/api/v1/users",
 				Method:  method,
-				EvalCtx: domain.EvaluationContext{Attrs: map[string]map[string]any{}},
+				EvalCtx: authzentity.EvaluationContext{Attrs: map[string]map[string]any{}},
 			})
 			if err != nil {
 				t.Fatalf("CheckAccess: %v", err)
@@ -201,7 +201,7 @@ func TestIntegration_CheckAccess_PrefixWildcardPath(t *testing.T) {
 	seedRoleWithScope(t, bc, "manager", "users.manage", "/api/v1/users*", "GET")
 
 	roles, _ := bc.ListRoles.Handle(ctx, query.ListRolesQuery{Pagination: shared.Pagination{Limit: 10}})
-	roleID := domain.RoleID(roles.Roles[0].ID)
+	roleID := authzentity.RoleID(roles.Roles[0].ID)
 
 	tests := []struct {
 		path    string
@@ -220,7 +220,7 @@ func TestIntegration_CheckAccess_PrefixWildcardPath(t *testing.T) {
 				RoleID:  roleID,
 				Path:    tt.path,
 				Method:  "GET",
-				EvalCtx: domain.EvaluationContext{Attrs: map[string]map[string]any{}},
+				EvalCtx: authzentity.EvaluationContext{Attrs: map[string]map[string]any{}},
 			})
 			if err != nil {
 				t.Fatalf("CheckAccess: %v", err)
@@ -246,13 +246,13 @@ func TestIntegration_CheckAccess_RoleNoPermissions(t *testing.T) {
 	}
 
 	roles, _ := bc.ListRoles.Handle(ctx, query.ListRolesQuery{Pagination: shared.Pagination{Limit: 10}})
-	roleID := domain.RoleID(roles.Roles[0].ID)
+	roleID := authzentity.RoleID(roles.Roles[0].ID)
 
 	allowed, err := bc.CheckAccess.Handle(ctx, query.CheckAccessQuery{
 		RoleID:  roleID,
 		Path:    "/api/v1/users",
 		Method:  "GET",
-		EvalCtx: domain.EvaluationContext{Attrs: map[string]map[string]any{}},
+		EvalCtx: authzentity.EvaluationContext{Attrs: map[string]map[string]any{}},
 	})
 	if err != nil {
 		t.Fatalf("CheckAccess: %v", err)
@@ -291,10 +291,10 @@ func TestIntegration_CheckAccess_MultipleScopes(t *testing.T) {
 	roles, _ := bc.ListRoles.Handle(ctx, query.ListRolesQuery{Pagination: shared.Pagination{Limit: 10}})
 	perms, _ := bc.ListPermissions.Handle(ctx, query.ListPermissionsQuery{Pagination: shared.Pagination{Limit: 100}})
 
-	roleID := domain.RoleID(roles.Roles[0].ID)
+	roleID := authzentity.RoleID(roles.Roles[0].ID)
 
 	for _, p := range perms.Permissions {
-		if err := bc.AssignPermission.Handle(ctx, command.AssignPermissionCommand{RoleID: roleID, PermissionID: domain.PermissionID(p.ID)}); err != nil {
+		if err := bc.AssignPermission.Handle(ctx, command.AssignPermissionCommand{RoleID: roleID, PermissionID: authzentity.PermissionID(p.ID)}); err != nil {
 			t.Fatalf("AssignPermission(%s): %v", p.Name, err)
 		}
 		var scopePath string
@@ -303,7 +303,7 @@ func TestIntegration_CheckAccess_MultipleScopes(t *testing.T) {
 		} else {
 			scopePath = "/api/v1/articles"
 		}
-		if err := bc.AssignScope.Handle(ctx, command.AssignScopeCommand{PermissionID: domain.PermissionID(p.ID), Path: scopePath, Method: "GET"}); err != nil {
+		if err := bc.AssignScope.Handle(ctx, command.AssignScopeCommand{PermissionID: authzentity.PermissionID(p.ID), Path: scopePath, Method: "GET"}); err != nil {
 			t.Fatalf("AssignScope(%s): %v", p.Name, err)
 		}
 	}
@@ -325,7 +325,7 @@ func TestIntegration_CheckAccess_MultipleScopes(t *testing.T) {
 				RoleID:  roleID,
 				Path:    tt.path,
 				Method:  tt.method,
-				EvalCtx: domain.EvaluationContext{Attrs: map[string]map[string]any{}},
+				EvalCtx: authzentity.EvaluationContext{Attrs: map[string]map[string]any{}},
 			})
 			if err != nil {
 				t.Fatalf("CheckAccess: %v", err)
@@ -350,7 +350,7 @@ func TestIntegration_CheckAccess_NonexistentRole(t *testing.T) {
 		RoleID:  [16]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
 		Path:    "/api/v1/users",
 		Method:  "GET",
-		EvalCtx: domain.EvaluationContext{Attrs: map[string]map[string]any{}},
+		EvalCtx: authzentity.EvaluationContext{Attrs: map[string]map[string]any{}},
 	})
 	if err == nil {
 		t.Error("expected error for nonexistent role, got nil")
@@ -370,12 +370,12 @@ func TestIntegration_CheckAccess_FullLifecycle(t *testing.T) {
 	seedRoleWithScope(t, bc, "lifecycle", "users.view", "/api/v1/users", "GET")
 
 	roles, _ := bc.ListRoles.Handle(ctx, query.ListRolesQuery{Pagination: shared.Pagination{Limit: 10}})
-	roleID := domain.RoleID(roles.Roles[0].ID)
+	roleID := authzentity.RoleID(roles.Roles[0].ID)
 
 	// 2. Access should be granted.
 	allowed, err := bc.CheckAccess.Handle(ctx, query.CheckAccessQuery{
 		RoleID: roleID, Path: "/api/v1/users", Method: "GET",
-		EvalCtx: domain.EvaluationContext{Attrs: map[string]map[string]any{}},
+		EvalCtx: authzentity.EvaluationContext{Attrs: map[string]map[string]any{}},
 	})
 	if err != nil {
 		t.Fatalf("CheckAccess: %v", err)
@@ -392,7 +392,7 @@ func TestIntegration_CheckAccess_FullLifecycle(t *testing.T) {
 	// 4. Access check should fail (role gone).
 	_, err = bc.CheckAccess.Handle(ctx, query.CheckAccessQuery{
 		RoleID: roleID, Path: "/api/v1/users", Method: "GET",
-		EvalCtx: domain.EvaluationContext{Attrs: map[string]map[string]any{}},
+		EvalCtx: authzentity.EvaluationContext{Attrs: map[string]map[string]any{}},
 	})
 	if err == nil {
 		t.Error("expected error after role deletion, got nil")
@@ -412,13 +412,13 @@ func TestIntegration_CheckAccess_AddScopeToExistingPermission(t *testing.T) {
 
 	roles, _ := bc.ListRoles.Handle(ctx, query.ListRolesQuery{Pagination: shared.Pagination{Limit: 10}})
 	perms, _ := bc.ListPermissions.Handle(ctx, query.ListPermissionsQuery{Pagination: shared.Pagination{Limit: 10}})
-	roleID := domain.RoleID(roles.Roles[0].ID)
-	permID := domain.PermissionID(perms.Permissions[0].ID)
+	roleID := authzentity.RoleID(roles.Roles[0].ID)
+	permID := authzentity.PermissionID(perms.Permissions[0].ID)
 
 	// Initially POST is not allowed.
 	allowed, _ := bc.CheckAccess.Handle(ctx, query.CheckAccessQuery{
 		RoleID: roleID, Path: "/api/v1/resources", Method: "POST",
-		EvalCtx: domain.EvaluationContext{Attrs: map[string]map[string]any{}},
+		EvalCtx: authzentity.EvaluationContext{Attrs: map[string]map[string]any{}},
 	})
 	if allowed {
 		t.Fatal("POST should not be allowed yet")
@@ -435,7 +435,7 @@ func TestIntegration_CheckAccess_AddScopeToExistingPermission(t *testing.T) {
 	// Now POST should be allowed.
 	allowed, err := bc.CheckAccess.Handle(ctx, query.CheckAccessQuery{
 		RoleID: roleID, Path: "/api/v1/resources", Method: "POST",
-		EvalCtx: domain.EvaluationContext{Attrs: map[string]map[string]any{}},
+		EvalCtx: authzentity.EvaluationContext{Attrs: map[string]map[string]any{}},
 	})
 	if err != nil {
 		t.Fatalf("CheckAccess: %v", err)
@@ -447,7 +447,7 @@ func TestIntegration_CheckAccess_AddScopeToExistingPermission(t *testing.T) {
 	// GET should still be allowed.
 	allowed, _ = bc.CheckAccess.Handle(ctx, query.CheckAccessQuery{
 		RoleID: roleID, Path: "/api/v1/resources", Method: "GET",
-		EvalCtx: domain.EvaluationContext{Attrs: map[string]map[string]any{}},
+		EvalCtx: authzentity.EvaluationContext{Attrs: map[string]map[string]any{}},
 	})
 	if !allowed {
 		t.Error("GET should still be allowed")

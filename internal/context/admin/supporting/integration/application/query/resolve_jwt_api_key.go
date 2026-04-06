@@ -8,7 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"gct/internal/context/admin/supporting/integration/domain"
+	integentity "gct/internal/context/admin/supporting/integration/domain/entity"
+	integrepo "gct/internal/context/admin/supporting/integration/domain/repository"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -21,7 +22,7 @@ type ResolveJWTAPIKeyQuery struct {
 
 // resolveCacheEntry holds a cached JWTIntegrationView and its insertion time.
 type resolveCacheEntry struct {
-	view       *domain.JWTIntegrationView
+	view       *integentity.JWTIntegrationView
 	insertedAt time.Time
 }
 
@@ -29,7 +30,7 @@ type resolveCacheEntry struct {
 // integration store using HMAC-SHA256(pepper, plaintext). Results are cached
 // in-process for cacheTTL to avoid a DB round-trip per sign-in attempt.
 type ResolveJWTAPIKeyHandler struct {
-	readRepo domain.IntegrationReadRepository
+	readRepo integrepo.IntegrationReadRepository
 	pepper   []byte
 	cacheTTL time.Duration
 	logger   logger.Log
@@ -39,7 +40,7 @@ type ResolveJWTAPIKeyHandler struct {
 }
 
 // NewResolveJWTAPIKeyHandler constructs a ResolveJWTAPIKeyHandler.
-func NewResolveJWTAPIKeyHandler(repo domain.IntegrationReadRepository, pepper []byte, cacheTTL time.Duration, l logger.Log) *ResolveJWTAPIKeyHandler {
+func NewResolveJWTAPIKeyHandler(repo integrepo.IntegrationReadRepository, pepper []byte, cacheTTL time.Duration, l logger.Log) *ResolveJWTAPIKeyHandler {
 	return &ResolveJWTAPIKeyHandler{
 		readRepo: repo,
 		pepper:   pepper,
@@ -58,15 +59,15 @@ func (h *ResolveJWTAPIKeyHandler) hash(plaintext string) []byte {
 }
 
 // Handle resolves a plaintext API key to its JWTIntegrationView.
-// Returns domain.ErrInvalidJWTAPIKey if the key is too short, or a mapped
+// Returns integentity.ErrInvalidJWTAPIKey if the key is too short, or a mapped
 // service error (ErrAPIKeyNotFound) if no integration matches the hash.
-func (h *ResolveJWTAPIKeyHandler) Handle(ctx context.Context, q ResolveJWTAPIKeyQuery) (result *domain.JWTIntegrationView, err error) {
+func (h *ResolveJWTAPIKeyHandler) Handle(ctx context.Context, q ResolveJWTAPIKeyQuery) (result *integentity.JWTIntegrationView, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "ResolveJWTAPIKeyHandler.Handle")
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "ResolveJWTAPIKey", "integration")()
 
 	if len(q.PlainAPIKey) < 32 {
-		return nil, domain.ErrInvalidJWTAPIKey
+		return nil, integentity.ErrInvalidJWTAPIKey
 	}
 
 	hashed := h.hash(q.PlainAPIKey)
@@ -88,8 +89,8 @@ func (h *ResolveJWTAPIKeyHandler) Handle(ctx context.Context, q ResolveJWTAPIKey
 
 	view, err := h.readRepo.FindJWTByHash(ctx, hashed)
 	if err != nil {
-		if errors.Is(err, domain.ErrIntegrationNotFound) {
-			return nil, domain.ErrAPIKeyNotFound
+		if errors.Is(err, integentity.ErrIntegrationNotFound) {
+			return nil, integentity.ErrAPIKeyNotFound
 		}
 		return nil, apperrors.MapToServiceError(err)
 	}

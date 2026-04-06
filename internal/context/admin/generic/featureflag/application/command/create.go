@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"gct/internal/context/admin/generic/featureflag/domain"
+	ffentity "gct/internal/context/admin/generic/featureflag/domain/entity"
+	ffevent "gct/internal/context/admin/generic/featureflag/domain/event"
+	ffrepo "gct/internal/context/admin/generic/featureflag/domain/repository"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
@@ -24,14 +26,14 @@ type CreateCommand struct {
 
 // CreateHandler orchestrates feature flag creation and emits domain events.
 type CreateHandler struct {
-	repo     domain.FeatureFlagRepository
+	repo     ffrepo.FeatureFlagRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
 // NewCreateHandler wires dependencies for feature flag creation.
 func NewCreateHandler(
-	repo domain.FeatureFlagRepository,
+	repo ffrepo.FeatureFlagRepository,
 	eventBus application.EventBus,
 	logger logger.Log,
 ) *CreateHandler {
@@ -48,7 +50,7 @@ func (h *CreateHandler) Handle(ctx context.Context, cmd CreateCommand) (err erro
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "CreateFeatureFlag", "feature_flag")()
 
-	ff, err := domain.NewFeatureFlag(cmd.Name, cmd.Key, cmd.Description, cmd.FlagType, cmd.DefaultValue, cmd.RolloutPercentage)
+	ff, err := ffentity.NewFeatureFlag(cmd.Name, cmd.Key, cmd.Description, cmd.FlagType, cmd.DefaultValue, cmd.RolloutPercentage)
 	if err != nil {
 		return fmt.Errorf("create_feature_flag: %w", err)
 	}
@@ -62,7 +64,7 @@ func (h *CreateHandler) Handle(ctx context.Context, cmd CreateCommand) (err erro
 		return apperrors.MapToServiceError(err)
 	}
 
-	ff.AddEvent(domain.NewFlagCreated(ff.ID()))
+	ff.AddEvent(ffevent.NewFlagCreated(ff.ID()))
 
 	if err := h.eventBus.Publish(ctx, ff.Events()...); err != nil {
 		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "CreateFeatureFlag", Entity: "feature_flag", Err: err}.KV()...)

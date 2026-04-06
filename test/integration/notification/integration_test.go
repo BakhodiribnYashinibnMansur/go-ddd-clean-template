@@ -7,7 +7,8 @@ import (
 	"gct/internal/context/content/generic/notification"
 	"gct/internal/context/content/generic/notification/application/command"
 	"gct/internal/context/content/generic/notification/application/query"
-	"gct/internal/context/content/generic/notification/domain"
+	notifentity "gct/internal/context/content/generic/notification/domain/entity"
+	notifrepo "gct/internal/context/content/generic/notification/domain/repository"
 	"gct/internal/kernel/infrastructure/eventbus"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/test/integration/common/setup"
@@ -39,7 +40,7 @@ func TestIntegration_CreateAndGetNotification(t *testing.T) {
 	}
 
 	result, err := bc.ListNotifications.Handle(ctx, query.ListQuery{
-		Filter: domain.NotificationFilter{Limit: 10},
+		Filter: notifrepo.NotificationFilter{Limit: 10},
 	})
 	if err != nil {
 		t.Fatalf("ListNotifications: %v", err)
@@ -56,7 +57,7 @@ func TestIntegration_CreateAndGetNotification(t *testing.T) {
 		t.Errorf("expected message 'This is a test message', got %s", n.Message)
 	}
 
-	view, err := bc.GetNotification.Handle(ctx, query.GetQuery{ID: domain.NotificationID(n.ID)})
+	view, err := bc.GetNotification.Handle(ctx, query.GetQuery{ID: notifentity.NotificationID(n.ID)})
 	if err != nil {
 		t.Fatalf("GetNotification: %v", err)
 	}
@@ -82,9 +83,9 @@ func TestIntegration_DeleteNotification(t *testing.T) {
 	}
 
 	list, _ := bc.ListNotifications.Handle(ctx, query.ListQuery{
-		Filter: domain.NotificationFilter{Limit: 10},
+		Filter: notifrepo.NotificationFilter{Limit: 10},
 	})
-	nID := domain.NotificationID(list.Notifications[0].ID)
+	nID := notifentity.NotificationID(list.Notifications[0].ID)
 
 	err = bc.DeleteNotification.Handle(ctx, command.DeleteCommand{ID: nID})
 	if err != nil {
@@ -92,7 +93,7 @@ func TestIntegration_DeleteNotification(t *testing.T) {
 	}
 
 	list2, _ := bc.ListNotifications.Handle(ctx, query.ListQuery{
-		Filter: domain.NotificationFilter{Limit: 10},
+		Filter: notifrepo.NotificationFilter{Limit: 10},
 	})
 	if list2.Total != 0 {
 		t.Errorf("expected 0 notifications after delete, got %d", list2.Total)

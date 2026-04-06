@@ -3,7 +3,7 @@ package command_test
 import (
 	"context"
 
-	"gct/internal/context/admin/supporting/dataexport/domain"
+	exportentity "gct/internal/context/admin/supporting/dataexport/domain/entity"
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 )
@@ -13,16 +13,16 @@ import (
 // ---------------------------------------------------------------------------
 
 type mockWriteRepo struct {
-	savedEntity   *domain.DataExport
-	updatedEntity *domain.DataExport
-	deletedID     domain.DataExportID
-	findByIDFn    func(ctx context.Context, id domain.DataExportID) (*domain.DataExport, error)
-	saveFn        func(ctx context.Context, entity *domain.DataExport) error
-	updateFn      func(ctx context.Context, entity *domain.DataExport) error
-	deleteFn      func(ctx context.Context, id domain.DataExportID) error
+	savedEntity   *exportentity.DataExport
+	updatedEntity *exportentity.DataExport
+	deletedID     exportentity.DataExportID
+	findByIDFn    func(ctx context.Context, id exportentity.DataExportID) (*exportentity.DataExport, error)
+	saveFn        func(ctx context.Context, entity *exportentity.DataExport) error
+	updateFn      func(ctx context.Context, entity *exportentity.DataExport) error
+	deleteFn      func(ctx context.Context, id exportentity.DataExportID) error
 }
 
-func (m *mockWriteRepo) Save(ctx context.Context, entity *domain.DataExport) error {
+func (m *mockWriteRepo) Save(ctx context.Context, entity *exportentity.DataExport) error {
 	m.savedEntity = entity
 	if m.saveFn != nil {
 		return m.saveFn(ctx, entity)
@@ -30,14 +30,14 @@ func (m *mockWriteRepo) Save(ctx context.Context, entity *domain.DataExport) err
 	return nil
 }
 
-func (m *mockWriteRepo) FindByID(ctx context.Context, id domain.DataExportID) (*domain.DataExport, error) {
+func (m *mockWriteRepo) FindByID(ctx context.Context, id exportentity.DataExportID) (*exportentity.DataExport, error) {
 	if m.findByIDFn != nil {
 		return m.findByIDFn(ctx, id)
 	}
-	return nil, domain.ErrDataExportNotFound
+	return nil, exportentity.ErrDataExportNotFound
 }
 
-func (m *mockWriteRepo) Update(ctx context.Context, entity *domain.DataExport) error {
+func (m *mockWriteRepo) Update(ctx context.Context, entity *exportentity.DataExport) error {
 	m.updatedEntity = entity
 	if m.updateFn != nil {
 		return m.updateFn(ctx, entity)
@@ -45,7 +45,7 @@ func (m *mockWriteRepo) Update(ctx context.Context, entity *domain.DataExport) e
 	return nil
 }
 
-func (m *mockWriteRepo) Delete(ctx context.Context, id domain.DataExportID) error {
+func (m *mockWriteRepo) Delete(ctx context.Context, id exportentity.DataExportID) error {
 	m.deletedID = id
 	if m.deleteFn != nil {
 		return m.deleteFn(ctx, id)

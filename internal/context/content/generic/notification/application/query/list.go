@@ -6,30 +6,32 @@ import (
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 
-	appdto "gct/internal/context/content/generic/notification/application"
-	"gct/internal/context/content/generic/notification/domain"
+	"gct/internal/context/content/generic/notification/application/dto"
+	notifrepo "gct/internal/context/content/generic/notification/domain/repository"
 	"gct/internal/kernel/infrastructure/pgxutil"
+
+	"github.com/google/uuid"
 )
 
 // ListQuery holds the input for listing notifications with filtering.
 type ListQuery struct {
-	Filter domain.NotificationFilter
+	Filter notifrepo.NotificationFilter
 }
 
 // ListResult holds the output of the list notifications query.
 type ListResult struct {
-	Notifications []*appdto.NotificationView
+	Notifications []*dto.NotificationView
 	Total         int64
 }
 
 // ListHandler handles the ListQuery.
 type ListHandler struct {
-	readRepo domain.NotificationReadRepository
+	readRepo notifrepo.NotificationReadRepository
 	logger   logger.Log
 }
 
 // NewListHandler creates a new ListHandler.
-func NewListHandler(readRepo domain.NotificationReadRepository, l logger.Log) *ListHandler {
+func NewListHandler(readRepo notifrepo.NotificationReadRepository, l logger.Log) *ListHandler {
 	return &ListHandler{readRepo: readRepo, logger: l}
 }
 
@@ -45,10 +47,10 @@ func (h *ListHandler) Handle(ctx context.Context, q ListQuery) (result *ListResu
 		return nil, apperrors.MapToServiceError(err)
 	}
 
-	items := make([]*appdto.NotificationView, len(views))
+	items := make([]*dto.NotificationView, len(views))
 	for i, v := range views {
-		items[i] = &appdto.NotificationView{
-			ID:        v.ID,
+		items[i] = &dto.NotificationView{
+			ID:        uuid.UUID(v.ID),
 			UserID:    v.UserID,
 			Title:     v.Title,
 			Message:   v.Message,

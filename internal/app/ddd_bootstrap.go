@@ -35,7 +35,7 @@ import (
 	jwtpkg "gct/internal/kernel/infrastructure/security/jwt"
 	securityratelimit "gct/internal/kernel/infrastructure/security/ratelimit"
 	"gct/internal/kernel/infrastructure/security/revocation"
-	integrationdomain "gct/internal/context/admin/supporting/integration/domain"
+	integentity "gct/internal/context/admin/supporting/integration/domain/entity"
 	integrationquery "gct/internal/context/admin/supporting/integration/application/query"
 	"crypto/rsa"
 
@@ -221,7 +221,7 @@ type integrationListerAdapter struct {
 // integrationReadRepoForKeyring is the subset of the Integration read repo
 // that the keyring rotation handler needs.
 type integrationReadRepoForKeyring interface {
-	ListActiveJWT(ctx context.Context) ([]integrationdomain.JWTIntegrationView, error)
+	ListActiveJWT(ctx context.Context) ([]integentity.JWTIntegrationView, error)
 }
 
 func (a *integrationListerAdapter) ListActiveJWT(ctx context.Context) ([]keyring.JWTIntegrationView, error) {

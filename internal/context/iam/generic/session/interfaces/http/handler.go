@@ -4,10 +4,10 @@ import (
 	"net/http"
 
 	"gct/internal/context/iam/generic/session"
-	appdto "gct/internal/context/iam/generic/session/application"
+	"gct/internal/context/iam/generic/session/application/dto"
 	"gct/internal/context/iam/generic/session/application/command"
 	"gct/internal/context/iam/generic/session/application/query"
-	sessiondomain "gct/internal/context/iam/generic/session/domain"
+	sessionentity "gct/internal/context/iam/generic/session/domain/entity"
 	"gct/internal/kernel/consts"
 	"gct/internal/kernel/infrastructure/httpx"
 	"gct/internal/kernel/infrastructure/httpx/response"
@@ -49,18 +49,18 @@ func (h *Handler) List(ctx *gin.Context) {
 		return
 	}
 
-	filter := appdto.SessionsFilter{
+	filter := dto.SessionsFilter{
 		Limit:  pg.Limit,
 		Offset: pg.Offset,
 	}
 
 	if userIDStr := ctx.Query("user_id"); userIDStr != "" {
-		uid, err := sessiondomain.ParseUserID(userIDStr)
+		parsed, err := uuid.Parse(userIDStr)
 		if err != nil {
 			response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 			return
 		}
-		filter.UserID = &uid
+		filter.UserID = &parsed
 	}
 
 	result, err := h.bc.ListSessions.Handle(ctx.Request.Context(), query.ListSessionsQuery{
@@ -91,7 +91,7 @@ func (h *Handler) List(ctx *gin.Context) {
 // @Router /sessions/{id} [get]
 // Get handles GET /sessions/:id.
 func (h *Handler) Get(ctx *gin.Context) {
-	id, err := sessiondomain.ParseSessionID(ctx.Param("id"))
+	id, err := sessionentity.ParseSessionID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return

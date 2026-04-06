@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"gct/internal/context/admin/supporting/dataexport/application/command"
-	"gct/internal/context/admin/supporting/dataexport/domain"
+	exportentity "gct/internal/context/admin/supporting/dataexport/domain/entity"
 	shared "gct/internal/kernel/domain"
 
 	"github.com/google/uuid"
@@ -17,27 +17,27 @@ import (
 func TestUpdateDataExportHandler_StatusProcessing(t *testing.T) {
 	t.Parallel()
 
-	exportID := domain.NewDataExportID()
-	existing := domain.ReconstructDataExport(
+	exportID := exportentity.NewDataExportID()
+	existing := exportentity.ReconstructDataExport(
 		exportID.UUID(), time.Now(), time.Now(),
-		uuid.New(), "users", "csv", domain.ExportStatusPending, nil, nil,
+		uuid.New(), "users", "csv", exportentity.ExportStatusPending, nil, nil,
 	)
 
 	repo := &mockWriteRepo{
-		findByIDFn: func(_ context.Context, id domain.DataExportID) (*domain.DataExport, error) {
+		findByIDFn: func(_ context.Context, id exportentity.DataExportID) (*exportentity.DataExport, error) {
 			if id == exportID {
 				return existing, nil
 			}
-			return nil, domain.ErrDataExportNotFound
+			return nil, exportentity.ErrDataExportNotFound
 		},
 	}
 	eb := &mockEventBus{}
 	l := &mockLogger{}
 	h := command.NewUpdateDataExportHandler(repo, eb, l)
 
-	status := domain.ExportStatusProcessing
+	status := exportentity.ExportStatusProcessing
 	cmd := command.UpdateDataExportCommand{
-		ID:     domain.DataExportID(exportID),
+		ID:     exportentity.DataExportID(exportID),
 		Status: &status,
 	}
 
@@ -46,7 +46,7 @@ func TestUpdateDataExportHandler_StatusProcessing(t *testing.T) {
 	if repo.updatedEntity == nil {
 		t.Fatal("expected entity to be updated")
 	}
-	if repo.updatedEntity.Status() != domain.ExportStatusProcessing {
+	if repo.updatedEntity.Status() != exportentity.ExportStatusProcessing {
 		t.Fatalf("expected status PROCESSING, got %s", repo.updatedEntity.Status())
 	}
 }
@@ -54,35 +54,35 @@ func TestUpdateDataExportHandler_StatusProcessing(t *testing.T) {
 func TestUpdateDataExportHandler_StatusCompleted(t *testing.T) {
 	t.Parallel()
 
-	exportID := domain.NewDataExportID()
-	existing := domain.ReconstructDataExport(
+	exportID := exportentity.NewDataExportID()
+	existing := exportentity.ReconstructDataExport(
 		exportID.UUID(), time.Now(), time.Now(),
-		uuid.New(), "users", "csv", domain.ExportStatusProcessing, nil, nil,
+		uuid.New(), "users", "csv", exportentity.ExportStatusProcessing, nil, nil,
 	)
 
 	repo := &mockWriteRepo{
-		findByIDFn: func(_ context.Context, id domain.DataExportID) (*domain.DataExport, error) {
+		findByIDFn: func(_ context.Context, id exportentity.DataExportID) (*exportentity.DataExport, error) {
 			if id == exportID {
 				return existing, nil
 			}
-			return nil, domain.ErrDataExportNotFound
+			return nil, exportentity.ErrDataExportNotFound
 		},
 	}
 	eb := &mockEventBus{}
 	l := &mockLogger{}
 	h := command.NewUpdateDataExportHandler(repo, eb, l)
 
-	status := domain.ExportStatusCompleted
+	status := exportentity.ExportStatusCompleted
 	fileURL := "https://example.com/export.csv"
 	cmd := command.UpdateDataExportCommand{
-		ID:      domain.DataExportID(exportID),
+		ID:      exportentity.DataExportID(exportID),
 		Status:  &status,
 		FileURL: &fileURL,
 	}
 
 	err := h.Handle(context.Background(), cmd)
 	require.NoError(t, err)
-	if repo.updatedEntity.Status() != domain.ExportStatusCompleted {
+	if repo.updatedEntity.Status() != exportentity.ExportStatusCompleted {
 		t.Fatalf("expected status COMPLETED, got %s", repo.updatedEntity.Status())
 	}
 	if repo.updatedEntity.FileURL() == nil || *repo.updatedEntity.FileURL() != fileURL {
@@ -96,35 +96,35 @@ func TestUpdateDataExportHandler_StatusCompleted(t *testing.T) {
 func TestUpdateDataExportHandler_StatusFailed(t *testing.T) {
 	t.Parallel()
 
-	exportID := domain.NewDataExportID()
-	existing := domain.ReconstructDataExport(
+	exportID := exportentity.NewDataExportID()
+	existing := exportentity.ReconstructDataExport(
 		exportID.UUID(), time.Now(), time.Now(),
-		uuid.New(), "orders", "xlsx", domain.ExportStatusProcessing, nil, nil,
+		uuid.New(), "orders", "xlsx", exportentity.ExportStatusProcessing, nil, nil,
 	)
 
 	repo := &mockWriteRepo{
-		findByIDFn: func(_ context.Context, id domain.DataExportID) (*domain.DataExport, error) {
+		findByIDFn: func(_ context.Context, id exportentity.DataExportID) (*exportentity.DataExport, error) {
 			if id == exportID {
 				return existing, nil
 			}
-			return nil, domain.ErrDataExportNotFound
+			return nil, exportentity.ErrDataExportNotFound
 		},
 	}
 	eb := &mockEventBus{}
 	l := &mockLogger{}
 	h := command.NewUpdateDataExportHandler(repo, eb, l)
 
-	status := domain.ExportStatusFailed
+	status := exportentity.ExportStatusFailed
 	errMsg := "disk full"
 	cmd := command.UpdateDataExportCommand{
-		ID:     domain.DataExportID(exportID),
+		ID:     exportentity.DataExportID(exportID),
 		Status: &status,
 		Error:  &errMsg,
 	}
 
 	err := h.Handle(context.Background(), cmd)
 	require.NoError(t, err)
-	if repo.updatedEntity.Status() != domain.ExportStatusFailed {
+	if repo.updatedEntity.Status() != exportentity.ExportStatusFailed {
 		t.Fatalf("expected status FAILED, got %s", repo.updatedEntity.Status())
 	}
 	if repo.updatedEntity.Error() == nil || *repo.updatedEntity.Error() != errMsg {
@@ -140,9 +140,9 @@ func TestUpdateDataExportHandler_NotFound(t *testing.T) {
 	l := &mockLogger{}
 	h := command.NewUpdateDataExportHandler(repo, eb, l)
 
-	status := domain.ExportStatusProcessing
+	status := exportentity.ExportStatusProcessing
 	cmd := command.UpdateDataExportCommand{
-		ID:     domain.DataExportID(uuid.New()),
+		ID:     exportentity.DataExportID(uuid.New()),
 		Status: &status,
 	}
 
@@ -150,7 +150,7 @@ func TestUpdateDataExportHandler_NotFound(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
-	if !errors.Is(err, domain.ErrDataExportNotFound) {
+	if !errors.Is(err, exportentity.ErrDataExportNotFound) {
 		t.Fatalf("expected ErrDataExportNotFound, got %v", err)
 	}
 }
@@ -158,21 +158,21 @@ func TestUpdateDataExportHandler_NotFound(t *testing.T) {
 func TestUpdateDataExportHandler_RepoUpdateError(t *testing.T) {
 	t.Parallel()
 
-	exportID := domain.NewDataExportID()
-	existing := domain.ReconstructDataExport(
+	exportID := exportentity.NewDataExportID()
+	existing := exportentity.ReconstructDataExport(
 		exportID.UUID(), time.Now(), time.Now(),
-		uuid.New(), "users", "csv", domain.ExportStatusPending, nil, nil,
+		uuid.New(), "users", "csv", exportentity.ExportStatusPending, nil, nil,
 	)
 	repoErr := errors.New("update failed")
 
 	repo := &mockWriteRepo{
-		findByIDFn: func(_ context.Context, id domain.DataExportID) (*domain.DataExport, error) {
+		findByIDFn: func(_ context.Context, id exportentity.DataExportID) (*exportentity.DataExport, error) {
 			if id == exportID {
 				return existing, nil
 			}
-			return nil, domain.ErrDataExportNotFound
+			return nil, exportentity.ErrDataExportNotFound
 		},
-		updateFn: func(_ context.Context, _ *domain.DataExport) error {
+		updateFn: func(_ context.Context, _ *exportentity.DataExport) error {
 			return repoErr
 		},
 	}
@@ -180,9 +180,9 @@ func TestUpdateDataExportHandler_RepoUpdateError(t *testing.T) {
 	l := &mockLogger{}
 	h := command.NewUpdateDataExportHandler(repo, eb, l)
 
-	status := domain.ExportStatusProcessing
+	status := exportentity.ExportStatusProcessing
 	cmd := command.UpdateDataExportCommand{
-		ID:     domain.DataExportID(exportID),
+		ID:     exportentity.DataExportID(exportID),
 		Status: &status,
 	}
 
@@ -198,29 +198,29 @@ func TestUpdateDataExportHandler_RepoUpdateError(t *testing.T) {
 func TestUpdateDataExportHandler_NilStatus(t *testing.T) {
 	t.Parallel()
 
-	exportID := domain.NewDataExportID()
-	existing := domain.ReconstructDataExport(
+	exportID := exportentity.NewDataExportID()
+	existing := exportentity.ReconstructDataExport(
 		exportID.UUID(), time.Now(), time.Now(),
-		uuid.New(), "users", "csv", domain.ExportStatusPending, nil, nil,
+		uuid.New(), "users", "csv", exportentity.ExportStatusPending, nil, nil,
 	)
 
 	repo := &mockWriteRepo{
-		findByIDFn: func(_ context.Context, id domain.DataExportID) (*domain.DataExport, error) {
+		findByIDFn: func(_ context.Context, id exportentity.DataExportID) (*exportentity.DataExport, error) {
 			if id == exportID {
 				return existing, nil
 			}
-			return nil, domain.ErrDataExportNotFound
+			return nil, exportentity.ErrDataExportNotFound
 		},
 	}
 	eb := &mockEventBus{}
 	l := &mockLogger{}
 	h := command.NewUpdateDataExportHandler(repo, eb, l)
 
-	cmd := command.UpdateDataExportCommand{ID: domain.DataExportID(exportID)}
+	cmd := command.UpdateDataExportCommand{ID: exportentity.DataExportID(exportID)}
 
 	err := h.Handle(context.Background(), cmd)
 	require.NoError(t, err)
-	if repo.updatedEntity.Status() != domain.ExportStatusPending {
+	if repo.updatedEntity.Status() != exportentity.ExportStatusPending {
 		t.Fatalf("expected status unchanged (PENDING), got %s", repo.updatedEntity.Status())
 	}
 }
@@ -228,18 +228,18 @@ func TestUpdateDataExportHandler_NilStatus(t *testing.T) {
 func TestUpdateDataExportHandler_EventBusError(t *testing.T) {
 	t.Parallel()
 
-	exportID := domain.NewDataExportID()
-	existing := domain.ReconstructDataExport(
+	exportID := exportentity.NewDataExportID()
+	existing := exportentity.ReconstructDataExport(
 		exportID.UUID(), time.Now(), time.Now(),
-		uuid.New(), "users", "csv", domain.ExportStatusPending, nil, nil,
+		uuid.New(), "users", "csv", exportentity.ExportStatusPending, nil, nil,
 	)
 
 	repo := &mockWriteRepo{
-		findByIDFn: func(_ context.Context, id domain.DataExportID) (*domain.DataExport, error) {
+		findByIDFn: func(_ context.Context, id exportentity.DataExportID) (*exportentity.DataExport, error) {
 			if id == exportID {
 				return existing, nil
 			}
-			return nil, domain.ErrDataExportNotFound
+			return nil, exportentity.ErrDataExportNotFound
 		},
 	}
 	eb := &mockEventBus{
@@ -250,9 +250,9 @@ func TestUpdateDataExportHandler_EventBusError(t *testing.T) {
 	l := &mockLogger{}
 	h := command.NewUpdateDataExportHandler(repo, eb, l)
 
-	status := domain.ExportStatusProcessing
+	status := exportentity.ExportStatusProcessing
 	cmd := command.UpdateDataExportCommand{
-		ID:     domain.DataExportID(exportID),
+		ID:     exportentity.DataExportID(exportID),
 		Status: &status,
 	}
 

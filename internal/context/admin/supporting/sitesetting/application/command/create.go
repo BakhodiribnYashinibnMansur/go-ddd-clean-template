@@ -3,7 +3,8 @@ package command
 import (
 	"context"
 
-	"gct/internal/context/admin/supporting/sitesetting/domain"
+	siteentity "gct/internal/context/admin/supporting/sitesetting/domain/entity"
+	siterepo "gct/internal/context/admin/supporting/sitesetting/domain/repository"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
@@ -22,14 +23,14 @@ type CreateSiteSettingCommand struct {
 // CreateSiteSettingHandler orchestrates site setting creation through the repository layer.
 // Domain events are published after a successful save; event bus failures are logged but do not roll back the write.
 type CreateSiteSettingHandler struct {
-	repo     domain.SiteSettingRepository
+	repo     siterepo.SiteSettingRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
 // NewCreateSiteSettingHandler creates a new CreateSiteSettingHandler.
 func NewCreateSiteSettingHandler(
-	repo domain.SiteSettingRepository,
+	repo siterepo.SiteSettingRepository,
 	eventBus application.EventBus,
 	logger logger.Log,
 ) *CreateSiteSettingHandler {
@@ -47,7 +48,7 @@ func (h *CreateSiteSettingHandler) Handle(ctx context.Context, cmd CreateSiteSet
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "CreateSiteSetting", "site_setting")()
 
-	s := domain.NewSiteSetting(cmd.Key, cmd.Value, cmd.Type, cmd.Description)
+	s := siteentity.NewSiteSetting(cmd.Key, cmd.Value, cmd.Type, cmd.Description)
 
 	if err := h.repo.Save(ctx, s); err != nil {
 		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateSiteSetting", Entity: "site_setting", Err: err}.KV()...)

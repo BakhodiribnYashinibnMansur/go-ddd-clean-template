@@ -6,7 +6,8 @@ import (
 	"gct/internal/context/content/supporting/announcement"
 	"gct/internal/context/content/supporting/announcement/application/command"
 	"gct/internal/context/content/supporting/announcement/application/query"
-	"gct/internal/context/content/supporting/announcement/domain"
+	announceentity "gct/internal/context/content/supporting/announcement/domain/entity"
+	announcerepo "gct/internal/context/content/supporting/announcement/domain/repository"
 	"gct/internal/kernel/infrastructure/httpx"
 	"gct/internal/kernel/infrastructure/httpx/response"
 	"gct/internal/kernel/infrastructure/logger"
@@ -78,7 +79,7 @@ func (h *Handler) List(ctx *gin.Context) {
 	}
 
 	q := query.ListAnnouncementsQuery{
-		Filter: domain.AnnouncementFilter{Limit: pg.Limit, Offset: pg.Offset},
+		Filter: announcerepo.AnnouncementFilter{Limit: pg.Limit, Offset: pg.Offset},
 	}
 	result, err := h.bc.ListAnnouncements.Handle(ctx.Request.Context(), q)
 	if err != nil {
@@ -102,7 +103,7 @@ func (h *Handler) List(ctx *gin.Context) {
 // @Router /announcements/{id} [get]
 // Get returns a single announcement by ID.
 func (h *Handler) Get(ctx *gin.Context) {
-	id, err := domain.ParseAnnouncementID(ctx.Param("id"))
+	id, err := announceentity.ParseAnnouncementID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
@@ -130,7 +131,7 @@ func (h *Handler) Get(ctx *gin.Context) {
 // @Router /announcements/{id} [patch]
 // Update updates an announcement.
 func (h *Handler) Update(ctx *gin.Context) {
-	id, err := domain.ParseAnnouncementID(ctx.Param("id"))
+	id, err := announceentity.ParseAnnouncementID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
@@ -170,7 +171,7 @@ func (h *Handler) Update(ctx *gin.Context) {
 // @Router /announcements/{id} [delete]
 // Delete deletes an announcement.
 func (h *Handler) Delete(ctx *gin.Context) {
-	id, err := domain.ParseAnnouncementID(ctx.Param("id"))
+	id, err := announceentity.ParseAnnouncementID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return

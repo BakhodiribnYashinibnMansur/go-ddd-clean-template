@@ -9,7 +9,8 @@ import (
 	"gct/internal/context/admin/supporting/sitesetting"
 	"gct/internal/context/admin/supporting/sitesetting/application/command"
 	"gct/internal/context/admin/supporting/sitesetting/application/query"
-	"gct/internal/context/admin/supporting/sitesetting/domain"
+	siteentity "gct/internal/context/admin/supporting/sitesetting/domain/entity"
+	siterepo "gct/internal/context/admin/supporting/sitesetting/domain/repository"
 	"gct/test/integration/common/setup"
 )
 
@@ -36,7 +37,7 @@ func TestIntegration_CreateAndGetSiteSetting(t *testing.T) {
 	}
 
 	result, err := bc.ListSiteSettings.Handle(ctx, query.ListSiteSettingsQuery{
-		Filter: domain.SiteSettingFilter{Limit: 10},
+		Filter: siterepo.SiteSettingFilter{Limit: 10},
 	})
 	if err != nil {
 		t.Fatalf("ListSiteSettings: %v", err)
@@ -53,7 +54,7 @@ func TestIntegration_CreateAndGetSiteSetting(t *testing.T) {
 		t.Errorf("expected value 'My Application', got %s", s.Value)
 	}
 
-	view, err := bc.GetSiteSetting.Handle(ctx, query.GetSiteSettingQuery{ID: domain.SiteSettingID(s.ID)})
+	view, err := bc.GetSiteSetting.Handle(ctx, query.GetSiteSettingQuery{ID: siteentity.SiteSettingID(s.ID)})
 	if err != nil {
 		t.Fatalf("GetSiteSetting: %v", err)
 	}
@@ -78,9 +79,9 @@ func TestIntegration_UpdateSiteSetting(t *testing.T) {
 	}
 
 	list, _ := bc.ListSiteSettings.Handle(ctx, query.ListSiteSettingsQuery{
-		Filter: domain.SiteSettingFilter{Limit: 10},
+		Filter: siterepo.SiteSettingFilter{Limit: 10},
 	})
-	sID := domain.SiteSettingID(list.Settings[0].ID)
+	sID := siteentity.SiteSettingID(list.Settings[0].ID)
 
 	newValue := "true"
 	err = bc.UpdateSiteSetting.Handle(ctx, command.UpdateSiteSettingCommand{
@@ -113,9 +114,9 @@ func TestIntegration_DeleteSiteSetting(t *testing.T) {
 	}
 
 	list, _ := bc.ListSiteSettings.Handle(ctx, query.ListSiteSettingsQuery{
-		Filter: domain.SiteSettingFilter{Limit: 10},
+		Filter: siterepo.SiteSettingFilter{Limit: 10},
 	})
-	sID := domain.SiteSettingID(list.Settings[0].ID)
+	sID := siteentity.SiteSettingID(list.Settings[0].ID)
 
 	err = bc.DeleteSiteSetting.Handle(ctx, command.DeleteSiteSettingCommand{ID: sID})
 	if err != nil {
@@ -123,7 +124,7 @@ func TestIntegration_DeleteSiteSetting(t *testing.T) {
 	}
 
 	list2, _ := bc.ListSiteSettings.Handle(ctx, query.ListSiteSettingsQuery{
-		Filter: domain.SiteSettingFilter{Limit: 10},
+		Filter: siterepo.SiteSettingFilter{Limit: 10},
 	})
 	if list2.Total != 0 {
 		t.Errorf("expected 0 site settings after delete, got %d", list2.Total)

@@ -7,7 +7,7 @@ import (
 
 	shared "gct/internal/kernel/domain"
 
-	"gct/internal/context/content/supporting/announcement/domain"
+	announceentity "gct/internal/context/content/supporting/announcement/domain/entity"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -16,18 +16,18 @@ import (
 func TestUpdateAnnouncementHandler_Handle(t *testing.T) {
 	t.Parallel()
 
-	a, _ := domain.NewAnnouncement(
+	a, _ := announceentity.NewAnnouncement(
 		shared.Lang{Uz: "old", Ru: "old", En: "old"},
 		shared.Lang{Uz: "old", Ru: "old", En: "old"},
 		1, nil, nil,
 	)
 
 	repo := &mockAnnouncementRepo{
-		findFn: func(_ context.Context, id domain.AnnouncementID) (*domain.Announcement, error) {
+		findFn: func(_ context.Context, id announceentity.AnnouncementID) (*announceentity.Announcement, error) {
 			if id == a.TypedID() {
 				return a, nil
 			}
-			return nil, domain.ErrAnnouncementNotFound
+			return nil, announceentity.ErrAnnouncementNotFound
 		},
 	}
 	eb := &mockEventBus{}
@@ -36,7 +36,7 @@ func TestUpdateAnnouncementHandler_Handle(t *testing.T) {
 	newTitle := shared.Lang{Uz: "new_uz", Ru: "new_ru", En: "new_en"}
 	newPriority := 5
 	cmd := UpdateAnnouncementCommand{
-		ID:       domain.AnnouncementID(a.ID()),
+		ID:       announceentity.AnnouncementID(a.ID()),
 		Title:    &newTitle,
 		Priority: &newPriority,
 	}
@@ -57,14 +57,14 @@ func TestUpdateAnnouncementHandler_Handle(t *testing.T) {
 func TestUpdateAnnouncementHandler_WithPublish(t *testing.T) {
 	t.Parallel()
 
-	a, _ := domain.NewAnnouncement(
+	a, _ := announceentity.NewAnnouncement(
 		shared.Lang{Uz: "t", Ru: "t", En: "t"},
 		shared.Lang{Uz: "c", Ru: "c", En: "c"},
 		1, nil, nil,
 	)
 
 	repo := &mockAnnouncementRepo{
-		findFn: func(_ context.Context, id domain.AnnouncementID) (*domain.Announcement, error) {
+		findFn: func(_ context.Context, id announceentity.AnnouncementID) (*announceentity.Announcement, error) {
 			return a, nil
 		},
 	}
@@ -72,7 +72,7 @@ func TestUpdateAnnouncementHandler_WithPublish(t *testing.T) {
 	handler := NewUpdateAnnouncementHandler(repo, eb, &mockLogger{})
 
 	cmd := UpdateAnnouncementCommand{
-		ID:      domain.AnnouncementID(a.ID()),
+		ID:      announceentity.AnnouncementID(a.ID()),
 		Publish: true,
 	}
 	err := handler.Handle(context.Background(), cmd)
@@ -100,7 +100,7 @@ func TestUpdateAnnouncementHandler_AlreadyPublished(t *testing.T) {
 	t.Parallel()
 
 	now := time.Now()
-	a := domain.ReconstructAnnouncement(
+	a := announceentity.ReconstructAnnouncement(
 		uuid.New(), time.Now(), time.Now(),
 		shared.Lang{Uz: "t", Ru: "t", En: "t"},
 		shared.Lang{Uz: "c", Ru: "c", En: "c"},
@@ -108,7 +108,7 @@ func TestUpdateAnnouncementHandler_AlreadyPublished(t *testing.T) {
 	)
 
 	repo := &mockAnnouncementRepo{
-		findFn: func(_ context.Context, _ domain.AnnouncementID) (*domain.Announcement, error) {
+		findFn: func(_ context.Context, _ announceentity.AnnouncementID) (*announceentity.Announcement, error) {
 			return a, nil
 		},
 	}
@@ -116,7 +116,7 @@ func TestUpdateAnnouncementHandler_AlreadyPublished(t *testing.T) {
 	handler := NewUpdateAnnouncementHandler(repo, eb, &mockLogger{})
 
 	cmd := UpdateAnnouncementCommand{
-		ID:      domain.AnnouncementID(a.ID()),
+		ID:      announceentity.AnnouncementID(a.ID()),
 		Publish: true,
 	}
 	err := handler.Handle(context.Background(), cmd)
@@ -135,7 +135,7 @@ func TestUpdateAnnouncementHandler_NotFound(t *testing.T) {
 	repo := &mockAnnouncementRepo{}
 	handler := NewUpdateAnnouncementHandler(repo, &mockEventBus{}, &mockLogger{})
 
-	err := handler.Handle(context.Background(), UpdateAnnouncementCommand{ID: domain.NewAnnouncementID()})
+	err := handler.Handle(context.Background(), UpdateAnnouncementCommand{ID: announceentity.NewAnnouncementID()})
 	if err == nil {
 		t.Fatal("expected error for not found")
 	}

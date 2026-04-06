@@ -4,7 +4,8 @@ import (
 	"context"
 	"time"
 
-	"gct/internal/context/content/supporting/announcement/domain"
+	announceentity "gct/internal/context/content/supporting/announcement/domain/entity"
+	announcerepo "gct/internal/context/content/supporting/announcement/domain/repository"
 	"gct/internal/kernel/consts"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -35,7 +36,7 @@ func NewAnnouncementReadRepo(pool *pgxpool.Pool) *AnnouncementReadRepo {
 }
 
 // FindByID returns a single AnnouncementView by ID.
-func (r *AnnouncementReadRepo) FindByID(ctx context.Context, id domain.AnnouncementID) (result *domain.AnnouncementView, err error) {
+func (r *AnnouncementReadRepo) FindByID(ctx context.Context, id announceentity.AnnouncementID) (result *announcerepo.AnnouncementView, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "AnnouncementReadRepo.FindByID")
 	defer func() { end(err) }()
 
@@ -53,7 +54,7 @@ func (r *AnnouncementReadRepo) FindByID(ctx context.Context, id domain.Announcem
 }
 
 // List returns a paginated list of AnnouncementView with optional filters.
-func (r *AnnouncementReadRepo) List(ctx context.Context, filter domain.AnnouncementFilter) (views []*domain.AnnouncementView, total int64, err error) {
+func (r *AnnouncementReadRepo) List(ctx context.Context, filter announcerepo.AnnouncementFilter) (views []*announcerepo.AnnouncementView, total int64, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "AnnouncementReadRepo.List")
 	defer func() { end(err) }()
 
@@ -110,7 +111,7 @@ func (r *AnnouncementReadRepo) List(ctx context.Context, filter domain.Announcem
 	return views, total, nil
 }
 
-func scanAnnouncementView(row pgx.Row) (*domain.AnnouncementView, error) {
+func scanAnnouncementView(row pgx.Row) (*announcerepo.AnnouncementView, error) {
 	var (
 		id        uuid.UUID
 		title     string
@@ -128,8 +129,8 @@ func scanAnnouncementView(row pgx.Row) (*domain.AnnouncementView, error) {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 	_ = aType
-	return &domain.AnnouncementView{
-		ID:      domain.AnnouncementID(id),
+	return &announcerepo.AnnouncementView{
+		ID:      announceentity.AnnouncementID(id),
 		TitleUz: title, TitleRu: title, TitleEn: title,
 		ContentUz: content, ContentRu: content, ContentEn: content,
 		Published: isActive,
@@ -141,7 +142,7 @@ func scanAnnouncementView(row pgx.Row) (*domain.AnnouncementView, error) {
 	}, nil
 }
 
-func scanAnnouncementViewFromRows(rows pgx.Rows) (*domain.AnnouncementView, error) {
+func scanAnnouncementViewFromRows(rows pgx.Rows) (*announcerepo.AnnouncementView, error) {
 	var (
 		id        uuid.UUID
 		title     string
@@ -159,8 +160,8 @@ func scanAnnouncementViewFromRows(rows pgx.Rows) (*domain.AnnouncementView, erro
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 	_ = aType
-	return &domain.AnnouncementView{
-		ID:      domain.AnnouncementID(id),
+	return &announcerepo.AnnouncementView{
+		ID:      announceentity.AnnouncementID(id),
 		TitleUz: title, TitleRu: title, TitleEn: title,
 		ContentUz: content, ContentRu: content, ContentEn: content,
 		Published: isActive,

@@ -6,30 +6,32 @@ import (
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 
-	appdto "gct/internal/context/ops/generic/ratelimit/application"
-	"gct/internal/context/ops/generic/ratelimit/domain"
+	"gct/internal/context/ops/generic/ratelimit/application/dto"
+	ratelimitrepo "gct/internal/context/ops/generic/ratelimit/domain/repository"
 	"gct/internal/kernel/infrastructure/pgxutil"
+
+	"github.com/google/uuid"
 )
 
 // ListRateLimitsQuery holds the input for listing rate limits.
 type ListRateLimitsQuery struct {
-	Filter domain.RateLimitFilter
+	Filter ratelimitrepo.RateLimitFilter
 }
 
 // ListRateLimitsResult holds the output of the list rate limits query.
 type ListRateLimitsResult struct {
-	RateLimits []*appdto.RateLimitView
+	RateLimits []*dto.RateLimitView
 	Total      int64
 }
 
 // ListRateLimitsHandler handles the ListRateLimitsQuery.
 type ListRateLimitsHandler struct {
-	readRepo domain.RateLimitReadRepository
+	readRepo ratelimitrepo.RateLimitReadRepository
 	logger   logger.Log
 }
 
 // NewListRateLimitsHandler creates a new ListRateLimitsHandler.
-func NewListRateLimitsHandler(readRepo domain.RateLimitReadRepository, l logger.Log) *ListRateLimitsHandler {
+func NewListRateLimitsHandler(readRepo ratelimitrepo.RateLimitReadRepository, l logger.Log) *ListRateLimitsHandler {
 	return &ListRateLimitsHandler{readRepo: readRepo, logger: l}
 }
 
@@ -45,10 +47,10 @@ func (h *ListRateLimitsHandler) Handle(ctx context.Context, q ListRateLimitsQuer
 		return nil, apperrors.MapToServiceError(err)
 	}
 
-	items := make([]*appdto.RateLimitView, len(views))
+	items := make([]*dto.RateLimitView, len(views))
 	for i, v := range views {
-		items[i] = &appdto.RateLimitView{
-			ID:                v.ID,
+		items[i] = &dto.RateLimitView{
+			ID:                uuid.UUID(v.ID),
 			Name:              v.Name,
 			Rule:              v.Rule,
 			RequestsPerWindow: v.RequestsPerWindow,

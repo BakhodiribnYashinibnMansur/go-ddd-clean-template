@@ -3,7 +3,8 @@ package command
 import (
 	"context"
 
-	"gct/internal/context/content/generic/translation/domain"
+	translationentity "gct/internal/context/content/generic/translation/domain/entity"
+	translationrepo "gct/internal/context/content/generic/translation/domain/repository"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -12,19 +13,19 @@ import (
 // DeleteTranslationCommand represents an intent to permanently remove a translation entry.
 // Once deleted, any UI referencing this key+language will fall back to the default locale or show a missing-key placeholder.
 type DeleteTranslationCommand struct {
-	ID domain.TranslationID
+	ID translationentity.TranslationID
 }
 
 // DeleteTranslationHandler performs hard-delete of translations through the repository.
 // No domain events are emitted — callers needing cache invalidation should handle that separately.
 type DeleteTranslationHandler struct {
-	repo   domain.TranslationRepository
+	repo   translationrepo.TranslationRepository
 	logger logger.Log
 }
 
 // NewDeleteTranslationHandler creates a new DeleteTranslationHandler.
 func NewDeleteTranslationHandler(
-	repo domain.TranslationRepository,
+	repo translationrepo.TranslationRepository,
 	logger logger.Log,
 ) *DeleteTranslationHandler {
 	return &DeleteTranslationHandler{

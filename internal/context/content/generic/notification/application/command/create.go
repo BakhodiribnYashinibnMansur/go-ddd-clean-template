@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"gct/internal/context/content/generic/notification/domain"
+	notifentity "gct/internal/context/content/generic/notification/domain/entity"
+	notifrepo "gct/internal/context/content/generic/notification/domain/repository"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
@@ -23,14 +24,14 @@ type CreateCommand struct {
 
 // CreateHandler handles the CreateCommand.
 type CreateHandler struct {
-	repo     domain.NotificationRepository
+	repo     notifrepo.NotificationRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
 // NewCreateHandler creates a new CreateHandler.
 func NewCreateHandler(
-	repo domain.NotificationRepository,
+	repo notifrepo.NotificationRepository,
 	eventBus application.EventBus,
 	logger logger.Log,
 ) *CreateHandler {
@@ -47,7 +48,7 @@ func (h *CreateHandler) Handle(ctx context.Context, cmd CreateCommand) (err erro
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "CreateNotification", "notification")()
 
-	n, err := domain.NewNotification(cmd.UserID, cmd.Title, cmd.Message, cmd.Type)
+	n, err := notifentity.NewNotification(cmd.UserID, cmd.Title, cmd.Message, cmd.Type)
 	if err != nil {
 		return fmt.Errorf("create_notification: %w", err)
 	}

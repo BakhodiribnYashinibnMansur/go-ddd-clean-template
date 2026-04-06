@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"gct/internal/context/admin/supporting/errorcode/domain"
+	errcodeentity "gct/internal/context/admin/supporting/errorcode/domain/entity"
 
 	"github.com/google/uuid"
 )
@@ -20,25 +20,25 @@ type errorErrorCodeRepo struct {
 	saveErr   error
 	updateErr error
 	deleteErr error
-	findFn    func(ctx context.Context, id domain.ErrorCodeID) (*domain.ErrorCode, error)
+	findFn    func(ctx context.Context, id errcodeentity.ErrorCodeID) (*errcodeentity.ErrorCode, error)
 }
 
-func (m *errorErrorCodeRepo) Save(_ context.Context, _ *domain.ErrorCode) error {
+func (m *errorErrorCodeRepo) Save(_ context.Context, _ *errcodeentity.ErrorCode) error {
 	return m.saveErr
 }
 
-func (m *errorErrorCodeRepo) FindByID(ctx context.Context, id domain.ErrorCodeID) (*domain.ErrorCode, error) {
+func (m *errorErrorCodeRepo) FindByID(ctx context.Context, id errcodeentity.ErrorCodeID) (*errcodeentity.ErrorCode, error) {
 	if m.findFn != nil {
 		return m.findFn(ctx, id)
 	}
-	return nil, domain.ErrErrorCodeNotFound
+	return nil, errcodeentity.ErrErrorCodeNotFound
 }
 
-func (m *errorErrorCodeRepo) Update(_ context.Context, _ *domain.ErrorCode) error {
+func (m *errorErrorCodeRepo) Update(_ context.Context, _ *errcodeentity.ErrorCode) error {
 	return m.updateErr
 }
 
-func (m *errorErrorCodeRepo) Delete(_ context.Context, _ domain.ErrorCodeID) error {
+func (m *errorErrorCodeRepo) Delete(_ context.Context, _ errcodeentity.ErrorCodeID) error {
 	return m.deleteErr
 }
 
@@ -61,16 +61,16 @@ func TestCreateErrorCodeHandler_RepoError(t *testing.T) {
 func TestUpdateErrorCodeHandler_RepoUpdateError(t *testing.T) {
 	t.Parallel()
 
-	ec := domain.NewErrorCode("ERR", "msg", 500, "c", "s", false, 0, "")
+	ec := errcodeentity.NewErrorCode("ERR", "msg", 500, "c", "s", false, 0, "")
 
 	repo := &errorErrorCodeRepo{
-		findFn:    func(_ context.Context, _ domain.ErrorCodeID) (*domain.ErrorCode, error) { return ec, nil },
+		findFn:    func(_ context.Context, _ errcodeentity.ErrorCodeID) (*errcodeentity.ErrorCode, error) { return ec, nil },
 		updateErr: errRepoUpdate,
 	}
 	handler := NewUpdateErrorCodeHandler(repo, &mockEventBus{}, &mockLogger{})
 
 	err := handler.Handle(context.Background(), UpdateErrorCodeCommand{
-		ID: domain.ErrorCodeID(ec.ID()), Message: "m", HTTPStatus: 500, Category: "c", Severity: "s",
+		ID: errcodeentity.ErrorCodeID(ec.ID()), Message: "m", HTTPStatus: 500, Category: "c", Severity: "s",
 	})
 	if !errors.Is(err, errRepoUpdate) {
 		t.Fatalf("expected errRepoUpdate, got: %v", err)
@@ -80,14 +80,14 @@ func TestUpdateErrorCodeHandler_RepoUpdateError(t *testing.T) {
 func TestDeleteErrorCodeHandler_RepoError(t *testing.T) {
 	t.Parallel()
 
-	ec := domain.NewErrorCode("ERR_DEL", "msg", 500, "c", "s", false, 0, "")
+	ec := errcodeentity.NewErrorCode("ERR_DEL", "msg", 500, "c", "s", false, 0, "")
 	repo := &errorErrorCodeRepo{
-		findFn:    func(_ context.Context, _ domain.ErrorCodeID) (*domain.ErrorCode, error) { return ec, nil },
+		findFn:    func(_ context.Context, _ errcodeentity.ErrorCodeID) (*errcodeentity.ErrorCode, error) { return ec, nil },
 		deleteErr: errRepoDelete,
 	}
 	handler := NewDeleteErrorCodeHandler(repo, &mockEventBus{}, &mockLogger{})
 
-	err := handler.Handle(context.Background(), DeleteErrorCodeCommand{ID: domain.ErrorCodeID(ec.ID())})
+	err := handler.Handle(context.Background(), DeleteErrorCodeCommand{ID: errcodeentity.ErrorCodeID(ec.ID())})
 	if !errors.Is(err, errRepoDelete) {
 		t.Fatalf("expected errRepoDelete, got: %v", err)
 	}
@@ -99,8 +99,8 @@ func TestDeleteErrorCodeHandler_FindByIDError(t *testing.T) {
 	repo := &errorErrorCodeRepo{} // findFn is nil, returns ErrErrorCodeNotFound
 	handler := NewDeleteErrorCodeHandler(repo, &mockEventBus{}, &mockLogger{})
 
-	err := handler.Handle(context.Background(), DeleteErrorCodeCommand{ID: domain.ErrorCodeID(uuid.New())})
-	if !errors.Is(err, domain.ErrErrorCodeNotFound) {
+	err := handler.Handle(context.Background(), DeleteErrorCodeCommand{ID: errcodeentity.ErrorCodeID(uuid.New())})
+	if !errors.Is(err, errcodeentity.ErrErrorCodeNotFound) {
 		t.Fatalf("expected ErrErrorCodeNotFound, got: %v", err)
 	}
 }

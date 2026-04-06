@@ -6,30 +6,32 @@ import (
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 
-	appdto "gct/internal/context/ops/supporting/iprule/application"
-	"gct/internal/context/ops/supporting/iprule/domain"
+	"gct/internal/context/ops/supporting/iprule/application/dto"
+	iprulerepo "gct/internal/context/ops/supporting/iprule/domain/repository"
 	"gct/internal/kernel/infrastructure/pgxutil"
+
+	"github.com/google/uuid"
 )
 
 // ListIPRulesQuery holds the input for listing IP rules.
 type ListIPRulesQuery struct {
-	Filter domain.IPRuleFilter
+	Filter iprulerepo.IPRuleFilter
 }
 
 // ListIPRulesResult holds the output of the list IP rules query.
 type ListIPRulesResult struct {
-	IPRules []*appdto.IPRuleView
+	IPRules []*dto.IPRuleView
 	Total   int64
 }
 
 // ListIPRulesHandler handles the ListIPRulesQuery.
 type ListIPRulesHandler struct {
-	readRepo domain.IPRuleReadRepository
+	readRepo iprulerepo.IPRuleReadRepository
 	logger   logger.Log
 }
 
 // NewListIPRulesHandler creates a new ListIPRulesHandler.
-func NewListIPRulesHandler(readRepo domain.IPRuleReadRepository, l logger.Log) *ListIPRulesHandler {
+func NewListIPRulesHandler(readRepo iprulerepo.IPRuleReadRepository, l logger.Log) *ListIPRulesHandler {
 	return &ListIPRulesHandler{readRepo: readRepo, logger: l}
 }
 
@@ -45,10 +47,10 @@ func (h *ListIPRulesHandler) Handle(ctx context.Context, q ListIPRulesQuery) (re
 		return nil, apperrors.MapToServiceError(err)
 	}
 
-	items := make([]*appdto.IPRuleView, len(views))
+	items := make([]*dto.IPRuleView, len(views))
 	for i, v := range views {
-		items[i] = &appdto.IPRuleView{
-			ID:        v.ID,
+		items[i] = &dto.IPRuleView{
+			ID:        uuid.UUID(v.ID),
 			IPAddress: v.IPAddress,
 			Action:    v.Action,
 			Reason:    v.Reason,

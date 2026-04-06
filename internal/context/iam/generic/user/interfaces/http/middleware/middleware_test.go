@@ -13,7 +13,8 @@ import (
 
 	"gct/config"
 	"gct/internal/context/iam/generic/user/application/query"
-	"gct/internal/context/iam/generic/user/domain"
+	userentity "gct/internal/context/iam/generic/user/domain/entity"
+	userrepo "gct/internal/context/iam/generic/user/domain/repository"
 	"gct/internal/kernel/consts"
 	shared "gct/internal/kernel/domain"
 	"gct/internal/kernel/infrastructure/security/audit"
@@ -52,7 +53,7 @@ func (nopLog) Errorc(_ context.Context, _ string, _ ...any) {}
 func (nopLog) Fatalc(_ context.Context, _ string, _ ...any) {}
 
 // ---------------------------------------------------------------------------
-// fakeReadRepo implements domain.UserReadRepository with controllable returns.
+// fakeReadRepo implements userrepo.UserReadRepository with controllable returns.
 // ---------------------------------------------------------------------------
 
 type fakeReadRepo struct {
@@ -62,24 +63,24 @@ type fakeReadRepo struct {
 	userErr error
 }
 
-func (f *fakeReadRepo) FindByID(_ context.Context, _ domain.UserID) (*domain.UserView, error) {
+func (f *fakeReadRepo) FindByID(_ context.Context, _ userentity.UserID) (*userentity.UserView, error) {
 	return nil, nil
 }
 
-func (f *fakeReadRepo) List(_ context.Context, _ domain.UsersFilter) ([]*domain.UserView, int64, error) {
+func (f *fakeReadRepo) List(_ context.Context, _ userentity.UsersFilter) ([]*userentity.UserView, int64, error) {
 	return nil, 0, nil
 }
 
-func (f *fakeReadRepo) FindSessionByID(_ context.Context, _ domain.SessionID) (*shared.AuthSession, error) {
+func (f *fakeReadRepo) FindSessionByID(_ context.Context, _ userentity.SessionID) (*shared.AuthSession, error) {
 	return f.session, f.sessErr
 }
 
-func (f *fakeReadRepo) FindUserForAuth(_ context.Context, _ domain.UserID) (*shared.AuthUser, error) {
+func (f *fakeReadRepo) FindUserForAuth(_ context.Context, _ userentity.UserID) (*shared.AuthUser, error) {
 	return f.user, f.userErr
 }
 
 // Ensure fakeReadRepo satisfies the interface at compile time.
-var _ domain.UserReadRepository = (*fakeReadRepo)(nil)
+var _ userrepo.UserReadRepository = (*fakeReadRepo)(nil)
 
 // ---------------------------------------------------------------------------
 // helpers
@@ -216,8 +217,8 @@ func TestParseAndValidateMetadata_ValidToken(t *testing.T) {
 	repo := &fakeReadRepo{}
 	mw := newTestMiddleware(t, repo, pubKey, issuer)
 
-	userID := domain.NewUserID().String()
-	sessionID := domain.NewSessionID().String()
+	userID := userentity.NewUserID().String()
+	sessionID := userentity.NewSessionID().String()
 
 	tokenStr, err := jwt.GenerateAccessToken(userID, sessionID, issuer, "test-aud", "", privKey, 5*time.Minute)
 	if err != nil {

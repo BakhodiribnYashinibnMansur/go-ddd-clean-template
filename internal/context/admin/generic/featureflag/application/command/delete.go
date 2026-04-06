@@ -3,7 +3,9 @@ package command
 import (
 	"context"
 
-	"gct/internal/context/admin/generic/featureflag/domain"
+	ffentity "gct/internal/context/admin/generic/featureflag/domain/entity"
+	ffevent "gct/internal/context/admin/generic/featureflag/domain/event"
+	ffrepo "gct/internal/context/admin/generic/featureflag/domain/repository"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
@@ -12,19 +14,19 @@ import (
 
 // DeleteCommand represents an intent to permanently remove a feature flag.
 type DeleteCommand struct {
-	ID domain.FeatureFlagID
+	ID ffentity.FeatureFlagID
 }
 
 // DeleteHandler performs hard deletion of a feature flag via the repository.
 type DeleteHandler struct {
-	repo     domain.FeatureFlagRepository
+	repo     ffrepo.FeatureFlagRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
 // NewDeleteHandler wires dependencies for feature flag deletion.
 func NewDeleteHandler(
-	repo domain.FeatureFlagRepository,
+	repo ffrepo.FeatureFlagRepository,
 	eventBus application.EventBus,
 	logger logger.Log,
 ) *DeleteHandler {
@@ -46,7 +48,7 @@ func (h *DeleteHandler) Handle(ctx context.Context, cmd DeleteCommand) (err erro
 		return apperrors.MapToServiceError(err)
 	}
 
-	if err := h.eventBus.Publish(ctx, domain.NewFlagDeleted(cmd.ID.UUID())); err != nil {
+	if err := h.eventBus.Publish(ctx, ffevent.NewFlagDeleted(cmd.ID.UUID())); err != nil {
 		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "DeleteFeatureFlag", Entity: "feature_flag", EntityID: cmd.ID, Err: err}.KV()...)
 	}
 

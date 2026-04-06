@@ -7,7 +7,8 @@ import (
 	"gct/internal/context/ops/supporting/iprule"
 	"gct/internal/context/ops/supporting/iprule/application/command"
 	"gct/internal/context/ops/supporting/iprule/application/query"
-	"gct/internal/context/ops/supporting/iprule/domain"
+	ipruleentity "gct/internal/context/ops/supporting/iprule/domain/entity"
+	iprulerepo "gct/internal/context/ops/supporting/iprule/domain/repository"
 	"gct/internal/kernel/infrastructure/eventbus"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/test/integration/common/setup"
@@ -36,7 +37,7 @@ func TestIntegration_CreateAndGetIPRule(t *testing.T) {
 	}
 
 	result, err := bc.ListIPRules.Handle(ctx, query.ListIPRulesQuery{
-		Filter: domain.IPRuleFilter{Limit: 10},
+		Filter: iprulerepo.IPRuleFilter{Limit: 10},
 	})
 	if err != nil {
 		t.Fatalf("ListIPRules: %v", err)
@@ -53,7 +54,7 @@ func TestIntegration_CreateAndGetIPRule(t *testing.T) {
 		t.Errorf("expected action block, got %s", r.Action)
 	}
 
-	view, err := bc.GetIPRule.Handle(ctx, query.GetIPRuleQuery{ID: domain.IPRuleID(r.ID)})
+	view, err := bc.GetIPRule.Handle(ctx, query.GetIPRuleQuery{ID: ipruleentity.IPRuleID(r.ID)})
 	if err != nil {
 		t.Fatalf("GetIPRule: %v", err)
 	}
@@ -78,9 +79,9 @@ func TestIntegration_UpdateIPRule(t *testing.T) {
 	}
 
 	list, _ := bc.ListIPRules.Handle(ctx, query.ListIPRulesQuery{
-		Filter: domain.IPRuleFilter{Limit: 10},
+		Filter: iprulerepo.IPRuleFilter{Limit: 10},
 	})
-	rID := domain.IPRuleID(list.IPRules[0].ID)
+	rID := ipruleentity.IPRuleID(list.IPRules[0].ID)
 
 	newAction := "block"
 	newReason := "No longer trusted"
@@ -118,9 +119,9 @@ func TestIntegration_DeleteIPRule(t *testing.T) {
 	}
 
 	list, _ := bc.ListIPRules.Handle(ctx, query.ListIPRulesQuery{
-		Filter: domain.IPRuleFilter{Limit: 10},
+		Filter: iprulerepo.IPRuleFilter{Limit: 10},
 	})
-	rID := domain.IPRuleID(list.IPRules[0].ID)
+	rID := ipruleentity.IPRuleID(list.IPRules[0].ID)
 
 	err = bc.DeleteIPRule.Handle(ctx, command.DeleteIPRuleCommand{ID: rID})
 	if err != nil {
@@ -128,7 +129,7 @@ func TestIntegration_DeleteIPRule(t *testing.T) {
 	}
 
 	list2, _ := bc.ListIPRules.Handle(ctx, query.ListIPRulesQuery{
-		Filter: domain.IPRuleFilter{Limit: 10},
+		Filter: iprulerepo.IPRuleFilter{Limit: 10},
 	})
 	if list2.Total != 0 {
 		t.Errorf("expected 0 ip rules after delete, got %d", list2.Total)

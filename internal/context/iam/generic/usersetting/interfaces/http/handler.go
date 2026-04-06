@@ -6,7 +6,8 @@ import (
 	"gct/internal/context/iam/generic/usersetting"
 	"gct/internal/context/iam/generic/usersetting/application/command"
 	"gct/internal/context/iam/generic/usersetting/application/query"
-	"gct/internal/context/iam/generic/usersetting/domain"
+	settingentity "gct/internal/context/iam/generic/usersetting/domain/entity"
+	settingrepo "gct/internal/context/iam/generic/usersetting/domain/repository"
 	"gct/internal/kernel/infrastructure/httpx"
 	"gct/internal/kernel/infrastructure/httpx/response"
 	"gct/internal/kernel/infrastructure/logger"
@@ -76,7 +77,7 @@ func (h *Handler) List(ctx *gin.Context) {
 	}
 
 	q := query.ListUserSettingsQuery{
-		Filter: domain.UserSettingFilter{Limit: pg.Limit, Offset: pg.Offset},
+		Filter: settingrepo.UserSettingFilter{Limit: pg.Limit, Offset: pg.Offset},
 	}
 	result, err := h.bc.ListUserSettings.Handle(ctx.Request.Context(), q)
 	if err != nil {
@@ -100,7 +101,7 @@ func (h *Handler) List(ctx *gin.Context) {
 // @Router /user-settings/{id} [delete]
 // Delete deletes a user setting.
 func (h *Handler) Delete(ctx *gin.Context) {
-	id, err := domain.ParseUserSettingID(ctx.Param("id"))
+	id, err := settingentity.ParseUserSettingID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return

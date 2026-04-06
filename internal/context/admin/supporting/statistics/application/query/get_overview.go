@@ -3,7 +3,7 @@ package query
 import (
 	"context"
 
-	appdto "gct/internal/context/admin/supporting/statistics/application"
+	"gct/internal/context/admin/supporting/statistics/application/dto"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -24,7 +24,7 @@ func NewGetOverviewHandler(repo StatisticsReadRepository, l logger.Log) *GetOver
 }
 
 // Handle executes the GetOverviewQuery and returns an OverviewView.
-func (h *GetOverviewHandler) Handle(ctx context.Context, _ GetOverviewQuery) (_ *appdto.OverviewView, err error) {
+func (h *GetOverviewHandler) Handle(ctx context.Context, _ GetOverviewQuery) (_ *dto.OverviewView, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "GetOverviewHandler.Handle")
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.l, ctx, "GetOverview", "statistics")()

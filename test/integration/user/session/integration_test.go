@@ -2,36 +2,26 @@ package session
 
 import (
 	"context"
-	"crypto/rand"
-	"crypto/rsa"
 	"testing"
-	"time"
 
 	"gct/internal/context/iam/generic/session"
-	sessionapp "gct/internal/context/iam/generic/session/application"
+	sessiondto "gct/internal/context/iam/generic/session/application/dto"
 	sessionquery "gct/internal/context/iam/generic/session/application/query"
-	sessiondomain "gct/internal/context/iam/generic/session/domain"
+	sessionentity "gct/internal/context/iam/generic/session/domain/entity"
 	shared "gct/internal/kernel/domain"
 	"gct/internal/kernel/infrastructure/eventbus"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/context/iam/generic/user"
 	"gct/internal/context/iam/generic/user/application/command"
 	userquery "gct/internal/context/iam/generic/user/application/query"
-	"gct/internal/context/iam/generic/user/domain"
+	userentity "gct/internal/context/iam/generic/user/domain/entity"
 	"gct/test/integration/common/setup"
 )
 
 func newTestJWTConfig(t *testing.T) command.JWTConfig {
 	t.Helper()
-	key, err := rsa.GenerateKey(rand.Reader, 2048)
-	if err != nil {
-		t.Fatalf("rsa.GenerateKey: %v", err)
-	}
 	return command.JWTConfig{
-		PrivateKey: key,
-		Issuer:     "gct-test",
-		AccessTTL:  15 * time.Minute,
-		RefreshTTL: 7 * 24 * time.Hour,
+		Issuer: "gct-test",
 	}
 }
 
@@ -54,10 +44,10 @@ func TestIntegration_ListAndGetSessions(t *testing.T) {
 	}
 
 	list, _ := userBC.ListUsers.Handle(ctx, userquery.ListUsersQuery{
-		Filter: domain.UsersFilter{Pagination: &shared.Pagination{Limit: 10}},
+		Filter: userentity.UsersFilter{Pagination: &shared.Pagination{Limit: 10}},
 	})
 	userID := list.Users[0].ID
-	_ = userBC.ApproveUser.Handle(ctx, command.ApproveUserCommand{ID: domain.UserID(userID)})
+	_ = userBC.ApproveUser.Handle(ctx, command.ApproveUserCommand{ID: userentity.UserID(userID)})
 
 	// Sign in to create a session
 	signInResult, err := userBC.SignIn.Handle(ctx, command.SignInCommand{
@@ -72,9 +62,8 @@ func TestIntegration_ListAndGetSessions(t *testing.T) {
 	}
 
 	// List sessions
-	filterUserID := sessiondomain.UserID(userID)
 	sessions, err := sessionBC.ListSessions.Handle(ctx, sessionquery.ListSessionsQuery{
-		Filter: sessionapp.SessionsFilter{UserID: &filterUserID, Limit: 10},
+		Filter: sessiondto.SessionsFilter{UserID: &userID, Limit: 10},
 	})
 	if err != nil {
 		t.Fatalf("ListSessions: %v", err)
@@ -84,11 +73,11 @@ func TestIntegration_ListAndGetSessions(t *testing.T) {
 	}
 
 	// Get session by ID
-	sess, err := sessionBC.GetSession.Handle(ctx, sessionquery.GetSessionQuery{ID: sessiondomain.SessionID(signInResult.SessionID)})
+	sess, err := sessionBC.GetSession.Handle(ctx, sessionquery.GetSessionQuery{ID: sessionentity.SessionID(signInResult.SessionID)})
 	if err != nil {
 		t.Fatalf("GetSession: %v", err)
 	}
-	if sess.UserID != userID.UUID() {
+	if sess.UserID != userID {
 		t.Errorf("user ID mismatch: %s vs %s", sess.UserID, userID)
 	}
 }

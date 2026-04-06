@@ -161,7 +161,7 @@ func TestListEndpointHistoryHandler_MapsAllFields(t *testing.T) {
 
 	v := result.Entries[0]
 
-	if v.ID != entryID {
+	if v.ID != entryID.UUID() {
 		t.Error("ID mismatch")
 	}
 	if *v.UserID != userID {

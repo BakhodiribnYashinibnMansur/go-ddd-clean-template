@@ -6,7 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"gct/internal/context/iam/generic/user/domain"
+	userentity "gct/internal/context/iam/generic/user/domain/entity"
+	userrepo "gct/internal/context/iam/generic/user/domain/repository"
+	usersvc "gct/internal/context/iam/generic/user/domain/service"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
@@ -68,10 +70,10 @@ type JWTConfig struct {
 
 // SignInHandler handles the SignInCommand.
 type SignInHandler struct {
-	repo        domain.UserRepository
+	repo        userrepo.UserRepository
 	eventBus    application.EventBus
 	logger      commandLogger
-	signIn      domain.SignInService
+	signIn      usersvc.SignInService
 	jwtConfig   JWTConfig
 	maxSessions func(ctx context.Context) int
 
@@ -101,7 +103,7 @@ type SignInSecurityDeps struct {
 // keeps the User BC free of a cross-BC import on SiteSetting — the caller
 // wires the closure in bootstrap.
 func NewSignInHandler(
-	repo domain.UserRepository,
+	repo userrepo.UserRepository,
 	eventBus application.EventBus,
 	logger commandLogger,
 	jwtCfg JWTConfig,
@@ -117,7 +119,7 @@ func NewSignInHandler(
 		repo:        repo,
 		eventBus:    eventBus,
 		logger:      logger,
-		signIn:      domain.SignInService{},
+		signIn:      usersvc.SignInService{},
 		jwtConfig:   jwtCfg,
 		maxSessions: fn,
 		auditLogger: audit.NoopLogger{},
@@ -178,7 +180,7 @@ func (h *SignInHandler) Handle(ctx context.Context, cmd SignInCommand) (result *
 		return nil, apperrors.MapToServiceError(err)
 	}
 
-	deviceType := domain.SessionDeviceType(strings.ToUpper(cmd.DeviceType))
+	deviceType := userentity.SessionDeviceType(strings.ToUpper(cmd.DeviceType))
 
 	session, err := h.signIn.SignIn(user, cmd.Password, deviceType, cmd.IP, cmd.UserAgent, resolved.Name, cmd.DeviceFingerprint)
 	if err != nil {
@@ -197,7 +199,7 @@ func (h *SignInHandler) Handle(ctx context.Context, cmd SignInCommand) (result *
 		maxN = defaultMaxSessions
 	}
 	for i := 0; i < 5; i++ {
-		count, cerr := h.repo.ActiveSessionCount(ctx, domain.UserID(user.ID()))
+		count, cerr := h.repo.ActiveSessionCount(ctx, userentity.UserID(user.ID()))
 		if cerr != nil {
 			h.logger.Warnc(ctx, "active session count failed",
 				logger.F{Op: "SignIn", Entity: "user", Err: cerr}.KV()...)
@@ -209,7 +211,7 @@ func (h *SignInHandler) Handle(ctx context.Context, cmd SignInCommand) (result *
 		if count < maxN {
 			break
 		}
-		if _, rerr := h.repo.RevokeOldestActiveSession(ctx, domain.UserID(user.ID())); rerr != nil {
+		if _, rerr := h.repo.RevokeOldestActiveSession(ctx, userentity.UserID(user.ID())); rerr != nil {
 			h.logger.Warnc(ctx, "revoke oldest session failed",
 				logger.F{Op: "SignIn", Entity: "user", Err: rerr}.KV()...)
 			break
@@ -298,9 +300,9 @@ func (h *SignInHandler) recordFailedAttempt(ctx context.Context, cmd SignInComma
 
 // findUser looks up a user by phone or email depending on the login format.
 // Returns ErrServiceUnauthorized when user is not found (sign-in should not reveal user existence).
-func (h *SignInHandler) findUser(ctx context.Context, login string) (*domain.User, error) {
+func (h *SignInHandler) findUser(ctx context.Context, login string) (*userentity.User, error) {
 	if strings.Contains(login, "@") {
-		email, err := domain.NewEmail(login)
+		email, err := userentity.NewEmail(login)
 		if err != nil {
 			return nil, apperrors.MapToServiceError(err)
 		}
@@ -314,7 +316,7 @@ func (h *SignInHandler) findUser(ctx context.Context, login string) (*domain.Use
 		return user, nil
 	}
 
-	phone, err := domain.NewPhone(login)
+	phone, err := userentity.NewPhone(login)
 	if err != nil {
 		return nil, apperrors.MapToServiceError(err)
 	}

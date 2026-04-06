@@ -5,15 +5,15 @@ import (
 
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 
-	appdto "gct/internal/context/iam/generic/session/application"
-	"gct/internal/context/iam/generic/session/domain"
+	"gct/internal/context/iam/generic/session/application/dto"
+	"gct/internal/context/iam/generic/session/domain/entity"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // GetSessionQuery holds the input for fetching a single session.
 type GetSessionQuery struct {
-	ID domain.SessionID
+	ID entity.SessionID
 }
 
 // GetSessionHandler handles the GetSessionQuery.
@@ -28,7 +28,7 @@ func NewGetSessionHandler(repo SessionReadRepository, l logger.Log) *GetSessionH
 }
 
 // Handle executes the GetSessionQuery and returns a SessionView.
-func (h *GetSessionHandler) Handle(ctx context.Context, q GetSessionQuery) (_ *appdto.SessionView, err error) {
+func (h *GetSessionHandler) Handle(ctx context.Context, q GetSessionQuery) (_ *dto.SessionView, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "GetSessionHandler.Handle")
 	defer func() { end(err) }()
 

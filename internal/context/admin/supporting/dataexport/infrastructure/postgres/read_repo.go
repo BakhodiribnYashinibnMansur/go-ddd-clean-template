@@ -4,7 +4,8 @@ import (
 	"context"
 	"time"
 
-	"gct/internal/context/admin/supporting/dataexport/domain"
+	exportentity "gct/internal/context/admin/supporting/dataexport/domain/entity"
+	exportrepo "gct/internal/context/admin/supporting/dataexport/domain/repository"
 	"gct/internal/kernel/consts"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -35,7 +36,7 @@ func NewDataExportReadRepo(pool *pgxpool.Pool) *DataExportReadRepo {
 }
 
 // FindByID returns a single DataExportView by its ID.
-func (r *DataExportReadRepo) FindByID(ctx context.Context, id domain.DataExportID) (result *domain.DataExportView, err error) {
+func (r *DataExportReadRepo) FindByID(ctx context.Context, id exportentity.DataExportID) (result *exportrepo.DataExportView, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "DataExportReadRepo.FindByID")
 	defer func() { end(err) }()
 
@@ -53,7 +54,7 @@ func (r *DataExportReadRepo) FindByID(ctx context.Context, id domain.DataExportI
 }
 
 // List returns a paginated list of DataExportView with optional filters.
-func (r *DataExportReadRepo) List(ctx context.Context, filter domain.DataExportFilter) (items []*domain.DataExportView, total int64, err error) {
+func (r *DataExportReadRepo) List(ctx context.Context, filter exportrepo.DataExportFilter) (items []*exportrepo.DataExportView, total int64, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "DataExportReadRepo.List")
 	defer func() { end(err) }()
 
@@ -101,7 +102,7 @@ func (r *DataExportReadRepo) List(ctx context.Context, filter domain.DataExportF
 	}
 	defer rows.Close()
 
-	var views []*domain.DataExportView
+	var views []*exportrepo.DataExportView
 	for rows.Next() {
 		v, err := scanDataExportViewFromRows(rows)
 		if err != nil {
@@ -113,7 +114,7 @@ func (r *DataExportReadRepo) List(ctx context.Context, filter domain.DataExportF
 	return views, total, nil
 }
 
-func applyFilters(conds squirrel.And, filter domain.DataExportFilter) squirrel.And {
+func applyFilters(conds squirrel.And, filter exportrepo.DataExportFilter) squirrel.And {
 	if filter.UserID != nil {
 		conds = append(conds, squirrel.Eq{"created_by": *filter.UserID})
 	}
@@ -126,7 +127,7 @@ func applyFilters(conds squirrel.And, filter domain.DataExportFilter) squirrel.A
 	return conds
 }
 
-func scanDataExportView(row pgx.Row) (*domain.DataExportView, error) {
+func scanDataExportView(row pgx.Row) (*exportrepo.DataExportView, error) {
 	var (
 		id          uuid.UUID
 		dataType    string
@@ -154,8 +155,8 @@ func scanDataExportView(row pgx.Row) (*domain.DataExportView, error) {
 		fileURLPtr = &fileURL
 	}
 
-	return &domain.DataExportView{
-		ID:        domain.DataExportID(id),
+	return &exportrepo.DataExportView{
+		ID:        exportentity.DataExportID(id),
 		UserID:    userID,
 		DataType:  dataType,
 		Format:    "",
@@ -167,7 +168,7 @@ func scanDataExportView(row pgx.Row) (*domain.DataExportView, error) {
 	}, nil
 }
 
-func scanDataExportViewFromRows(rows pgx.Rows) (*domain.DataExportView, error) {
+func scanDataExportViewFromRows(rows pgx.Rows) (*exportrepo.DataExportView, error) {
 	var (
 		id          uuid.UUID
 		dataType    string
@@ -195,8 +196,8 @@ func scanDataExportViewFromRows(rows pgx.Rows) (*domain.DataExportView, error) {
 		fileURLPtr = &fileURL
 	}
 
-	return &domain.DataExportView{
-		ID:        domain.DataExportID(id),
+	return &exportrepo.DataExportView{
+		ID:        exportentity.DataExportID(id),
 		UserID:    userID,
 		DataType:  dataType,
 		Format:    "",

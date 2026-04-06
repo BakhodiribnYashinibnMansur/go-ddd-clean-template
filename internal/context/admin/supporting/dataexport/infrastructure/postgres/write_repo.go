@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"gct/internal/context/admin/supporting/dataexport/domain"
+	exportentity "gct/internal/context/admin/supporting/dataexport/domain/entity"
 	"gct/internal/kernel/consts"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -22,7 +22,7 @@ var writeColumns = []string{
 	"created_by", "created_at", "completed_at",
 }
 
-// DataExportWriteRepo implements domain.DataExportRepository using PostgreSQL.
+// DataExportWriteRepo implements exportentity.DataExportRepository using PostgreSQL.
 type DataExportWriteRepo struct {
 	pool    *pgxpool.Pool
 	builder squirrel.StatementBuilderType
@@ -37,7 +37,7 @@ func NewDataExportWriteRepo(pool *pgxpool.Pool) *DataExportWriteRepo {
 }
 
 // Save inserts a new DataExport aggregate into the database.
-func (r *DataExportWriteRepo) Save(ctx context.Context, de *domain.DataExport) (err error) {
+func (r *DataExportWriteRepo) Save(ctx context.Context, de *exportentity.DataExport) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "DataExportWriteRepo.Save")
 	defer func() { end(err) }()
 
@@ -71,7 +71,7 @@ func (r *DataExportWriteRepo) Save(ctx context.Context, de *domain.DataExport) (
 }
 
 // Update updates an existing DataExport aggregate in the database.
-func (r *DataExportWriteRepo) Update(ctx context.Context, de *domain.DataExport) (err error) {
+func (r *DataExportWriteRepo) Update(ctx context.Context, de *exportentity.DataExport) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "DataExportWriteRepo.Update")
 	defer func() { end(err) }()
 
@@ -98,7 +98,7 @@ func (r *DataExportWriteRepo) Update(ctx context.Context, de *domain.DataExport)
 }
 
 // FindByID retrieves a DataExport aggregate by its ID.
-func (r *DataExportWriteRepo) FindByID(ctx context.Context, id domain.DataExportID) (result *domain.DataExport, err error) {
+func (r *DataExportWriteRepo) FindByID(ctx context.Context, id exportentity.DataExportID) (result *exportentity.DataExport, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "DataExportWriteRepo.FindByID")
 	defer func() { end(err) }()
 
@@ -116,7 +116,7 @@ func (r *DataExportWriteRepo) FindByID(ctx context.Context, id domain.DataExport
 }
 
 // Delete removes a data export by its ID.
-func (r *DataExportWriteRepo) Delete(ctx context.Context, id domain.DataExportID) (err error) {
+func (r *DataExportWriteRepo) Delete(ctx context.Context, id exportentity.DataExportID) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "DataExportWriteRepo.Delete")
 	defer func() { end(err) }()
 
@@ -135,7 +135,7 @@ func (r *DataExportWriteRepo) Delete(ctx context.Context, id domain.DataExportID
 	return nil
 }
 
-func scanDataExport(row pgx.Row) (*domain.DataExport, error) {
+func scanDataExport(row pgx.Row) (*exportentity.DataExport, error) {
 	var (
 		id          uuid.UUID
 		dataType    string
@@ -163,5 +163,5 @@ func scanDataExport(row pgx.Row) (*domain.DataExport, error) {
 		fileURLPtr = &fileURL
 	}
 
-	return domain.ReconstructDataExport(id, createdAt, createdAt, userID, dataType, "", status, fileURLPtr, nil), nil
+	return exportentity.ReconstructDataExport(id, createdAt, createdAt, userID, dataType, "", status, fileURLPtr, nil), nil
 }

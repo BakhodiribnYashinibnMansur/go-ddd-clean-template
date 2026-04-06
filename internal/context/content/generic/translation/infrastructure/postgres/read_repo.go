@@ -3,7 +3,8 @@ package postgres
 import (
 	"context"
 
-	"gct/internal/context/content/generic/translation/domain"
+	translationentity "gct/internal/context/content/generic/translation/domain/entity"
+	translationrepo "gct/internal/context/content/generic/translation/domain/repository"
 	"gct/internal/kernel/consts"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -33,7 +34,7 @@ func NewTranslationReadRepo(pool *pgxpool.Pool) *TranslationReadRepo {
 }
 
 // FindByID returns a single TranslationView by ID.
-func (r *TranslationReadRepo) FindByID(ctx context.Context, id domain.TranslationID) (result *domain.TranslationView, err error) {
+func (r *TranslationReadRepo) FindByID(ctx context.Context, id translationentity.TranslationID) (result *translationrepo.TranslationView, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "TranslationReadRepo.FindByID")
 	defer func() { end(err) }()
 
@@ -51,7 +52,7 @@ func (r *TranslationReadRepo) FindByID(ctx context.Context, id domain.Translatio
 }
 
 // List returns a paginated list of TranslationView with optional filters.
-func (r *TranslationReadRepo) List(ctx context.Context, filter domain.TranslationFilter) (views []*domain.TranslationView, total int64, err error) {
+func (r *TranslationReadRepo) List(ctx context.Context, filter translationrepo.TranslationFilter) (views []*translationrepo.TranslationView, total int64, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "TranslationReadRepo.List")
 	defer func() { end(err) }()
 
@@ -108,28 +109,28 @@ func (r *TranslationReadRepo) List(ctx context.Context, filter domain.Translatio
 	return views, total, nil
 }
 
-func scanTranslationView(row pgx.Row) (*domain.TranslationView, error) {
+func scanTranslationView(row pgx.Row) (*translationrepo.TranslationView, error) {
 	var (
-		v     domain.TranslationView
+		v     translationrepo.TranslationView
 		rawID uuid.UUID
 	)
 	err := row.Scan(&rawID, &v.Key, &v.Language, &v.Value, &v.Group, &v.CreatedAt, &v.UpdatedAt)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
-	v.ID = domain.TranslationID(rawID)
+	v.ID = translationentity.TranslationID(rawID)
 	return &v, nil
 }
 
-func scanTranslationViewFromRows(rows pgx.Rows) (*domain.TranslationView, error) {
+func scanTranslationViewFromRows(rows pgx.Rows) (*translationrepo.TranslationView, error) {
 	var (
-		v     domain.TranslationView
+		v     translationrepo.TranslationView
 		rawID uuid.UUID
 	)
 	err := rows.Scan(&rawID, &v.Key, &v.Language, &v.Value, &v.Group, &v.CreatedAt, &v.UpdatedAt)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
-	v.ID = domain.TranslationID(rawID)
+	v.ID = translationentity.TranslationID(rawID)
 	return &v, nil
 }

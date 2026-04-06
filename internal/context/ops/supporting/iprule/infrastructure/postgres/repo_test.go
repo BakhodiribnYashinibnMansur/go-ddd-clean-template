@@ -5,7 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/ops/supporting/iprule/domain"
+	ipruleentity "gct/internal/context/ops/supporting/iprule/domain/entity"
+	iprulerepo "gct/internal/context/ops/supporting/iprule/domain/repository"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -88,7 +89,7 @@ func TestScanIPRuleView_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if v.ID != domain.IPRuleID(id) {
+	if v.ID != ipruleentity.IPRuleID(id) {
 		t.Errorf("ID = %v, want %v", v.ID, id)
 	}
 	if v.IPAddress != "192.168.1.1" {
@@ -130,7 +131,7 @@ func TestScanIPRuleViewFromRows_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if v.ID != domain.IPRuleID(id) {
+	if v.ID != ipruleentity.IPRuleID(id) {
 		t.Errorf("ID = %v, want %v", v.ID, id)
 	}
 }
@@ -215,7 +216,7 @@ func TestScanIPRuleFromRows_Error(t *testing.T) {
 
 func TestApplyFilters_NoFilters(t *testing.T) {
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.IPRuleFilter{})
+	result := applyFilters(conds, iprulerepo.IPRuleFilter{})
 	if len(result) != 0 {
 		t.Errorf("expected 0 conditions, got %d", len(result))
 	}
@@ -224,7 +225,7 @@ func TestApplyFilters_NoFilters(t *testing.T) {
 func TestApplyFilters_WithIPAddress(t *testing.T) {
 	ip := "10.0.0.1"
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.IPRuleFilter{IPAddress: &ip})
+	result := applyFilters(conds, iprulerepo.IPRuleFilter{IPAddress: &ip})
 	if len(result) != 1 {
 		t.Errorf("expected 1 condition, got %d", len(result))
 	}
@@ -233,7 +234,7 @@ func TestApplyFilters_WithIPAddress(t *testing.T) {
 func TestApplyFilters_WithAction(t *testing.T) {
 	action := "ALLOW"
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.IPRuleFilter{Action: &action})
+	result := applyFilters(conds, iprulerepo.IPRuleFilter{Action: &action})
 	if len(result) != 1 {
 		t.Errorf("expected 1 condition, got %d", len(result))
 	}
@@ -243,7 +244,7 @@ func TestApplyFilters_AllFilters(t *testing.T) {
 	ip := "10.0.0.1"
 	action := "DENY"
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.IPRuleFilter{IPAddress: &ip, Action: &action})
+	result := applyFilters(conds, iprulerepo.IPRuleFilter{IPAddress: &ip, Action: &action})
 	if len(result) != 2 {
 		t.Errorf("expected 2 conditions, got %d", len(result))
 	}

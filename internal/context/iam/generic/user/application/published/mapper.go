@@ -6,7 +6,7 @@
 package published
 
 import (
-	"gct/internal/context/iam/generic/user/domain"
+	userevent "gct/internal/context/iam/generic/user/domain/event"
 	"gct/internal/contract/events"
 	shareddomain "gct/internal/kernel/domain"
 )
@@ -19,17 +19,17 @@ func Map(internal []shareddomain.DomainEvent) []shareddomain.DomainEvent {
 	out := make([]shareddomain.DomainEvent, 0, len(internal))
 	for _, e := range internal {
 		switch v := e.(type) {
-		case domain.UserCreated:
+		case userevent.UserCreated:
 			out = append(out, events.NewUserCreatedV1(v.AggregateID(), v.Phone))
-		case domain.UserSignedIn:
+		case userevent.UserSignedIn:
 			out = append(out, events.NewUserSignedInV1(v.AggregateID(), v.SessionID, v.IPAddress))
-		case domain.UserDeactivated:
+		case userevent.UserDeactivated:
 			out = append(out, events.NewUserDeactivatedV1(v.AggregateID()))
-		case domain.PasswordChanged:
+		case userevent.PasswordChanged:
 			out = append(out, events.NewUserPasswordChangedV1(v.AggregateID()))
-		case domain.UserApproved:
+		case userevent.UserApproved:
 			out = append(out, events.NewUserApprovedV1(v.AggregateID()))
-		case domain.RoleChanged:
+		case userevent.RoleChanged:
 			out = append(out, events.NewUserRoleChangedV1(v.AggregateID(), v.OldRoleID, v.NewRoleID))
 		}
 	}

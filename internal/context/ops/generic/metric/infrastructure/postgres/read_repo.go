@@ -4,7 +4,8 @@ import (
 	"context"
 	"time"
 
-	"gct/internal/context/ops/generic/metric/domain"
+	metricentity "gct/internal/context/ops/generic/metric/domain/entity"
+	metricrepo "gct/internal/context/ops/generic/metric/domain/repository"
 	"gct/internal/kernel/consts"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -34,7 +35,7 @@ func NewMetricReadRepo(pool *pgxpool.Pool) *MetricReadRepo {
 }
 
 // List returns a paginated list of MetricView with optional filters.
-func (r *MetricReadRepo) List(ctx context.Context, filter domain.MetricFilter) (items []*domain.MetricView, total int64, err error) {
+func (r *MetricReadRepo) List(ctx context.Context, filter metricrepo.MetricFilter) (items []*metricrepo.MetricView, total int64, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "MetricReadRepo.List")
 	defer func() { end(err) }()
 
@@ -82,7 +83,7 @@ func (r *MetricReadRepo) List(ctx context.Context, filter domain.MetricFilter) (
 	}
 	defer rows.Close()
 
-	var views []*domain.MetricView
+	var views []*metricrepo.MetricView
 	for rows.Next() {
 		v, err := scanMetricView(rows)
 		if err != nil {
@@ -94,7 +95,7 @@ func (r *MetricReadRepo) List(ctx context.Context, filter domain.MetricFilter) (
 	return views, total, nil
 }
 
-func scanMetricView(rows pgx.Rows) (*domain.MetricView, error) {
+func scanMetricView(rows pgx.Rows) (*metricrepo.MetricView, error) {
 	var (
 		id         uuid.UUID
 		name       string
@@ -109,8 +110,8 @@ func scanMetricView(rows pgx.Rows) (*domain.MetricView, error) {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 
-	return &domain.MetricView{
-		ID:         domain.MetricID(id),
+	return &metricrepo.MetricView{
+		ID:         metricentity.MetricID(id),
 		Name:       name,
 		LatencyMs:  latencyMs,
 		IsPanic:    isPanic,

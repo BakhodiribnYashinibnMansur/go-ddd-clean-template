@@ -7,7 +7,8 @@ import (
 	"gct/internal/context/admin/supporting/errorcode"
 	"gct/internal/context/admin/supporting/errorcode/application/command"
 	"gct/internal/context/admin/supporting/errorcode/application/query"
-	"gct/internal/context/admin/supporting/errorcode/domain"
+	errcodeentity "gct/internal/context/admin/supporting/errorcode/domain/entity"
+	errcoderepo "gct/internal/context/admin/supporting/errorcode/domain/repository"
 	"gct/internal/kernel/infrastructure/eventbus"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/test/integration/common/setup"
@@ -40,7 +41,7 @@ func TestIntegration_CreateAndGetErrorCode(t *testing.T) {
 	}
 
 	result, err := bc.ListErrorCodes.Handle(ctx, query.ListErrorCodesQuery{
-		Filter: domain.ErrorCodeFilter{Limit: 10},
+		Filter: errcoderepo.ErrorCodeFilter{Limit: 10},
 	})
 	if err != nil {
 		t.Fatalf("ListErrorCodes: %v", err)
@@ -57,7 +58,7 @@ func TestIntegration_CreateAndGetErrorCode(t *testing.T) {
 		t.Errorf("expected message 'Unauthorized access', got %s", a.Message)
 	}
 
-	view, err := bc.GetErrorCode.Handle(ctx, query.GetErrorCodeQuery{ID: domain.ErrorCodeID(a.ID)})
+	view, err := bc.GetErrorCode.Handle(ctx, query.GetErrorCodeQuery{ID: errcodeentity.ErrorCodeID(a.ID)})
 	if err != nil {
 		t.Fatalf("GetErrorCode: %v", err)
 	}
@@ -86,9 +87,9 @@ func TestIntegration_UpdateErrorCode(t *testing.T) {
 	}
 
 	list, _ := bc.ListErrorCodes.Handle(ctx, query.ListErrorCodesQuery{
-		Filter: domain.ErrorCodeFilter{Limit: 10},
+		Filter: errcoderepo.ErrorCodeFilter{Limit: 10},
 	})
-	ecID := domain.ErrorCodeID(list.ErrorCodes[0].ID)
+	ecID := errcodeentity.ErrorCodeID(list.ErrorCodes[0].ID)
 
 	err = bc.UpdateErrorCode.Handle(ctx, command.UpdateErrorCodeCommand{
 		ID:         ecID,
@@ -133,9 +134,9 @@ func TestIntegration_DeleteErrorCode(t *testing.T) {
 	}
 
 	list, _ := bc.ListErrorCodes.Handle(ctx, query.ListErrorCodesQuery{
-		Filter: domain.ErrorCodeFilter{Limit: 10},
+		Filter: errcoderepo.ErrorCodeFilter{Limit: 10},
 	})
-	ecID := domain.ErrorCodeID(list.ErrorCodes[0].ID)
+	ecID := errcodeentity.ErrorCodeID(list.ErrorCodes[0].ID)
 
 	err = bc.DeleteErrorCode.Handle(ctx, command.DeleteErrorCodeCommand{ID: ecID})
 	if err != nil {
@@ -143,7 +144,7 @@ func TestIntegration_DeleteErrorCode(t *testing.T) {
 	}
 
 	list2, _ := bc.ListErrorCodes.Handle(ctx, query.ListErrorCodesQuery{
-		Filter: domain.ErrorCodeFilter{Limit: 10},
+		Filter: errcoderepo.ErrorCodeFilter{Limit: 10},
 	})
 	if list2.Total != 0 {
 		t.Errorf("expected 0 error codes after delete, got %d", list2.Total)

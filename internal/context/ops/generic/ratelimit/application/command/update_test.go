@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/context/ops/generic/ratelimit/domain"
+	ratelimitentity "gct/internal/context/ops/generic/ratelimit/domain/entity"
 
 	"github.com/stretchr/testify/require"
 )
@@ -12,14 +12,14 @@ import (
 func TestUpdateRateLimitHandler_Handle(t *testing.T) {
 	t.Parallel()
 
-	rl := domain.NewRateLimit("old-name", "/old", 50, 30, true)
+	rl := ratelimitentity.NewRateLimit("old-name", "/old", 50, 30, true)
 
 	repo := &mockRateLimitRepo{
-		findFn: func(_ context.Context, id domain.RateLimitID) (*domain.RateLimit, error) {
+		findFn: func(_ context.Context, id ratelimitentity.RateLimitID) (*ratelimitentity.RateLimit, error) {
 			if id == rl.TypedID() {
 				return rl, nil
 			}
-			return nil, domain.ErrRateLimitNotFound
+			return nil, ratelimitentity.ErrRateLimitNotFound
 		},
 	}
 	eb := &mockEventBus{}
@@ -29,7 +29,7 @@ func TestUpdateRateLimitHandler_Handle(t *testing.T) {
 	newRequests := 200
 	newEnabled := false
 	cmd := UpdateRateLimitCommand{
-		ID:                domain.RateLimitID(rl.ID()),
+		ID:                ratelimitentity.RateLimitID(rl.ID()),
 		Name:              &newName,
 		RequestsPerWindow: &newRequests,
 		Enabled:           &newEnabled,
@@ -65,10 +65,10 @@ func TestUpdateRateLimitHandler_Handle(t *testing.T) {
 func TestUpdateRateLimitHandler_PartialUpdate(t *testing.T) {
 	t.Parallel()
 
-	rl := domain.NewRateLimit("name", "/rule", 100, 60, true)
+	rl := ratelimitentity.NewRateLimit("name", "/rule", 100, 60, true)
 
 	repo := &mockRateLimitRepo{
-		findFn: func(_ context.Context, _ domain.RateLimitID) (*domain.RateLimit, error) {
+		findFn: func(_ context.Context, _ ratelimitentity.RateLimitID) (*ratelimitentity.RateLimit, error) {
 			return rl, nil
 		},
 	}
@@ -76,7 +76,7 @@ func TestUpdateRateLimitHandler_PartialUpdate(t *testing.T) {
 
 	newWindow := 120
 	err := handler.Handle(context.Background(), UpdateRateLimitCommand{
-		ID:             domain.RateLimitID(rl.ID()),
+		ID:             ratelimitentity.RateLimitID(rl.ID()),
 		WindowDuration: &newWindow,
 	})
 	require.NoError(t, err)
@@ -94,7 +94,7 @@ func TestUpdateRateLimitHandler_NotFound(t *testing.T) {
 	repo := &mockRateLimitRepo{}
 	handler := NewUpdateRateLimitHandler(repo, &mockEventBus{}, &mockLogger{})
 
-	err := handler.Handle(context.Background(), UpdateRateLimitCommand{ID: domain.NewRateLimitID()})
+	err := handler.Handle(context.Background(), UpdateRateLimitCommand{ID: ratelimitentity.NewRateLimitID()})
 	if err == nil {
 		t.Fatal("expected error for not found")
 	}

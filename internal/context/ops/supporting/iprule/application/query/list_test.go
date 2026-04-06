@@ -6,7 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/ops/supporting/iprule/domain"
+	ipruleentity "gct/internal/context/ops/supporting/iprule/domain/entity"
+	iprulerepo "gct/internal/context/ops/supporting/iprule/domain/repository"
 
 	"github.com/stretchr/testify/require"
 )
@@ -15,16 +16,16 @@ func TestListIPRulesHandler_Handle(t *testing.T) {
 	t.Parallel()
 
 	readRepo := &mockReadRepo{
-		views: []*domain.IPRuleView{
-			{ID: domain.NewIPRuleID(), IPAddress: "1.1.1.1", Action: "DENY", Reason: "r1", CreatedAt: time.Now(), UpdatedAt: time.Now()},
-			{ID: domain.NewIPRuleID(), IPAddress: "2.2.2.2", Action: "ALLOW", Reason: "r2", CreatedAt: time.Now(), UpdatedAt: time.Now()},
+		views: []*iprulerepo.IPRuleView{
+			{ID: ipruleentity.NewIPRuleID(), IPAddress: "1.1.1.1", Action: "DENY", Reason: "r1", CreatedAt: time.Now(), UpdatedAt: time.Now()},
+			{ID: ipruleentity.NewIPRuleID(), IPAddress: "2.2.2.2", Action: "ALLOW", Reason: "r2", CreatedAt: time.Now(), UpdatedAt: time.Now()},
 		},
 		total: 2,
 	}
 
 	handler := NewListIPRulesHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListIPRulesQuery{
-		Filter: domain.IPRuleFilter{Limit: 10, Offset: 0},
+		Filter: iprulerepo.IPRuleFilter{Limit: 10, Offset: 0},
 	})
 	require.NoError(t, err)
 	if result.Total != 2 {
@@ -41,11 +42,11 @@ func TestListIPRulesHandler_Handle(t *testing.T) {
 func TestListIPRulesHandler_Empty(t *testing.T) {
 	t.Parallel()
 
-	readRepo := &mockReadRepo{views: []*domain.IPRuleView{}, total: 0}
+	readRepo := &mockReadRepo{views: []*iprulerepo.IPRuleView{}, total: 0}
 
 	handler := NewListIPRulesHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListIPRulesQuery{
-		Filter: domain.IPRuleFilter{},
+		Filter: iprulerepo.IPRuleFilter{},
 	})
 	require.NoError(t, err)
 	if result.Total != 0 {
@@ -61,15 +62,15 @@ func TestListIPRulesHandler_WithFilters(t *testing.T) {
 
 	action := "DENY"
 	readRepo := &mockReadRepo{
-		views: []*domain.IPRuleView{
-			{ID: domain.NewIPRuleID(), IPAddress: "3.3.3.3", Action: "DENY", Reason: "blocked", CreatedAt: time.Now(), UpdatedAt: time.Now()},
+		views: []*iprulerepo.IPRuleView{
+			{ID: ipruleentity.NewIPRuleID(), IPAddress: "3.3.3.3", Action: "DENY", Reason: "blocked", CreatedAt: time.Now(), UpdatedAt: time.Now()},
 		},
 		total: 1,
 	}
 
 	handler := NewListIPRulesHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListIPRulesQuery{
-		Filter: domain.IPRuleFilter{Action: &action, Limit: 10},
+		Filter: iprulerepo.IPRuleFilter{Action: &action, Limit: 10},
 	})
 	require.NoError(t, err)
 	if result.Total != 1 {
@@ -82,7 +83,7 @@ func TestListIPRulesHandler_RepoError(t *testing.T) {
 
 	readRepo := &errorReadRepo{err: errRepo}
 	handler := NewListIPRulesHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), ListIPRulesQuery{Filter: domain.IPRuleFilter{}})
+	_, err := handler.Handle(context.Background(), ListIPRulesQuery{Filter: iprulerepo.IPRuleFilter{}})
 	if err == nil {
 		t.Fatal("expected error from repo")
 	}

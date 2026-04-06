@@ -4,7 +4,7 @@ import (
 	"context"
 	"strconv"
 
-	"gct/internal/context/admin/supporting/sitesetting/domain"
+	siterepo "gct/internal/context/admin/supporting/sitesetting/domain/repository"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
 )
@@ -22,12 +22,12 @@ const DefaultUserMaxSessions = 3
 // at warn-level and the default (3) is returned — sign-in must never break
 // because of a misconfigured row.
 type GetUserMaxSessionsHandler struct {
-	readRepo domain.SiteSettingReadRepository
+	readRepo siterepo.SiteSettingReadRepository
 	logger   logger.Log
 }
 
 // NewGetUserMaxSessionsHandler creates a new GetUserMaxSessionsHandler.
-func NewGetUserMaxSessionsHandler(readRepo domain.SiteSettingReadRepository, l logger.Log) *GetUserMaxSessionsHandler {
+func NewGetUserMaxSessionsHandler(readRepo siterepo.SiteSettingReadRepository, l logger.Log) *GetUserMaxSessionsHandler {
 	return &GetUserMaxSessionsHandler{readRepo: readRepo, logger: l}
 }
 
@@ -39,7 +39,7 @@ func (h *GetUserMaxSessionsHandler) Handle(ctx context.Context) (result int, err
 	defer func() { end(err) }()
 
 	key := UserMaxSessionsKey
-	views, _, lerr := h.readRepo.List(ctx, domain.SiteSettingFilter{Key: &key, Limit: 1})
+	views, _, lerr := h.readRepo.List(ctx, siterepo.SiteSettingFilter{Key: &key, Limit: 1})
 	if lerr != nil {
 		h.logger.Warnc(ctx, "max sessions lookup failed",
 			logger.F{Op: "GetUserMaxSessions", Entity: "site_setting", Err: lerr}.KV()...)

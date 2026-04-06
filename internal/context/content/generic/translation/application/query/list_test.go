@@ -6,7 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/content/generic/translation/domain"
+	translationentity "gct/internal/context/content/generic/translation/domain/entity"
+	translationrepo "gct/internal/context/content/generic/translation/domain/repository"
 
 	"github.com/stretchr/testify/require"
 )
@@ -16,16 +17,16 @@ func TestListTranslationsHandler_Handle(t *testing.T) {
 
 	now := time.Now()
 	readRepo := &mockReadRepo{
-		views: []*domain.TranslationView{
-			{ID: domain.NewTranslationID(), Key: "k1", Language: "en", Value: "v1", Group: "g1", CreatedAt: now, UpdatedAt: now},
-			{ID: domain.NewTranslationID(), Key: "k2", Language: "fr", Value: "v2", Group: "g2", CreatedAt: now, UpdatedAt: now},
+		views: []*translationrepo.TranslationView{
+			{ID: translationentity.NewTranslationID(), Key: "k1", Language: "en", Value: "v1", Group: "g1", CreatedAt: now, UpdatedAt: now},
+			{ID: translationentity.NewTranslationID(), Key: "k2", Language: "fr", Value: "v2", Group: "g2", CreatedAt: now, UpdatedAt: now},
 		},
 		total: 2,
 	}
 
 	handler := NewListTranslationsHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListTranslationsQuery{
-		Filter: domain.TranslationFilter{Limit: 10, Offset: 0},
+		Filter: translationrepo.TranslationFilter{Limit: 10, Offset: 0},
 	})
 	require.NoError(t, err)
 	if result.Total != 2 {
@@ -42,11 +43,11 @@ func TestListTranslationsHandler_Handle(t *testing.T) {
 func TestListTranslationsHandler_Empty(t *testing.T) {
 	t.Parallel()
 
-	readRepo := &mockReadRepo{views: []*domain.TranslationView{}, total: 0}
+	readRepo := &mockReadRepo{views: []*translationrepo.TranslationView{}, total: 0}
 
 	handler := NewListTranslationsHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListTranslationsQuery{
-		Filter: domain.TranslationFilter{},
+		Filter: translationrepo.TranslationFilter{},
 	})
 	require.NoError(t, err)
 	if result.Total != 0 {
@@ -62,8 +63,8 @@ func TestListTranslationsHandler_WithFilters(t *testing.T) {
 
 	now := time.Now()
 	readRepo := &mockReadRepo{
-		views: []*domain.TranslationView{
-			{ID: domain.NewTranslationID(), Key: "welcome", Language: "en", Value: "Welcome", Group: "auth", CreatedAt: now, UpdatedAt: now},
+		views: []*translationrepo.TranslationView{
+			{ID: translationentity.NewTranslationID(), Key: "welcome", Language: "en", Value: "Welcome", Group: "auth", CreatedAt: now, UpdatedAt: now},
 		},
 		total: 1,
 	}
@@ -73,7 +74,7 @@ func TestListTranslationsHandler_WithFilters(t *testing.T) {
 	group := "auth"
 
 	result, err := handler.Handle(context.Background(), ListTranslationsQuery{
-		Filter: domain.TranslationFilter{
+		Filter: translationrepo.TranslationFilter{
 			Language: &lang,
 			Group:    &group,
 			Limit:    10,
@@ -90,7 +91,7 @@ func TestListTranslationsHandler_RepoError(t *testing.T) {
 
 	readRepo := &errorReadRepo{err: errRepo}
 	handler := NewListTranslationsHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), ListTranslationsQuery{Filter: domain.TranslationFilter{}})
+	_, err := handler.Handle(context.Background(), ListTranslationsQuery{Filter: translationrepo.TranslationFilter{}})
 	if err == nil {
 		t.Fatal("expected error from repo")
 	}

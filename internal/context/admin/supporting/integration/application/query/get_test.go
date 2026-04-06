@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/admin/supporting/integration/domain"
+	integentity "gct/internal/context/admin/supporting/integration/domain/entity"
 
 	"github.com/stretchr/testify/require"
 )
@@ -15,57 +15,57 @@ import (
 // --- Mocks ---
 
 type mockReadRepo struct {
-	view       *domain.IntegrationView
-	views      []*domain.IntegrationView
+	view       *integentity.IntegrationView
+	views      []*integentity.IntegrationView
 	total      int64
-	apiKeyView *domain.IntegrationAPIKeyView
+	apiKeyView *integentity.IntegrationAPIKeyView
 }
 
-func (m *mockReadRepo) FindByID(_ context.Context, id domain.IntegrationID) (*domain.IntegrationView, error) {
+func (m *mockReadRepo) FindByID(_ context.Context, id integentity.IntegrationID) (*integentity.IntegrationView, error) {
 	if m.view != nil && m.view.ID == id {
 		return m.view, nil
 	}
-	return nil, domain.ErrIntegrationNotFound
+	return nil, integentity.ErrIntegrationNotFound
 }
 
-func (m *mockReadRepo) List(_ context.Context, _ domain.IntegrationFilter) ([]*domain.IntegrationView, int64, error) {
+func (m *mockReadRepo) List(_ context.Context, _ integentity.IntegrationFilter) ([]*integentity.IntegrationView, int64, error) {
 	return m.views, m.total, nil
 }
 
-func (m *mockReadRepo) FindByAPIKey(_ context.Context, _ string) (*domain.IntegrationAPIKeyView, error) {
+func (m *mockReadRepo) FindByAPIKey(_ context.Context, _ string) (*integentity.IntegrationAPIKeyView, error) {
 	if m.apiKeyView != nil {
 		return m.apiKeyView, nil
 	}
-	return nil, domain.ErrIntegrationNotFound
+	return nil, integentity.ErrIntegrationNotFound
 }
 
-func (m *mockReadRepo) ListActiveJWT(_ context.Context) ([]domain.JWTIntegrationView, error) {
+func (m *mockReadRepo) ListActiveJWT(_ context.Context) ([]integentity.JWTIntegrationView, error) {
 	return nil, nil
 }
 
-func (m *mockReadRepo) FindJWTByHash(_ context.Context, _ []byte) (*domain.JWTIntegrationView, error) {
-	return nil, domain.ErrIntegrationNotFound
+func (m *mockReadRepo) FindJWTByHash(_ context.Context, _ []byte) (*integentity.JWTIntegrationView, error) {
+	return nil, integentity.ErrIntegrationNotFound
 }
 
 type errorReadRepo struct{ err error }
 
-func (m *errorReadRepo) FindByID(_ context.Context, _ domain.IntegrationID) (*domain.IntegrationView, error) {
+func (m *errorReadRepo) FindByID(_ context.Context, _ integentity.IntegrationID) (*integentity.IntegrationView, error) {
 	return nil, m.err
 }
 
-func (m *errorReadRepo) List(_ context.Context, _ domain.IntegrationFilter) ([]*domain.IntegrationView, int64, error) {
+func (m *errorReadRepo) List(_ context.Context, _ integentity.IntegrationFilter) ([]*integentity.IntegrationView, int64, error) {
 	return nil, 0, m.err
 }
 
-func (m *errorReadRepo) FindByAPIKey(_ context.Context, _ string) (*domain.IntegrationAPIKeyView, error) {
+func (m *errorReadRepo) FindByAPIKey(_ context.Context, _ string) (*integentity.IntegrationAPIKeyView, error) {
 	return nil, m.err
 }
 
-func (m *errorReadRepo) ListActiveJWT(_ context.Context) ([]domain.JWTIntegrationView, error) {
+func (m *errorReadRepo) ListActiveJWT(_ context.Context) ([]integentity.JWTIntegrationView, error) {
 	return nil, m.err
 }
 
-func (m *errorReadRepo) FindJWTByHash(_ context.Context, _ []byte) (*domain.JWTIntegrationView, error) {
+func (m *errorReadRepo) FindJWTByHash(_ context.Context, _ []byte) (*integentity.JWTIntegrationView, error) {
 	return nil, m.err
 }
 
@@ -76,10 +76,10 @@ var errRepo = errors.New("repo failure")
 func TestGetHandler_Handle(t *testing.T) {
 	t.Parallel()
 
-	id := domain.NewIntegrationID()
+	id := integentity.NewIntegrationID()
 	now := time.Now()
 	readRepo := &mockReadRepo{
-		view: &domain.IntegrationView{
+		view: &integentity.IntegrationView{
 			ID:         id,
 			Name:       "Slack",
 			Type:       "messaging",
@@ -93,7 +93,7 @@ func TestGetHandler_Handle(t *testing.T) {
 	}
 
 	handler := NewGetHandler(readRepo, logger.Noop())
-	result, err := handler.Handle(context.Background(), GetQuery{ID: domain.IntegrationID(id)})
+	result, err := handler.Handle(context.Background(), GetQuery{ID: integentity.IntegrationID(id)})
 	require.NoError(t, err)
 	if result == nil {
 		t.Fatal("expected result")
@@ -120,7 +120,7 @@ func TestGetHandler_NotFound(t *testing.T) {
 
 	readRepo := &mockReadRepo{}
 	handler := NewGetHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), GetQuery{ID: domain.NewIntegrationID()})
+	_, err := handler.Handle(context.Background(), GetQuery{ID: integentity.NewIntegrationID()})
 	if err == nil {
 		t.Fatal("expected error for not found")
 	}
@@ -131,7 +131,7 @@ func TestGetHandler_RepoError(t *testing.T) {
 
 	readRepo := &errorReadRepo{err: errRepo}
 	handler := NewGetHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), GetQuery{ID: domain.NewIntegrationID()})
+	_, err := handler.Handle(context.Background(), GetQuery{ID: integentity.NewIntegrationID()})
 	if err == nil {
 		t.Fatal("expected error from repo")
 	}
@@ -140,10 +140,10 @@ func TestGetHandler_RepoError(t *testing.T) {
 func TestGetHandler_AllFieldsMapped(t *testing.T) {
 	t.Parallel()
 
-	id := domain.NewIntegrationID()
+	id := integentity.NewIntegrationID()
 	now := time.Now()
 	readRepo := &mockReadRepo{
-		view: &domain.IntegrationView{
+		view: &integentity.IntegrationView{
 			ID:         id,
 			Name:       "SMTP",
 			Type:       "email",
@@ -157,7 +157,7 @@ func TestGetHandler_AllFieldsMapped(t *testing.T) {
 	}
 
 	handler := NewGetHandler(readRepo, logger.Noop())
-	result, err := handler.Handle(context.Background(), GetQuery{ID: domain.IntegrationID(id)})
+	result, err := handler.Handle(context.Background(), GetQuery{ID: integentity.IntegrationID(id)})
 	require.NoError(t, err)
 	if result.WebhookURL != "" {
 		t.Errorf("expected empty webhookURL, got %s", result.WebhookURL)

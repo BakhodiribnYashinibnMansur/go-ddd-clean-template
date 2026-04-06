@@ -6,29 +6,32 @@ import (
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 
+	"gct/internal/context/ops/generic/systemerror/application/dto"
+	syserrentity "gct/internal/context/ops/generic/systemerror/domain/entity"
+	syserrrepo "gct/internal/context/ops/generic/systemerror/domain/repository"
 	"gct/internal/kernel/infrastructure/pgxutil"
-	appdto "gct/internal/context/ops/generic/systemerror/application"
-	"gct/internal/context/ops/generic/systemerror/domain"
+
+	"github.com/google/uuid"
 )
 
 // GetSystemErrorQuery holds the input for fetching a single system error.
 type GetSystemErrorQuery struct {
-	ID domain.SystemErrorID
+	ID syserrentity.SystemErrorID
 }
 
 // GetSystemErrorHandler handles the GetSystemErrorQuery.
 type GetSystemErrorHandler struct {
-	readRepo domain.SystemErrorReadRepository
+	readRepo syserrrepo.SystemErrorReadRepository
 	logger   logger.Log
 }
 
 // NewGetSystemErrorHandler creates a new GetSystemErrorHandler.
-func NewGetSystemErrorHandler(readRepo domain.SystemErrorReadRepository, l logger.Log) *GetSystemErrorHandler {
+func NewGetSystemErrorHandler(readRepo syserrrepo.SystemErrorReadRepository, l logger.Log) *GetSystemErrorHandler {
 	return &GetSystemErrorHandler{readRepo: readRepo, logger: l}
 }
 
 // Handle executes the GetSystemErrorQuery and returns a SystemErrorView.
-func (h *GetSystemErrorHandler) Handle(ctx context.Context, q GetSystemErrorQuery) (_ *appdto.SystemErrorView, err error) {
+func (h *GetSystemErrorHandler) Handle(ctx context.Context, q GetSystemErrorQuery) (_ *dto.SystemErrorView, err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "GetSystemErrorHandler.Handle")
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "GetSystemError", "system_error")()
@@ -39,8 +42,8 @@ func (h *GetSystemErrorHandler) Handle(ctx context.Context, q GetSystemErrorQuer
 		return nil, apperrors.MapToServiceError(err)
 	}
 
-	return &appdto.SystemErrorView{
-		ID:          view.ID,
+	return &dto.SystemErrorView{
+		ID:          uuid.UUID(view.ID),
 		Code:        view.Code,
 		Message:     view.Message,
 		StackTrace:  view.StackTrace,

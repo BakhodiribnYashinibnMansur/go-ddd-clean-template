@@ -7,7 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/ops/generic/metric/domain"
+	metricentity "gct/internal/context/ops/generic/metric/domain/entity"
+	metricrepo "gct/internal/context/ops/generic/metric/domain/repository"
 
 	"github.com/stretchr/testify/require"
 )
@@ -15,17 +16,17 @@ import (
 // --- Mocks ---
 
 type mockReadRepo struct {
-	views []*domain.MetricView
+	views []*metricrepo.MetricView
 	total int64
 }
 
-func (m *mockReadRepo) List(_ context.Context, _ domain.MetricFilter) ([]*domain.MetricView, int64, error) {
+func (m *mockReadRepo) List(_ context.Context, _ metricrepo.MetricFilter) ([]*metricrepo.MetricView, int64, error) {
 	return m.views, m.total, nil
 }
 
 type errorReadRepo struct{ err error }
 
-func (m *errorReadRepo) List(_ context.Context, _ domain.MetricFilter) ([]*domain.MetricView, int64, error) {
+func (m *errorReadRepo) List(_ context.Context, _ metricrepo.MetricFilter) ([]*metricrepo.MetricView, int64, error) {
 	return nil, 0, m.err
 }
 
@@ -38,16 +39,16 @@ func TestListMetricsHandler_Handle(t *testing.T) {
 
 	now := time.Now()
 	readRepo := &mockReadRepo{
-		views: []*domain.MetricView{
-			{ID: domain.NewMetricID(), Name: "UserService.Create", LatencyMs: 150.5, IsPanic: false, CreatedAt: now},
-			{ID: domain.NewMetricID(), Name: "AuthService.Login", LatencyMs: 300.0, IsPanic: false, CreatedAt: now},
+		views: []*metricrepo.MetricView{
+			{ID: metricentity.NewMetricID(), Name: "UserService.Create", LatencyMs: 150.5, IsPanic: false, CreatedAt: now},
+			{ID: metricentity.NewMetricID(), Name: "AuthService.Login", LatencyMs: 300.0, IsPanic: false, CreatedAt: now},
 		},
 		total: 2,
 	}
 
 	handler := NewListMetricsHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListMetricsQuery{
-		Filter: domain.MetricFilter{Limit: 10, Offset: 0},
+		Filter: metricrepo.MetricFilter{Limit: 10, Offset: 0},
 	})
 	require.NoError(t, err)
 	if result.Total != 2 {
@@ -67,11 +68,11 @@ func TestListMetricsHandler_Handle(t *testing.T) {
 func TestListMetricsHandler_Empty(t *testing.T) {
 	t.Parallel()
 
-	readRepo := &mockReadRepo{views: []*domain.MetricView{}, total: 0}
+	readRepo := &mockReadRepo{views: []*metricrepo.MetricView{}, total: 0}
 
 	handler := NewListMetricsHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListMetricsQuery{
-		Filter: domain.MetricFilter{},
+		Filter: metricrepo.MetricFilter{},
 	})
 	require.NoError(t, err)
 	if result.Total != 0 {
@@ -88,15 +89,15 @@ func TestListMetricsHandler_WithPanicError(t *testing.T) {
 	panicErr := "nil pointer dereference"
 	now := time.Now()
 	readRepo := &mockReadRepo{
-		views: []*domain.MetricView{
-			{ID: domain.NewMetricID(), Name: "Handler.Crash", LatencyMs: 10.0, IsPanic: true, PanicError: &panicErr, CreatedAt: now},
+		views: []*metricrepo.MetricView{
+			{ID: metricentity.NewMetricID(), Name: "Handler.Crash", LatencyMs: 10.0, IsPanic: true, PanicError: &panicErr, CreatedAt: now},
 		},
 		total: 1,
 	}
 
 	handler := NewListMetricsHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListMetricsQuery{
-		Filter: domain.MetricFilter{Limit: 10},
+		Filter: metricrepo.MetricFilter{Limit: 10},
 	})
 	require.NoError(t, err)
 	if result.Total != 1 {
@@ -115,7 +116,7 @@ func TestListMetricsHandler_RepoError(t *testing.T) {
 
 	readRepo := &errorReadRepo{err: errRepo}
 	handler := NewListMetricsHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), ListMetricsQuery{Filter: domain.MetricFilter{}})
+	_, err := handler.Handle(context.Background(), ListMetricsQuery{Filter: metricrepo.MetricFilter{}})
 	if err == nil {
 		t.Fatal("expected error from repo")
 	}

@@ -7,7 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/admin/supporting/dataexport/domain"
+	exportentity "gct/internal/context/admin/supporting/dataexport/domain/entity"
+	exportrepo "gct/internal/context/admin/supporting/dataexport/domain/repository"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -18,21 +19,21 @@ import (
 // ---------------------------------------------------------------------------
 
 type mockDataExportReadRepository struct {
-	findByIDView *domain.DataExportView
+	findByIDView *exportrepo.DataExportView
 	findByIDErr  error
-	listViews    []*domain.DataExportView
+	listViews    []*exportrepo.DataExportView
 	listTotal    int64
 	listErr      error
 }
 
-func (m *mockDataExportReadRepository) FindByID(_ context.Context, _ domain.DataExportID) (*domain.DataExportView, error) {
+func (m *mockDataExportReadRepository) FindByID(_ context.Context, _ exportentity.DataExportID) (*exportrepo.DataExportView, error) {
 	if m.findByIDErr != nil {
 		return nil, m.findByIDErr
 	}
 	return m.findByIDView, nil
 }
 
-func (m *mockDataExportReadRepository) List(_ context.Context, _ domain.DataExportFilter) ([]*domain.DataExportView, int64, error) {
+func (m *mockDataExportReadRepository) List(_ context.Context, _ exportrepo.DataExportFilter) ([]*exportrepo.DataExportView, int64, error) {
 	if m.listErr != nil {
 		return nil, 0, m.listErr
 	}
@@ -46,13 +47,13 @@ func (m *mockDataExportReadRepository) List(_ context.Context, _ domain.DataExpo
 func TestGetDataExportHandler_Success(t *testing.T) {
 	t.Parallel()
 
-	exportID := domain.NewDataExportID()
+	exportID := exportentity.NewDataExportID()
 	userID := uuid.New()
 	now := time.Now()
 	fileURL := "https://cdn.example.com/exports/data.csv"
 
 	readRepo := &mockDataExportReadRepository{
-		findByIDView: &domain.DataExportView{
+		findByIDView: &exportrepo.DataExportView{
 			ID:        exportID,
 			UserID:    userID,
 			DataType:  "users",
@@ -66,14 +67,14 @@ func TestGetDataExportHandler_Success(t *testing.T) {
 
 	handler := NewGetDataExportHandler(readRepo, logger.Noop())
 
-	result, err := handler.Handle(context.Background(), GetDataExportQuery{ID: domain.DataExportID(exportID)})
+	result, err := handler.Handle(context.Background(), GetDataExportQuery{ID: exportentity.DataExportID(exportID)})
 	require.NoError(t, err)
 
 	if result == nil {
 		t.Fatal("expected non-nil result")
 	}
 
-	if result.ID != exportID {
+	if result.ID != uuid.UUID(exportID) {
 		t.Errorf("expected ID %s, got %s", exportID, result.ID)
 	}
 
@@ -91,7 +92,7 @@ func TestGetDataExportHandler_RepoError(t *testing.T) {
 
 	handler := NewGetDataExportHandler(readRepo, logger.Noop())
 
-	result, err := handler.Handle(context.Background(), GetDataExportQuery{ID: domain.DataExportID(uuid.New())})
+	result, err := handler.Handle(context.Background(), GetDataExportQuery{ID: exportentity.DataExportID(uuid.New())})
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
@@ -104,14 +105,14 @@ func TestGetDataExportHandler_RepoError(t *testing.T) {
 func TestGetDataExportHandler_MapsAllFields(t *testing.T) {
 	t.Parallel()
 
-	exportID := domain.NewDataExportID()
+	exportID := exportentity.NewDataExportID()
 	userID := uuid.New()
 	now := time.Now()
 	fileURL := "https://cdn.example.com/exports/data.json"
 	errMsg := "timeout"
 
 	readRepo := &mockDataExportReadRepository{
-		findByIDView: &domain.DataExportView{
+		findByIDView: &exportrepo.DataExportView{
 			ID:        exportID,
 			UserID:    userID,
 			DataType:  "audit_logs",
@@ -126,12 +127,12 @@ func TestGetDataExportHandler_MapsAllFields(t *testing.T) {
 
 	handler := NewGetDataExportHandler(readRepo, logger.Noop())
 
-	result, err := handler.Handle(context.Background(), GetDataExportQuery{ID: domain.DataExportID(exportID)})
+	result, err := handler.Handle(context.Background(), GetDataExportQuery{ID: exportentity.DataExportID(exportID)})
 	require.NoError(t, err)
 
 	v := result
 
-	if v.ID != exportID {
+	if v.ID != uuid.UUID(exportID) {
 		t.Error("ID mismatch")
 	}
 	if v.UserID != userID {

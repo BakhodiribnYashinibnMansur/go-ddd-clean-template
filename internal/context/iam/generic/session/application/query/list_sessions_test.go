@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	appdto "gct/internal/context/iam/generic/session/application"
+	"gct/internal/context/iam/generic/session/application/dto"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -18,7 +18,7 @@ func TestListSessionsHandler_Handle(t *testing.T) {
 
 	now := time.Now()
 	readRepo := &mockSessionReadRepository{
-		views: []*appdto.SessionView{
+		views: []*dto.SessionView{
 			{
 				ID:           uuid.New(),
 				UserID:       uuid.New(),
@@ -51,7 +51,7 @@ func TestListSessionsHandler_Handle(t *testing.T) {
 
 	handler := NewListSessionsHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListSessionsQuery{
-		Filter: appdto.SessionsFilter{Limit: 10, Offset: 0},
+		Filter: dto.SessionsFilter{Limit: 10, Offset: 0},
 	})
 	require.NoError(t, err)
 	if result.Total != 2 {
@@ -72,13 +72,13 @@ func TestListSessionsHandler_Empty(t *testing.T) {
 	t.Parallel()
 
 	readRepo := &mockSessionReadRepository{
-		views: []*appdto.SessionView{},
+		views: []*dto.SessionView{},
 		total: 0,
 	}
 
 	handler := NewListSessionsHandler(readRepo, logger.Noop())
 	result, err := handler.Handle(context.Background(), ListSessionsQuery{
-		Filter: appdto.SessionsFilter{},
+		Filter: dto.SessionsFilter{},
 	})
 	require.NoError(t, err)
 	if result.Total != 0 {
@@ -98,7 +98,7 @@ func TestListSessionsHandler_RepoError(t *testing.T) {
 
 	handler := NewListSessionsHandler(readRepo, logger.Noop())
 	_, err := handler.Handle(context.Background(), ListSessionsQuery{
-		Filter: appdto.SessionsFilter{},
+		Filter: dto.SessionsFilter{},
 	})
 	if err == nil {
 		t.Fatal("expected error when repo fails, got nil")

@@ -4,7 +4,8 @@ import (
 	"context"
 	"time"
 
-	"gct/internal/context/content/generic/translation/domain"
+	translationentity "gct/internal/context/content/generic/translation/domain/entity"
+	translationrepo "gct/internal/context/content/generic/translation/domain/repository"
 	"gct/internal/kernel/consts"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -36,7 +37,7 @@ func NewTranslationWriteRepo(pool *pgxpool.Pool) *TranslationWriteRepo {
 }
 
 // Save inserts a new Translation aggregate into the database.
-func (r *TranslationWriteRepo) Save(ctx context.Context, t *domain.Translation) (err error) {
+func (r *TranslationWriteRepo) Save(ctx context.Context, t *translationentity.Translation) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "TranslationWriteRepo.Save")
 	defer func() { end(err) }()
 
@@ -60,7 +61,7 @@ func (r *TranslationWriteRepo) Save(ctx context.Context, t *domain.Translation) 
 }
 
 // FindByID retrieves a Translation aggregate by its ID.
-func (r *TranslationWriteRepo) FindByID(ctx context.Context, id domain.TranslationID) (result *domain.Translation, err error) {
+func (r *TranslationWriteRepo) FindByID(ctx context.Context, id translationentity.TranslationID) (result *translationentity.Translation, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "TranslationWriteRepo.FindByID")
 	defer func() { end(err) }()
 
@@ -78,7 +79,7 @@ func (r *TranslationWriteRepo) FindByID(ctx context.Context, id domain.Translati
 }
 
 // Update updates an existing Translation aggregate in the database.
-func (r *TranslationWriteRepo) Update(ctx context.Context, t *domain.Translation) (err error) {
+func (r *TranslationWriteRepo) Update(ctx context.Context, t *translationentity.Translation) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "TranslationWriteRepo.Update")
 	defer func() { end(err) }()
 
@@ -103,7 +104,7 @@ func (r *TranslationWriteRepo) Update(ctx context.Context, t *domain.Translation
 }
 
 // Delete removes a Translation by its ID.
-func (r *TranslationWriteRepo) Delete(ctx context.Context, id domain.TranslationID) (err error) {
+func (r *TranslationWriteRepo) Delete(ctx context.Context, id translationentity.TranslationID) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "TranslationWriteRepo.Delete")
 	defer func() { end(err) }()
 
@@ -123,7 +124,7 @@ func (r *TranslationWriteRepo) Delete(ctx context.Context, id domain.Translation
 }
 
 // List retrieves a paginated list of Translation aggregates with optional filters.
-func (r *TranslationWriteRepo) List(ctx context.Context, filter domain.TranslationFilter) (results []*domain.Translation, total int64, err error) {
+func (r *TranslationWriteRepo) List(ctx context.Context, filter translationrepo.TranslationFilter) (results []*translationentity.Translation, total int64, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "TranslationWriteRepo.List")
 	defer func() { end(err) }()
 
@@ -184,7 +185,7 @@ func (r *TranslationWriteRepo) List(ctx context.Context, filter domain.Translati
 // Helpers
 // ---------------------------------------------------------------------------
 
-func applyFilters(conds squirrel.And, filter domain.TranslationFilter) squirrel.And {
+func applyFilters(conds squirrel.And, filter translationrepo.TranslationFilter) squirrel.And {
 	if filter.Key != nil {
 		conds = append(conds, squirrel.Eq{"entity_type": *filter.Key})
 	}
@@ -197,7 +198,7 @@ func applyFilters(conds squirrel.And, filter domain.TranslationFilter) squirrel.
 	return conds
 }
 
-func scanTranslation(row pgx.Row) (*domain.Translation, error) {
+func scanTranslation(row pgx.Row) (*translationentity.Translation, error) {
 	var (
 		id         uuid.UUID
 		entityType string
@@ -213,10 +214,10 @@ func scanTranslation(row pgx.Row) (*domain.Translation, error) {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 
-	return domain.ReconstructTranslation(id, createdAt, updatedAt, entityType, langCode, string(data), entityID.String()), nil
+	return translationentity.ReconstructTranslation(id, createdAt, updatedAt, entityType, langCode, string(data), entityID.String()), nil
 }
 
-func scanTranslationFromRows(rows pgx.Rows) (*domain.Translation, error) {
+func scanTranslationFromRows(rows pgx.Rows) (*translationentity.Translation, error) {
 	var (
 		id         uuid.UUID
 		entityType string
@@ -232,5 +233,5 @@ func scanTranslationFromRows(rows pgx.Rows) (*domain.Translation, error) {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 
-	return domain.ReconstructTranslation(id, createdAt, updatedAt, entityType, langCode, string(data), entityID.String()), nil
+	return translationentity.ReconstructTranslation(id, createdAt, updatedAt, entityType, langCode, string(data), entityID.String()), nil
 }

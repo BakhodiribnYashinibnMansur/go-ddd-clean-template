@@ -7,7 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/ops/generic/ratelimit/domain"
+	ratelimitentity "gct/internal/context/ops/generic/ratelimit/domain/entity"
+	ratelimitrepo "gct/internal/context/ops/generic/ratelimit/domain/repository"
 
 	"github.com/stretchr/testify/require"
 )
@@ -15,29 +16,29 @@ import (
 // --- Mocks ---
 
 type mockReadRepo struct {
-	view  *domain.RateLimitView
-	views []*domain.RateLimitView
+	view  *ratelimitrepo.RateLimitView
+	views []*ratelimitrepo.RateLimitView
 	total int64
 }
 
-func (m *mockReadRepo) FindByID(_ context.Context, id domain.RateLimitID) (*domain.RateLimitView, error) {
+func (m *mockReadRepo) FindByID(_ context.Context, id ratelimitentity.RateLimitID) (*ratelimitrepo.RateLimitView, error) {
 	if m.view != nil && m.view.ID == id {
 		return m.view, nil
 	}
-	return nil, domain.ErrRateLimitNotFound
+	return nil, ratelimitentity.ErrRateLimitNotFound
 }
 
-func (m *mockReadRepo) List(_ context.Context, _ domain.RateLimitFilter) ([]*domain.RateLimitView, int64, error) {
+func (m *mockReadRepo) List(_ context.Context, _ ratelimitrepo.RateLimitFilter) ([]*ratelimitrepo.RateLimitView, int64, error) {
 	return m.views, m.total, nil
 }
 
 type errorReadRepo struct{ err error }
 
-func (m *errorReadRepo) FindByID(_ context.Context, _ domain.RateLimitID) (*domain.RateLimitView, error) {
+func (m *errorReadRepo) FindByID(_ context.Context, _ ratelimitentity.RateLimitID) (*ratelimitrepo.RateLimitView, error) {
 	return nil, m.err
 }
 
-func (m *errorReadRepo) List(_ context.Context, _ domain.RateLimitFilter) ([]*domain.RateLimitView, int64, error) {
+func (m *errorReadRepo) List(_ context.Context, _ ratelimitrepo.RateLimitFilter) ([]*ratelimitrepo.RateLimitView, int64, error) {
 	return nil, 0, m.err
 }
 
@@ -48,10 +49,10 @@ var errRepo = errors.New("repo failure")
 func TestGetRateLimitHandler_Handle(t *testing.T) {
 	t.Parallel()
 
-	id := domain.NewRateLimitID()
+	id := ratelimitentity.NewRateLimitID()
 	now := time.Now()
 	readRepo := &mockReadRepo{
-		view: &domain.RateLimitView{
+		view: &ratelimitrepo.RateLimitView{
 			ID:                id,
 			Name:              "api-global",
 			Rule:              "/api/*",
@@ -88,7 +89,7 @@ func TestGetRateLimitHandler_NotFound(t *testing.T) {
 
 	readRepo := &mockReadRepo{}
 	handler := NewGetRateLimitHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), GetRateLimitQuery{ID: domain.NewRateLimitID()})
+	_, err := handler.Handle(context.Background(), GetRateLimitQuery{ID: ratelimitentity.NewRateLimitID()})
 	if err == nil {
 		t.Fatal("expected error for not found")
 	}
@@ -99,7 +100,7 @@ func TestGetRateLimitHandler_RepoError(t *testing.T) {
 
 	readRepo := &errorReadRepo{err: errRepo}
 	handler := NewGetRateLimitHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), GetRateLimitQuery{ID: domain.NewRateLimitID()})
+	_, err := handler.Handle(context.Background(), GetRateLimitQuery{ID: ratelimitentity.NewRateLimitID()})
 	if err == nil {
 		t.Fatal("expected error from repo")
 	}
@@ -108,10 +109,10 @@ func TestGetRateLimitHandler_RepoError(t *testing.T) {
 func TestGetRateLimitHandler_AllFieldsMapped(t *testing.T) {
 	t.Parallel()
 
-	id := domain.NewRateLimitID()
+	id := ratelimitentity.NewRateLimitID()
 	now := time.Now()
 	readRepo := &mockReadRepo{
-		view: &domain.RateLimitView{
+		view: &ratelimitrepo.RateLimitView{
 			ID:                id,
 			Name:              "strict",
 			Rule:              "/auth/*",

@@ -3,7 +3,8 @@ package command
 import (
 	"context"
 
-	"gct/internal/context/ops/generic/metric/domain"
+	metricentity "gct/internal/context/ops/generic/metric/domain/entity"
+	metricrepo "gct/internal/context/ops/generic/metric/domain/repository"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
@@ -22,14 +23,14 @@ type RecordMetricCommand struct {
 
 // RecordMetricHandler handles the RecordMetricCommand.
 type RecordMetricHandler struct {
-	repo     domain.MetricRepository
+	repo     metricrepo.MetricRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
 // NewRecordMetricHandler creates a new RecordMetricHandler.
 func NewRecordMetricHandler(
-	repo domain.MetricRepository,
+	repo metricrepo.MetricRepository,
 	eventBus application.EventBus,
 	logger logger.Log,
 ) *RecordMetricHandler {
@@ -46,7 +47,7 @@ func (h *RecordMetricHandler) Handle(ctx context.Context, cmd RecordMetricComman
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "RecordMetric", "metric")()
 
-	fm := domain.NewFunctionMetric(cmd.Name, cmd.LatencyMs, cmd.IsPanic, cmd.PanicError)
+	fm := metricentity.NewFunctionMetric(cmd.Name, cmd.LatencyMs, cmd.IsPanic, cmd.PanicError)
 
 	if err := h.repo.Save(ctx, fm); err != nil {
 		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "RecordMetric", Entity: "metric", Err: err}.KV()...)

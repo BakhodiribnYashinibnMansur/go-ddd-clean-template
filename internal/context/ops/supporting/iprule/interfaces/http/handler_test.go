@@ -12,7 +12,8 @@ import (
 	"gct/internal/context/ops/supporting/iprule"
 	"gct/internal/context/ops/supporting/iprule/application/command"
 	"gct/internal/context/ops/supporting/iprule/application/query"
-	"gct/internal/context/ops/supporting/iprule/domain"
+	ipruleentity "gct/internal/context/ops/supporting/iprule/domain/entity"
+	iprulerepo "gct/internal/context/ops/supporting/iprule/domain/repository"
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
@@ -23,47 +24,47 @@ import (
 // --- Mocks ---
 
 type mockRepo struct {
-	saved   *domain.IPRule
-	updated *domain.IPRule
-	deleted domain.IPRuleID
-	findFn  func(ctx context.Context, id domain.IPRuleID) (*domain.IPRule, error)
+	saved   *ipruleentity.IPRule
+	updated *ipruleentity.IPRule
+	deleted ipruleentity.IPRuleID
+	findFn  func(ctx context.Context, id ipruleentity.IPRuleID) (*ipruleentity.IPRule, error)
 }
 
-func (m *mockRepo) Save(_ context.Context, e *domain.IPRule) error {
+func (m *mockRepo) Save(_ context.Context, e *ipruleentity.IPRule) error {
 	m.saved = e
 	return nil
 }
-func (m *mockRepo) FindByID(ctx context.Context, id domain.IPRuleID) (*domain.IPRule, error) {
+func (m *mockRepo) FindByID(ctx context.Context, id ipruleentity.IPRuleID) (*ipruleentity.IPRule, error) {
 	if m.findFn != nil {
 		return m.findFn(ctx, id)
 	}
-	return nil, domain.ErrIPRuleNotFound
+	return nil, ipruleentity.ErrIPRuleNotFound
 }
-func (m *mockRepo) Update(_ context.Context, e *domain.IPRule) error {
+func (m *mockRepo) Update(_ context.Context, e *ipruleentity.IPRule) error {
 	m.updated = e
 	return nil
 }
-func (m *mockRepo) Delete(_ context.Context, id domain.IPRuleID) error {
+func (m *mockRepo) Delete(_ context.Context, id ipruleentity.IPRuleID) error {
 	m.deleted = id
 	return nil
 }
-func (m *mockRepo) List(_ context.Context, _ domain.IPRuleFilter) ([]*domain.IPRule, int64, error) {
+func (m *mockRepo) List(_ context.Context, _ iprulerepo.IPRuleFilter) ([]*ipruleentity.IPRule, int64, error) {
 	return nil, 0, nil
 }
 
 type mockReadRepo struct {
-	view  *domain.IPRuleView
-	views []*domain.IPRuleView
+	view  *iprulerepo.IPRuleView
+	views []*iprulerepo.IPRuleView
 	total int64
 }
 
-func (m *mockReadRepo) FindByID(_ context.Context, id domain.IPRuleID) (*domain.IPRuleView, error) {
+func (m *mockReadRepo) FindByID(_ context.Context, id ipruleentity.IPRuleID) (*iprulerepo.IPRuleView, error) {
 	if m.view != nil && m.view.ID == id {
 		return m.view, nil
 	}
-	return nil, domain.ErrIPRuleNotFound
+	return nil, ipruleentity.ErrIPRuleNotFound
 }
-func (m *mockReadRepo) List(_ context.Context, _ domain.IPRuleFilter) ([]*domain.IPRuleView, int64, error) {
+func (m *mockReadRepo) List(_ context.Context, _ iprulerepo.IPRuleFilter) ([]*iprulerepo.IPRuleView, int64, error) {
 	return m.views, m.total, nil
 }
 
@@ -165,8 +166,8 @@ func TestHandler_List_Success(t *testing.T) {
 	t.Parallel()
 
 	readRepo := &mockReadRepo{
-		views: []*domain.IPRuleView{
-			{ID: domain.NewIPRuleID(), IPAddress: "1.1.1.1", Action: "DENY", CreatedAt: time.Now(), UpdatedAt: time.Now()},
+		views: []*iprulerepo.IPRuleView{
+			{ID: ipruleentity.NewIPRuleID(), IPAddress: "1.1.1.1", Action: "DENY", CreatedAt: time.Now(), UpdatedAt: time.Now()},
 		},
 		total: 1,
 	}
@@ -184,9 +185,9 @@ func TestHandler_List_Success(t *testing.T) {
 func TestHandler_Get_Success(t *testing.T) {
 	t.Parallel()
 
-	id := domain.NewIPRuleID()
+	id := ipruleentity.NewIPRuleID()
 	readRepo := &mockReadRepo{
-		view: &domain.IPRuleView{
+		view: &iprulerepo.IPRuleView{
 			ID: id, IPAddress: "1.1.1.1", Action: "DENY", CreatedAt: time.Now(), UpdatedAt: time.Now(),
 		},
 	}
@@ -218,13 +219,13 @@ func TestHandler_Get_InvalidID(t *testing.T) {
 func TestHandler_Update_Success(t *testing.T) {
 	t.Parallel()
 
-	r := domain.NewIPRule("192.168.1.1", "DENY", "test", nil)
+	r := ipruleentity.NewIPRule("192.168.1.1", "DENY", "test", nil)
 	repo := &mockRepo{
-		findFn: func(_ context.Context, id domain.IPRuleID) (*domain.IPRule, error) {
+		findFn: func(_ context.Context, id ipruleentity.IPRuleID) (*ipruleentity.IPRule, error) {
 			if id == r.TypedID() {
 				return r, nil
 			}
-			return nil, domain.ErrIPRuleNotFound
+			return nil, ipruleentity.ErrIPRuleNotFound
 		},
 	}
 	router := setupRouter(repo, &mockReadRepo{})
@@ -315,7 +316,7 @@ func TestHandler_Create_InvalidJSON(t *testing.T) {
 
 func TestHandler_List_DefaultPagination(t *testing.T) {
 	readRepo := &mockReadRepo{
-		views: []*domain.IPRuleView{},
+		views: []*iprulerepo.IPRuleView{},
 		total: 0,
 	}
 	router := setupRouter(&mockRepo{}, readRepo)

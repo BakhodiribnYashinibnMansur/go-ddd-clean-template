@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"gct/internal/context/content/generic/file/application/command"
-	"gct/internal/context/content/generic/file/domain"
+	fileentity "gct/internal/context/content/generic/file/domain/entity"
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
@@ -16,10 +16,10 @@ import (
 // --- Mocks ---
 
 type mockFileRepo struct {
-	saved *domain.File
+	saved *fileentity.File
 }
 
-func (m *mockFileRepo) Save(_ context.Context, f *domain.File) error {
+func (m *mockFileRepo) Save(_ context.Context, f *fileentity.File) error {
 	m.saved = f
 	return nil
 }

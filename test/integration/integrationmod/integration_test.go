@@ -8,7 +8,7 @@ import (
 	"gct/internal/context/admin/supporting/integration"
 	"gct/internal/context/admin/supporting/integration/application/command"
 	"gct/internal/context/admin/supporting/integration/application/query"
-	"gct/internal/context/admin/supporting/integration/domain"
+	integentity "gct/internal/context/admin/supporting/integration/domain/entity"
 	"gct/internal/kernel/infrastructure/eventbus"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/test/integration/common/setup"
@@ -39,7 +39,7 @@ func TestIntegration_CreateAndGetIntegration(t *testing.T) {
 	}
 
 	result, err := bc.ListIntegrations.Handle(ctx, query.ListQuery{
-		Filter: domain.IntegrationFilter{Limit: 10},
+		Filter: integentity.IntegrationFilter{Limit: 10},
 	})
 	if err != nil {
 		t.Fatalf("ListIntegrations: %v", err)
@@ -56,7 +56,7 @@ func TestIntegration_CreateAndGetIntegration(t *testing.T) {
 		t.Errorf("expected type webhook, got %s", ig.Type)
 	}
 
-	view, err := bc.GetIntegration.Handle(ctx, query.GetQuery{ID: domain.IntegrationID(ig.ID)})
+	view, err := bc.GetIntegration.Handle(ctx, query.GetQuery{ID: integentity.IntegrationID(ig.ID)})
 	if err != nil {
 		t.Fatalf("GetIntegration: %v", err)
 	}
@@ -83,9 +83,9 @@ func TestIntegration_UpdateIntegration(t *testing.T) {
 	}
 
 	list, _ := bc.ListIntegrations.Handle(ctx, query.ListQuery{
-		Filter: domain.IntegrationFilter{Limit: 10},
+		Filter: integentity.IntegrationFilter{Limit: 10},
 	})
-	igID := domain.IntegrationID(list.Integrations[0].ID)
+	igID := integentity.IntegrationID(list.Integrations[0].ID)
 
 	newName := "updated-integration"
 	newURL := "https://example.com/updated"
@@ -125,9 +125,9 @@ func TestIntegration_DeleteIntegration(t *testing.T) {
 	}
 
 	list, _ := bc.ListIntegrations.Handle(ctx, query.ListQuery{
-		Filter: domain.IntegrationFilter{Limit: 10},
+		Filter: integentity.IntegrationFilter{Limit: 10},
 	})
-	igID := domain.IntegrationID(list.Integrations[0].ID)
+	igID := integentity.IntegrationID(list.Integrations[0].ID)
 
 	err = bc.DeleteIntegration.Handle(ctx, command.DeleteCommand{ID: igID})
 	if err != nil {
@@ -135,7 +135,7 @@ func TestIntegration_DeleteIntegration(t *testing.T) {
 	}
 
 	list2, _ := bc.ListIntegrations.Handle(ctx, query.ListQuery{
-		Filter: domain.IntegrationFilter{Limit: 10},
+		Filter: integentity.IntegrationFilter{Limit: 10},
 	})
 	if list2.Total != 0 {
 		t.Errorf("expected 0 integrations after delete, got %d", list2.Total)

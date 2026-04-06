@@ -6,30 +6,31 @@ import (
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 
-	appdto "gct/internal/context/admin/supporting/integration/application"
-	"gct/internal/context/admin/supporting/integration/domain"
+	"gct/internal/context/admin/supporting/integration/application/dto"
+	integentity "gct/internal/context/admin/supporting/integration/domain/entity"
+	integrepo "gct/internal/context/admin/supporting/integration/domain/repository"
 	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
 // ListQuery holds the input for listing integrations with filtering.
 type ListQuery struct {
-	Filter domain.IntegrationFilter
+	Filter integentity.IntegrationFilter
 }
 
 // ListResult holds the output of the list integrations query.
 type ListResult struct {
-	Integrations []*appdto.IntegrationView
+	Integrations []*dto.IntegrationView
 	Total        int64
 }
 
 // ListHandler handles the ListQuery.
 type ListHandler struct {
-	readRepo domain.IntegrationReadRepository
+	readRepo integrepo.IntegrationReadRepository
 	logger   logger.Log
 }
 
 // NewListHandler creates a new ListHandler.
-func NewListHandler(readRepo domain.IntegrationReadRepository, l logger.Log) *ListHandler {
+func NewListHandler(readRepo integrepo.IntegrationReadRepository, l logger.Log) *ListHandler {
 	return &ListHandler{readRepo: readRepo, logger: l}
 }
 
@@ -45,10 +46,10 @@ func (h *ListHandler) Handle(ctx context.Context, q ListQuery) (_ *ListResult, e
 		return nil, apperrors.MapToServiceError(err)
 	}
 
-	result := make([]*appdto.IntegrationView, len(views))
+	result := make([]*dto.IntegrationView, len(views))
 	for i, v := range views {
-		result[i] = &appdto.IntegrationView{
-			ID:         v.ID,
+		result[i] = &dto.IntegrationView{
+			ID:         v.ID.UUID(),
 			Name:       v.Name,
 			Type:       v.Type,
 			APIKey:     v.APIKey,

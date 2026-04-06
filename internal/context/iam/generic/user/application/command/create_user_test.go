@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/context/iam/generic/user/domain"
+	userentity "gct/internal/context/iam/generic/user/domain/entity"
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
@@ -15,9 +15,9 @@ import (
 // --- Mock Repository ---
 
 type mockUserRepository struct {
-	savedUser   *domain.User
-	updatedUser *domain.User
-	findByIDFn  func(ctx context.Context, id domain.UserID) (*domain.User, error)
+	savedUser   *userentity.User
+	updatedUser *userentity.User
+	findByIDFn  func(ctx context.Context, id userentity.UserID) (*userentity.User, error)
 
 	activeCount    int
 	activeCountErr error
@@ -26,44 +26,44 @@ type mockUserRepository struct {
 	countCalls     int
 }
 
-func (m *mockUserRepository) Save(ctx context.Context, entity *domain.User) error {
+func (m *mockUserRepository) Save(ctx context.Context, entity *userentity.User) error {
 	m.savedUser = entity
 	return nil
 }
 
-func (m *mockUserRepository) FindByID(ctx context.Context, id domain.UserID) (*domain.User, error) {
+func (m *mockUserRepository) FindByID(ctx context.Context, id userentity.UserID) (*userentity.User, error) {
 	if m.findByIDFn != nil {
 		return m.findByIDFn(ctx, id)
 	}
-	return nil, domain.ErrUserNotFound
+	return nil, userentity.ErrUserNotFound
 }
 
-func (m *mockUserRepository) Update(ctx context.Context, entity *domain.User) error {
+func (m *mockUserRepository) Update(ctx context.Context, entity *userentity.User) error {
 	m.updatedUser = entity
 	return nil
 }
 
-func (m *mockUserRepository) Delete(ctx context.Context, id domain.UserID) error {
+func (m *mockUserRepository) Delete(ctx context.Context, id userentity.UserID) error {
 	return nil
 }
 
-func (m *mockUserRepository) List(ctx context.Context, filter shared.Pagination) ([]*domain.User, int64, error) {
+func (m *mockUserRepository) List(ctx context.Context, filter shared.Pagination) ([]*userentity.User, int64, error) {
 	return nil, 0, nil
 }
 
-func (m *mockUserRepository) FindByPhone(ctx context.Context, phone domain.Phone) (*domain.User, error) {
-	return nil, domain.ErrUserNotFound
+func (m *mockUserRepository) FindByPhone(ctx context.Context, phone userentity.Phone) (*userentity.User, error) {
+	return nil, userentity.ErrUserNotFound
 }
 
-func (m *mockUserRepository) FindByEmail(ctx context.Context, email domain.Email) (*domain.User, error) {
-	return nil, domain.ErrUserNotFound
+func (m *mockUserRepository) FindByEmail(ctx context.Context, email userentity.Email) (*userentity.User, error) {
+	return nil, userentity.ErrUserNotFound
 }
 
 func (m *mockUserRepository) FindDefaultRoleID(_ context.Context) (uuid.UUID, error) {
 	return uuid.New(), nil
 }
 
-func (m *mockUserRepository) ActiveSessionCount(_ context.Context, _ domain.UserID) (int, error) {
+func (m *mockUserRepository) ActiveSessionCount(_ context.Context, _ userentity.UserID) (int, error) {
 	m.countCalls++
 	if m.activeCountErr != nil {
 		return 0, m.activeCountErr
@@ -76,18 +76,18 @@ func (m *mockUserRepository) ActiveSessionCount(_ context.Context, _ domain.User
 	return c, nil
 }
 
-func (m *mockUserRepository) RevokeOldestActiveSession(_ context.Context, _ domain.UserID) (domain.SessionID, error) {
+func (m *mockUserRepository) RevokeOldestActiveSession(_ context.Context, _ userentity.UserID) (userentity.SessionID, error) {
 	if m.revokeErr != nil {
-		return domain.NilSessionID, m.revokeErr
+		return userentity.NilSessionID, m.revokeErr
 	}
 	if m.activeCount-m.revokedOldest <= 0 {
-		return domain.NilSessionID, nil
+		return userentity.NilSessionID, nil
 	}
 	m.revokedOldest++
-	return domain.SessionID(uuid.New()), nil
+	return userentity.SessionID(uuid.New()), nil
 }
 
-func (m *mockUserRepository) RevokeSessionsByIntegration(_ context.Context, _ domain.UserID, _ string) (int, error) {
+func (m *mockUserRepository) RevokeSessionsByIntegration(_ context.Context, _ userentity.UserID, _ string) (int, error) {
 	return 0, nil
 }
 

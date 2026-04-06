@@ -4,7 +4,8 @@ import (
 	"context"
 	"time"
 
-	"gct/internal/context/iam/generic/usersetting/domain"
+	settingentity "gct/internal/context/iam/generic/usersetting/domain/entity"
+	settingrepo "gct/internal/context/iam/generic/usersetting/domain/repository"
 	"gct/internal/kernel/consts"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -19,7 +20,7 @@ var readColumns = []string{
 	"id", "user_id", "key", "value", "created_at", "updated_at",
 }
 
-// UserSettingReadRepo implements domain.UserSettingReadRepository for the CQRS read side.
+// UserSettingReadRepo implements repository.UserSettingReadRepository for the CQRS read side.
 type UserSettingReadRepo struct {
 	pool    *pgxpool.Pool
 	builder squirrel.StatementBuilderType
@@ -34,7 +35,7 @@ func NewUserSettingReadRepo(pool *pgxpool.Pool) *UserSettingReadRepo {
 }
 
 // FindByID returns a single UserSettingView by its ID.
-func (r *UserSettingReadRepo) FindByID(ctx context.Context, id domain.UserSettingID) (result *domain.UserSettingView, err error) {
+func (r *UserSettingReadRepo) FindByID(ctx context.Context, id settingentity.UserSettingID) (result *settingrepo.UserSettingView, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "UserSettingReadRepo.FindByID")
 	defer func() { end(err) }()
 
@@ -52,7 +53,7 @@ func (r *UserSettingReadRepo) FindByID(ctx context.Context, id domain.UserSettin
 }
 
 // List returns a paginated list of UserSettingView with optional filters.
-func (r *UserSettingReadRepo) List(ctx context.Context, filter domain.UserSettingFilter) (items []*domain.UserSettingView, total int64, err error) {
+func (r *UserSettingReadRepo) List(ctx context.Context, filter settingrepo.UserSettingFilter) (items []*settingrepo.UserSettingView, total int64, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "UserSettingReadRepo.List")
 	defer func() { end(err) }()
 
@@ -100,7 +101,7 @@ func (r *UserSettingReadRepo) List(ctx context.Context, filter domain.UserSettin
 	}
 	defer rows.Close()
 
-	var views []*domain.UserSettingView
+	var views []*settingrepo.UserSettingView
 	for rows.Next() {
 		v, err := scanUserSettingViewFromRows(rows)
 		if err != nil {
@@ -112,7 +113,7 @@ func (r *UserSettingReadRepo) List(ctx context.Context, filter domain.UserSettin
 	return views, total, nil
 }
 
-func applyFilters(conds squirrel.And, filter domain.UserSettingFilter) squirrel.And {
+func applyFilters(conds squirrel.And, filter settingrepo.UserSettingFilter) squirrel.And {
 	if filter.UserID != nil {
 		conds = append(conds, squirrel.Eq{"user_id": *filter.UserID})
 	}
@@ -122,7 +123,7 @@ func applyFilters(conds squirrel.And, filter domain.UserSettingFilter) squirrel.
 	return conds
 }
 
-func scanUserSettingView(row pgx.Row) (*domain.UserSettingView, error) {
+func scanUserSettingView(row pgx.Row) (*settingrepo.UserSettingView, error) {
 	var (
 		id        uuid.UUID
 		userID    uuid.UUID
@@ -137,8 +138,8 @@ func scanUserSettingView(row pgx.Row) (*domain.UserSettingView, error) {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 
-	return &domain.UserSettingView{
-		ID:        domain.UserSettingID(id),
+	return &settingrepo.UserSettingView{
+		ID:        settingentity.UserSettingID(id),
 		UserID:    userID,
 		Key:       key,
 		Value:     value,
@@ -147,7 +148,7 @@ func scanUserSettingView(row pgx.Row) (*domain.UserSettingView, error) {
 	}, nil
 }
 
-func scanUserSettingViewFromRows(rows pgx.Rows) (*domain.UserSettingView, error) {
+func scanUserSettingViewFromRows(rows pgx.Rows) (*settingrepo.UserSettingView, error) {
 	var (
 		id        uuid.UUID
 		userID    uuid.UUID
@@ -162,8 +163,8 @@ func scanUserSettingViewFromRows(rows pgx.Rows) (*domain.UserSettingView, error)
 		return nil, apperrors.HandlePgError(err, tableName, nil)
 	}
 
-	return &domain.UserSettingView{
-		ID:        domain.UserSettingID(id),
+	return &settingrepo.UserSettingView{
+		ID:        settingentity.UserSettingID(id),
 		UserID:    userID,
 		Key:       key,
 		Value:     value,

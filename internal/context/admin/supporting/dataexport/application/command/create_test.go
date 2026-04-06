@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"gct/internal/context/admin/supporting/dataexport/application/command"
-	"gct/internal/context/admin/supporting/dataexport/domain"
+	exportentity "gct/internal/context/admin/supporting/dataexport/domain/entity"
 	shared "gct/internal/kernel/domain"
 
 	"github.com/google/uuid"
@@ -42,7 +42,7 @@ func TestCreateDataExportHandler_Success(t *testing.T) {
 	if repo.savedEntity.Format() != "csv" {
 		t.Fatalf("expected format csv, got %s", repo.savedEntity.Format())
 	}
-	if repo.savedEntity.Status() != domain.ExportStatusPending {
+	if repo.savedEntity.Status() != exportentity.ExportStatusPending {
 		t.Fatalf("expected status PENDING, got %s", repo.savedEntity.Status())
 	}
 	if len(eb.publishedEvents) != 1 {
@@ -58,7 +58,7 @@ func TestCreateDataExportHandler_RepoSaveError(t *testing.T) {
 
 	repoErr := errors.New("db connection failed")
 	repo := &mockWriteRepo{
-		saveFn: func(_ context.Context, _ *domain.DataExport) error {
+		saveFn: func(_ context.Context, _ *exportentity.DataExport) error {
 			return repoErr
 		},
 	}

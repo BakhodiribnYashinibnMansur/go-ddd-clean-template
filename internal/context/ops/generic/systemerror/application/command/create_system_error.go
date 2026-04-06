@@ -7,7 +7,8 @@ import (
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
-	"gct/internal/context/ops/generic/systemerror/domain"
+	syserrentity "gct/internal/context/ops/generic/systemerror/domain/entity"
+	syserrrepo "gct/internal/context/ops/generic/systemerror/domain/repository"
 
 	"github.com/google/uuid"
 )
@@ -32,14 +33,14 @@ type CreateSystemErrorCommand struct {
 // CreateSystemErrorHandler persists system error records and emits domain events for downstream alerting.
 // Event bus failures are logged but swallowed so that error recording is never blocked by event delivery.
 type CreateSystemErrorHandler struct {
-	repo     domain.SystemErrorRepository
+	repo     syserrrepo.SystemErrorRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
 // NewCreateSystemErrorHandler creates a new CreateSystemErrorHandler.
 func NewCreateSystemErrorHandler(
-	repo domain.SystemErrorRepository,
+	repo syserrrepo.SystemErrorRepository,
 	eventBus application.EventBus,
 	logger logger.Log,
 ) *CreateSystemErrorHandler {
@@ -57,7 +58,7 @@ func (h *CreateSystemErrorHandler) Handle(ctx context.Context, cmd CreateSystemE
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "CreateSystemError", "system_error")()
 
-	se := domain.NewSystemError(cmd.Code, cmd.Message, cmd.Severity)
+	se := syserrentity.NewSystemError(cmd.Code, cmd.Message, cmd.Severity)
 
 	if cmd.StackTrace != nil {
 		se.SetStackTrace(cmd.StackTrace)

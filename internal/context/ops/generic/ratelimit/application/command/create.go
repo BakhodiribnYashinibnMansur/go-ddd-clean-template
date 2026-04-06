@@ -3,7 +3,8 @@ package command
 import (
 	"context"
 
-	"gct/internal/context/ops/generic/ratelimit/domain"
+	ratelimitentity "gct/internal/context/ops/generic/ratelimit/domain/entity"
+	ratelimitrepo "gct/internal/context/ops/generic/ratelimit/domain/repository"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
@@ -21,14 +22,14 @@ type CreateRateLimitCommand struct {
 
 // CreateRateLimitHandler handles the CreateRateLimitCommand.
 type CreateRateLimitHandler struct {
-	repo     domain.RateLimitRepository
+	repo     ratelimitrepo.RateLimitRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
 // NewCreateRateLimitHandler creates a new CreateRateLimitHandler.
 func NewCreateRateLimitHandler(
-	repo domain.RateLimitRepository,
+	repo ratelimitrepo.RateLimitRepository,
 	eventBus application.EventBus,
 	logger logger.Log,
 ) *CreateRateLimitHandler {
@@ -45,7 +46,7 @@ func (h *CreateRateLimitHandler) Handle(ctx context.Context, cmd CreateRateLimit
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "CreateRateLimit", "rate_limit")()
 
-	rl := domain.NewRateLimit(cmd.Name, cmd.Rule, cmd.RequestsPerWindow, cmd.WindowDuration, cmd.Enabled)
+	rl := ratelimitentity.NewRateLimit(cmd.Name, cmd.Rule, cmd.RequestsPerWindow, cmd.WindowDuration, cmd.Enabled)
 
 	if err := h.repo.Save(ctx, rl); err != nil {
 		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateRateLimit", Entity: "rate_limit", Err: err}.KV()...)

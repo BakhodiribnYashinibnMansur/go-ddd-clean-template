@@ -3,7 +3,8 @@ package command
 import (
 	"context"
 
-	"gct/internal/context/iam/generic/usersetting/domain"
+	settingentity "gct/internal/context/iam/generic/usersetting/domain/entity"
+	settingrepo "gct/internal/context/iam/generic/usersetting/domain/repository"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -11,18 +12,18 @@ import (
 
 // DeleteUserSettingCommand holds the input for deleting a user setting.
 type DeleteUserSettingCommand struct {
-	ID domain.UserSettingID
+	ID settingentity.UserSettingID
 }
 
 // DeleteUserSettingHandler handles the DeleteUserSettingCommand.
 type DeleteUserSettingHandler struct {
-	repo   domain.UserSettingRepository
+	repo   settingrepo.UserSettingRepository
 	logger logger.Log
 }
 
 // NewDeleteUserSettingHandler creates a new DeleteUserSettingHandler.
 func NewDeleteUserSettingHandler(
-	repo domain.UserSettingRepository,
+	repo settingrepo.UserSettingRepository,
 	logger logger.Log,
 ) *DeleteUserSettingHandler {
 	return &DeleteUserSettingHandler{

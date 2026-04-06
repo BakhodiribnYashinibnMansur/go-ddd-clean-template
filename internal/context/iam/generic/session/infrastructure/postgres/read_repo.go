@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	appdto "gct/internal/context/iam/generic/session/application"
+	"gct/internal/context/iam/generic/session/application/dto"
 	"gct/internal/kernel/consts"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -36,7 +36,7 @@ func NewSessionReadRepo(pool *pgxpool.Pool) *SessionReadRepo {
 }
 
 // FindByID returns a SessionView for the given session ID.
-func (r *SessionReadRepo) FindByID(ctx context.Context, id uuid.UUID) (result *appdto.SessionView, err error) {
+func (r *SessionReadRepo) FindByID(ctx context.Context, id uuid.UUID) (result *dto.SessionView, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "SessionReadRepo.FindByID")
 	defer func() { end(err) }()
 
@@ -74,7 +74,7 @@ func (r *SessionReadRepo) FindByID(ctx context.Context, id uuid.UUID) (result *a
 		return nil, apperrors.HandlePgError(err, consts.TableSession, map[string]any{"id": id})
 	}
 
-	return &appdto.SessionView{
+	return &dto.SessionView{
 		ID:           sid,
 		UserID:       userID,
 		DeviceID:     deviceID,
@@ -90,14 +90,14 @@ func (r *SessionReadRepo) FindByID(ctx context.Context, id uuid.UUID) (result *a
 }
 
 // List returns a paginated list of SessionView with optional filters.
-func (r *SessionReadRepo) List(ctx context.Context, filter appdto.SessionsFilter) (items []*appdto.SessionView, total int64, err error) {
+func (r *SessionReadRepo) List(ctx context.Context, filter dto.SessionsFilter) (items []*dto.SessionView, total int64, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "SessionReadRepo.List")
 	defer func() { end(err) }()
 
 	// Build WHERE conditions.
 	conds := squirrel.And{}
 	if filter.UserID != nil {
-		conds = append(conds, squirrel.Eq{"user_id": filter.UserID.UUID()})
+		conds = append(conds, squirrel.Eq{"user_id": *filter.UserID})
 	}
 	if filter.Revoked != nil {
 		conds = append(conds, squirrel.Eq{"revoked": *filter.Revoked})
@@ -145,7 +145,7 @@ func (r *SessionReadRepo) List(ctx context.Context, filter appdto.SessionsFilter
 	}
 	defer rows.Close()
 
-	var views []*appdto.SessionView
+	var views []*dto.SessionView
 	for rows.Next() {
 		var (
 			sid          uuid.UUID
@@ -169,7 +169,7 @@ func (r *SessionReadRepo) List(ctx context.Context, filter appdto.SessionsFilter
 			return nil, 0, apperrors.HandlePgError(err, consts.TableSession, nil)
 		}
 
-		views = append(views, &appdto.SessionView{
+		views = append(views, &dto.SessionView{
 			ID:           sid,
 			UserID:       userID,
 			DeviceID:     deviceID,

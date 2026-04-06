@@ -6,7 +6,7 @@ import (
 	"gct/internal/context/ops/generic/metric"
 	"gct/internal/context/ops/generic/metric/application/command"
 	"gct/internal/context/ops/generic/metric/application/query"
-	"gct/internal/context/ops/generic/metric/domain"
+	metricrepo "gct/internal/context/ops/generic/metric/domain/repository"
 	"gct/internal/kernel/infrastructure/httpx"
 	"gct/internal/kernel/infrastructure/httpx/response"
 	"gct/internal/kernel/infrastructure/logger"
@@ -77,7 +77,7 @@ func (h *Handler) List(ctx *gin.Context) {
 	}
 
 	q := query.ListMetricsQuery{
-		Filter: domain.MetricFilter{Limit: pg.Limit, Offset: pg.Offset},
+		Filter: metricrepo.MetricFilter{Limit: pg.Limit, Offset: pg.Offset},
 	}
 	result, err := h.bc.ListMetrics.Handle(ctx.Request.Context(), q)
 	if err != nil {

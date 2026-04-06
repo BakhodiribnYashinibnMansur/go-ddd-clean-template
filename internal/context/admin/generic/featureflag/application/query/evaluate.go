@@ -3,7 +3,7 @@ package query
 import (
 	"context"
 
-	"gct/internal/context/admin/generic/featureflag/domain"
+	ffentity "gct/internal/context/admin/generic/featureflag/domain/entity"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/pgxutil"
 )
@@ -52,7 +52,7 @@ func (h *EvaluateHandler) Handle(ctx context.Context, q EvaluateQuery) (_ *Evalu
 
 	result := h.evaluator.EvaluateFull(ctx, q.Key, q.UserAttrs)
 	if result == nil {
-		return nil, apperrors.MapToServiceError(domain.ErrFeatureFlagNotFound)
+		return nil, apperrors.MapToServiceError(ffentity.ErrFeatureFlagNotFound)
 	}
 
 	return &EvaluateResult{

@@ -11,7 +11,7 @@ import (
 	"gct/internal/context/iam/generic/user"
 	"gct/internal/context/iam/generic/user/application/command"
 	"gct/internal/context/iam/generic/user/application/query"
-	"gct/internal/context/iam/generic/user/domain"
+	userentity "gct/internal/context/iam/generic/user/domain/entity"
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
@@ -24,55 +24,55 @@ import (
 // ---------------------------------------------------------------------------
 
 type mockUserRepo struct {
-	savedUser   *domain.User
-	updatedUser *domain.User
-	findByIDFn  func(ctx context.Context, id domain.UserID) (*domain.User, error)
+	savedUser   *userentity.User
+	updatedUser *userentity.User
+	findByIDFn  func(ctx context.Context, id userentity.UserID) (*userentity.User, error)
 }
 
-func (m *mockUserRepo) Save(_ context.Context, entity *domain.User) error {
+func (m *mockUserRepo) Save(_ context.Context, entity *userentity.User) error {
 	m.savedUser = entity
 	return nil
 }
 
-func (m *mockUserRepo) FindByID(ctx context.Context, id domain.UserID) (*domain.User, error) {
+func (m *mockUserRepo) FindByID(ctx context.Context, id userentity.UserID) (*userentity.User, error) {
 	if m.findByIDFn != nil {
 		return m.findByIDFn(ctx, id)
 	}
-	return nil, domain.ErrUserNotFound
+	return nil, userentity.ErrUserNotFound
 }
 
-func (m *mockUserRepo) Update(_ context.Context, entity *domain.User) error {
+func (m *mockUserRepo) Update(_ context.Context, entity *userentity.User) error {
 	m.updatedUser = entity
 	return nil
 }
 
-func (m *mockUserRepo) Delete(_ context.Context, _ domain.UserID) error { return nil }
+func (m *mockUserRepo) Delete(_ context.Context, _ userentity.UserID) error { return nil }
 
-func (m *mockUserRepo) List(_ context.Context, _ shared.Pagination) ([]*domain.User, int64, error) {
+func (m *mockUserRepo) List(_ context.Context, _ shared.Pagination) ([]*userentity.User, int64, error) {
 	return nil, 0, nil
 }
 
-func (m *mockUserRepo) FindByPhone(_ context.Context, phone domain.Phone) (*domain.User, error) {
-	return nil, domain.ErrUserNotFound
+func (m *mockUserRepo) FindByPhone(_ context.Context, phone userentity.Phone) (*userentity.User, error) {
+	return nil, userentity.ErrUserNotFound
 }
 
-func (m *mockUserRepo) FindByEmail(_ context.Context, email domain.Email) (*domain.User, error) {
-	return nil, domain.ErrUserNotFound
+func (m *mockUserRepo) FindByEmail(_ context.Context, email userentity.Email) (*userentity.User, error) {
+	return nil, userentity.ErrUserNotFound
 }
 
 func (m *mockUserRepo) FindDefaultRoleID(_ context.Context) (uuid.UUID, error) {
 	return uuid.New(), nil
 }
 
-func (m *mockUserRepo) ActiveSessionCount(_ context.Context, _ domain.UserID) (int, error) {
+func (m *mockUserRepo) ActiveSessionCount(_ context.Context, _ userentity.UserID) (int, error) {
 	return 0, nil
 }
 
-func (m *mockUserRepo) RevokeOldestActiveSession(_ context.Context, _ domain.UserID) (domain.SessionID, error) {
-	return domain.NilSessionID, nil
+func (m *mockUserRepo) RevokeOldestActiveSession(_ context.Context, _ userentity.UserID) (userentity.SessionID, error) {
+	return userentity.NilSessionID, nil
 }
 
-func (m *mockUserRepo) RevokeSessionsByIntegration(_ context.Context, _ domain.UserID, _ string) (int, error) {
+func (m *mockUserRepo) RevokeSessionsByIntegration(_ context.Context, _ userentity.UserID, _ string) (int, error) {
 	return 0, nil
 }
 
@@ -111,28 +111,28 @@ func (m *mockLogger) Errorc(_ context.Context, _ string, _ ...any) {}
 func (m *mockLogger) Fatalc(_ context.Context, _ string, _ ...any) {}
 
 type mockReadRepo struct {
-	view  *domain.UserView
-	views []*domain.UserView
+	view  *userentity.UserView
+	views []*userentity.UserView
 	total int64
 }
 
-func (m *mockReadRepo) FindByID(_ context.Context, id domain.UserID) (*domain.UserView, error) {
+func (m *mockReadRepo) FindByID(_ context.Context, id userentity.UserID) (*userentity.UserView, error) {
 	if m.view != nil && m.view.ID == id {
 		return m.view, nil
 	}
-	return nil, domain.ErrUserNotFound
+	return nil, userentity.ErrUserNotFound
 }
 
-func (m *mockReadRepo) List(_ context.Context, _ domain.UsersFilter) ([]*domain.UserView, int64, error) {
+func (m *mockReadRepo) List(_ context.Context, _ userentity.UsersFilter) ([]*userentity.UserView, int64, error) {
 	return m.views, m.total, nil
 }
 
-func (m *mockReadRepo) FindSessionByID(_ context.Context, _ domain.SessionID) (*shared.AuthSession, error) {
-	return nil, domain.ErrUserNotFound
+func (m *mockReadRepo) FindSessionByID(_ context.Context, _ userentity.SessionID) (*shared.AuthSession, error) {
+	return nil, userentity.ErrUserNotFound
 }
 
-func (m *mockReadRepo) FindUserForAuth(_ context.Context, _ domain.UserID) (*shared.AuthUser, error) {
-	return nil, domain.ErrUserNotFound
+func (m *mockReadRepo) FindUserForAuth(_ context.Context, _ userentity.UserID) (*shared.AuthUser, error) {
+	return nil, userentity.ErrUserNotFound
 }
 
 // ---------------------------------------------------------------------------
@@ -226,8 +226,8 @@ func TestHandler_List_Success(t *testing.T) {
 
 	repo := &mockUserRepo{}
 	readRepo := &mockReadRepo{
-		views: []*domain.UserView{
-			{ID: domain.NewUserID(), Phone: "+998901111111", Active: true},
+		views: []*userentity.UserView{
+			{ID: userentity.NewUserID(), Phone: "+998901111111", Active: true},
 		},
 		total: 1,
 	}
@@ -260,10 +260,10 @@ func TestHandler_List_Success(t *testing.T) {
 func TestHandler_Get_Success(t *testing.T) {
 	t.Parallel()
 
-	userID := domain.NewUserID()
+	userID := userentity.NewUserID()
 	repo := &mockUserRepo{}
 	readRepo := &mockReadRepo{
-		view: &domain.UserView{
+		view: &userentity.UserView{
 			ID:     userID,
 			Phone:  "+998901234567",
 			Active: true,
@@ -322,16 +322,16 @@ func TestHandler_Get_NotFound(t *testing.T) {
 func TestHandler_Update_Success(t *testing.T) {
 	t.Parallel()
 
-	phone, _ := domain.NewPhone("+998901234567")
-	pw, _ := domain.NewPasswordFromRaw("StrongP@ss123")
-	existingUser, _ := domain.NewUser(phone, pw)
+	phone, _ := userentity.NewPhone("+998901234567")
+	pw, _ := userentity.NewPasswordFromRaw("StrongP@ss123")
+	existingUser, _ := userentity.NewUser(phone, pw)
 
 	repo := &mockUserRepo{
-		findByIDFn: func(_ context.Context, id domain.UserID) (*domain.User, error) {
+		findByIDFn: func(_ context.Context, id userentity.UserID) (*userentity.User, error) {
 			if id == existingUser.TypedID() {
 				return existingUser, nil
 			}
-			return nil, domain.ErrUserNotFound
+			return nil, userentity.ErrUserNotFound
 		},
 	}
 	readRepo := &mockReadRepo{}
@@ -359,16 +359,16 @@ func TestHandler_Update_Success(t *testing.T) {
 func TestHandler_Delete_Success(t *testing.T) {
 	t.Parallel()
 
-	phone, _ := domain.NewPhone("+998901234567")
-	pw, _ := domain.NewPasswordFromRaw("StrongP@ss123")
-	existingUser, _ := domain.NewUser(phone, pw)
+	phone, _ := userentity.NewPhone("+998901234567")
+	pw, _ := userentity.NewPasswordFromRaw("StrongP@ss123")
+	existingUser, _ := userentity.NewUser(phone, pw)
 
 	repo := &mockUserRepo{
-		findByIDFn: func(_ context.Context, id domain.UserID) (*domain.User, error) {
+		findByIDFn: func(_ context.Context, id userentity.UserID) (*userentity.User, error) {
 			if id == existingUser.TypedID() {
 				return existingUser, nil
 			}
-			return nil, domain.ErrUserNotFound
+			return nil, userentity.ErrUserNotFound
 		},
 	}
 	readRepo := &mockReadRepo{}
@@ -408,16 +408,16 @@ func TestHandler_Delete_InvalidID(t *testing.T) {
 func TestHandler_Approve_Success(t *testing.T) {
 	t.Parallel()
 
-	phone, _ := domain.NewPhone("+998901234567")
-	pw, _ := domain.NewPasswordFromRaw("StrongP@ss123")
-	existingUser, _ := domain.NewUser(phone, pw)
+	phone, _ := userentity.NewPhone("+998901234567")
+	pw, _ := userentity.NewPasswordFromRaw("StrongP@ss123")
+	existingUser, _ := userentity.NewUser(phone, pw)
 
 	repo := &mockUserRepo{
-		findByIDFn: func(_ context.Context, id domain.UserID) (*domain.User, error) {
+		findByIDFn: func(_ context.Context, id userentity.UserID) (*userentity.User, error) {
 			if id == existingUser.TypedID() {
 				return existingUser, nil
 			}
-			return nil, domain.ErrUserNotFound
+			return nil, userentity.ErrUserNotFound
 		},
 	}
 	readRepo := &mockReadRepo{}
@@ -440,16 +440,16 @@ func TestHandler_Approve_Success(t *testing.T) {
 func TestHandler_ChangeRole_Success(t *testing.T) {
 	t.Parallel()
 
-	phone, _ := domain.NewPhone("+998901234567")
-	pw, _ := domain.NewPasswordFromRaw("StrongP@ss123")
-	existingUser, _ := domain.NewUser(phone, pw)
+	phone, _ := userentity.NewPhone("+998901234567")
+	pw, _ := userentity.NewPasswordFromRaw("StrongP@ss123")
+	existingUser, _ := userentity.NewUser(phone, pw)
 
 	repo := &mockUserRepo{
-		findByIDFn: func(_ context.Context, id domain.UserID) (*domain.User, error) {
+		findByIDFn: func(_ context.Context, id userentity.UserID) (*userentity.User, error) {
 			if id == existingUser.TypedID() {
 				return existingUser, nil
 			}
-			return nil, domain.ErrUserNotFound
+			return nil, userentity.ErrUserNotFound
 		},
 	}
 	readRepo := &mockReadRepo{}
@@ -495,16 +495,16 @@ func TestHandler_ChangeRole_BadRequest(t *testing.T) {
 func TestHandler_BulkAction_Success(t *testing.T) {
 	t.Parallel()
 
-	phone, _ := domain.NewPhone("+998901234567")
-	pw, _ := domain.NewPasswordFromRaw("StrongP@ss123")
-	existingUser, _ := domain.NewUser(phone, pw)
+	phone, _ := userentity.NewPhone("+998901234567")
+	pw, _ := userentity.NewPasswordFromRaw("StrongP@ss123")
+	existingUser, _ := userentity.NewUser(phone, pw)
 
 	repo := &mockUserRepo{
-		findByIDFn: func(_ context.Context, id domain.UserID) (*domain.User, error) {
+		findByIDFn: func(_ context.Context, id userentity.UserID) (*userentity.User, error) {
 			if id == existingUser.TypedID() {
 				return existingUser, nil
 			}
-			return nil, domain.ErrUserNotFound
+			return nil, userentity.ErrUserNotFound
 		},
 	}
 	readRepo := &mockReadRepo{}
@@ -756,7 +756,7 @@ func TestHandler_List_DefaultPagination(t *testing.T) {
 
 	repo := &mockUserRepo{}
 	readRepo := &mockReadRepo{
-		views: []*domain.UserView{},
+		views: []*userentity.UserView{},
 		total: 0,
 	}
 	bc := newBC(repo, readRepo)
@@ -777,7 +777,7 @@ func TestHandler_List_WithFilters(t *testing.T) {
 
 	repo := &mockUserRepo{}
 	readRepo := &mockReadRepo{
-		views: []*domain.UserView{},
+		views: []*userentity.UserView{},
 		total: 0,
 	}
 	bc := newBC(repo, readRepo)
@@ -795,10 +795,10 @@ func TestHandler_List_WithFilters(t *testing.T) {
 func TestHandler_ResponseFormat(t *testing.T) {
 	t.Parallel()
 
-	userID := domain.NewUserID()
+	userID := userentity.NewUserID()
 	repo := &mockUserRepo{}
 	readRepo := &mockReadRepo{
-		view: &domain.UserView{
+		view: &userentity.UserView{
 			ID:     userID,
 			Phone:  "+998901234567",
 			Active: true,
@@ -855,7 +855,7 @@ func TestHandler_DeleteUser_InvalidUUID(t *testing.T) {
 
 func TestHandler_ListUsers_DefaultPagination(t *testing.T) {
 	readRepo := &mockReadRepo{
-		views: []*domain.UserView{},
+		views: []*userentity.UserView{},
 		total: 0,
 	}
 	bc := newBC(&mockUserRepo{}, readRepo)

@@ -3,7 +3,8 @@ package command
 import (
 	"context"
 
-	"gct/internal/context/iam/generic/authz/domain"
+	authzentity "gct/internal/context/iam/generic/authz/domain/entity"
+	authzrepo "gct/internal/context/iam/generic/authz/domain/repository"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -13,19 +14,19 @@ import (
 // This is an idempotent toggle — calling it twice restores the original state.
 // Disabled policies are skipped during authorization evaluation without being deleted.
 type TogglePolicyCommand struct {
-	ID domain.PolicyID
+	ID authzentity.PolicyID
 }
 
 // TogglePolicyHandler orchestrates the enable/disable lifecycle of an authorization policy.
 // Changes take effect immediately on the next authorization evaluation — there is no propagation delay.
 type TogglePolicyHandler struct {
-	repo   domain.PolicyRepository
+	repo   authzrepo.PolicyRepository
 	logger logger.Log
 }
 
 // NewTogglePolicyHandler wires dependencies for policy toggling.
 func NewTogglePolicyHandler(
-	repo domain.PolicyRepository,
+	repo authzrepo.PolicyRepository,
 	logger logger.Log,
 ) *TogglePolicyHandler {
 	return &TogglePolicyHandler{

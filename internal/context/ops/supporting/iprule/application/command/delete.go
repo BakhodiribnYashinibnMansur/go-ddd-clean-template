@@ -3,7 +3,8 @@ package command
 import (
 	"context"
 
-	"gct/internal/context/ops/supporting/iprule/domain"
+	ipruleentity "gct/internal/context/ops/supporting/iprule/domain/entity"
+	iprulerepo "gct/internal/context/ops/supporting/iprule/domain/repository"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -12,20 +13,20 @@ import (
 // DeleteIPRuleCommand represents an intent to permanently remove an IP rule by its unique identifier.
 // Once deleted, any traffic previously matched by this rule will fall through to the default policy.
 type DeleteIPRuleCommand struct {
-	ID domain.IPRuleID
+	ID ipruleentity.IPRuleID
 }
 
 // DeleteIPRuleHandler orchestrates IP rule deletion through the repository layer.
 // It enforces a hard-delete strategy — no soft-delete or audit trail is maintained at this level.
 // Callers are responsible for authorization checks before invoking this handler.
 type DeleteIPRuleHandler struct {
-	repo   domain.IPRuleRepository
+	repo   iprulerepo.IPRuleRepository
 	logger logger.Log
 }
 
 // NewDeleteIPRuleHandler wires up the handler with its required dependencies.
 func NewDeleteIPRuleHandler(
-	repo domain.IPRuleRepository,
+	repo iprulerepo.IPRuleRepository,
 	logger logger.Log,
 ) *DeleteIPRuleHandler {
 	return &DeleteIPRuleHandler{

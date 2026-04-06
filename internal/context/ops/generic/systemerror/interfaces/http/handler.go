@@ -9,7 +9,8 @@ import (
 	"gct/internal/context/ops/generic/systemerror"
 	"gct/internal/context/ops/generic/systemerror/application/command"
 	"gct/internal/context/ops/generic/systemerror/application/query"
-	"gct/internal/context/ops/generic/systemerror/domain"
+	syserrentity "gct/internal/context/ops/generic/systemerror/domain/entity"
+	syserrrepo "gct/internal/context/ops/generic/systemerror/domain/repository"
 
 	"github.com/gin-gonic/gin"
 )
@@ -84,7 +85,7 @@ func (h *Handler) List(ctx *gin.Context) {
 	}
 
 	q := query.ListSystemErrorsQuery{
-		Filter: domain.SystemErrorFilter{Limit: pg.Limit, Offset: pg.Offset},
+		Filter: syserrrepo.SystemErrorFilter{Limit: pg.Limit, Offset: pg.Offset},
 	}
 	result, err := h.bc.ListSystemErrors.Handle(ctx.Request.Context(), q)
 	if err != nil {
@@ -108,7 +109,7 @@ func (h *Handler) List(ctx *gin.Context) {
 // @Router /system-errors/{id} [get]
 // Get returns a single system error by ID.
 func (h *Handler) Get(ctx *gin.Context) {
-	id, err := domain.ParseSystemErrorID(ctx.Param("id"))
+	id, err := syserrentity.ParseSystemErrorID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
@@ -136,7 +137,7 @@ func (h *Handler) Get(ctx *gin.Context) {
 // @Router /system-errors/{id}/resolve [post]
 // Resolve marks a system error as resolved.
 func (h *Handler) Resolve(ctx *gin.Context) {
-	id, err := domain.ParseSystemErrorID(ctx.Param("id"))
+	id, err := syserrentity.ParseSystemErrorID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return

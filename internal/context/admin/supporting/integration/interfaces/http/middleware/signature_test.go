@@ -15,7 +15,7 @@ import (
 
 	"gct/config"
 	"gct/internal/context/admin/supporting/integration/application/query"
-	"gct/internal/context/admin/supporting/integration/domain"
+	integentity "gct/internal/context/admin/supporting/integration/domain/entity"
 	"gct/internal/kernel/consts"
 
 	"github.com/gin-gonic/gin"
@@ -31,30 +31,30 @@ func init() {
 // ---------------------------------------------------------------------------
 
 type mockReadRepo struct {
-	apiKeyView *domain.IntegrationAPIKeyView
+	apiKeyView *integentity.IntegrationAPIKeyView
 	findErr    error
 }
 
-func (r *mockReadRepo) FindByID(_ context.Context, _ domain.IntegrationID) (*domain.IntegrationView, error) {
+func (r *mockReadRepo) FindByID(_ context.Context, _ integentity.IntegrationID) (*integentity.IntegrationView, error) {
 	return nil, errors.New("not implemented")
 }
 
-func (r *mockReadRepo) List(_ context.Context, _ domain.IntegrationFilter) ([]*domain.IntegrationView, int64, error) {
+func (r *mockReadRepo) List(_ context.Context, _ integentity.IntegrationFilter) ([]*integentity.IntegrationView, int64, error) {
 	return nil, 0, errors.New("not implemented")
 }
 
-func (r *mockReadRepo) FindByAPIKey(_ context.Context, _ string) (*domain.IntegrationAPIKeyView, error) {
+func (r *mockReadRepo) FindByAPIKey(_ context.Context, _ string) (*integentity.IntegrationAPIKeyView, error) {
 	if r.findErr != nil {
 		return nil, r.findErr
 	}
 	return r.apiKeyView, nil
 }
 
-func (r *mockReadRepo) ListActiveJWT(_ context.Context) ([]domain.JWTIntegrationView, error) {
+func (r *mockReadRepo) ListActiveJWT(_ context.Context) ([]integentity.JWTIntegrationView, error) {
 	return nil, errors.New("not implemented")
 }
 
-func (r *mockReadRepo) FindJWTByHash(_ context.Context, _ []byte) (*domain.JWTIntegrationView, error) {
+func (r *mockReadRepo) FindJWTByHash(_ context.Context, _ []byte) (*integentity.JWTIntegrationView, error) {
 	return nil, errors.New("not implemented")
 }
 
@@ -339,9 +339,9 @@ func TestSignature_InactiveAPIKey(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockReadRepo{
-		apiKeyView: &domain.IntegrationAPIKeyView{
+		apiKeyView: &integentity.IntegrationAPIKeyView{
 			ID:            uuid.New(),
-			IntegrationID: domain.NewIntegrationID(),
+			IntegrationID: integentity.NewIntegrationID(),
 			Key:           "my-key",
 			Active:        false, // inactive
 		},
@@ -361,7 +361,7 @@ func TestSignature_InactiveAPIKey(t *testing.T) {
 		consts.HeaderXSign:      sign,
 	}
 	w := performRequest(mw.Validate(), "GET", "/api/v1/test", headers)
-	// The ValidateAPIKeyHandler returns domain.ErrAPIKeyInactive for inactive keys
+	// The ValidateAPIKeyHandler returns integentity.ErrAPIKeyInactive for inactive keys
 	if w.Code != 498 {
 		t.Errorf("expected 498 for inactive API key, got %d", w.Code)
 	}
@@ -374,10 +374,10 @@ func TestSignature_InactiveAPIKey(t *testing.T) {
 func TestSignature_InvalidSign(t *testing.T) {
 	t.Parallel()
 
-	integrationID := domain.NewIntegrationID()
+	integrationID := integentity.NewIntegrationID()
 	apiKeyID := uuid.New()
 	repo := &mockReadRepo{
-		apiKeyView: &domain.IntegrationAPIKeyView{
+		apiKeyView: &integentity.IntegrationAPIKeyView{
 			ID:            apiKeyID,
 			IntegrationID: integrationID,
 			Key:           "valid-key",
@@ -406,10 +406,10 @@ func TestSignature_InvalidSign(t *testing.T) {
 func TestSignature_ValidRequest(t *testing.T) {
 	t.Parallel()
 
-	integrationID := domain.NewIntegrationID()
+	integrationID := integentity.NewIntegrationID()
 	apiKeyID := uuid.New()
 	repo := &mockReadRepo{
-		apiKeyView: &domain.IntegrationAPIKeyView{
+		apiKeyView: &integentity.IntegrationAPIKeyView{
 			ID:            apiKeyID,
 			IntegrationID: integrationID,
 			Key:           "valid-key",
@@ -445,8 +445,8 @@ func TestSignature_ValidRequest(t *testing.T) {
 	if w.Code != http.StatusOK {
 		t.Errorf("expected 200 for valid request, got %d", w.Code)
 	}
-	if capturedIntegrationID != integrationID {
-		t.Errorf("expected integration ID %v, got %v", integrationID, capturedIntegrationID)
+	if capturedIntegrationID != uuid.UUID(integrationID) {
+		t.Errorf("expected integration ID %v, got %v", uuid.UUID(integrationID), capturedIntegrationID)
 	}
 	if capturedAPIKeyID != apiKeyID {
 		t.Errorf("expected API key ID %v, got %v", apiKeyID, capturedAPIKeyID)
@@ -460,10 +460,10 @@ func TestSignature_ValidRequest(t *testing.T) {
 func TestSignature_DefaultExpireTime(t *testing.T) {
 	t.Parallel()
 
-	integrationID := domain.NewIntegrationID()
+	integrationID := integentity.NewIntegrationID()
 	apiKeyID := uuid.New()
 	repo := &mockReadRepo{
-		apiKeyView: &domain.IntegrationAPIKeyView{
+		apiKeyView: &integentity.IntegrationAPIKeyView{
 			ID:            apiKeyID,
 			IntegrationID: integrationID,
 			Key:           "valid-key",
@@ -535,10 +535,10 @@ func TestMakeSign_DifferentInputs(t *testing.T) {
 func TestSignature_APIKeyFromQueryParam(t *testing.T) {
 	t.Parallel()
 
-	integrationID := domain.NewIntegrationID()
+	integrationID := integentity.NewIntegrationID()
 	apiKeyID := uuid.New()
 	repo := &mockReadRepo{
-		apiKeyView: &domain.IntegrationAPIKeyView{
+		apiKeyView: &integentity.IntegrationAPIKeyView{
 			ID:            apiKeyID,
 			IntegrationID: integrationID,
 			Key:           "query-key",

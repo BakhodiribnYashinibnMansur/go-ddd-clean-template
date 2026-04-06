@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"gct/internal/context/admin/supporting/integration/domain"
+	integentity "gct/internal/context/admin/supporting/integration/domain/entity"
 )
 
 // --- Error mocks ---
@@ -18,25 +18,25 @@ type errorIntegrationRepo struct {
 	saveErr   error
 	updateErr error
 	deleteErr error
-	findFn    func(ctx context.Context, id domain.IntegrationID) (*domain.Integration, error)
+	findFn    func(ctx context.Context, id integentity.IntegrationID) (*integentity.Integration, error)
 }
 
-func (m *errorIntegrationRepo) Save(_ context.Context, _ *domain.Integration) error {
+func (m *errorIntegrationRepo) Save(_ context.Context, _ *integentity.Integration) error {
 	return m.saveErr
 }
 
-func (m *errorIntegrationRepo) FindByID(ctx context.Context, id domain.IntegrationID) (*domain.Integration, error) {
+func (m *errorIntegrationRepo) FindByID(ctx context.Context, id integentity.IntegrationID) (*integentity.Integration, error) {
 	if m.findFn != nil {
 		return m.findFn(ctx, id)
 	}
-	return nil, domain.ErrIntegrationNotFound
+	return nil, integentity.ErrIntegrationNotFound
 }
 
-func (m *errorIntegrationRepo) Update(_ context.Context, _ *domain.Integration) error {
+func (m *errorIntegrationRepo) Update(_ context.Context, _ *integentity.Integration) error {
 	return m.updateErr
 }
 
-func (m *errorIntegrationRepo) Delete(_ context.Context, _ domain.IntegrationID) error {
+func (m *errorIntegrationRepo) Delete(_ context.Context, _ integentity.IntegrationID) error {
 	return m.deleteErr
 }
 
@@ -59,15 +59,15 @@ func TestCreateHandler_RepoError(t *testing.T) {
 func TestUpdateHandler_RepoUpdateError(t *testing.T) {
 	t.Parallel()
 
-	i, _ := domain.NewIntegration("n", "t", "k", "u", true, nil)
+	i, _ := integentity.NewIntegration("n", "t", "k", "u", true, nil)
 
 	repo := &errorIntegrationRepo{
-		findFn:    func(_ context.Context, _ domain.IntegrationID) (*domain.Integration, error) { return i, nil },
+		findFn:    func(_ context.Context, _ integentity.IntegrationID) (*integentity.Integration, error) { return i, nil },
 		updateErr: errRepoUpdate,
 	}
 	handler := NewUpdateHandler(repo, &mockEventBus{}, &mockLogger{})
 
-	err := handler.Handle(context.Background(), UpdateCommand{ID: domain.IntegrationID(i.ID())})
+	err := handler.Handle(context.Background(), UpdateCommand{ID: integentity.IntegrationID(i.ID())})
 	if !errors.Is(err, errRepoUpdate) {
 		t.Fatalf("expected errRepoUpdate, got: %v", err)
 	}
@@ -79,7 +79,7 @@ func TestDeleteHandler_RepoError(t *testing.T) {
 	repo := &errorIntegrationRepo{deleteErr: errRepoDelete}
 	handler := NewDeleteHandler(repo, &mockEventBus{}, &mockLogger{})
 
-	err := handler.Handle(context.Background(), DeleteCommand{ID: domain.NewIntegrationID()})
+	err := handler.Handle(context.Background(), DeleteCommand{ID: integentity.NewIntegrationID()})
 	if !errors.Is(err, errRepoDelete) {
 		t.Fatalf("expected errRepoDelete, got: %v", err)
 	}

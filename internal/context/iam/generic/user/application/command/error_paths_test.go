@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"gct/internal/context/iam/generic/user/domain"
+	userentity "gct/internal/context/iam/generic/user/domain/entity"
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
@@ -25,22 +25,22 @@ type errorRepo struct {
 	mockUserRepository
 	saveErr   error
 	updateErr error
-	findUser  *domain.User
+	findUser  *userentity.User
 }
 
-func (m *errorRepo) Save(_ context.Context, _ *domain.User) error {
+func (m *errorRepo) Save(_ context.Context, _ *userentity.User) error {
 	return m.saveErr
 }
 
-func (m *errorRepo) Update(_ context.Context, _ *domain.User) error {
+func (m *errorRepo) Update(_ context.Context, _ *userentity.User) error {
 	return m.updateErr
 }
 
-func (m *errorRepo) FindByID(_ context.Context, id domain.UserID) (*domain.User, error) {
+func (m *errorRepo) FindByID(_ context.Context, id userentity.UserID) (*userentity.User, error) {
 	if m.findUser != nil && m.findUser.TypedID() == id {
 		return m.findUser, nil
 	}
-	return nil, domain.ErrUserNotFound
+	return nil, userentity.ErrUserNotFound
 }
 
 type errorEventBus struct {
@@ -117,7 +117,7 @@ func TestUpdateUserHandler_RepoUpdateError(t *testing.T) {
 
 	newName := "updated"
 	err := handler.Handle(context.Background(), UpdateUserCommand{
-		ID:       domain.UserID(user.ID()),
+		ID:       userentity.UserID(user.ID()),
 		Username: &newName,
 	})
 	if !errors.Is(err, errRepoUpdate) {
@@ -138,7 +138,7 @@ func TestApproveUserHandler_RepoUpdateError(t *testing.T) {
 
 	handler := NewApproveUserHandler(repo, eventBus, log)
 
-	err := handler.Handle(context.Background(), ApproveUserCommand{ID: domain.UserID(user.ID())})
+	err := handler.Handle(context.Background(), ApproveUserCommand{ID: userentity.UserID(user.ID())})
 	if !errors.Is(err, errRepoUpdate) {
 		t.Fatalf("expected errRepoUpdate, got: %v", err)
 	}
@@ -157,7 +157,7 @@ func TestDeleteUserHandler_RepoUpdateError(t *testing.T) {
 
 	handler := NewDeleteUserHandler(repo, eventBus, log)
 
-	err := handler.Handle(context.Background(), DeleteUserCommand{ID: domain.UserID(user.ID())})
+	err := handler.Handle(context.Background(), DeleteUserCommand{ID: userentity.UserID(user.ID())})
 	if !errors.Is(err, errRepoUpdate) {
 		t.Fatalf("expected errRepoUpdate, got: %v", err)
 	}
@@ -177,7 +177,7 @@ func TestChangeRoleHandler_RepoUpdateError(t *testing.T) {
 	handler := NewChangeRoleHandler(repo, eventBus, log)
 
 	err := handler.Handle(context.Background(), ChangeRoleCommand{
-		UserID: domain.UserID(user.ID()),
+		UserID: userentity.UserID(user.ID()),
 		RoleID: uuid.New(),
 	})
 	if !errors.Is(err, errRepoUpdate) {
@@ -243,9 +243,9 @@ func TestCreateUserHandler_CancelledContext(t *testing.T) {
 func TestSignInHandler_RepoUpdateError(t *testing.T) {
 	t.Parallel()
 
-	phone, _ := domain.NewPhone("+998901234567")
-	pw, _ := domain.NewPasswordFromRaw("StrongP@ss123")
-	user, _ := domain.NewUser(phone, pw)
+	phone, _ := userentity.NewPhone("+998901234567")
+	pw, _ := userentity.NewPasswordFromRaw("StrongP@ss123")
+	user, _ := userentity.NewUser(phone, pw)
 	user.Approve()
 
 	repo := &signInErrorRepo{user: user, updateErr: errRepoUpdate}
@@ -269,25 +269,25 @@ func TestSignInHandler_RepoUpdateError(t *testing.T) {
 // signInErrorRepo returns user by phone but fails on Update.
 type signInErrorRepo struct {
 	mockUserRepository
-	user      *domain.User
+	user      *userentity.User
 	updateErr error
 }
 
-func (m *signInErrorRepo) FindByPhone(_ context.Context, phone domain.Phone) (*domain.User, error) {
+func (m *signInErrorRepo) FindByPhone(_ context.Context, phone userentity.Phone) (*userentity.User, error) {
 	if m.user != nil && m.user.Phone().Value() == phone.Value() {
 		return m.user, nil
 	}
-	return nil, domain.ErrUserNotFound
+	return nil, userentity.ErrUserNotFound
 }
 
-func (m *signInErrorRepo) FindByEmail(_ context.Context, email domain.Email) (*domain.User, error) {
-	return nil, domain.ErrUserNotFound
+func (m *signInErrorRepo) FindByEmail(_ context.Context, email userentity.Email) (*userentity.User, error) {
+	return nil, userentity.ErrUserNotFound
 }
 
 func (m *signInErrorRepo) FindDefaultRoleID(_ context.Context) (uuid.UUID, error) {
 	return uuid.New(), nil
 }
 
-func (m *signInErrorRepo) Update(_ context.Context, _ *domain.User) error {
+func (m *signInErrorRepo) Update(_ context.Context, _ *userentity.User) error {
 	return m.updateErr
 }

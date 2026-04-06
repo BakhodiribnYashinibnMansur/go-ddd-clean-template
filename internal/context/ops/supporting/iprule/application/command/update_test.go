@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/context/ops/supporting/iprule/domain"
+	ipruleentity "gct/internal/context/ops/supporting/iprule/domain/entity"
 
 	"github.com/stretchr/testify/require"
 )
@@ -12,14 +12,14 @@ import (
 func TestUpdateIPRuleHandler_Handle(t *testing.T) {
 	t.Parallel()
 
-	r := domain.NewIPRule("192.168.1.1", "DENY", "bad actor", nil)
+	r := ipruleentity.NewIPRule("192.168.1.1", "DENY", "bad actor", nil)
 
 	repo := &mockIPRuleRepo{
-		findFn: func(_ context.Context, id domain.IPRuleID) (*domain.IPRule, error) {
+		findFn: func(_ context.Context, id ipruleentity.IPRuleID) (*ipruleentity.IPRule, error) {
 			if id == r.TypedID() {
 				return r, nil
 			}
-			return nil, domain.ErrIPRuleNotFound
+			return nil, ipruleentity.ErrIPRuleNotFound
 		},
 	}
 	eb := &mockEventBus{}
@@ -54,10 +54,10 @@ func TestUpdateIPRuleHandler_Handle(t *testing.T) {
 func TestUpdateIPRuleHandler_PartialUpdate(t *testing.T) {
 	t.Parallel()
 
-	r := domain.NewIPRule("192.168.1.1", "DENY", "reason", nil)
+	r := ipruleentity.NewIPRule("192.168.1.1", "DENY", "reason", nil)
 
 	repo := &mockIPRuleRepo{
-		findFn: func(_ context.Context, _ domain.IPRuleID) (*domain.IPRule, error) {
+		findFn: func(_ context.Context, _ ipruleentity.IPRuleID) (*ipruleentity.IPRule, error) {
 			return r, nil
 		},
 	}
@@ -86,7 +86,7 @@ func TestUpdateIPRuleHandler_NotFound(t *testing.T) {
 	repo := &mockIPRuleRepo{}
 	handler := NewUpdateIPRuleHandler(repo, &mockEventBus{}, &mockLogger{})
 
-	err := handler.Handle(context.Background(), UpdateIPRuleCommand{ID: domain.NewIPRuleID()})
+	err := handler.Handle(context.Background(), UpdateIPRuleCommand{ID: ipruleentity.NewIPRuleID()})
 	if err == nil {
 		t.Fatal("expected error for not found")
 	}

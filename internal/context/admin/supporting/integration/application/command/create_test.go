@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/context/admin/supporting/integration/domain"
+	integentity "gct/internal/context/admin/supporting/integration/domain/entity"
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
@@ -14,30 +14,30 @@ import (
 // --- Mocks ---
 
 type mockIntegrationRepo struct {
-	saved   *domain.Integration
-	updated *domain.Integration
-	deleted domain.IntegrationID
-	findFn  func(ctx context.Context, id domain.IntegrationID) (*domain.Integration, error)
+	saved   *integentity.Integration
+	updated *integentity.Integration
+	deleted integentity.IntegrationID
+	findFn  func(ctx context.Context, id integentity.IntegrationID) (*integentity.Integration, error)
 }
 
-func (m *mockIntegrationRepo) Save(_ context.Context, e *domain.Integration) error {
+func (m *mockIntegrationRepo) Save(_ context.Context, e *integentity.Integration) error {
 	m.saved = e
 	return nil
 }
 
-func (m *mockIntegrationRepo) FindByID(ctx context.Context, id domain.IntegrationID) (*domain.Integration, error) {
+func (m *mockIntegrationRepo) FindByID(ctx context.Context, id integentity.IntegrationID) (*integentity.Integration, error) {
 	if m.findFn != nil {
 		return m.findFn(ctx, id)
 	}
-	return nil, domain.ErrIntegrationNotFound
+	return nil, integentity.ErrIntegrationNotFound
 }
 
-func (m *mockIntegrationRepo) Update(_ context.Context, e *domain.Integration) error {
+func (m *mockIntegrationRepo) Update(_ context.Context, e *integentity.Integration) error {
 	m.updated = e
 	return nil
 }
 
-func (m *mockIntegrationRepo) Delete(_ context.Context, id domain.IntegrationID) error {
+func (m *mockIntegrationRepo) Delete(_ context.Context, id integentity.IntegrationID) error {
 	m.deleted = id
 	return nil
 }

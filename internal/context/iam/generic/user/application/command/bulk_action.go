@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"gct/internal/context/iam/generic/user/domain"
+	userentity "gct/internal/context/iam/generic/user/domain/entity"
+	userrepo "gct/internal/context/iam/generic/user/domain/repository"
 	"gct/internal/kernel/application"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -18,20 +19,20 @@ const (
 
 // BulkActionCommand holds the input for performing a bulk action on users.
 type BulkActionCommand struct {
-	IDs    []domain.UserID
+	IDs    []userentity.UserID
 	Action string
 }
 
 // BulkActionHandler handles the BulkActionCommand.
 type BulkActionHandler struct {
-	repo     domain.UserRepository
+	repo     userrepo.UserRepository
 	eventBus application.EventBus
 	logger   commandLogger
 }
 
 // NewBulkActionHandler creates a new BulkActionHandler.
 func NewBulkActionHandler(
-	repo domain.UserRepository,
+	repo userrepo.UserRepository,
 	eventBus application.EventBus,
 	logger commandLogger,
 ) *BulkActionHandler {

@@ -6,30 +6,32 @@ import (
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 
-	appdto "gct/internal/context/iam/generic/usersetting/application"
-	"gct/internal/context/iam/generic/usersetting/domain"
+	"gct/internal/context/iam/generic/usersetting/application/dto"
+	settingrepo "gct/internal/context/iam/generic/usersetting/domain/repository"
 	"gct/internal/kernel/infrastructure/pgxutil"
+
+	"github.com/google/uuid"
 )
 
 // ListUserSettingsQuery holds the input for listing user settings with filtering.
 type ListUserSettingsQuery struct {
-	Filter domain.UserSettingFilter
+	Filter settingrepo.UserSettingFilter
 }
 
 // ListUserSettingsResult holds the output of the list user settings query.
 type ListUserSettingsResult struct {
-	Settings []*appdto.UserSettingView
+	Settings []*dto.UserSettingView
 	Total    int64
 }
 
 // ListUserSettingsHandler handles the ListUserSettingsQuery.
 type ListUserSettingsHandler struct {
-	readRepo domain.UserSettingReadRepository
+	readRepo settingrepo.UserSettingReadRepository
 	logger   logger.Log
 }
 
 // NewListUserSettingsHandler creates a new ListUserSettingsHandler.
-func NewListUserSettingsHandler(readRepo domain.UserSettingReadRepository, l logger.Log) *ListUserSettingsHandler {
+func NewListUserSettingsHandler(readRepo settingrepo.UserSettingReadRepository, l logger.Log) *ListUserSettingsHandler {
 	return &ListUserSettingsHandler{readRepo: readRepo, logger: l}
 }
 
@@ -45,10 +47,10 @@ func (h *ListUserSettingsHandler) Handle(ctx context.Context, q ListUserSettings
 		return nil, apperrors.MapToServiceError(err)
 	}
 
-	result := make([]*appdto.UserSettingView, len(views))
+	result := make([]*dto.UserSettingView, len(views))
 	for i, v := range views {
-		result[i] = &appdto.UserSettingView{
-			ID:        v.ID,
+		result[i] = &dto.UserSettingView{
+			ID:        uuid.UUID(v.ID),
 			UserID:    v.UserID,
 			Key:       v.Key,
 			Value:     v.Value,

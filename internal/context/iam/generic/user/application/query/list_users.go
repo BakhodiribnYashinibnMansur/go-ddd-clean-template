@@ -3,33 +3,35 @@ package query
 import (
 	"context"
 
+	"gct/internal/context/iam/generic/user/application/dto"
+	userentity "gct/internal/context/iam/generic/user/domain/entity"
+	userrepo "gct/internal/context/iam/generic/user/domain/repository"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
-
-	appdto "gct/internal/context/iam/generic/user/application"
-	"gct/internal/context/iam/generic/user/domain"
 	"gct/internal/kernel/infrastructure/pgxutil"
+
+	"github.com/google/uuid"
 )
 
 // ListUsersQuery holds the input for listing users with filtering.
 type ListUsersQuery struct {
-	Filter domain.UsersFilter
+	Filter userentity.UsersFilter
 }
 
 // ListUsersResult holds the output of the list users query.
 type ListUsersResult struct {
-	Users []*appdto.UserView
+	Users []*dto.UserView
 	Total int64
 }
 
 // ListUsersHandler handles the ListUsersQuery.
 type ListUsersHandler struct {
-	readRepo domain.UserReadRepository
+	readRepo userrepo.UserReadRepository
 	logger   queryLogger
 }
 
 // NewListUsersHandler creates a new ListUsersHandler.
-func NewListUsersHandler(readRepo domain.UserReadRepository, l logger.Log) *ListUsersHandler {
+func NewListUsersHandler(readRepo userrepo.UserReadRepository, l logger.Log) *ListUsersHandler {
 	return &ListUsersHandler{readRepo: readRepo, logger: l}
 }
 
@@ -45,10 +47,10 @@ func (h *ListUsersHandler) Handle(ctx context.Context, q ListUsersQuery) (_ *Lis
 		return nil, apperrors.MapToServiceError(err)
 	}
 
-	result := make([]*appdto.UserView, len(views))
+	result := make([]*dto.UserView, len(views))
 	for i, v := range views {
-		result[i] = &appdto.UserView{
-			ID:         v.ID,
+		result[i] = &dto.UserView{
+			ID:         uuid.UUID(v.ID),
 			Phone:      v.Phone,
 			Email:      v.Email,
 			Username:   v.Username,

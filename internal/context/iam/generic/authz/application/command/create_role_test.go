@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/context/iam/generic/authz/domain"
+	authzentity "gct/internal/context/iam/generic/authz/domain/entity"
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
@@ -14,33 +14,33 @@ import (
 // --- Mock RoleRepository ---
 
 type mockRoleRepository struct {
-	savedRole   *domain.Role
-	updatedRole *domain.Role
-	findByIDFn  func(ctx context.Context, id domain.RoleID) (*domain.Role, error)
+	savedRole   *authzentity.Role
+	updatedRole *authzentity.Role
+	findByIDFn  func(ctx context.Context, id authzentity.RoleID) (*authzentity.Role, error)
 }
 
-func (m *mockRoleRepository) Save(ctx context.Context, role *domain.Role) error {
+func (m *mockRoleRepository) Save(ctx context.Context, role *authzentity.Role) error {
 	m.savedRole = role
 	return nil
 }
 
-func (m *mockRoleRepository) FindByID(ctx context.Context, id domain.RoleID) (*domain.Role, error) {
+func (m *mockRoleRepository) FindByID(ctx context.Context, id authzentity.RoleID) (*authzentity.Role, error) {
 	if m.findByIDFn != nil {
 		return m.findByIDFn(ctx, id)
 	}
-	return nil, domain.ErrRoleNotFound
+	return nil, authzentity.ErrRoleNotFound
 }
 
-func (m *mockRoleRepository) Update(ctx context.Context, role *domain.Role) error {
+func (m *mockRoleRepository) Update(ctx context.Context, role *authzentity.Role) error {
 	m.updatedRole = role
 	return nil
 }
 
-func (m *mockRoleRepository) Delete(ctx context.Context, id domain.RoleID) error {
+func (m *mockRoleRepository) Delete(ctx context.Context, id authzentity.RoleID) error {
 	return nil
 }
 
-func (m *mockRoleRepository) List(ctx context.Context, pagination shared.Pagination) ([]*domain.Role, int64, error) {
+func (m *mockRoleRepository) List(ctx context.Context, pagination shared.Pagination) ([]*authzentity.Role, int64, error) {
 	return nil, 0, nil
 }
 

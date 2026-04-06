@@ -5,7 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/iam/generic/usersetting/domain"
+	settingentity "gct/internal/context/iam/generic/usersetting/domain/entity"
+	settingrepo "gct/internal/context/iam/generic/usersetting/domain/repository"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -76,7 +77,7 @@ func TestNewUserSettingReadRepo(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestScanUserSettingView_Success(t *testing.T) {
-	id := domain.NewUserSettingID()
+	id := settingentity.NewUserSettingID()
 	userID := uuid.New()
 	now := time.Now().Truncate(time.Microsecond)
 
@@ -119,7 +120,7 @@ func TestScanUserSettingView_Error(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestScanUserSettingViewFromRows_Success(t *testing.T) {
-	id := domain.NewUserSettingID()
+	id := settingentity.NewUserSettingID()
 	userID := uuid.New()
 	now := time.Now().Truncate(time.Microsecond)
 
@@ -150,7 +151,7 @@ func TestScanUserSettingViewFromRows_Error(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestScanUserSetting_Success(t *testing.T) {
-	id := domain.NewUserSettingID()
+	id := settingentity.NewUserSettingID()
 	userID := uuid.New()
 	now := time.Now().Truncate(time.Microsecond)
 
@@ -191,7 +192,7 @@ func TestScanUserSetting_Error(t *testing.T) {
 
 func TestApplyFilters_NoFilters(t *testing.T) {
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.UserSettingFilter{})
+	result := applyFilters(conds, settingrepo.UserSettingFilter{})
 	if len(result) != 0 {
 		t.Errorf("expected 0 conditions, got %d", len(result))
 	}
@@ -200,7 +201,7 @@ func TestApplyFilters_NoFilters(t *testing.T) {
 func TestApplyFilters_WithUserID(t *testing.T) {
 	uid := uuid.New()
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.UserSettingFilter{UserID: &uid})
+	result := applyFilters(conds, settingrepo.UserSettingFilter{UserID: &uid})
 	if len(result) != 1 {
 		t.Errorf("expected 1 condition, got %d", len(result))
 	}
@@ -209,7 +210,7 @@ func TestApplyFilters_WithUserID(t *testing.T) {
 func TestApplyFilters_WithKey(t *testing.T) {
 	key := "theme"
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.UserSettingFilter{Key: &key})
+	result := applyFilters(conds, settingrepo.UserSettingFilter{Key: &key})
 	if len(result) != 1 {
 		t.Errorf("expected 1 condition, got %d", len(result))
 	}
@@ -219,7 +220,7 @@ func TestApplyFilters_AllFilters(t *testing.T) {
 	uid := uuid.New()
 	key := "locale"
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.UserSettingFilter{UserID: &uid, Key: &key})
+	result := applyFilters(conds, settingrepo.UserSettingFilter{UserID: &uid, Key: &key})
 	if len(result) != 2 {
 		t.Errorf("expected 2 conditions, got %d", len(result))
 	}

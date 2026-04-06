@@ -3,7 +3,8 @@ package command
 import (
 	"context"
 
-	"gct/internal/context/admin/supporting/integration/domain"
+	integentity "gct/internal/context/admin/supporting/integration/domain/entity"
+	integrepo "gct/internal/context/admin/supporting/integration/domain/repository"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
@@ -14,7 +15,7 @@ import (
 // Pointer fields implement patch semantics — nil means "leave unchanged," non-nil means "overwrite."
 // Callers must provide at least one non-nil field for the update to be meaningful.
 type UpdateCommand struct {
-	ID         domain.IntegrationID
+	ID         integentity.IntegrationID
 	Name       *string
 	Type       *string
 	APIKey     *string
@@ -26,14 +27,14 @@ type UpdateCommand struct {
 // UpdateHandler applies partial modifications to an existing integration via fetch-then-update.
 // Callers are responsible for authorization; this handler only enforces repository-level constraints.
 type UpdateHandler struct {
-	repo     domain.IntegrationRepository
+	repo     integrepo.IntegrationRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
 // NewUpdateHandler wires up the handler with its required dependencies.
 func NewUpdateHandler(
-	repo domain.IntegrationRepository,
+	repo integrepo.IntegrationRepository,
 	eventBus application.EventBus,
 	logger logger.Log,
 ) *UpdateHandler {

@@ -4,12 +4,12 @@ import (
 	"context"
 	"testing"
 
-	sessiondomain "gct/internal/context/iam/generic/session/domain"
+	sessionevent "gct/internal/context/iam/generic/session/domain/event"
 	"gct/internal/kernel/application"
 	shareddomain "gct/internal/kernel/domain"
 	"gct/internal/context/iam/generic/user"
 	usercommand "gct/internal/context/iam/generic/user/application/command"
-	userdomain "gct/internal/context/iam/generic/user/domain"
+	userentity "gct/internal/context/iam/generic/user/domain/entity"
 
 	"github.com/google/uuid"
 )
@@ -77,23 +77,32 @@ type sessionTestUserRepo struct {
 	revokeAllUserID   uuid.UUID
 }
 
-func (m *sessionTestUserRepo) Save(_ context.Context, _ *userdomain.User) error   { return nil }
-func (m *sessionTestUserRepo) Update(_ context.Context, _ *userdomain.User) error { return nil }
-func (m *sessionTestUserRepo) Delete(_ context.Context, _ userdomain.UserID) error        { return nil }
-func (m *sessionTestUserRepo) FindByID(_ context.Context, id userdomain.UserID) (*userdomain.User, error) {
-	return nil, userdomain.ErrUserNotFound
+func (m *sessionTestUserRepo) Save(_ context.Context, _ *userentity.User) error   { return nil }
+func (m *sessionTestUserRepo) Update(_ context.Context, _ *userentity.User) error { return nil }
+func (m *sessionTestUserRepo) Delete(_ context.Context, _ userentity.UserID) error        { return nil }
+func (m *sessionTestUserRepo) FindByID(_ context.Context, id userentity.UserID) (*userentity.User, error) {
+	return nil, userentity.ErrUserNotFound
 }
-func (m *sessionTestUserRepo) List(_ context.Context, _ shareddomain.Pagination) ([]*userdomain.User, int64, error) {
+func (m *sessionTestUserRepo) List(_ context.Context, _ shareddomain.Pagination) ([]*userentity.User, int64, error) {
 	return nil, 0, nil
 }
-func (m *sessionTestUserRepo) FindByPhone(_ context.Context, _ userdomain.Phone) (*userdomain.User, error) {
-	return nil, userdomain.ErrUserNotFound
+func (m *sessionTestUserRepo) FindByPhone(_ context.Context, _ userentity.Phone) (*userentity.User, error) {
+	return nil, userentity.ErrUserNotFound
 }
-func (m *sessionTestUserRepo) FindByEmail(_ context.Context, _ userdomain.Email) (*userdomain.User, error) {
-	return nil, userdomain.ErrUserNotFound
+func (m *sessionTestUserRepo) FindByEmail(_ context.Context, _ userentity.Email) (*userentity.User, error) {
+	return nil, userentity.ErrUserNotFound
 }
 func (m *sessionTestUserRepo) FindDefaultRoleID(_ context.Context) (uuid.UUID, error) {
 	return uuid.New(), nil
+}
+func (m *sessionTestUserRepo) ActiveSessionCount(_ context.Context, _ userentity.UserID) (int, error) {
+	return 0, nil
+}
+func (m *sessionTestUserRepo) RevokeOldestActiveSession(_ context.Context, _ userentity.UserID) (userentity.SessionID, error) {
+	return userentity.NilSessionID, nil
+}
+func (m *sessionTestUserRepo) RevokeSessionsByIntegration(_ context.Context, _ userentity.UserID, _ string) (int, error) {
+	return 0, nil
 }
 
 // ---------------------------------------------------------------------------
@@ -136,7 +145,7 @@ func TestSubscribeSessionEvents_RevokeEvent_TypeMismatch(t *testing.T) {
 	subscribeSessionEvents(eventBus, userBC, log)
 
 	// Publish a wrong event type — should not panic, handler returns nil
-	wrongEvent := sessiondomain.NewSessionRevokeAllRequested(uuid.New())
+	wrongEvent := sessionevent.NewSessionRevokeAllRequested(uuid.New())
 	handler := eventBus.handlers["session.revoke_requested"][0]
 	err := handler(context.Background(), wrongEvent)
 	if err != nil {
@@ -158,7 +167,7 @@ func TestSubscribeSessionEvents_RevokeAllEvent_TypeMismatch(t *testing.T) {
 	subscribeSessionEvents(eventBus, userBC, log)
 
 	// Publish a wrong event type — should not panic
-	wrongEvent := sessiondomain.NewSessionRevokeRequested(uuid.New(), uuid.New())
+	wrongEvent := sessionevent.NewSessionRevokeRequested(uuid.New(), uuid.New())
 	handler := eventBus.handlers["session.revoke_all_requested"][0]
 	err := handler(context.Background(), wrongEvent)
 	if err != nil {

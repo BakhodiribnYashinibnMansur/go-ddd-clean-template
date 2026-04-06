@@ -3,7 +3,7 @@ package command
 import (
 	"context"
 
-	"gct/internal/context/iam/generic/authz/domain"
+	authzrepo "gct/internal/context/iam/generic/authz/domain/repository"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -19,13 +19,13 @@ type DeleteScopeCommand struct {
 // DeleteScopeHandler performs hard deletion of an API scope via the repository.
 // No domain events are emitted; callers needing downstream notifications should handle that at a higher layer.
 type DeleteScopeHandler struct {
-	repo   domain.ScopeRepository
+	repo   authzrepo.ScopeRepository
 	logger logger.Log
 }
 
 // NewDeleteScopeHandler wires dependencies for scope deletion.
 func NewDeleteScopeHandler(
-	repo domain.ScopeRepository,
+	repo authzrepo.ScopeRepository,
 	logger logger.Log,
 ) *DeleteScopeHandler {
 	return &DeleteScopeHandler{

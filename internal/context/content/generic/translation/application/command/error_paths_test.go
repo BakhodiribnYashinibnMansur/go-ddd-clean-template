@@ -5,7 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"gct/internal/context/content/generic/translation/domain"
+	translationentity "gct/internal/context/content/generic/translation/domain/entity"
+	translationrepo "gct/internal/context/content/generic/translation/domain/repository"
 )
 
 // errorRepo is a mock that returns configurable errors for each method.
@@ -13,29 +14,29 @@ type errorRepo struct {
 	saveErr   error
 	updateErr error
 	deleteErr error
-	findFn    func(ctx context.Context, id domain.TranslationID) (*domain.Translation, error)
+	findFn    func(ctx context.Context, id translationentity.TranslationID) (*translationentity.Translation, error)
 }
 
-func (m *errorRepo) Save(_ context.Context, _ *domain.Translation) error {
+func (m *errorRepo) Save(_ context.Context, _ *translationentity.Translation) error {
 	return m.saveErr
 }
 
-func (m *errorRepo) FindByID(ctx context.Context, id domain.TranslationID) (*domain.Translation, error) {
+func (m *errorRepo) FindByID(ctx context.Context, id translationentity.TranslationID) (*translationentity.Translation, error) {
 	if m.findFn != nil {
 		return m.findFn(ctx, id)
 	}
-	return nil, domain.ErrTranslationNotFound
+	return nil, translationentity.ErrTranslationNotFound
 }
 
-func (m *errorRepo) Update(_ context.Context, _ *domain.Translation) error {
+func (m *errorRepo) Update(_ context.Context, _ *translationentity.Translation) error {
 	return m.updateErr
 }
 
-func (m *errorRepo) Delete(_ context.Context, _ domain.TranslationID) error {
+func (m *errorRepo) Delete(_ context.Context, _ translationentity.TranslationID) error {
 	return m.deleteErr
 }
 
-func (m *errorRepo) List(_ context.Context, _ domain.TranslationFilter) ([]*domain.Translation, int64, error) {
+func (m *errorRepo) List(_ context.Context, _ translationrepo.TranslationFilter) ([]*translationentity.Translation, int64, error) {
 	return nil, 0, nil
 }
 
@@ -71,7 +72,7 @@ func TestUpdateTranslationHandler_FindError(t *testing.T) {
 	handler := NewUpdateTranslationHandler(repo, eb, log)
 	newVal := "new"
 	err := handler.Handle(context.Background(), UpdateTranslationCommand{
-		ID:    domain.NewTranslationID(),
+		ID:    translationentity.NewTranslationID(),
 		Value: &newVal,
 	})
 	if err == nil {
@@ -82,10 +83,10 @@ func TestUpdateTranslationHandler_FindError(t *testing.T) {
 func TestUpdateTranslationHandler_UpdateError(t *testing.T) {
 	t.Parallel()
 
-	tr := domain.NewTranslation("k", "en", "v", "g")
+	tr := translationentity.NewTranslation("k", "en", "v", "g")
 
 	repo := &errorRepo{
-		findFn:    func(_ context.Context, _ domain.TranslationID) (*domain.Translation, error) { return tr, nil },
+		findFn:    func(_ context.Context, _ translationentity.TranslationID) (*translationentity.Translation, error) { return tr, nil },
 		updateErr: errUpdate,
 	}
 	eb := &mockEventBus{}
@@ -94,7 +95,7 @@ func TestUpdateTranslationHandler_UpdateError(t *testing.T) {
 	handler := NewUpdateTranslationHandler(repo, eb, log)
 	newVal := "updated"
 	err := handler.Handle(context.Background(), UpdateTranslationCommand{
-		ID:    domain.TranslationID(tr.ID()),
+		ID:    translationentity.TranslationID(tr.ID()),
 		Value: &newVal,
 	})
 	if !errors.Is(err, errUpdate) {
@@ -109,7 +110,7 @@ func TestDeleteTranslationHandler_DeleteError(t *testing.T) {
 	log := &mockLogger{}
 
 	handler := NewDeleteTranslationHandler(repo, log)
-	err := handler.Handle(context.Background(), DeleteTranslationCommand{ID: domain.NewTranslationID()})
+	err := handler.Handle(context.Background(), DeleteTranslationCommand{ID: translationentity.NewTranslationID()})
 	if !errors.Is(err, errDelete) {
 		t.Fatalf("expected errDelete, got: %v", err)
 	}

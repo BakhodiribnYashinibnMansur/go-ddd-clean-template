@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/iam/generic/authz/domain"
+	authzentity "gct/internal/context/iam/generic/authz/domain/entity"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -15,31 +15,31 @@ import (
 func TestUpdatePolicyHandler_UpdateFields(t *testing.T) {
 	t.Parallel()
 
-	policyID := domain.NewPolicyID()
-	permID := domain.NewPermissionID()
-	existingPolicy := domain.ReconstructPolicy(
+	policyID := authzentity.NewPolicyID()
+	permID := authzentity.NewPermissionID()
+	existingPolicy := authzentity.ReconstructPolicy(
 		policyID.UUID(), time.Now(), time.Now(), nil,
-		permID.UUID(), domain.PolicyAllow, 1, true, nil,
+		permID.UUID(), authzentity.PolicyAllow, 1, true, nil,
 	)
 
 	repo := &mockPolicyRepository{
-		findByIDFn: func(_ context.Context, id domain.PolicyID) (*domain.Policy, error) {
+		findByIDFn: func(_ context.Context, id authzentity.PolicyID) (*authzentity.Policy, error) {
 			if id == policyID {
 				return existingPolicy, nil
 			}
-			return nil, domain.ErrPolicyNotFound
+			return nil, authzentity.ErrPolicyNotFound
 		},
 	}
 	log := &mockLogger{}
 
 	handler := NewUpdatePolicyHandler(repo, log)
 
-	newEffect := domain.PolicyDeny
+	newEffect := authzentity.PolicyDeny
 	newPriority := 99
 	newConditions := map[string]any{"env": "production"}
 
 	cmd := UpdatePolicyCommand{
-		ID:         domain.PolicyID(policyID),
+		ID:         authzentity.PolicyID(policyID),
 		Effect:     &newEffect,
 		Priority:   &newPriority,
 		Conditions: newConditions,
@@ -52,7 +52,7 @@ func TestUpdatePolicyHandler_UpdateFields(t *testing.T) {
 		t.Fatal("expected policy to be updated")
 	}
 
-	if repo.updatedPolicy.Effect() != domain.PolicyDeny {
+	if repo.updatedPolicy.Effect() != authzentity.PolicyDeny {
 		t.Errorf("expected effect DENY, got '%s'", repo.updatedPolicy.Effect())
 	}
 
@@ -73,14 +73,14 @@ func TestUpdatePolicyHandler_NotFound(t *testing.T) {
 
 	handler := NewUpdatePolicyHandler(repo, log)
 
-	newEffect := domain.PolicyAllow
+	newEffect := authzentity.PolicyAllow
 	cmd := UpdatePolicyCommand{
-		ID:     domain.PolicyID(uuid.New()),
+		ID:     authzentity.PolicyID(uuid.New()),
 		Effect: &newEffect,
 	}
 
 	err := handler.Handle(context.Background(), cmd)
-	if !errors.Is(err, domain.ErrPolicyNotFound) {
+	if !errors.Is(err, authzentity.ErrPolicyNotFound) {
 		t.Fatalf("expected ErrPolicyNotFound, got: %v", err)
 	}
 

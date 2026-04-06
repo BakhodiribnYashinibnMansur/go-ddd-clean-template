@@ -3,7 +3,8 @@ package command
 import (
 	"context"
 
-	"gct/internal/context/ops/generic/ratelimit/domain"
+	ratelimitentity "gct/internal/context/ops/generic/ratelimit/domain/entity"
+	ratelimitrepo "gct/internal/context/ops/generic/ratelimit/domain/repository"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
@@ -12,7 +13,7 @@ import (
 
 // UpdateRateLimitCommand holds the input for updating a rate limit.
 type UpdateRateLimitCommand struct {
-	ID                domain.RateLimitID
+	ID                ratelimitentity.RateLimitID
 	Name              *string
 	Rule              *string
 	RequestsPerWindow *int
@@ -22,14 +23,14 @@ type UpdateRateLimitCommand struct {
 
 // UpdateRateLimitHandler handles the UpdateRateLimitCommand.
 type UpdateRateLimitHandler struct {
-	repo     domain.RateLimitRepository
+	repo     ratelimitrepo.RateLimitRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
 // NewUpdateRateLimitHandler creates a new UpdateRateLimitHandler.
 func NewUpdateRateLimitHandler(
-	repo domain.RateLimitRepository,
+	repo ratelimitrepo.RateLimitRepository,
 	eventBus application.EventBus,
 	logger logger.Log,
 ) *UpdateRateLimitHandler {

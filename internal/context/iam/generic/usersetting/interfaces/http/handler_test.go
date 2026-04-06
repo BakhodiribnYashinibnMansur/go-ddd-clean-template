@@ -12,7 +12,8 @@ import (
 	"gct/internal/context/iam/generic/usersetting"
 	"gct/internal/context/iam/generic/usersetting/application/command"
 	"gct/internal/context/iam/generic/usersetting/application/query"
-	"gct/internal/context/iam/generic/usersetting/domain"
+	settingentity "gct/internal/context/iam/generic/usersetting/domain/entity"
+	settingrepo "gct/internal/context/iam/generic/usersetting/domain/repository"
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
@@ -23,35 +24,35 @@ import (
 // --- Mocks ---
 
 type mockRepo struct {
-	upserted *domain.UserSetting
-	deleted  domain.UserSettingID
+	upserted *settingentity.UserSetting
+	deleted  settingentity.UserSettingID
 }
 
-func (m *mockRepo) Upsert(_ context.Context, us *domain.UserSetting) error {
+func (m *mockRepo) Upsert(_ context.Context, us *settingentity.UserSetting) error {
 	m.upserted = us
 	return nil
 }
-func (m *mockRepo) FindByUserIDAndKey(_ context.Context, _ uuid.UUID, _ string) (*domain.UserSetting, error) {
-	return nil, domain.ErrUserSettingNotFound
+func (m *mockRepo) FindByUserIDAndKey(_ context.Context, _ uuid.UUID, _ string) (*settingentity.UserSetting, error) {
+	return nil, settingentity.ErrUserSettingNotFound
 }
-func (m *mockRepo) Delete(_ context.Context, id domain.UserSettingID) error {
+func (m *mockRepo) Delete(_ context.Context, id settingentity.UserSettingID) error {
 	m.deleted = id
 	return nil
 }
 
 type mockReadRepo struct {
-	view  *domain.UserSettingView
-	views []*domain.UserSettingView
+	view  *settingrepo.UserSettingView
+	views []*settingrepo.UserSettingView
 	total int64
 }
 
-func (m *mockReadRepo) FindByID(_ context.Context, id domain.UserSettingID) (*domain.UserSettingView, error) {
+func (m *mockReadRepo) FindByID(_ context.Context, id settingentity.UserSettingID) (*settingrepo.UserSettingView, error) {
 	if m.view != nil && m.view.ID == id {
 		return m.view, nil
 	}
-	return nil, domain.ErrUserSettingNotFound
+	return nil, settingentity.ErrUserSettingNotFound
 }
-func (m *mockReadRepo) List(_ context.Context, _ domain.UserSettingFilter) ([]*domain.UserSettingView, int64, error) {
+func (m *mockReadRepo) List(_ context.Context, _ settingrepo.UserSettingFilter) ([]*settingrepo.UserSettingView, int64, error) {
 	return m.views, m.total, nil
 }
 
@@ -151,8 +152,8 @@ func TestHandler_List_Success(t *testing.T) {
 
 	now := time.Now()
 	readRepo := &mockReadRepo{
-		views: []*domain.UserSettingView{
-			{ID: domain.NewUserSettingID(), UserID: uuid.New(), Key: "theme", Value: "dark", CreatedAt: now, UpdatedAt: now},
+		views: []*settingrepo.UserSettingView{
+			{ID: settingentity.NewUserSettingID(), UserID: uuid.New(), Key: "theme", Value: "dark", CreatedAt: now, UpdatedAt: now},
 		},
 		total: 1,
 	}
@@ -173,7 +174,7 @@ func TestHandler_Delete_Success(t *testing.T) {
 	repo := &mockRepo{}
 	router := setupRouter(repo, &mockReadRepo{})
 
-	id := domain.NewUserSettingID()
+	id := settingentity.NewUserSettingID()
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("DELETE", "/api/v1/user-settings/"+id.String(), nil)
 	router.ServeHTTP(w, req)
@@ -212,7 +213,7 @@ func TestHandler_Upsert_InvalidJSON(t *testing.T) {
 
 func TestHandler_List_DefaultPagination(t *testing.T) {
 	readRepo := &mockReadRepo{
-		views: []*domain.UserSettingView{},
+		views: []*settingrepo.UserSettingView{},
 		total: 0,
 	}
 	router := setupRouter(&mockRepo{}, readRepo)

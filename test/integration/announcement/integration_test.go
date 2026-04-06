@@ -7,7 +7,8 @@ import (
 	"gct/internal/context/content/supporting/announcement"
 	"gct/internal/context/content/supporting/announcement/application/command"
 	"gct/internal/context/content/supporting/announcement/application/query"
-	"gct/internal/context/content/supporting/announcement/domain"
+	announceentity "gct/internal/context/content/supporting/announcement/domain/entity"
+	announcerepo "gct/internal/context/content/supporting/announcement/domain/repository"
 	shared "gct/internal/kernel/domain"
 	"gct/internal/kernel/infrastructure/eventbus"
 	"gct/internal/kernel/infrastructure/logger"
@@ -36,7 +37,7 @@ func TestIntegration_CreateAndGetAnnouncement(t *testing.T) {
 	}
 
 	result, err := bc.ListAnnouncements.Handle(ctx, query.ListAnnouncementsQuery{
-		Filter: domain.AnnouncementFilter{Limit: 10},
+		Filter: announcerepo.AnnouncementFilter{Limit: 10},
 	})
 	if err != nil {
 		t.Fatalf("ListAnnouncements: %v", err)
@@ -53,7 +54,7 @@ func TestIntegration_CreateAndGetAnnouncement(t *testing.T) {
 		t.Errorf("expected priority 1, got %d", a.Priority)
 	}
 
-	view, err := bc.GetAnnouncement.Handle(ctx, query.GetAnnouncementQuery{ID: domain.AnnouncementID(a.ID)})
+	view, err := bc.GetAnnouncement.Handle(ctx, query.GetAnnouncementQuery{ID: announceentity.AnnouncementID(a.ID)})
 	if err != nil {
 		t.Fatalf("GetAnnouncement: %v", err)
 	}
@@ -77,7 +78,7 @@ func TestIntegration_UpdateAndPublishAnnouncement(t *testing.T) {
 	}
 
 	list, _ := bc.ListAnnouncements.Handle(ctx, query.ListAnnouncementsQuery{
-		Filter: domain.AnnouncementFilter{Limit: 10},
+		Filter: announcerepo.AnnouncementFilter{Limit: 10},
 	})
 	aID := list.Announcements[0].ID
 
@@ -88,7 +89,7 @@ func TestIntegration_UpdateAndPublishAnnouncement(t *testing.T) {
 	newTitle := shared.Lang{Uz: "Yangilangan", Ru: "Обновлено", En: "Updated"}
 	newPriority := 5
 	err = bc.UpdateAnnouncement.Handle(ctx, command.UpdateAnnouncementCommand{
-		ID:       domain.AnnouncementID(aID),
+		ID:       announceentity.AnnouncementID(aID),
 		Title:    &newTitle,
 		Priority: &newPriority,
 		Publish:  true,
@@ -97,7 +98,7 @@ func TestIntegration_UpdateAndPublishAnnouncement(t *testing.T) {
 		t.Fatalf("UpdateAnnouncement: %v", err)
 	}
 
-	view, _ := bc.GetAnnouncement.Handle(ctx, query.GetAnnouncementQuery{ID: domain.AnnouncementID(aID)})
+	view, _ := bc.GetAnnouncement.Handle(ctx, query.GetAnnouncementQuery{ID: announceentity.AnnouncementID(aID)})
 	if view.Title.Uz != "Yangilangan" {
 		t.Errorf("title not updated, got %s", view.Title.Uz)
 	}
@@ -124,17 +125,17 @@ func TestIntegration_DeleteAnnouncement(t *testing.T) {
 	}
 
 	list, _ := bc.ListAnnouncements.Handle(ctx, query.ListAnnouncementsQuery{
-		Filter: domain.AnnouncementFilter{Limit: 10},
+		Filter: announcerepo.AnnouncementFilter{Limit: 10},
 	})
 	aID := list.Announcements[0].ID
 
-	err = bc.DeleteAnnouncement.Handle(ctx, command.DeleteAnnouncementCommand{ID: domain.AnnouncementID(aID)})
+	err = bc.DeleteAnnouncement.Handle(ctx, command.DeleteAnnouncementCommand{ID: announceentity.AnnouncementID(aID)})
 	if err != nil {
 		t.Fatalf("DeleteAnnouncement: %v", err)
 	}
 
 	list2, _ := bc.ListAnnouncements.Handle(ctx, query.ListAnnouncementsQuery{
-		Filter: domain.AnnouncementFilter{Limit: 10},
+		Filter: announcerepo.AnnouncementFilter{Limit: 10},
 	})
 	if list2.Total != 0 {
 		t.Errorf("expected 0 announcements after delete, got %d", list2.Total)

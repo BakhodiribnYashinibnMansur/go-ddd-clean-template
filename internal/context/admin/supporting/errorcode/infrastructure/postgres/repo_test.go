@@ -5,7 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/admin/supporting/errorcode/domain"
+	errcodeentity "gct/internal/context/admin/supporting/errorcode/domain/entity"
+	errcoderepo "gct/internal/context/admin/supporting/errorcode/domain/repository"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -83,7 +84,7 @@ func fillErrorCodeDest(dest []any, id uuid.UUID, now time.Time) {
 // ---------------------------------------------------------------------------
 
 func TestScanErrorCodeView_Success(t *testing.T) {
-	id := domain.NewErrorCodeID()
+	id := errcodeentity.NewErrorCodeID()
 	now := time.Now().Truncate(time.Microsecond)
 
 	row := &mockRow{scanFunc: func(dest ...any) error {
@@ -125,7 +126,7 @@ func TestScanErrorCodeView_Error(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestScanErrorCodeViewFromRows_Success(t *testing.T) {
-	id := domain.NewErrorCodeID()
+	id := errcodeentity.NewErrorCodeID()
 	now := time.Now().Truncate(time.Microsecond)
 
 	rows := &mockRows{scanFunc: func(dest ...any) error {
@@ -155,7 +156,7 @@ func TestScanErrorCodeViewFromRows_Error(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestScanErrorCode_Success(t *testing.T) {
-	id := domain.NewErrorCodeID()
+	id := errcodeentity.NewErrorCodeID()
 	now := time.Now().Truncate(time.Microsecond)
 
 	row := &mockRow{scanFunc: func(dest ...any) error {
@@ -192,7 +193,7 @@ func TestScanErrorCode_Error(t *testing.T) {
 
 func TestApplyFilters_NoFilters(t *testing.T) {
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.ErrorCodeFilter{})
+	result := applyFilters(conds, errcoderepo.ErrorCodeFilter{})
 	if len(result) != 0 {
 		t.Errorf("expected 0 conditions, got %d", len(result))
 	}
@@ -201,7 +202,7 @@ func TestApplyFilters_NoFilters(t *testing.T) {
 func TestApplyFilters_WithCode(t *testing.T) {
 	code := "ERR_001"
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.ErrorCodeFilter{Code: &code})
+	result := applyFilters(conds, errcoderepo.ErrorCodeFilter{Code: &code})
 	if len(result) != 1 {
 		t.Errorf("expected 1 condition, got %d", len(result))
 	}
@@ -210,7 +211,7 @@ func TestApplyFilters_WithCode(t *testing.T) {
 func TestApplyFilters_WithCategory(t *testing.T) {
 	cat := "server"
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.ErrorCodeFilter{Category: &cat})
+	result := applyFilters(conds, errcoderepo.ErrorCodeFilter{Category: &cat})
 	if len(result) != 1 {
 		t.Errorf("expected 1 condition, got %d", len(result))
 	}
@@ -219,7 +220,7 @@ func TestApplyFilters_WithCategory(t *testing.T) {
 func TestApplyFilters_WithSeverity(t *testing.T) {
 	sev := "critical"
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.ErrorCodeFilter{Severity: &sev})
+	result := applyFilters(conds, errcoderepo.ErrorCodeFilter{Severity: &sev})
 	if len(result) != 1 {
 		t.Errorf("expected 1 condition, got %d", len(result))
 	}
@@ -230,7 +231,7 @@ func TestApplyFilters_AllFilters(t *testing.T) {
 	cat := "server"
 	sev := "critical"
 	conds := squirrel.And{}
-	result := applyFilters(conds, domain.ErrorCodeFilter{Code: &code, Category: &cat, Severity: &sev})
+	result := applyFilters(conds, errcoderepo.ErrorCodeFilter{Code: &code, Category: &cat, Severity: &sev})
 	if len(result) != 3 {
 		t.Errorf("expected 3 conditions, got %d", len(result))
 	}

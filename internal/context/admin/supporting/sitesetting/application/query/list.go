@@ -6,30 +6,32 @@ import (
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 
-	appdto "gct/internal/context/admin/supporting/sitesetting/application"
-	"gct/internal/context/admin/supporting/sitesetting/domain"
+	"gct/internal/context/admin/supporting/sitesetting/application/dto"
+	siterepo "gct/internal/context/admin/supporting/sitesetting/domain/repository"
 	"gct/internal/kernel/infrastructure/pgxutil"
+
+	"github.com/google/uuid"
 )
 
 // ListSiteSettingsQuery holds the input for listing site settings.
 type ListSiteSettingsQuery struct {
-	Filter domain.SiteSettingFilter
+	Filter siterepo.SiteSettingFilter
 }
 
 // ListSiteSettingsResult holds the output of the list site settings query.
 type ListSiteSettingsResult struct {
-	Settings []*appdto.SiteSettingView
+	Settings []*dto.SiteSettingView
 	Total    int64
 }
 
 // ListSiteSettingsHandler handles the ListSiteSettingsQuery.
 type ListSiteSettingsHandler struct {
-	readRepo domain.SiteSettingReadRepository
+	readRepo siterepo.SiteSettingReadRepository
 	logger   logger.Log
 }
 
 // NewListSiteSettingsHandler creates a new ListSiteSettingsHandler.
-func NewListSiteSettingsHandler(readRepo domain.SiteSettingReadRepository, l logger.Log) *ListSiteSettingsHandler {
+func NewListSiteSettingsHandler(readRepo siterepo.SiteSettingReadRepository, l logger.Log) *ListSiteSettingsHandler {
 	return &ListSiteSettingsHandler{readRepo: readRepo, logger: l}
 }
 
@@ -45,10 +47,10 @@ func (h *ListSiteSettingsHandler) Handle(ctx context.Context, q ListSiteSettings
 		return nil, apperrors.MapToServiceError(err)
 	}
 
-	items := make([]*appdto.SiteSettingView, len(views))
+	items := make([]*dto.SiteSettingView, len(views))
 	for i, v := range views {
-		items[i] = &appdto.SiteSettingView{
-			ID:          v.ID,
+		items[i] = &dto.SiteSettingView{
+			ID:          uuid.UUID(v.ID),
 			Key:         v.Key,
 			Value:       v.Value,
 			Type:        v.Type,

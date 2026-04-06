@@ -6,10 +6,12 @@ import (
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 
-	appdto "gct/internal/context/iam/generic/authz/application"
-	"gct/internal/context/iam/generic/authz/domain"
+	"gct/internal/context/iam/generic/authz/application/dto"
+	authzrepo "gct/internal/context/iam/generic/authz/domain/repository"
 	shared "gct/internal/kernel/domain"
 	"gct/internal/kernel/infrastructure/pgxutil"
+
+	"github.com/google/uuid"
 )
 
 // ListPermissionsQuery holds the input for listing permissions.
@@ -19,18 +21,18 @@ type ListPermissionsQuery struct {
 
 // ListPermissionsResult holds the output of the list permissions query.
 type ListPermissionsResult struct {
-	Permissions []*appdto.PermissionView
+	Permissions []*dto.PermissionView
 	Total       int64
 }
 
 // ListPermissionsHandler handles the ListPermissionsQuery.
 type ListPermissionsHandler struct {
-	readRepo domain.AuthzReadRepository
+	readRepo authzrepo.AuthzReadRepository
 	logger   logger.Log
 }
 
 // NewListPermissionsHandler creates a new ListPermissionsHandler.
-func NewListPermissionsHandler(readRepo domain.AuthzReadRepository, l logger.Log) *ListPermissionsHandler {
+func NewListPermissionsHandler(readRepo authzrepo.AuthzReadRepository, l logger.Log) *ListPermissionsHandler {
 	return &ListPermissionsHandler{readRepo: readRepo, logger: l}
 }
 
@@ -46,11 +48,16 @@ func (h *ListPermissionsHandler) Handle(ctx context.Context, q ListPermissionsQu
 		return nil, apperrors.MapToServiceError(err)
 	}
 
-	result := make([]*appdto.PermissionView, len(views))
+	result := make([]*dto.PermissionView, len(views))
 	for i, v := range views {
-		result[i] = &appdto.PermissionView{
-			ID:          v.ID,
-			ParentID:    v.ParentID,
+		var parentID *uuid.UUID
+		if v.ParentID != nil {
+			id := uuid.UUID(*v.ParentID)
+			parentID = &id
+		}
+		result[i] = &dto.PermissionView{
+			ID:          uuid.UUID(v.ID),
+			ParentID:    parentID,
 			Name:        v.Name,
 			Description: v.Description,
 		}

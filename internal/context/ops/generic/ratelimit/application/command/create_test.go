@@ -4,7 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/context/ops/generic/ratelimit/domain"
+	ratelimitentity "gct/internal/context/ops/generic/ratelimit/domain/entity"
+	ratelimitrepo "gct/internal/context/ops/generic/ratelimit/domain/repository"
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
@@ -14,35 +15,35 @@ import (
 // --- Mocks ---
 
 type mockRateLimitRepo struct {
-	saved   *domain.RateLimit
-	updated *domain.RateLimit
-	deleted domain.RateLimitID
-	findFn  func(ctx context.Context, id domain.RateLimitID) (*domain.RateLimit, error)
+	saved   *ratelimitentity.RateLimit
+	updated *ratelimitentity.RateLimit
+	deleted ratelimitentity.RateLimitID
+	findFn  func(ctx context.Context, id ratelimitentity.RateLimitID) (*ratelimitentity.RateLimit, error)
 }
 
-func (m *mockRateLimitRepo) Save(_ context.Context, e *domain.RateLimit) error {
+func (m *mockRateLimitRepo) Save(_ context.Context, e *ratelimitentity.RateLimit) error {
 	m.saved = e
 	return nil
 }
 
-func (m *mockRateLimitRepo) FindByID(ctx context.Context, id domain.RateLimitID) (*domain.RateLimit, error) {
+func (m *mockRateLimitRepo) FindByID(ctx context.Context, id ratelimitentity.RateLimitID) (*ratelimitentity.RateLimit, error) {
 	if m.findFn != nil {
 		return m.findFn(ctx, id)
 	}
-	return nil, domain.ErrRateLimitNotFound
+	return nil, ratelimitentity.ErrRateLimitNotFound
 }
 
-func (m *mockRateLimitRepo) Update(_ context.Context, e *domain.RateLimit) error {
+func (m *mockRateLimitRepo) Update(_ context.Context, e *ratelimitentity.RateLimit) error {
 	m.updated = e
 	return nil
 }
 
-func (m *mockRateLimitRepo) Delete(_ context.Context, id domain.RateLimitID) error {
+func (m *mockRateLimitRepo) Delete(_ context.Context, id ratelimitentity.RateLimitID) error {
 	m.deleted = id
 	return nil
 }
 
-func (m *mockRateLimitRepo) List(_ context.Context, _ domain.RateLimitFilter) ([]*domain.RateLimit, int64, error) {
+func (m *mockRateLimitRepo) List(_ context.Context, _ ratelimitrepo.RateLimitFilter) ([]*ratelimitentity.RateLimit, int64, error) {
 	return nil, 0, nil
 }
 

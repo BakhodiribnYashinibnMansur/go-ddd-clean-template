@@ -6,7 +6,8 @@ import (
 	"gct/internal/context/content/generic/translation"
 	"gct/internal/context/content/generic/translation/application/command"
 	"gct/internal/context/content/generic/translation/application/query"
-	"gct/internal/context/content/generic/translation/domain"
+	translationentity "gct/internal/context/content/generic/translation/domain/entity"
+	translationrepo "gct/internal/context/content/generic/translation/domain/repository"
 	"gct/internal/kernel/infrastructure/httpx"
 	"gct/internal/kernel/infrastructure/httpx/response"
 	"gct/internal/kernel/infrastructure/logger"
@@ -77,7 +78,7 @@ func (h *Handler) List(ctx *gin.Context) {
 	}
 
 	q := query.ListTranslationsQuery{
-		Filter: domain.TranslationFilter{Limit: pg.Limit, Offset: pg.Offset},
+		Filter: translationrepo.TranslationFilter{Limit: pg.Limit, Offset: pg.Offset},
 	}
 	result, err := h.bc.ListTranslations.Handle(ctx.Request.Context(), q)
 	if err != nil {
@@ -101,7 +102,7 @@ func (h *Handler) List(ctx *gin.Context) {
 // @Router /translations/{id} [get]
 // Get returns a single translation by ID.
 func (h *Handler) Get(ctx *gin.Context) {
-	id, err := domain.ParseTranslationID(ctx.Param("id"))
+	id, err := translationentity.ParseTranslationID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
@@ -129,7 +130,7 @@ func (h *Handler) Get(ctx *gin.Context) {
 // @Router /translations/{id} [patch]
 // Update updates a translation.
 func (h *Handler) Update(ctx *gin.Context) {
-	id, err := domain.ParseTranslationID(ctx.Param("id"))
+	id, err := translationentity.ParseTranslationID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return
@@ -167,7 +168,7 @@ func (h *Handler) Update(ctx *gin.Context) {
 // @Router /translations/{id} [delete]
 // Delete deletes a translation.
 func (h *Handler) Delete(ctx *gin.Context) {
-	id, err := domain.ParseTranslationID(ctx.Param("id"))
+	id, err := translationentity.ParseTranslationID(ctx.Param("id"))
 	if err != nil {
 		response.RespondWithError(ctx, httpx.ErrParsingUUID, http.StatusBadRequest)
 		return

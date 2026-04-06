@@ -5,14 +5,14 @@ import (
 	"testing"
 
 	"gct/internal/context/iam/generic/session"
-	appdto "gct/internal/context/iam/generic/session/application"
+	"gct/internal/context/iam/generic/session/application/dto"
 	sessioncmd "gct/internal/context/iam/generic/session/application/command"
 	"gct/internal/context/iam/generic/session/application/query"
-	sessiondomain "gct/internal/context/iam/generic/session/domain"
+	sessionentity "gct/internal/context/iam/generic/session/domain/entity"
 	"gct/internal/context/iam/generic/user"
 	usercmd "gct/internal/context/iam/generic/user/application/command"
 	userquery "gct/internal/context/iam/generic/user/application/query"
-	"gct/internal/context/iam/generic/user/domain"
+	userentity "gct/internal/context/iam/generic/user/domain/entity"
 	shared "gct/internal/kernel/domain"
 	"gct/internal/kernel/infrastructure/eventbus"
 	"gct/internal/kernel/infrastructure/logger"
@@ -50,7 +50,7 @@ func createApprovedUser(t *testing.T, ctx context.Context, env testEnv, phone, p
 	}
 
 	list, err := env.userBC.ListUsers.Handle(ctx, userquery.ListUsersQuery{
-		Filter: domain.UsersFilter{Pagination: &shared.Pagination{Limit: 10}},
+		Filter: userentity.UsersFilter{Pagination: &shared.Pagination{Limit: 10}},
 	})
 	if err != nil {
 		t.Fatalf("ListUsers: %v", err)
@@ -59,10 +59,10 @@ func createApprovedUser(t *testing.T, ctx context.Context, env testEnv, phone, p
 	// Find our user by phone (in case the DB is not perfectly clean).
 	for _, u := range list.Users {
 		if u.Phone == phone {
-			if err := env.userBC.ApproveUser.Handle(ctx, usercmd.ApproveUserCommand{ID: u.ID}); err != nil {
+			if err := env.userBC.ApproveUser.Handle(ctx, usercmd.ApproveUserCommand{ID: userentity.UserID(u.ID)}); err != nil {
 				t.Fatalf("ApproveUser: %v", err)
 			}
-			return u.ID.UUID()
+			return u.ID
 		}
 	}
 	t.Fatalf("created user with phone %s not found in ListUsers", phone)
@@ -95,7 +95,7 @@ func TestIntegration_ListSessions_Empty(t *testing.T) {
 	ctx := context.Background()
 
 	result, err := env.sessionBC.ListSessions.Handle(ctx, query.ListSessionsQuery{
-		Filter: appdto.SessionsFilter{Limit: 10},
+		Filter: dto.SessionsFilter{Limit: 10},
 	})
 	if err != nil {
 		t.Fatalf("ListSessions: %v", err)
@@ -120,7 +120,7 @@ func TestIntegration_GetSession(t *testing.T) {
 	sir := signIn(t, ctx, env, phone, password, "desktop", "10.0.0.1", "IntegrationTest/1.0")
 
 	// Fetch session via Session BC
-	sess, err := env.sessionBC.GetSession.Handle(ctx, query.GetSessionQuery{ID: sessiondomain.SessionID(sir.SessionID)})
+	sess, err := env.sessionBC.GetSession.Handle(ctx, query.GetSessionQuery{ID: sessionentity.SessionID(sir.SessionID)})
 	if err != nil {
 		t.Fatalf("GetSession: %v", err)
 	}
@@ -165,9 +165,8 @@ func TestIntegration_ListSessions_WithData(t *testing.T) {
 	_ = signIn(t, ctx, env, phone, password, "mobile", "10.0.0.2", "IntegrationTest/Mobile")
 
 	// List sessions filtered by user ID.
-	suid := sessiondomain.UserID(userID)
 	result, err := env.sessionBC.ListSessions.Handle(ctx, query.ListSessionsQuery{
-		Filter: appdto.SessionsFilter{UserID: &suid, Limit: 10},
+		Filter: dto.SessionsFilter{UserID: &userID, Limit: 10},
 	})
 	if err != nil {
 		t.Fatalf("ListSessions: %v", err)
@@ -188,7 +187,7 @@ func TestIntegration_ListSessions_WithData(t *testing.T) {
 
 	// List without user filter should also return 2 (clean DB).
 	all, err := env.sessionBC.ListSessions.Handle(ctx, query.ListSessionsQuery{
-		Filter: appdto.SessionsFilter{Limit: 100},
+		Filter: dto.SessionsFilter{Limit: 100},
 	})
 	if err != nil {
 		t.Fatalf("ListSessions (all): %v", err)
@@ -222,7 +221,7 @@ func TestIntegration_RevokeSession(t *testing.T) {
 	// Without a subscriber that actually revokes the session in the DB,
 	// the session remains active. Verify the event was published successfully
 	// by confirming no error above, and that the session is still readable.
-	sess, err := env.sessionBC.GetSession.Handle(ctx, query.GetSessionQuery{ID: sessiondomain.SessionID(sir.SessionID)})
+	sess, err := env.sessionBC.GetSession.Handle(ctx, query.GetSessionQuery{ID: sessionentity.SessionID(sir.SessionID)})
 	if err != nil {
 		t.Fatalf("GetSession after revoke event: %v", err)
 	}
@@ -254,9 +253,8 @@ func TestIntegration_RevokeAllSessions(t *testing.T) {
 
 	// Same as RevokeSession: the command publishes an event but does not
 	// mutate the DB directly. Verify no error and sessions are still readable.
-	suid := sessiondomain.UserID(userID)
 	result, err := env.sessionBC.ListSessions.Handle(ctx, query.ListSessionsQuery{
-		Filter: appdto.SessionsFilter{UserID: &suid, Limit: 10},
+		Filter: dto.SessionsFilter{UserID: &userID, Limit: 10},
 	})
 	if err != nil {
 		t.Fatalf("ListSessions after revoke-all event: %v", err)
@@ -271,7 +269,7 @@ func TestIntegration_GetSession_NotFound(t *testing.T) {
 	env := newTestEnv(t)
 	ctx := context.Background()
 
-	_, err := env.sessionBC.GetSession.Handle(ctx, query.GetSessionQuery{ID: sessiondomain.SessionID(uuid.New())})
+	_, err := env.sessionBC.GetSession.Handle(ctx, query.GetSessionQuery{ID: sessionentity.SessionID(uuid.New())})
 	if err == nil {
 		t.Fatal("expected error for non-existent session, got nil")
 	}
@@ -294,9 +292,8 @@ func TestIntegration_ListSessions_FilterByUser(t *testing.T) {
 	_ = signIn(t, ctx, env, phone2, password, "mobile", "10.0.0.2", "UserB")
 
 	// Filter by user1 should return exactly 1.
-	suid1 := sessiondomain.UserID(userID1)
 	result, err := env.sessionBC.ListSessions.Handle(ctx, query.ListSessionsQuery{
-		Filter: appdto.SessionsFilter{UserID: &suid1, Limit: 10},
+		Filter: dto.SessionsFilter{UserID: &userID1, Limit: 10},
 	})
 	if err != nil {
 		t.Fatalf("ListSessions (filtered): %v", err)
@@ -310,7 +307,7 @@ func TestIntegration_ListSessions_FilterByUser(t *testing.T) {
 
 	// Unfiltered should return 2.
 	all, err := env.sessionBC.ListSessions.Handle(ctx, query.ListSessionsQuery{
-		Filter: appdto.SessionsFilter{Limit: 10},
+		Filter: dto.SessionsFilter{Limit: 10},
 	})
 	if err != nil {
 		t.Fatalf("ListSessions (all): %v", err)

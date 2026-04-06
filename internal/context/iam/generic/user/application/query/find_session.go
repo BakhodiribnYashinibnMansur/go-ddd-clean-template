@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"gct/internal/context/iam/generic/user/domain"
+	userentity "gct/internal/context/iam/generic/user/domain/entity"
+	userrepo "gct/internal/context/iam/generic/user/domain/repository"
 	shared "gct/internal/kernel/domain"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -12,17 +13,17 @@ import (
 
 // FindSessionQuery holds the input for fetching a session by ID.
 type FindSessionQuery struct {
-	SessionID domain.SessionID
+	SessionID userentity.SessionID
 }
 
 // FindSessionHandler handles the FindSessionQuery.
 type FindSessionHandler struct {
-	readRepo domain.UserReadRepository
+	readRepo userrepo.UserReadRepository
 	logger   queryLogger
 }
 
 // NewFindSessionHandler creates a new FindSessionHandler.
-func NewFindSessionHandler(readRepo domain.UserReadRepository, l logger.Log) *FindSessionHandler {
+func NewFindSessionHandler(readRepo userrepo.UserReadRepository, l logger.Log) *FindSessionHandler {
 	return &FindSessionHandler{readRepo: readRepo, logger: l}
 }
 

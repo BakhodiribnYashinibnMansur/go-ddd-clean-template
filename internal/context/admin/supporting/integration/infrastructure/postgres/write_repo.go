@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"gct/internal/context/admin/supporting/integration/domain"
+	integentity "gct/internal/context/admin/supporting/integration/domain/entity"
 	"gct/internal/kernel/consts"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/metadata"
@@ -26,7 +26,7 @@ var writeColumns = []string{
 	"jwt_rotated_at", "jwt_rotate_every_days", "jwt_binding_mode", "jwt_max_sessions",
 }
 
-// IntegrationWriteRepo implements domain.IntegrationRepository using PostgreSQL.
+// IntegrationWriteRepo implements integentity.IntegrationRepository using PostgreSQL.
 type IntegrationWriteRepo struct {
 	pool     *pgxpool.Pool
 	builder  squirrel.StatementBuilderType
@@ -76,7 +76,7 @@ func nullableTime(t *time.Time) any {
 }
 
 // Save inserts a new Integration aggregate into the database.
-func (r *IntegrationWriteRepo) Save(ctx context.Context, i *domain.Integration) (err error) {
+func (r *IntegrationWriteRepo) Save(ctx context.Context, i *integentity.Integration) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "IntegrationWriteRepo.Save")
 	defer func() { end(err) }()
 
@@ -120,7 +120,7 @@ func (r *IntegrationWriteRepo) Save(ctx context.Context, i *domain.Integration) 
 }
 
 // FindByID retrieves an Integration aggregate by ID.
-func (r *IntegrationWriteRepo) FindByID(ctx context.Context, id domain.IntegrationID) (result *domain.Integration, err error) {
+func (r *IntegrationWriteRepo) FindByID(ctx context.Context, id integentity.IntegrationID) (result *integentity.Integration, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "IntegrationWriteRepo.FindByID")
 	defer func() { end(err) }()
 
@@ -144,7 +144,7 @@ func (r *IntegrationWriteRepo) FindByID(ctx context.Context, id domain.Integrati
 		return nil, err
 	}
 
-	return domain.ReconstructIntegration(
+	return integentity.ReconstructIntegration(
 		entity.ID(), entity.CreatedAt(), entity.UpdatedAt(), nil,
 		entity.Name(), entity.Type(), entity.APIKey(), entity.WebhookURL(),
 		entity.Enabled(), config,
@@ -157,7 +157,7 @@ func (r *IntegrationWriteRepo) FindByID(ctx context.Context, id domain.Integrati
 }
 
 // Update updates an Integration aggregate in the database.
-func (r *IntegrationWriteRepo) Update(ctx context.Context, i *domain.Integration) (err error) {
+func (r *IntegrationWriteRepo) Update(ctx context.Context, i *integentity.Integration) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "IntegrationWriteRepo.Update")
 	defer func() { end(err) }()
 
@@ -197,7 +197,7 @@ func (r *IntegrationWriteRepo) Update(ctx context.Context, i *domain.Integration
 }
 
 // Delete removes an Integration by ID.
-func (r *IntegrationWriteRepo) Delete(ctx context.Context, id domain.IntegrationID) (err error) {
+func (r *IntegrationWriteRepo) Delete(ctx context.Context, id integentity.IntegrationID) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "IntegrationWriteRepo.Delete")
 	defer func() { end(err) }()
 
@@ -218,7 +218,7 @@ func (r *IntegrationWriteRepo) Delete(ctx context.Context, id domain.Integration
 
 // RotateJWTKey atomically installs new JWT key material for an integration,
 // moving current values to the "previous" slots.
-func (r *IntegrationWriteRepo) RotateJWTKey(ctx context.Context, id domain.IntegrationID, newPublicPEM, newKeyID string) (err error) {
+func (r *IntegrationWriteRepo) RotateJWTKey(ctx context.Context, id integentity.IntegrationID, newPublicPEM, newKeyID string) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "IntegrationWriteRepo.RotateJWTKey")
 	defer func() { end(err) }()
 
@@ -242,7 +242,7 @@ UPDATE ` + tableName + `
 // Helpers
 // ---------------------------------------------------------------------------
 
-func scanIntegration(row pgx.Row) (*domain.Integration, error) {
+func scanIntegration(row pgx.Row) (*integentity.Integration, error) {
 	var (
 		id          uuid.UUID
 		name        string
@@ -304,7 +304,7 @@ func scanIntegration(row pgx.Row) (*domain.Integration, error) {
 		prevKid = *jwtPreviousKeyID
 	}
 
-	return domain.ReconstructIntegration(
+	return integentity.ReconstructIntegration(
 		id, createdAt, updatedAt, nil, name, desc, "", baseURL, isActive, nil,
 		jwtAPIKeyHash, accessTTL, refreshTTL,
 		pub, prevPub, kid, prevKid,

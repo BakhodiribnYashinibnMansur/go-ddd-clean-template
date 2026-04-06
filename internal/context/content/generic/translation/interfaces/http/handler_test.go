@@ -12,7 +12,8 @@ import (
 	"gct/internal/context/content/generic/translation"
 	"gct/internal/context/content/generic/translation/application/command"
 	"gct/internal/context/content/generic/translation/application/query"
-	"gct/internal/context/content/generic/translation/domain"
+	translationentity "gct/internal/context/content/generic/translation/domain/entity"
+	translationrepo "gct/internal/context/content/generic/translation/domain/repository"
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
@@ -23,45 +24,45 @@ import (
 // --- Mocks ---
 
 type mockRepo struct {
-	saved   *domain.Translation
-	updated *domain.Translation
-	findFn  func(ctx context.Context, id domain.TranslationID) (*domain.Translation, error)
+	saved   *translationentity.Translation
+	updated *translationentity.Translation
+	findFn  func(ctx context.Context, id translationentity.TranslationID) (*translationentity.Translation, error)
 }
 
-func (m *mockRepo) Save(_ context.Context, e *domain.Translation) error {
+func (m *mockRepo) Save(_ context.Context, e *translationentity.Translation) error {
 	m.saved = e
 	return nil
 }
-func (m *mockRepo) FindByID(ctx context.Context, id domain.TranslationID) (*domain.Translation, error) {
+func (m *mockRepo) FindByID(ctx context.Context, id translationentity.TranslationID) (*translationentity.Translation, error) {
 	if m.findFn != nil {
 		return m.findFn(ctx, id)
 	}
-	return nil, domain.ErrTranslationNotFound
+	return nil, translationentity.ErrTranslationNotFound
 }
-func (m *mockRepo) Update(_ context.Context, e *domain.Translation) error {
+func (m *mockRepo) Update(_ context.Context, e *translationentity.Translation) error {
 	m.updated = e
 	return nil
 }
-func (m *mockRepo) Delete(_ context.Context, _ domain.TranslationID) error {
+func (m *mockRepo) Delete(_ context.Context, _ translationentity.TranslationID) error {
 	return nil
 }
-func (m *mockRepo) List(_ context.Context, _ domain.TranslationFilter) ([]*domain.Translation, int64, error) {
+func (m *mockRepo) List(_ context.Context, _ translationrepo.TranslationFilter) ([]*translationentity.Translation, int64, error) {
 	return nil, 0, nil
 }
 
 type mockReadRepo struct {
-	view  *domain.TranslationView
-	views []*domain.TranslationView
+	view  *translationrepo.TranslationView
+	views []*translationrepo.TranslationView
 	total int64
 }
 
-func (m *mockReadRepo) FindByID(_ context.Context, id domain.TranslationID) (*domain.TranslationView, error) {
+func (m *mockReadRepo) FindByID(_ context.Context, id translationentity.TranslationID) (*translationrepo.TranslationView, error) {
 	if m.view != nil && m.view.ID == id {
 		return m.view, nil
 	}
-	return nil, domain.ErrTranslationNotFound
+	return nil, translationentity.ErrTranslationNotFound
 }
-func (m *mockReadRepo) List(_ context.Context, _ domain.TranslationFilter) ([]*domain.TranslationView, int64, error) {
+func (m *mockReadRepo) List(_ context.Context, _ translationrepo.TranslationFilter) ([]*translationrepo.TranslationView, int64, error) {
 	return m.views, m.total, nil
 }
 
@@ -161,8 +162,8 @@ func TestHandler_List_Success(t *testing.T) {
 
 	now := time.Now()
 	readRepo := &mockReadRepo{
-		views: []*domain.TranslationView{
-			{ID: domain.NewTranslationID(), Key: "k1", Language: "en", Value: "v1", Group: "g1", CreatedAt: now, UpdatedAt: now},
+		views: []*translationrepo.TranslationView{
+			{ID: translationentity.NewTranslationID(), Key: "k1", Language: "en", Value: "v1", Group: "g1", CreatedAt: now, UpdatedAt: now},
 		},
 		total: 1,
 	}
@@ -180,10 +181,10 @@ func TestHandler_List_Success(t *testing.T) {
 func TestHandler_Get_Success(t *testing.T) {
 	t.Parallel()
 
-	id := domain.NewTranslationID()
+	id := translationentity.NewTranslationID()
 	now := time.Now()
 	readRepo := &mockReadRepo{
-		view: &domain.TranslationView{ID: id, Key: "k", Language: "en", Value: "v", Group: "g", CreatedAt: now, UpdatedAt: now},
+		view: &translationrepo.TranslationView{ID: id, Key: "k", Language: "en", Value: "v", Group: "g", CreatedAt: now, UpdatedAt: now},
 	}
 	router := setupRouter(&mockRepo{}, readRepo)
 
@@ -213,13 +214,13 @@ func TestHandler_Get_InvalidID(t *testing.T) {
 func TestHandler_Update_Success(t *testing.T) {
 	t.Parallel()
 
-	tr := domain.NewTranslation("old", "en", "old_val", "g")
+	tr := translationentity.NewTranslation("old", "en", "old_val", "g")
 	repo := &mockRepo{
-		findFn: func(_ context.Context, id domain.TranslationID) (*domain.Translation, error) {
+		findFn: func(_ context.Context, id translationentity.TranslationID) (*translationentity.Translation, error) {
 			if id == tr.TypedID() {
 				return tr, nil
 			}
-			return nil, domain.ErrTranslationNotFound
+			return nil, translationentity.ErrTranslationNotFound
 		},
 	}
 	router := setupRouter(repo, &mockReadRepo{})
@@ -313,7 +314,7 @@ func TestHandler_Create_InvalidJSON(t *testing.T) {
 
 func TestHandler_List_DefaultPagination(t *testing.T) {
 	readRepo := &mockReadRepo{
-		views: []*domain.TranslationView{},
+		views: []*translationrepo.TranslationView{},
 		total: 0,
 	}
 	router := setupRouter(&mockRepo{}, readRepo)

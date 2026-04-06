@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	appdto "gct/internal/context/iam/generic/session/application"
-	sessiondomain "gct/internal/context/iam/generic/session/domain"
+	"gct/internal/context/iam/generic/session/application/dto"
+	sessionentity "gct/internal/context/iam/generic/session/domain/entity"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -17,13 +17,13 @@ import (
 // --- Mock Read Repository ---
 
 type mockSessionReadRepository struct {
-	view  *appdto.SessionView
-	views []*appdto.SessionView
+	view  *dto.SessionView
+	views []*dto.SessionView
 	total int64
 	err   error
 }
 
-func (m *mockSessionReadRepository) FindByID(_ context.Context, id uuid.UUID) (*appdto.SessionView, error) {
+func (m *mockSessionReadRepository) FindByID(_ context.Context, id uuid.UUID) (*dto.SessionView, error) {
 	if m.err != nil {
 		return nil, m.err
 	}
@@ -33,7 +33,7 @@ func (m *mockSessionReadRepository) FindByID(_ context.Context, id uuid.UUID) (*
 	return nil, errors.New("session not found")
 }
 
-func (m *mockSessionReadRepository) List(_ context.Context, _ appdto.SessionsFilter) ([]*appdto.SessionView, int64, error) {
+func (m *mockSessionReadRepository) List(_ context.Context, _ dto.SessionsFilter) ([]*dto.SessionView, int64, error) {
 	if m.err != nil {
 		return nil, 0, m.err
 	}
@@ -75,7 +75,7 @@ func TestGetSessionHandler_Handle(t *testing.T) {
 	now := time.Now()
 
 	readRepo := &mockSessionReadRepository{
-		view: &appdto.SessionView{
+		view: &dto.SessionView{
 			ID:           sessionID,
 			UserID:       userID,
 			DeviceID:     "device-123",
@@ -92,7 +92,7 @@ func TestGetSessionHandler_Handle(t *testing.T) {
 
 	handler := NewGetSessionHandler(readRepo, logger.Noop())
 
-	q := GetSessionQuery{ID: sessiondomain.SessionID(sessionID)}
+	q := GetSessionQuery{ID: sessionentity.SessionID(sessionID)}
 	result, err := handler.Handle(context.Background(), q)
 	require.NoError(t, err)
 
@@ -128,7 +128,7 @@ func TestGetSessionHandler_NotFound(t *testing.T) {
 
 	handler := NewGetSessionHandler(readRepo, logger.Noop())
 
-	q := GetSessionQuery{ID: sessiondomain.NewSessionID()}
+	q := GetSessionQuery{ID: sessionentity.NewSessionID()}
 	_, err := handler.Handle(context.Background(), q)
 	if err == nil {
 		t.Fatal("expected error for non-existent session, got nil")
@@ -144,7 +144,7 @@ func TestGetSessionHandler_RepoError(t *testing.T) {
 
 	handler := NewGetSessionHandler(readRepo, logger.Noop())
 
-	q := GetSessionQuery{ID: sessiondomain.NewSessionID()}
+	q := GetSessionQuery{ID: sessionentity.NewSessionID()}
 	_, err := handler.Handle(context.Background(), q)
 	if err == nil {
 		t.Fatal("expected error when repo fails, got nil")

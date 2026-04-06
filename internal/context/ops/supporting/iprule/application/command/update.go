@@ -4,7 +4,8 @@ import (
 	"context"
 	"time"
 
-	"gct/internal/context/ops/supporting/iprule/domain"
+	ipruleentity "gct/internal/context/ops/supporting/iprule/domain/entity"
+	iprulerepo "gct/internal/context/ops/supporting/iprule/domain/repository"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
@@ -15,7 +16,7 @@ import (
 // Pointer fields implement patch semantics — nil means "leave unchanged," non-nil means "overwrite."
 // Changing Action or IPAddress takes effect immediately for subsequent traffic evaluations.
 type UpdateIPRuleCommand struct {
-	ID        domain.IPRuleID
+	ID        ipruleentity.IPRuleID
 	IPAddress *string
 	Action    *string
 	Reason    *string
@@ -25,14 +26,14 @@ type UpdateIPRuleCommand struct {
 // UpdateIPRuleHandler applies partial modifications to an existing IP rule via fetch-then-update.
 // Domain events are emitted so downstream caches or firewalls can refresh their rule sets.
 type UpdateIPRuleHandler struct {
-	repo     domain.IPRuleRepository
+	repo     iprulerepo.IPRuleRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
 // NewUpdateIPRuleHandler wires up the handler with its required dependencies.
 func NewUpdateIPRuleHandler(
-	repo domain.IPRuleRepository,
+	repo iprulerepo.IPRuleRepository,
 	eventBus application.EventBus,
 	logger logger.Log,
 ) *UpdateIPRuleHandler {

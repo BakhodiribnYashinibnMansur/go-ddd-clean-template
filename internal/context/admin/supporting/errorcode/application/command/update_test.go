@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"gct/internal/context/admin/supporting/errorcode/domain"
+	errcodeentity "gct/internal/context/admin/supporting/errorcode/domain/entity"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -13,21 +13,21 @@ import (
 func TestUpdateErrorCodeHandler_Handle(t *testing.T) {
 	t.Parallel()
 
-	ec := domain.NewErrorCode("AUTH_001", "old msg", 401, "auth", "high", false, 0, "old suggestion")
+	ec := errcodeentity.NewErrorCode("AUTH_001", "old msg", 401, "auth", "high", false, 0, "old suggestion")
 
 	repo := &mockErrorCodeRepo{
-		findFn: func(_ context.Context, id domain.ErrorCodeID) (*domain.ErrorCode, error) {
+		findFn: func(_ context.Context, id errcodeentity.ErrorCodeID) (*errcodeentity.ErrorCode, error) {
 			if id == ec.TypedID() {
 				return ec, nil
 			}
-			return nil, domain.ErrErrorCodeNotFound
+			return nil, errcodeentity.ErrErrorCodeNotFound
 		},
 	}
 	eb := &mockEventBus{}
 	handler := NewUpdateErrorCodeHandler(repo, eb, &mockLogger{})
 
 	cmd := UpdateErrorCodeCommand{
-		ID:         domain.ErrorCodeID(ec.ID()),
+		ID:         errcodeentity.ErrorCodeID(ec.ID()),
 		Message:    "new msg",
 		HTTPStatus: 403,
 		Category:   "auth",
@@ -75,7 +75,7 @@ func TestUpdateErrorCodeHandler_NotFound(t *testing.T) {
 	handler := NewUpdateErrorCodeHandler(repo, &mockEventBus{}, &mockLogger{})
 
 	err := handler.Handle(context.Background(), UpdateErrorCodeCommand{
-		ID: domain.ErrorCodeID(uuid.New()), Message: "m", HTTPStatus: 500, Category: "c", Severity: "s",
+		ID: errcodeentity.ErrorCodeID(uuid.New()), Message: "m", HTTPStatus: 500, Category: "c", Severity: "s",
 	})
 	if err == nil {
 		t.Fatal("expected error for not found")

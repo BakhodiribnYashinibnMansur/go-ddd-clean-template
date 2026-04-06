@@ -3,7 +3,8 @@ package command
 import (
 	"context"
 
-	"gct/internal/context/iam/generic/authz/domain"
+	authzentity "gct/internal/context/iam/generic/authz/domain/entity"
+	authzrepo "gct/internal/context/iam/generic/authz/domain/repository"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -15,20 +16,20 @@ import (
 // ParentID enables hierarchical permission trees — nil means a root-level permission.
 type CreatePermissionCommand struct {
 	Name        string
-	ParentID    *domain.PermissionID
+	ParentID    *authzentity.PermissionID
 	Description *string
 }
 
 // CreatePermissionHandler persists new permissions via the repository.
 // No domain events are emitted — permissions are structural metadata, not runtime state changes.
 type CreatePermissionHandler struct {
-	repo   domain.PermissionRepository
+	repo   authzrepo.PermissionRepository
 	logger logger.Log
 }
 
 // NewCreatePermissionHandler wires dependencies for permission creation.
 func NewCreatePermissionHandler(
-	repo domain.PermissionRepository,
+	repo authzrepo.PermissionRepository,
 	logger logger.Log,
 ) *CreatePermissionHandler {
 	return &CreatePermissionHandler{
@@ -49,7 +50,7 @@ func (h *CreatePermissionHandler) Handle(ctx context.Context, cmd CreatePermissi
 		u := cmd.ParentID.UUID()
 		parentUUID = &u
 	}
-	perm := domain.NewPermission(cmd.Name, parentUUID)
+	perm := authzentity.NewPermission(cmd.Name, parentUUID)
 	if cmd.Description != nil {
 		perm.SetDescription(cmd.Description)
 	}

@@ -7,7 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/ops/generic/systemerror/domain"
+	syserrentity "gct/internal/context/ops/generic/systemerror/domain/entity"
+	syserrrepo "gct/internal/context/ops/generic/systemerror/domain/repository"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -16,29 +17,29 @@ import (
 // --- Mocks ---
 
 type mockReadRepo struct {
-	view  *domain.SystemErrorView
-	views []*domain.SystemErrorView
+	view  *syserrrepo.SystemErrorView
+	views []*syserrrepo.SystemErrorView
 	total int64
 }
 
-func (m *mockReadRepo) FindByID(_ context.Context, id domain.SystemErrorID) (*domain.SystemErrorView, error) {
+func (m *mockReadRepo) FindByID(_ context.Context, id syserrentity.SystemErrorID) (*syserrrepo.SystemErrorView, error) {
 	if m.view != nil && m.view.ID == id {
 		return m.view, nil
 	}
-	return nil, domain.ErrSystemErrorNotFound
+	return nil, syserrentity.ErrSystemErrorNotFound
 }
 
-func (m *mockReadRepo) List(_ context.Context, _ domain.SystemErrorFilter) ([]*domain.SystemErrorView, int64, error) {
+func (m *mockReadRepo) List(_ context.Context, _ syserrrepo.SystemErrorFilter) ([]*syserrrepo.SystemErrorView, int64, error) {
 	return m.views, m.total, nil
 }
 
 type errorReadRepo struct{ err error }
 
-func (m *errorReadRepo) FindByID(_ context.Context, _ domain.SystemErrorID) (*domain.SystemErrorView, error) {
+func (m *errorReadRepo) FindByID(_ context.Context, _ syserrentity.SystemErrorID) (*syserrrepo.SystemErrorView, error) {
 	return nil, m.err
 }
 
-func (m *errorReadRepo) List(_ context.Context, _ domain.SystemErrorFilter) ([]*domain.SystemErrorView, int64, error) {
+func (m *errorReadRepo) List(_ context.Context, _ syserrrepo.SystemErrorFilter) ([]*syserrrepo.SystemErrorView, int64, error) {
 	return nil, 0, m.err
 }
 
@@ -49,9 +50,9 @@ var errRepo = errors.New("repo failure")
 func TestGetSystemErrorHandler_Handle(t *testing.T) {
 	t.Parallel()
 
-	id := domain.NewSystemErrorID()
+	id := syserrentity.NewSystemErrorID()
 	readRepo := &mockReadRepo{
-		view: &domain.SystemErrorView{
+		view: &syserrrepo.SystemErrorView{
 			ID:       id,
 			Code:     "ERR_500",
 			Message:  "internal error",
@@ -79,7 +80,7 @@ func TestGetSystemErrorHandler_NotFound(t *testing.T) {
 
 	readRepo := &mockReadRepo{}
 	handler := NewGetSystemErrorHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), GetSystemErrorQuery{ID: domain.NewSystemErrorID()})
+	_, err := handler.Handle(context.Background(), GetSystemErrorQuery{ID: syserrentity.NewSystemErrorID()})
 	if err == nil {
 		t.Fatal("expected error for not found")
 	}
@@ -90,7 +91,7 @@ func TestGetSystemErrorHandler_RepoError(t *testing.T) {
 
 	readRepo := &errorReadRepo{err: errRepo}
 	handler := NewGetSystemErrorHandler(readRepo, logger.Noop())
-	_, err := handler.Handle(context.Background(), GetSystemErrorQuery{ID: domain.NewSystemErrorID()})
+	_, err := handler.Handle(context.Background(), GetSystemErrorQuery{ID: syserrentity.NewSystemErrorID()})
 	if err == nil {
 		t.Fatal("expected error from repo")
 	}
@@ -99,7 +100,7 @@ func TestGetSystemErrorHandler_RepoError(t *testing.T) {
 func TestGetSystemErrorHandler_AllFieldsMapped(t *testing.T) {
 	t.Parallel()
 
-	id := domain.NewSystemErrorID()
+	id := syserrentity.NewSystemErrorID()
 	stack := "trace"
 	svc := "api"
 	reqID := uuid.New()
@@ -111,7 +112,7 @@ func TestGetSystemErrorHandler_AllFieldsMapped(t *testing.T) {
 	now := time.Now()
 
 	readRepo := &mockReadRepo{
-		view: &domain.SystemErrorView{
+		view: &syserrrepo.SystemErrorView{
 			ID:          id,
 			Code:        "ERR",
 			Message:     "msg",

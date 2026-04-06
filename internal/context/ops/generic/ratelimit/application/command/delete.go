@@ -3,7 +3,8 @@ package command
 import (
 	"context"
 
-	"gct/internal/context/ops/generic/ratelimit/domain"
+	ratelimitentity "gct/internal/context/ops/generic/ratelimit/domain/entity"
+	ratelimitrepo "gct/internal/context/ops/generic/ratelimit/domain/repository"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -11,18 +12,18 @@ import (
 
 // DeleteRateLimitCommand holds the input for deleting a rate limit.
 type DeleteRateLimitCommand struct {
-	ID domain.RateLimitID
+	ID ratelimitentity.RateLimitID
 }
 
 // DeleteRateLimitHandler handles the DeleteRateLimitCommand.
 type DeleteRateLimitHandler struct {
-	repo   domain.RateLimitRepository
+	repo   ratelimitrepo.RateLimitRepository
 	logger logger.Log
 }
 
 // NewDeleteRateLimitHandler creates a new DeleteRateLimitHandler.
 func NewDeleteRateLimitHandler(
-	repo domain.RateLimitRepository,
+	repo ratelimitrepo.RateLimitRepository,
 	logger logger.Log,
 ) *DeleteRateLimitHandler {
 	return &DeleteRateLimitHandler{

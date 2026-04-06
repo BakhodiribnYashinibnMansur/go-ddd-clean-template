@@ -3,7 +3,8 @@ package command
 import (
 	"context"
 
-	"gct/internal/context/iam/generic/authz/domain"
+	authzentity "gct/internal/context/iam/generic/authz/domain/entity"
+	authzrepo "gct/internal/context/iam/generic/authz/domain/repository"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
@@ -20,14 +21,14 @@ type CreateRoleCommand struct {
 // CreateRoleHandler orchestrates role creation and emits domain events for downstream authorization cache invalidation.
 // Event publish failures are logged but do not roll back the persisted role.
 type CreateRoleHandler struct {
-	repo     domain.RoleRepository
+	repo     authzrepo.RoleRepository
 	eventBus application.EventBus
 	logger   logger.Log
 }
 
 // NewCreateRoleHandler wires dependencies for role creation.
 func NewCreateRoleHandler(
-	repo domain.RoleRepository,
+	repo authzrepo.RoleRepository,
 	eventBus application.EventBus,
 	logger logger.Log,
 ) *CreateRoleHandler {
@@ -45,7 +46,7 @@ func (h *CreateRoleHandler) Handle(ctx context.Context, cmd CreateRoleCommand) (
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "CreateRole", "role")()
 
-	role := domain.NewRole(cmd.Name)
+	role := authzentity.NewRole(cmd.Name)
 	if cmd.Description != nil {
 		role.SetDescription(cmd.Description)
 	}

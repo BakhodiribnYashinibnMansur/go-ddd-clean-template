@@ -6,30 +6,32 @@ import (
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 
-	appdto "gct/internal/context/content/generic/translation/application"
-	"gct/internal/context/content/generic/translation/domain"
+	"gct/internal/context/content/generic/translation/application/dto"
+	translationrepo "gct/internal/context/content/generic/translation/domain/repository"
 	"gct/internal/kernel/infrastructure/pgxutil"
+
+	"github.com/google/uuid"
 )
 
 // ListTranslationsQuery holds the input for listing translations.
 type ListTranslationsQuery struct {
-	Filter domain.TranslationFilter
+	Filter translationrepo.TranslationFilter
 }
 
 // ListTranslationsResult holds the output of the list translations query.
 type ListTranslationsResult struct {
-	Translations []*appdto.TranslationView
+	Translations []*dto.TranslationView
 	Total        int64
 }
 
 // ListTranslationsHandler handles the ListTranslationsQuery.
 type ListTranslationsHandler struct {
-	readRepo domain.TranslationReadRepository
+	readRepo translationrepo.TranslationReadRepository
 	logger   logger.Log
 }
 
 // NewListTranslationsHandler creates a new ListTranslationsHandler.
-func NewListTranslationsHandler(readRepo domain.TranslationReadRepository, l logger.Log) *ListTranslationsHandler {
+func NewListTranslationsHandler(readRepo translationrepo.TranslationReadRepository, l logger.Log) *ListTranslationsHandler {
 	return &ListTranslationsHandler{readRepo: readRepo, logger: l}
 }
 
@@ -45,10 +47,10 @@ func (h *ListTranslationsHandler) Handle(ctx context.Context, q ListTranslations
 		return nil, apperrors.MapToServiceError(err)
 	}
 
-	items := make([]*appdto.TranslationView, len(views))
+	items := make([]*dto.TranslationView, len(views))
 	for i, v := range views {
-		items[i] = &appdto.TranslationView{
-			ID:        v.ID,
+		items[i] = &dto.TranslationView{
+			ID:        uuid.UUID(v.ID),
 			Key:       v.Key,
 			Language:  v.Language,
 			Value:     v.Value,

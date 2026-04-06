@@ -6,30 +6,32 @@ import (
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 
-	appdto "gct/internal/context/admin/supporting/errorcode/application"
-	"gct/internal/context/admin/supporting/errorcode/domain"
+	"gct/internal/context/admin/supporting/errorcode/application/dto"
+	errcoderepo "gct/internal/context/admin/supporting/errorcode/domain/repository"
 	"gct/internal/kernel/infrastructure/pgxutil"
+
+	"github.com/google/uuid"
 )
 
 // ListErrorCodesQuery holds the input for listing error codes with filtering.
 type ListErrorCodesQuery struct {
-	Filter domain.ErrorCodeFilter
+	Filter errcoderepo.ErrorCodeFilter
 }
 
 // ListErrorCodesResult holds the output of the list error codes query.
 type ListErrorCodesResult struct {
-	ErrorCodes []*appdto.ErrorCodeView
+	ErrorCodes []*dto.ErrorCodeView
 	Total      int64
 }
 
 // ListErrorCodesHandler handles the ListErrorCodesQuery.
 type ListErrorCodesHandler struct {
-	readRepo domain.ErrorCodeReadRepository
+	readRepo errcoderepo.ErrorCodeReadRepository
 	logger   logger.Log
 }
 
 // NewListErrorCodesHandler creates a new ListErrorCodesHandler.
-func NewListErrorCodesHandler(readRepo domain.ErrorCodeReadRepository, l logger.Log) *ListErrorCodesHandler {
+func NewListErrorCodesHandler(readRepo errcoderepo.ErrorCodeReadRepository, l logger.Log) *ListErrorCodesHandler {
 	return &ListErrorCodesHandler{readRepo: readRepo, logger: l}
 }
 
@@ -45,10 +47,10 @@ func (h *ListErrorCodesHandler) Handle(ctx context.Context, q ListErrorCodesQuer
 		return nil, apperrors.MapToServiceError(err)
 	}
 
-	result := make([]*appdto.ErrorCodeView, len(views))
+	result := make([]*dto.ErrorCodeView, len(views))
 	for i, v := range views {
-		result[i] = &appdto.ErrorCodeView{
-			ID:         v.ID,
+		result[i] = &dto.ErrorCodeView{
+			ID:         uuid.UUID(v.ID),
 			Code:       v.Code,
 			Message:    v.Message,
 			MessageUz:  v.MessageUz,

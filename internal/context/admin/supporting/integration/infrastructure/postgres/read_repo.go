@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"gct/internal/context/admin/supporting/integration/domain"
+	integentity "gct/internal/context/admin/supporting/integration/domain/entity"
 	"gct/internal/kernel/consts"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/metadata"
@@ -26,7 +26,7 @@ var readColumns = []string{
 	"jwt_rotated_at", "jwt_rotate_every_days", "jwt_binding_mode", "jwt_max_sessions",
 }
 
-// IntegrationReadRepo implements domain.IntegrationReadRepository for the CQRS read side.
+// IntegrationReadRepo implements integentity.IntegrationReadRepository for the CQRS read side.
 type IntegrationReadRepo struct {
 	pool     *pgxpool.Pool
 	builder  squirrel.StatementBuilderType
@@ -43,7 +43,7 @@ func NewIntegrationReadRepo(pool *pgxpool.Pool) *IntegrationReadRepo {
 }
 
 // FindByID returns an IntegrationView for the given ID.
-func (r *IntegrationReadRepo) FindByID(ctx context.Context, id domain.IntegrationID) (result *domain.IntegrationView, err error) {
+func (r *IntegrationReadRepo) FindByID(ctx context.Context, id integentity.IntegrationID) (result *integentity.IntegrationView, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "IntegrationReadRepo.FindByID")
 	defer func() { end(err) }()
 
@@ -72,7 +72,7 @@ func (r *IntegrationReadRepo) FindByID(ctx context.Context, id domain.Integratio
 }
 
 // List returns a paginated list of IntegrationView with optional filters.
-func (r *IntegrationReadRepo) List(ctx context.Context, filter domain.IntegrationFilter) (items []*domain.IntegrationView, total int64, err error) {
+func (r *IntegrationReadRepo) List(ctx context.Context, filter integentity.IntegrationFilter) (items []*integentity.IntegrationView, total int64, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "IntegrationReadRepo.List")
 	defer func() { end(err) }()
 
@@ -125,7 +125,7 @@ func (r *IntegrationReadRepo) List(ctx context.Context, filter domain.Integratio
 	}
 	defer rows.Close()
 
-	var views []*domain.IntegrationView
+	var views []*integentity.IntegrationView
 	for rows.Next() {
 		v, err := scanIntegrationViewFromRows(rows)
 		if err != nil {
@@ -151,7 +151,7 @@ type integrationViewScanner interface {
 	Scan(dest ...any) error
 }
 
-func scanIntegrationViewInto(s integrationViewScanner) (*domain.IntegrationView, error) {
+func scanIntegrationViewInto(s integrationViewScanner) (*integentity.IntegrationView, error) {
 	var (
 		id          uuid.UUID
 		name        string
@@ -203,8 +203,8 @@ func scanIntegrationViewInto(s integrationViewScanner) (*domain.IntegrationView,
 		return *p
 	}
 
-	return &domain.IntegrationView{
-		ID:                      domain.IntegrationID(id),
+	return &integentity.IntegrationView{
+		ID:                      integentity.IntegrationID(id),
 		Name:                    name,
 		Type:                    desc,
 		APIKey:                  "",
@@ -226,7 +226,7 @@ func scanIntegrationViewInto(s integrationViewScanner) (*domain.IntegrationView,
 	}, nil
 }
 
-func scanIntegrationView(row pgx.Row) (*domain.IntegrationView, error) {
+func scanIntegrationView(row pgx.Row) (*integentity.IntegrationView, error) {
 	v, err := scanIntegrationViewInto(row)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
@@ -234,7 +234,7 @@ func scanIntegrationView(row pgx.Row) (*domain.IntegrationView, error) {
 	return v, nil
 }
 
-func scanIntegrationViewFromRows(rows pgx.Rows) (*domain.IntegrationView, error) {
+func scanIntegrationViewFromRows(rows pgx.Rows) (*integentity.IntegrationView, error) {
 	v, err := scanIntegrationViewInto(rows)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, tableName, nil)
@@ -243,7 +243,7 @@ func scanIntegrationViewFromRows(rows pgx.Rows) (*domain.IntegrationView, error)
 }
 
 // FindByAPIKey returns an IntegrationAPIKeyView for the given API key string.
-func (r *IntegrationReadRepo) FindByAPIKey(ctx context.Context, apiKey string) (result *domain.IntegrationAPIKeyView, err error) {
+func (r *IntegrationReadRepo) FindByAPIKey(ctx context.Context, apiKey string) (result *integentity.IntegrationAPIKeyView, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "IntegrationReadRepo.FindByAPIKey")
 	defer func() { end(err) }()
 
@@ -258,7 +258,7 @@ func (r *IntegrationReadRepo) FindByAPIKey(ctx context.Context, apiKey string) (
 		return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
 	}
 
-	var view domain.IntegrationAPIKeyView
+	var view integentity.IntegrationAPIKeyView
 	err = r.pool.QueryRow(ctx, sql, args...).Scan(
 		&view.ID,
 		&view.IntegrationID,
@@ -281,7 +281,7 @@ const jwtViewSelect = `SELECT id, name, jwt_access_ttl_seconds, jwt_refresh_ttl_
   FROM ` + tableName
 
 // ListActiveJWT returns all integrations that have jwt_api_key_hash set.
-func (r *IntegrationReadRepo) ListActiveJWT(ctx context.Context) (out []domain.JWTIntegrationView, err error) {
+func (r *IntegrationReadRepo) ListActiveJWT(ctx context.Context) (out []integentity.JWTIntegrationView, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "IntegrationReadRepo.ListActiveJWT")
 	defer func() { end(err) }()
 
@@ -306,7 +306,7 @@ func (r *IntegrationReadRepo) ListActiveJWT(ctx context.Context) (out []domain.J
 
 // FindJWTByHash returns the integration whose jwt_api_key_hash exactly matches
 // the provided hash.
-func (r *IntegrationReadRepo) FindJWTByHash(ctx context.Context, hash []byte) (result *domain.JWTIntegrationView, err error) {
+func (r *IntegrationReadRepo) FindJWTByHash(ctx context.Context, hash []byte) (result *integentity.JWTIntegrationView, err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "IntegrationReadRepo.FindJWTByHash")
 	defer func() { end(err) }()
 
@@ -321,7 +321,7 @@ func (r *IntegrationReadRepo) FindJWTByHash(ctx context.Context, hash []byte) (r
 	return v, nil
 }
 
-func scanJWTIntegrationView(s integrationViewScanner) (*domain.JWTIntegrationView, error) {
+func scanJWTIntegrationView(s integrationViewScanner) (*integentity.JWTIntegrationView, error) {
 	var (
 		id              uuid.UUID
 		name            string
@@ -352,8 +352,8 @@ func scanJWTIntegrationView(s integrationViewScanner) (*domain.JWTIntegrationVie
 	if refreshSecs != nil {
 		refreshTTL = time.Duration(*refreshSecs) * time.Second
 	}
-	return &domain.JWTIntegrationView{
-		ID:                   domain.IntegrationID(id),
+	return &integentity.JWTIntegrationView{
+		ID:                   integentity.IntegrationID(id),
 		Name:                 name,
 		AccessTTL:            accessTTL,
 		RefreshTTL:           refreshTTL,

@@ -3,7 +3,8 @@ package command
 import (
 	"context"
 
-	"gct/internal/context/iam/generic/user/domain"
+	userentity "gct/internal/context/iam/generic/user/domain/entity"
+	userrepo "gct/internal/context/iam/generic/user/domain/repository"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
@@ -14,7 +15,7 @@ import (
 // Pointer fields use nil-means-unchanged semantics. Phone, password, and role are excluded —
 // use dedicated commands (ChangeRole, etc.) for those privileged mutations.
 type UpdateUserCommand struct {
-	ID         domain.UserID
+	ID         userentity.UserID
 	Email      *string
 	Username   *string
 	Attributes map[string]string
@@ -23,14 +24,14 @@ type UpdateUserCommand struct {
 // UpdateUserHandler applies partial profile updates via a load-reconstruct-save cycle.
 // Because the User aggregate uses unexported fields, the handler reconstructs the entity with merged values.
 type UpdateUserHandler struct {
-	repo     domain.UserRepository
+	repo     userrepo.UserRepository
 	eventBus application.EventBus
 	logger   commandLogger
 }
 
 // NewUpdateUserHandler creates a new UpdateUserHandler.
 func NewUpdateUserHandler(
-	repo domain.UserRepository,
+	repo userrepo.UserRepository,
 	eventBus application.EventBus,
 	logger commandLogger,
 ) *UpdateUserHandler {
@@ -58,7 +59,7 @@ func (h *UpdateUserHandler) Handle(ctx context.Context, cmd UpdateUserCommand) (
 	// the updated values while preserving existing data.
 	email := user.Email()
 	if cmd.Email != nil {
-		e, err := domain.NewEmail(*cmd.Email)
+		e, err := userentity.NewEmail(*cmd.Email)
 		if err != nil {
 			return apperrors.MapToServiceError(err)
 		}
@@ -75,7 +76,7 @@ func (h *UpdateUserHandler) Handle(ctx context.Context, cmd UpdateUserCommand) (
 		attributes = cmd.Attributes
 	}
 
-	updated := domain.ReconstructUser(
+	updated := userentity.ReconstructUser(
 		user.ID(),
 		user.CreatedAt(),
 		user.UpdatedAt(),

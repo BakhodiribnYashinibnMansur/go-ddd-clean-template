@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"gct/internal/context/iam/generic/user/domain"
+	userentity "gct/internal/context/iam/generic/user/domain/entity"
 	jwtpkg "gct/internal/kernel/infrastructure/security/jwt"
 
 	"github.com/google/uuid"
@@ -48,12 +48,12 @@ func TestSignInHandler_Handle(t *testing.T) {
 	t.Parallel()
 
 	// Create a user with known credentials.
-	phone, err := domain.NewPhone("+998901234567")
+	phone, err := userentity.NewPhone("+998901234567")
 	require.NoError(t, err)
-	password, err := domain.NewPasswordFromRaw("StrongP@ss123")
+	password, err := userentity.NewPasswordFromRaw("StrongP@ss123")
 	require.NoError(t, err)
 
-	user, _ := domain.NewUser(phone, password)
+	user, _ := userentity.NewUser(phone, password)
 	user.Approve()
 	// Clear events from construction/approval so we only check sign-in events.
 	user.ClearEvents()
@@ -112,10 +112,10 @@ func TestSignInHandler_Handle(t *testing.T) {
 func TestSignInHandler_WrongPassword(t *testing.T) {
 	t.Parallel()
 
-	phone, _ := domain.NewPhone("+998901234567")
-	password, _ := domain.NewPasswordFromRaw("StrongP@ss123")
+	phone, _ := userentity.NewPhone("+998901234567")
+	password, _ := userentity.NewPasswordFromRaw("StrongP@ss123")
 
-	user, _ := domain.NewUser(phone, password)
+	user, _ := userentity.NewUser(phone, password)
 	user.Approve()
 
 	phoneRepo := &signInMockRepo{user: user}
@@ -141,10 +141,10 @@ func TestSignInHandler_WrongPassword(t *testing.T) {
 func TestSignInHandler_InactiveUser(t *testing.T) {
 	t.Parallel()
 
-	phone, _ := domain.NewPhone("+998901234567")
-	password, _ := domain.NewPasswordFromRaw("StrongP@ss123")
+	phone, _ := userentity.NewPhone("+998901234567")
+	password, _ := userentity.NewPasswordFromRaw("StrongP@ss123")
 
-	user, _ := domain.NewUser(phone, password)
+	user, _ := userentity.NewUser(phone, password)
 	user.Approve()
 	user.Deactivate()
 
@@ -171,28 +171,28 @@ func TestSignInHandler_InactiveUser(t *testing.T) {
 // signInMockRepo is a specialized mock that returns a user by phone.
 type signInMockRepo struct {
 	mockUserRepository
-	user *domain.User
+	user *userentity.User
 }
 
-func (m *signInMockRepo) FindByPhone(_ context.Context, phone domain.Phone) (*domain.User, error) {
+func (m *signInMockRepo) FindByPhone(_ context.Context, phone userentity.Phone) (*userentity.User, error) {
 	if m.user != nil && m.user.Phone().Value() == phone.Value() {
 		return m.user, nil
 	}
-	return nil, domain.ErrUserNotFound
+	return nil, userentity.ErrUserNotFound
 }
 
-func (m *signInMockRepo) FindByEmail(_ context.Context, email domain.Email) (*domain.User, error) {
+func (m *signInMockRepo) FindByEmail(_ context.Context, email userentity.Email) (*userentity.User, error) {
 	if m.user != nil && m.user.Email() != nil && m.user.Email().Value() == email.Value() {
 		return m.user, nil
 	}
-	return nil, domain.ErrUserNotFound
+	return nil, userentity.ErrUserNotFound
 }
 
 func (m *signInMockRepo) FindDefaultRoleID(_ context.Context) (uuid.UUID, error) {
 	return uuid.New(), nil
 }
 
-func (m *signInMockRepo) Update(ctx context.Context, entity *domain.User) error {
+func (m *signInMockRepo) Update(ctx context.Context, entity *userentity.User) error {
 	m.updatedUser = entity
 	return nil
 }
@@ -204,9 +204,9 @@ func (m *signInMockRepo) Update(ctx context.Context, entity *domain.User) error 
 func TestSignInHandler_EvictsOldestWhenAtCap(t *testing.T) {
 	t.Parallel()
 
-	phone, _ := domain.NewPhone("+998901234567")
-	password, _ := domain.NewPasswordFromRaw("StrongP@ss123")
-	user, _ := domain.NewUser(phone, password)
+	phone, _ := userentity.NewPhone("+998901234567")
+	password, _ := userentity.NewPasswordFromRaw("StrongP@ss123")
+	user, _ := userentity.NewUser(phone, password)
 	user.Approve()
 	user.ClearEvents()
 
@@ -238,9 +238,9 @@ func TestSignInHandler_EvictsOldestWhenAtCap(t *testing.T) {
 func TestSignInHandler_NoEvictionBelowCap(t *testing.T) {
 	t.Parallel()
 
-	phone, _ := domain.NewPhone("+998901234567")
-	password, _ := domain.NewPasswordFromRaw("StrongP@ss123")
-	user, _ := domain.NewUser(phone, password)
+	phone, _ := userentity.NewPhone("+998901234567")
+	password, _ := userentity.NewPasswordFromRaw("StrongP@ss123")
+	user, _ := userentity.NewUser(phone, password)
 	user.Approve()
 	user.ClearEvents()
 
