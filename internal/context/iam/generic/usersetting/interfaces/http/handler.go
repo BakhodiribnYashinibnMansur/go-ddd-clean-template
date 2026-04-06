@@ -25,6 +25,17 @@ func NewHandler(bc *usersetting.BoundedContext, l logger.Log) *Handler {
 	return &Handler{bc: bc, l: l}
 }
 
+// @Summary Upsert a user setting
+// @Description Create or update a user setting
+// @Tags UserSettings
+// @Accept json
+// @Produce json
+// @Param request body UpsertRequest true "User setting data"
+// @Success 201 {object} map[string]bool
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /user-settings [post]
 // Upsert creates or updates a user setting.
 func (h *Handler) Upsert(ctx *gin.Context) {
 	var req UpsertRequest
@@ -44,6 +55,18 @@ func (h *Handler) Upsert(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, gin.H{"success": true})
 }
 
+// @Summary List user settings
+// @Description Get a paginated list of user settings
+// @Tags UserSettings
+// @Accept json
+// @Produce json
+// @Param limit query int false "Limit" default(10)
+// @Param offset query int false "Offset" default(0)
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /user-settings [get]
 // List returns a paginated list of user settings.
 func (h *Handler) List(ctx *gin.Context) {
 	pg, err := httpx.GetPagination(ctx)
@@ -63,6 +86,18 @@ func (h *Handler) List(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"data": result.Settings, "total": result.Total})
 }
 
+// @Summary Delete a user setting
+// @Description Delete a user setting by ID
+// @Tags UserSettings
+// @Accept json
+// @Produce json
+// @Param id path string true "User Setting ID (UUID)"
+// @Success 200 {object} map[string]bool
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /user-settings/{id} [delete]
 // Delete deletes a user setting.
 func (h *Handler) Delete(ctx *gin.Context) {
 	id, err := domain.ParseUserSettingID(ctx.Param("id"))

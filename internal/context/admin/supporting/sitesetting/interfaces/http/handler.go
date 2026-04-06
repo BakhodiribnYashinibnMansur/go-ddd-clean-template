@@ -25,6 +25,17 @@ func NewHandler(bc *sitesetting.BoundedContext, l logger.Log) *Handler {
 	return &Handler{bc: bc, l: l}
 }
 
+// @Summary Create a site setting
+// @Description Create a new site setting
+// @Tags SiteSettings
+// @Accept json
+// @Produce json
+// @Param request body CreateRequest true "Site setting data"
+// @Success 201 {object} map[string]bool
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /site-settings [post]
 // Create creates a new site setting.
 func (h *Handler) Create(ctx *gin.Context) {
 	var req CreateRequest
@@ -45,6 +56,18 @@ func (h *Handler) Create(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, gin.H{"success": true})
 }
 
+// @Summary List site settings
+// @Description Get a paginated list of site settings
+// @Tags SiteSettings
+// @Accept json
+// @Produce json
+// @Param limit query int false "Limit" default(10)
+// @Param offset query int false "Offset" default(0)
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /site-settings [get]
 // List returns a paginated list of site settings.
 func (h *Handler) List(ctx *gin.Context) {
 	pg, err := httpx.GetPagination(ctx)
@@ -64,6 +87,18 @@ func (h *Handler) List(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"data": result.Settings, "total": result.Total})
 }
 
+// @Summary Get a site setting
+// @Description Get a single site setting by ID
+// @Tags SiteSettings
+// @Accept json
+// @Produce json
+// @Param id path string true "Site Setting ID"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /site-settings/{id} [get]
 // Get returns a single site setting by ID.
 func (h *Handler) Get(ctx *gin.Context) {
 	id, err := domain.ParseSiteSettingID(ctx.Param("id"))
@@ -79,6 +114,19 @@ func (h *Handler) Get(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"data": result})
 }
 
+// @Summary Update a site setting
+// @Description Update an existing site setting by ID
+// @Tags SiteSettings
+// @Accept json
+// @Produce json
+// @Param id path string true "Site Setting ID"
+// @Param request body UpdateRequest true "Site setting update data"
+// @Success 200 {object} map[string]bool
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /site-settings/{id} [patch]
 // Update updates a site setting.
 func (h *Handler) Update(ctx *gin.Context) {
 	id, err := domain.ParseSiteSettingID(ctx.Param("id"))
@@ -105,6 +153,18 @@ func (h *Handler) Update(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"success": true})
 }
 
+// @Summary Delete a site setting
+// @Description Delete a site setting by ID
+// @Tags SiteSettings
+// @Accept json
+// @Produce json
+// @Param id path string true "Site Setting ID"
+// @Success 200 {object} map[string]bool
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /site-settings/{id} [delete]
 // Delete deletes a site setting.
 func (h *Handler) Delete(ctx *gin.Context) {
 	id, err := domain.ParseSiteSettingID(ctx.Param("id"))

@@ -44,6 +44,17 @@ func (h *Handler) SetMinio(client *miniogo.Client, bucket string) {
 	h.bucket = bucket
 }
 
+// @Summary Create a file record
+// @Description Create a new file record
+// @Tags Files
+// @Accept json
+// @Produce json
+// @Param request body CreateRequest true "File data"
+// @Success 201 {object} map[string]bool
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /files [post]
 // Create creates a new file record.
 func (h *Handler) Create(ctx *gin.Context) {
 	var req CreateRequest
@@ -67,6 +78,18 @@ func (h *Handler) Create(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, gin.H{"success": true})
 }
 
+// @Summary List files
+// @Description Get a paginated list of files
+// @Tags Files
+// @Accept json
+// @Produce json
+// @Param limit query int false "Limit" default(10)
+// @Param offset query int false "Offset" default(0)
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /files [get]
 // List returns a paginated list of files.
 func (h *Handler) List(ctx *gin.Context) {
 	pg, err := httpx.GetPagination(ctx)
@@ -86,6 +109,18 @@ func (h *Handler) List(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"data": result.Files, "total": result.Total})
 }
 
+// @Summary Get a file
+// @Description Get a file by ID
+// @Tags Files
+// @Accept json
+// @Produce json
+// @Param id path string true "File ID"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /files/{id} [get]
 // Get returns a single file by ID.
 func (h *Handler) Get(ctx *gin.Context) {
 	id, err := domain.ParseFileID(ctx.Param("id"))
@@ -101,6 +136,18 @@ func (h *Handler) Get(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"data": result})
 }
 
+// @Summary Upload a single image
+// @Description Upload a single image file, re-encoded as JPEG
+// @Tags Files
+// @Accept multipart/form-data
+// @Produce json
+// @Param file formData file true "File to upload"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Failure 503 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /files/upload/image [post]
 // UploadImage handles POST /files/upload/image — single image upload, re-encoded as JPEG.
 func (h *Handler) UploadImage(ctx *gin.Context) {
 	if h.minio == nil {
@@ -143,6 +190,18 @@ func (h *Handler) UploadImage(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"data": objectName})
 }
 
+// @Summary Upload multiple images
+// @Description Upload multiple image files, re-encoded as JPEG
+// @Tags Files
+// @Accept multipart/form-data
+// @Produce json
+// @Param files[] formData file true "Files to upload"
+// @Success 200 {object} map[string][]string
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Failure 503 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /files/upload/images [post]
 // UploadImages handles POST /files/upload/images — multiple image upload.
 func (h *Handler) UploadImages(ctx *gin.Context) {
 	if h.minio == nil {
@@ -187,6 +246,18 @@ func (h *Handler) UploadImages(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"data": names})
 }
 
+// @Summary Upload a document
+// @Description Upload a single document file
+// @Tags Files
+// @Accept multipart/form-data
+// @Produce json
+// @Param file formData file true "File to upload"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Failure 503 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /files/upload/doc [post]
 // UploadDoc handles POST /files/upload/doc — single document upload.
 func (h *Handler) UploadDoc(ctx *gin.Context) {
 	if h.minio == nil {
@@ -217,6 +288,17 @@ func (h *Handler) UploadDoc(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"data": objectName})
 }
 
+// @Summary Download a file
+// @Description Download a file by file path
+// @Tags Files
+// @Produce octet-stream
+// @Param file-path query string true "File path"
+// @Success 200 {file} binary
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /files/download [get]
 // Download handles GET /files/download?file-path=...
 func (h *Handler) Download(ctx *gin.Context) {
 	filePath := ctx.Query("file-path")

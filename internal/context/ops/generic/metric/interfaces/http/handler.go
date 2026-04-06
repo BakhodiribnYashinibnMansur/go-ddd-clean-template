@@ -25,6 +25,17 @@ func NewHandler(bc *metric.BoundedContext, l logger.Log) *Handler {
 	return &Handler{bc: bc, l: l}
 }
 
+// @Summary Create a metric
+// @Description Record a new metric
+// @Tags Metrics
+// @Accept json
+// @Produce json
+// @Param request body CreateRequest true "Metric data"
+// @Success 201 {object} map[string]bool
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /metrics [post]
 // Create records a new metric.
 func (h *Handler) Create(ctx *gin.Context) {
 	var req CreateRequest
@@ -45,6 +56,18 @@ func (h *Handler) Create(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, gin.H{"success": true})
 }
 
+// @Summary List metrics
+// @Description Return a paginated list of metrics
+// @Tags Metrics
+// @Accept json
+// @Produce json
+// @Param limit query int false "Limit" default(10)
+// @Param offset query int false "Offset" default(0)
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /metrics [get]
 // List returns a paginated list of metrics.
 func (h *Handler) List(ctx *gin.Context) {
 	pg, err := httpx.GetPagination(ctx)

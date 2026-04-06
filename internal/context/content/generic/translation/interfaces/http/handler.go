@@ -25,6 +25,17 @@ func NewHandler(bc *translation.BoundedContext, l logger.Log) *Handler {
 	return &Handler{bc: bc, l: l}
 }
 
+// @Summary Create a translation
+// @Description Create a new translation
+// @Tags Translations
+// @Accept json
+// @Produce json
+// @Param request body CreateRequest true "Translation data"
+// @Success 201 {object} map[string]bool
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /translations [post]
 // Create creates a new translation.
 func (h *Handler) Create(ctx *gin.Context) {
 	var req CreateRequest
@@ -45,6 +56,18 @@ func (h *Handler) Create(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, gin.H{"success": true})
 }
 
+// @Summary List translations
+// @Description Get a paginated list of translations
+// @Tags Translations
+// @Accept json
+// @Produce json
+// @Param limit query int false "Limit" default(10)
+// @Param offset query int false "Offset" default(0)
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /translations [get]
 // List returns a paginated list of translations.
 func (h *Handler) List(ctx *gin.Context) {
 	pg, err := httpx.GetPagination(ctx)
@@ -64,6 +87,18 @@ func (h *Handler) List(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"data": result.Translations, "total": result.Total})
 }
 
+// @Summary Get a translation
+// @Description Get a translation by ID
+// @Tags Translations
+// @Accept json
+// @Produce json
+// @Param id path string true "Translation ID"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /translations/{id} [get]
 // Get returns a single translation by ID.
 func (h *Handler) Get(ctx *gin.Context) {
 	id, err := domain.ParseTranslationID(ctx.Param("id"))
@@ -79,6 +114,19 @@ func (h *Handler) Get(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"data": result})
 }
 
+// @Summary Update a translation
+// @Description Update an existing translation by ID
+// @Tags Translations
+// @Accept json
+// @Produce json
+// @Param id path string true "Translation ID"
+// @Param request body UpdateRequest true "Translation data"
+// @Success 200 {object} map[string]bool
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /translations/{id} [patch]
 // Update updates a translation.
 func (h *Handler) Update(ctx *gin.Context) {
 	id, err := domain.ParseTranslationID(ctx.Param("id"))
@@ -105,6 +153,18 @@ func (h *Handler) Update(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"success": true})
 }
 
+// @Summary Delete a translation
+// @Description Delete a translation by ID
+// @Tags Translations
+// @Accept json
+// @Produce json
+// @Param id path string true "Translation ID"
+// @Success 200 {object} map[string]bool
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /translations/{id} [delete]
 // Delete deletes a translation.
 func (h *Handler) Delete(ctx *gin.Context) {
 	id, err := domain.ParseTranslationID(ctx.Param("id"))

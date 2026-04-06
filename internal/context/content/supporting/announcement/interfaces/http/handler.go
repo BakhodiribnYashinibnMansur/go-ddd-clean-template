@@ -25,6 +25,17 @@ func NewHandler(bc *announcement.BoundedContext, l logger.Log) *Handler {
 	return &Handler{bc: bc, l: l}
 }
 
+// @Summary Create an announcement
+// @Description Create a new announcement
+// @Tags Announcements
+// @Accept json
+// @Produce json
+// @Param request body CreateRequest true "Announcement data"
+// @Success 201 {object} map[string]bool
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /announcements [post]
 // Create creates a new announcement.
 func (h *Handler) Create(ctx *gin.Context) {
 	var req CreateRequest
@@ -46,6 +57,18 @@ func (h *Handler) Create(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, gin.H{"success": true})
 }
 
+// @Summary List announcements
+// @Description Get a paginated list of announcements
+// @Tags Announcements
+// @Accept json
+// @Produce json
+// @Param limit query int false "Limit" default(10)
+// @Param offset query int false "Offset" default(0)
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /announcements [get]
 // List returns a paginated list of announcements.
 func (h *Handler) List(ctx *gin.Context) {
 	pg, err := httpx.GetPagination(ctx)
@@ -65,6 +88,18 @@ func (h *Handler) List(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"data": result.Announcements, "total": result.Total})
 }
 
+// @Summary Get an announcement
+// @Description Get an announcement by ID
+// @Tags Announcements
+// @Accept json
+// @Produce json
+// @Param id path string true "Announcement ID"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /announcements/{id} [get]
 // Get returns a single announcement by ID.
 func (h *Handler) Get(ctx *gin.Context) {
 	id, err := domain.ParseAnnouncementID(ctx.Param("id"))
@@ -80,6 +115,19 @@ func (h *Handler) Get(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"data": result})
 }
 
+// @Summary Update an announcement
+// @Description Update an existing announcement by ID
+// @Tags Announcements
+// @Accept json
+// @Produce json
+// @Param id path string true "Announcement ID"
+// @Param request body UpdateRequest true "Announcement data"
+// @Success 200 {object} map[string]bool
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /announcements/{id} [patch]
 // Update updates an announcement.
 func (h *Handler) Update(ctx *gin.Context) {
 	id, err := domain.ParseAnnouncementID(ctx.Param("id"))
@@ -108,6 +156,18 @@ func (h *Handler) Update(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"success": true})
 }
 
+// @Summary Delete an announcement
+// @Description Delete an announcement by ID
+// @Tags Announcements
+// @Accept json
+// @Produce json
+// @Param id path string true "Announcement ID"
+// @Success 200 {object} map[string]bool
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /announcements/{id} [delete]
 // Delete deletes an announcement.
 func (h *Handler) Delete(ctx *gin.Context) {
 	id, err := domain.ParseAnnouncementID(ctx.Param("id"))

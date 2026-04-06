@@ -24,6 +24,18 @@ func NewHandler(bc *audit.BoundedContext, l logger.Log) *Handler {
 	return &Handler{bc: bc, l: l}
 }
 
+// @Summary List audit logs
+// @Description Get a paginated list of audit log entries
+// @Tags Audit
+// @Accept json
+// @Produce json
+// @Param limit query int false "Limit" default(10)
+// @Param offset query int false "Offset" default(0)
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /audit-logs [get]
 // ListAuditLogs returns a paginated list of audit log entries.
 func (h *Handler) ListAuditLogs(ctx *gin.Context) {
 	pg, err := httpx.GetPagination(ctx)
@@ -45,6 +57,18 @@ func (h *Handler) ListAuditLogs(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"data": result.AuditLogs, "total": result.Total})
 }
 
+// @Summary List endpoint history
+// @Description Get a paginated list of endpoint history entries
+// @Tags Audit
+// @Accept json
+// @Produce json
+// @Param limit query int false "Limit" default(10)
+// @Param offset query int false "Offset" default(0)
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /endpoint-history [get]
 // ListEndpointHistory returns a paginated list of endpoint history entries.
 func (h *Handler) ListEndpointHistory(ctx *gin.Context) {
 	pg, err := httpx.GetPagination(ctx)

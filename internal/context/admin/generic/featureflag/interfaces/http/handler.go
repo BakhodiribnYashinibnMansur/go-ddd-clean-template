@@ -26,6 +26,17 @@ func NewHandler(bc *featureflag.BoundedContext, l logger.Log) *Handler {
 	return &Handler{bc: bc, l: l}
 }
 
+// @Summary Create a feature flag
+// @Description Create a new feature flag
+// @Tags FeatureFlags
+// @Accept json
+// @Produce json
+// @Param request body CreateRequest true "Feature flag data"
+// @Success 201 {object} map[string]bool
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /feature-flags [post]
 // Create creates a new feature flag.
 func (h *Handler) Create(ctx *gin.Context) {
 	var req CreateRequest
@@ -49,6 +60,18 @@ func (h *Handler) Create(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, gin.H{"success": true})
 }
 
+// @Summary List feature flags
+// @Description Get a paginated list of feature flags
+// @Tags FeatureFlags
+// @Accept json
+// @Produce json
+// @Param limit query int false "Limit" default(10)
+// @Param offset query int false "Offset" default(0)
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /feature-flags [get]
 // List returns a paginated list of feature flags.
 func (h *Handler) List(ctx *gin.Context) {
 	pg, err := httpx.GetPagination(ctx)
@@ -68,6 +91,18 @@ func (h *Handler) List(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"data": result.Flags, "total": result.Total})
 }
 
+// @Summary Get a feature flag
+// @Description Get a single feature flag by ID
+// @Tags FeatureFlags
+// @Accept json
+// @Produce json
+// @Param id path string true "Feature Flag ID"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /feature-flags/{id} [get]
 // Get returns a single feature flag by ID.
 func (h *Handler) Get(ctx *gin.Context) {
 	id, err := domain.ParseFeatureFlagID(ctx.Param("id"))
@@ -83,6 +118,19 @@ func (h *Handler) Get(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"data": result})
 }
 
+// @Summary Update a feature flag
+// @Description Update an existing feature flag by ID
+// @Tags FeatureFlags
+// @Accept json
+// @Produce json
+// @Param id path string true "Feature Flag ID"
+// @Param request body UpdateRequest true "Feature flag update data"
+// @Success 200 {object} map[string]bool
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /feature-flags/{id} [patch]
 // Update updates a feature flag.
 func (h *Handler) Update(ctx *gin.Context) {
 	id, err := domain.ParseFeatureFlagID(ctx.Param("id"))
@@ -112,6 +160,18 @@ func (h *Handler) Update(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"success": true})
 }
 
+// @Summary Delete a feature flag
+// @Description Delete a feature flag by ID
+// @Tags FeatureFlags
+// @Accept json
+// @Produce json
+// @Param id path string true "Feature Flag ID"
+// @Success 200 {object} map[string]bool
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /feature-flags/{id} [delete]
 // Delete deletes a feature flag.
 func (h *Handler) Delete(ctx *gin.Context) {
 	id, err := domain.ParseFeatureFlagID(ctx.Param("id"))
@@ -126,6 +186,19 @@ func (h *Handler) Delete(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"success": true})
 }
 
+// @Summary Create a rule group
+// @Description Add a rule group to a feature flag
+// @Tags FeatureFlags
+// @Accept json
+// @Produce json
+// @Param id path string true "Feature Flag ID"
+// @Param request body CreateRuleGroupRequest true "Rule group data"
+// @Success 201 {object} map[string]bool
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /feature-flags/{id}/rule-groups [post]
 // CreateRuleGroup adds a rule group to a feature flag.
 func (h *Handler) CreateRuleGroup(ctx *gin.Context) {
 	flagID, err := domain.ParseFeatureFlagID(ctx.Param("id"))
@@ -162,6 +235,20 @@ func (h *Handler) CreateRuleGroup(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, gin.H{"success": true})
 }
 
+// @Summary Update a rule group
+// @Description Update an existing rule group of a feature flag
+// @Tags FeatureFlags
+// @Accept json
+// @Produce json
+// @Param id path string true "Feature Flag ID"
+// @Param groupId path string true "Rule Group ID"
+// @Param request body UpdateRuleGroupRequest true "Rule group update data"
+// @Success 200 {object} map[string]bool
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /feature-flags/{id}/rule-groups/{groupId} [patch]
 // UpdateRuleGroup updates an existing rule group.
 func (h *Handler) UpdateRuleGroup(ctx *gin.Context) {
 	groupID, err := uuid.Parse(ctx.Param("groupId"))
@@ -201,6 +288,19 @@ func (h *Handler) UpdateRuleGroup(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"success": true})
 }
 
+// @Summary Delete a rule group
+// @Description Remove a rule group from a feature flag
+// @Tags FeatureFlags
+// @Accept json
+// @Produce json
+// @Param id path string true "Feature Flag ID"
+// @Param groupId path string true "Rule Group ID"
+// @Success 200 {object} map[string]bool
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /feature-flags/{id}/rule-groups/{groupId} [delete]
 // DeleteRuleGroup removes a rule group.
 func (h *Handler) DeleteRuleGroup(ctx *gin.Context) {
 	groupID, err := uuid.Parse(ctx.Param("groupId"))
@@ -215,6 +315,18 @@ func (h *Handler) DeleteRuleGroup(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"success": true})
 }
 
+// @Summary Evaluate a feature flag
+// @Description Evaluate a single feature flag for the given user attributes
+// @Tags FeatureFlags
+// @Accept json
+// @Produce json
+// @Param request body EvaluateRequest true "Evaluation request"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /feature-flags/evaluate [post]
 // Evaluate evaluates a single feature flag for the given user attributes.
 func (h *Handler) Evaluate(ctx *gin.Context) {
 	var req EvaluateRequest
@@ -239,6 +351,17 @@ func (h *Handler) Evaluate(ctx *gin.Context) {
 	})
 }
 
+// @Summary Batch evaluate feature flags
+// @Description Evaluate multiple feature flags for the given user attributes
+// @Tags FeatureFlags
+// @Accept json
+// @Produce json
+// @Param request body BatchEvaluateRequest true "Batch evaluation request"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /feature-flags/batch-evaluate [post]
 // BatchEvaluate evaluates multiple feature flags for the given user attributes.
 func (h *Handler) BatchEvaluate(ctx *gin.Context) {
 	var req BatchEvaluateRequest

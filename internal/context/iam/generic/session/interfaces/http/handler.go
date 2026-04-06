@@ -28,6 +28,19 @@ func NewHandler(bc *session.BoundedContext, l logger.Log) *Handler {
 	return &Handler{bc: bc, l: l}
 }
 
+// @Summary List sessions
+// @Description Get a paginated list of sessions with optional user filter
+// @Tags Sessions
+// @Accept json
+// @Produce json
+// @Param limit query int false "Limit" default(10)
+// @Param offset query int false "Offset" default(0)
+// @Param user_id query string false "Filter by user ID (UUID)"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /sessions [get]
 // List handles GET /sessions.
 func (h *Handler) List(ctx *gin.Context) {
 	pg, err := httpx.GetPagination(ctx)
@@ -64,6 +77,18 @@ func (h *Handler) List(ctx *gin.Context) {
 	})
 }
 
+// @Summary Get a session
+// @Description Get session details by ID
+// @Tags Sessions
+// @Accept json
+// @Produce json
+// @Param id path string true "Session ID (UUID)"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /sessions/{id} [get]
 // Get handles GET /sessions/:id.
 func (h *Handler) Get(ctx *gin.Context) {
 	id, err := sessiondomain.ParseSessionID(ctx.Param("id"))
@@ -81,6 +106,18 @@ func (h *Handler) Get(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"data": view})
 }
 
+// @Summary Delete a session
+// @Description Revoke a session by ID
+// @Tags Sessions
+// @Accept json
+// @Produce json
+// @Param id path string true "Session ID (UUID)"
+// @Success 200 {object} map[string]bool
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /sessions/{id} [delete]
 // Delete handles DELETE /sessions/:id.
 func (h *Handler) Delete(ctx *gin.Context) {
 	sessionID, err := uuid.Parse(ctx.Param("id"))
@@ -111,6 +148,16 @@ func (h *Handler) Delete(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"success": true})
 }
 
+// @Summary Revoke all sessions
+// @Description Revoke all sessions for the authenticated user
+// @Tags Sessions
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]bool
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /sessions/revoke-all [post]
 // RevokeAll handles POST /sessions/revoke-all.
 func (h *Handler) RevokeAll(ctx *gin.Context) {
 	userIDStr, exists := ctx.Get(consts.CtxUserID)

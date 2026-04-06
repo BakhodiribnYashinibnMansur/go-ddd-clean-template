@@ -27,6 +27,17 @@ func NewHandler(bc *user.BoundedContext, l logger.Log) *Handler {
 	return &Handler{bc: bc, l: l}
 }
 
+// @Summary Create a user
+// @Description Create a new user account
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param request body CreateUserRequest true "User data"
+// @Success 201 {object} map[string]bool
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /users [post]
 // Create handles POST /users.
 func (h *Handler) Create(ctx *gin.Context) {
 	var req CreateUserRequest
@@ -51,6 +62,21 @@ func (h *Handler) Create(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, gin.H{"success": true})
 }
 
+// @Summary List users
+// @Description Get a paginated list of users with optional filters
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param limit query int false "Limit" default(10)
+// @Param offset query int false "Offset" default(0)
+// @Param phone query string false "Filter by phone"
+// @Param email query string false "Filter by email"
+// @Param active query bool false "Filter by active status"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /users [get]
 // List handles GET /users.
 func (h *Handler) List(ctx *gin.Context) {
 	pg, err := httpx.GetPagination(ctx)
@@ -88,6 +114,18 @@ func (h *Handler) List(ctx *gin.Context) {
 	})
 }
 
+// @Summary Get a user
+// @Description Get user details by ID
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param id path string true "User ID (UUID)"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /users/{id} [get]
 // Get handles GET /users/:id.
 func (h *Handler) Get(ctx *gin.Context) {
 	id, err := uuid.Parse(ctx.Param("id"))
@@ -105,6 +143,19 @@ func (h *Handler) Get(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"data": view})
 }
 
+// @Summary Update a user
+// @Description Update user details by ID
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param id path string true "User ID (UUID)"
+// @Param request body UpdateUserRequest true "User update data"
+// @Success 200 {object} map[string]bool
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /users/{id} [patch]
 // Update handles PATCH /users/:id.
 func (h *Handler) Update(ctx *gin.Context) {
 	id, err := uuid.Parse(ctx.Param("id"))
@@ -133,6 +184,18 @@ func (h *Handler) Update(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"success": true})
 }
 
+// @Summary Delete a user
+// @Description Delete a user by ID
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param id path string true "User ID (UUID)"
+// @Success 200 {object} map[string]bool
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /users/{id} [delete]
 // Delete handles DELETE /users/:id.
 func (h *Handler) Delete(ctx *gin.Context) {
 	id, err := uuid.Parse(ctx.Param("id"))
@@ -150,6 +213,18 @@ func (h *Handler) Delete(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"success": true})
 }
 
+// @Summary Approve a user
+// @Description Approve a pending user account by ID
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param id path string true "User ID (UUID)"
+// @Success 200 {object} map[string]bool
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /users/{id}/approve [post]
 // Approve handles POST /users/:id/approve.
 func (h *Handler) Approve(ctx *gin.Context) {
 	id, err := uuid.Parse(ctx.Param("id"))
@@ -167,6 +242,19 @@ func (h *Handler) Approve(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"success": true})
 }
 
+// @Summary Change user role
+// @Description Change the role of a user by ID
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param id path string true "User ID (UUID)"
+// @Param request body ChangeRoleRequest true "Role data"
+// @Success 200 {object} map[string]bool
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /users/{id}/role [post]
 // ChangeRole handles POST /users/:id/role.
 func (h *Handler) ChangeRole(ctx *gin.Context) {
 	id, err := uuid.Parse(ctx.Param("id"))
@@ -193,6 +281,17 @@ func (h *Handler) ChangeRole(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"success": true})
 }
 
+// @Summary Bulk action on users
+// @Description Perform a bulk action on multiple users
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param request body BulkActionRequest true "Bulk action data"
+// @Success 200 {object} map[string]bool
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /users/bulk-action [post]
 // BulkAction handles POST /users/bulk-action.
 func (h *Handler) BulkAction(ctx *gin.Context) {
 	var req BulkActionRequest
@@ -217,6 +316,17 @@ func (h *Handler) BulkAction(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"success": true})
 }
 
+// @Summary Sign in
+// @Description Authenticate a user and return tokens
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param request body SignInRequest true "Sign-in credentials"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Router /auth/sign-in [post]
 // SignIn handles POST /auth/sign-in.
 func (h *Handler) SignIn(ctx *gin.Context) {
 	var req SignInRequest
@@ -261,6 +371,16 @@ func (h *Handler) SignIn(ctx *gin.Context) {
 	})
 }
 
+// @Summary Sign up
+// @Description Register a new user account
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param request body SignUpRequest true "Sign-up data"
+// @Success 201 {object} map[string]bool
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Router /auth/sign-up [post]
 // SignUp handles POST /auth/sign-up.
 func (h *Handler) SignUp(ctx *gin.Context) {
 	var req SignUpRequest
@@ -283,6 +403,17 @@ func (h *Handler) SignUp(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, gin.H{"status": "success"})
 }
 
+// @Summary Sign out
+// @Description End a user session
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param request body SignOutRequest true "Sign-out data"
+// @Success 200 {object} map[string]bool
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Security BearerAuth
+// @Router /auth/sign-out [post]
 // SignOut handles POST /auth/sign-out.
 func (h *Handler) SignOut(ctx *gin.Context) {
 	var req SignOutRequest
