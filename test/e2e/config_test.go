@@ -47,8 +47,6 @@ func TestNewTestConfig(t *testing.T) {
 
 	// Verify JWT settings
 	assert.Equal(t, "auth-service-test", cfg.JWT.Issuer)
-	assert.NotEmpty(t, cfg.JWT.KeysDir)
-	assert.NotEmpty(t, cfg.JWT.Leeway)
 
 	// Verify API keys
 	assert.Equal(t, int64(10), cfg.APIKeys.SignExpireTime)

@@ -135,6 +135,23 @@ func CleanDB(t *testing.T) {
 			DELETE FROM endpoint_history;
 			DELETE FROM audit_log;
 			DELETE FROM user_relation;
+			DELETE FROM notification;
+			DELETE FROM announcement;
+			DELETE FROM translation;
+			DELETE FROM site_setting;
+			DELETE FROM feature_flag_rule_group;
+			DELETE FROM feature_flag;
+			DELETE FROM data_export;
+			DELETE FROM user_setting;
+			DELETE FROM error_code;
+			DELETE FROM rate_limit_rule;
+			DELETE FROM ip_rule;
+			DELETE FROM role_permission;
+			DELETE FROM permission_scope;
+			DELETE FROM policy;
+			DELETE FROM scope;
+			DELETE FROM permission;
+			DELETE FROM role;
 			DELETE FROM session;
 			DELETE FROM users;
 		`)

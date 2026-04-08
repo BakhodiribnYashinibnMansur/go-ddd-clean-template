@@ -9,6 +9,7 @@ import (
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/metrics"
 	"gct/internal/kernel/infrastructure/pgxutil"
 )
 
@@ -25,6 +26,7 @@ type SignUpHandler struct {
 	repo     userrepo.UserRepository
 	eventBus application.EventBus
 	logger   commandLogger
+	bm       *metrics.BusinessMetrics
 }
 
 // NewSignUpHandler creates a new SignUpHandler.
@@ -91,5 +93,12 @@ func (h *SignUpHandler) Handle(ctx context.Context, cmd SignUpCommand) (err erro
 		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "SignUp", Entity: "user", Err: err}.KV()...)
 	}
 
+	h.bm.Inc(ctx, "user_signups")
+
 	return nil
+}
+
+// WithBusinessMetrics injects business metrics into the handler.
+func (h *SignUpHandler) WithBusinessMetrics(bm *metrics.BusinessMetrics) {
+	h.bm = bm
 }

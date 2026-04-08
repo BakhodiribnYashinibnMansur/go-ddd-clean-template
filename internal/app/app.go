@@ -121,6 +121,13 @@ func Run(cfg *config.Config) {
 		l.Infoc(ctx, "Redis is disabled in configuration")
 	}
 
+	// Register Redis pool metrics
+	if cfg.Metrics.Enabled && redisclient != nil {
+		if redisErr := metrics.RegisterRedisPoolMetrics(redisclient, cfg.Tracing.ServiceName); redisErr != nil {
+			l.Errorc(ctx, "Failed to register Redis pool metrics (non-critical)", "error", redisErr)
+		}
+	}
+
 	// 2b. Log Persistence — buffer in Redis, flush to PostgreSQL via COPY FROM
 	var logFlusher *logger.Flusher
 	if cfg.Log.PersistEnabled && redisclient != nil {
