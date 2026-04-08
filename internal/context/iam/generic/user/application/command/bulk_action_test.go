@@ -21,7 +21,7 @@ func TestBulkActionHandler_Activate(t *testing.T) {
 
 	handler := NewBulkActionHandler(repo, eventBus, log)
 
-	err := handler.Handle(context.Background(), BulkActionCommand{
+	_, err := handler.Handle(context.Background(), BulkActionCommand{
 		IDs:    []userentity.UserID{userentity.UserID(user.ID())},
 		Action: BulkActionActivate,
 	})
@@ -47,7 +47,7 @@ func TestBulkActionHandler_Deactivate(t *testing.T) {
 
 	handler := NewBulkActionHandler(repo, eventBus, log)
 
-	err := handler.Handle(context.Background(), BulkActionCommand{
+	_, err := handler.Handle(context.Background(), BulkActionCommand{
 		IDs:    []userentity.UserID{userentity.UserID(user.ID())},
 		Action: BulkActionDeactivate,
 	})
@@ -73,7 +73,7 @@ func TestBulkActionHandler_Delete(t *testing.T) {
 
 	handler := NewBulkActionHandler(repo, eventBus, log)
 
-	err := handler.Handle(context.Background(), BulkActionCommand{
+	_, err := handler.Handle(context.Background(), BulkActionCommand{
 		IDs:    []userentity.UserID{userentity.UserID(user.ID())},
 		Action: BulkActionDelete,
 	})
@@ -102,7 +102,7 @@ func TestBulkActionHandler_UnknownAction(t *testing.T) {
 
 	handler := NewBulkActionHandler(repo, eventBus, log)
 
-	err := handler.Handle(context.Background(), BulkActionCommand{
+	_, err := handler.Handle(context.Background(), BulkActionCommand{
 		IDs:    []userentity.UserID{userentity.UserID(user.ID())},
 		Action: "unknown_action",
 	})
@@ -126,7 +126,7 @@ func TestBulkActionHandler_MultipleUsers(t *testing.T) {
 
 	handler := NewBulkActionHandler(repo, eventBus, log)
 
-	err := handler.Handle(context.Background(), BulkActionCommand{
+	_, err := handler.Handle(context.Background(), BulkActionCommand{
 		IDs:    []userentity.UserID{userentity.UserID(user1.TypedID()), userentity.UserID(user2.TypedID())},
 		Action: BulkActionDeactivate,
 	})
@@ -148,11 +148,13 @@ func TestBulkActionHandler_SkipsMissing(t *testing.T) {
 
 	handler := NewBulkActionHandler(repo, eventBus, log)
 
-	err := handler.Handle(context.Background(), BulkActionCommand{
+	result, err := handler.Handle(context.Background(), BulkActionCommand{
 		IDs:    []userentity.UserID{userentity.UserID(user.ID()), userentity.NewUserID()}, // second ID doesn't exist
 		Action: BulkActionActivate,
 	})
-	require.NoError(t, err)
+	require.Error(t, err)
+	require.Equal(t, 1, result.Succeeded)
+	require.Equal(t, 1, result.Failed)
 
 	if len(repo.updatedUsers) != 1 {
 		t.Fatalf("expected 1 updated user, got %d", len(repo.updatedUsers))

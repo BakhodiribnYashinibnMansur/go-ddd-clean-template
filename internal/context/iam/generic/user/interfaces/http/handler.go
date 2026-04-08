@@ -304,16 +304,26 @@ func (h *Handler) BulkAction(ctx *gin.Context) {
 	for i, id := range req.IDs {
 		ids[i] = userentity.UserID(id)
 	}
-	err := h.bc.BulkAction.Handle(ctx.Request.Context(), command.BulkActionCommand{
+	result, err := h.bc.BulkAction.Handle(ctx.Request.Context(), command.BulkActionCommand{
 		IDs:    ids,
 		Action: req.Action,
 	})
 	if err != nil {
+		// Partial failure — return 207 Multi-Status with details.
+		if result != nil {
+			ctx.JSON(http.StatusMultiStatus, gin.H{
+				"success":   false,
+				"succeeded": result.Succeeded,
+				"failed":    result.Failed,
+				"errors":    result.Errors,
+			})
+			return
+		}
 		response.HandleError(ctx, err)
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"success": true})
+	ctx.JSON(http.StatusOK, gin.H{"success": true, "succeeded": result.Succeeded})
 }
 
 // @Summary Sign in

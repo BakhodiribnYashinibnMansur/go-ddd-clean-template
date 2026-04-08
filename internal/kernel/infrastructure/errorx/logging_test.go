@@ -73,9 +73,15 @@ func TestLogInfo_StandardError(t *testing.T) {
 }
 
 func TestSetReporter(t *testing.T) {
-	// Save original reporter
-	origReporter := reporter
-	defer func() { reporter = origReporter }()
+	// Save original reporter and restore after test
+	origReporter := getReporter()
+	defer func() {
+		if origReporter != nil {
+			SetReporter(origReporter)
+		} else {
+			reporterPtr.Store(nil)
+		}
+	}()
 
 	called := false
 	mockReporter := &mockReporterImpl{
@@ -96,9 +102,15 @@ func TestSetReporter(t *testing.T) {
 }
 
 func TestLogError_WithNilReporter(t *testing.T) {
-	origReporter := reporter
-	defer func() { reporter = origReporter }()
-	reporter = nil
+	origReporter := getReporter()
+	defer func() {
+		if origReporter != nil {
+			SetReporter(origReporter)
+		} else {
+			reporterPtr.Store(nil)
+		}
+	}()
+	reporterPtr.Store(nil)
 
 	logger := zaptest.NewLogger(t)
 	// Should not panic when reporter is nil

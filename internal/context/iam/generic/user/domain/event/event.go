@@ -101,6 +101,23 @@ func (e UserApproved) EventName() string      { return "user.approved" }
 func (e UserApproved) OccurredAt() time.Time  { return e.occurredAt }
 func (e UserApproved) AggregateID() uuid.UUID { return e.aggregateID }
 
+// UserProfileUpdated is raised when a user's profile fields (email, username, attributes) are modified.
+type UserProfileUpdated struct {
+	aggregateID uuid.UUID
+	occurredAt  time.Time
+}
+
+func NewUserProfileUpdated(userID uuid.UUID) UserProfileUpdated {
+	return UserProfileUpdated{
+		aggregateID: userID,
+		occurredAt:  time.Now(),
+	}
+}
+
+func (e UserProfileUpdated) EventName() string      { return "user.profile_updated" }
+func (e UserProfileUpdated) OccurredAt() time.Time  { return e.occurredAt }
+func (e UserProfileUpdated) AggregateID() uuid.UUID { return e.aggregateID }
+
 // RoleChanged is raised when a user's role is changed. Carries both old (nullable, for first assignment)
 // and new role IDs so subscribers can detect privilege escalation in audit logs.
 type RoleChanged struct {

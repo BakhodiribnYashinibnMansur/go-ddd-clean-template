@@ -96,7 +96,11 @@ func (ff *FeatureFlag) AddRuleGroup(rg *RuleGroup) {
 }
 
 // UpdateDetails applies partial modifications to the feature flag.
-func (ff *FeatureFlag) UpdateDetails(name, key, description *string, flagType *string, defaultValue *string, rolloutPercentage *int, isActive *bool) {
+// Returns an error if rolloutPercentage is outside [0, 100].
+func (ff *FeatureFlag) UpdateDetails(name, key, description *string, flagType *string, defaultValue *string, rolloutPercentage *int, isActive *bool) error {
+	if rolloutPercentage != nil && (*rolloutPercentage < 0 || *rolloutPercentage > 100) {
+		return fmt.Errorf("update_details: rolloutPercentage must be between 0 and 100")
+	}
 	if name != nil {
 		ff.name = *name
 	}
@@ -119,6 +123,7 @@ func (ff *FeatureFlag) UpdateDetails(name, key, description *string, flagType *s
 		ff.isActive = *isActive
 	}
 	ff.Touch()
+	return nil
 }
 
 // Evaluate determines the value of the flag for the given user attributes.

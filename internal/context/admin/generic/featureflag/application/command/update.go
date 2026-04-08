@@ -55,14 +55,16 @@ func (h *UpdateHandler) Handle(ctx context.Context, cmd UpdateCommand) (err erro
 		return apperrors.MapToServiceError(err)
 	}
 
-	ff.UpdateDetails(cmd.Name, cmd.Key, cmd.Description, cmd.FlagType, cmd.DefaultValue, cmd.RolloutPercentage, cmd.IsActive)
+	if err := ff.UpdateDetails(cmd.Name, cmd.Key, cmd.Description, cmd.FlagType, cmd.DefaultValue, cmd.RolloutPercentage, cmd.IsActive); err != nil {
+		return err
+	}
+
+	ff.AddEvent(ffevent.NewFlagUpdated(ff.ID()))
 
 	if err := h.repo.Update(ctx, ff); err != nil {
 		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "UpdateFeatureFlag", Entity: "feature_flag", EntityID: cmd.ID, Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
-
-	ff.AddEvent(ffevent.NewFlagUpdated(ff.ID()))
 
 	if err := h.eventBus.Publish(ctx, ff.Events()...); err != nil {
 		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "UpdateFeatureFlag", Entity: "feature_flag", Err: err}.KV()...)

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	userentity "gct/internal/context/iam/generic/user/domain/entity"
+	userevent "gct/internal/context/iam/generic/user/domain/event"
 	userrepo "gct/internal/context/iam/generic/user/domain/repository"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
@@ -93,6 +94,7 @@ func (h *UpdateUserHandler) Handle(ctx context.Context, cmd UpdateUserCommand) (
 		user.Sessions(),
 	)
 	updated.Touch()
+	updated.AddEvent(userevent.NewUserProfileUpdated(updated.ID()))
 
 	if err := h.repo.Update(ctx, updated); err != nil {
 		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "UpdateUser", Entity: "user", EntityID: cmd.ID, Err: err}.KV()...)
