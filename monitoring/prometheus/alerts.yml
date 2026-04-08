@@ -1,0 +1,187 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Prometheus Alert Rules — GCA Backend
+# ─────────────────────────────────────────────────────────────────────────────
+
+groups:
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # HTTP Alerts
+  # ════════════════════════════════════════════════════════════════════════════
+
+  - name: http_alerts
+    rules:
+      - alert: HighErrorRate5xx
+        expr: |
+          (
+            sum(rate(http_requests_total{status=~"5.."}[5m]))
+            /
+            sum(rate(http_requests_total[5m]))
+          ) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High HTTP 5xx error rate"
+          description: "5xx error rate is {{ $value | humanizePercentage }} (threshold: 5%) over the last 5 minutes."
+
+      - alert: HighP99Latency
+        expr: |
+          histogram_quantile(0.99,
+            sum(rate(http_request_duration_seconds_bucket[5m])) by (le)
+          ) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High p99 HTTP latency"
+          description: "p99 latency is {{ $value | humanizeDuration }} (threshold: 1s)."
+
+      - alert: HighP95Latency
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(http_request_duration_seconds_bucket[5m])) by (le)
+          ) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High p95 HTTP latency"
+          description: "p95 latency is {{ $value | humanizeDuration }} (threshold: 500ms)."
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # Database Alerts
+  # ════════════════════════════════════════════════════════════════════════════
+
+  - name: database_alerts
+    rules:
+      - alert: DBPoolExhaustion
+        expr: |
+          (db_pool_acquired_conns / db_pool_max_conns) > 0.85
+        for: 3m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Database connection pool near exhaustion"
+          description: "Pool utilization is {{ $value | humanizePercentage }} (threshold: 85%)."
+
+      - alert: DBPoolHighUtilization
+        expr: |
+          (db_pool_acquired_conns / db_pool_max_conns) > 0.7
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Database connection pool high utilization"
+          description: "Pool utilization is {{ $value | humanizePercentage }} (threshold: 70%)."
+
+      - alert: DBSlowQueries
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(db_query_duration_seconds_bucket[5m])) by (le)
+          ) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Slow database queries detected"
+          description: "p95 query duration is {{ $value | humanizeDuration }} (threshold: 500ms)."
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # Application Alerts
+  # ════════════════════════════════════════════════════════════════════════════
+
+  - name: application_alerts
+    rules:
+      - alert: HighErrorLogRate
+        expr: |
+          sum(rate(app_log_entries_total{level="error"}[5m])) > 1
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error log rate"
+          description: "Error log rate is {{ $value }}/s (threshold: 1/s)."
+
+      - alert: GoroutineLeak
+        expr: |
+          process_runtime_go_goroutines > 2000
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Possible goroutine leak"
+          description: "Goroutine count is {{ $value }} (threshold: 2000)."
+
+      - alert: HighMemoryUsage
+        expr: |
+          process_runtime_go_mem_heap_alloc > 1.5e9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage"
+          description: "Heap allocation is {{ $value | humanize1024 }}B (threshold: 1.5GB)."
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # Infrastructure Alerts
+  # ════════════════════════════════════════════════════════════════════════════
+
+  - name: infrastructure_alerts
+    rules:
+      - alert: TargetDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Scrape target is down"
+          description: "{{ $labels.job }} target {{ $labels.instance }} is unreachable."
+
+      - alert: RedisDown
+        expr: redis_up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis is down"
+          description: "Redis exporter reports the instance is unreachable."
+
+      - alert: RedisHighMemoryUsage
+        expr: |
+          redis_memory_used_bytes / redis_memory_max_bytes > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis memory usage is high"
+          description: "Redis memory utilization is {{ $value | humanizePercentage }} (threshold: 85%)."
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # Business Alerts
+  # ════════════════════════════════════════════════════════════════════════════
+
+  - name: business_alerts
+    rules:
+      - alert: HighSignInFailureRate
+        expr: |
+          (
+            sum(rate(business_user_signin_failures_total[5m]))
+            /
+            (sum(rate(business_user_signins_total[5m])) + sum(rate(business_user_signin_failures_total[5m])) + 1e-10)
+          ) > 0.3
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High sign-in failure rate"
+          description: "Sign-in failure rate is {{ $value | humanizePercentage }} (threshold: 30%)."
+
+      - alert: RedisPoolExhaustion
+        expr: |
+          redis_pool_stale_conns > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis pool has many stale connections"
+          description: "{{ $value }} stale connections detected in the Redis pool."
