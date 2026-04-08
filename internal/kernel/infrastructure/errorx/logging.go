@@ -2,6 +2,7 @@ package errorx
 
 import (
 	"errors"
+	"sync/atomic"
 
 	"go.uber.org/zap"
 )
@@ -10,10 +11,17 @@ type Reporter interface {
 	SendError(err error) error
 }
 
-var reporter Reporter
+var reporterPtr atomic.Pointer[Reporter]
 
 func SetReporter(r Reporter) {
-	reporter = r
+	reporterPtr.Store(&r)
+}
+
+func getReporter() Reporter {
+	if p := reporterPtr.Load(); p != nil {
+		return *p
+	}
+	return nil
 }
 
 // LogError logs error using zap logger with all available fields
@@ -21,8 +29,8 @@ func SetReporter(r Reporter) {
 //
 //	errors.LogError(logger, err)
 func LogError(logger *zap.Logger, err error) {
-	if reporter != nil {
-		_ = reporter.SendError(err)
+	if r := getReporter(); r != nil {
+		_ = r.SendError(err)
 	}
 
 	var appErr *AppError

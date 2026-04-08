@@ -55,7 +55,9 @@ func (h *UpdateHandler) Handle(ctx context.Context, cmd UpdateCommand) (err erro
 		return apperrors.MapToServiceError(err)
 	}
 
-	ff.UpdateDetails(cmd.Name, cmd.Key, cmd.Description, cmd.FlagType, cmd.DefaultValue, cmd.RolloutPercentage, cmd.IsActive)
+	if err := ff.UpdateDetails(cmd.Name, cmd.Key, cmd.Description, cmd.FlagType, cmd.DefaultValue, cmd.RolloutPercentage, cmd.IsActive); err != nil {
+		return err
+	}
 
 	ff.AddEvent(ffevent.NewFlagUpdated(ff.ID()))
 

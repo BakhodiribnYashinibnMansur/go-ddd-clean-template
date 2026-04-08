@@ -4,6 +4,7 @@ import (
 	"context"
 
 	userentity "gct/internal/context/iam/generic/user/domain/entity"
+	userevent "gct/internal/context/iam/generic/user/domain/event"
 	userrepo "gct/internal/context/iam/generic/user/domain/repository"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
@@ -93,6 +94,7 @@ func (h *UpdateUserHandler) Handle(ctx context.Context, cmd UpdateUserCommand) (
 		user.Sessions(),
 	)
 	updated.Touch()
+	updated.AddEvent(userevent.NewUserProfileUpdated(updated.ID()))
 
 	return h.committer.Commit(ctx, func(ctx context.Context) error {
 		if err := h.repo.Update(ctx, updated); err != nil {
