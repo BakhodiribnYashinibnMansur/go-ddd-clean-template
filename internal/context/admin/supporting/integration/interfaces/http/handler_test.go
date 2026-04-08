@@ -16,6 +16,8 @@ import (
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
+	"gct/internal/kernel/outbox"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -116,8 +118,8 @@ func setupRouter(repo *mockRepo, readRepo *mockReadRepo) *gin.Engine {
 	l := &mockLogger{}
 
 	bc := &integration.BoundedContext{
-		CreateIntegration: command.NewCreateHandler(repo, eb, l),
-		UpdateIntegration: command.NewUpdateHandler(repo, eb, l),
+		CreateIntegration: command.NewCreateHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l),
+		UpdateIntegration: command.NewUpdateHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l),
 		DeleteIntegration: command.NewDeleteHandler(repo, eb, l),
 		GetIntegration:    query.NewGetHandler(readRepo, l),
 		ListIntegrations:  query.NewListHandler(readRepo, l),

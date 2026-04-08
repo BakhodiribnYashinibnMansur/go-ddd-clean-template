@@ -6,10 +6,10 @@ import (
 
 	notifentity "gct/internal/context/content/generic/notification/domain/entity"
 	notifrepo "gct/internal/context/content/generic/notification/domain/repository"
-	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
+	"gct/internal/kernel/outbox"
 
 	"github.com/google/uuid"
 )
@@ -24,21 +24,21 @@ type CreateCommand struct {
 
 // CreateHandler handles the CreateCommand.
 type CreateHandler struct {
-	repo     notifrepo.NotificationRepository
-	eventBus application.EventBus
-	logger   logger.Log
+	repo      notifrepo.NotificationRepository
+	committer *outbox.EventCommitter
+	logger    logger.Log
 }
 
 // NewCreateHandler creates a new CreateHandler.
 func NewCreateHandler(
 	repo notifrepo.NotificationRepository,
-	eventBus application.EventBus,
+	committer *outbox.EventCommitter,
 	logger logger.Log,
 ) *CreateHandler {
 	return &CreateHandler{
-		repo:     repo,
-		eventBus: eventBus,
-		logger:   logger,
+		repo:      repo,
+		committer: committer,
+		logger:    logger,
 	}
 }
 
@@ -53,14 +53,11 @@ func (h *CreateHandler) Handle(ctx context.Context, cmd CreateCommand) (err erro
 		return fmt.Errorf("create_notification: %w", err)
 	}
 
-	if err := h.repo.Save(ctx, n); err != nil {
-		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateNotification", Entity: "notification", Err: err}.KV()...)
-		return apperrors.MapToServiceError(err)
-	}
-
-	if err := h.eventBus.Publish(ctx, n.Events()...); err != nil {
-		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "CreateNotification", Entity: "notification", Err: err}.KV()...)
-	}
-
-	return nil
+	return h.committer.Commit(ctx, func(ctx context.Context) error {
+		if err := h.repo.Save(ctx, n); err != nil {
+			h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateNotification", Entity: "notification", Err: err}.KV()...)
+			return apperrors.MapToServiceError(err)
+		}
+		return nil
+	}, n.Events)
 }

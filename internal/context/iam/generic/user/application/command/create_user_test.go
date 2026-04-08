@@ -7,6 +7,7 @@ import (
 	userentity "gct/internal/context/iam/generic/user/domain/entity"
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
+	"gct/internal/kernel/outbox"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -140,7 +141,7 @@ func TestCreateUserHandler_Handle(t *testing.T) {
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewCreateUserHandler(repo, eventBus, log)
+	handler := NewCreateUserHandler(repo, outbox.NewEventCommitter(nil, nil, eventBus, log), log)
 
 	email := "test@example.com"
 	username := "testuser"
@@ -187,7 +188,7 @@ func TestCreateUserHandler_InvalidPhone(t *testing.T) {
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewCreateUserHandler(repo, eventBus, log)
+	handler := NewCreateUserHandler(repo, outbox.NewEventCommitter(nil, nil, eventBus, log), log)
 
 	cmd := CreateUserCommand{
 		Phone:    "invalid",
@@ -211,7 +212,7 @@ func TestCreateUserHandler_WeakPassword(t *testing.T) {
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewCreateUserHandler(repo, eventBus, log)
+	handler := NewCreateUserHandler(repo, outbox.NewEventCommitter(nil, nil, eventBus, log), log)
 
 	cmd := CreateUserCommand{
 		Phone:    "+998901234567",

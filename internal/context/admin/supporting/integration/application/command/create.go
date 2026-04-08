@@ -6,10 +6,10 @@ import (
 
 	integentity "gct/internal/context/admin/supporting/integration/domain/entity"
 	integrepo "gct/internal/context/admin/supporting/integration/domain/repository"
-	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
+	"gct/internal/kernel/outbox"
 )
 
 // CreateCommand represents an intent to register a new third-party integration.
@@ -27,26 +27,25 @@ type CreateCommand struct {
 // CreateHandler orchestrates integration creation through the repository and event bus.
 // Domain events are emitted on success so downstream listeners can initialize provider connections.
 type CreateHandler struct {
-	repo     integrepo.IntegrationRepository
-	eventBus application.EventBus
-	logger   logger.Log
+	repo      integrepo.IntegrationRepository
+	committer *outbox.EventCommitter
+	logger    logger.Log
 }
 
 // NewCreateHandler wires up the handler with its required dependencies.
 func NewCreateHandler(
 	repo integrepo.IntegrationRepository,
-	eventBus application.EventBus,
+	committer *outbox.EventCommitter,
 	logger logger.Log,
 ) *CreateHandler {
 	return &CreateHandler{
-		repo:     repo,
-		eventBus: eventBus,
-		logger:   logger,
+		repo:      repo,
+		committer: committer,
+		logger:    logger,
 	}
 }
 
 // Handle persists the new integration and publishes domain events.
-// Event publish failures are logged but do not roll back the save — eventual consistency is acceptable here.
 func (h *CreateHandler) Handle(ctx context.Context, cmd CreateCommand) (err error) {
 	ctx, end := pgxutil.AppSpan(ctx, "CreateHandler.Handle")
 	defer func() { end(err) }()
@@ -57,14 +56,11 @@ func (h *CreateHandler) Handle(ctx context.Context, cmd CreateCommand) (err erro
 		return fmt.Errorf("create_integration: %w", err)
 	}
 
-	if err := h.repo.Save(ctx, i); err != nil {
-		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateIntegration", Entity: "integration", Err: err}.KV()...)
-		return apperrors.MapToServiceError(err)
-	}
-
-	if err := h.eventBus.Publish(ctx, i.Events()...); err != nil {
-		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "CreateIntegration", Entity: "integration", Err: err}.KV()...)
-	}
-
-	return nil
+	return h.committer.Commit(ctx, func(ctx context.Context) error {
+		if err := h.repo.Save(ctx, i); err != nil {
+			h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateIntegration", Entity: "integration", Err: err}.KV()...)
+			return apperrors.MapToServiceError(err)
+		}
+		return nil
+	}, i.Events)
 }

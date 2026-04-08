@@ -17,6 +17,8 @@ import (
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
+	"gct/internal/kernel/outbox"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -106,8 +108,8 @@ func setupRouter(repo *mockRepo, readRepo *mockReadRepo) *gin.Engine {
 	l := &mockLogger{}
 
 	bc := &sitesetting.BoundedContext{
-		CreateSiteSetting: command.NewCreateSiteSettingHandler(repo, eb, l),
-		UpdateSiteSetting: command.NewUpdateSiteSettingHandler(repo, eb, l),
+		CreateSiteSetting: command.NewCreateSiteSettingHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l),
+		UpdateSiteSetting: command.NewUpdateSiteSettingHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l),
 		DeleteSiteSetting: command.NewDeleteSiteSettingHandler(repo, l),
 		GetSiteSetting:    query.NewGetSiteSettingHandler(readRepo, l),
 		ListSiteSettings:  query.NewListSiteSettingsHandler(readRepo, l),

@@ -16,6 +16,7 @@ import (
 	shared "gct/internal/kernel/domain"
 	"gct/internal/kernel/infrastructure/eventbus"
 	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/outbox"
 	"gct/test/integration/common/setup"
 
 	"github.com/google/uuid"
@@ -32,7 +33,7 @@ func newTestEnv(t *testing.T) testEnv {
 	l := logger.New("error")
 	eb := eventbus.NewInMemoryEventBus()
 	return testEnv{
-		userBC:    user.NewBoundedContext(setup.TestPG.Pool, eb, l, newTestJWTConfig(t)),
+		userBC:    user.NewBoundedContext(setup.TestPG.Pool, eb, outbox.NewEventCommitter(setup.TestPG.Pool, nil, eb, l), l, newTestJWTConfig(t)),
 		sessionBC: session.NewBoundedContext(setup.TestPG.Pool, eb, l),
 	}
 }

@@ -72,7 +72,7 @@ func (r *SystemErrorWriteRepo) Save(ctx context.Context, se *syserrentity.System
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildInsert)
 	}
 
-	if _, err = r.pool.Exec(ctx, sql, args...); err != nil {
+	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 
@@ -139,7 +139,7 @@ func (r *SystemErrorWriteRepo) Update(ctx context.Context, se *syserrentity.Syst
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildUpdate)
 	}
 
-	if _, err = r.pool.Exec(ctx, sql, args...); err != nil {
+	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 

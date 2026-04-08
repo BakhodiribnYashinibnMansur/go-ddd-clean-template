@@ -13,6 +13,7 @@ import (
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/test/integration/common/setup"
 
+	"gct/internal/kernel/outbox"
 	"github.com/google/uuid"
 )
 
@@ -20,7 +21,7 @@ func newTestBC(t *testing.T) *dataexport.BoundedContext {
 	t.Helper()
 	eb := eventbus.NewInMemoryEventBus()
 	l := logger.New("error")
-	return dataexport.NewBoundedContext(setup.TestPG.Pool, eb, l)
+	return dataexport.NewBoundedContext(setup.TestPG.Pool, outbox.NewEventCommitter(nil, nil, eb, l), l)
 }
 
 func TestIntegration_CreateAndGetDataExport(t *testing.T) {

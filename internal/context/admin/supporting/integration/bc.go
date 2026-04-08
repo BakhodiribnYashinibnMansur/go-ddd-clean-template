@@ -9,6 +9,7 @@ import (
 	"gct/internal/context/admin/supporting/integration/infrastructure/postgres"
 	"gct/internal/kernel/application"
 	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/outbox"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -35,13 +36,13 @@ type BoundedContext struct {
 }
 
 // NewBoundedContext creates a fully wired Integration bounded context.
-func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, apiKeyPepper []byte, cacheTTL time.Duration, l logger.Log) *BoundedContext {
+func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, committer *outbox.EventCommitter, apiKeyPepper []byte, cacheTTL time.Duration, l logger.Log) *BoundedContext {
 	writeRepo := postgres.NewIntegrationWriteRepo(pool)
 	readRepo := postgres.NewIntegrationReadRepo(pool)
 
 	return &BoundedContext{
-		CreateIntegration: command.NewCreateHandler(writeRepo, eventBus, l),
-		UpdateIntegration: command.NewUpdateHandler(writeRepo, eventBus, l),
+		CreateIntegration: command.NewCreateHandler(writeRepo, committer, l),
+		UpdateIntegration: command.NewUpdateHandler(writeRepo, committer, l),
 		DeleteIntegration: command.NewDeleteHandler(writeRepo, eventBus, l),
 		GetIntegration:    query.NewGetHandler(readRepo, l),
 		ListIntegrations:  query.NewListHandler(readRepo, l),

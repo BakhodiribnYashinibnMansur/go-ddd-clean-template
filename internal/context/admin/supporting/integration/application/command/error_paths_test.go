@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	integentity "gct/internal/context/admin/supporting/integration/domain/entity"
+	"gct/internal/kernel/outbox"
 )
 
 // --- Error mocks ---
@@ -46,7 +47,7 @@ func TestCreateHandler_RepoError(t *testing.T) {
 	t.Parallel()
 
 	repo := &errorIntegrationRepo{saveErr: errRepoSave}
-	handler := NewCreateHandler(repo, &mockEventBus{}, &mockLogger{})
+	handler := NewCreateHandler(repo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	err := handler.Handle(context.Background(), CreateCommand{
 		Name: "test", Type: "t", APIKey: "k", WebhookURL: "u",
@@ -65,7 +66,7 @@ func TestUpdateHandler_RepoUpdateError(t *testing.T) {
 		findFn:    func(_ context.Context, _ integentity.IntegrationID) (*integentity.Integration, error) { return i, nil },
 		updateErr: errRepoUpdate,
 	}
-	handler := NewUpdateHandler(repo, &mockEventBus{}, &mockLogger{})
+	handler := NewUpdateHandler(repo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	err := handler.Handle(context.Background(), UpdateCommand{ID: integentity.IntegrationID(i.ID())})
 	if !errors.Is(err, errRepoUpdate) {

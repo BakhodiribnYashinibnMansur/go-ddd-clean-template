@@ -13,6 +13,7 @@ import (
 	syserrrepo "gct/internal/context/ops/generic/systemerror/domain/repository"
 	"gct/test/integration/common/setup"
 
+	"gct/internal/kernel/outbox"
 	"github.com/google/uuid"
 )
 
@@ -20,7 +21,7 @@ func newTestBC(t *testing.T) *systemerror.BoundedContext {
 	t.Helper()
 	eb := eventbus.NewInMemoryEventBus()
 	l := logger.New("error")
-	return systemerror.NewBoundedContext(setup.TestPG.Pool, eb, l)
+	return systemerror.NewBoundedContext(setup.TestPG.Pool, outbox.NewEventCommitter(nil, nil, eb, l), l)
 }
 
 func TestIntegration_CreateAndGetSystemError(t *testing.T) {

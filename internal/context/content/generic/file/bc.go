@@ -4,8 +4,8 @@ import (
 	"gct/internal/context/content/generic/file/application/command"
 	"gct/internal/context/content/generic/file/application/query"
 	"gct/internal/context/content/generic/file/infrastructure/postgres"
-	"gct/internal/kernel/application"
 	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/outbox"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -21,12 +21,12 @@ type BoundedContext struct {
 }
 
 // NewBoundedContext creates a fully wired File bounded context.
-func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, l logger.Log) *BoundedContext {
+func NewBoundedContext(pool *pgxpool.Pool, committer *outbox.EventCommitter, l logger.Log) *BoundedContext {
 	writeRepo := postgres.NewFileWriteRepo(pool)
 	readRepo := postgres.NewFileReadRepo(pool)
 
 	return &BoundedContext{
-		CreateFile: command.NewCreateFileHandler(writeRepo, eventBus, l),
+		CreateFile: command.NewCreateFileHandler(writeRepo, committer, l),
 		GetFile:    query.NewGetFileHandler(readRepo, l),
 		ListFiles:  query.NewListFilesHandler(readRepo, l),
 	}

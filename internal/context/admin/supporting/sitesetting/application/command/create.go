@@ -5,10 +5,10 @@ import (
 
 	siteentity "gct/internal/context/admin/supporting/sitesetting/domain/entity"
 	siterepo "gct/internal/context/admin/supporting/sitesetting/domain/repository"
-	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
+	"gct/internal/kernel/outbox"
 )
 
 // CreateSiteSettingCommand represents an intent to register a new site-wide configuration entry.
@@ -21,23 +21,22 @@ type CreateSiteSettingCommand struct {
 }
 
 // CreateSiteSettingHandler orchestrates site setting creation through the repository layer.
-// Domain events are published after a successful save; event bus failures are logged but do not roll back the write.
 type CreateSiteSettingHandler struct {
-	repo     siterepo.SiteSettingRepository
-	eventBus application.EventBus
-	logger   logger.Log
+	repo      siterepo.SiteSettingRepository
+	committer *outbox.EventCommitter
+	logger    logger.Log
 }
 
 // NewCreateSiteSettingHandler creates a new CreateSiteSettingHandler.
 func NewCreateSiteSettingHandler(
 	repo siterepo.SiteSettingRepository,
-	eventBus application.EventBus,
+	committer *outbox.EventCommitter,
 	logger logger.Log,
 ) *CreateSiteSettingHandler {
 	return &CreateSiteSettingHandler{
-		repo:     repo,
-		eventBus: eventBus,
-		logger:   logger,
+		repo:      repo,
+		committer: committer,
+		logger:    logger,
 	}
 }
 
@@ -50,14 +49,11 @@ func (h *CreateSiteSettingHandler) Handle(ctx context.Context, cmd CreateSiteSet
 
 	s := siteentity.NewSiteSetting(cmd.Key, cmd.Value, cmd.Type, cmd.Description)
 
-	if err := h.repo.Save(ctx, s); err != nil {
-		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateSiteSetting", Entity: "site_setting", Err: err}.KV()...)
-		return apperrors.MapToServiceError(err)
-	}
-
-	if err := h.eventBus.Publish(ctx, s.Events()...); err != nil {
-		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "CreateSiteSetting", Entity: "site_setting", Err: err}.KV()...)
-	}
-
-	return nil
+	return h.committer.Commit(ctx, func(ctx context.Context) error {
+		if err := h.repo.Save(ctx, s); err != nil {
+			h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateSiteSetting", Entity: "site_setting", Err: err}.KV()...)
+			return apperrors.MapToServiceError(err)
+		}
+		return nil
+	}, s.Events)
 }

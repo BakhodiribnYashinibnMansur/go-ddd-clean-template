@@ -5,10 +5,10 @@ import (
 
 	errcodeentity "gct/internal/context/admin/supporting/errorcode/domain/entity"
 	errcoderepo "gct/internal/context/admin/supporting/errorcode/domain/repository"
-	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
+	"gct/internal/kernel/outbox"
 )
 
 // UpdateErrorCodeCommand represents a full replacement of an error code's mutable fields.
@@ -28,23 +28,22 @@ type UpdateErrorCodeCommand struct {
 }
 
 // UpdateErrorCodeHandler applies a full replacement of an error code's mutable fields using a fetch-mutate-persist pattern.
-// Event publish failures are logged but do not roll back the persisted changes.
 type UpdateErrorCodeHandler struct {
-	repo     errcoderepo.ErrorCodeRepository
-	eventBus application.EventBus
-	logger   logger.Log
+	repo      errcoderepo.ErrorCodeRepository
+	committer *outbox.EventCommitter
+	logger    logger.Log
 }
 
 // NewUpdateErrorCodeHandler wires dependencies for error code updates.
 func NewUpdateErrorCodeHandler(
 	repo errcoderepo.ErrorCodeRepository,
-	eventBus application.EventBus,
+	committer *outbox.EventCommitter,
 	logger logger.Log,
 ) *UpdateErrorCodeHandler {
 	return &UpdateErrorCodeHandler{
-		repo:     repo,
-		eventBus: eventBus,
-		logger:   logger,
+		repo:      repo,
+		committer: committer,
+		logger:    logger,
 	}
 }
 
@@ -66,14 +65,11 @@ func (h *UpdateErrorCodeHandler) Handle(ctx context.Context, cmd UpdateErrorCode
 		cmd.Retryable, cmd.RetryAfter, cmd.Suggestion,
 	)
 
-	if err := h.repo.Update(ctx, ec); err != nil {
-		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "UpdateErrorCode", Entity: "error_code", EntityID: cmd.ID, Err: err}.KV()...)
-		return apperrors.MapToServiceError(err)
-	}
-
-	if err := h.eventBus.Publish(ctx, ec.Events()...); err != nil {
-		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "UpdateErrorCode", Entity: "error_code", Err: err}.KV()...)
-	}
-
-	return nil
+	return h.committer.Commit(ctx, func(ctx context.Context) error {
+		if err := h.repo.Update(ctx, ec); err != nil {
+			h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "UpdateErrorCode", Entity: "error_code", EntityID: cmd.ID, Err: err}.KV()...)
+			return apperrors.MapToServiceError(err)
+		}
+		return nil
+	}, ec.Events)
 }

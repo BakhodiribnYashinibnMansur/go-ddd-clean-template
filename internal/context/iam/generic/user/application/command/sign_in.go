@@ -9,7 +9,6 @@ import (
 	userentity "gct/internal/context/iam/generic/user/domain/entity"
 	userrepo "gct/internal/context/iam/generic/user/domain/repository"
 	usersvc "gct/internal/context/iam/generic/user/domain/service"
-	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -17,6 +16,7 @@ import (
 	jwtpkg "gct/internal/kernel/infrastructure/security/jwt"
 	"gct/internal/kernel/infrastructure/security/ratelimit"
 	"gct/internal/kernel/infrastructure/security/tbh"
+	"gct/internal/kernel/outbox"
 
 	"github.com/google/uuid"
 )
@@ -71,7 +71,7 @@ type JWTConfig struct {
 // SignInHandler handles the SignInCommand.
 type SignInHandler struct {
 	repo        userrepo.UserRepository
-	eventBus    application.EventBus
+	committer   *outbox.EventCommitter
 	logger      commandLogger
 	signIn      usersvc.SignInService
 	jwtConfig   JWTConfig
@@ -104,7 +104,7 @@ type SignInSecurityDeps struct {
 // wires the closure in bootstrap.
 func NewSignInHandler(
 	repo userrepo.UserRepository,
-	eventBus application.EventBus,
+	committer *outbox.EventCommitter,
 	logger commandLogger,
 	jwtCfg JWTConfig,
 	maxSessionsFn ...func(ctx context.Context) int,
@@ -117,7 +117,7 @@ func NewSignInHandler(
 	}
 	return &SignInHandler{
 		repo:        repo,
-		eventBus:    eventBus,
+		committer:   committer,
 		logger:      logger,
 		signIn:      usersvc.SignInService{},
 		jwtConfig:   jwtCfg,
@@ -232,14 +232,16 @@ func (h *SignInHandler) Handle(ctx context.Context, cmd SignInCommand) (result *
 	}
 	session.SetRefreshTokenHash(refToken.Hashed)
 
-	// Persist user (with the updated session containing the refresh token hash).
-	if err := h.repo.Update(ctx, user); err != nil {
-		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "SignIn", Entity: "user", Err: err}.KV()...)
-		return nil, apperrors.MapToServiceError(err)
-	}
-
-	if err := h.eventBus.Publish(ctx, user.Events()...); err != nil {
-		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "SignIn", Entity: "user", Err: err}.KV()...)
+	// Persist user (with the updated session containing the refresh token hash)
+	// and publish domain events via the transactional outbox.
+	if err := h.committer.Commit(ctx, func(ctx context.Context) error {
+		if err := h.repo.Update(ctx, user); err != nil {
+			h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "SignIn", Entity: "user", Err: err}.KV()...)
+			return apperrors.MapToServiceError(err)
+		}
+		return nil
+	}, user.Events); err != nil {
+		return nil, err
 	}
 
 	// Compute TBH claim for device-binding when pepper is configured.

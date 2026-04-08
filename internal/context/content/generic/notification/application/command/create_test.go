@@ -9,6 +9,8 @@ import (
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
+	"gct/internal/kernel/outbox"
+
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -72,7 +74,7 @@ func TestCreateHandler_Handle(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockNotificationRepo{}
-	handler := command.NewCreateHandler(repo, &mockEventBus{}, &mockLogger{})
+	handler := command.NewCreateHandler(repo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	userID := uuid.New()
 	cmd := command.CreateCommand{

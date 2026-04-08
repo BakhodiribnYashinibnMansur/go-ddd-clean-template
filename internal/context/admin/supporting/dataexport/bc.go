@@ -4,8 +4,8 @@ import (
 	"gct/internal/context/admin/supporting/dataexport/application/command"
 	"gct/internal/context/admin/supporting/dataexport/application/query"
 	"gct/internal/context/admin/supporting/dataexport/infrastructure/postgres"
-	"gct/internal/kernel/application"
 	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/outbox"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -23,13 +23,13 @@ type BoundedContext struct {
 }
 
 // NewBoundedContext creates a fully wired DataExport bounded context.
-func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, l logger.Log) *BoundedContext {
+func NewBoundedContext(pool *pgxpool.Pool, committer *outbox.EventCommitter, l logger.Log) *BoundedContext {
 	writeRepo := postgres.NewDataExportWriteRepo(pool)
 	readRepo := postgres.NewDataExportReadRepo(pool)
 
 	return &BoundedContext{
-		CreateDataExport: command.NewCreateDataExportHandler(writeRepo, eventBus, l),
-		UpdateDataExport: command.NewUpdateDataExportHandler(writeRepo, eventBus, l),
+		CreateDataExport: command.NewCreateDataExportHandler(writeRepo, committer, l),
+		UpdateDataExport: command.NewUpdateDataExportHandler(writeRepo, committer, l),
 		DeleteDataExport: command.NewDeleteDataExportHandler(writeRepo, l),
 		GetDataExport:    query.NewGetDataExportHandler(readRepo, l),
 		ListDataExports:  query.NewListDataExportsHandler(readRepo, l),

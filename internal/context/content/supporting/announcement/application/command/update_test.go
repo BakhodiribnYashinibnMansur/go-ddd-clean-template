@@ -9,6 +9,8 @@ import (
 
 	announceentity "gct/internal/context/content/supporting/announcement/domain/entity"
 
+	"gct/internal/kernel/outbox"
+
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -31,7 +33,7 @@ func TestUpdateAnnouncementHandler_Handle(t *testing.T) {
 		},
 	}
 	eb := &mockEventBus{}
-	handler := NewUpdateAnnouncementHandler(repo, eb, &mockLogger{})
+	handler := NewUpdateAnnouncementHandler(repo, outbox.NewEventCommitter(nil, nil, eb, &mockLogger{}), &mockLogger{})
 
 	newTitle := shared.Lang{Uz: "new_uz", Ru: "new_ru", En: "new_en"}
 	newPriority := 5
@@ -69,7 +71,7 @@ func TestUpdateAnnouncementHandler_WithPublish(t *testing.T) {
 		},
 	}
 	eb := &mockEventBus{}
-	handler := NewUpdateAnnouncementHandler(repo, eb, &mockLogger{})
+	handler := NewUpdateAnnouncementHandler(repo, outbox.NewEventCommitter(nil, nil, eb, &mockLogger{}), &mockLogger{})
 
 	cmd := UpdateAnnouncementCommand{
 		ID:      announceentity.AnnouncementID(a.ID()),
@@ -113,7 +115,7 @@ func TestUpdateAnnouncementHandler_AlreadyPublished(t *testing.T) {
 		},
 	}
 	eb := &mockEventBus{}
-	handler := NewUpdateAnnouncementHandler(repo, eb, &mockLogger{})
+	handler := NewUpdateAnnouncementHandler(repo, outbox.NewEventCommitter(nil, nil, eb, &mockLogger{}), &mockLogger{})
 
 	cmd := UpdateAnnouncementCommand{
 		ID:      announceentity.AnnouncementID(a.ID()),
@@ -133,7 +135,7 @@ func TestUpdateAnnouncementHandler_NotFound(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockAnnouncementRepo{}
-	handler := NewUpdateAnnouncementHandler(repo, &mockEventBus{}, &mockLogger{})
+	handler := NewUpdateAnnouncementHandler(repo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	err := handler.Handle(context.Background(), UpdateAnnouncementCommand{ID: announceentity.NewAnnouncementID()})
 	if err == nil {

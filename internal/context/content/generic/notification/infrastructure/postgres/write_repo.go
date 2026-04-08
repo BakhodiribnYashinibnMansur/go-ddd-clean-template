@@ -58,7 +58,7 @@ func (r *NotificationWriteRepo) Save(ctx context.Context, n *notifentity.Notific
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildInsert)
 	}
 
-	if _, err = r.pool.Exec(ctx, sql, args...); err != nil {
+	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 
@@ -97,7 +97,7 @@ func (r *NotificationWriteRepo) Update(ctx context.Context, n *notifentity.Notif
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildUpdate)
 	}
 
-	if _, err = r.pool.Exec(ctx, sql, args...); err != nil {
+	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 
@@ -117,7 +117,7 @@ func (r *NotificationWriteRepo) Delete(ctx context.Context, id notifentity.Notif
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildDelete)
 	}
 
-	if _, err = r.pool.Exec(ctx, sql, args...); err != nil {
+	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 

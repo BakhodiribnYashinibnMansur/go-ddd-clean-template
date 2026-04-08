@@ -1,8 +1,8 @@
 package systemerror
 
 import (
-	"gct/internal/kernel/application"
 	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/outbox"
 	"gct/internal/context/ops/generic/systemerror/application/command"
 	"gct/internal/context/ops/generic/systemerror/application/query"
 	"gct/internal/context/ops/generic/systemerror/infrastructure/postgres"
@@ -22,13 +22,13 @@ type BoundedContext struct {
 }
 
 // NewBoundedContext creates a fully wired SystemError bounded context.
-func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, l logger.Log) *BoundedContext {
+func NewBoundedContext(pool *pgxpool.Pool, committer *outbox.EventCommitter, l logger.Log) *BoundedContext {
 	writeRepo := postgres.NewSystemErrorWriteRepo(pool)
 	readRepo := postgres.NewSystemErrorReadRepo(pool)
 
 	return &BoundedContext{
-		CreateSystemError: command.NewCreateSystemErrorHandler(writeRepo, eventBus, l),
-		ResolveError:      command.NewResolveErrorHandler(writeRepo, eventBus, l),
+		CreateSystemError: command.NewCreateSystemErrorHandler(writeRepo, committer, l),
+		ResolveError:      command.NewResolveErrorHandler(writeRepo, committer, l),
 		GetSystemError:    query.NewGetSystemErrorHandler(readRepo, l),
 		ListSystemErrors:  query.NewListSystemErrorsHandler(readRepo, l),
 	}

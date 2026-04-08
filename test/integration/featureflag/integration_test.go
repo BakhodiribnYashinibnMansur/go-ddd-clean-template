@@ -11,6 +11,7 @@ import (
 	ffrepo "gct/internal/context/admin/generic/featureflag/domain/repository"
 	"gct/internal/kernel/infrastructure/eventbus"
 	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/outbox"
 	"gct/test/integration/common/setup"
 )
 
@@ -18,7 +19,7 @@ func newTestBC(t *testing.T) *featureflag.BoundedContext {
 	t.Helper()
 	eb := eventbus.NewInMemoryEventBus()
 	l := logger.New("error")
-	bc, err := featureflag.NewBoundedContext(context.Background(), setup.TestPG.Pool, eb, l)
+	bc, err := featureflag.NewBoundedContext(context.Background(), setup.TestPG.Pool, eb, outbox.NewEventCommitter(setup.TestPG.Pool, nil, eb, l), l)
 	if err != nil {
 		t.Fatalf("NewBoundedContext: %v", err)
 	}

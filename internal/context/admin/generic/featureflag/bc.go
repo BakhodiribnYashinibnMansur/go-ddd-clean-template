@@ -11,6 +11,7 @@ import (
 	"gct/internal/kernel/application"
 	shareddomain "gct/internal/kernel/domain"
 	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/outbox"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -36,7 +37,7 @@ type BoundedContext struct {
 }
 
 // NewBoundedContext creates a fully wired FeatureFlag bounded context.
-func NewBoundedContext(ctx context.Context, pool *pgxpool.Pool, eventBus application.EventBus, l logger.Log) (*BoundedContext, error) {
+func NewBoundedContext(ctx context.Context, pool *pgxpool.Pool, eventBus application.EventBus, committer *outbox.EventCommitter, l logger.Log) (*BoundedContext, error) {
 	writeRepo := postgres.NewFeatureFlagWriteRepo(pool)
 	readRepo := postgres.NewFeatureFlagReadRepo(pool)
 	rgRepo := postgres.NewRuleGroupWriteRepo(pool)
@@ -60,12 +61,12 @@ func NewBoundedContext(ctx context.Context, pool *pgxpool.Pool, eventBus applica
 	}
 
 	return &BoundedContext{
-		CreateFlag:        command.NewCreateHandler(writeRepo, eventBus, l),
-		UpdateFlag:        command.NewUpdateHandler(writeRepo, eventBus, l),
-		DeleteFlag:        command.NewDeleteHandler(writeRepo, eventBus, l),
-		CreateRuleGroup:   command.NewCreateRuleGroupHandler(writeRepo, rgRepo, eventBus, l),
-		UpdateRuleGroup:   command.NewUpdateRuleGroupHandler(rgRepo, eventBus, l),
-		DeleteRuleGroup:   command.NewDeleteRuleGroupHandler(rgRepo, eventBus, l),
+		CreateFlag:        command.NewCreateHandler(writeRepo, committer, l),
+		UpdateFlag:        command.NewUpdateHandler(writeRepo, committer, l),
+		DeleteFlag:        command.NewDeleteHandler(writeRepo, committer, l),
+		CreateRuleGroup:   command.NewCreateRuleGroupHandler(writeRepo, rgRepo, committer, l),
+		UpdateRuleGroup:   command.NewUpdateRuleGroupHandler(rgRepo, committer, l),
+		DeleteRuleGroup:   command.NewDeleteRuleGroupHandler(rgRepo, committer, l),
 		GetFlag:           query.NewGetHandler(readRepo, l),
 		ListFlags:         query.NewListHandler(readRepo, l),
 		EvaluateFlag:      query.NewEvaluateHandler(cachedEval),

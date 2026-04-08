@@ -6,10 +6,10 @@ import (
 
 	ipruleentity "gct/internal/context/ops/supporting/iprule/domain/entity"
 	iprulerepo "gct/internal/context/ops/supporting/iprule/domain/repository"
-	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
+	"gct/internal/kernel/outbox"
 )
 
 // CreateIPRuleCommand represents an intent to add a new IP-based access control rule.
@@ -25,21 +25,21 @@ type CreateIPRuleCommand struct {
 // CreateIPRuleHandler persists a new IP rule and emits domain events for downstream enforcement.
 // Callers are responsible for validating IP format and ensuring no conflicting rule already exists.
 type CreateIPRuleHandler struct {
-	repo     iprulerepo.IPRuleRepository
-	eventBus application.EventBus
-	logger   logger.Log
+	repo      iprulerepo.IPRuleRepository
+	committer *outbox.EventCommitter
+	logger    logger.Log
 }
 
 // NewCreateIPRuleHandler wires up the handler with its required dependencies.
 func NewCreateIPRuleHandler(
 	repo iprulerepo.IPRuleRepository,
-	eventBus application.EventBus,
+	committer *outbox.EventCommitter,
 	logger logger.Log,
 ) *CreateIPRuleHandler {
 	return &CreateIPRuleHandler{
-		repo:     repo,
-		eventBus: eventBus,
-		logger:   logger,
+		repo:      repo,
+		committer: committer,
+		logger:    logger,
 	}
 }
 
@@ -52,14 +52,11 @@ func (h *CreateIPRuleHandler) Handle(ctx context.Context, cmd CreateIPRuleComman
 
 	r := ipruleentity.NewIPRule(cmd.IPAddress, cmd.Action, cmd.Reason, cmd.ExpiresAt)
 
-	if err := h.repo.Save(ctx, r); err != nil {
-		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateIPRule", Entity: "ip_rule", Err: err}.KV()...)
-		return apperrors.MapToServiceError(err)
-	}
-
-	if err := h.eventBus.Publish(ctx, r.Events()...); err != nil {
-		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "CreateIPRule", Entity: "ip_rule", Err: err}.KV()...)
-	}
-
-	return nil
+	return h.committer.Commit(ctx, func(ctx context.Context) error {
+		if err := h.repo.Save(ctx, r); err != nil {
+			h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateIPRule", Entity: "ip_rule", Err: err}.KV()...)
+			return apperrors.MapToServiceError(err)
+		}
+		return nil
+	}, r.Events)
 }

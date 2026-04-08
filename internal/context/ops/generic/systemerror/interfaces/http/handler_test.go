@@ -17,6 +17,8 @@ import (
 	syserrentity "gct/internal/context/ops/generic/systemerror/domain/entity"
 	syserrrepo "gct/internal/context/ops/generic/systemerror/domain/repository"
 
+	"gct/internal/kernel/outbox"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -103,8 +105,8 @@ func setupRouter(repo *mockRepo, readRepo *mockReadRepo) *gin.Engine {
 	l := &mockLogger{}
 
 	bc := &systemerror.BoundedContext{
-		CreateSystemError: command.NewCreateSystemErrorHandler(repo, eb, l),
-		ResolveError:      command.NewResolveErrorHandler(repo, eb, l),
+		CreateSystemError: command.NewCreateSystemErrorHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l),
+		ResolveError:      command.NewResolveErrorHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l),
 		GetSystemError:    query.NewGetSystemErrorHandler(readRepo, l),
 		ListSystemErrors:  query.NewListSystemErrorsHandler(readRepo, l),
 	}

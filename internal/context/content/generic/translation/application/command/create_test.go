@@ -10,6 +10,7 @@ import (
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
+	"gct/internal/kernel/outbox"
 	"github.com/stretchr/testify/require"
 )
 
@@ -89,7 +90,7 @@ func TestCreateTranslationHandler_Handle(t *testing.T) {
 	eb := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewCreateTranslationHandler(repo, eb, log)
+	handler := NewCreateTranslationHandler(repo, outbox.NewEventCommitter(nil, nil, eb, log), log)
 
 	cmd := CreateTranslationCommand{
 		Key:      "welcome_message",
@@ -125,7 +126,7 @@ func TestCreateTranslationHandler_MinimalFields(t *testing.T) {
 	eb := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewCreateTranslationHandler(repo, eb, log)
+	handler := NewCreateTranslationHandler(repo, outbox.NewEventCommitter(nil, nil, eb, log), log)
 
 	err := handler.Handle(context.Background(), CreateTranslationCommand{
 		Key:      "btn_ok",
@@ -150,7 +151,7 @@ func TestCreateTranslationHandler_RepoError(t *testing.T) {
 	eb := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewCreateTranslationHandler(errRepo, eb, log)
+	handler := NewCreateTranslationHandler(errRepo, outbox.NewEventCommitter(nil, nil, eb, log), log)
 	err := handler.Handle(context.Background(), CreateTranslationCommand{
 		Key: "k", Language: "en", Value: "v", Group: "g",
 	})

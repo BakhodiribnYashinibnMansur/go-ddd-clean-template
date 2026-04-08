@@ -7,6 +7,8 @@ import (
 
 	ffentity "gct/internal/context/admin/generic/featureflag/domain/entity"
 
+	"gct/internal/kernel/outbox"
+
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -25,7 +27,7 @@ func TestCreateRuleGroupHandler_Handle(t *testing.T) {
 	}
 	rgRepo := &mockRuleGroupRepo{}
 	eb := &mockEventBus{}
-	handler := NewCreateRuleGroupHandler(flagRepo, rgRepo, eb, &mockLogger{})
+	handler := NewCreateRuleGroupHandler(flagRepo, rgRepo, outbox.NewEventCommitter(nil, nil, eb, &mockLogger{}), &mockLogger{})
 
 	cmd := CreateRuleGroupCommand{
 		FlagID:    ffentity.FeatureFlagID(flagID),
@@ -68,7 +70,7 @@ func TestCreateRuleGroupHandler_Handle_FlagNotFound(t *testing.T) {
 
 	flagRepo := &mockFeatureFlagRepo{} // default returns ErrFeatureFlagNotFound
 	rgRepo := &mockRuleGroupRepo{}
-	handler := NewCreateRuleGroupHandler(flagRepo, rgRepo, &mockEventBus{}, &mockLogger{})
+	handler := NewCreateRuleGroupHandler(flagRepo, rgRepo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	err := handler.Handle(context.Background(), CreateRuleGroupCommand{
 		FlagID: ffentity.FeatureFlagID(uuid.New()),
@@ -95,7 +97,7 @@ func TestCreateRuleGroupHandler_Handle_InvalidOperator(t *testing.T) {
 		},
 	}
 	rgRepo := &mockRuleGroupRepo{}
-	handler := NewCreateRuleGroupHandler(flagRepo, rgRepo, &mockEventBus{}, &mockLogger{})
+	handler := NewCreateRuleGroupHandler(flagRepo, rgRepo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	err := handler.Handle(context.Background(), CreateRuleGroupCommand{
 		FlagID:    ffentity.FeatureFlagID(flagID),
@@ -131,7 +133,7 @@ func TestCreateRuleGroupHandler_Handle_RepoError(t *testing.T) {
 			return repoErr
 		},
 	}
-	handler := NewCreateRuleGroupHandler(flagRepo, rgRepo, &mockEventBus{}, &mockLogger{})
+	handler := NewCreateRuleGroupHandler(flagRepo, rgRepo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	err := handler.Handle(context.Background(), CreateRuleGroupCommand{
 		FlagID:    ffentity.FeatureFlagID(flagID),
@@ -156,7 +158,7 @@ func TestCreateRuleGroupHandler_Handle_MultipleConditions(t *testing.T) {
 		},
 	}
 	rgRepo := &mockRuleGroupRepo{}
-	handler := NewCreateRuleGroupHandler(flagRepo, rgRepo, &mockEventBus{}, &mockLogger{})
+	handler := NewCreateRuleGroupHandler(flagRepo, rgRepo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	cmd := CreateRuleGroupCommand{
 		FlagID:    ffentity.FeatureFlagID(flagID),

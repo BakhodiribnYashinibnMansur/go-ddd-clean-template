@@ -5,10 +5,10 @@ import (
 
 	metricentity "gct/internal/context/ops/generic/metric/domain/entity"
 	metricrepo "gct/internal/context/ops/generic/metric/domain/repository"
-	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
+	"gct/internal/kernel/outbox"
 )
 
 // RecordMetricCommand captures a single function execution observation for performance monitoring.
@@ -23,21 +23,21 @@ type RecordMetricCommand struct {
 
 // RecordMetricHandler handles the RecordMetricCommand.
 type RecordMetricHandler struct {
-	repo     metricrepo.MetricRepository
-	eventBus application.EventBus
-	logger   logger.Log
+	repo      metricrepo.MetricRepository
+	committer *outbox.EventCommitter
+	logger    logger.Log
 }
 
 // NewRecordMetricHandler creates a new RecordMetricHandler.
 func NewRecordMetricHandler(
 	repo metricrepo.MetricRepository,
-	eventBus application.EventBus,
+	committer *outbox.EventCommitter,
 	logger logger.Log,
 ) *RecordMetricHandler {
 	return &RecordMetricHandler{
-		repo:     repo,
-		eventBus: eventBus,
-		logger:   logger,
+		repo:      repo,
+		committer: committer,
+		logger:    logger,
 	}
 }
 
@@ -49,14 +49,11 @@ func (h *RecordMetricHandler) Handle(ctx context.Context, cmd RecordMetricComman
 
 	fm := metricentity.NewFunctionMetric(cmd.Name, cmd.LatencyMs, cmd.IsPanic, cmd.PanicError)
 
-	if err := h.repo.Save(ctx, fm); err != nil {
-		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "RecordMetric", Entity: "metric", Err: err}.KV()...)
-		return apperrors.MapToServiceError(err)
-	}
-
-	if err := h.eventBus.Publish(ctx, fm.Events()...); err != nil {
-		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "RecordMetric", Entity: "metric", Err: err}.KV()...)
-	}
-
-	return nil
+	return h.committer.Commit(ctx, func(ctx context.Context) error {
+		if err := h.repo.Save(ctx, fm); err != nil {
+			h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "RecordMetric", Entity: "metric", Err: err}.KV()...)
+			return apperrors.MapToServiceError(err)
+		}
+		return nil
+	}, fm.Events)
 }

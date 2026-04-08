@@ -6,6 +6,7 @@ import (
 	"time"
 
 	userentity "gct/internal/context/iam/generic/user/domain/entity"
+	"gct/internal/kernel/outbox"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -43,7 +44,7 @@ func TestUpdateUserHandler_Handle(t *testing.T) {
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewUpdateUserHandler(repo, eventBus, log)
+	handler := NewUpdateUserHandler(repo, outbox.NewEventCommitter(nil, nil, eventBus, log), log)
 
 	newEmail := "new@example.com"
 	newUsername := "newuser"
@@ -76,7 +77,7 @@ func TestUpdateUserHandler_NotFound(t *testing.T) {
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewUpdateUserHandler(repo, eventBus, log)
+	handler := NewUpdateUserHandler(repo, outbox.NewEventCommitter(nil, nil, eventBus, log), log)
 
 	cmd := UpdateUserCommand{ID: userentity.NewUserID()}
 	err := handler.Handle(context.Background(), cmd)
@@ -97,7 +98,7 @@ func TestUpdateUserHandler_InvalidEmail(t *testing.T) {
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewUpdateUserHandler(repo, eventBus, log)
+	handler := NewUpdateUserHandler(repo, outbox.NewEventCommitter(nil, nil, eventBus, log), log)
 
 	badEmail := "not-an-email"
 	cmd := UpdateUserCommand{
@@ -123,7 +124,7 @@ func TestUpdateUserHandler_OnlyAttributes(t *testing.T) {
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewUpdateUserHandler(repo, eventBus, log)
+	handler := NewUpdateUserHandler(repo, outbox.NewEventCommitter(nil, nil, eventBus, log), log)
 
 	cmd := UpdateUserCommand{
 		ID:         userentity.UserID(user.ID()),

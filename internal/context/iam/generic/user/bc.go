@@ -10,6 +10,7 @@ import (
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/security/audit"
 	"gct/internal/kernel/infrastructure/security/revocation"
+	"gct/internal/kernel/outbox"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -41,15 +42,15 @@ type BoundedContext struct {
 // nil, the sign-in handler falls back to a constant default. In production
 // this is wired from the SiteSetting BC so administrators can change the
 // cap at runtime without a redeploy; in tests callers typically omit it.
-func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, l logger.Log, jwtCfg command.JWTConfig, maxSessionsFn ...func(ctx context.Context) int) *BoundedContext {
+func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, committer *outbox.EventCommitter, l logger.Log, jwtCfg command.JWTConfig, maxSessionsFn ...func(ctx context.Context) int) *BoundedContext {
 	writeRepo := postgres.NewUserWriteRepo(pool)
 	readRepo := postgres.NewUserReadRepo(pool)
 
 	return &BoundedContext{
-		CreateUser:      command.NewCreateUserHandler(writeRepo, eventBus, l),
-		UpdateUser:      command.NewUpdateUserHandler(writeRepo, eventBus, l),
-		DeleteUser:      command.NewDeleteUserHandler(writeRepo, eventBus, l),
-		SignIn:          command.NewSignInHandler(writeRepo, eventBus, l, jwtCfg, maxSessionsFn...),
+		CreateUser:      command.NewCreateUserHandler(writeRepo, committer, l),
+		UpdateUser:      command.NewUpdateUserHandler(writeRepo, committer, l),
+		DeleteUser:      command.NewDeleteUserHandler(writeRepo, committer, l),
+		SignIn:          command.NewSignInHandler(writeRepo, committer, l, jwtCfg, maxSessionsFn...),
 		SignUp:          command.NewSignUpHandler(writeRepo, eventBus, l),
 		SignOut:         command.NewSignOutHandler(writeRepo, eventBus, l),
 		ApproveUser:     command.NewApproveUserHandler(writeRepo, eventBus, l),

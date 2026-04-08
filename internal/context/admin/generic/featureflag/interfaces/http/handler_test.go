@@ -17,6 +17,8 @@ import (
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
+	"gct/internal/kernel/outbox"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -160,12 +162,12 @@ func setupRouter(repo *mockFeatureFlagRepo, rgRepo *mockRuleGroupRepo, readRepo 
 	l := &mockLogger{}
 
 	bc := &featureflag.BoundedContext{
-		CreateFlag:        command.NewCreateHandler(repo, eb, l),
-		UpdateFlag:        command.NewUpdateHandler(repo, eb, l),
-		DeleteFlag:        command.NewDeleteHandler(repo, eb, l),
-		CreateRuleGroup:   command.NewCreateRuleGroupHandler(repo, rgRepo, eb, l),
-		UpdateRuleGroup:   command.NewUpdateRuleGroupHandler(rgRepo, eb, l),
-		DeleteRuleGroup:   command.NewDeleteRuleGroupHandler(rgRepo, eb, l),
+		CreateFlag:        command.NewCreateHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l),
+		UpdateFlag:        command.NewUpdateHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l),
+		DeleteFlag:        command.NewDeleteHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l),
+		CreateRuleGroup:   command.NewCreateRuleGroupHandler(repo, rgRepo, outbox.NewEventCommitter(nil, nil, eb, l), l),
+		UpdateRuleGroup:   command.NewUpdateRuleGroupHandler(rgRepo, outbox.NewEventCommitter(nil, nil, eb, l), l),
+		DeleteRuleGroup:   command.NewDeleteRuleGroupHandler(rgRepo, outbox.NewEventCommitter(nil, nil, eb, l), l),
 		GetFlag:           query.NewGetHandler(readRepo, l),
 		ListFlags:         query.NewListHandler(readRepo, l),
 		EvaluateFlag:      query.NewEvaluateHandler(&mockCachedEvaluator{}),
@@ -407,12 +409,12 @@ func setupRouterWithEvaluator(evalResults map[string]*query.EvalResult) *gin.Eng
 	eval := &mockCachedEvaluator{results: evalResults}
 
 	bc := &featureflag.BoundedContext{
-		CreateFlag:        command.NewCreateHandler(&mockFeatureFlagRepo{}, &mockEventBus{}, l),
-		UpdateFlag:        command.NewUpdateHandler(&mockFeatureFlagRepo{}, &mockEventBus{}, l),
-		DeleteFlag:        command.NewDeleteHandler(&mockFeatureFlagRepo{}, &mockEventBus{}, l),
-		CreateRuleGroup:   command.NewCreateRuleGroupHandler(&mockFeatureFlagRepo{}, &mockRuleGroupRepo{}, &mockEventBus{}, l),
-		UpdateRuleGroup:   command.NewUpdateRuleGroupHandler(&mockRuleGroupRepo{}, &mockEventBus{}, l),
-		DeleteRuleGroup:   command.NewDeleteRuleGroupHandler(&mockRuleGroupRepo{}, &mockEventBus{}, l),
+		CreateFlag:        command.NewCreateHandler(&mockFeatureFlagRepo{}, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, l), l),
+		UpdateFlag:        command.NewUpdateHandler(&mockFeatureFlagRepo{}, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, l), l),
+		DeleteFlag:        command.NewDeleteHandler(&mockFeatureFlagRepo{}, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, l), l),
+		CreateRuleGroup:   command.NewCreateRuleGroupHandler(&mockFeatureFlagRepo{}, &mockRuleGroupRepo{}, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, l), l),
+		UpdateRuleGroup:   command.NewUpdateRuleGroupHandler(&mockRuleGroupRepo{}, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, l), l),
+		DeleteRuleGroup:   command.NewDeleteRuleGroupHandler(&mockRuleGroupRepo{}, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, l), l),
 		GetFlag:           query.NewGetHandler(&mockReadRepo{}, l),
 		ListFlags:         query.NewListHandler(&mockReadRepo{}, l),
 		EvaluateFlag:      query.NewEvaluateHandler(eval),

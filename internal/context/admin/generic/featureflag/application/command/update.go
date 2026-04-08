@@ -6,10 +6,10 @@ import (
 	ffentity "gct/internal/context/admin/generic/featureflag/domain/entity"
 	ffevent "gct/internal/context/admin/generic/featureflag/domain/event"
 	ffrepo "gct/internal/context/admin/generic/featureflag/domain/repository"
-	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
+	"gct/internal/kernel/outbox"
 )
 
 // UpdateCommand represents a partial update to an existing feature flag.
@@ -26,21 +26,21 @@ type UpdateCommand struct {
 
 // UpdateHandler applies partial modifications to an existing feature flag.
 type UpdateHandler struct {
-	repo     ffrepo.FeatureFlagRepository
-	eventBus application.EventBus
-	logger   logger.Log
+	repo      ffrepo.FeatureFlagRepository
+	committer *outbox.EventCommitter
+	logger    logger.Log
 }
 
 // NewUpdateHandler wires dependencies for feature flag updates.
 func NewUpdateHandler(
 	repo ffrepo.FeatureFlagRepository,
-	eventBus application.EventBus,
+	committer *outbox.EventCommitter,
 	logger logger.Log,
 ) *UpdateHandler {
 	return &UpdateHandler{
-		repo:     repo,
-		eventBus: eventBus,
-		logger:   logger,
+		repo:      repo,
+		committer: committer,
+		logger:    logger,
 	}
 }
 
@@ -57,16 +57,13 @@ func (h *UpdateHandler) Handle(ctx context.Context, cmd UpdateCommand) (err erro
 
 	ff.UpdateDetails(cmd.Name, cmd.Key, cmd.Description, cmd.FlagType, cmd.DefaultValue, cmd.RolloutPercentage, cmd.IsActive)
 
-	if err := h.repo.Update(ctx, ff); err != nil {
-		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "UpdateFeatureFlag", Entity: "feature_flag", EntityID: cmd.ID, Err: err}.KV()...)
-		return apperrors.MapToServiceError(err)
-	}
-
 	ff.AddEvent(ffevent.NewFlagUpdated(ff.ID()))
 
-	if err := h.eventBus.Publish(ctx, ff.Events()...); err != nil {
-		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "UpdateFeatureFlag", Entity: "feature_flag", Err: err}.KV()...)
-	}
-
-	return nil
+	return h.committer.Commit(ctx, func(ctx context.Context) error {
+		if err := h.repo.Update(ctx, ff); err != nil {
+			h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "UpdateFeatureFlag", Entity: "feature_flag", EntityID: cmd.ID, Err: err}.KV()...)
+			return apperrors.MapToServiceError(err)
+		}
+		return nil
+	}, ff.Events)
 }

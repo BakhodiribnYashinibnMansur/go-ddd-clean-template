@@ -3,10 +3,10 @@ package command
 import (
 	"context"
 
-	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
+	"gct/internal/kernel/outbox"
 	syserrentity "gct/internal/context/ops/generic/systemerror/domain/entity"
 	syserrrepo "gct/internal/context/ops/generic/systemerror/domain/repository"
 
@@ -33,21 +33,21 @@ type CreateSystemErrorCommand struct {
 // CreateSystemErrorHandler persists system error records and emits domain events for downstream alerting.
 // Event bus failures are logged but swallowed so that error recording is never blocked by event delivery.
 type CreateSystemErrorHandler struct {
-	repo     syserrrepo.SystemErrorRepository
-	eventBus application.EventBus
-	logger   logger.Log
+	repo      syserrrepo.SystemErrorRepository
+	committer *outbox.EventCommitter
+	logger    logger.Log
 }
 
 // NewCreateSystemErrorHandler creates a new CreateSystemErrorHandler.
 func NewCreateSystemErrorHandler(
 	repo syserrrepo.SystemErrorRepository,
-	eventBus application.EventBus,
+	committer *outbox.EventCommitter,
 	logger logger.Log,
 ) *CreateSystemErrorHandler {
 	return &CreateSystemErrorHandler{
-		repo:     repo,
-		eventBus: eventBus,
-		logger:   logger,
+		repo:      repo,
+		committer: committer,
+		logger:    logger,
 	}
 }
 
@@ -85,14 +85,11 @@ func (h *CreateSystemErrorHandler) Handle(ctx context.Context, cmd CreateSystemE
 		se.SetMethod(cmd.Method)
 	}
 
-	if err := h.repo.Save(ctx, se); err != nil {
-		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateSystemError", Entity: "system_error", Err: err}.KV()...)
-		return apperrors.MapToServiceError(err)
-	}
-
-	if err := h.eventBus.Publish(ctx, se.Events()...); err != nil {
-		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "CreateSystemError", Entity: "system_error", Err: err}.KV()...)
-	}
-
-	return nil
+	return h.committer.Commit(ctx, func(ctx context.Context) error {
+		if err := h.repo.Save(ctx, se); err != nil {
+			h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateSystemError", Entity: "system_error", Err: err}.KV()...)
+			return apperrors.MapToServiceError(err)
+		}
+		return nil
+	}, se.Events)
 }

@@ -7,6 +7,8 @@ import (
 
 	errcodeentity "gct/internal/context/admin/supporting/errorcode/domain/entity"
 
+	"gct/internal/kernel/outbox"
+
 	"github.com/google/uuid"
 )
 
@@ -48,7 +50,7 @@ func TestCreateErrorCodeHandler_RepoError(t *testing.T) {
 	t.Parallel()
 
 	repo := &errorErrorCodeRepo{saveErr: errRepoSave}
-	handler := NewCreateErrorCodeHandler(repo, &mockEventBus{}, &mockLogger{})
+	handler := NewCreateErrorCodeHandler(repo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	err := handler.Handle(context.Background(), CreateErrorCodeCommand{
 		Code: "ERR", Message: "fail", HTTPStatus: 500, Category: "c", Severity: "s",
@@ -67,7 +69,7 @@ func TestUpdateErrorCodeHandler_RepoUpdateError(t *testing.T) {
 		findFn:    func(_ context.Context, _ errcodeentity.ErrorCodeID) (*errcodeentity.ErrorCode, error) { return ec, nil },
 		updateErr: errRepoUpdate,
 	}
-	handler := NewUpdateErrorCodeHandler(repo, &mockEventBus{}, &mockLogger{})
+	handler := NewUpdateErrorCodeHandler(repo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	err := handler.Handle(context.Background(), UpdateErrorCodeCommand{
 		ID: errcodeentity.ErrorCodeID(ec.ID()), Message: "m", HTTPStatus: 500, Category: "c", Severity: "s",
@@ -85,7 +87,7 @@ func TestDeleteErrorCodeHandler_RepoError(t *testing.T) {
 		findFn:    func(_ context.Context, _ errcodeentity.ErrorCodeID) (*errcodeentity.ErrorCode, error) { return ec, nil },
 		deleteErr: errRepoDelete,
 	}
-	handler := NewDeleteErrorCodeHandler(repo, &mockEventBus{}, &mockLogger{})
+	handler := NewDeleteErrorCodeHandler(repo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	err := handler.Handle(context.Background(), DeleteErrorCodeCommand{ID: errcodeentity.ErrorCodeID(ec.ID())})
 	if !errors.Is(err, errRepoDelete) {
@@ -97,7 +99,7 @@ func TestDeleteErrorCodeHandler_FindByIDError(t *testing.T) {
 	t.Parallel()
 
 	repo := &errorErrorCodeRepo{} // findFn is nil, returns ErrErrorCodeNotFound
-	handler := NewDeleteErrorCodeHandler(repo, &mockEventBus{}, &mockLogger{})
+	handler := NewDeleteErrorCodeHandler(repo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	err := handler.Handle(context.Background(), DeleteErrorCodeCommand{ID: errcodeentity.ErrorCodeID(uuid.New())})
 	if !errors.Is(err, errcodeentity.ErrErrorCodeNotFound) {

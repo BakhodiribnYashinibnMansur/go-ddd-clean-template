@@ -6,10 +6,10 @@ import (
 
 	ipruleentity "gct/internal/context/ops/supporting/iprule/domain/entity"
 	iprulerepo "gct/internal/context/ops/supporting/iprule/domain/repository"
-	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
+	"gct/internal/kernel/outbox"
 )
 
 // UpdateIPRuleCommand represents a partial update to an existing IP rule identified by ID.
@@ -26,21 +26,21 @@ type UpdateIPRuleCommand struct {
 // UpdateIPRuleHandler applies partial modifications to an existing IP rule via fetch-then-update.
 // Domain events are emitted so downstream caches or firewalls can refresh their rule sets.
 type UpdateIPRuleHandler struct {
-	repo     iprulerepo.IPRuleRepository
-	eventBus application.EventBus
-	logger   logger.Log
+	repo      iprulerepo.IPRuleRepository
+	committer *outbox.EventCommitter
+	logger    logger.Log
 }
 
 // NewUpdateIPRuleHandler wires up the handler with its required dependencies.
 func NewUpdateIPRuleHandler(
 	repo iprulerepo.IPRuleRepository,
-	eventBus application.EventBus,
+	committer *outbox.EventCommitter,
 	logger logger.Log,
 ) *UpdateIPRuleHandler {
 	return &UpdateIPRuleHandler{
-		repo:     repo,
-		eventBus: eventBus,
-		logger:   logger,
+		repo:      repo,
+		committer: committer,
+		logger:    logger,
 	}
 }
 
@@ -58,14 +58,11 @@ func (h *UpdateIPRuleHandler) Handle(ctx context.Context, cmd UpdateIPRuleComman
 
 	r.Update(cmd.IPAddress, cmd.Action, cmd.Reason, cmd.ExpiresAt)
 
-	if err := h.repo.Update(ctx, r); err != nil {
-		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "UpdateIPRule", Entity: "ip_rule", EntityID: cmd.ID.String(), Err: err}.KV()...)
-		return apperrors.MapToServiceError(err)
-	}
-
-	if err := h.eventBus.Publish(ctx, r.Events()...); err != nil {
-		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "UpdateIPRule", Entity: "ip_rule", EntityID: cmd.ID.String(), Err: err}.KV()...)
-	}
-
-	return nil
+	return h.committer.Commit(ctx, func(ctx context.Context) error {
+		if err := h.repo.Update(ctx, r); err != nil {
+			h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "UpdateIPRule", Entity: "ip_rule", EntityID: cmd.ID.String(), Err: err}.KV()...)
+			return apperrors.MapToServiceError(err)
+		}
+		return nil
+	}, r.Events)
 }

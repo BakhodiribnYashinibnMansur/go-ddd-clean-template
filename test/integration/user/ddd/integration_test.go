@@ -8,6 +8,7 @@ import (
 	shared "gct/internal/kernel/domain"
 	"gct/internal/kernel/infrastructure/eventbus"
 	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/outbox"
 	"gct/internal/context/iam/generic/user"
 	"gct/internal/context/iam/generic/user/application/command"
 	"gct/internal/context/iam/generic/user/application/query"
@@ -27,7 +28,7 @@ func newTestBC(t *testing.T) *user.BoundedContext {
 	t.Helper()
 	eb := eventbus.NewInMemoryEventBus()
 	l := logger.New("error")
-	return user.NewBoundedContext(testPool, eb, l, newTestJWTConfig(t))
+	return user.NewBoundedContext(testPool, eb, outbox.NewEventCommitter(testPool, nil, eb, l), l, newTestJWTConfig(t))
 }
 
 // ---------------------------------------------------------------------------
@@ -267,7 +268,7 @@ func TestIntegration_SignUp_SignIn_SignOut(t *testing.T) {
 	})
 
 	l := logger.New("error")
-	bc := user.NewBoundedContext(testPool, eb, l, newTestJWTConfig(t))
+	bc := user.NewBoundedContext(testPool, eb, outbox.NewEventCommitter(testPool, nil, eb, l), l, newTestJWTConfig(t))
 	ctx := context.Background()
 
 	// Sign Up
@@ -384,7 +385,7 @@ func TestIntegration_EventBus_PublishesOnCreate(t *testing.T) {
 	})
 
 	l := logger.New("error")
-	bc := user.NewBoundedContext(testPool, eb, l, newTestJWTConfig(t))
+	bc := user.NewBoundedContext(testPool, eb, outbox.NewEventCommitter(testPool, nil, eb, l), l, newTestJWTConfig(t))
 	ctx := context.Background()
 
 	err := bc.CreateUser.Handle(ctx, command.CreateUserCommand{

@@ -4,8 +4,8 @@ import (
 	"gct/internal/context/ops/generic/ratelimit/application/command"
 	"gct/internal/context/ops/generic/ratelimit/application/query"
 	"gct/internal/context/ops/generic/ratelimit/infrastructure/postgres"
-	"gct/internal/kernel/application"
 	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/outbox"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -23,13 +23,13 @@ type BoundedContext struct {
 }
 
 // NewBoundedContext creates a fully wired RateLimit bounded context.
-func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, l logger.Log) *BoundedContext {
+func NewBoundedContext(pool *pgxpool.Pool, committer *outbox.EventCommitter, l logger.Log) *BoundedContext {
 	writeRepo := postgres.NewRateLimitWriteRepo(pool)
 	readRepo := postgres.NewRateLimitReadRepo(pool)
 
 	return &BoundedContext{
-		CreateRateLimit: command.NewCreateRateLimitHandler(writeRepo, eventBus, l),
-		UpdateRateLimit: command.NewUpdateRateLimitHandler(writeRepo, eventBus, l),
+		CreateRateLimit: command.NewCreateRateLimitHandler(writeRepo, committer, l),
+		UpdateRateLimit: command.NewUpdateRateLimitHandler(writeRepo, committer, l),
 		DeleteRateLimit: command.NewDeleteRateLimitHandler(writeRepo, l),
 		GetRateLimit:    query.NewGetRateLimitHandler(readRepo, l),
 		ListRateLimits:  query.NewListRateLimitsHandler(readRepo, l),

@@ -8,6 +8,7 @@ import (
 
 	ffentity "gct/internal/context/admin/generic/featureflag/domain/entity"
 
+	"gct/internal/kernel/outbox"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -28,7 +29,7 @@ func TestUpdateRuleGroupHandler_Handle(t *testing.T) {
 		},
 	}
 	eb := &mockEventBus{}
-	handler := NewUpdateRuleGroupHandler(rgRepo, eb, &mockLogger{})
+	handler := NewUpdateRuleGroupHandler(rgRepo, outbox.NewEventCommitter(nil, nil, eb, &mockLogger{}), &mockLogger{})
 
 	newName := "new-name"
 	newVariation := "true"
@@ -72,7 +73,7 @@ func TestUpdateRuleGroupHandler_Handle_WithConditions(t *testing.T) {
 			return rg, nil
 		},
 	}
-	handler := NewUpdateRuleGroupHandler(rgRepo, &mockEventBus{}, &mockLogger{})
+	handler := NewUpdateRuleGroupHandler(rgRepo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	conditions := []ConditionInput{
 		{Attribute: "plan", Operator: "eq", Value: "premium"},
@@ -109,7 +110,7 @@ func TestUpdateRuleGroupHandler_Handle_InvalidOperator(t *testing.T) {
 			return rg, nil
 		},
 	}
-	handler := NewUpdateRuleGroupHandler(rgRepo, &mockEventBus{}, &mockLogger{})
+	handler := NewUpdateRuleGroupHandler(rgRepo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	conditions := []ConditionInput{
 		{Attribute: "plan", Operator: "bad_op", Value: "premium"},
@@ -130,7 +131,7 @@ func TestUpdateRuleGroupHandler_Handle_NotFound(t *testing.T) {
 	t.Parallel()
 
 	rgRepo := &mockRuleGroupRepo{} // default returns ErrRuleGroupNotFound
-	handler := NewUpdateRuleGroupHandler(rgRepo, &mockEventBus{}, &mockLogger{})
+	handler := NewUpdateRuleGroupHandler(rgRepo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	err := handler.Handle(context.Background(), UpdateRuleGroupCommand{ID: ffentity.RuleGroupID(uuid.New())})
 	if err == nil {
@@ -157,7 +158,7 @@ func TestUpdateRuleGroupHandler_Handle_UpdateRepoError(t *testing.T) {
 			return repoErr
 		},
 	}
-	handler := NewUpdateRuleGroupHandler(rgRepo, &mockEventBus{}, &mockLogger{})
+	handler := NewUpdateRuleGroupHandler(rgRepo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	err := handler.Handle(context.Background(), UpdateRuleGroupCommand{ID: ffentity.RuleGroupID(rgID)})
 	if err == nil {

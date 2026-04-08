@@ -7,6 +7,7 @@ import (
 
 	ratelimitentity "gct/internal/context/ops/generic/ratelimit/domain/entity"
 	ratelimitrepo "gct/internal/context/ops/generic/ratelimit/domain/repository"
+	"gct/internal/kernel/outbox"
 )
 
 // --- Error mocks ---
@@ -51,7 +52,7 @@ func TestCreateRateLimitHandler_RepoError(t *testing.T) {
 	t.Parallel()
 
 	repo := &errorRateLimitRepo{saveErr: errRepoSave}
-	handler := NewCreateRateLimitHandler(repo, &mockEventBus{}, &mockLogger{})
+	handler := NewCreateRateLimitHandler(repo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	err := handler.Handle(context.Background(), CreateRateLimitCommand{
 		Name: "test", Rule: "/r", RequestsPerWindow: 10, WindowDuration: 30,
@@ -70,7 +71,7 @@ func TestUpdateRateLimitHandler_RepoUpdateError(t *testing.T) {
 		findFn:    func(_ context.Context, _ ratelimitentity.RateLimitID) (*ratelimitentity.RateLimit, error) { return rl, nil },
 		updateErr: errRepoUpdate,
 	}
-	handler := NewUpdateRateLimitHandler(repo, &mockEventBus{}, &mockLogger{})
+	handler := NewUpdateRateLimitHandler(repo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	err := handler.Handle(context.Background(), UpdateRateLimitCommand{ID: ratelimitentity.RateLimitID(rl.ID())})
 	if !errors.Is(err, errRepoUpdate) {

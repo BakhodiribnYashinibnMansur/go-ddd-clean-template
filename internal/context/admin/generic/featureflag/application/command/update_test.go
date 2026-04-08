@@ -7,6 +7,7 @@ import (
 
 	ffentity "gct/internal/context/admin/generic/featureflag/domain/entity"
 
+	"gct/internal/kernel/outbox"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -24,7 +25,7 @@ func TestUpdateHandler_Handle(t *testing.T) {
 		},
 	}
 	eb := &mockEventBus{}
-	handler := NewUpdateHandler(flagRepo, eb, &mockLogger{})
+	handler := NewUpdateHandler(flagRepo, outbox.NewEventCommitter(nil, nil, eb, &mockLogger{}), &mockLogger{})
 
 	newName := "updated-name"
 	newKey := "updated_key"
@@ -60,7 +61,7 @@ func TestUpdateHandler_Handle_PartialUpdate(t *testing.T) {
 			return newReconstructedFlag(flagID), nil
 		},
 	}
-	handler := NewUpdateHandler(flagRepo, &mockEventBus{}, &mockLogger{})
+	handler := NewUpdateHandler(flagRepo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	newDesc := "new description"
 	err := handler.Handle(context.Background(), UpdateCommand{
@@ -85,7 +86,7 @@ func TestUpdateHandler_Handle_NotFound(t *testing.T) {
 	t.Parallel()
 
 	flagRepo := &mockFeatureFlagRepo{} // default returns ErrFeatureFlagNotFound
-	handler := NewUpdateHandler(flagRepo, &mockEventBus{}, &mockLogger{})
+	handler := NewUpdateHandler(flagRepo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	err := handler.Handle(context.Background(), UpdateCommand{ID: ffentity.FeatureFlagID(uuid.New())})
 	if err == nil {
@@ -109,7 +110,7 @@ func TestUpdateHandler_Handle_UpdateRepoError(t *testing.T) {
 			return repoErr
 		},
 	}
-	handler := NewUpdateHandler(flagRepo, &mockEventBus{}, &mockLogger{})
+	handler := NewUpdateHandler(flagRepo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	err := handler.Handle(context.Background(), UpdateCommand{ID: ffentity.FeatureFlagID(flagID)})
 	if err == nil {
@@ -129,7 +130,7 @@ func TestUpdateHandler_Handle_ToggleActive(t *testing.T) {
 			return newReconstructedFlag(flagID), nil
 		},
 	}
-	handler := NewUpdateHandler(flagRepo, &mockEventBus{}, &mockLogger{})
+	handler := NewUpdateHandler(flagRepo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	isActive := false
 	err := handler.Handle(context.Background(), UpdateCommand{

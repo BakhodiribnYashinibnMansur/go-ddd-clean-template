@@ -57,7 +57,7 @@ func (r *MetricWriteRepo) Save(ctx context.Context, fm *metricentity.FunctionMet
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildInsert)
 	}
 
-	if _, err = r.pool.Exec(ctx, sql, args...); err != nil {
+	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 

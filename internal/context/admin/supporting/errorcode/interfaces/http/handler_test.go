@@ -17,6 +17,8 @@ import (
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
+	"gct/internal/kernel/outbox"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -105,9 +107,9 @@ func setupRouter(repo *mockRepo, readRepo *mockReadRepo) *gin.Engine {
 	l := &mockLogger{}
 
 	bc := &errorcode.BoundedContext{
-		CreateErrorCode: command.NewCreateErrorCodeHandler(repo, eb, l),
-		UpdateErrorCode: command.NewUpdateErrorCodeHandler(repo, eb, l),
-		DeleteErrorCode: command.NewDeleteErrorCodeHandler(repo, eb, l),
+		CreateErrorCode: command.NewCreateErrorCodeHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l),
+		UpdateErrorCode: command.NewUpdateErrorCodeHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l),
+		DeleteErrorCode: command.NewDeleteErrorCodeHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l),
 		GetErrorCode:    query.NewGetErrorCodeHandler(readRepo, l),
 		ListErrorCodes:  query.NewListErrorCodesHandler(readRepo, l),
 	}

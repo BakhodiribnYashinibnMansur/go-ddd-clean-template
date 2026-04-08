@@ -6,6 +6,8 @@ import (
 
 	errcodeentity "gct/internal/context/admin/supporting/errorcode/domain/entity"
 
+	"gct/internal/kernel/outbox"
+
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -24,7 +26,7 @@ func TestUpdateErrorCodeHandler_Handle(t *testing.T) {
 		},
 	}
 	eb := &mockEventBus{}
-	handler := NewUpdateErrorCodeHandler(repo, eb, &mockLogger{})
+	handler := NewUpdateErrorCodeHandler(repo, outbox.NewEventCommitter(nil, nil, eb, &mockLogger{}), &mockLogger{})
 
 	cmd := UpdateErrorCodeCommand{
 		ID:         errcodeentity.ErrorCodeID(ec.ID()),
@@ -72,7 +74,7 @@ func TestUpdateErrorCodeHandler_NotFound(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockErrorCodeRepo{}
-	handler := NewUpdateErrorCodeHandler(repo, &mockEventBus{}, &mockLogger{})
+	handler := NewUpdateErrorCodeHandler(repo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	err := handler.Handle(context.Background(), UpdateErrorCodeCommand{
 		ID: errcodeentity.ErrorCodeID(uuid.New()), Message: "m", HTTPStatus: 500, Category: "c", Severity: "s",

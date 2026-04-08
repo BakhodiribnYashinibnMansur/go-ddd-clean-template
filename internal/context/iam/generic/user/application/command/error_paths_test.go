@@ -8,6 +8,7 @@ import (
 	userentity "gct/internal/context/iam/generic/user/domain/entity"
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
+	"gct/internal/kernel/outbox"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -66,7 +67,7 @@ func TestCreateUserHandler_RepoSaveError(t *testing.T) {
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewCreateUserHandler(repo, eventBus, log)
+	handler := NewCreateUserHandler(repo, outbox.NewEventCommitter(nil, nil, eventBus, log), log)
 
 	err := handler.Handle(context.Background(), CreateUserCommand{
 		Phone:    "+998901234567",
@@ -113,7 +114,7 @@ func TestUpdateUserHandler_RepoUpdateError(t *testing.T) {
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewUpdateUserHandler(repo, eventBus, log)
+	handler := NewUpdateUserHandler(repo, outbox.NewEventCommitter(nil, nil, eventBus, log), log)
 
 	newName := "updated"
 	err := handler.Handle(context.Background(), UpdateUserCommand{
@@ -155,7 +156,7 @@ func TestDeleteUserHandler_RepoUpdateError(t *testing.T) {
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewDeleteUserHandler(repo, eventBus, log)
+	handler := NewDeleteUserHandler(repo, outbox.NewEventCommitter(nil, nil, eventBus, log), log)
 
 	err := handler.Handle(context.Background(), DeleteUserCommand{ID: userentity.UserID(user.ID())})
 	if !errors.Is(err, errRepoUpdate) {
@@ -196,7 +197,7 @@ func TestCreateUserHandler_EventPublishError_StillSucceeds(t *testing.T) {
 	eventBus := &errorEventBus{err: errEventPublish}
 	log := &mockLogger{}
 
-	handler := NewCreateUserHandler(repo, eventBus, log)
+	handler := NewCreateUserHandler(repo, outbox.NewEventCommitter(nil, nil, eventBus, log), log)
 
 	err := handler.Handle(context.Background(), CreateUserCommand{
 		Phone:    "+998901234567",
@@ -223,7 +224,7 @@ func TestCreateUserHandler_CancelledContext(t *testing.T) {
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewCreateUserHandler(repo, eventBus, log)
+	handler := NewCreateUserHandler(repo, outbox.NewEventCommitter(nil, nil, eventBus, log), log)
 
 	// The handler itself doesn't check ctx, but the repo.Save might.
 	// With our mock, it will succeed. This tests that the handler passes ctx through.
@@ -252,7 +253,7 @@ func TestSignInHandler_RepoUpdateError(t *testing.T) {
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewSignInHandler(repo, eventBus, log, testJWTConfig(t))
+	handler := NewSignInHandler(repo, outbox.NewEventCommitter(nil, nil, eventBus, log), log, testJWTConfig(t))
 
 	_, err := handler.Handle(context.Background(), SignInCommand{
 		Login:      "+998901234567",

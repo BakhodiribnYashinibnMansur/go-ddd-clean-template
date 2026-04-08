@@ -306,7 +306,7 @@ func (r *UserWriteRepo) Delete(ctx context.Context, id userentity.UserID) (err e
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildDelete)
 	}
 
-	if _, err = r.pool.Exec(ctx, sql, args...); err != nil {
+	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, usersTable, nil)
 	}
 	return nil

@@ -4,8 +4,8 @@ import (
 	"gct/internal/context/content/supporting/announcement/application/command"
 	"gct/internal/context/content/supporting/announcement/application/query"
 	"gct/internal/context/content/supporting/announcement/infrastructure/postgres"
-	"gct/internal/kernel/application"
 	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/outbox"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -23,13 +23,13 @@ type BoundedContext struct {
 }
 
 // NewBoundedContext creates a fully wired Announcement bounded context.
-func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, l logger.Log) *BoundedContext {
+func NewBoundedContext(pool *pgxpool.Pool, committer *outbox.EventCommitter, l logger.Log) *BoundedContext {
 	writeRepo := postgres.NewAnnouncementWriteRepo(pool)
 	readRepo := postgres.NewAnnouncementReadRepo(pool)
 
 	return &BoundedContext{
-		CreateAnnouncement: command.NewCreateAnnouncementHandler(writeRepo, eventBus, l),
-		UpdateAnnouncement: command.NewUpdateAnnouncementHandler(writeRepo, eventBus, l),
+		CreateAnnouncement: command.NewCreateAnnouncementHandler(writeRepo, committer, l),
+		UpdateAnnouncement: command.NewUpdateAnnouncementHandler(writeRepo, committer, l),
 		DeleteAnnouncement: command.NewDeleteAnnouncementHandler(writeRepo, l),
 		GetAnnouncement:    query.NewGetAnnouncementHandler(readRepo, l),
 		ListAnnouncements:  query.NewListAnnouncementsHandler(readRepo, l),

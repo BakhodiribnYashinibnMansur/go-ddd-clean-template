@@ -9,6 +9,8 @@ import (
 	exportentity "gct/internal/context/admin/supporting/dataexport/domain/entity"
 	shared "gct/internal/kernel/domain"
 
+	"gct/internal/kernel/outbox"
+
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -19,7 +21,7 @@ func TestCreateDataExportHandler_Success(t *testing.T) {
 	repo := &mockWriteRepo{}
 	eb := &mockEventBus{}
 	l := &mockLogger{}
-	h := command.NewCreateDataExportHandler(repo, eb, l)
+	h := command.NewCreateDataExportHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l)
 
 	cmd := command.CreateDataExportCommand{
 		UserID:   uuid.New(),
@@ -64,7 +66,7 @@ func TestCreateDataExportHandler_RepoSaveError(t *testing.T) {
 	}
 	eb := &mockEventBus{}
 	l := &mockLogger{}
-	h := command.NewCreateDataExportHandler(repo, eb, l)
+	h := command.NewCreateDataExportHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l)
 
 	cmd := command.CreateDataExportCommand{
 		UserID:   uuid.New(),
@@ -94,7 +96,7 @@ func TestCreateDataExportHandler_EventBusError(t *testing.T) {
 		},
 	}
 	l := &mockLogger{}
-	h := command.NewCreateDataExportHandler(repo, eb, l)
+	h := command.NewCreateDataExportHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l)
 
 	cmd := command.CreateDataExportCommand{
 		UserID:   uuid.New(),

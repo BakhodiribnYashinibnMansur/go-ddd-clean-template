@@ -17,6 +17,8 @@ import (
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
+	"gct/internal/kernel/outbox"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -108,8 +110,8 @@ func setupRouter(repo *mockRepo, readRepo *mockReadRepo) *gin.Engine {
 	l := &mockLogger{}
 
 	bc := &iprule.BoundedContext{
-		CreateIPRule: command.NewCreateIPRuleHandler(repo, eb, l),
-		UpdateIPRule: command.NewUpdateIPRuleHandler(repo, eb, l),
+		CreateIPRule: command.NewCreateIPRuleHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l),
+		UpdateIPRule: command.NewUpdateIPRuleHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l),
 		DeleteIPRule: command.NewDeleteIPRuleHandler(repo, l),
 		GetIPRule:    query.NewGetIPRuleHandler(readRepo, l),
 		ListIPRules:  query.NewListIPRulesHandler(readRepo, l),

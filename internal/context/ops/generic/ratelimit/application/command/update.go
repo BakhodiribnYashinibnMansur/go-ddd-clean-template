@@ -5,10 +5,10 @@ import (
 
 	ratelimitentity "gct/internal/context/ops/generic/ratelimit/domain/entity"
 	ratelimitrepo "gct/internal/context/ops/generic/ratelimit/domain/repository"
-	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
+	"gct/internal/kernel/outbox"
 )
 
 // UpdateRateLimitCommand holds the input for updating a rate limit.
@@ -23,21 +23,21 @@ type UpdateRateLimitCommand struct {
 
 // UpdateRateLimitHandler handles the UpdateRateLimitCommand.
 type UpdateRateLimitHandler struct {
-	repo     ratelimitrepo.RateLimitRepository
-	eventBus application.EventBus
-	logger   logger.Log
+	repo      ratelimitrepo.RateLimitRepository
+	committer *outbox.EventCommitter
+	logger    logger.Log
 }
 
 // NewUpdateRateLimitHandler creates a new UpdateRateLimitHandler.
 func NewUpdateRateLimitHandler(
 	repo ratelimitrepo.RateLimitRepository,
-	eventBus application.EventBus,
+	committer *outbox.EventCommitter,
 	logger logger.Log,
 ) *UpdateRateLimitHandler {
 	return &UpdateRateLimitHandler{
-		repo:     repo,
-		eventBus: eventBus,
-		logger:   logger,
+		repo:      repo,
+		committer: committer,
+		logger:    logger,
 	}
 }
 
@@ -54,14 +54,11 @@ func (h *UpdateRateLimitHandler) Handle(ctx context.Context, cmd UpdateRateLimit
 
 	rl.Update(cmd.Name, cmd.Rule, cmd.RequestsPerWindow, cmd.WindowDuration, cmd.Enabled)
 
-	if err := h.repo.Update(ctx, rl); err != nil {
-		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "UpdateRateLimit", Entity: "rate_limit", EntityID: cmd.ID, Err: err}.KV()...)
-		return apperrors.MapToServiceError(err)
-	}
-
-	if err := h.eventBus.Publish(ctx, rl.Events()...); err != nil {
-		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "UpdateRateLimit", Entity: "rate_limit", EntityID: cmd.ID, Err: err}.KV()...)
-	}
-
-	return nil
+	return h.committer.Commit(ctx, func(ctx context.Context) error {
+		if err := h.repo.Update(ctx, rl); err != nil {
+			h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "UpdateRateLimit", Entity: "rate_limit", EntityID: cmd.ID, Err: err}.KV()...)
+			return apperrors.MapToServiceError(err)
+		}
+		return nil
+	}, rl.Events)
 }

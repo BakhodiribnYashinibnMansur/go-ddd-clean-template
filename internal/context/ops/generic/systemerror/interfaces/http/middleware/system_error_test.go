@@ -15,6 +15,8 @@ import (
 	syserrentity "gct/internal/context/ops/generic/systemerror/domain/entity"
 	syserrrepo "gct/internal/context/ops/generic/systemerror/domain/repository"
 
+	"gct/internal/kernel/outbox"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -91,7 +93,7 @@ func (m *mockEventBus) Subscribe(_ string, _ application.EventHandler) error    
 // --- Helper ---
 
 func newSystemErrorMiddleware(repo *mockSystemErrorRepo, l logger.Log) *SystemErrorMiddleware {
-	handler := command.NewCreateSystemErrorHandler(repo, &mockEventBus{}, l)
+	handler := command.NewCreateSystemErrorHandler(repo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, l), l)
 	return NewSystemErrorMiddleware(handler, l)
 }
 

@@ -5,10 +5,10 @@ import (
 
 	ratelimitentity "gct/internal/context/ops/generic/ratelimit/domain/entity"
 	ratelimitrepo "gct/internal/context/ops/generic/ratelimit/domain/repository"
-	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
+	"gct/internal/kernel/outbox"
 )
 
 // CreateRateLimitCommand holds the input for creating a new rate limit.
@@ -22,21 +22,21 @@ type CreateRateLimitCommand struct {
 
 // CreateRateLimitHandler handles the CreateRateLimitCommand.
 type CreateRateLimitHandler struct {
-	repo     ratelimitrepo.RateLimitRepository
-	eventBus application.EventBus
-	logger   logger.Log
+	repo      ratelimitrepo.RateLimitRepository
+	committer *outbox.EventCommitter
+	logger    logger.Log
 }
 
 // NewCreateRateLimitHandler creates a new CreateRateLimitHandler.
 func NewCreateRateLimitHandler(
 	repo ratelimitrepo.RateLimitRepository,
-	eventBus application.EventBus,
+	committer *outbox.EventCommitter,
 	logger logger.Log,
 ) *CreateRateLimitHandler {
 	return &CreateRateLimitHandler{
-		repo:     repo,
-		eventBus: eventBus,
-		logger:   logger,
+		repo:      repo,
+		committer: committer,
+		logger:    logger,
 	}
 }
 
@@ -48,14 +48,11 @@ func (h *CreateRateLimitHandler) Handle(ctx context.Context, cmd CreateRateLimit
 
 	rl := ratelimitentity.NewRateLimit(cmd.Name, cmd.Rule, cmd.RequestsPerWindow, cmd.WindowDuration, cmd.Enabled)
 
-	if err := h.repo.Save(ctx, rl); err != nil {
-		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateRateLimit", Entity: "rate_limit", Err: err}.KV()...)
-		return apperrors.MapToServiceError(err)
-	}
-
-	if err := h.eventBus.Publish(ctx, rl.Events()...); err != nil {
-		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "CreateRateLimit", Entity: "rate_limit", Err: err}.KV()...)
-	}
-
-	return nil
+	return h.committer.Commit(ctx, func(ctx context.Context) error {
+		if err := h.repo.Save(ctx, rl); err != nil {
+			h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateRateLimit", Entity: "rate_limit", Err: err}.KV()...)
+			return apperrors.MapToServiceError(err)
+		}
+		return nil
+	}, rl.Events)
 }

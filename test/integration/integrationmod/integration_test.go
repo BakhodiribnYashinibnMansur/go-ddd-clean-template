@@ -11,6 +11,7 @@ import (
 	integentity "gct/internal/context/admin/supporting/integration/domain/entity"
 	"gct/internal/kernel/infrastructure/eventbus"
 	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/outbox"
 	"gct/test/integration/common/setup"
 )
 
@@ -18,7 +19,7 @@ func newTestBC(t *testing.T) *integration.BoundedContext {
 	t.Helper()
 	eb := eventbus.NewInMemoryEventBus()
 	l := logger.New("error")
-	return integration.NewBoundedContext(setup.TestPG.Pool, eb, nil, 30*time.Second, l)
+	return integration.NewBoundedContext(setup.TestPG.Pool, eb, outbox.NewEventCommitter(setup.TestPG.Pool, nil, eb, l), nil, 30*time.Second, l)
 }
 
 func TestIntegration_CreateAndGetIntegration(t *testing.T) {

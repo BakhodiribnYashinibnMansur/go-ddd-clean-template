@@ -63,7 +63,7 @@ func (r *DataExportWriteRepo) Save(ctx context.Context, de *exportentity.DataExp
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildInsert)
 	}
 
-	if _, err = r.pool.Exec(ctx, sql, args...); err != nil {
+	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 
@@ -90,7 +90,7 @@ func (r *DataExportWriteRepo) Update(ctx context.Context, de *exportentity.DataE
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildUpdate)
 	}
 
-	if _, err = r.pool.Exec(ctx, sql, args...); err != nil {
+	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 
@@ -128,7 +128,7 @@ func (r *DataExportWriteRepo) Delete(ctx context.Context, id exportentity.DataEx
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildDelete)
 	}
 
-	if _, err = r.pool.Exec(ctx, sql, args...); err != nil {
+	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 

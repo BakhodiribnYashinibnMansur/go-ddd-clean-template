@@ -10,6 +10,7 @@ import (
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
+	"gct/internal/kernel/outbox"
 	"github.com/stretchr/testify/require"
 )
 
@@ -89,7 +90,7 @@ func TestCreateSiteSettingHandler_Handle(t *testing.T) {
 	eb := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewCreateSiteSettingHandler(repo, eb, log)
+	handler := NewCreateSiteSettingHandler(repo, outbox.NewEventCommitter(nil, nil, eb, log), log)
 
 	cmd := CreateSiteSettingCommand{
 		Key:         "site_name",
@@ -125,7 +126,7 @@ func TestCreateSiteSettingHandler_MinimalFields(t *testing.T) {
 	eb := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewCreateSiteSettingHandler(repo, eb, log)
+	handler := NewCreateSiteSettingHandler(repo, outbox.NewEventCommitter(nil, nil, eb, log), log)
 
 	err := handler.Handle(context.Background(), CreateSiteSettingCommand{
 		Key:   "maintenance_mode",
@@ -149,7 +150,7 @@ func TestCreateSiteSettingHandler_RepoError(t *testing.T) {
 	eb := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewCreateSiteSettingHandler(errR, eb, log)
+	handler := NewCreateSiteSettingHandler(errR, outbox.NewEventCommitter(nil, nil, eb, log), log)
 	err := handler.Handle(context.Background(), CreateSiteSettingCommand{
 		Key: "k", Value: "v", Type: "t",
 	})

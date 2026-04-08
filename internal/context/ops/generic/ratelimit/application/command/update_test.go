@@ -6,6 +6,8 @@ import (
 
 	ratelimitentity "gct/internal/context/ops/generic/ratelimit/domain/entity"
 
+	"gct/internal/kernel/outbox"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -23,7 +25,7 @@ func TestUpdateRateLimitHandler_Handle(t *testing.T) {
 		},
 	}
 	eb := &mockEventBus{}
-	handler := NewUpdateRateLimitHandler(repo, eb, &mockLogger{})
+	handler := NewUpdateRateLimitHandler(repo, outbox.NewEventCommitter(nil, nil, eb, &mockLogger{}), &mockLogger{})
 
 	newName := "new-name"
 	newRequests := 200
@@ -72,7 +74,7 @@ func TestUpdateRateLimitHandler_PartialUpdate(t *testing.T) {
 			return rl, nil
 		},
 	}
-	handler := NewUpdateRateLimitHandler(repo, &mockEventBus{}, &mockLogger{})
+	handler := NewUpdateRateLimitHandler(repo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	newWindow := 120
 	err := handler.Handle(context.Background(), UpdateRateLimitCommand{
@@ -92,7 +94,7 @@ func TestUpdateRateLimitHandler_NotFound(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockRateLimitRepo{}
-	handler := NewUpdateRateLimitHandler(repo, &mockEventBus{}, &mockLogger{})
+	handler := NewUpdateRateLimitHandler(repo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	err := handler.Handle(context.Background(), UpdateRateLimitCommand{ID: ratelimitentity.NewRateLimitID()})
 	if err == nil {

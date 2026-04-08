@@ -11,6 +11,7 @@ import (
 	syserrentity "gct/internal/context/ops/generic/systemerror/domain/entity"
 	syserrrepo "gct/internal/context/ops/generic/systemerror/domain/repository"
 
+	"gct/internal/kernel/outbox"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -87,7 +88,7 @@ func TestCreateSystemErrorHandler_Handle(t *testing.T) {
 	eb := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewCreateSystemErrorHandler(repo, eb, log)
+	handler := NewCreateSystemErrorHandler(repo, outbox.NewEventCommitter(nil, nil, eb, log), log)
 
 	stack := "goroutine 1 [running]:\nmain.main()"
 	svc := "api-gateway"
@@ -142,7 +143,7 @@ func TestCreateSystemErrorHandler_MinimalFields(t *testing.T) {
 	eb := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewCreateSystemErrorHandler(repo, eb, log)
+	handler := NewCreateSystemErrorHandler(repo, outbox.NewEventCommitter(nil, nil, eb, log), log)
 
 	err := handler.Handle(context.Background(), CreateSystemErrorCommand{
 		Code:     "ERR_400",
@@ -179,7 +180,7 @@ func TestResolveErrorHandler_Handle(t *testing.T) {
 	eb := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewResolveErrorHandler(repo, eb, log)
+	handler := NewResolveErrorHandler(repo, outbox.NewEventCommitter(nil, nil, eb, log), log)
 
 	resolverID := uuid.New()
 	err := handler.Handle(context.Background(), ResolveErrorCommand{
@@ -219,7 +220,7 @@ func TestResolveErrorHandler_NotFound(t *testing.T) {
 	eb := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewResolveErrorHandler(repo, eb, log)
+	handler := NewResolveErrorHandler(repo, outbox.NewEventCommitter(nil, nil, eb, log), log)
 
 	err := handler.Handle(context.Background(), ResolveErrorCommand{
 		ID:         syserrentity.NewSystemErrorID(),
@@ -250,7 +251,7 @@ func TestResolveErrorHandler_AlreadyResolved(t *testing.T) {
 	eb := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewResolveErrorHandler(repo, eb, log)
+	handler := NewResolveErrorHandler(repo, outbox.NewEventCommitter(nil, nil, eb, log), log)
 
 	// Should be idempotent
 	err := handler.Handle(context.Background(), ResolveErrorCommand{
@@ -275,7 +276,7 @@ func TestCreateSystemErrorHandler_RepoError(t *testing.T) {
 
 	_ = repo // unused, just to keep the mock available
 
-	handler := NewCreateSystemErrorHandler(repo2, eb, log)
+	handler := NewCreateSystemErrorHandler(repo2, outbox.NewEventCommitter(nil, nil, eb, log), log)
 	err := handler.Handle(context.Background(), CreateSystemErrorCommand{
 		Code: "ERR", Message: "fail", Severity: "low",
 	})
@@ -296,7 +297,7 @@ func TestResolveErrorHandler_RepoUpdateError(t *testing.T) {
 	eb := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewResolveErrorHandler(repo, eb, log)
+	handler := NewResolveErrorHandler(repo, outbox.NewEventCommitter(nil, nil, eb, log), log)
 	err := handler.Handle(context.Background(), ResolveErrorCommand{
 		ID: se.TypedID(), ResolvedBy: uuid.New(),
 	})

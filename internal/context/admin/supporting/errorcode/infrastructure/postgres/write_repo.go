@@ -64,7 +64,7 @@ func (r *ErrorCodeWriteRepo) Save(ctx context.Context, ec *errcodeentity.ErrorCo
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildInsert)
 	}
 
-	if _, err = r.pool.Exec(ctx, sql, args...); err != nil {
+	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 
@@ -94,7 +94,7 @@ func (r *ErrorCodeWriteRepo) Update(ctx context.Context, ec *errcodeentity.Error
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildUpdate)
 	}
 
-	if _, err = r.pool.Exec(ctx, sql, args...); err != nil {
+	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 
@@ -132,7 +132,7 @@ func (r *ErrorCodeWriteRepo) Delete(ctx context.Context, id errcodeentity.ErrorC
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildDelete)
 	}
 
-	if _, err = r.pool.Exec(ctx, sql, args...); err != nil {
+	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 

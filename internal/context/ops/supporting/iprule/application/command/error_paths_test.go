@@ -7,6 +7,7 @@ import (
 
 	ipruleentity "gct/internal/context/ops/supporting/iprule/domain/entity"
 	iprulerepo "gct/internal/context/ops/supporting/iprule/domain/repository"
+	"gct/internal/kernel/outbox"
 )
 
 // --- Error mocks ---
@@ -51,7 +52,7 @@ func TestCreateIPRuleHandler_RepoError(t *testing.T) {
 	t.Parallel()
 
 	repo := &errorIPRuleRepo{saveErr: errRepoSave}
-	handler := NewCreateIPRuleHandler(repo, &mockEventBus{}, &mockLogger{})
+	handler := NewCreateIPRuleHandler(repo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	err := handler.Handle(context.Background(), CreateIPRuleCommand{
 		IPAddress: "1.1.1.1", Action: "DENY", Reason: "test",
@@ -70,7 +71,7 @@ func TestUpdateIPRuleHandler_RepoUpdateError(t *testing.T) {
 		findFn:    func(_ context.Context, _ ipruleentity.IPRuleID) (*ipruleentity.IPRule, error) { return r, nil },
 		updateErr: errRepoUpdate,
 	}
-	handler := NewUpdateIPRuleHandler(repo, &mockEventBus{}, &mockLogger{})
+	handler := NewUpdateIPRuleHandler(repo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	err := handler.Handle(context.Background(), UpdateIPRuleCommand{ID: r.TypedID()})
 	if !errors.Is(err, errRepoUpdate) {

@@ -10,6 +10,8 @@ import (
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
+	"gct/internal/kernel/outbox"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -89,7 +91,7 @@ func TestCreateIPRuleHandler_Handle(t *testing.T) {
 
 	repo := &mockIPRuleRepo{}
 	eb := &mockEventBus{}
-	handler := NewCreateIPRuleHandler(repo, eb, &mockLogger{})
+	handler := NewCreateIPRuleHandler(repo, outbox.NewEventCommitter(nil, nil, eb, &mockLogger{}), &mockLogger{})
 
 	expires := time.Now().Add(24 * time.Hour)
 	cmd := CreateIPRuleCommand{
@@ -130,7 +132,7 @@ func TestCreateIPRuleHandler_PermanentRule(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockIPRuleRepo{}
-	handler := NewCreateIPRuleHandler(repo, &mockEventBus{}, &mockLogger{})
+	handler := NewCreateIPRuleHandler(repo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	err := handler.Handle(context.Background(), CreateIPRuleCommand{
 		IPAddress: "10.0.0.1",

@@ -17,6 +17,9 @@ import (
 
 var _ application.EventBus = (*RedisStreamsEventBus)(nil)
 
+// Compile-time check: RedisStreamsEventBus implements outbox.RawPublisher.
+// Imported indirectly — the outbox package defines the interface; we satisfy it here.
+
 // RedisStreamsEventBus implements EventBus using Redis Streams for persistence
 // and Redis Pub/Sub for instant signaling.
 type RedisStreamsEventBus struct {
@@ -112,6 +115,25 @@ func (b *RedisStreamsEventBus) Subscribe(eventName string, handler application.E
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	b.handlers[eventName] = append(b.handlers[eventName], handler)
+	return nil
+}
+
+// PublishRaw writes a pre-serialized event payload to the Redis Stream and
+// sends a Pub/Sub signal. It does NOT call local handlers — the relay uses
+// this method to forward outbox entries to the transport layer only.
+// This satisfies the outbox.RawPublisher interface.
+func (b *RedisStreamsEventBus) PublishRaw(ctx context.Context, eventName string, payload []byte) error {
+	_, err := b.client.XAdd(ctx, &redis.XAddArgs{
+		Stream: streamKey(eventName),
+		MaxLen: b.maxLen,
+		Approx: true,
+		Values: map[string]any{"data": string(payload)},
+	}).Result()
+	if err != nil {
+		return fmt.Errorf("eventbus.PublishRaw XADD %s: %w", eventName, err)
+	}
+
+	b.client.Publish(ctx, signalChannel(eventName), "new")
 	return nil
 }
 

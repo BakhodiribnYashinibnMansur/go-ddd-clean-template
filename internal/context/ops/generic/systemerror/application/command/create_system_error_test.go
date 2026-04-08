@@ -6,6 +6,7 @@ import (
 
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
+	"gct/internal/kernel/outbox"
 	"gct/internal/context/ops/generic/systemerror/application/command"
 	syserrentity "gct/internal/context/ops/generic/systemerror/domain/entity"
 	syserrrepo "gct/internal/context/ops/generic/systemerror/domain/repository"
@@ -70,7 +71,7 @@ func TestCreateSystemErrorHandler_Handle(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockSystemErrorRepo{}
-	handler := command.NewCreateSystemErrorHandler(repo, &mockEventBus{}, &mockLogger{})
+	handler := command.NewCreateSystemErrorHandler(repo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	cmd := command.CreateSystemErrorCommand{
 		Code:     "DB_CONNECTION_FAILED",

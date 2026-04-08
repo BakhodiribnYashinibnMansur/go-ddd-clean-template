@@ -7,6 +7,7 @@ import (
 
 	siteentity "gct/internal/context/admin/supporting/sitesetting/domain/entity"
 
+	"gct/internal/kernel/outbox"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -27,7 +28,7 @@ func TestUpdateSiteSettingHandler_Handle(t *testing.T) {
 	eb := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewUpdateSiteSettingHandler(repo, eb, log)
+	handler := NewUpdateSiteSettingHandler(repo, outbox.NewEventCommitter(nil, nil, eb, log), log)
 
 	newValue := "new_value"
 	newDesc := "new desc"
@@ -72,7 +73,7 @@ func TestUpdateSiteSettingHandler_NotFound(t *testing.T) {
 	eb := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewUpdateSiteSettingHandler(repo, eb, log)
+	handler := NewUpdateSiteSettingHandler(repo, outbox.NewEventCommitter(nil, nil, eb, log), log)
 
 	newVal := "v"
 	err := handler.Handle(context.Background(), UpdateSiteSettingCommand{
@@ -97,7 +98,7 @@ func TestUpdateSiteSettingHandler_RepoUpdateError(t *testing.T) {
 	eb := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewUpdateSiteSettingHandler(errR, eb, log)
+	handler := NewUpdateSiteSettingHandler(errR, outbox.NewEventCommitter(nil, nil, eb, log), log)
 
 	newVal := "new"
 	err := handler.Handle(context.Background(), UpdateSiteSettingCommand{

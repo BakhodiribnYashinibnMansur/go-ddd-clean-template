@@ -7,6 +7,8 @@ import (
 
 	errcodeentity "gct/internal/context/admin/supporting/errorcode/domain/entity"
 
+	"gct/internal/kernel/outbox"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -24,7 +26,7 @@ func TestDeleteErrorCodeHandler_Handle(t *testing.T) {
 		},
 	}
 	eb := &mockEventBus{}
-	handler := NewDeleteErrorCodeHandler(repo, eb, &mockLogger{})
+	handler := NewDeleteErrorCodeHandler(repo, outbox.NewEventCommitter(nil, nil, eb, &mockLogger{}), &mockLogger{})
 
 	err := handler.Handle(context.Background(), DeleteErrorCodeCommand{ID: errcodeentity.ErrorCodeID(id)})
 	require.NoError(t, err)

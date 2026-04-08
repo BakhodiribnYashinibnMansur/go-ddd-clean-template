@@ -15,6 +15,8 @@ import (
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
+	"gct/internal/kernel/outbox"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -152,10 +154,10 @@ func newBC(repo *mockUserRepo, readRepo *mockReadRepo) *user.BoundedContext {
 	eb := &mockEventBus{}
 	l := &mockLogger{}
 	return &user.BoundedContext{
-		CreateUser:  command.NewCreateUserHandler(repo, eb, l),
-		UpdateUser:  command.NewUpdateUserHandler(repo, eb, l),
-		DeleteUser:  command.NewDeleteUserHandler(repo, eb, l),
-		SignIn:      command.NewSignInHandler(repo, eb, l, command.JWTConfig{}),
+		CreateUser:  command.NewCreateUserHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l),
+		UpdateUser:  command.NewUpdateUserHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l),
+		DeleteUser:  command.NewDeleteUserHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l),
+		SignIn:      command.NewSignInHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l, command.JWTConfig{}),
 		SignUp:      command.NewSignUpHandler(repo, eb, l),
 		SignOut:     command.NewSignOutHandler(repo, eb, l),
 		ApproveUser: command.NewApproveUserHandler(repo, eb, l),

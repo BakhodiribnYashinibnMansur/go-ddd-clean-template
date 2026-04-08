@@ -7,6 +7,7 @@ import (
 	"gct/internal/context/iam/generic/user/application/command"
 	"gct/internal/kernel/application"
 	"gct/internal/kernel/domain"
+	"gct/internal/kernel/outbox"
 )
 
 type mockEventBus struct{}
@@ -39,7 +40,9 @@ func (m *mockLogger) Fatalc(_ context.Context, _ string, _ ...any) {}
 
 func TestNewBoundedContext(t *testing.T) {
 	jwtCfg := command.JWTConfig{} // zero-value config is fine for wiring test
-	bc := NewBoundedContext(nil, &mockEventBus{}, &mockLogger{}, jwtCfg)
+	eb := &mockEventBus{}
+	l := &mockLogger{}
+	bc := NewBoundedContext(nil, eb, outbox.NewEventCommitter(nil, nil, eb, l), l, jwtCfg)
 	if bc == nil {
 		t.Fatal("expected non-nil BoundedContext")
 	}

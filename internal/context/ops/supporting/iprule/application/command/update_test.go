@@ -6,6 +6,8 @@ import (
 
 	ipruleentity "gct/internal/context/ops/supporting/iprule/domain/entity"
 
+	"gct/internal/kernel/outbox"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -23,7 +25,7 @@ func TestUpdateIPRuleHandler_Handle(t *testing.T) {
 		},
 	}
 	eb := &mockEventBus{}
-	handler := NewUpdateIPRuleHandler(repo, eb, &mockLogger{})
+	handler := NewUpdateIPRuleHandler(repo, outbox.NewEventCommitter(nil, nil, eb, &mockLogger{}), &mockLogger{})
 
 	newIP := "10.0.0.1"
 	newAction := "ALLOW"
@@ -61,7 +63,7 @@ func TestUpdateIPRuleHandler_PartialUpdate(t *testing.T) {
 			return r, nil
 		},
 	}
-	handler := NewUpdateIPRuleHandler(repo, &mockEventBus{}, &mockLogger{})
+	handler := NewUpdateIPRuleHandler(repo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	newReason := "updated reason"
 	err := handler.Handle(context.Background(), UpdateIPRuleCommand{
@@ -84,7 +86,7 @@ func TestUpdateIPRuleHandler_NotFound(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockIPRuleRepo{}
-	handler := NewUpdateIPRuleHandler(repo, &mockEventBus{}, &mockLogger{})
+	handler := NewUpdateIPRuleHandler(repo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	err := handler.Handle(context.Background(), UpdateIPRuleCommand{ID: ipruleentity.NewIPRuleID()})
 	if err == nil {

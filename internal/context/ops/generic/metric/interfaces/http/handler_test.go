@@ -17,6 +17,8 @@ import (
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
+	"gct/internal/kernel/outbox"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -83,7 +85,7 @@ func setupRouter(repo *mockRepo, readRepo *mockReadRepo) *gin.Engine {
 	l := &mockLogger{}
 
 	bc := &metric.BoundedContext{
-		RecordMetric: command.NewRecordMetricHandler(repo, eb, l),
+		RecordMetric: command.NewRecordMetricHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l),
 		ListMetrics:  query.NewListMetricsHandler(readRepo, l),
 	}
 

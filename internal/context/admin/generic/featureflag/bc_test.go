@@ -6,6 +6,7 @@ import (
 
 	"gct/internal/kernel/application"
 	"gct/internal/kernel/domain"
+	"gct/internal/kernel/outbox"
 )
 
 type mockEventBus struct{}
@@ -47,7 +48,9 @@ func TestNewBoundedContext_NilPool(t *testing.T) {
 	}()
 
 	ctx := context.Background()
-	bc, err := NewBoundedContext(ctx, nil, &mockEventBus{}, &mockLogger{})
+	eb := &mockEventBus{}
+	l := &mockLogger{}
+	bc, err := NewBoundedContext(ctx, nil, eb, outbox.NewEventCommitter(nil, nil, eb, l), l)
 	if err != nil {
 		// Expected: constructor returns error because CachedEvaluator cannot load flags with nil pool.
 		t.Logf("NewBoundedContext returned expected error with nil pool: %v", err)

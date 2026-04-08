@@ -73,7 +73,7 @@ func (r *RoleWriteRepo) Save(ctx context.Context, role *authzentity.Role) (err e
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildInsert)
 	}
 
-	if _, err = r.pool.Exec(ctx, sql, args...); err != nil {
+	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, roleTable, nil)
 	}
 	return nil
@@ -113,7 +113,7 @@ func (r *RoleWriteRepo) Update(ctx context.Context, role *authzentity.Role) (err
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildUpdate)
 	}
 
-	if _, err = r.pool.Exec(ctx, sql, args...); err != nil {
+	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, roleTable, nil)
 	}
 	return nil
@@ -245,7 +245,7 @@ func (r *PermissionWriteRepo) Save(ctx context.Context, perm *authzentity.Permis
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildInsert)
 	}
 
-	if _, err = r.pool.Exec(ctx, sql, args...); err != nil {
+	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, permissionTable, nil)
 	}
 	return nil
@@ -286,7 +286,7 @@ func (r *PermissionWriteRepo) Update(ctx context.Context, perm *authzentity.Perm
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildUpdate)
 	}
 
-	if _, err = r.pool.Exec(ctx, sql, args...); err != nil {
+	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, permissionTable, nil)
 	}
 	return nil
@@ -433,7 +433,7 @@ func (r *PolicyWriteRepo) Save(ctx context.Context, policy *authzentity.Policy) 
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildInsert)
 	}
 
-	if _, err = r.pool.Exec(ctx, sql, args...); err != nil {
+	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, policyTable, nil)
 	}
 
@@ -490,7 +490,7 @@ func (r *PolicyWriteRepo) Update(ctx context.Context, policy *authzentity.Policy
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildUpdate)
 	}
 
-	if _, err = r.pool.Exec(ctx, sql, args...); err != nil {
+	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, policyTable, nil)
 	}
 

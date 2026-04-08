@@ -11,13 +11,14 @@ import (
 	"gct/internal/kernel/infrastructure/eventbus"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/test/integration/common/setup"
+	"gct/internal/kernel/outbox"
 )
 
 func newTestBC(t *testing.T) *metric.BoundedContext {
 	t.Helper()
 	eb := eventbus.NewInMemoryEventBus()
 	l := logger.New("error")
-	return metric.NewBoundedContext(setup.TestPG.Pool, eb, l)
+	return metric.NewBoundedContext(setup.TestPG.Pool, outbox.NewEventCommitter(nil, nil, eb, l), l)
 }
 
 func TestIntegration_RecordAndListMetrics(t *testing.T) {

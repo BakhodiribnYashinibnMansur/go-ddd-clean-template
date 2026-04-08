@@ -10,6 +10,8 @@ import (
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
+	"gct/internal/kernel/outbox"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -89,7 +91,7 @@ func TestCreateAnnouncementHandler_Handle(t *testing.T) {
 
 	repo := &mockAnnouncementRepo{}
 	eb := &mockEventBus{}
-	handler := NewCreateAnnouncementHandler(repo, eb, &mockLogger{})
+	handler := NewCreateAnnouncementHandler(repo, outbox.NewEventCommitter(nil, nil, eb, &mockLogger{}), &mockLogger{})
 
 	now := time.Now()
 	cmd := CreateAnnouncementCommand{
@@ -127,7 +129,7 @@ func TestCreateAnnouncementHandler_MinimalFields(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockAnnouncementRepo{}
-	handler := NewCreateAnnouncementHandler(repo, &mockEventBus{}, &mockLogger{})
+	handler := NewCreateAnnouncementHandler(repo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	err := handler.Handle(context.Background(), CreateAnnouncementCommand{
 		Title:   shared.Lang{Uz: "t", Ru: "t", En: "t"},

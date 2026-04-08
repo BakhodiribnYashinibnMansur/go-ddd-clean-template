@@ -10,6 +10,8 @@ import (
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
+	"gct/internal/kernel/outbox"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -62,7 +64,7 @@ func TestRecordMetricHandler_Handle(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockMetricRepo{}
-	handler := command.NewRecordMetricHandler(repo, &mockEventBus{}, &mockLogger{})
+	handler := command.NewRecordMetricHandler(repo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	cmd := command.RecordMetricCommand{
 		Name:      "UserService.Create",

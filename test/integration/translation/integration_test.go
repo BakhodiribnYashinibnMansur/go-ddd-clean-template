@@ -12,13 +12,14 @@ import (
 	translationentity "gct/internal/context/content/generic/translation/domain/entity"
 	translationrepo "gct/internal/context/content/generic/translation/domain/repository"
 	"gct/test/integration/common/setup"
+	"gct/internal/kernel/outbox"
 )
 
 func newTestBC(t *testing.T) *translation.BoundedContext {
 	t.Helper()
 	eb := eventbus.NewInMemoryEventBus()
 	l := logger.New("error")
-	return translation.NewBoundedContext(setup.TestPG.Pool, eb, l)
+	return translation.NewBoundedContext(setup.TestPG.Pool, outbox.NewEventCommitter(nil, nil, eb, l), l)
 }
 
 func TestIntegration_CreateAndGetTranslation(t *testing.T) {

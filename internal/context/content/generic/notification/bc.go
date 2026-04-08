@@ -6,6 +6,7 @@ import (
 	"gct/internal/context/content/generic/notification/infrastructure/postgres"
 	"gct/internal/kernel/application"
 	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/outbox"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -22,12 +23,12 @@ type BoundedContext struct {
 }
 
 // NewBoundedContext creates a fully wired Notification bounded context.
-func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, l logger.Log) *BoundedContext {
+func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, committer *outbox.EventCommitter, l logger.Log) *BoundedContext {
 	writeRepo := postgres.NewNotificationWriteRepo(pool)
 	readRepo := postgres.NewNotificationReadRepo(pool)
 
 	return &BoundedContext{
-		CreateNotification: command.NewCreateHandler(writeRepo, eventBus, l),
+		CreateNotification: command.NewCreateHandler(writeRepo, committer, l),
 		DeleteNotification: command.NewDeleteHandler(writeRepo, eventBus, l),
 		GetNotification:    query.NewGetHandler(readRepo, l),
 		ListNotifications:  query.NewListHandler(readRepo, l),

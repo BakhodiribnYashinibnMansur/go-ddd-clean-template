@@ -6,6 +6,8 @@ import (
 
 	integentity "gct/internal/context/admin/supporting/integration/domain/entity"
 
+	"gct/internal/kernel/outbox"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -23,7 +25,7 @@ func TestUpdateHandler_Handle(t *testing.T) {
 		},
 	}
 	eb := &mockEventBus{}
-	handler := NewUpdateHandler(repo, eb, &mockLogger{})
+	handler := NewUpdateHandler(repo, outbox.NewEventCommitter(nil, nil, eb, &mockLogger{}), &mockLogger{})
 
 	newName := "Slack Updated"
 	newKey := "new-key"
@@ -65,7 +67,7 @@ func TestUpdateHandler_PartialUpdate(t *testing.T) {
 			return i, nil
 		},
 	}
-	handler := NewUpdateHandler(repo, &mockEventBus{}, &mockLogger{})
+	handler := NewUpdateHandler(repo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	newURL := "https://new.com"
 	err := handler.Handle(context.Background(), UpdateCommand{
@@ -91,7 +93,7 @@ func TestUpdateHandler_WithConfig(t *testing.T) {
 			return i, nil
 		},
 	}
-	handler := NewUpdateHandler(repo, &mockEventBus{}, &mockLogger{})
+	handler := NewUpdateHandler(repo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	newConfig := map[string]string{"channel": "#alerts", "priority": "high"}
 	err := handler.Handle(context.Background(), UpdateCommand{
@@ -108,7 +110,7 @@ func TestUpdateHandler_NotFound(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockIntegrationRepo{}
-	handler := NewUpdateHandler(repo, &mockEventBus{}, &mockLogger{})
+	handler := NewUpdateHandler(repo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	err := handler.Handle(context.Background(), UpdateCommand{ID: integentity.NewIntegrationID()})
 	if err == nil {

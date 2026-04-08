@@ -7,6 +7,7 @@ import (
 
 	translationentity "gct/internal/context/content/generic/translation/domain/entity"
 
+	"gct/internal/kernel/outbox"
 	"github.com/stretchr/testify/require"
 )
 
@@ -26,7 +27,7 @@ func TestUpdateTranslationHandler_Handle(t *testing.T) {
 	eb := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewUpdateTranslationHandler(repo, eb, log)
+	handler := NewUpdateTranslationHandler(repo, outbox.NewEventCommitter(nil, nil, eb, log), log)
 
 	newKey := "new_key"
 	newValue := "New Value"
@@ -71,7 +72,7 @@ func TestUpdateTranslationHandler_NotFound(t *testing.T) {
 	eb := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewUpdateTranslationHandler(repo, eb, log)
+	handler := NewUpdateTranslationHandler(repo, outbox.NewEventCommitter(nil, nil, eb, log), log)
 
 	newKey := "k"
 	err := handler.Handle(context.Background(), UpdateTranslationCommand{
@@ -96,7 +97,7 @@ func TestUpdateTranslationHandler_RepoUpdateError(t *testing.T) {
 	eb := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewUpdateTranslationHandler(errR, eb, log)
+	handler := NewUpdateTranslationHandler(errR, outbox.NewEventCommitter(nil, nil, eb, log), log)
 
 	newVal := "new"
 	err := handler.Handle(context.Background(), UpdateTranslationCommand{

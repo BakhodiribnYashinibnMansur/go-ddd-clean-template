@@ -5,10 +5,10 @@ import (
 
 	exportentity "gct/internal/context/admin/supporting/dataexport/domain/entity"
 	exportrepo "gct/internal/context/admin/supporting/dataexport/domain/repository"
-	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
+	"gct/internal/kernel/outbox"
 
 	"github.com/google/uuid"
 )
@@ -23,23 +23,22 @@ type CreateDataExportCommand struct {
 }
 
 // CreateDataExportHandler orchestrates data export creation and emits domain events for async processing.
-// Event publish failures are logged but do not roll back the persisted export record.
 type CreateDataExportHandler struct {
-	repo     exportrepo.DataExportRepository
-	eventBus application.EventBus
-	logger   logger.Log
+	repo      exportrepo.DataExportRepository
+	committer *outbox.EventCommitter
+	logger    logger.Log
 }
 
 // NewCreateDataExportHandler wires dependencies for data export creation.
 func NewCreateDataExportHandler(
 	repo exportrepo.DataExportRepository,
-	eventBus application.EventBus,
+	committer *outbox.EventCommitter,
 	logger logger.Log,
 ) *CreateDataExportHandler {
 	return &CreateDataExportHandler{
-		repo:     repo,
-		eventBus: eventBus,
-		logger:   logger,
+		repo:      repo,
+		committer: committer,
+		logger:    logger,
 	}
 }
 
@@ -52,14 +51,11 @@ func (h *CreateDataExportHandler) Handle(ctx context.Context, cmd CreateDataExpo
 
 	de := exportentity.NewDataExport(cmd.UserID, cmd.DataType, cmd.Format)
 
-	if err := h.repo.Save(ctx, de); err != nil {
-		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateDataExport", Entity: "data_export", Err: err}.KV()...)
-		return apperrors.MapToServiceError(err)
-	}
-
-	if err := h.eventBus.Publish(ctx, de.Events()...); err != nil {
-		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "CreateDataExport", Entity: "data_export", Err: err}.KV()...)
-	}
-
-	return nil
+	return h.committer.Commit(ctx, func(ctx context.Context) error {
+		if err := h.repo.Save(ctx, de); err != nil {
+			h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateDataExport", Entity: "data_export", Err: err}.KV()...)
+			return apperrors.MapToServiceError(err)
+		}
+		return nil
+	}, de.Events)
 }

@@ -4,8 +4,8 @@ import (
 	"gct/internal/context/content/generic/translation/application/command"
 	"gct/internal/context/content/generic/translation/application/query"
 	"gct/internal/context/content/generic/translation/infrastructure/postgres"
-	"gct/internal/kernel/application"
 	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/outbox"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -23,13 +23,13 @@ type BoundedContext struct {
 }
 
 // NewBoundedContext creates a fully wired Translation bounded context.
-func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, l logger.Log) *BoundedContext {
+func NewBoundedContext(pool *pgxpool.Pool, committer *outbox.EventCommitter, l logger.Log) *BoundedContext {
 	writeRepo := postgres.NewTranslationWriteRepo(pool)
 	readRepo := postgres.NewTranslationReadRepo(pool)
 
 	return &BoundedContext{
-		CreateTranslation: command.NewCreateTranslationHandler(writeRepo, eventBus, l),
-		UpdateTranslation: command.NewUpdateTranslationHandler(writeRepo, eventBus, l),
+		CreateTranslation: command.NewCreateTranslationHandler(writeRepo, committer, l),
+		UpdateTranslation: command.NewUpdateTranslationHandler(writeRepo, committer, l),
 		DeleteTranslation: command.NewDeleteTranslationHandler(writeRepo, l),
 		GetTranslation:    query.NewGetTranslationHandler(readRepo, l),
 		ListTranslations:  query.NewListTranslationsHandler(readRepo, l),

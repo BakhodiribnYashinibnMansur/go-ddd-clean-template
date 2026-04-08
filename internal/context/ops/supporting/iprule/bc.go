@@ -4,8 +4,8 @@ import (
 	"gct/internal/context/ops/supporting/iprule/application/command"
 	"gct/internal/context/ops/supporting/iprule/application/query"
 	"gct/internal/context/ops/supporting/iprule/infrastructure/postgres"
-	"gct/internal/kernel/application"
 	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/outbox"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -23,13 +23,13 @@ type BoundedContext struct {
 }
 
 // NewBoundedContext creates a fully wired IPRule bounded context.
-func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, l logger.Log) *BoundedContext {
+func NewBoundedContext(pool *pgxpool.Pool, committer *outbox.EventCommitter, l logger.Log) *BoundedContext {
 	writeRepo := postgres.NewIPRuleWriteRepo(pool)
 	readRepo := postgres.NewIPRuleReadRepo(pool)
 
 	return &BoundedContext{
-		CreateIPRule: command.NewCreateIPRuleHandler(writeRepo, eventBus, l),
-		UpdateIPRule: command.NewUpdateIPRuleHandler(writeRepo, eventBus, l),
+		CreateIPRule: command.NewCreateIPRuleHandler(writeRepo, committer, l),
+		UpdateIPRule: command.NewUpdateIPRuleHandler(writeRepo, committer, l),
 		DeleteIPRule: command.NewDeleteIPRuleHandler(writeRepo, l),
 		GetIPRule:    query.NewGetIPRuleHandler(readRepo, l),
 		ListIPRules:  query.NewListIPRulesHandler(readRepo, l),

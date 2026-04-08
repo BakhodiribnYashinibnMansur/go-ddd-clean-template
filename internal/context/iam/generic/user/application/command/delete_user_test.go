@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	userentity "gct/internal/context/iam/generic/user/domain/entity"
+	"gct/internal/kernel/outbox"
 
 	"github.com/stretchr/testify/require"
 )
@@ -24,7 +25,7 @@ func TestDeleteUserHandler_Handle(t *testing.T) {
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewDeleteUserHandler(repo, eventBus, log)
+	handler := NewDeleteUserHandler(repo, outbox.NewEventCommitter(nil, nil, eventBus, log), log)
 
 	err := handler.Handle(context.Background(), DeleteUserCommand{ID: userentity.UserID(user.ID())})
 	require.NoError(t, err)
@@ -53,7 +54,7 @@ func TestDeleteUserHandler_NotFound(t *testing.T) {
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewDeleteUserHandler(repo, eventBus, log)
+	handler := NewDeleteUserHandler(repo, outbox.NewEventCommitter(nil, nil, eventBus, log), log)
 
 	err := handler.Handle(context.Background(), DeleteUserCommand{ID: userentity.NewUserID()})
 	if err == nil {

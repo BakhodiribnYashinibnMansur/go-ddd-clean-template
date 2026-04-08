@@ -11,6 +11,7 @@ import (
 	shared "gct/internal/kernel/domain"
 	"gct/internal/kernel/infrastructure/eventbus"
 	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/outbox"
 	"gct/internal/context/iam/generic/user"
 	"gct/internal/context/iam/generic/user/application/command"
 	userquery "gct/internal/context/iam/generic/user/application/query"
@@ -30,7 +31,7 @@ func TestIntegration_ListAndGetSessions(t *testing.T) {
 	l := logger.New("error")
 	eb := eventbus.NewInMemoryEventBus()
 
-	userBC := user.NewBoundedContext(setup.TestPG.Pool, eb, l, newTestJWTConfig(t))
+	userBC := user.NewBoundedContext(setup.TestPG.Pool, eb, outbox.NewEventCommitter(setup.TestPG.Pool, nil, eb, l), l, newTestJWTConfig(t))
 	sessionBC := session.NewBoundedContext(setup.TestPG.Pool, eb, l)
 	ctx := context.Background()
 

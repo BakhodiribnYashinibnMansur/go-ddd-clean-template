@@ -17,6 +17,8 @@ import (
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
+	"gct/internal/kernel/outbox"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -97,7 +99,7 @@ func setupRouter(repo *mockRepo, readRepo *mockReadRepo) *gin.Engine {
 	l := &mockLogger{}
 
 	bc := &notification.BoundedContext{
-		CreateNotification: command.NewCreateHandler(repo, eb, l),
+		CreateNotification: command.NewCreateHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l),
 		DeleteNotification: command.NewDeleteHandler(repo, eb, l),
 		GetNotification:    query.NewGetHandler(readRepo, l),
 		ListNotifications:  query.NewListHandler(readRepo, l),

@@ -17,6 +17,8 @@ import (
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
+	"gct/internal/kernel/outbox"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -105,8 +107,8 @@ func setupRouter(repo *mockRepo, readRepo *mockReadRepo) *gin.Engine {
 	l := &mockLogger{}
 
 	bc := &dataexport.BoundedContext{
-		CreateDataExport: command.NewCreateDataExportHandler(repo, eb, l),
-		UpdateDataExport: command.NewUpdateDataExportHandler(repo, eb, l),
+		CreateDataExport: command.NewCreateDataExportHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l),
+		UpdateDataExport: command.NewUpdateDataExportHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l),
 		DeleteDataExport: command.NewDeleteDataExportHandler(repo, l),
 		GetDataExport:    query.NewGetDataExportHandler(readRepo, l),
 		ListDataExports:  query.NewListDataExportsHandler(readRepo, l),

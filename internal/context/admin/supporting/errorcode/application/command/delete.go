@@ -6,10 +6,11 @@ import (
 	errcodeentity "gct/internal/context/admin/supporting/errorcode/domain/entity"
 	errcodeevent "gct/internal/context/admin/supporting/errorcode/domain/event"
 	errcoderepo "gct/internal/context/admin/supporting/errorcode/domain/repository"
-	"gct/internal/kernel/application"
+	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
+	"gct/internal/kernel/outbox"
 )
 
 // DeleteErrorCodeCommand represents an intent to permanently remove a standardized error code.
@@ -21,21 +22,21 @@ type DeleteErrorCodeCommand struct {
 // DeleteErrorCodeHandler performs hard deletion of an error code via the repository.
 // Publishes an ErrorCodeDeleted event so subscribers can evict the code from in-memory caches.
 type DeleteErrorCodeHandler struct {
-	repo     errcoderepo.ErrorCodeRepository
-	eventBus application.EventBus
-	logger   logger.Log
+	repo      errcoderepo.ErrorCodeRepository
+	committer *outbox.EventCommitter
+	logger    logger.Log
 }
 
 // NewDeleteErrorCodeHandler wires dependencies for error code deletion.
 func NewDeleteErrorCodeHandler(
 	repo errcoderepo.ErrorCodeRepository,
-	eventBus application.EventBus,
+	committer *outbox.EventCommitter,
 	logger logger.Log,
 ) *DeleteErrorCodeHandler {
 	return &DeleteErrorCodeHandler{
-		repo:     repo,
-		eventBus: eventBus,
-		logger:   logger,
+		repo:      repo,
+		committer: committer,
+		logger:    logger,
 	}
 }
 
@@ -51,15 +52,13 @@ func (h *DeleteErrorCodeHandler) Handle(ctx context.Context, cmd DeleteErrorCode
 		return apperrors.MapToServiceError(err)
 	}
 
-	if err = h.repo.Delete(ctx, cmd.ID); err != nil {
-		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteErrorCode", Entity: "error_code", EntityID: cmd.ID.String(), Err: err}.KV()...)
-		return apperrors.MapToServiceError(err)
-	}
-
 	event := errcodeevent.NewErrorCodeDeleted(cmd.ID.UUID(), ec.Code())
-	if pubErr := h.eventBus.Publish(ctx, event); pubErr != nil {
-		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "DeleteErrorCode", Entity: "error_code", EntityID: cmd.ID.String(), Err: pubErr}.KV()...)
-	}
 
-	return nil
+	return h.committer.Commit(ctx, func(ctx context.Context) error {
+		if err := h.repo.Delete(ctx, cmd.ID); err != nil {
+			h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteErrorCode", Entity: "error_code", EntityID: cmd.ID.String(), Err: err}.KV()...)
+			return apperrors.MapToServiceError(err)
+		}
+		return nil
+	}, func() []shareddomain.DomainEvent { return []shareddomain.DomainEvent{event} })
 }

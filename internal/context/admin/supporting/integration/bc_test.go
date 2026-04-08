@@ -7,6 +7,7 @@ import (
 
 	"gct/internal/kernel/application"
 	"gct/internal/kernel/domain"
+	"gct/internal/kernel/outbox"
 )
 
 type mockEventBus struct{}
@@ -38,7 +39,9 @@ func (m *mockLogger) Errorc(_ context.Context, _ string, _ ...any) {}
 func (m *mockLogger) Fatalc(_ context.Context, _ string, _ ...any) {}
 
 func TestNewBoundedContext(t *testing.T) {
-	bc := NewBoundedContext(nil, &mockEventBus{}, nil, 30*time.Second, &mockLogger{})
+	eb := &mockEventBus{}
+	l := &mockLogger{}
+	bc := NewBoundedContext(nil, eb, outbox.NewEventCommitter(nil, nil, eb, l), nil, 30*time.Second, l)
 	if bc == nil {
 		t.Fatal("expected non-nil BoundedContext")
 	}

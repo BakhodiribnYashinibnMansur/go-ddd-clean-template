@@ -10,6 +10,8 @@ import (
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
+	"gct/internal/kernel/outbox"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -166,7 +168,7 @@ func TestCreateHandler_Handle(t *testing.T) {
 
 	repo := &mockFeatureFlagRepo{}
 	eb := &mockEventBus{}
-	handler := NewCreateHandler(repo, eb, &mockLogger{})
+	handler := NewCreateHandler(repo, outbox.NewEventCommitter(nil, nil, eb, &mockLogger{}), &mockLogger{})
 
 	cmd := CreateCommand{
 		Name:              "dark-mode",
@@ -212,7 +214,7 @@ func TestCreateHandler_Handle_Active(t *testing.T) {
 
 	repo := &mockFeatureFlagRepo{}
 	eb := &mockEventBus{}
-	handler := NewCreateHandler(repo, eb, &mockLogger{})
+	handler := NewCreateHandler(repo, outbox.NewEventCommitter(nil, nil, eb, &mockLogger{}), &mockLogger{})
 
 	cmd := CreateCommand{
 		Name:     "feature-x",
@@ -240,7 +242,7 @@ func TestCreateHandler_Handle_RepoError(t *testing.T) {
 			return repoErr
 		},
 	}
-	handler := NewCreateHandler(repo, &mockEventBus{}, &mockLogger{})
+	handler := NewCreateHandler(repo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	err := handler.Handle(context.Background(), CreateCommand{
 		Name:     "test",

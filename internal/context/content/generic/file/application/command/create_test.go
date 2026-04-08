@@ -9,6 +9,8 @@ import (
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
+	"gct/internal/kernel/outbox"
+
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -58,7 +60,7 @@ func TestCreateFileHandler_Handle(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockFileRepo{}
-	handler := command.NewCreateFileHandler(repo, &mockEventBus{}, &mockLogger{})
+	handler := command.NewCreateFileHandler(repo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	uploaderID := uuid.New()
 	cmd := command.CreateFileCommand{
@@ -104,7 +106,7 @@ func TestCreateFileHandler_NilUploadedBy(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockFileRepo{}
-	handler := command.NewCreateFileHandler(repo, &mockEventBus{}, &mockLogger{})
+	handler := command.NewCreateFileHandler(repo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	cmd := command.CreateFileCommand{
 		Name:         "doc.pdf",

@@ -4,8 +4,8 @@ import (
 	"gct/internal/context/ops/generic/metric/application/command"
 	"gct/internal/context/ops/generic/metric/application/query"
 	"gct/internal/context/ops/generic/metric/infrastructure/postgres"
-	"gct/internal/kernel/application"
 	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/outbox"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -20,12 +20,12 @@ type BoundedContext struct {
 }
 
 // NewBoundedContext creates a fully wired Metric bounded context.
-func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, l logger.Log) *BoundedContext {
+func NewBoundedContext(pool *pgxpool.Pool, committer *outbox.EventCommitter, l logger.Log) *BoundedContext {
 	writeRepo := postgres.NewMetricWriteRepo(pool)
 	readRepo := postgres.NewMetricReadRepo(pool)
 
 	return &BoundedContext{
-		RecordMetric: command.NewRecordMetricHandler(writeRepo, eventBus, l),
+		RecordMetric: command.NewRecordMetricHandler(writeRepo, committer, l),
 		ListMetrics:  query.NewListMetricsHandler(readRepo, l),
 	}
 }

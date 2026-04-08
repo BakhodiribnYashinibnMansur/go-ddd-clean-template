@@ -108,7 +108,7 @@ func (r *IntegrationWriteRepo) Save(ctx context.Context, i *integentity.Integrat
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildInsert)
 	}
 
-	if _, err = r.pool.Exec(ctx, sql, args...); err != nil {
+	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 
@@ -185,7 +185,7 @@ func (r *IntegrationWriteRepo) Update(ctx context.Context, i *integentity.Integr
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildUpdate)
 	}
 
-	if _, err = r.pool.Exec(ctx, sql, args...); err != nil {
+	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 
@@ -209,7 +209,7 @@ func (r *IntegrationWriteRepo) Delete(ctx context.Context, id integentity.Integr
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildDelete)
 	}
 
-	if _, err = r.pool.Exec(ctx, sql, args...); err != nil {
+	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 
@@ -232,7 +232,7 @@ UPDATE ` + tableName + `
        updated_at                  = NOW()
  WHERE id = $3`
 
-	if _, err = r.pool.Exec(ctx, sql, newPublicPEM, newKeyID, id.UUID()); err != nil {
+	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, newPublicPEM, newKeyID, id.UUID()); err != nil {
 		return apperrors.HandlePgError(err, tableName, map[string]any{"id": id.UUID()})
 	}
 	return nil

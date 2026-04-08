@@ -10,6 +10,8 @@ import (
 	exportentity "gct/internal/context/admin/supporting/dataexport/domain/entity"
 	shared "gct/internal/kernel/domain"
 
+	"gct/internal/kernel/outbox"
+
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -33,7 +35,7 @@ func TestUpdateDataExportHandler_StatusProcessing(t *testing.T) {
 	}
 	eb := &mockEventBus{}
 	l := &mockLogger{}
-	h := command.NewUpdateDataExportHandler(repo, eb, l)
+	h := command.NewUpdateDataExportHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l)
 
 	status := exportentity.ExportStatusProcessing
 	cmd := command.UpdateDataExportCommand{
@@ -70,7 +72,7 @@ func TestUpdateDataExportHandler_StatusCompleted(t *testing.T) {
 	}
 	eb := &mockEventBus{}
 	l := &mockLogger{}
-	h := command.NewUpdateDataExportHandler(repo, eb, l)
+	h := command.NewUpdateDataExportHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l)
 
 	status := exportentity.ExportStatusCompleted
 	fileURL := "https://example.com/export.csv"
@@ -112,7 +114,7 @@ func TestUpdateDataExportHandler_StatusFailed(t *testing.T) {
 	}
 	eb := &mockEventBus{}
 	l := &mockLogger{}
-	h := command.NewUpdateDataExportHandler(repo, eb, l)
+	h := command.NewUpdateDataExportHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l)
 
 	status := exportentity.ExportStatusFailed
 	errMsg := "disk full"
@@ -138,7 +140,7 @@ func TestUpdateDataExportHandler_NotFound(t *testing.T) {
 	repo := &mockWriteRepo{}
 	eb := &mockEventBus{}
 	l := &mockLogger{}
-	h := command.NewUpdateDataExportHandler(repo, eb, l)
+	h := command.NewUpdateDataExportHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l)
 
 	status := exportentity.ExportStatusProcessing
 	cmd := command.UpdateDataExportCommand{
@@ -178,7 +180,7 @@ func TestUpdateDataExportHandler_RepoUpdateError(t *testing.T) {
 	}
 	eb := &mockEventBus{}
 	l := &mockLogger{}
-	h := command.NewUpdateDataExportHandler(repo, eb, l)
+	h := command.NewUpdateDataExportHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l)
 
 	status := exportentity.ExportStatusProcessing
 	cmd := command.UpdateDataExportCommand{
@@ -214,7 +216,7 @@ func TestUpdateDataExportHandler_NilStatus(t *testing.T) {
 	}
 	eb := &mockEventBus{}
 	l := &mockLogger{}
-	h := command.NewUpdateDataExportHandler(repo, eb, l)
+	h := command.NewUpdateDataExportHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l)
 
 	cmd := command.UpdateDataExportCommand{ID: exportentity.DataExportID(exportID)}
 
@@ -248,7 +250,7 @@ func TestUpdateDataExportHandler_EventBusError(t *testing.T) {
 		},
 	}
 	l := &mockLogger{}
-	h := command.NewUpdateDataExportHandler(repo, eb, l)
+	h := command.NewUpdateDataExportHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l)
 
 	status := exportentity.ExportStatusProcessing
 	cmd := command.UpdateDataExportCommand{

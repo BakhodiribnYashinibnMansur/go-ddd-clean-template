@@ -7,6 +7,7 @@ import (
 
 	translationentity "gct/internal/context/content/generic/translation/domain/entity"
 	translationrepo "gct/internal/context/content/generic/translation/domain/repository"
+	"gct/internal/kernel/outbox"
 )
 
 // errorRepo is a mock that returns configurable errors for each method.
@@ -53,7 +54,7 @@ func TestCreateTranslationHandler_SaveError(t *testing.T) {
 	eb := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewCreateTranslationHandler(repo, eb, log)
+	handler := NewCreateTranslationHandler(repo, outbox.NewEventCommitter(nil, nil, eb, log), log)
 	err := handler.Handle(context.Background(), CreateTranslationCommand{
 		Key: "k", Language: "en", Value: "v", Group: "g",
 	})
@@ -69,7 +70,7 @@ func TestUpdateTranslationHandler_FindError(t *testing.T) {
 	eb := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewUpdateTranslationHandler(repo, eb, log)
+	handler := NewUpdateTranslationHandler(repo, outbox.NewEventCommitter(nil, nil, eb, log), log)
 	newVal := "new"
 	err := handler.Handle(context.Background(), UpdateTranslationCommand{
 		ID:    translationentity.NewTranslationID(),
@@ -92,7 +93,7 @@ func TestUpdateTranslationHandler_UpdateError(t *testing.T) {
 	eb := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewUpdateTranslationHandler(repo, eb, log)
+	handler := NewUpdateTranslationHandler(repo, outbox.NewEventCommitter(nil, nil, eb, log), log)
 	newVal := "updated"
 	err := handler.Handle(context.Background(), UpdateTranslationCommand{
 		ID:    translationentity.TranslationID(tr.ID()),

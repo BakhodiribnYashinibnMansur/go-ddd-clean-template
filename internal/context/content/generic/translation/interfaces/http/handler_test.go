@@ -17,6 +17,8 @@ import (
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
+	"gct/internal/kernel/outbox"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -106,8 +108,8 @@ func setupRouter(repo *mockRepo, readRepo *mockReadRepo) *gin.Engine {
 	l := &mockLogger{}
 
 	bc := &translation.BoundedContext{
-		CreateTranslation: command.NewCreateTranslationHandler(repo, eb, l),
-		UpdateTranslation: command.NewUpdateTranslationHandler(repo, eb, l),
+		CreateTranslation: command.NewCreateTranslationHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l),
+		UpdateTranslation: command.NewUpdateTranslationHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l),
 		DeleteTranslation: command.NewDeleteTranslationHandler(repo, l),
 		GetTranslation:    query.NewGetTranslationHandler(readRepo, l),
 		ListTranslations:  query.NewListTranslationsHandler(readRepo, l),

@@ -9,6 +9,8 @@ import (
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
+	"gct/internal/kernel/outbox"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -88,7 +90,7 @@ func TestCreateRateLimitHandler_Handle(t *testing.T) {
 
 	repo := &mockRateLimitRepo{}
 	eb := &mockEventBus{}
-	handler := NewCreateRateLimitHandler(repo, eb, &mockLogger{})
+	handler := NewCreateRateLimitHandler(repo, outbox.NewEventCommitter(nil, nil, eb, &mockLogger{}), &mockLogger{})
 
 	cmd := CreateRateLimitCommand{
 		Name:              "api-global",
@@ -125,7 +127,7 @@ func TestCreateRateLimitHandler_Disabled(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockRateLimitRepo{}
-	handler := NewCreateRateLimitHandler(repo, &mockEventBus{}, &mockLogger{})
+	handler := NewCreateRateLimitHandler(repo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	err := handler.Handle(context.Background(), CreateRateLimitCommand{
 		Name:              "disabled-rule",

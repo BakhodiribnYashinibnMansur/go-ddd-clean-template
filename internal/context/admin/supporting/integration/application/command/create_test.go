@@ -8,6 +8,8 @@ import (
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
+	"gct/internal/kernel/outbox"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -83,7 +85,7 @@ func TestCreateHandler_Handle(t *testing.T) {
 
 	repo := &mockIntegrationRepo{}
 	eb := &mockEventBus{}
-	handler := NewCreateHandler(repo, eb, &mockLogger{})
+	handler := NewCreateHandler(repo, outbox.NewEventCommitter(nil, nil, eb, &mockLogger{}), &mockLogger{})
 
 	cmd := CreateCommand{
 		Name:       "Slack",
@@ -131,7 +133,7 @@ func TestCreateHandler_NilConfig(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockIntegrationRepo{}
-	handler := NewCreateHandler(repo, &mockEventBus{}, &mockLogger{})
+	handler := NewCreateHandler(repo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	err := handler.Handle(context.Background(), CreateCommand{
 		Name:       "SMTP",

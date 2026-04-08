@@ -17,6 +17,8 @@ import (
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
+	"gct/internal/kernel/outbox"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -88,7 +90,7 @@ func setupRouter(repo *mockRepo, readRepo *mockReadRepo) *gin.Engine {
 	l := &mockLogger{}
 
 	bc := &file.BoundedContext{
-		CreateFile: command.NewCreateFileHandler(repo, eb, l),
+		CreateFile: command.NewCreateFileHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l),
 		GetFile:    query.NewGetFileHandler(readRepo, l),
 		ListFiles:  query.NewListFilesHandler(readRepo, l),
 	}

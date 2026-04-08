@@ -23,6 +23,7 @@ import (
 	"gct/internal/kernel/application"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/metrics"
+	"gct/internal/kernel/outbox"
 	"gct/internal/context/admin/supporting/sitesetting"
 	"gct/internal/context/ops/generic/systemerror"
 	"gct/internal/context/content/generic/translation"
@@ -83,12 +84,17 @@ type SecurityDeps struct {
 // the User BC then receives the wired JWTConfig with that resolver injected.
 func NewDDDBoundedContexts(ctx context.Context, pool *pgxpool.Pool, eventBus application.EventBus, l logger.Log, bm *metrics.BusinessMetrics, jwtCfg command.JWTConfig, cfg *config.Config, apiKeyPepper []byte, kr *keyring.Keyring, secDeps SecurityDeps) (*DDDBoundedContexts, error) {
 	_ = bm // available for BC injection when needed
-	ffBC, err := featureflag.NewBoundedContext(ctx, pool, eventBus, l)
+
+	// EventCommitter wraps repo writes + domain events in the transactional
+	// outbox pattern. Pass nil writer for dev mode (direct event bus publish).
+	committer := outbox.NewEventCommitter(pool, nil, eventBus, l)
+
+	ffBC, err := featureflag.NewBoundedContext(ctx, pool, eventBus, committer, l)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize feature flag BC: %w", err)
 	}
 
-	integrationBC := integration.NewBoundedContext(pool, eventBus, apiKeyPepper, cfg.JWT.CacheTTL, l)
+	integrationBC := integration.NewBoundedContext(pool, eventBus, committer, apiKeyPepper, cfg.JWT.CacheTTL, l)
 
 	// Wire the sign-in resolver now that both the Integration BC and keyring
 	// are available. User BC needs this to issue per-integration JWTs.
@@ -97,13 +103,13 @@ func NewDDDBoundedContexts(ctx context.Context, pool *pgxpool.Pool, eventBus app
 	// SiteSetting BC is constructed before User BC so sign-in can look up
 	// the "user.max_sessions" cap through a runtime closure (no cross-BC
 	// import — the User BC only sees the func).
-	siteSettingBC := sitesetting.NewBoundedContext(pool, eventBus, l)
+	siteSettingBC := sitesetting.NewBoundedContext(pool, committer, l)
 	maxSessionsFn := func(ctx context.Context) int {
 		n, _ := siteSettingBC.UserMaxSessions.Handle(ctx)
 		return n
 	}
 
-	userBC := user.NewBoundedContext(pool, eventBus, l, jwtCfg, maxSessionsFn)
+	userBC := user.NewBoundedContext(pool, eventBus, committer, l, jwtCfg, maxSessionsFn)
 
 	// Phase S1: wire security deps into sign-in and sign-out handlers.
 	userBC.WireSecurityDeps(secDeps.AuditLogger, secDeps.RevStore, command.SignInSecurityDeps{
@@ -116,22 +122,22 @@ func NewDDDBoundedContexts(ctx context.Context, pool *pgxpool.Pool, eventBus app
 		User:         userBC,
 		Authz:        authz.NewBoundedContext(pool, eventBus, l),
 		Audit:        audit.NewBoundedContext(pool, eventBus, l),
-		SystemError:  systemerror.NewBoundedContext(pool, eventBus, l),
-		Metric:       metric.NewBoundedContext(pool, eventBus, l),
+		SystemError:  systemerror.NewBoundedContext(pool, committer, l),
+		Metric:       metric.NewBoundedContext(pool, committer, l),
 		FeatureFlag:  ffBC,
 		Integration:  integrationBC,
 
-		Notification: notification.NewBoundedContext(pool, eventBus, l),
-		Announcement: announcement.NewBoundedContext(pool, eventBus, l),
-		Translation:  translation.NewBoundedContext(pool, eventBus, l),
+		Notification: notification.NewBoundedContext(pool, eventBus, committer, l),
+		Announcement: announcement.NewBoundedContext(pool, committer, l),
+		Translation:  translation.NewBoundedContext(pool, committer, l),
 		SiteSetting:  siteSettingBC,
-		RateLimit:    ratelimit.NewBoundedContext(pool, eventBus, l),
-		IPRule:       iprule.NewBoundedContext(pool, eventBus, l),
+		RateLimit:    ratelimit.NewBoundedContext(pool, committer, l),
+		IPRule:       iprule.NewBoundedContext(pool, committer, l),
 
-		DataExport:   dataexport.NewBoundedContext(pool, eventBus, l),
-		File:         file.NewBoundedContext(pool, eventBus, l),
+		DataExport:   dataexport.NewBoundedContext(pool, committer, l),
+		File:         file.NewBoundedContext(pool, committer, l),
 		UserSetting:  usersetting.NewBoundedContext(pool, eventBus, l),
-		ErrorCode:    errorcode.NewBoundedContext(pool, eventBus, l),
+		ErrorCode:    errorcode.NewBoundedContext(pool, committer, l),
 
 		Session:    session.NewBoundedContext(pool, eventBus, l),
 		Statistics: statistics.NewBoundedContext(pool, l),

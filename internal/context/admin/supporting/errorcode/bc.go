@@ -4,8 +4,8 @@ import (
 	"gct/internal/context/admin/supporting/errorcode/application/command"
 	"gct/internal/context/admin/supporting/errorcode/application/query"
 	"gct/internal/context/admin/supporting/errorcode/infrastructure/postgres"
-	"gct/internal/kernel/application"
 	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/outbox"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -23,14 +23,14 @@ type BoundedContext struct {
 }
 
 // NewBoundedContext creates a fully wired ErrorCode bounded context.
-func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, l logger.Log) *BoundedContext {
+func NewBoundedContext(pool *pgxpool.Pool, committer *outbox.EventCommitter, l logger.Log) *BoundedContext {
 	writeRepo := postgres.NewErrorCodeWriteRepo(pool)
 	readRepo := postgres.NewErrorCodeReadRepo(pool)
 
 	return &BoundedContext{
-		CreateErrorCode: command.NewCreateErrorCodeHandler(writeRepo, eventBus, l),
-		UpdateErrorCode: command.NewUpdateErrorCodeHandler(writeRepo, eventBus, l),
-		DeleteErrorCode: command.NewDeleteErrorCodeHandler(writeRepo, eventBus, l),
+		CreateErrorCode: command.NewCreateErrorCodeHandler(writeRepo, committer, l),
+		UpdateErrorCode: command.NewUpdateErrorCodeHandler(writeRepo, committer, l),
+		DeleteErrorCode: command.NewDeleteErrorCodeHandler(writeRepo, committer, l),
 		GetErrorCode:    query.NewGetErrorCodeHandler(readRepo, l),
 		ListErrorCodes:  query.NewListErrorCodesHandler(readRepo, l),
 	}

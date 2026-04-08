@@ -4,8 +4,8 @@ import (
 	"gct/internal/context/admin/supporting/sitesetting/application/command"
 	"gct/internal/context/admin/supporting/sitesetting/application/query"
 	"gct/internal/context/admin/supporting/sitesetting/infrastructure/postgres"
-	"gct/internal/kernel/application"
 	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/outbox"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -24,13 +24,13 @@ type BoundedContext struct {
 }
 
 // NewBoundedContext creates a fully wired SiteSetting bounded context.
-func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, l logger.Log) *BoundedContext {
+func NewBoundedContext(pool *pgxpool.Pool, committer *outbox.EventCommitter, l logger.Log) *BoundedContext {
 	writeRepo := postgres.NewSiteSettingWriteRepo(pool)
 	readRepo := postgres.NewSiteSettingReadRepo(pool)
 
 	return &BoundedContext{
-		CreateSiteSetting: command.NewCreateSiteSettingHandler(writeRepo, eventBus, l),
-		UpdateSiteSetting: command.NewUpdateSiteSettingHandler(writeRepo, eventBus, l),
+		CreateSiteSetting: command.NewCreateSiteSettingHandler(writeRepo, committer, l),
+		UpdateSiteSetting: command.NewUpdateSiteSettingHandler(writeRepo, committer, l),
 		DeleteSiteSetting: command.NewDeleteSiteSettingHandler(writeRepo, l),
 		GetSiteSetting:    query.NewGetSiteSettingHandler(readRepo, l),
 		ListSiteSettings:  query.NewListSiteSettingsHandler(readRepo, l),

@@ -6,10 +6,11 @@ import (
 	ffentity "gct/internal/context/admin/generic/featureflag/domain/entity"
 	ffevent "gct/internal/context/admin/generic/featureflag/domain/event"
 	ffrepo "gct/internal/context/admin/generic/featureflag/domain/repository"
-	"gct/internal/kernel/application"
+	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
+	"gct/internal/kernel/outbox"
 )
 
 // DeleteRuleGroupCommand represents an intent to remove a rule group.
@@ -19,21 +20,21 @@ type DeleteRuleGroupCommand struct {
 
 // DeleteRuleGroupHandler performs deletion of a rule group.
 type DeleteRuleGroupHandler struct {
-	rgRepo   ffrepo.RuleGroupRepository
-	eventBus application.EventBus
-	logger   logger.Log
+	rgRepo    ffrepo.RuleGroupRepository
+	committer *outbox.EventCommitter
+	logger    logger.Log
 }
 
 // NewDeleteRuleGroupHandler wires dependencies for rule group deletion.
 func NewDeleteRuleGroupHandler(
 	rgRepo ffrepo.RuleGroupRepository,
-	eventBus application.EventBus,
+	committer *outbox.EventCommitter,
 	logger logger.Log,
 ) *DeleteRuleGroupHandler {
 	return &DeleteRuleGroupHandler{
-		rgRepo:   rgRepo,
-		eventBus: eventBus,
-		logger:   logger,
+		rgRepo:    rgRepo,
+		committer: committer,
+		logger:    logger,
 	}
 }
 
@@ -50,15 +51,13 @@ func (h *DeleteRuleGroupHandler) Handle(ctx context.Context, cmd DeleteRuleGroup
 	}
 
 	flagID := rg.FlagID()
+	event := ffevent.NewFlagUpdated(flagID)
 
-	if err := h.rgRepo.Delete(ctx, cmd.ID); err != nil {
-		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteRuleGroup", Entity: "rule_group", EntityID: cmd.ID, Err: err}.KV()...)
-		return apperrors.MapToServiceError(err)
-	}
-
-	if err := h.eventBus.Publish(ctx, ffevent.NewFlagUpdated(flagID)); err != nil {
-		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "DeleteRuleGroup", Entity: "rule_group", EntityID: cmd.ID, Err: err}.KV()...)
-	}
-
-	return nil
+	return h.committer.Commit(ctx, func(ctx context.Context) error {
+		if err := h.rgRepo.Delete(ctx, cmd.ID); err != nil {
+			h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteRuleGroup", Entity: "rule_group", EntityID: cmd.ID, Err: err}.KV()...)
+			return apperrors.MapToServiceError(err)
+		}
+		return nil
+	}, func() []shareddomain.DomainEvent { return []shareddomain.DomainEvent{event} })
 }

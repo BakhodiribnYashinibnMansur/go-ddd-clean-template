@@ -53,7 +53,7 @@ func (r *RuleGroupWriteRepo) Save(ctx context.Context, rg *ffentity.RuleGroup) (
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildInsert)
 	}
 
-	if _, err = r.pool.Exec(ctx, sql, args...); err != nil {
+	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, ruleGroupTable, nil)
 	}
 
@@ -120,7 +120,7 @@ func (r *RuleGroupWriteRepo) Update(ctx context.Context, rg *ffentity.RuleGroup)
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildUpdate)
 	}
 
-	if _, err = r.pool.Exec(ctx, sql, args...); err != nil {
+	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, ruleGroupTable, nil)
 	}
 
@@ -151,7 +151,7 @@ func (r *RuleGroupWriteRepo) Delete(ctx context.Context, id ffentity.RuleGroupID
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildDelete)
 	}
 
-	if _, err = r.pool.Exec(ctx, sql, args...); err != nil {
+	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, ruleGroupTable, nil)
 	}
 
@@ -228,7 +228,7 @@ func (r *RuleGroupWriteRepo) DeleteConditionsByRuleGroupID(ctx context.Context, 
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildDelete)
 	}
 
-	if _, err = r.pool.Exec(ctx, sql, args...); err != nil {
+	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, conditionTable, nil)
 	}
 
@@ -249,7 +249,7 @@ func (r *RuleGroupWriteRepo) saveCondition(ctx context.Context, c ffentity.Condi
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildInsert)
 	}
 
-	if _, err = r.pool.Exec(ctx, sql, args...); err != nil {
+	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, conditionTable, nil)
 	}
 

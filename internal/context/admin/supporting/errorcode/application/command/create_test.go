@@ -8,6 +8,8 @@ import (
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
+	"gct/internal/kernel/outbox"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -83,7 +85,7 @@ func TestCreateErrorCodeHandler_Handle(t *testing.T) {
 
 	repo := &mockErrorCodeRepo{}
 	eb := &mockEventBus{}
-	handler := NewCreateErrorCodeHandler(repo, eb, &mockLogger{})
+	handler := NewCreateErrorCodeHandler(repo, outbox.NewEventCommitter(nil, nil, eb, &mockLogger{}), &mockLogger{})
 
 	cmd := CreateErrorCodeCommand{
 		Code:       "AUTH_001",
@@ -136,7 +138,7 @@ func TestCreateErrorCodeHandler_MinimalFields(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockErrorCodeRepo{}
-	handler := NewCreateErrorCodeHandler(repo, &mockEventBus{}, &mockLogger{})
+	handler := NewCreateErrorCodeHandler(repo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	err := handler.Handle(context.Background(), CreateErrorCodeCommand{
 		Code:       "ERR_BASIC",

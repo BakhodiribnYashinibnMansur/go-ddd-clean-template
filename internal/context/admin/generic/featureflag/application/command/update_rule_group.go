@@ -7,10 +7,11 @@ import (
 	ffentity "gct/internal/context/admin/generic/featureflag/domain/entity"
 	ffevent "gct/internal/context/admin/generic/featureflag/domain/event"
 	ffrepo "gct/internal/context/admin/generic/featureflag/domain/repository"
-	"gct/internal/kernel/application"
+	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
+	"gct/internal/kernel/outbox"
 )
 
 // UpdateRuleGroupCommand represents a partial update to an existing rule group.
@@ -24,21 +25,21 @@ type UpdateRuleGroupCommand struct {
 
 // UpdateRuleGroupHandler applies modifications to an existing rule group.
 type UpdateRuleGroupHandler struct {
-	rgRepo   ffrepo.RuleGroupRepository
-	eventBus application.EventBus
-	logger   logger.Log
+	rgRepo    ffrepo.RuleGroupRepository
+	committer *outbox.EventCommitter
+	logger    logger.Log
 }
 
 // NewUpdateRuleGroupHandler wires dependencies for rule group updates.
 func NewUpdateRuleGroupHandler(
 	rgRepo ffrepo.RuleGroupRepository,
-	eventBus application.EventBus,
+	committer *outbox.EventCommitter,
 	logger logger.Log,
 ) *UpdateRuleGroupHandler {
 	return &UpdateRuleGroupHandler{
-		rgRepo:   rgRepo,
-		eventBus: eventBus,
-		logger:   logger,
+		rgRepo:    rgRepo,
+		committer: committer,
+		logger:    logger,
 	}
 }
 
@@ -75,14 +76,13 @@ func (h *UpdateRuleGroupHandler) Handle(ctx context.Context, cmd UpdateRuleGroup
 		)
 	}
 
-	if err := h.rgRepo.Update(ctx, rg); err != nil {
-		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "UpdateRuleGroup", Entity: "rule_group", EntityID: cmd.ID, Err: err}.KV()...)
-		return apperrors.MapToServiceError(err)
-	}
+	event := ffevent.NewFlagUpdated(rg.FlagID())
 
-	if err := h.eventBus.Publish(ctx, ffevent.NewFlagUpdated(rg.FlagID())); err != nil {
-		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "UpdateRuleGroup", Entity: "rule_group", Err: err}.KV()...)
-	}
-
-	return nil
+	return h.committer.Commit(ctx, func(ctx context.Context) error {
+		if err := h.rgRepo.Update(ctx, rg); err != nil {
+			h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "UpdateRuleGroup", Entity: "rule_group", EntityID: cmd.ID, Err: err}.KV()...)
+			return apperrors.MapToServiceError(err)
+		}
+		return nil
+	}, func() []shareddomain.DomainEvent { return []shareddomain.DomainEvent{event} })
 }

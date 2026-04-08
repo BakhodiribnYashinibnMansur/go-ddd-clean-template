@@ -7,11 +7,11 @@ import (
 
 	announceentity "gct/internal/context/content/supporting/announcement/domain/entity"
 	announcerepo "gct/internal/context/content/supporting/announcement/domain/repository"
-	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
+	"gct/internal/kernel/outbox"
 )
 
 // CreateAnnouncementCommand represents an intent to create a new system announcement.
@@ -28,21 +28,21 @@ type CreateAnnouncementCommand struct {
 // CreateAnnouncementHandler orchestrates announcement creation through the repository layer.
 // It emits domain events after a successful save; event publish failures are logged but do not roll back the save.
 type CreateAnnouncementHandler struct {
-	repo     announcerepo.AnnouncementRepository
-	eventBus application.EventBus
-	logger   logger.Log
+	repo      announcerepo.AnnouncementRepository
+	committer *outbox.EventCommitter
+	logger    logger.Log
 }
 
 // NewCreateAnnouncementHandler wires dependencies for announcement creation.
 func NewCreateAnnouncementHandler(
 	repo announcerepo.AnnouncementRepository,
-	eventBus application.EventBus,
+	committer *outbox.EventCommitter,
 	logger logger.Log,
 ) *CreateAnnouncementHandler {
 	return &CreateAnnouncementHandler{
-		repo:     repo,
-		eventBus: eventBus,
-		logger:   logger,
+		repo:      repo,
+		committer: committer,
+		logger:    logger,
 	}
 }
 
@@ -58,14 +58,11 @@ func (h *CreateAnnouncementHandler) Handle(ctx context.Context, cmd CreateAnnoun
 		return fmt.Errorf("create_announcement: %w", err)
 	}
 
-	if err := h.repo.Save(ctx, a); err != nil {
-		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateAnnouncement", Entity: "announcement", Err: err}.KV()...)
-		return apperrors.MapToServiceError(err)
-	}
-
-	if err := h.eventBus.Publish(ctx, a.Events()...); err != nil {
-		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "CreateAnnouncement", Entity: "announcement", Err: err}.KV()...)
-	}
-
-	return nil
+	return h.committer.Commit(ctx, func(ctx context.Context) error {
+		if err := h.repo.Save(ctx, a); err != nil {
+			h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateAnnouncement", Entity: "announcement", Err: err}.KV()...)
+			return apperrors.MapToServiceError(err)
+		}
+		return nil
+	}, a.Events)
 }

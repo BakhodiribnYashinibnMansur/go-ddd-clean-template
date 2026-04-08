@@ -17,6 +17,8 @@ import (
 	"gct/internal/kernel/application"
 	shared "gct/internal/kernel/domain"
 
+	"gct/internal/kernel/outbox"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -108,8 +110,8 @@ func setupRouter(repo *mockRepo, readRepo *mockReadRepo) *gin.Engine {
 	l := &mockLogger{}
 
 	bc := &ratelimit.BoundedContext{
-		CreateRateLimit: command.NewCreateRateLimitHandler(repo, eb, l),
-		UpdateRateLimit: command.NewUpdateRateLimitHandler(repo, eb, l),
+		CreateRateLimit: command.NewCreateRateLimitHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l),
+		UpdateRateLimit: command.NewUpdateRateLimitHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l),
 		DeleteRateLimit: command.NewDeleteRateLimitHandler(repo, l),
 		GetRateLimit:    query.NewGetRateLimitHandler(readRepo, l),
 		ListRateLimits:  query.NewListRateLimitsHandler(readRepo, l),

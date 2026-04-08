@@ -8,6 +8,7 @@ import (
 	announceentity "gct/internal/context/content/supporting/announcement/domain/entity"
 	announcerepo "gct/internal/context/content/supporting/announcement/domain/repository"
 	shared "gct/internal/kernel/domain"
+	"gct/internal/kernel/outbox"
 )
 
 // --- Error mocks ---
@@ -52,7 +53,7 @@ func TestCreateAnnouncementHandler_RepoError(t *testing.T) {
 	t.Parallel()
 
 	repo := &errorAnnouncementRepo{saveErr: errRepoSave}
-	handler := NewCreateAnnouncementHandler(repo, &mockEventBus{}, &mockLogger{})
+	handler := NewCreateAnnouncementHandler(repo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	err := handler.Handle(context.Background(), CreateAnnouncementCommand{
 		Title:   shared.Lang{Uz: "t", Ru: "t", En: "t"},
@@ -76,7 +77,7 @@ func TestUpdateAnnouncementHandler_RepoUpdateError(t *testing.T) {
 		findFn:    func(_ context.Context, _ announceentity.AnnouncementID) (*announceentity.Announcement, error) { return a, nil },
 		updateErr: errRepoUpdate,
 	}
-	handler := NewUpdateAnnouncementHandler(repo, &mockEventBus{}, &mockLogger{})
+	handler := NewUpdateAnnouncementHandler(repo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	err := handler.Handle(context.Background(), UpdateAnnouncementCommand{ID: announceentity.AnnouncementID(a.ID())})
 	if !errors.Is(err, errRepoUpdate) {

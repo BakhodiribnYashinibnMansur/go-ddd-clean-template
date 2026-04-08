@@ -8,6 +8,8 @@ import (
 
 	ffentity "gct/internal/context/admin/generic/featureflag/domain/entity"
 
+	"gct/internal/kernel/outbox"
+
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -28,7 +30,7 @@ func TestDeleteRuleGroupHandler_Handle(t *testing.T) {
 		},
 	}
 	eb := &mockEventBus{}
-	handler := NewDeleteRuleGroupHandler(rgRepo, eb, &mockLogger{})
+	handler := NewDeleteRuleGroupHandler(rgRepo, outbox.NewEventCommitter(nil, nil, eb, &mockLogger{}), &mockLogger{})
 
 	err := handler.Handle(context.Background(), DeleteRuleGroupCommand{ID: ffentity.RuleGroupID(rgID)})
 	require.NoError(t, err)
@@ -48,7 +50,7 @@ func TestDeleteRuleGroupHandler_Handle_NotFound(t *testing.T) {
 	t.Parallel()
 
 	rgRepo := &mockRuleGroupRepo{} // default returns ErrRuleGroupNotFound
-	handler := NewDeleteRuleGroupHandler(rgRepo, &mockEventBus{}, &mockLogger{})
+	handler := NewDeleteRuleGroupHandler(rgRepo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	err := handler.Handle(context.Background(), DeleteRuleGroupCommand{ID: ffentity.RuleGroupID(uuid.New())})
 	if err == nil {
@@ -75,7 +77,7 @@ func TestDeleteRuleGroupHandler_Handle_DeleteRepoError(t *testing.T) {
 			return repoErr
 		},
 	}
-	handler := NewDeleteRuleGroupHandler(rgRepo, &mockEventBus{}, &mockLogger{})
+	handler := NewDeleteRuleGroupHandler(rgRepo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	err := handler.Handle(context.Background(), DeleteRuleGroupCommand{ID: ffentity.RuleGroupID(rgID)})
 	if err == nil {

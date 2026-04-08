@@ -8,6 +8,7 @@ import (
 	siteentity "gct/internal/context/admin/supporting/sitesetting/domain/entity"
 	siterepo "gct/internal/context/admin/supporting/sitesetting/domain/repository"
 
+	"gct/internal/kernel/outbox"
 	"github.com/google/uuid"
 )
 
@@ -55,7 +56,7 @@ func TestCreateSiteSettingHandler_SaveError(t *testing.T) {
 	eb := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewCreateSiteSettingHandler(repo, eb, log)
+	handler := NewCreateSiteSettingHandler(repo, outbox.NewEventCommitter(nil, nil, eb, log), log)
 	err := handler.Handle(context.Background(), CreateSiteSettingCommand{
 		Key: "k", Value: "v", Type: "t",
 	})
@@ -71,7 +72,7 @@ func TestUpdateSiteSettingHandler_FindError(t *testing.T) {
 	eb := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewUpdateSiteSettingHandler(repo, eb, log)
+	handler := NewUpdateSiteSettingHandler(repo, outbox.NewEventCommitter(nil, nil, eb, log), log)
 	newVal := "new"
 	err := handler.Handle(context.Background(), UpdateSiteSettingCommand{
 		ID:    siteentity.SiteSettingID(uuid.New()),
@@ -94,7 +95,7 @@ func TestUpdateSiteSettingHandler_UpdateError(t *testing.T) {
 	eb := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewUpdateSiteSettingHandler(repo, eb, log)
+	handler := NewUpdateSiteSettingHandler(repo, outbox.NewEventCommitter(nil, nil, eb, log), log)
 	newVal := "updated"
 	err := handler.Handle(context.Background(), UpdateSiteSettingCommand{
 		ID:    siteentity.SiteSettingID(ss.TypedID()),

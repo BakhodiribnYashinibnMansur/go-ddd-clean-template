@@ -11,6 +11,7 @@ import (
 	notifrepo "gct/internal/context/content/generic/notification/domain/repository"
 	"gct/internal/kernel/infrastructure/eventbus"
 	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/outbox"
 	"gct/test/integration/common/setup"
 
 	"github.com/google/uuid"
@@ -20,7 +21,7 @@ func newTestBC(t *testing.T) *notification.BoundedContext {
 	t.Helper()
 	eb := eventbus.NewInMemoryEventBus()
 	l := logger.New("error")
-	return notification.NewBoundedContext(setup.TestPG.Pool, eb, l)
+	return notification.NewBoundedContext(setup.TestPG.Pool, eb, outbox.NewEventCommitter(setup.TestPG.Pool, nil, eb, l), l)
 }
 
 func TestIntegration_CreateAndGetNotification(t *testing.T) {

@@ -5,10 +5,10 @@ import (
 
 	userentity "gct/internal/context/iam/generic/user/domain/entity"
 	userrepo "gct/internal/context/iam/generic/user/domain/repository"
-	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
+	"gct/internal/kernel/outbox"
 )
 
 // DeleteUserCommand represents an intent to soft-delete a user by their unique identifier.
@@ -20,21 +20,21 @@ type DeleteUserCommand struct {
 // DeleteUserHandler performs a two-step soft-delete: deactivation followed by a soft-delete timestamp.
 // The user record is preserved for audit/recovery; domain events are emitted for downstream cleanup.
 type DeleteUserHandler struct {
-	repo     userrepo.UserRepository
-	eventBus application.EventBus
-	logger   commandLogger
+	repo      userrepo.UserRepository
+	committer *outbox.EventCommitter
+	logger    commandLogger
 }
 
 // NewDeleteUserHandler creates a new DeleteUserHandler.
 func NewDeleteUserHandler(
 	repo userrepo.UserRepository,
-	eventBus application.EventBus,
+	committer *outbox.EventCommitter,
 	logger commandLogger,
 ) *DeleteUserHandler {
 	return &DeleteUserHandler{
-		repo:     repo,
-		eventBus: eventBus,
-		logger:   logger,
+		repo:      repo,
+		committer: committer,
+		logger:    logger,
 	}
 }
 
@@ -53,14 +53,11 @@ func (h *DeleteUserHandler) Handle(ctx context.Context, cmd DeleteUserCommand) (
 	user.Deactivate()
 	user.SoftDelete()
 
-	if err := h.repo.Update(ctx, user); err != nil {
-		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "DeleteUser", Entity: "user", EntityID: cmd.ID, Err: err}.KV()...)
-		return apperrors.MapToServiceError(err)
-	}
-
-	if err := h.eventBus.Publish(ctx, user.Events()...); err != nil {
-		h.logger.Warnc(ctx, "event publish failed", logger.F{Op: "DeleteUser", Entity: "user", EntityID: cmd.ID, Err: err}.KV()...)
-	}
-
-	return nil
+	return h.committer.Commit(ctx, func(ctx context.Context) error {
+		if err := h.repo.Update(ctx, user); err != nil {
+			h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "DeleteUser", Entity: "user", EntityID: cmd.ID, Err: err}.KV()...)
+			return apperrors.MapToServiceError(err)
+		}
+		return nil
+	}, user.Events)
 }

@@ -9,6 +9,7 @@ import (
 
 	userentity "gct/internal/context/iam/generic/user/domain/entity"
 	jwtpkg "gct/internal/kernel/infrastructure/security/jwt"
+	"gct/internal/kernel/outbox"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -69,7 +70,7 @@ func TestSignInHandler_Handle(t *testing.T) {
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewSignInHandler(phoneRepo, eventBus, log, testJWTConfig(t))
+	handler := NewSignInHandler(phoneRepo, outbox.NewEventCommitter(nil, nil, eventBus, log), log, testJWTConfig(t))
 
 	cmd := SignInCommand{
 		Login:      "+998901234567",
@@ -122,7 +123,7 @@ func TestSignInHandler_WrongPassword(t *testing.T) {
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewSignInHandler(phoneRepo, eventBus, log, testJWTConfig(t))
+	handler := NewSignInHandler(phoneRepo, outbox.NewEventCommitter(nil, nil, eventBus, log), log, testJWTConfig(t))
 
 	cmd := SignInCommand{
 		Login:      "+998901234567",
@@ -152,7 +153,7 @@ func TestSignInHandler_InactiveUser(t *testing.T) {
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewSignInHandler(phoneRepo, eventBus, log, testJWTConfig(t))
+	handler := NewSignInHandler(phoneRepo, outbox.NewEventCommitter(nil, nil, eventBus, log), log, testJWTConfig(t))
 
 	cmd := SignInCommand{
 		Login:      "+998901234567",
@@ -216,7 +217,7 @@ func TestSignInHandler_EvictsOldestWhenAtCap(t *testing.T) {
 	log := &mockLogger{}
 
 	maxFn := func(_ context.Context) int { return 3 }
-	handler := NewSignInHandler(repo, eventBus, log, testJWTConfig(t), maxFn)
+	handler := NewSignInHandler(repo, outbox.NewEventCommitter(nil, nil, eventBus, log), log, testJWTConfig(t), maxFn)
 
 	cmd := SignInCommand{
 		Login:      "+998901234567",
@@ -250,7 +251,7 @@ func TestSignInHandler_NoEvictionBelowCap(t *testing.T) {
 	log := &mockLogger{}
 
 	maxFn := func(_ context.Context) int { return 3 }
-	handler := NewSignInHandler(repo, eventBus, log, testJWTConfig(t), maxFn)
+	handler := NewSignInHandler(repo, outbox.NewEventCommitter(nil, nil, eventBus, log), log, testJWTConfig(t), maxFn)
 
 	cmd := SignInCommand{
 		Login:      "+998901234567",

@@ -7,6 +7,7 @@ import (
 
 	ffentity "gct/internal/context/admin/generic/featureflag/domain/entity"
 
+	"gct/internal/kernel/outbox"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -16,7 +17,7 @@ func TestDeleteHandler_Handle(t *testing.T) {
 
 	repo := &mockFeatureFlagRepo{}
 	eb := &mockEventBus{}
-	handler := NewDeleteHandler(repo, eb, &mockLogger{})
+	handler := NewDeleteHandler(repo, outbox.NewEventCommitter(nil, nil, eb, &mockLogger{}), &mockLogger{})
 
 	id := ffentity.NewFeatureFlagID()
 	err := handler.Handle(context.Background(), DeleteCommand{ID: ffentity.FeatureFlagID(id)})
@@ -42,7 +43,7 @@ func TestDeleteHandler_Handle_RepoError(t *testing.T) {
 			return repoErr
 		},
 	}
-	handler := NewDeleteHandler(repo, &mockEventBus{}, &mockLogger{})
+	handler := NewDeleteHandler(repo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	err := handler.Handle(context.Background(), DeleteCommand{ID: ffentity.FeatureFlagID(uuid.New())})
 	if err == nil {
