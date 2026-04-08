@@ -19,6 +19,7 @@ type BoundedContext struct {
 
 	// Subscribers (event-driven coupling with other BCs)
 	userEvents *subscriber.UserEventSubscriber
+	generic    *subscriber.GenericSubscriber
 }
 
 // NewBoundedContext creates a fully wired ActivityLog bounded context.
@@ -31,10 +32,14 @@ func NewBoundedContext(pool *pgxpool.Pool, eventBus application.EventBus, l logg
 	return &BoundedContext{
 		ListActivityLogs: query.NewListActivityLogsHandler(readRepo, l),
 		userEvents:       subscriber.NewUserEventSubscriber(createBatch, l),
+		generic:          subscriber.NewGenericSubscriber(createBatch, l),
 	}
 }
 
 // RegisterSubscribers hooks this BC's event subscribers onto the shared event bus.
 func (bc *BoundedContext) RegisterSubscribers(bus application.EventBus) error {
-	return bc.userEvents.Register(bus)
+	if err := bc.userEvents.Register(bus); err != nil {
+		return err
+	}
+	return bc.generic.Register(bus)
 }

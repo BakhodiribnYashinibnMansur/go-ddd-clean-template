@@ -1,6 +1,7 @@
 package event
 
 import (
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -26,6 +27,7 @@ func NewFileUploaded(id uuid.UUID, name, mimeType string, size int64) FileUpload
 	}
 }
 
-func (e FileUploaded) EventName() string     { return "file.uploaded" }
-func (e FileUploaded) OccurredAt() time.Time  { return e.occurredAt }
-func (e FileUploaded) AggregateID() uuid.UUID { return e.aggregateID }
+func (e FileUploaded) EventName() string        { return "file.uploaded" }
+func (e FileUploaded) OccurredAt() time.Time    { return e.occurredAt }
+func (e FileUploaded) AggregateID() uuid.UUID   { return e.aggregateID }
+func (e FileUploaded) ActivityMetadata() string { return "name=" + e.Name + " mime=" + e.MimeType + " size=" + strconv.FormatInt(e.Size, 10) }

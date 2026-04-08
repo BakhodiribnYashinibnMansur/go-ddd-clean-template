@@ -22,9 +22,10 @@ func NewRoleCreated(roleID uuid.UUID, name string) RoleCreated {
 	}
 }
 
-func (e RoleCreated) EventName() string      { return "authz.role_created" }
-func (e RoleCreated) OccurredAt() time.Time  { return e.occurredAt }
-func (e RoleCreated) AggregateID() uuid.UUID { return e.aggregateID }
+func (e RoleCreated) EventName() string        { return "authz.role_created" }
+func (e RoleCreated) OccurredAt() time.Time    { return e.occurredAt }
+func (e RoleCreated) AggregateID() uuid.UUID   { return e.aggregateID }
+func (e RoleCreated) ActivityMetadata() string { return "name=" + e.Name }
 
 // RoleDeleted is emitted when a role is permanently removed.
 // Consumers should cascade-revoke any user-role assignments referencing this role.
@@ -60,9 +61,10 @@ func NewPolicyUpdated(roleID, policyID uuid.UUID) PolicyUpdated {
 	}
 }
 
-func (e PolicyUpdated) EventName() string      { return "authz.policy_updated" }
-func (e PolicyUpdated) OccurredAt() time.Time  { return e.occurredAt }
-func (e PolicyUpdated) AggregateID() uuid.UUID { return e.aggregateID }
+func (e PolicyUpdated) EventName() string        { return "authz.policy_updated" }
+func (e PolicyUpdated) OccurredAt() time.Time    { return e.occurredAt }
+func (e PolicyUpdated) AggregateID() uuid.UUID   { return e.aggregateID }
+func (e PolicyUpdated) ActivityMetadata() string { return "policy=" + e.PolicyID.String() }
 
 // PermissionGranted is emitted when a permission is added to a role's permission set.
 // This can trigger permission cache invalidation for all users assigned to the role.
@@ -80,6 +82,7 @@ func NewPermissionGranted(roleID, permissionID uuid.UUID) PermissionGranted {
 	}
 }
 
-func (e PermissionGranted) EventName() string      { return "authz.permission_granted" }
-func (e PermissionGranted) OccurredAt() time.Time  { return e.occurredAt }
-func (e PermissionGranted) AggregateID() uuid.UUID { return e.aggregateID }
+func (e PermissionGranted) EventName() string        { return "authz.permission_granted" }
+func (e PermissionGranted) OccurredAt() time.Time    { return e.occurredAt }
+func (e PermissionGranted) AggregateID() uuid.UUID   { return e.aggregateID }
+func (e PermissionGranted) ActivityMetadata() string { return "permission=" + e.PermissionID.String() }

@@ -24,6 +24,7 @@ func NewNotificationSent(id, userID uuid.UUID, title string) NotificationSent {
 	}
 }
 
-func (e NotificationSent) EventName() string      { return "notification.sent" }
-func (e NotificationSent) OccurredAt() time.Time   { return e.occurredAt }
-func (e NotificationSent) AggregateID() uuid.UUID  { return e.aggregateID }
+func (e NotificationSent) EventName() string        { return "notification.sent" }
+func (e NotificationSent) OccurredAt() time.Time    { return e.occurredAt }
+func (e NotificationSent) AggregateID() uuid.UUID   { return e.aggregateID }
+func (e NotificationSent) ActivityMetadata() string { return "user=" + e.UserID.String() + " title=" + e.Title }

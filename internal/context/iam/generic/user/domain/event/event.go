@@ -22,9 +22,10 @@ func NewUserCreated(userID uuid.UUID, phone string) UserCreated {
 	}
 }
 
-func (e UserCreated) EventName() string      { return "user.created" }
-func (e UserCreated) OccurredAt() time.Time  { return e.occurredAt }
-func (e UserCreated) AggregateID() uuid.UUID { return e.aggregateID }
+func (e UserCreated) EventName() string        { return "user.created" }
+func (e UserCreated) OccurredAt() time.Time    { return e.occurredAt }
+func (e UserCreated) AggregateID() uuid.UUID   { return e.aggregateID }
+func (e UserCreated) ActivityMetadata() string { return "phone=" + e.Phone }
 
 // UserSignedIn is raised after successful credential verification and session creation.
 // Carries session ID and IP for audit logging and anomaly detection (e.g., new-IP alerts).
@@ -44,9 +45,10 @@ func NewUserSignedIn(userID, sessionID uuid.UUID, ip string) UserSignedIn {
 	}
 }
 
-func (e UserSignedIn) EventName() string      { return "user.signed_in" }
-func (e UserSignedIn) OccurredAt() time.Time  { return e.occurredAt }
-func (e UserSignedIn) AggregateID() uuid.UUID { return e.aggregateID }
+func (e UserSignedIn) EventName() string        { return "user.signed_in" }
+func (e UserSignedIn) OccurredAt() time.Time    { return e.occurredAt }
+func (e UserSignedIn) AggregateID() uuid.UUID   { return e.aggregateID }
+func (e UserSignedIn) ActivityMetadata() string { return "ip=" + e.IPAddress + " session=" + e.SessionID.String() }
 
 // UserDeactivated is raised when an admin deactivates a user account.
 // Subscribers should consider revoking active sessions or sending a notification.
@@ -139,6 +141,14 @@ func NewRoleChanged(userID uuid.UUID, oldRoleID *uuid.UUID, newRoleID uuid.UUID)
 func (e RoleChanged) EventName() string      { return "user.role_changed" }
 func (e RoleChanged) OccurredAt() time.Time  { return e.occurredAt }
 func (e RoleChanged) AggregateID() uuid.UUID { return e.aggregateID }
+
+func (e RoleChanged) ActivityMetadata() string {
+	old := "<none>"
+	if e.OldRoleID != nil {
+		old = e.OldRoleID.String()
+	}
+	return "old_role=" + old + " new_role=" + e.NewRoleID.String()
+}
 
 // ---------------------------------------------------------------------------
 // V2 events — carry field-level changes for activity logging

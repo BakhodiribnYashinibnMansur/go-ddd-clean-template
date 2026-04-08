@@ -24,9 +24,10 @@ func NewSystemErrorRecorded(id uuid.UUID, code, severity string) SystemErrorReco
 	}
 }
 
-func (e SystemErrorRecorded) EventName() string      { return "system_error.recorded" }
-func (e SystemErrorRecorded) OccurredAt() time.Time   { return e.occurredAt }
-func (e SystemErrorRecorded) AggregateID() uuid.UUID  { return e.aggregateID }
+func (e SystemErrorRecorded) EventName() string        { return "system_error.recorded" }
+func (e SystemErrorRecorded) OccurredAt() time.Time    { return e.occurredAt }
+func (e SystemErrorRecorded) AggregateID() uuid.UUID   { return e.aggregateID }
+func (e SystemErrorRecorded) ActivityMetadata() string { return "code=" + e.Code + " severity=" + e.Severity }
 
 // SystemErrorResolved is raised when an admin marks a system error as resolved.
 // This can be used to close alerting tickets or update dashboards.
@@ -44,6 +45,7 @@ func NewSystemErrorResolved(id, resolvedBy uuid.UUID) SystemErrorResolved {
 	}
 }
 
-func (e SystemErrorResolved) EventName() string      { return "system_error.resolved" }
-func (e SystemErrorResolved) OccurredAt() time.Time   { return e.occurredAt }
-func (e SystemErrorResolved) AggregateID() uuid.UUID  { return e.aggregateID }
+func (e SystemErrorResolved) EventName() string        { return "system_error.resolved" }
+func (e SystemErrorResolved) OccurredAt() time.Time    { return e.occurredAt }
+func (e SystemErrorResolved) AggregateID() uuid.UUID   { return e.aggregateID }
+func (e SystemErrorResolved) ActivityMetadata() string { return "resolved_by=" + e.ResolvedBy.String() }
