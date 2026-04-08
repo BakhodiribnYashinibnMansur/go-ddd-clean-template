@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	contractevents "gct/internal/contract/events"
 	userentity "gct/internal/context/iam/generic/user/domain/entity"
+	userevent "gct/internal/context/iam/generic/user/domain/event"
 	userrepo "gct/internal/context/iam/generic/user/domain/repository"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
@@ -18,6 +20,7 @@ import (
 // Phone and Password are required; all other fields are optional enrichments.
 // The password is supplied in raw form and will be hashed by the domain layer before persistence.
 type CreateUserCommand struct {
+	ActorID    uuid.UUID
 	Phone      string
 	Password   string
 	Email      *string
@@ -90,6 +93,24 @@ func (h *CreateUserHandler) Handle(ctx context.Context, cmd CreateUserCommand) (
 	if err != nil {
 		return fmt.Errorf("create_user: %w", err)
 	}
+
+	// Build field-level changes for activity logging.
+	var changes []userevent.FieldChange
+	changes = append(changes, userevent.FieldChange{FieldName: "phone", NewValue: cmd.Phone})
+	changes = append(changes, userevent.FieldChange{FieldName: "password", OldValue: contractevents.RedactedValue, NewValue: contractevents.RedactedValue})
+	if cmd.Email != nil {
+		changes = append(changes, userevent.FieldChange{FieldName: "email", NewValue: *cmd.Email})
+	}
+	if cmd.Username != nil {
+		changes = append(changes, userevent.FieldChange{FieldName: "username", NewValue: *cmd.Username})
+	}
+	if cmd.RoleID != nil {
+		changes = append(changes, userevent.FieldChange{FieldName: "role_id", NewValue: cmd.RoleID.String()})
+	}
+	for k, v := range cmd.Attributes {
+		changes = append(changes, userevent.FieldChange{FieldName: fmt.Sprintf("attributes.%s", k), NewValue: v})
+	}
+	user.AddEvent(userevent.NewUserCreatedWithChanges(user.ID(), cmd.ActorID, changes))
 
 	return h.committer.Commit(ctx, func(ctx context.Context) error {
 		if err := h.repo.Save(ctx, user); err != nil {

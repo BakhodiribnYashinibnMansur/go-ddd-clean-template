@@ -4,6 +4,7 @@ import (
 	"context"
 
 	userentity "gct/internal/context/iam/generic/user/domain/entity"
+	userevent "gct/internal/context/iam/generic/user/domain/event"
 	userrepo "gct/internal/context/iam/generic/user/domain/repository"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
@@ -15,7 +16,8 @@ import (
 
 // ChangeRoleCommand holds the input for changing a user's role.
 type ChangeRoleCommand struct {
-	UserID userentity.UserID
+	UserID  userentity.UserID
+	ActorID uuid.UUID
 	// RoleID is owned by the Authz BC and stays as uuid.UUID at this boundary.
 	RoleID uuid.UUID
 }
@@ -51,7 +53,16 @@ func (h *ChangeRoleHandler) Handle(ctx context.Context, cmd ChangeRoleCommand) (
 		return apperrors.MapToServiceError(err)
 	}
 
+	oldRoleID := ""
+	if user.RoleID() != nil {
+		oldRoleID = user.RoleID().String()
+	}
+
 	user.ChangeRole(cmd.RoleID)
+
+	user.AddEvent(userevent.NewRoleChangedWithChanges(user.ID(), cmd.ActorID, []userevent.FieldChange{
+		{FieldName: "role_id", OldValue: oldRoleID, NewValue: cmd.RoleID.String()},
+	}))
 
 	if err := h.repo.Update(ctx, user); err != nil {
 		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "ChangeRole", Entity: "user", EntityID: cmd.UserID, Err: err}.KV()...)

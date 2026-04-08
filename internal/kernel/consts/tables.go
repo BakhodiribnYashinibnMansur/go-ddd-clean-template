@@ -30,4 +30,5 @@ const (
 	TableFileMetadata    = "file_metadata"
 	TableUserSettings    = "user_settings"
 	TableEntityMetadata  = "entity_metadata"
+	TableActivityLog     = "activity_log"
 )

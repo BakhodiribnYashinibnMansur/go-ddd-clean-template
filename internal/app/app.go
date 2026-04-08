@@ -384,6 +384,9 @@ func Run(cfg *config.Config) {
 	if err := dddBCs.Audit.RegisterSubscribers(eventBusInstance); err != nil {
 		l.Fatalw("failed to register audit subscribers", "error", err)
 	}
+	if err := dddBCs.ActivityLog.RegisterSubscribers(eventBusInstance); err != nil {
+		l.Fatalw("failed to register activity log subscribers", "error", err)
+	}
 
 	// 4.3 Subscribe session events — Session BC publishes, User BC handles
 	subscribeSessionEvents(eventBusInstance, dddBCs.User, l)

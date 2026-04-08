@@ -2,6 +2,8 @@ package command
 
 import (
 	"context"
+	"fmt"
+	"sort"
 
 	userentity "gct/internal/context/iam/generic/user/domain/entity"
 	userevent "gct/internal/context/iam/generic/user/domain/event"
@@ -10,6 +12,8 @@ import (
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
 	"gct/internal/kernel/outbox"
+
+	"github.com/google/uuid"
 )
 
 // UpdateUserCommand represents a partial update to a user's profile fields.
@@ -17,6 +21,7 @@ import (
 // use dedicated commands (ChangeRole, etc.) for those privileged mutations.
 type UpdateUserCommand struct {
 	ID         userentity.UserID
+	ActorID    uuid.UUID
 	Email      *string
 	Username   *string
 	Attributes map[string]string
@@ -77,6 +82,41 @@ func (h *UpdateUserHandler) Handle(ctx context.Context, cmd UpdateUserCommand) (
 		attributes = cmd.Attributes
 	}
 
+	// Compute field-level changes before raising events.
+	var changes []userevent.FieldChange
+
+	if cmd.Email != nil {
+		oldVal := ""
+		if user.Email() != nil {
+			oldVal = user.Email().Value()
+		}
+		newVal := ""
+		if email != nil {
+			newVal = email.Value()
+		}
+		if oldVal != newVal {
+			changes = append(changes, userevent.FieldChange{FieldName: "email", OldValue: oldVal, NewValue: newVal})
+		}
+	}
+
+	if cmd.Username != nil {
+		oldVal := ""
+		if user.Username() != nil {
+			oldVal = *user.Username()
+		}
+		newVal := ""
+		if username != nil {
+			newVal = *username
+		}
+		if oldVal != newVal {
+			changes = append(changes, userevent.FieldChange{FieldName: "username", OldValue: oldVal, NewValue: newVal})
+		}
+	}
+
+	if cmd.Attributes != nil {
+		changes = append(changes, diffAttributes(user.Attributes(), attributes)...)
+	}
+
 	updated := userentity.ReconstructUser(
 		user.ID(),
 		user.CreatedAt(),
@@ -96,6 +136,10 @@ func (h *UpdateUserHandler) Handle(ctx context.Context, cmd UpdateUserCommand) (
 	updated.Touch()
 	updated.AddEvent(userevent.NewUserProfileUpdated(updated.ID()))
 
+	if len(changes) > 0 {
+		updated.AddEvent(userevent.NewUserProfileUpdatedWithChanges(updated.ID(), cmd.ActorID, changes))
+	}
+
 	return h.committer.Commit(ctx, func(ctx context.Context) error {
 		if err := h.repo.Update(ctx, updated); err != nil {
 			h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "UpdateUser", Entity: "user", EntityID: cmd.ID, Err: err}.KV()...)
@@ -103,4 +147,36 @@ func (h *UpdateUserHandler) Handle(ctx context.Context, cmd UpdateUserCommand) (
 		}
 		return nil
 	}, updated.Events)
+}
+
+// diffAttributes compares old and new attribute maps, returning a FieldChange
+// for every added, removed, or modified key. Keys are sorted for deterministic output.
+func diffAttributes(old, new map[string]string) []userevent.FieldChange {
+	allKeys := make(map[string]struct{})
+	for k := range old {
+		allKeys[k] = struct{}{}
+	}
+	for k := range new {
+		allKeys[k] = struct{}{}
+	}
+
+	sorted := make([]string, 0, len(allKeys))
+	for k := range allKeys {
+		sorted = append(sorted, k)
+	}
+	sort.Strings(sorted)
+
+	var changes []userevent.FieldChange
+	for _, k := range sorted {
+		oldVal := old[k]
+		newVal := new[k]
+		if oldVal != newVal {
+			changes = append(changes, userevent.FieldChange{
+				FieldName: fmt.Sprintf("attributes.%s", k),
+				OldValue:  oldVal,
+				NewValue:  newVal,
+			})
+		}
+	}
+	return changes
 }

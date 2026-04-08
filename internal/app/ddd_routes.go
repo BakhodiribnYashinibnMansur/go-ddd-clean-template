@@ -5,6 +5,7 @@ import (
 
 	miniogo "github.com/minio/minio-go/v7"
 
+	activityloghttp "gct/internal/context/ops/supporting/activitylog/interfaces/http"
 	announcementhttp "gct/internal/context/content/supporting/announcement/interfaces/http"
 	audithttp "gct/internal/context/iam/supporting/audit/interfaces/http"
 	authzhttp "gct/internal/context/iam/generic/authz/interfaces/http"
@@ -56,6 +57,7 @@ type dddHandlers struct {
 	file         *filehttp.Handler
 	userSetting  *usersettinghttp.Handler
 	errorCode    *errorcodehttp.Handler
+	activityLog  *activityloghttp.Handler
 }
 
 // buildDDDHandlers constructs every HTTP handler for the DDD bounded contexts.
@@ -84,6 +86,7 @@ func buildDDDHandlers(bcs *DDDBoundedContexts, l logger.Log, opt RouteOptions) *
 		file:         fileHandler,
 		userSetting:  usersettinghttp.NewHandler(bcs.UserSetting, l),
 		errorCode:    errorcodehttp.NewHandler(bcs.ErrorCode, l),
+		activityLog:  activityloghttp.NewHandler(bcs.ActivityLog, l),
 	}
 }
 
@@ -232,6 +235,8 @@ func registerOpsRoutes(protected *gin.RouterGroup, h *dddHandlers) {
 		ipRules.PATCH("/:id", h.ipRule.Update)
 		ipRules.DELETE("/:id", h.ipRule.Delete)
 	}
+
+	h.activityLog.RegisterRoutes(protected)
 }
 
 // registerContentRoutes wires content routes (notifications, announcements, translations, files).
