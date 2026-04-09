@@ -62,7 +62,7 @@ func TestReconstructActivityLogEntry(t *testing.T) {
 
 	entry := domain.ReconstructActivityLogEntry(
 		42, actorID, "user.updated", "user", entityID,
-		&fn, strPtr("old"), strPtr("new"), nil, now,
+		&fn, strPtr("old"), strPtr("new"), nil, nil, now,
 	)
 
 	assert.Equal(t, int64(42), entry.ID())

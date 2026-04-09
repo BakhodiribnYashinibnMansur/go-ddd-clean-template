@@ -19,6 +19,7 @@ type ActivityLogEntry struct {
 	oldValue   *string
 	newValue   *string
 	metadata   *string
+	requestID  *string
 	createdAt  time.Time
 }
 
@@ -46,6 +47,14 @@ func NewActivityLogEntry(
 	}
 }
 
+// WithRequestID sets the request ID on the entry and returns it for chaining.
+func (e *ActivityLogEntry) WithRequestID(requestID string) *ActivityLogEntry {
+	if requestID != "" {
+		e.requestID = &requestID
+	}
+	return e
+}
+
 // ReconstructActivityLogEntry rebuilds an entry from persisted data.
 func ReconstructActivityLogEntry(
 	id int64,
@@ -57,6 +66,7 @@ func ReconstructActivityLogEntry(
 	oldValue *string,
 	newValue *string,
 	metadata *string,
+	requestID *string,
 	createdAt time.Time,
 ) *ActivityLogEntry {
 	return &ActivityLogEntry{
@@ -69,6 +79,7 @@ func ReconstructActivityLogEntry(
 		oldValue:   oldValue,
 		newValue:   newValue,
 		metadata:   metadata,
+		requestID:  requestID,
 		createdAt:  createdAt,
 	}
 }
@@ -84,4 +95,5 @@ func (e *ActivityLogEntry) FieldName() *string    { return e.fieldName }
 func (e *ActivityLogEntry) OldValue() *string     { return e.oldValue }
 func (e *ActivityLogEntry) NewValue() *string     { return e.newValue }
 func (e *ActivityLogEntry) Metadata() *string     { return e.metadata }
+func (e *ActivityLogEntry) RequestID() *string    { return e.requestID }
 func (e *ActivityLogEntry) CreatedAt() time.Time  { return e.createdAt }

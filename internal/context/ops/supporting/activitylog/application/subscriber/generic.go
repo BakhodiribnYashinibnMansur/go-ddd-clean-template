@@ -8,6 +8,7 @@ import (
 	"gct/internal/context/ops/supporting/activitylog/domain"
 	"gct/internal/kernel/application"
 	shareddomain "gct/internal/kernel/domain"
+	"gct/internal/kernel/infrastructure/contextx"
 	"gct/internal/kernel/infrastructure/logger"
 )
 
@@ -130,7 +131,7 @@ func (s *GenericSubscriber) handle(ctx context.Context, mapping eventMapping, ev
 		event.AggregateID(),
 		nil, nil, nil, // no field-level changes
 		metadata,
-	)
+	).WithRequestID(contextx.GetRequestID(ctx))
 
 	if err := s.createBatch.Handle(ctx, command.CreateActivityLogBatchCommand{
 		Entries: []*domain.ActivityLogEntry{entry},

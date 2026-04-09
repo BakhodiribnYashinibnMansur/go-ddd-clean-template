@@ -14,7 +14,7 @@ import (
 
 var activityLogColumns = []string{
 	"actor_id", "action", "entity_type", "entity_id",
-	"field_name", "old_value", "new_value", "metadata", "created_at",
+	"field_name", "old_value", "new_value", "metadata", "request_id", "created_at",
 }
 
 // ActivityLogWriteRepo implements domain.ActivityLogWriteRepository using PostgreSQL.
@@ -54,6 +54,7 @@ func (r *ActivityLogWriteRepo) SaveBatch(ctx context.Context, entries []*domain.
 			e.OldValue(),
 			e.NewValue(),
 			e.Metadata(),
+			e.RequestID(),
 			e.CreatedAt(),
 		)
 	}

@@ -12,6 +12,7 @@ import (
 	"gct/internal/context/ops/supporting/activitylog/domain"
 	"gct/internal/kernel/application"
 	shareddomain "gct/internal/kernel/domain"
+	"gct/internal/kernel/infrastructure/contextx"
 	"gct/internal/kernel/infrastructure/logger"
 
 	"github.com/google/uuid"
@@ -53,6 +54,7 @@ func (s *UserEventSubscriber) Register(bus application.EventBus) error {
 
 func (s *UserEventSubscriber) handle(ctx context.Context, event shareddomain.DomainEvent) error {
 	var entries []*domain.ActivityLogEntry
+	reqID := contextx.GetRequestID(ctx)
 
 	switch e := event.(type) {
 	case contractevents.UserCreatedV2:
@@ -75,6 +77,10 @@ func (s *UserEventSubscriber) handle(ctx context.Context, event shareddomain.Dom
 
 	case contractevents.UserPasswordChangedV2:
 		entries = changesToEntries(e.ActorID, "user.password_changed", "user", event.AggregateID(), e.Changes)
+	}
+
+	for _, entry := range entries {
+		entry.WithRequestID(reqID)
 	}
 
 	if len(entries) == 0 {

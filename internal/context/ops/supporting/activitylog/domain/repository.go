@@ -33,6 +33,7 @@ type ActivityLogView struct {
 	OldValue   *string    `json:"old_value,omitempty"`
 	NewValue   *string    `json:"new_value,omitempty"`
 	Metadata   *string    `json:"metadata,omitempty"`
+	RequestID  *string    `json:"request_id,omitempty"`
 	CreatedAt  time.Time  `json:"created_at"`
 }
 

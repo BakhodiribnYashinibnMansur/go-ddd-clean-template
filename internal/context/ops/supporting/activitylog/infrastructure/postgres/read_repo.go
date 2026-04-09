@@ -17,7 +17,7 @@ import (
 
 var readActivityLogColumns = []string{
 	"id", "actor_id", "action", "entity_type", "entity_id",
-	"field_name", "old_value", "new_value", "metadata", "created_at",
+	"field_name", "old_value", "new_value", "metadata", "request_id", "created_at",
 }
 
 // ActivityLogReadRepo implements domain.ActivityLogReadRepository using PostgreSQL.
@@ -124,12 +124,13 @@ func (r *ActivityLogReadRepo) List(ctx context.Context, filter domain.ActivityLo
 			oldValue   *string
 			newValue   *string
 			metadata   *string
+			requestID  *string
 			createdAt  time.Time
 		)
 
 		if err := rows.Scan(
 			&id, &actorID, &action, &entityType, &entityID,
-			&fieldName, &oldValue, &newValue, &metadata, &createdAt,
+			&fieldName, &oldValue, &newValue, &metadata, &requestID, &createdAt,
 		); err != nil {
 			return nil, 0, apperrors.HandlePgError(err, consts.TableActivityLog, nil)
 		}
@@ -144,6 +145,7 @@ func (r *ActivityLogReadRepo) List(ctx context.Context, filter domain.ActivityLo
 			OldValue:   oldValue,
 			NewValue:   newValue,
 			Metadata:   metadata,
+			RequestID:  requestID,
 			CreatedAt:  createdAt,
 		})
 	}
