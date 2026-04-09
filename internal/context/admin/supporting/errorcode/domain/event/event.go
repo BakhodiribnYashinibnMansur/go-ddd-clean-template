@@ -1,6 +1,7 @@
 package event
 
 import (
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -26,9 +27,10 @@ func NewErrorCodeCreated(id uuid.UUID, code, message string, httpStatus int) Err
 	}
 }
 
-func (e ErrorCodeCreated) EventName() string      { return "errorcode.created" }
-func (e ErrorCodeCreated) OccurredAt() time.Time  { return e.occurredAt }
-func (e ErrorCodeCreated) AggregateID() uuid.UUID { return e.aggregateID }
+func (e ErrorCodeCreated) EventName() string        { return "errorcode.created" }
+func (e ErrorCodeCreated) OccurredAt() time.Time    { return e.occurredAt }
+func (e ErrorCodeCreated) AggregateID() uuid.UUID   { return e.aggregateID }
+func (e ErrorCodeCreated) ActivityMetadata() string { return "code=" + e.Code + " status=" + strconv.Itoa(e.HTTPStatus) }
 
 // ErrorCodeUpdated is a domain event emitted on modification of an error code.
 // Consumers can use this to refresh a cached error-code lookup table used by API error mappers.
@@ -50,9 +52,10 @@ func NewErrorCodeUpdated(id uuid.UUID, code, message string, httpStatus int) Err
 	}
 }
 
-func (e ErrorCodeUpdated) EventName() string      { return "errorcode.updated" }
-func (e ErrorCodeUpdated) OccurredAt() time.Time  { return e.occurredAt }
-func (e ErrorCodeUpdated) AggregateID() uuid.UUID { return e.aggregateID }
+func (e ErrorCodeUpdated) EventName() string        { return "errorcode.updated" }
+func (e ErrorCodeUpdated) OccurredAt() time.Time    { return e.occurredAt }
+func (e ErrorCodeUpdated) AggregateID() uuid.UUID   { return e.aggregateID }
+func (e ErrorCodeUpdated) ActivityMetadata() string { return "code=" + e.Code + " status=" + strconv.Itoa(e.HTTPStatus) }
 
 // ErrorCodeDeleted is a domain event emitted when an error code is removed.
 // Consumers should use this to evict the code from any in-memory lookup caches.
@@ -70,6 +73,7 @@ func NewErrorCodeDeleted(id uuid.UUID, code string) ErrorCodeDeleted {
 	}
 }
 
-func (e ErrorCodeDeleted) EventName() string      { return "errorcode.deleted" }
-func (e ErrorCodeDeleted) OccurredAt() time.Time  { return e.occurredAt }
-func (e ErrorCodeDeleted) AggregateID() uuid.UUID { return e.aggregateID }
+func (e ErrorCodeDeleted) EventName() string        { return "errorcode.deleted" }
+func (e ErrorCodeDeleted) OccurredAt() time.Time    { return e.occurredAt }
+func (e ErrorCodeDeleted) AggregateID() uuid.UUID   { return e.aggregateID }
+func (e ErrorCodeDeleted) ActivityMetadata() string { return "code=" + e.Code }

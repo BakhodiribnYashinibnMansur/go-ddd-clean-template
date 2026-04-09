@@ -22,9 +22,10 @@ func NewSessionRevokeRequested(userID, sessionID uuid.UUID) SessionRevokeRequest
 	}
 }
 
-func (e SessionRevokeRequested) EventName() string      { return "session.revoke_requested" }
-func (e SessionRevokeRequested) OccurredAt() time.Time  { return e.occurredAt }
-func (e SessionRevokeRequested) AggregateID() uuid.UUID { return e.aggregateID }
+func (e SessionRevokeRequested) EventName() string        { return "session.revoke_requested" }
+func (e SessionRevokeRequested) OccurredAt() time.Time    { return e.occurredAt }
+func (e SessionRevokeRequested) AggregateID() uuid.UUID   { return e.aggregateID }
+func (e SessionRevokeRequested) ActivityMetadata() string { return "session=" + e.SessionID.String() }
 
 // SessionRevokeAllRequested is raised when a user requests revocation of all their sessions.
 // The User BC subscribes to this event and revokes every session on the user aggregate.

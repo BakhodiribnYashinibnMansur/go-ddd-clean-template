@@ -11,6 +11,7 @@ import (
 	usersvc "gct/internal/context/iam/generic/user/domain/service"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
+	"gct/internal/kernel/infrastructure/metrics"
 	"gct/internal/kernel/infrastructure/pgxutil"
 	"gct/internal/kernel/infrastructure/security/audit"
 	jwtpkg "gct/internal/kernel/infrastructure/security/jwt"
@@ -19,6 +20,7 @@ import (
 	"gct/internal/kernel/outbox"
 
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 // SignInCommand represents an authentication attempt using login credentials and device metadata.
@@ -81,6 +83,9 @@ type SignInHandler struct {
 	auditLogger audit.Logger
 	limiter     *ratelimit.AuthLimiter
 	tbhPepper   []byte
+
+	// Business metrics — optional, nil-safe.
+	bm *metrics.BusinessMetrics
 }
 
 // defaultMaxSessions is the fallback cap when no dynamic resolver is wired.
@@ -136,6 +141,11 @@ func (h *SignInHandler) WithSecurityDeps(deps SignInSecurityDeps) *SignInHandler
 	h.limiter = deps.Limiter
 	h.tbhPepper = deps.TBHPepper
 	return h
+}
+
+// WithBusinessMetrics injects business metrics into the handler.
+func (h *SignInHandler) WithBusinessMetrics(bm *metrics.BusinessMetrics) {
+	h.bm = bm
 }
 
 // Handle executes the SignInCommand and returns SignInResult.
@@ -277,6 +287,9 @@ func (h *SignInHandler) Handle(ctx context.Context, cmd SignInCommand) (result *
 		UserID: &uid, SessionID: &sid, IntegrationName: resolved.Name,
 	})
 
+	// Business metrics: successful sign-in.
+	h.bm.Inc(ctx, "user_signins", attribute.String("integration", resolved.Name))
+
 	result = &SignInResult{
 		UserID:       user.ID(),
 		SessionID:    session.ID(),
@@ -290,6 +303,7 @@ func (h *SignInHandler) Handle(ctx context.Context, cmd SignInCommand) (result *
 // recordFailedAttempt increments rate-limit counters and emits an audit event
 // for a failed authentication attempt.
 func (h *SignInHandler) recordFailedAttempt(ctx context.Context, cmd SignInCommand) {
+	h.bm.Inc(ctx, "user_signin_failures", attribute.String("ip", cmd.IP))
 	if h.limiter != nil {
 		_ = h.limiter.RecordFailedIP(ctx, cmd.IP)
 		_ = h.limiter.RecordFailedUser(ctx, cmd.Login)

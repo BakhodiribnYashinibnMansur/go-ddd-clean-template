@@ -46,7 +46,10 @@ func (h *Handler) Create(ctx *gin.Context) {
 		return
 	}
 
+	actorID, _ := httpx.GetUserID(ctx)
+
 	err := h.bc.CreateUser.Handle(ctx.Request.Context(), command.CreateUserCommand{
+		ActorID:    actorID,
 		Phone:      req.Phone,
 		Password:   req.Password,
 		Email:      req.Email,
@@ -170,8 +173,11 @@ func (h *Handler) Update(ctx *gin.Context) {
 		return
 	}
 
+	actorID, _ := httpx.GetUserID(ctx)
+
 	err = h.bc.UpdateUser.Handle(ctx.Request.Context(), command.UpdateUserCommand{
 		ID:         userentity.UserID(id),
+		ActorID:    actorID,
 		Email:      req.Email,
 		Username:   req.Username,
 		Attributes: req.Attributes,
@@ -204,7 +210,9 @@ func (h *Handler) Delete(ctx *gin.Context) {
 		return
 	}
 
-	err = h.bc.DeleteUser.Handle(ctx.Request.Context(), command.DeleteUserCommand{ID: userentity.UserID(id)})
+	actorID, _ := httpx.GetUserID(ctx)
+
+	err = h.bc.DeleteUser.Handle(ctx.Request.Context(), command.DeleteUserCommand{ID: userentity.UserID(id), ActorID: actorID})
 	if err != nil {
 		response.HandleError(ctx, err)
 		return
@@ -233,7 +241,9 @@ func (h *Handler) Approve(ctx *gin.Context) {
 		return
 	}
 
-	err = h.bc.ApproveUser.Handle(ctx.Request.Context(), command.ApproveUserCommand{ID: userentity.UserID(id)})
+	actorID, _ := httpx.GetUserID(ctx)
+
+	err = h.bc.ApproveUser.Handle(ctx.Request.Context(), command.ApproveUserCommand{ID: userentity.UserID(id), ActorID: actorID})
 	if err != nil {
 		response.HandleError(ctx, err)
 		return
@@ -269,9 +279,12 @@ func (h *Handler) ChangeRole(ctx *gin.Context) {
 		return
 	}
 
+	actorID, _ := httpx.GetUserID(ctx)
+
 	err = h.bc.ChangeRole.Handle(ctx.Request.Context(), command.ChangeRoleCommand{
-		UserID: userentity.UserID(id),
-		RoleID: req.RoleID,
+		UserID:  userentity.UserID(id),
+		ActorID: actorID,
+		RoleID:  req.RoleID,
 	})
 	if err != nil {
 		response.HandleError(ctx, err)

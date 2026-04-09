@@ -24,9 +24,10 @@ func NewExportRequested(id, userID uuid.UUID, dataType string) ExportRequested {
 	}
 }
 
-func (e ExportRequested) EventName() string      { return "dataexport.requested" }
-func (e ExportRequested) OccurredAt() time.Time  { return e.occurredAt }
-func (e ExportRequested) AggregateID() uuid.UUID { return e.aggregateID }
+func (e ExportRequested) EventName() string        { return "dataexport.requested" }
+func (e ExportRequested) OccurredAt() time.Time    { return e.occurredAt }
+func (e ExportRequested) AggregateID() uuid.UUID   { return e.aggregateID }
+func (e ExportRequested) ActivityMetadata() string { return "user=" + e.UserID.String() + " type=" + e.DataType }
 
 // ExportCompleted is emitted when the export file has been generated and uploaded.
 // Consumers can use this to send download-ready notifications to the requesting user.
@@ -46,6 +47,7 @@ func NewExportCompleted(id, userID uuid.UUID, fileURL string) ExportCompleted {
 	}
 }
 
-func (e ExportCompleted) EventName() string      { return "dataexport.completed" }
-func (e ExportCompleted) OccurredAt() time.Time  { return e.occurredAt }
-func (e ExportCompleted) AggregateID() uuid.UUID { return e.aggregateID }
+func (e ExportCompleted) EventName() string        { return "dataexport.completed" }
+func (e ExportCompleted) OccurredAt() time.Time    { return e.occurredAt }
+func (e ExportCompleted) AggregateID() uuid.UUID   { return e.aggregateID }
+func (e ExportCompleted) ActivityMetadata() string { return "user=" + e.UserID.String() }

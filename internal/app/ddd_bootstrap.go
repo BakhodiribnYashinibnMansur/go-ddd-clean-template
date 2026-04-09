@@ -14,6 +14,7 @@ import (
 	"gct/internal/context/admin/generic/featureflag"
 	"gct/internal/context/content/generic/file"
 	"gct/internal/context/admin/supporting/integration"
+	"gct/internal/context/ops/supporting/activitylog"
 	"gct/internal/context/ops/supporting/iprule"
 
 	"gct/internal/context/ops/generic/metric"
@@ -66,6 +67,7 @@ type DDDBoundedContexts struct {
 	File         *file.BoundedContext
 	UserSetting  *usersetting.BoundedContext
 	ErrorCode    *errorcode.BoundedContext
+	ActivityLog  *activitylog.BoundedContext
 }
 
 // SecurityDeps groups Phase S1 security infrastructure that is wired into
@@ -139,8 +141,9 @@ func NewDDDBoundedContexts(ctx context.Context, pool *pgxpool.Pool, eventBus app
 		UserSetting:  usersetting.NewBoundedContext(pool, eventBus, l),
 		ErrorCode:    errorcode.NewBoundedContext(pool, committer, l),
 
-		Session:    session.NewBoundedContext(pool, eventBus, l),
-		Statistics: statistics.NewBoundedContext(pool, l),
+		Session:     session.NewBoundedContext(pool, eventBus, l),
+		Statistics:  statistics.NewBoundedContext(pool, l),
+		ActivityLog: activitylog.NewBoundedContext(pool, eventBus, l),
 	}, nil
 }
 

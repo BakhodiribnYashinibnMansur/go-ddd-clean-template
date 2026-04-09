@@ -5,13 +5,17 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"encoding/base64"
+
 	"gct/internal/app"
 	authzmw "gct/internal/context/iam/generic/authz/interfaces/http/middleware"
+	"gct/internal/context/iam/generic/user/application/command"
 	"gct/internal/kernel/consts"
-	sharedmw "gct/internal/kernel/infrastructure/middleware"
 	"gct/internal/kernel/infrastructure/eventbus"
 	"gct/internal/kernel/infrastructure/logger"
-	"gct/internal/context/iam/generic/user/application/command"
+	sharedmw "gct/internal/kernel/infrastructure/middleware"
+	jwtpkg "gct/internal/kernel/infrastructure/security/jwt"
+	"gct/internal/kernel/infrastructure/security/keyring"
 	usermw "gct/internal/context/iam/generic/user/interfaces/http/middleware"
 	userport "gct/internal/context/iam/generic/user/interfaces/port"
 	"gct/test/e2e/common/setup"
@@ -33,12 +37,32 @@ func startTestServer() *httptest.Server {
 	l := logger.New("debug")
 
 	eventBus := eventbus.NewInMemoryEventBus()
+
+	pepperBytes, err := base64.RawStdEncoding.DecodeString(setup.TestCfg.JWT.RefreshPepper)
+	if err != nil {
+		panic("failed to decode refresh pepper: " + err.Error())
+	}
+	hasher, err := jwtpkg.NewRefreshHasher(pepperBytes)
+	if err != nil {
+		panic("failed to create refresh hasher: " + err.Error())
+	}
+	apiKeyPepper, err := base64.RawStdEncoding.DecodeString(setup.TestCfg.JWT.APIKeyPepper)
+	if err != nil {
+		panic("failed to decode api key pepper: " + err.Error())
+	}
+	kr, err := keyring.New(setup.TestCfg.JWT.KeysDir, setup.TestCfg.JWT.KeyBits)
+	if err != nil {
+		panic("failed to create keyring: " + err.Error())
+	}
+
 	jwtCfg := command.JWTConfig{
-		Issuer: setup.TestCfg.JWT.Issuer,
+		Issuer:        setup.TestCfg.JWT.Issuer,
+		RefreshHasher: hasher,
 	}
 
 	bcs, err := app.NewDDDBoundedContexts(
-		context.Background(), setup.TestPG.Pool, eventBus, l, nil, jwtCfg, setup.TestCfg, nil, nil, app.SecurityDeps{},
+		context.Background(), setup.TestPG.Pool, eventBus, l, nil,
+		jwtCfg, setup.TestCfg, apiKeyPepper, kr, app.SecurityDeps{},
 	)
 	if err != nil {
 		panic("failed to initialize DDD bounded contexts: " + err.Error())

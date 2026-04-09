@@ -4,16 +4,20 @@ import (
 	"context"
 
 	userentity "gct/internal/context/iam/generic/user/domain/entity"
+	userevent "gct/internal/context/iam/generic/user/domain/event"
 	userrepo "gct/internal/context/iam/generic/user/domain/repository"
 	"gct/internal/kernel/application"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
+
+	"github.com/google/uuid"
 )
 
 // ApproveUserCommand holds the input for approving a user.
 type ApproveUserCommand struct {
-	ID userentity.UserID
+	ID      userentity.UserID
+	ActorID uuid.UUID
 }
 
 // ApproveUserHandler handles the ApproveUserCommand.
@@ -48,6 +52,10 @@ func (h *ApproveUserHandler) Handle(ctx context.Context, cmd ApproveUserCommand)
 	}
 
 	user.Approve()
+
+	user.AddEvent(userevent.NewUserApprovedWithChanges(user.ID(), cmd.ActorID, []userevent.FieldChange{
+		{FieldName: "is_approved", OldValue: "false", NewValue: "true"},
+	}))
 
 	if err := h.repo.Update(ctx, user); err != nil {
 		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "ApproveUser", Entity: "user", EntityID: cmd.ID, Err: err}.KV()...)

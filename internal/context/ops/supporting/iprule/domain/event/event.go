@@ -24,6 +24,7 @@ func NewIPRuleCreated(id uuid.UUID, ipAddress, action string) IPRuleCreated {
 	}
 }
 
-func (e IPRuleCreated) EventName() string     { return "iprule.created" }
-func (e IPRuleCreated) OccurredAt() time.Time  { return e.occurredAt }
-func (e IPRuleCreated) AggregateID() uuid.UUID { return e.aggregateID }
+func (e IPRuleCreated) EventName() string        { return "iprule.created" }
+func (e IPRuleCreated) OccurredAt() time.Time    { return e.occurredAt }
+func (e IPRuleCreated) AggregateID() uuid.UUID   { return e.aggregateID }
+func (e IPRuleCreated) ActivityMetadata() string { return "ip=" + e.IPAddress + " action=" + e.Action }

@@ -22,9 +22,10 @@ func NewUserCreated(userID uuid.UUID, phone string) UserCreated {
 	}
 }
 
-func (e UserCreated) EventName() string      { return "user.created" }
-func (e UserCreated) OccurredAt() time.Time  { return e.occurredAt }
-func (e UserCreated) AggregateID() uuid.UUID { return e.aggregateID }
+func (e UserCreated) EventName() string        { return "user.created" }
+func (e UserCreated) OccurredAt() time.Time    { return e.occurredAt }
+func (e UserCreated) AggregateID() uuid.UUID   { return e.aggregateID }
+func (e UserCreated) ActivityMetadata() string { return "phone=" + e.Phone }
 
 // UserSignedIn is raised after successful credential verification and session creation.
 // Carries session ID and IP for audit logging and anomaly detection (e.g., new-IP alerts).
@@ -44,9 +45,10 @@ func NewUserSignedIn(userID, sessionID uuid.UUID, ip string) UserSignedIn {
 	}
 }
 
-func (e UserSignedIn) EventName() string      { return "user.signed_in" }
-func (e UserSignedIn) OccurredAt() time.Time  { return e.occurredAt }
-func (e UserSignedIn) AggregateID() uuid.UUID { return e.aggregateID }
+func (e UserSignedIn) EventName() string        { return "user.signed_in" }
+func (e UserSignedIn) OccurredAt() time.Time    { return e.occurredAt }
+func (e UserSignedIn) AggregateID() uuid.UUID   { return e.aggregateID }
+func (e UserSignedIn) ActivityMetadata() string { return "ip=" + e.IPAddress + " session=" + e.SessionID.String() }
 
 // UserDeactivated is raised when an admin deactivates a user account.
 // Subscribers should consider revoking active sessions or sending a notification.
@@ -139,3 +141,147 @@ func NewRoleChanged(userID uuid.UUID, oldRoleID *uuid.UUID, newRoleID uuid.UUID)
 func (e RoleChanged) EventName() string      { return "user.role_changed" }
 func (e RoleChanged) OccurredAt() time.Time  { return e.occurredAt }
 func (e RoleChanged) AggregateID() uuid.UUID { return e.aggregateID }
+
+func (e RoleChanged) ActivityMetadata() string {
+	old := "<none>"
+	if e.OldRoleID != nil {
+		old = e.OldRoleID.String()
+	}
+	return "old_role=" + old + " new_role=" + e.NewRoleID.String()
+}
+
+// ---------------------------------------------------------------------------
+// V2 events — carry field-level changes for activity logging
+// ---------------------------------------------------------------------------
+
+// FieldChange represents a single field-level mutation (local copy of contract type
+// to avoid the domain importing the contract package).
+type FieldChange struct {
+	FieldName string
+	OldValue  string
+	NewValue  string
+}
+
+// UserCreatedWithChanges is raised alongside UserCreated to carry initial field values.
+type UserCreatedWithChanges struct {
+	aggregateID uuid.UUID
+	occurredAt  time.Time
+	ActorID     uuid.UUID
+	Changes     []FieldChange
+}
+
+func NewUserCreatedWithChanges(userID, actorID uuid.UUID, changes []FieldChange) UserCreatedWithChanges {
+	return UserCreatedWithChanges{
+		aggregateID: userID,
+		occurredAt:  time.Now(),
+		ActorID:     actorID,
+		Changes:     changes,
+	}
+}
+
+func (e UserCreatedWithChanges) EventName() string      { return "user.created.v2" }
+func (e UserCreatedWithChanges) OccurredAt() time.Time  { return e.occurredAt }
+func (e UserCreatedWithChanges) AggregateID() uuid.UUID { return e.aggregateID }
+
+// UserProfileUpdatedWithChanges carries field-level diffs for profile updates.
+type UserProfileUpdatedWithChanges struct {
+	aggregateID uuid.UUID
+	occurredAt  time.Time
+	ActorID     uuid.UUID
+	Changes     []FieldChange
+}
+
+func NewUserProfileUpdatedWithChanges(userID, actorID uuid.UUID, changes []FieldChange) UserProfileUpdatedWithChanges {
+	return UserProfileUpdatedWithChanges{
+		aggregateID: userID,
+		occurredAt:  time.Now(),
+		ActorID:     actorID,
+		Changes:     changes,
+	}
+}
+
+func (e UserProfileUpdatedWithChanges) EventName() string      { return "user.profile_updated.v2" }
+func (e UserProfileUpdatedWithChanges) OccurredAt() time.Time  { return e.occurredAt }
+func (e UserProfileUpdatedWithChanges) AggregateID() uuid.UUID { return e.aggregateID }
+
+// UserDeletedWithChanges records user deletion with actor identity.
+type UserDeletedWithChanges struct {
+	aggregateID uuid.UUID
+	occurredAt  time.Time
+	ActorID     uuid.UUID
+}
+
+func NewUserDeletedWithChanges(userID, actorID uuid.UUID) UserDeletedWithChanges {
+	return UserDeletedWithChanges{
+		aggregateID: userID,
+		occurredAt:  time.Now(),
+		ActorID:     actorID,
+	}
+}
+
+func (e UserDeletedWithChanges) EventName() string      { return "user.deleted.v2" }
+func (e UserDeletedWithChanges) OccurredAt() time.Time  { return e.occurredAt }
+func (e UserDeletedWithChanges) AggregateID() uuid.UUID { return e.aggregateID }
+
+// RoleChangedWithChanges carries the role change as field-level diff.
+type RoleChangedWithChanges struct {
+	aggregateID uuid.UUID
+	occurredAt  time.Time
+	ActorID     uuid.UUID
+	Changes     []FieldChange
+}
+
+func NewRoleChangedWithChanges(userID, actorID uuid.UUID, changes []FieldChange) RoleChangedWithChanges {
+	return RoleChangedWithChanges{
+		aggregateID: userID,
+		occurredAt:  time.Now(),
+		ActorID:     actorID,
+		Changes:     changes,
+	}
+}
+
+func (e RoleChangedWithChanges) EventName() string      { return "user.role_changed.v2" }
+func (e RoleChangedWithChanges) OccurredAt() time.Time  { return e.occurredAt }
+func (e RoleChangedWithChanges) AggregateID() uuid.UUID { return e.aggregateID }
+
+// UserApprovedWithChanges carries the approval state change.
+type UserApprovedWithChanges struct {
+	aggregateID uuid.UUID
+	occurredAt  time.Time
+	ActorID     uuid.UUID
+	Changes     []FieldChange
+}
+
+func NewUserApprovedWithChanges(userID, actorID uuid.UUID, changes []FieldChange) UserApprovedWithChanges {
+	return UserApprovedWithChanges{
+		aggregateID: userID,
+		occurredAt:  time.Now(),
+		ActorID:     actorID,
+		Changes:     changes,
+	}
+}
+
+func (e UserApprovedWithChanges) EventName() string      { return "user.approved.v2" }
+func (e UserApprovedWithChanges) OccurredAt() time.Time  { return e.occurredAt }
+func (e UserApprovedWithChanges) AggregateID() uuid.UUID { return e.aggregateID }
+
+// PasswordChangedWithChanges records a password change with actor identity.
+type PasswordChangedWithChanges struct {
+	aggregateID uuid.UUID
+	occurredAt  time.Time
+	ActorID     uuid.UUID
+	Changes     []FieldChange
+}
+
+func NewPasswordChangedWithChanges(userID, actorID uuid.UUID, changes []FieldChange) PasswordChangedWithChanges {
+	return PasswordChangedWithChanges{
+		aggregateID: userID,
+		occurredAt:  time.Now(),
+		ActorID:     actorID,
+		Changes:     changes,
+	}
+}
+
+func (e PasswordChangedWithChanges) EventName() string      { return "user.password_changed.v2" }
+func (e PasswordChangedWithChanges) OccurredAt() time.Time  { return e.occurredAt }
+func (e PasswordChangedWithChanges) AggregateID() uuid.UUID { return e.aggregateID }

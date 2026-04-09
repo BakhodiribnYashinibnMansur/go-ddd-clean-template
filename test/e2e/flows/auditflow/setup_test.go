@@ -5,6 +5,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"encoding/base64"
+
 	"gct/internal/app"
 	authzmw "gct/internal/context/iam/generic/authz/interfaces/http/middleware"
 	auditmw "gct/internal/context/iam/supporting/audit/interfaces/http/middleware"
@@ -16,6 +18,8 @@ import (
 	"gct/internal/kernel/infrastructure/eventbus"
 	"gct/internal/kernel/infrastructure/logger"
 	sharedmw "gct/internal/kernel/infrastructure/middleware"
+	jwtpkg "gct/internal/kernel/infrastructure/security/jwt"
+	"gct/internal/kernel/infrastructure/security/keyring"
 	"gct/test/e2e/common/setup"
 
 	"github.com/gin-gonic/gin"
@@ -48,12 +52,31 @@ func startAuditTestServer(t *testing.T) *testServer {
 	l := logger.New("debug")
 	eventBus := eventbus.NewInMemoryEventBus()
 
+	pepperBytes, err := base64.RawStdEncoding.DecodeString(setup.TestCfg.JWT.RefreshPepper)
+	if err != nil {
+		t.Fatalf("failed to decode refresh pepper: %s", err)
+	}
+	hasher, err := jwtpkg.NewRefreshHasher(pepperBytes)
+	if err != nil {
+		t.Fatalf("failed to create refresh hasher: %s", err)
+	}
+	apiKeyPepper, err := base64.RawStdEncoding.DecodeString(setup.TestCfg.JWT.APIKeyPepper)
+	if err != nil {
+		t.Fatalf("failed to decode api key pepper: %s", err)
+	}
+	kr, err := keyring.New(setup.TestCfg.JWT.KeysDir, setup.TestCfg.JWT.KeyBits)
+	if err != nil {
+		t.Fatalf("failed to create keyring: %s", err)
+	}
+
 	jwtCfg := command.JWTConfig{
-		Issuer: setup.TestCfg.JWT.Issuer,
+		Issuer:        setup.TestCfg.JWT.Issuer,
+		RefreshHasher: hasher,
 	}
 
 	bcs, err := app.NewDDDBoundedContexts(
-		context.Background(), setup.TestPG.Pool, eventBus, l, nil, jwtCfg, setup.TestCfg, nil, nil, app.SecurityDeps{},
+		context.Background(), setup.TestPG.Pool, eventBus, l, nil,
+		jwtCfg, setup.TestCfg, apiKeyPepper, kr, app.SecurityDeps{},
 	)
 	if err != nil {
 		t.Fatalf("failed to initialize DDD bounded contexts: %s", err)

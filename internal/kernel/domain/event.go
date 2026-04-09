@@ -15,3 +15,12 @@ type DomainEvent interface {
 	OccurredAt() time.Time
 	AggregateID() uuid.UUID
 }
+
+// MetadataProvider is an optional interface that domain events can implement
+// to provide extra context for activity logging. Events that carry useful
+// payload (IP, session ID, names, etc.) should implement this so the
+// activity log subscriber can persist human-readable metadata without
+// importing BC-internal types.
+type MetadataProvider interface {
+	ActivityMetadata() string
+}

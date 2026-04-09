@@ -291,3 +291,38 @@ test-api-all: test test-e2e test-schemathesis ### run all API tests (unit, e2e, 
 	@echo "✅ All API tests completed!"
 .PHONY: test-api-all
 
+# ==============================================================================
+# k6 Performance Testing
+# ==============================================================================
+
+K6_BASE_URL ?= http://localhost:8080
+
+test-k6-smoke: ### run k6 smoke test (quick sanity)
+	k6 run -e BASE_URL=$(K6_BASE_URL) test/performance/k6/scenarios/smoke.js
+.PHONY: test-k6-smoke
+
+test-k6-auth: ### run k6 auth flow load test
+	k6 run -e BASE_URL=$(K6_BASE_URL) test/performance/k6/scenarios/auth-flow.js
+.PHONY: test-k6-auth
+
+test-k6-crud: ### run k6 CRUD load test
+	k6 run -e BASE_URL=$(K6_BASE_URL) test/performance/k6/scenarios/crud-users.js
+.PHONY: test-k6-crud
+
+test-k6-files: ### run k6 file upload load test
+	k6 run -e BASE_URL=$(K6_BASE_URL) test/performance/k6/scenarios/file-upload.js
+.PHONY: test-k6-files
+
+test-k6-mixed: ### run k6 mixed workload test
+	k6 run -e BASE_URL=$(K6_BASE_URL) test/performance/k6/scenarios/mixed-workload.js
+.PHONY: test-k6-mixed
+
+test-k6-all: test-k6-smoke test-k6-auth test-k6-crud test-k6-files test-k6-mixed ### run all k6 tests
+	@echo "✅ All k6 performance tests completed!"
+.PHONY: test-k6-all
+
+test-k6-ci: ### run k6 smoke test for CI (with JSON output)
+	@mkdir -p test-results
+	k6 run -e BASE_URL=$(K6_BASE_URL) --out json=test-results/k6-results.json test/performance/k6/scenarios/smoke.js
+.PHONY: test-k6-ci
+

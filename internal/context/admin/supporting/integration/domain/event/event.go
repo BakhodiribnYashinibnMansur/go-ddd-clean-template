@@ -24,6 +24,7 @@ func NewIntegrationConnected(id uuid.UUID, name, intType string) IntegrationConn
 	}
 }
 
-func (e IntegrationConnected) EventName() string      { return "integration.connected" }
-func (e IntegrationConnected) OccurredAt() time.Time  { return e.occurredAt }
-func (e IntegrationConnected) AggregateID() uuid.UUID { return e.aggregateID }
+func (e IntegrationConnected) EventName() string        { return "integration.connected" }
+func (e IntegrationConnected) OccurredAt() time.Time    { return e.occurredAt }
+func (e IntegrationConnected) AggregateID() uuid.UUID   { return e.aggregateID }
+func (e IntegrationConnected) ActivityMetadata() string { return "name=" + e.Name + " type=" + e.Type }

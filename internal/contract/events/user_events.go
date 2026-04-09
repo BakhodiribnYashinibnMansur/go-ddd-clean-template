@@ -99,3 +99,106 @@ func NewUserRoleChangedV1(userID uuid.UUID, oldRoleID *uuid.UUID, newRoleID uuid
 		NewRoleID: newRoleID,
 	}
 }
+
+// ---------------------------------------------------------------------------
+// V2 events — carry field-level changes for activity logging
+// ---------------------------------------------------------------------------
+
+const (
+	EventUserCreatedV2        = "user.created.v2"
+	EventUserProfileUpdatedV2 = "user.profile_updated.v2"
+	EventUserDeletedV2        = "user.deleted.v2"
+	EventUserRoleChangedV2    = "user.role_changed.v2"
+	EventUserApprovedV2       = "user.approved.v2"
+	EventUserPasswordChangedV2 = "user.password_changed.v2"
+)
+
+// UserCreatedV2 carries all initial field values as FieldChange entries (old = "").
+type UserCreatedV2 struct {
+	BaseEvent
+	ActorID uuid.UUID     `json:"actor_id"`
+	Changes []FieldChange `json:"changes"`
+}
+
+func NewUserCreatedV2(userID, actorID uuid.UUID, changes []FieldChange) UserCreatedV2 {
+	return UserCreatedV2{
+		BaseEvent: BaseEvent{Envelope: NewEnvelope(EventUserCreatedV2, userID, 2)},
+		ActorID:   actorID,
+		Changes:   changes,
+	}
+}
+
+// UserProfileUpdatedV2 carries field-level diffs for profile updates.
+type UserProfileUpdatedV2 struct {
+	BaseEvent
+	ActorID uuid.UUID     `json:"actor_id"`
+	Changes []FieldChange `json:"changes"`
+}
+
+func NewUserProfileUpdatedV2(userID, actorID uuid.UUID, changes []FieldChange) UserProfileUpdatedV2 {
+	return UserProfileUpdatedV2{
+		BaseEvent: BaseEvent{Envelope: NewEnvelope(EventUserProfileUpdatedV2, userID, 2)},
+		ActorID:   actorID,
+		Changes:   changes,
+	}
+}
+
+// UserDeletedV2 records the deletion action with actor identity.
+type UserDeletedV2 struct {
+	BaseEvent
+	ActorID uuid.UUID `json:"actor_id"`
+}
+
+func NewUserDeletedV2(userID, actorID uuid.UUID) UserDeletedV2 {
+	return UserDeletedV2{
+		BaseEvent: BaseEvent{Envelope: NewEnvelope(EventUserDeletedV2, userID, 2)},
+		ActorID:   actorID,
+	}
+}
+
+// UserRoleChangedV2 carries the role change as a FieldChange.
+type UserRoleChangedV2 struct {
+	BaseEvent
+	ActorID uuid.UUID     `json:"actor_id"`
+	Changes []FieldChange `json:"changes"`
+}
+
+func NewUserRoleChangedV2(userID, actorID uuid.UUID, changes []FieldChange) UserRoleChangedV2 {
+	return UserRoleChangedV2{
+		BaseEvent: BaseEvent{Envelope: NewEnvelope(EventUserRoleChangedV2, userID, 2)},
+		ActorID:   actorID,
+		Changes:   changes,
+	}
+}
+
+// UserApprovedV2 carries the approval change as a FieldChange.
+type UserApprovedV2 struct {
+	BaseEvent
+	ActorID uuid.UUID     `json:"actor_id"`
+	Changes []FieldChange `json:"changes"`
+}
+
+func NewUserApprovedV2(userID, actorID uuid.UUID, changes []FieldChange) UserApprovedV2 {
+	return UserApprovedV2{
+		BaseEvent: BaseEvent{Envelope: NewEnvelope(EventUserApprovedV2, userID, 2)},
+		ActorID:   actorID,
+		Changes:   changes,
+	}
+}
+
+// UserPasswordChangedV2 records a password change with redacted values.
+type UserPasswordChangedV2 struct {
+	BaseEvent
+	ActorID uuid.UUID     `json:"actor_id"`
+	Changes []FieldChange `json:"changes"`
+}
+
+func NewUserPasswordChangedV2(userID, actorID uuid.UUID) UserPasswordChangedV2 {
+	return UserPasswordChangedV2{
+		BaseEvent: BaseEvent{Envelope: NewEnvelope(EventUserPasswordChangedV2, userID, 2)},
+		ActorID:   actorID,
+		Changes: []FieldChange{
+			{FieldName: "password", OldValue: RedactedValue, NewValue: RedactedValue},
+		},
+	}
+}

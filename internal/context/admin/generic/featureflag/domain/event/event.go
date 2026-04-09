@@ -1,6 +1,7 @@
 package event
 
 import (
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -21,9 +22,10 @@ func NewFlagToggled(id uuid.UUID, enabled bool) FlagToggled {
 	}
 }
 
-func (e FlagToggled) EventName() string      { return "featureflag.toggled" }
-func (e FlagToggled) OccurredAt() time.Time  { return e.occurredAt }
-func (e FlagToggled) AggregateID() uuid.UUID { return e.aggregateID }
+func (e FlagToggled) EventName() string        { return "featureflag.toggled" }
+func (e FlagToggled) OccurredAt() time.Time    { return e.occurredAt }
+func (e FlagToggled) AggregateID() uuid.UUID   { return e.aggregateID }
+func (e FlagToggled) ActivityMetadata() string { return "enabled=" + strconv.FormatBool(e.Enabled) }
 
 // FlagCreated is a domain event emitted when a new feature flag is created.
 type FlagCreated struct {
