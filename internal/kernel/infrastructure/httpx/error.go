@@ -85,6 +85,8 @@ var (
 	ErrMultipartRequired = apperrors.NewHandlerError(apperrors.ErrHandlerBadRequest, "multipart form required")
 	ErrFilePathRequired  = apperrors.NewHandlerError(apperrors.ErrHandlerBadRequest, "file-path required")
 	ErrFileNotFound      = apperrors.NewHandlerError(apperrors.ErrHandlerNotFound, "file not found")
+	ErrUnsupportedVideo  = apperrors.NewHandlerError(apperrors.ErrHandlerBadRequest, "unsupported video format")
+	ErrTranscodeFailed   = apperrors.NewHandlerError(apperrors.ErrHandlerInternal, "video transcoding failed")
 )
 
 const (

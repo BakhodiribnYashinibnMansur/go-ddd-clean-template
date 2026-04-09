@@ -16,7 +16,7 @@ import (
 	"gct/internal/context/iam/generic/user"
 	"gct/internal/context/iam/generic/user/application/command"
 	"gct/internal/context/iam/generic/user/application/query"
-	"gct/internal/context/iam/generic/user/domain"
+	domain "gct/internal/context/iam/generic/user/domain/entity"
 
 	"github.com/google/uuid"
 )
@@ -337,7 +337,7 @@ func TestIntegration_SignUp_SignIn_SignOut(t *testing.T) {
 	if err != nil {
 		t.Fatalf("SignIn: %v", err)
 	}
-	if result.UserID != userID.UUID() {
+	if result.UserID != uuid.UUID(userID) {
 		t.Errorf("user ID mismatch: %s vs %s", result.UserID, userID)
 	}
 

@@ -11,5 +11,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	g.POST("/upload/image", h.UploadImage)
 	g.POST("/upload/images", h.UploadImages)
 	g.POST("/upload/doc", h.UploadDoc)
+	g.POST("/upload/video", h.UploadVideo)
 	g.GET("/download", h.Download)
+	g.GET("/stream", h.Stream)
 }
