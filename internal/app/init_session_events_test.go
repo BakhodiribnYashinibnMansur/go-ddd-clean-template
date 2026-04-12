@@ -9,7 +9,7 @@ import (
 	shareddomain "gct/internal/kernel/domain"
 	"gct/internal/context/iam/generic/user"
 	usercommand "gct/internal/context/iam/generic/user/application/command"
-	userentity "gct/internal/context/iam/generic/user/domain/entity"
+	userdomain "gct/internal/context/iam/generic/user/domain/entity"
 
 	"github.com/google/uuid"
 )
@@ -145,7 +145,7 @@ func TestSubscribeSessionEvents_RevokeEvent_TypeMismatch(t *testing.T) {
 	subscribeSessionEvents(eventBus, userBC, log)
 
 	// Publish a wrong event type — should not panic, handler returns nil
-	wrongEvent := sessiondomain.NewSessionRevokeAllRequested(uuid.New())
+	wrongEvent := sessionevent.NewSessionRevokeAllRequested(uuid.New())
 	handler := eventBus.handlers["session.revoke_requested"][0]
 	err := handler(context.Background(), wrongEvent)
 	if err != nil {
@@ -167,7 +167,7 @@ func TestSubscribeSessionEvents_RevokeAllEvent_TypeMismatch(t *testing.T) {
 	subscribeSessionEvents(eventBus, userBC, log)
 
 	// Publish a wrong event type — should not panic
-	wrongEvent := sessiondomain.NewSessionRevokeRequested(uuid.New(), uuid.New())
+	wrongEvent := sessionevent.NewSessionRevokeRequested(uuid.New(), uuid.New())
 	handler := eventBus.handlers["session.revoke_all_requested"][0]
 	err := handler(context.Background(), wrongEvent)
 	if err != nil {
