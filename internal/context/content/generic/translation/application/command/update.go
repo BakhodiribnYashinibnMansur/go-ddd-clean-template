@@ -5,6 +5,7 @@ import (
 
 	translationentity "gct/internal/context/content/generic/translation/domain/entity"
 	translationrepo "gct/internal/context/content/generic/translation/domain/repository"
+	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -56,8 +57,8 @@ func (h *UpdateTranslationHandler) Handle(ctx context.Context, cmd UpdateTransla
 
 	t.Update(cmd.Key, cmd.Language, cmd.Value, cmd.Group)
 
-	return h.committer.Commit(ctx, func(ctx context.Context) error {
-		if err := h.repo.Update(ctx, t); err != nil {
+	return h.committer.Commit(ctx, func(ctx context.Context, q shareddomain.Querier) error {
+		if err := h.repo.Update(ctx, q, t); err != nil {
 			h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "UpdateTranslation", Entity: "translation", EntityID: cmd.ID, Err: err}.KV()...)
 			return apperrors.MapToServiceError(err)
 		}

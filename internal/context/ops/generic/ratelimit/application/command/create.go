@@ -5,6 +5,7 @@ import (
 
 	ratelimitentity "gct/internal/context/ops/generic/ratelimit/domain/entity"
 	ratelimitrepo "gct/internal/context/ops/generic/ratelimit/domain/repository"
+	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -48,8 +49,8 @@ func (h *CreateRateLimitHandler) Handle(ctx context.Context, cmd CreateRateLimit
 
 	rl := ratelimitentity.NewRateLimit(cmd.Name, cmd.Rule, cmd.RequestsPerWindow, cmd.WindowDuration, cmd.Enabled)
 
-	return h.committer.Commit(ctx, func(ctx context.Context) error {
-		if err := h.repo.Save(ctx, rl); err != nil {
+	return h.committer.Commit(ctx, func(ctx context.Context, q shareddomain.Querier) error {
+		if err := h.repo.Save(ctx, q, rl); err != nil {
 			h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateRateLimit", Entity: "rate_limit", Err: err}.KV()...)
 			return apperrors.MapToServiceError(err)
 		}

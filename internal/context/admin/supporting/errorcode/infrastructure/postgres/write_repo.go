@@ -6,6 +6,7 @@ import (
 
 	errcodeentity "gct/internal/context/admin/supporting/errorcode/domain/entity"
 	"gct/internal/kernel/consts"
+	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/pgxutil"
 
@@ -37,7 +38,7 @@ func NewErrorCodeWriteRepo(pool *pgxpool.Pool) *ErrorCodeWriteRepo {
 }
 
 // Save inserts a new ErrorCode aggregate into the database.
-func (r *ErrorCodeWriteRepo) Save(ctx context.Context, ec *errcodeentity.ErrorCode) (err error) {
+func (r *ErrorCodeWriteRepo) Save(ctx context.Context, q shareddomain.Querier, ec *errcodeentity.ErrorCode) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "ErrorCodeWriteRepo.Save")
 	defer func() { end(err) }()
 
@@ -64,7 +65,7 @@ func (r *ErrorCodeWriteRepo) Save(ctx context.Context, ec *errcodeentity.ErrorCo
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildInsert)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = q.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 
@@ -72,7 +73,7 @@ func (r *ErrorCodeWriteRepo) Save(ctx context.Context, ec *errcodeentity.ErrorCo
 }
 
 // Update updates an existing ErrorCode aggregate in the database.
-func (r *ErrorCodeWriteRepo) Update(ctx context.Context, ec *errcodeentity.ErrorCode) (err error) {
+func (r *ErrorCodeWriteRepo) Update(ctx context.Context, q shareddomain.Querier, ec *errcodeentity.ErrorCode) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "ErrorCodeWriteRepo.Update")
 	defer func() { end(err) }()
 
@@ -94,7 +95,7 @@ func (r *ErrorCodeWriteRepo) Update(ctx context.Context, ec *errcodeentity.Error
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildUpdate)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = q.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 
@@ -120,7 +121,7 @@ func (r *ErrorCodeWriteRepo) FindByID(ctx context.Context, id errcodeentity.Erro
 }
 
 // Delete removes an error code by its ID.
-func (r *ErrorCodeWriteRepo) Delete(ctx context.Context, id errcodeentity.ErrorCodeID) (err error) {
+func (r *ErrorCodeWriteRepo) Delete(ctx context.Context, q shareddomain.Querier, id errcodeentity.ErrorCodeID) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "ErrorCodeWriteRepo.Delete")
 	defer func() { end(err) }()
 
@@ -132,7 +133,7 @@ func (r *ErrorCodeWriteRepo) Delete(ctx context.Context, id errcodeentity.ErrorC
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildDelete)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = q.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 

@@ -11,8 +11,9 @@ import (
 	"context"
 	"time"
 
+	shareddomain "gct/internal/kernel/domain"
+
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 )
 
 // Entry is one outbox row.
@@ -29,11 +30,11 @@ type Entry struct {
 	LastError     *string
 }
 
-// Writer inserts rows into the outbox within an existing transaction. Call
-// this from a command handler after mutating the aggregate but BEFORE the
-// transaction commits, using the same pgx.Tx.
+// Writer inserts rows into the outbox within an existing transaction. The
+// Querier should be the same pgx.Tx that mutated the aggregate so the outbox
+// write commits or rolls back atomically with the business change.
 type Writer interface {
-	Append(ctx context.Context, tx pgx.Tx, entries ...Entry) error
+	Append(ctx context.Context, q shareddomain.Querier, entries ...Entry) error
 }
 
 // Store is the read/update side used by the relay.

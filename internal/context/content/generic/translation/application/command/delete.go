@@ -5,9 +5,11 @@ import (
 
 	translationentity "gct/internal/context/content/generic/translation/domain/entity"
 	translationrepo "gct/internal/context/content/generic/translation/domain/repository"
+	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
+	"gct/internal/kernel/outbox"
 )
 
 // DeleteTranslationCommand represents an intent to permanently remove a translation entry.
@@ -19,18 +21,21 @@ type DeleteTranslationCommand struct {
 // DeleteTranslationHandler performs hard-delete of translations through the repository.
 // No domain events are emitted — callers needing cache invalidation should handle that separately.
 type DeleteTranslationHandler struct {
-	repo   translationrepo.TranslationRepository
-	logger logger.Log
+	repo      translationrepo.TranslationRepository
+	committer *outbox.EventCommitter
+	logger    logger.Log
 }
 
 // NewDeleteTranslationHandler creates a new DeleteTranslationHandler.
 func NewDeleteTranslationHandler(
 	repo translationrepo.TranslationRepository,
+	committer *outbox.EventCommitter,
 	logger logger.Log,
 ) *DeleteTranslationHandler {
 	return &DeleteTranslationHandler{
-		repo:   repo,
-		logger: logger,
+		repo:      repo,
+		committer: committer,
+		logger:    logger,
 	}
 }
 
@@ -41,9 +46,11 @@ func (h *DeleteTranslationHandler) Handle(ctx context.Context, cmd DeleteTransla
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "DeleteTranslation", "translation")()
 
-	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
-		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteTranslation", Entity: "translation", EntityID: cmd.ID, Err: err}.KV()...)
-		return apperrors.MapToServiceError(err)
-	}
-	return nil
+	return h.committer.Commit(ctx, func(ctx context.Context, q shareddomain.Querier) error {
+		if err := h.repo.Delete(ctx, q, cmd.ID); err != nil {
+			h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteTranslation", Entity: "translation", EntityID: cmd.ID, Err: err}.KV()...)
+			return apperrors.MapToServiceError(err)
+		}
+		return nil
+	}, func() []shareddomain.DomainEvent { return nil })
 }

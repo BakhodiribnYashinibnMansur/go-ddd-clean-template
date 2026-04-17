@@ -7,6 +7,7 @@ import (
 	"time"
 
 	ffentity "gct/internal/context/admin/generic/featureflag/domain/entity"
+	shareddomain "gct/internal/kernel/domain"
 	"gct/internal/kernel/infrastructure/logger"
 
 	"github.com/google/uuid"
@@ -41,16 +42,16 @@ func (m *mockRepo) FindAll(context.Context) ([]*ffentity.FeatureFlag, error) {
 	return m.allFlags, nil
 }
 
-func (m *mockRepo) Save(context.Context, *ffentity.FeatureFlag) error {
+func (m *mockRepo) Save(context.Context, shareddomain.Querier, *ffentity.FeatureFlag) error {
 	panic("not implemented")
 }
 func (m *mockRepo) FindByID(context.Context, ffentity.FeatureFlagID) (*ffentity.FeatureFlag, error) {
 	panic("not implemented")
 }
-func (m *mockRepo) Update(context.Context, *ffentity.FeatureFlag) error {
+func (m *mockRepo) Update(context.Context, shareddomain.Querier, *ffentity.FeatureFlag) error {
 	panic("not implemented")
 }
-func (m *mockRepo) Delete(context.Context, ffentity.FeatureFlagID) error {
+func (m *mockRepo) Delete(context.Context, shareddomain.Querier, ffentity.FeatureFlagID) error {
 	panic("not implemented")
 }
 

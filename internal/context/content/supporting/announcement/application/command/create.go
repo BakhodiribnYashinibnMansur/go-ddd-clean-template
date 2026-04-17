@@ -7,7 +7,7 @@ import (
 
 	announceentity "gct/internal/context/content/supporting/announcement/domain/entity"
 	announcerepo "gct/internal/context/content/supporting/announcement/domain/repository"
-	shared "gct/internal/kernel/domain"
+	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -18,8 +18,8 @@ import (
 // Title and Content are multilingual; Priority controls display ordering (higher = more prominent).
 // StartDate/EndDate define the visibility window — nil means unbounded on that side.
 type CreateAnnouncementCommand struct {
-	Title     shared.Lang
-	Content   shared.Lang
+	Title     shareddomain.Lang
+	Content   shareddomain.Lang
 	Priority  int
 	StartDate *time.Time
 	EndDate   *time.Time
@@ -58,8 +58,8 @@ func (h *CreateAnnouncementHandler) Handle(ctx context.Context, cmd CreateAnnoun
 		return fmt.Errorf("create_announcement: %w", err)
 	}
 
-	return h.committer.Commit(ctx, func(ctx context.Context) error {
-		if err := h.repo.Save(ctx, a); err != nil {
+	return h.committer.Commit(ctx, func(ctx context.Context, q shareddomain.Querier) error {
+		if err := h.repo.Save(ctx, q, a); err != nil {
 			h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateAnnouncement", Entity: "announcement", Err: err}.KV()...)
 			return apperrors.MapToServiceError(err)
 		}

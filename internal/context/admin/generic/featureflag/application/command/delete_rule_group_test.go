@@ -7,6 +7,7 @@ import (
 	"time"
 
 	ffentity "gct/internal/context/admin/generic/featureflag/domain/entity"
+	shareddomain "gct/internal/kernel/domain"
 
 	"gct/internal/kernel/outbox"
 
@@ -73,7 +74,7 @@ func TestDeleteRuleGroupHandler_Handle_DeleteRepoError(t *testing.T) {
 		findFn: func(_ context.Context, _ ffentity.RuleGroupID) (*ffentity.RuleGroup, error) {
 			return rg, nil
 		},
-		deleteFn: func(_ context.Context, _ ffentity.RuleGroupID) error {
+		deleteFn: func(_ context.Context, _ shareddomain.Querier, _ ffentity.RuleGroupID) error {
 			return repoErr
 		},
 	}

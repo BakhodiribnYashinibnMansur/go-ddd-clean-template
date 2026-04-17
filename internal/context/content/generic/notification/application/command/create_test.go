@@ -22,7 +22,7 @@ type mockNotificationRepo struct {
 	deleted notifentity.NotificationID
 }
 
-func (m *mockNotificationRepo) Save(_ context.Context, n *notifentity.Notification) error {
+func (m *mockNotificationRepo) Save(_ context.Context, _ shared.Querier, n *notifentity.Notification) error {
 	m.saved = n
 	return nil
 }
@@ -31,11 +31,11 @@ func (m *mockNotificationRepo) FindByID(_ context.Context, _ notifentity.Notific
 	return nil, nil
 }
 
-func (m *mockNotificationRepo) Update(_ context.Context, _ *notifentity.Notification) error {
+func (m *mockNotificationRepo) Update(_ context.Context, _ shared.Querier, _ *notifentity.Notification) error {
 	return nil
 }
 
-func (m *mockNotificationRepo) Delete(_ context.Context, id notifentity.NotificationID) error {
+func (m *mockNotificationRepo) Delete(_ context.Context, _ shared.Querier, id notifentity.NotificationID) error {
 	m.deleted = id
 	return nil
 }

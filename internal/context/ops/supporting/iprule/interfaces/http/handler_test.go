@@ -32,7 +32,7 @@ type mockRepo struct {
 	findFn  func(ctx context.Context, id ipruleentity.IPRuleID) (*ipruleentity.IPRule, error)
 }
 
-func (m *mockRepo) Save(_ context.Context, e *ipruleentity.IPRule) error {
+func (m *mockRepo) Save(_ context.Context, _ shared.Querier, e *ipruleentity.IPRule) error {
 	m.saved = e
 	return nil
 }
@@ -42,11 +42,11 @@ func (m *mockRepo) FindByID(ctx context.Context, id ipruleentity.IPRuleID) (*ipr
 	}
 	return nil, ipruleentity.ErrIPRuleNotFound
 }
-func (m *mockRepo) Update(_ context.Context, e *ipruleentity.IPRule) error {
+func (m *mockRepo) Update(_ context.Context, _ shared.Querier, e *ipruleentity.IPRule) error {
 	m.updated = e
 	return nil
 }
-func (m *mockRepo) Delete(_ context.Context, id ipruleentity.IPRuleID) error {
+func (m *mockRepo) Delete(_ context.Context, _ shared.Querier, id ipruleentity.IPRuleID) error {
 	m.deleted = id
 	return nil
 }
@@ -112,7 +112,7 @@ func setupRouter(repo *mockRepo, readRepo *mockReadRepo) *gin.Engine {
 	bc := &iprule.BoundedContext{
 		CreateIPRule: command.NewCreateIPRuleHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l),
 		UpdateIPRule: command.NewUpdateIPRuleHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l),
-		DeleteIPRule: command.NewDeleteIPRuleHandler(repo, l),
+		DeleteIPRule: command.NewDeleteIPRuleHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l),
 		GetIPRule:    query.NewGetIPRuleHandler(readRepo, l),
 		ListIPRules:  query.NewListIPRulesHandler(readRepo, l),
 	}

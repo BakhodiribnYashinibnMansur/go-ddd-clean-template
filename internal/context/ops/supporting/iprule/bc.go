@@ -30,7 +30,7 @@ func NewBoundedContext(pool *pgxpool.Pool, committer *outbox.EventCommitter, l l
 	return &BoundedContext{
 		CreateIPRule: command.NewCreateIPRuleHandler(writeRepo, committer, l),
 		UpdateIPRule: command.NewUpdateIPRuleHandler(writeRepo, committer, l),
-		DeleteIPRule: command.NewDeleteIPRuleHandler(writeRepo, l),
+		DeleteIPRule: command.NewDeleteIPRuleHandler(writeRepo, committer, l),
 		GetIPRule:    query.NewGetIPRuleHandler(readRepo, l),
 		ListIPRules:  query.NewListIPRulesHandler(readRepo, l),
 	}

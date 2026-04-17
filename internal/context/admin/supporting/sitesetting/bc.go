@@ -31,7 +31,7 @@ func NewBoundedContext(pool *pgxpool.Pool, committer *outbox.EventCommitter, l l
 	return &BoundedContext{
 		CreateSiteSetting: command.NewCreateSiteSettingHandler(writeRepo, committer, l),
 		UpdateSiteSetting: command.NewUpdateSiteSettingHandler(writeRepo, committer, l),
-		DeleteSiteSetting: command.NewDeleteSiteSettingHandler(writeRepo, l),
+		DeleteSiteSetting: command.NewDeleteSiteSettingHandler(writeRepo, pool, l),
 		GetSiteSetting:    query.NewGetSiteSettingHandler(readRepo, l),
 		ListSiteSettings:  query.NewListSiteSettingsHandler(readRepo, l),
 		UserMaxSessions:   query.NewGetUserMaxSessionsHandler(readRepo, l),

@@ -7,6 +7,7 @@ import (
 
 	translationentity "gct/internal/context/content/generic/translation/domain/entity"
 
+	"gct/internal/kernel/outbox"
 	"github.com/stretchr/testify/require"
 )
 
@@ -16,7 +17,7 @@ func TestDeleteTranslationHandler_Handle(t *testing.T) {
 	repo := &mockRepo{}
 	log := &mockLogger{}
 
-	handler := NewDeleteTranslationHandler(repo, log)
+	handler := NewDeleteTranslationHandler(repo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, log), log)
 
 	err := handler.Handle(context.Background(), DeleteTranslationCommand{
 		ID: translationentity.NewTranslationID(),
@@ -31,7 +32,7 @@ func TestDeleteTranslationHandler_RepoError(t *testing.T) {
 	errR := &errorRepo{deleteErr: repoErr}
 	log := &mockLogger{}
 
-	handler := NewDeleteTranslationHandler(errR, log)
+	handler := NewDeleteTranslationHandler(errR, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, log), log)
 
 	err := handler.Handle(context.Background(), DeleteTranslationCommand{
 		ID: translationentity.NewTranslationID(),

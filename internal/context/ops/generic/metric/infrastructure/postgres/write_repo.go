@@ -7,6 +7,7 @@ import (
 	metricentity "gct/internal/context/ops/generic/metric/domain/entity"
 	metricrepo "gct/internal/context/ops/generic/metric/domain/repository"
 	"gct/internal/kernel/consts"
+	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/pgxutil"
 
@@ -37,7 +38,7 @@ func NewMetricWriteRepo(pool *pgxpool.Pool) *MetricWriteRepo {
 }
 
 // Save inserts a new FunctionMetric aggregate into the database.
-func (r *MetricWriteRepo) Save(ctx context.Context, fm *metricentity.FunctionMetric) (err error) {
+func (r *MetricWriteRepo) Save(ctx context.Context, q shareddomain.Querier, fm *metricentity.FunctionMetric) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "MetricWriteRepo.Save")
 	defer func() { end(err) }()
 
@@ -57,7 +58,7 @@ func (r *MetricWriteRepo) Save(ctx context.Context, fm *metricentity.FunctionMet
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildInsert)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = q.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 

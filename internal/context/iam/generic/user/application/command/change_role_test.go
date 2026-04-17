@@ -25,7 +25,7 @@ func TestChangeRoleHandler_Handle(t *testing.T) {
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewChangeRoleHandler(repo, eventBus, log)
+	handler := NewChangeRoleHandler(repo, fakeDB{}, eventBus, log)
 
 	newRoleID := uuid.New()
 	err := handler.Handle(context.Background(), ChangeRoleCommand{
@@ -60,7 +60,7 @@ func TestChangeRoleHandler_NotFound(t *testing.T) {
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewChangeRoleHandler(repo, eventBus, log)
+	handler := NewChangeRoleHandler(repo, fakeDB{}, eventBus, log)
 
 	err := handler.Handle(context.Background(), ChangeRoleCommand{
 		UserID: userentity.NewUserID(),

@@ -6,6 +6,7 @@ import (
 
 	notifentity "gct/internal/context/content/generic/notification/domain/entity"
 	"gct/internal/kernel/consts"
+	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/pgxutil"
 
@@ -36,7 +37,7 @@ func NewNotificationWriteRepo(pool *pgxpool.Pool) *NotificationWriteRepo {
 }
 
 // Save inserts a new Notification aggregate into the database.
-func (r *NotificationWriteRepo) Save(ctx context.Context, n *notifentity.Notification) (err error) {
+func (r *NotificationWriteRepo) Save(ctx context.Context, q shareddomain.Querier, n *notifentity.Notification) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "NotificationWriteRepo.Save")
 	defer func() { end(err) }()
 
@@ -58,7 +59,7 @@ func (r *NotificationWriteRepo) Save(ctx context.Context, n *notifentity.Notific
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildInsert)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = q.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 
@@ -84,7 +85,7 @@ func (r *NotificationWriteRepo) FindByID(ctx context.Context, id notifentity.Not
 }
 
 // Update updates a Notification aggregate in the database.
-func (r *NotificationWriteRepo) Update(ctx context.Context, n *notifentity.Notification) (err error) {
+func (r *NotificationWriteRepo) Update(ctx context.Context, q shareddomain.Querier, n *notifentity.Notification) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "NotificationWriteRepo.Update")
 	defer func() { end(err) }()
 
@@ -97,7 +98,7 @@ func (r *NotificationWriteRepo) Update(ctx context.Context, n *notifentity.Notif
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildUpdate)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = q.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 
@@ -105,7 +106,7 @@ func (r *NotificationWriteRepo) Update(ctx context.Context, n *notifentity.Notif
 }
 
 // Delete removes a Notification by ID.
-func (r *NotificationWriteRepo) Delete(ctx context.Context, id notifentity.NotificationID) (err error) {
+func (r *NotificationWriteRepo) Delete(ctx context.Context, q shareddomain.Querier, id notifentity.NotificationID) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "NotificationWriteRepo.Delete")
 	defer func() { end(err) }()
 
@@ -117,7 +118,7 @@ func (r *NotificationWriteRepo) Delete(ctx context.Context, id notifentity.Notif
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildDelete)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = q.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 

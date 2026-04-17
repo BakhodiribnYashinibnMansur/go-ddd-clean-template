@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"gct/internal/context/ops/supporting/iprule/domain/entity"
+	shareddomain "gct/internal/kernel/domain"
 )
 
 // IPRuleFilter carries optional filtering parameters for listing IP rules.
@@ -19,9 +20,9 @@ type IPRuleFilter struct {
 // List is included on the write side because enforcement middleware needs access to full aggregates
 // for real-time IP matching, not just read-model projections.
 type IPRuleRepository interface {
-	Save(ctx context.Context, entity *entity.IPRule) error
+	Save(ctx context.Context, q shareddomain.Querier, entity *entity.IPRule) error
 	FindByID(ctx context.Context, id entity.IPRuleID) (*entity.IPRule, error)
-	Update(ctx context.Context, entity *entity.IPRule) error
-	Delete(ctx context.Context, id entity.IPRuleID) error
+	Update(ctx context.Context, q shareddomain.Querier, entity *entity.IPRule) error
+	Delete(ctx context.Context, q shareddomain.Querier, id entity.IPRuleID) error
 	List(ctx context.Context, filter IPRuleFilter) ([]*entity.IPRule, int64, error)
 }

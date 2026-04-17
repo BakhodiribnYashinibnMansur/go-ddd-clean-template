@@ -6,6 +6,7 @@ import (
 	userentity "gct/internal/context/iam/generic/user/domain/entity"
 	userrepo "gct/internal/context/iam/generic/user/domain/repository"
 	"gct/internal/kernel/application"
+	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -19,6 +20,7 @@ type RevokeAllSessionsCommand struct {
 // RevokeAllSessionsHandler handles the RevokeAllSessionsCommand.
 type RevokeAllSessionsHandler struct {
 	repo     userrepo.UserRepository
+	db       shareddomain.DB
 	eventBus application.EventBus
 	logger   commandLogger
 }
@@ -26,11 +28,13 @@ type RevokeAllSessionsHandler struct {
 // NewRevokeAllSessionsHandler creates a new RevokeAllSessionsHandler.
 func NewRevokeAllSessionsHandler(
 	repo userrepo.UserRepository,
+	db shareddomain.DB,
 	eventBus application.EventBus,
 	logger commandLogger,
 ) *RevokeAllSessionsHandler {
 	return &RevokeAllSessionsHandler{
 		repo:     repo,
+		db:       db,
 		eventBus: eventBus,
 		logger:   logger,
 	}
@@ -49,7 +53,9 @@ func (h *RevokeAllSessionsHandler) Handle(ctx context.Context, cmd RevokeAllSess
 
 	user.RevokeAllSessions()
 
-	if err := h.repo.Update(ctx, user); err != nil {
+	if err := pgxutil.WithTx(ctx, h.db, func(q shareddomain.Querier) error {
+		return h.repo.Update(ctx, q, user)
+	}); err != nil {
 		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "RevokeAllSessions", Entity: "user", EntityID: cmd.UserID, Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}

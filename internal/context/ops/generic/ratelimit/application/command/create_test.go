@@ -23,7 +23,7 @@ type mockRateLimitRepo struct {
 	findFn  func(ctx context.Context, id ratelimitentity.RateLimitID) (*ratelimitentity.RateLimit, error)
 }
 
-func (m *mockRateLimitRepo) Save(_ context.Context, e *ratelimitentity.RateLimit) error {
+func (m *mockRateLimitRepo) Save(_ context.Context, _ shared.Querier, e *ratelimitentity.RateLimit) error {
 	m.saved = e
 	return nil
 }
@@ -35,12 +35,12 @@ func (m *mockRateLimitRepo) FindByID(ctx context.Context, id ratelimitentity.Rat
 	return nil, ratelimitentity.ErrRateLimitNotFound
 }
 
-func (m *mockRateLimitRepo) Update(_ context.Context, e *ratelimitentity.RateLimit) error {
+func (m *mockRateLimitRepo) Update(_ context.Context, _ shared.Querier, e *ratelimitentity.RateLimit) error {
 	m.updated = e
 	return nil
 }
 
-func (m *mockRateLimitRepo) Delete(_ context.Context, id ratelimitentity.RateLimitID) error {
+func (m *mockRateLimitRepo) Delete(_ context.Context, _ shared.Querier, id ratelimitentity.RateLimitID) error {
 	m.deleted = id
 	return nil
 }

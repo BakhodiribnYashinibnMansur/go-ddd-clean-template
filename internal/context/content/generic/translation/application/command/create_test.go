@@ -8,7 +8,7 @@ import (
 	translationentity "gct/internal/context/content/generic/translation/domain/entity"
 	translationrepo "gct/internal/context/content/generic/translation/domain/repository"
 	"gct/internal/kernel/application"
-	shared "gct/internal/kernel/domain"
+	shareddomain "gct/internal/kernel/domain"
 
 	"gct/internal/kernel/outbox"
 	"github.com/stretchr/testify/require"
@@ -22,7 +22,7 @@ type mockRepo struct {
 	findFn  func(ctx context.Context, id translationentity.TranslationID) (*translationentity.Translation, error)
 }
 
-func (m *mockRepo) Save(_ context.Context, e *translationentity.Translation) error {
+func (m *mockRepo) Save(_ context.Context, _ shareddomain.Querier, e *translationentity.Translation) error {
 	m.saved = e
 	return nil
 }
@@ -34,12 +34,12 @@ func (m *mockRepo) FindByID(ctx context.Context, id translationentity.Translatio
 	return nil, translationentity.ErrTranslationNotFound
 }
 
-func (m *mockRepo) Update(_ context.Context, e *translationentity.Translation) error {
+func (m *mockRepo) Update(_ context.Context, _ shareddomain.Querier, e *translationentity.Translation) error {
 	m.updated = e
 	return nil
 }
 
-func (m *mockRepo) Delete(_ context.Context, _ translationentity.TranslationID) error {
+func (m *mockRepo) Delete(_ context.Context, _ shareddomain.Querier, _ translationentity.TranslationID) error {
 	return nil
 }
 
@@ -48,10 +48,10 @@ func (m *mockRepo) List(_ context.Context, _ translationrepo.TranslationFilter) 
 }
 
 type mockEventBus struct {
-	published []shared.DomainEvent
+	published []shareddomain.DomainEvent
 }
 
-func (m *mockEventBus) Publish(_ context.Context, events ...shared.DomainEvent) error {
+func (m *mockEventBus) Publish(_ context.Context, events ...shareddomain.DomainEvent) error {
 	m.published = append(m.published, events...)
 	return nil
 }

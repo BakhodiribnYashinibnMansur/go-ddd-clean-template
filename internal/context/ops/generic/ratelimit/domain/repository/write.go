@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"gct/internal/context/ops/generic/ratelimit/domain/entity"
+	shareddomain "gct/internal/kernel/domain"
 )
 
 // RateLimitFilter carries optional filtering parameters for listing rate limits.
@@ -19,9 +20,9 @@ type RateLimitFilter struct {
 // List is included on the write side because enforcement middleware needs access to full aggregates
 // for real-time rate limit evaluation, not just read-model projections.
 type RateLimitRepository interface {
-	Save(ctx context.Context, entity *entity.RateLimit) error
+	Save(ctx context.Context, q shareddomain.Querier, entity *entity.RateLimit) error
 	FindByID(ctx context.Context, id entity.RateLimitID) (*entity.RateLimit, error)
-	Update(ctx context.Context, entity *entity.RateLimit) error
-	Delete(ctx context.Context, id entity.RateLimitID) error
+	Update(ctx context.Context, q shareddomain.Querier, entity *entity.RateLimit) error
+	Delete(ctx context.Context, q shareddomain.Querier, id entity.RateLimitID) error
 	List(ctx context.Context, filter RateLimitFilter) ([]*entity.RateLimit, int64, error)
 }

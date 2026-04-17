@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	userentity "gct/internal/context/iam/generic/user/domain/entity"
+	shared "gct/internal/kernel/domain"
 
 	"github.com/stretchr/testify/require"
 )
@@ -18,7 +19,7 @@ type revokeTestRepo struct {
 	updated   *userentity.User
 }
 
-func (r *revokeTestRepo) Update(_ context.Context, entity *userentity.User) error {
+func (r *revokeTestRepo) Update(_ context.Context, _ shared.Querier, entity *userentity.User) error {
 	r.updated = entity
 	return r.updateErr
 }
@@ -50,7 +51,7 @@ func TestRevokeAllSessionsHandler_Success(t *testing.T) {
 	eb := &mockEventBus{}
 	l := &mockLogger{}
 
-	handler := NewRevokeAllSessionsHandler(repo, eb, l)
+	handler := NewRevokeAllSessionsHandler(repo, fakeDB{}, eb, l)
 
 	err = handler.Handle(context.Background(), RevokeAllSessionsCommand{
 		UserID: userentity.UserID(user.ID()),
@@ -75,7 +76,7 @@ func TestRevokeAllSessionsHandler_UserNotFound(t *testing.T) {
 	eb := &mockEventBus{}
 	l := &mockLogger{}
 
-	handler := NewRevokeAllSessionsHandler(repo, eb, l)
+	handler := NewRevokeAllSessionsHandler(repo, fakeDB{}, eb, l)
 
 	err := handler.Handle(context.Background(), RevokeAllSessionsCommand{
 		UserID: userentity.NewUserID(),
@@ -110,7 +111,7 @@ func TestRevokeAllSessionsHandler_UpdateError(t *testing.T) {
 	eb := &mockEventBus{}
 	l := &mockLogger{}
 
-	handler := NewRevokeAllSessionsHandler(repo, eb, l)
+	handler := NewRevokeAllSessionsHandler(repo, fakeDB{}, eb, l)
 
 	err := handler.Handle(context.Background(), RevokeAllSessionsCommand{
 		UserID: userentity.UserID(user.ID()),
@@ -143,7 +144,7 @@ func TestRevokeAllSessionsHandler_NoSessions(t *testing.T) {
 	eb := &mockEventBus{}
 	l := &mockLogger{}
 
-	handler := NewRevokeAllSessionsHandler(repo, eb, l)
+	handler := NewRevokeAllSessionsHandler(repo, fakeDB{}, eb, l)
 
 	err := handler.Handle(context.Background(), RevokeAllSessionsCommand{
 		UserID: userentity.UserID(user.ID()),

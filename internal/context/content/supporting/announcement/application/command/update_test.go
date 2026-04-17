@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	shared "gct/internal/kernel/domain"
+	shareddomain "gct/internal/kernel/domain"
 
 	announceentity "gct/internal/context/content/supporting/announcement/domain/entity"
 
@@ -19,8 +19,8 @@ func TestUpdateAnnouncementHandler_Handle(t *testing.T) {
 	t.Parallel()
 
 	a, _ := announceentity.NewAnnouncement(
-		shared.Lang{Uz: "old", Ru: "old", En: "old"},
-		shared.Lang{Uz: "old", Ru: "old", En: "old"},
+		shareddomain.Lang{Uz: "old", Ru: "old", En: "old"},
+		shareddomain.Lang{Uz: "old", Ru: "old", En: "old"},
 		1, nil, nil,
 	)
 
@@ -35,7 +35,7 @@ func TestUpdateAnnouncementHandler_Handle(t *testing.T) {
 	eb := &mockEventBus{}
 	handler := NewUpdateAnnouncementHandler(repo, outbox.NewEventCommitter(nil, nil, eb, &mockLogger{}), &mockLogger{})
 
-	newTitle := shared.Lang{Uz: "new_uz", Ru: "new_ru", En: "new_en"}
+	newTitle := shareddomain.Lang{Uz: "new_uz", Ru: "new_ru", En: "new_en"}
 	newPriority := 5
 	cmd := UpdateAnnouncementCommand{
 		ID:       announceentity.AnnouncementID(a.ID()),
@@ -60,8 +60,8 @@ func TestUpdateAnnouncementHandler_WithPublish(t *testing.T) {
 	t.Parallel()
 
 	a, _ := announceentity.NewAnnouncement(
-		shared.Lang{Uz: "t", Ru: "t", En: "t"},
-		shared.Lang{Uz: "c", Ru: "c", En: "c"},
+		shareddomain.Lang{Uz: "t", Ru: "t", En: "t"},
+		shareddomain.Lang{Uz: "c", Ru: "c", En: "c"},
 		1, nil, nil,
 	)
 
@@ -104,8 +104,8 @@ func TestUpdateAnnouncementHandler_AlreadyPublished(t *testing.T) {
 	now := time.Now()
 	a := announceentity.ReconstructAnnouncement(
 		uuid.New(), time.Now(), time.Now(),
-		shared.Lang{Uz: "t", Ru: "t", En: "t"},
-		shared.Lang{Uz: "c", Ru: "c", En: "c"},
+		shareddomain.Lang{Uz: "t", Ru: "t", En: "t"},
+		shareddomain.Lang{Uz: "c", Ru: "c", En: "c"},
 		true, &now, 1, nil, nil,
 	)
 

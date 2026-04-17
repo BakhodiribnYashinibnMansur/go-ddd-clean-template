@@ -31,7 +31,7 @@ type mockRepo struct {
 	findFn  func(ctx context.Context, id integentity.IntegrationID) (*integentity.Integration, error)
 }
 
-func (m *mockRepo) Save(_ context.Context, e *integentity.Integration) error {
+func (m *mockRepo) Save(_ context.Context, _ shared.Querier, e *integentity.Integration) error {
 	m.saved = e
 	return nil
 }
@@ -41,12 +41,15 @@ func (m *mockRepo) FindByID(ctx context.Context, id integentity.IntegrationID) (
 	}
 	return nil, integentity.ErrIntegrationNotFound
 }
-func (m *mockRepo) Update(_ context.Context, e *integentity.Integration) error {
+func (m *mockRepo) Update(_ context.Context, _ shared.Querier, e *integentity.Integration) error {
 	m.updated = e
 	return nil
 }
-func (m *mockRepo) Delete(_ context.Context, id integentity.IntegrationID) error {
+func (m *mockRepo) Delete(_ context.Context, _ shared.Querier, id integentity.IntegrationID) error {
 	m.deleted = id
+	return nil
+}
+func (m *mockRepo) RotateJWTKey(_ context.Context, _ shared.Querier, _ integentity.IntegrationID, _, _ string) error {
 	return nil
 }
 
@@ -120,7 +123,7 @@ func setupRouter(repo *mockRepo, readRepo *mockReadRepo) *gin.Engine {
 	bc := &integration.BoundedContext{
 		CreateIntegration: command.NewCreateHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l),
 		UpdateIntegration: command.NewUpdateHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l),
-		DeleteIntegration: command.NewDeleteHandler(repo, eb, l),
+		DeleteIntegration: command.NewDeleteHandler(repo, nil, eb, l),
 		GetIntegration:    query.NewGetHandler(readRepo, l),
 		ListIntegrations:  query.NewListHandler(readRepo, l),
 	}

@@ -40,6 +40,7 @@ require (
 	go.opentelemetry.io/otel/exporters/jaeger v1.17.0
 	go.opentelemetry.io/otel/exporters/prometheus v0.64.0
 	go.uber.org/zap v1.27.1
+	pgregory.net/rapid v1.2.0
 )
 
 require (
@@ -103,7 +104,6 @@ require (
 	google.golang.org/appengine/v2 v2.0.6 // indirect
 	google.golang.org/grpc v1.80.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
-	pgregory.net/rapid v1.2.0 // indirect
 )
 
 require (

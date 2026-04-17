@@ -28,7 +28,7 @@ type mockRepo struct {
 	saved *metricentity.FunctionMetric
 }
 
-func (m *mockRepo) Save(_ context.Context, fm *metricentity.FunctionMetric) error {
+func (m *mockRepo) Save(_ context.Context, _ shared.Querier, fm *metricentity.FunctionMetric) error {
 	m.saved = fm
 	return nil
 }

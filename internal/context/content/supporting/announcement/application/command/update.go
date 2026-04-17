@@ -6,7 +6,7 @@ import (
 
 	announceentity "gct/internal/context/content/supporting/announcement/domain/entity"
 	announcerepo "gct/internal/context/content/supporting/announcement/domain/repository"
-	shared "gct/internal/kernel/domain"
+	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -18,8 +18,8 @@ import (
 // from draft to published — already-published announcements ignore this flag.
 type UpdateAnnouncementCommand struct {
 	ID        announceentity.AnnouncementID
-	Title     *shared.Lang
-	Content   *shared.Lang
+	Title     *shareddomain.Lang
+	Content   *shareddomain.Lang
 	Priority  *int
 	StartDate *time.Time
 	EndDate   *time.Time
@@ -65,8 +65,8 @@ func (h *UpdateAnnouncementHandler) Handle(ctx context.Context, cmd UpdateAnnoun
 		a.Publish()
 	}
 
-	return h.committer.Commit(ctx, func(ctx context.Context) error {
-		if err := h.repo.Update(ctx, a); err != nil {
+	return h.committer.Commit(ctx, func(ctx context.Context, q shareddomain.Querier) error {
+		if err := h.repo.Update(ctx, q, a); err != nil {
 			h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "UpdateAnnouncement", Entity: "announcement", EntityID: cmd.ID, Err: err}.KV()...)
 			return apperrors.MapToServiceError(err)
 		}

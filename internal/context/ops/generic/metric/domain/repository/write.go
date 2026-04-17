@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"gct/internal/context/ops/generic/metric/domain/entity"
+	shareddomain "gct/internal/kernel/domain"
 )
 
 // MetricFilter carries optional filtering parameters for listing function metrics.
@@ -23,6 +24,6 @@ type MetricFilter struct {
 // List is included on the write side because metric aggregation may need access to full domain objects.
 // No FindByID or Delete — metrics are immutable, append-only records.
 type MetricRepository interface {
-	Save(ctx context.Context, e *entity.FunctionMetric) error
+	Save(ctx context.Context, q shareddomain.Querier, e *entity.FunctionMetric) error
 	List(ctx context.Context, filter MetricFilter) ([]*entity.FunctionMetric, int64, error)
 }

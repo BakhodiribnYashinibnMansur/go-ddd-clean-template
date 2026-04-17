@@ -21,7 +21,7 @@ func newTestBC(t *testing.T) *notification.BoundedContext {
 	t.Helper()
 	eb := eventbus.NewInMemoryEventBus()
 	l := logger.New("error")
-	return notification.NewBoundedContext(setup.TestPG.Pool, eb, outbox.NewEventCommitter(setup.TestPG.Pool, nil, eb, l), l)
+	return notification.NewBoundedContext(setup.TestPG.Pool, outbox.NewEventCommitter(setup.TestPG.Pool, nil, eb, l), l)
 }
 
 func TestIntegration_CreateAndGetNotification(t *testing.T) {

@@ -31,7 +31,7 @@ type mockRepo struct {
 	findFn  func(ctx context.Context, id translationentity.TranslationID) (*translationentity.Translation, error)
 }
 
-func (m *mockRepo) Save(_ context.Context, e *translationentity.Translation) error {
+func (m *mockRepo) Save(_ context.Context, _ shared.Querier, e *translationentity.Translation) error {
 	m.saved = e
 	return nil
 }
@@ -41,11 +41,11 @@ func (m *mockRepo) FindByID(ctx context.Context, id translationentity.Translatio
 	}
 	return nil, translationentity.ErrTranslationNotFound
 }
-func (m *mockRepo) Update(_ context.Context, e *translationentity.Translation) error {
+func (m *mockRepo) Update(_ context.Context, _ shared.Querier, e *translationentity.Translation) error {
 	m.updated = e
 	return nil
 }
-func (m *mockRepo) Delete(_ context.Context, _ translationentity.TranslationID) error {
+func (m *mockRepo) Delete(_ context.Context, _ shared.Querier, _ translationentity.TranslationID) error {
 	return nil
 }
 func (m *mockRepo) List(_ context.Context, _ translationrepo.TranslationFilter) ([]*translationentity.Translation, int64, error) {
@@ -110,7 +110,7 @@ func setupRouter(repo *mockRepo, readRepo *mockReadRepo) *gin.Engine {
 	bc := &translation.BoundedContext{
 		CreateTranslation: command.NewCreateTranslationHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l),
 		UpdateTranslation: command.NewUpdateTranslationHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l),
-		DeleteTranslation: command.NewDeleteTranslationHandler(repo, l),
+		DeleteTranslation: command.NewDeleteTranslationHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l),
 		GetTranslation:    query.NewGetTranslationHandler(readRepo, l),
 		ListTranslations:  query.NewListTranslationsHandler(readRepo, l),
 	}

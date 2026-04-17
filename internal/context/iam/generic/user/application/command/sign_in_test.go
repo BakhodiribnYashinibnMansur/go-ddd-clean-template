@@ -8,10 +8,10 @@ import (
 	"time"
 
 	userentity "gct/internal/context/iam/generic/user/domain/entity"
+	shared "gct/internal/kernel/domain"
 	jwtpkg "gct/internal/kernel/infrastructure/security/jwt"
 	"gct/internal/kernel/outbox"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -189,11 +189,7 @@ func (m *signInMockRepo) FindByEmail(_ context.Context, email userentity.Email) 
 	return nil, userentity.ErrUserNotFound
 }
 
-func (m *signInMockRepo) FindDefaultRoleID(_ context.Context) (uuid.UUID, error) {
-	return uuid.New(), nil
-}
-
-func (m *signInMockRepo) Update(ctx context.Context, entity *userentity.User) error {
+func (m *signInMockRepo) Update(ctx context.Context, q shared.Querier, entity *userentity.User) error {
 	m.updatedUser = entity
 	return nil
 }

@@ -1,5 +1,10 @@
 package domain
 
+import "regexp"
+
+// safeSortColumnRe matches valid SQL column identifiers (letters, digits, underscores).
+var safeSortColumnRe = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*$`)
+
 // SortOrder represents the direction of sorting in query results.
 // Always validate with IsValid before passing to SQL to prevent injection.
 type SortOrder string
@@ -22,6 +27,24 @@ type Pagination struct {
 	Total     int64  `json:"total"`
 	SortBy    string `json:"sort_by"`
 	SortOrder string `json:"sort_order"` // "ASC" or "DESC"
+}
+
+// SafeOrderBy returns a SQL-safe ORDER BY clause (e.g. "created_at DESC").
+// It rejects any SortBy value that is not a valid column identifier
+// (letters, digits, underscores only) to prevent SQL injection.
+// Returns an empty string when SortBy is empty or invalid.
+func (p *Pagination) SafeOrderBy() string {
+	if p.SortBy == "" {
+		return ""
+	}
+	if !safeSortColumnRe.MatchString(p.SortBy) {
+		return ""
+	}
+	order := "ASC"
+	if p.SortOrder == "DESC" {
+		order = "DESC"
+	}
+	return p.SortBy + " " + order
 }
 
 // Getters and Setters for Pagination

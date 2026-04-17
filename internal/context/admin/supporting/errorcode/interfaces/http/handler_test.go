@@ -32,7 +32,7 @@ type mockRepo struct {
 	findFn  func(ctx context.Context, id errcodeentity.ErrorCodeID) (*errcodeentity.ErrorCode, error)
 }
 
-func (m *mockRepo) Save(_ context.Context, e *errcodeentity.ErrorCode) error {
+func (m *mockRepo) Save(_ context.Context, _ shared.Querier, e *errcodeentity.ErrorCode) error {
 	m.saved = e
 	return nil
 }
@@ -42,11 +42,11 @@ func (m *mockRepo) FindByID(ctx context.Context, id errcodeentity.ErrorCodeID) (
 	}
 	return nil, errcodeentity.ErrErrorCodeNotFound
 }
-func (m *mockRepo) Update(_ context.Context, e *errcodeentity.ErrorCode) error {
+func (m *mockRepo) Update(_ context.Context, _ shared.Querier, e *errcodeentity.ErrorCode) error {
 	m.updated = e
 	return nil
 }
-func (m *mockRepo) Delete(_ context.Context, id errcodeentity.ErrorCodeID) error {
+func (m *mockRepo) Delete(_ context.Context, _ shared.Querier, id errcodeentity.ErrorCodeID) error {
 	m.deleted = id
 	return nil
 }

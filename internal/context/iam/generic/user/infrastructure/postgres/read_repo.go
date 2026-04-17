@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	userentity "gct/internal/context/iam/generic/user/domain/entity"
@@ -140,12 +139,8 @@ func (r *UserReadRepo) List(ctx context.Context, filter userentity.UsersFilter) 
 		qb = qb.Limit(uint64(filter.Pagination.Limit)).
 			Offset(uint64(filter.Pagination.Offset))
 
-		if filter.Pagination.SortBy != "" {
-			order := "ASC"
-			if filter.Pagination.SortOrder == "DESC" {
-				order = "DESC"
-			}
-			qb = qb.OrderBy(fmt.Sprintf("%s %s", filter.Pagination.SortBy, order))
+		if ob := filter.Pagination.SafeOrderBy(); ob != "" {
+			qb = qb.OrderBy(ob)
 		}
 	}
 
@@ -159,6 +154,19 @@ func (r *UserReadRepo) List(ctx context.Context, filter userentity.UsersFilter) 
 		return nil, 0, apperrors.HandlePgError(err, consts.TableUsers, nil)
 	}
 	defer rows.Close()
+
+	type scannedUser struct {
+		uid        uuid.UUID
+		roleID     *uuid.UUID
+		username   *string
+		email      *string
+		phone      string
+		active     bool
+		isApproved bool
+	}
+
+	var scanned []scannedUser
+	var entityIDs []uuid.UUID
 
 	for rows.Next() {
 		var (
@@ -182,20 +190,25 @@ func (r *UserReadRepo) List(ctx context.Context, filter userentity.UsersFilter) 
 			return nil, 0, apperrors.HandlePgError(err, consts.TableUsers, nil)
 		}
 
-		attrs, err := r.metadata.GetAll(ctx, metadata.EntityTypeUserAttributes, uid)
-		if err != nil {
-			return nil, 0, err
-		}
+		scanned = append(scanned, scannedUser{uid, roleID, username, email, phone, active, isApproved})
+		entityIDs = append(entityIDs, uid)
+	}
 
+	allAttrs, err := r.metadata.GetAllBatch(ctx, metadata.EntityTypeUserAttributes, entityIDs)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	for _, s := range scanned {
 		items = append(items, &userentity.UserView{
-			ID:         userentity.UserID(uid),
-			Phone:      phone,
-			Email:      email,
-			Username:   username,
-			RoleID:     roleID,
-			Attributes: attrs,
-			Active:     active,
-			IsApproved: isApproved,
+			ID:         userentity.UserID(s.uid),
+			Phone:      s.phone,
+			Email:      s.email,
+			Username:   s.username,
+			RoleID:     s.roleID,
+			Attributes: allAttrs[s.uid],
+			Active:     s.active,
+			IsApproved: s.isApproved,
 		})
 	}
 
@@ -269,4 +282,17 @@ func (r *UserReadRepo) FindUserForAuth(ctx context.Context, id userentity.UserID
 	u.Attributes = attrs
 
 	return &u, nil
+}
+
+// FindDefaultRoleID returns the ID of the "user" role (the default role for self-registration).
+func (r *UserReadRepo) FindDefaultRoleID(ctx context.Context) (result uuid.UUID, err error) {
+	ctx, end := pgxutil.RepoSpan(ctx, "UserReadRepo.FindDefaultRoleID")
+	defer func() { end(err) }()
+
+	var id uuid.UUID
+	err = r.pool.QueryRow(ctx, "SELECT id FROM role WHERE name = 'user' LIMIT 1").Scan(&id)
+	if err != nil {
+		return uuid.Nil, apperrors.HandlePgError(err, "role", nil)
+	}
+	return id, nil
 }

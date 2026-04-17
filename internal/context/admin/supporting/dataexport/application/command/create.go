@@ -5,6 +5,7 @@ import (
 
 	exportentity "gct/internal/context/admin/supporting/dataexport/domain/entity"
 	exportrepo "gct/internal/context/admin/supporting/dataexport/domain/repository"
+	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -51,8 +52,8 @@ func (h *CreateDataExportHandler) Handle(ctx context.Context, cmd CreateDataExpo
 
 	de := exportentity.NewDataExport(cmd.UserID, cmd.DataType, cmd.Format)
 
-	return h.committer.Commit(ctx, func(ctx context.Context) error {
-		if err := h.repo.Save(ctx, de); err != nil {
+	return h.committer.Commit(ctx, func(ctx context.Context, q shareddomain.Querier) error {
+		if err := h.repo.Save(ctx, q, de); err != nil {
 			h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateDataExport", Entity: "data_export", Err: err}.KV()...)
 			return apperrors.MapToServiceError(err)
 		}

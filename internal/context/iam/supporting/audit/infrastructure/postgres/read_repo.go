@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"gct/internal/context/iam/supporting/audit/domain"
@@ -99,12 +98,8 @@ func (r *AuditReadRepo) ListAuditLogs(ctx context.Context, filter domain.AuditLo
 		qb = qb.Limit(uint64(filter.Pagination.Limit)).
 			Offset(uint64(filter.Pagination.Offset))
 
-		if filter.Pagination.SortBy != "" {
-			order := "ASC"
-			if filter.Pagination.SortOrder == "DESC" {
-				order = "DESC"
-			}
-			qb = qb.OrderBy(fmt.Sprintf("%s %s", filter.Pagination.SortBy, order))
+		if ob := filter.Pagination.SafeOrderBy(); ob != "" {
+			qb = qb.OrderBy(ob)
 		}
 	}
 
@@ -231,12 +226,8 @@ func (r *AuditReadRepo) ListEndpointHistory(ctx context.Context, filter domain.E
 		qb = qb.Limit(uint64(filter.Pagination.Limit)).
 			Offset(uint64(filter.Pagination.Offset))
 
-		if filter.Pagination.SortBy != "" {
-			order := "ASC"
-			if filter.Pagination.SortOrder == "DESC" {
-				order = "DESC"
-			}
-			qb = qb.OrderBy(fmt.Sprintf("%s %s", filter.Pagination.SortBy, order))
+		if ob := filter.Pagination.SafeOrderBy(); ob != "" {
+			qb = qb.OrderBy(ob)
 		}
 	}
 

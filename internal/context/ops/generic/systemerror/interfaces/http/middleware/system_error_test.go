@@ -64,7 +64,7 @@ type mockSystemErrorRepo struct {
 	saveErr  error
 }
 
-func (m *mockSystemErrorRepo) Save(ctx context.Context, entity *syserrentity.SystemError) error {
+func (m *mockSystemErrorRepo) Save(ctx context.Context, _ shared.Querier, entity *syserrentity.SystemError) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.saved = append(m.saved, entity)
@@ -75,7 +75,7 @@ func (m *mockSystemErrorRepo) FindByID(ctx context.Context, id syserrentity.Syst
 	return nil, nil
 }
 
-func (m *mockSystemErrorRepo) Update(ctx context.Context, entity *syserrentity.SystemError) error {
+func (m *mockSystemErrorRepo) Update(ctx context.Context, _ shared.Querier, entity *syserrentity.SystemError) error {
 	return nil
 }
 

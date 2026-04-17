@@ -5,11 +5,11 @@ import (
 	"time"
 
 	"gct/internal/kernel/consts"
+	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -57,8 +57,9 @@ func (r *GenericMetadataRepo) SetMany(ctx context.Context, entityType string, en
 	return nil
 }
 
-// SetManyTx upserts multiple key-value pairs within an existing transaction.
-func (r *GenericMetadataRepo) SetManyTx(ctx context.Context, tx pgx.Tx, entityType string, entityID uuid.UUID, entries map[string]string) error {
+// SetManyTx upserts multiple key-value pairs using the provided Querier
+// (typically a transaction obtained from the caller).
+func (r *GenericMetadataRepo) SetManyTx(ctx context.Context, q shareddomain.Querier, entityType string, entityID uuid.UUID, entries map[string]string) error {
 	if len(entries) == 0 {
 		return nil
 	}
@@ -79,7 +80,7 @@ func (r *GenericMetadataRepo) SetManyTx(ctx context.Context, tx pgx.Tx, entityTy
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildInsert)
 	}
 
-	if _, err = tx.Exec(ctx, sql, args...); err != nil {
+	if _, err = q.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, consts.TableEntityMetadata, nil)
 	}
 
@@ -115,8 +116,48 @@ func (r *GenericMetadataRepo) GetAll(ctx context.Context, entityType string, ent
 	return result, nil
 }
 
-// GetAllTx retrieves all key-value pairs within an existing transaction.
-func (r *GenericMetadataRepo) GetAllTx(ctx context.Context, tx pgx.Tx, entityType string, entityID uuid.UUID) (map[string]string, error) {
+// GetAllBatch retrieves key-value pairs for multiple entities in a single query.
+// Returns a map from entity ID to its key-value pairs. Entities with no metadata
+// are absent from the result map.
+func (r *GenericMetadataRepo) GetAllBatch(ctx context.Context, entityType string, entityIDs []uuid.UUID) (map[uuid.UUID]map[string]string, error) {
+	if len(entityIDs) == 0 {
+		return make(map[uuid.UUID]map[string]string), nil
+	}
+
+	sql, args, err := r.builder.
+		Select("entity_id", "key", "value").
+		From(consts.TableEntityMetadata).
+		Where(squirrel.Eq{"entity_type": entityType, "entity_id": entityIDs}).
+		ToSql()
+	if err != nil {
+		return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
+	}
+
+	rows, err := r.pool.Query(ctx, sql, args...)
+	if err != nil {
+		return nil, apperrors.HandlePgError(err, consts.TableEntityMetadata, nil)
+	}
+	defer rows.Close()
+
+	result := make(map[uuid.UUID]map[string]string, len(entityIDs))
+	for rows.Next() {
+		var eid uuid.UUID
+		var k, v string
+		if err := rows.Scan(&eid, &k, &v); err != nil {
+			return nil, apperrors.HandlePgError(err, consts.TableEntityMetadata, nil)
+		}
+		if result[eid] == nil {
+			result[eid] = make(map[string]string)
+		}
+		result[eid][k] = v
+	}
+
+	return result, nil
+}
+
+// GetAllTx retrieves all key-value pairs using the provided Querier
+// (typically a transaction obtained from the caller).
+func (r *GenericMetadataRepo) GetAllTx(ctx context.Context, q shareddomain.Querier, entityType string, entityID uuid.UUID) (map[string]string, error) {
 	sql, args, err := r.builder.
 		Select("key", "value").
 		From(consts.TableEntityMetadata).
@@ -126,7 +167,7 @@ func (r *GenericMetadataRepo) GetAllTx(ctx context.Context, tx pgx.Tx, entityTyp
 		return nil, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
 	}
 
-	rows, err := tx.Query(ctx, sql, args...)
+	rows, err := q.Query(ctx, sql, args...)
 	if err != nil {
 		return nil, apperrors.HandlePgError(err, consts.TableEntityMetadata, nil)
 	}
@@ -161,8 +202,9 @@ func (r *GenericMetadataRepo) DeleteAll(ctx context.Context, entityType string, 
 	return nil
 }
 
-// DeleteAllTx removes all metadata within an existing transaction.
-func (r *GenericMetadataRepo) DeleteAllTx(ctx context.Context, tx pgx.Tx, entityType string, entityID uuid.UUID) error {
+// DeleteAllTx removes all metadata using the provided Querier
+// (typically a transaction obtained from the caller).
+func (r *GenericMetadataRepo) DeleteAllTx(ctx context.Context, q shareddomain.Querier, entityType string, entityID uuid.UUID) error {
 	sql, args, err := r.builder.
 		Delete(consts.TableEntityMetadata).
 		Where(squirrel.Eq{"entity_type": entityType, "entity_id": entityID}).
@@ -171,7 +213,7 @@ func (r *GenericMetadataRepo) DeleteAllTx(ctx context.Context, tx pgx.Tx, entity
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildDelete)
 	}
 
-	if _, err = tx.Exec(ctx, sql, args...); err != nil {
+	if _, err = q.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, consts.TableEntityMetadata, nil)
 	}
 

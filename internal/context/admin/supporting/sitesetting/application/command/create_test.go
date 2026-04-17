@@ -8,7 +8,7 @@ import (
 	siteentity "gct/internal/context/admin/supporting/sitesetting/domain/entity"
 	siterepo "gct/internal/context/admin/supporting/sitesetting/domain/repository"
 	"gct/internal/kernel/application"
-	shared "gct/internal/kernel/domain"
+	shareddomain "gct/internal/kernel/domain"
 
 	"gct/internal/kernel/outbox"
 	"github.com/stretchr/testify/require"
@@ -22,7 +22,7 @@ type mockRepo struct {
 	findFn  func(ctx context.Context, id siteentity.SiteSettingID) (*siteentity.SiteSetting, error)
 }
 
-func (m *mockRepo) Save(_ context.Context, e *siteentity.SiteSetting) error {
+func (m *mockRepo) Save(_ context.Context, _ shareddomain.Querier, e *siteentity.SiteSetting) error {
 	m.saved = e
 	return nil
 }
@@ -34,12 +34,12 @@ func (m *mockRepo) FindByID(ctx context.Context, id siteentity.SiteSettingID) (*
 	return nil, siteentity.ErrSiteSettingNotFound
 }
 
-func (m *mockRepo) Update(_ context.Context, e *siteentity.SiteSetting) error {
+func (m *mockRepo) Update(_ context.Context, _ shareddomain.Querier, e *siteentity.SiteSetting) error {
 	m.updated = e
 	return nil
 }
 
-func (m *mockRepo) Delete(_ context.Context, _ siteentity.SiteSettingID) error {
+func (m *mockRepo) Delete(_ context.Context, _ shareddomain.Querier, _ siteentity.SiteSettingID) error {
 	return nil
 }
 
@@ -48,10 +48,10 @@ func (m *mockRepo) List(_ context.Context, _ siterepo.SiteSettingFilter) ([]*sit
 }
 
 type mockEventBus struct {
-	published []shared.DomainEvent
+	published []shareddomain.DomainEvent
 }
 
-func (m *mockEventBus) Publish(_ context.Context, events ...shared.DomainEvent) error {
+func (m *mockEventBus) Publish(_ context.Context, events ...shareddomain.DomainEvent) error {
 	m.published = append(m.published, events...)
 	return nil
 }

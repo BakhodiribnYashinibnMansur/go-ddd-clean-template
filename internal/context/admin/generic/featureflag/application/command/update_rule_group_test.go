@@ -7,6 +7,7 @@ import (
 	"time"
 
 	ffentity "gct/internal/context/admin/generic/featureflag/domain/entity"
+	shareddomain "gct/internal/kernel/domain"
 
 	"gct/internal/kernel/outbox"
 	"github.com/google/uuid"
@@ -154,7 +155,7 @@ func TestUpdateRuleGroupHandler_Handle_UpdateRepoError(t *testing.T) {
 		findFn: func(_ context.Context, _ ffentity.RuleGroupID) (*ffentity.RuleGroup, error) {
 			return rg, nil
 		},
-		updateFn: func(_ context.Context, _ *ffentity.RuleGroup) error {
+		updateFn: func(_ context.Context, _ shareddomain.Querier, _ *ffentity.RuleGroup) error {
 			return repoErr
 		},
 	}

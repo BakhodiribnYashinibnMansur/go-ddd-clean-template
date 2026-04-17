@@ -64,7 +64,7 @@ func (r *ActivityLogWriteRepo) SaveBatch(ctx context.Context, entries []*domain.
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildInsert)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = r.pool.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, consts.TableActivityLog, nil)
 	}
 

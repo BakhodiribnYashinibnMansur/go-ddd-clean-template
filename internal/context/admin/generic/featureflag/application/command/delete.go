@@ -46,8 +46,8 @@ func (h *DeleteHandler) Handle(ctx context.Context, cmd DeleteCommand) (err erro
 
 	event := ffevent.NewFlagDeleted(cmd.ID.UUID())
 
-	return h.committer.Commit(ctx, func(ctx context.Context) error {
-		if err := h.repo.Delete(ctx, cmd.ID); err != nil {
+	return h.committer.Commit(ctx, func(ctx context.Context, q shareddomain.Querier) error {
+		if err := h.repo.Delete(ctx, q, cmd.ID); err != nil {
 			h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteFeatureFlag", Entity: "feature_flag", EntityID: cmd.ID, Err: err}.KV()...)
 			return apperrors.MapToServiceError(err)
 		}

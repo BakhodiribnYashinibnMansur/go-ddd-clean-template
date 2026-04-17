@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	integentity "gct/internal/context/admin/supporting/integration/domain/entity"
+	shareddomain "gct/internal/kernel/domain"
 	"gct/internal/kernel/outbox"
 )
 
@@ -22,7 +23,7 @@ type errorIntegrationRepo struct {
 	findFn    func(ctx context.Context, id integentity.IntegrationID) (*integentity.Integration, error)
 }
 
-func (m *errorIntegrationRepo) Save(_ context.Context, _ *integentity.Integration) error {
+func (m *errorIntegrationRepo) Save(_ context.Context, _ shareddomain.Querier, _ *integentity.Integration) error {
 	return m.saveErr
 }
 
@@ -33,12 +34,16 @@ func (m *errorIntegrationRepo) FindByID(ctx context.Context, id integentity.Inte
 	return nil, integentity.ErrIntegrationNotFound
 }
 
-func (m *errorIntegrationRepo) Update(_ context.Context, _ *integentity.Integration) error {
+func (m *errorIntegrationRepo) Update(_ context.Context, _ shareddomain.Querier, _ *integentity.Integration) error {
 	return m.updateErr
 }
 
-func (m *errorIntegrationRepo) Delete(_ context.Context, _ integentity.IntegrationID) error {
+func (m *errorIntegrationRepo) Delete(_ context.Context, _ shareddomain.Querier, _ integentity.IntegrationID) error {
 	return m.deleteErr
+}
+
+func (m *errorIntegrationRepo) RotateJWTKey(_ context.Context, _ shareddomain.Querier, _ integentity.IntegrationID, _, _ string) error {
+	return nil
 }
 
 // --- Tests ---
@@ -78,7 +83,7 @@ func TestDeleteHandler_RepoError(t *testing.T) {
 	t.Parallel()
 
 	repo := &errorIntegrationRepo{deleteErr: errRepoDelete}
-	handler := NewDeleteHandler(repo, &mockEventBus{}, &mockLogger{})
+	handler := NewDeleteHandler(repo, nil, &mockEventBus{}, &mockLogger{})
 
 	err := handler.Handle(context.Background(), DeleteCommand{ID: integentity.NewIntegrationID()})
 	if !errors.Is(err, errRepoDelete) {

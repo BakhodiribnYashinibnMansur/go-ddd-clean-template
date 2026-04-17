@@ -30,15 +30,15 @@ type mockRepo struct {
 	deleted notifentity.NotificationID
 }
 
-func (m *mockRepo) Save(_ context.Context, n *notifentity.Notification) error {
+func (m *mockRepo) Save(_ context.Context, _ shared.Querier, n *notifentity.Notification) error {
 	m.saved = n
 	return nil
 }
 func (m *mockRepo) FindByID(_ context.Context, _ notifentity.NotificationID) (*notifentity.Notification, error) {
 	return nil, notifentity.ErrNotificationNotFound
 }
-func (m *mockRepo) Update(_ context.Context, _ *notifentity.Notification) error { return nil }
-func (m *mockRepo) Delete(_ context.Context, id notifentity.NotificationID) error {
+func (m *mockRepo) Update(_ context.Context, _ shared.Querier, _ *notifentity.Notification) error { return nil }
+func (m *mockRepo) Delete(_ context.Context, _ shared.Querier, id notifentity.NotificationID) error {
 	m.deleted = id
 	return nil
 }
@@ -100,7 +100,7 @@ func setupRouter(repo *mockRepo, readRepo *mockReadRepo) *gin.Engine {
 
 	bc := &notification.BoundedContext{
 		CreateNotification: command.NewCreateHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l),
-		DeleteNotification: command.NewDeleteHandler(repo, eb, l),
+		DeleteNotification: command.NewDeleteHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l),
 		GetNotification:    query.NewGetHandler(readRepo, l),
 		ListNotifications:  query.NewListHandler(readRepo, l),
 	}

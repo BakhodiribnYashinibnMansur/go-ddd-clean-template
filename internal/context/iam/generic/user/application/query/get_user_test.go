@@ -44,6 +44,10 @@ func (m *errorReadRepo) FindUserForAuth(_ context.Context, _ userentity.UserID) 
 	return nil, m.err
 }
 
+func (m *errorReadRepo) FindDefaultRoleID(_ context.Context) (uuid.UUID, error) {
+	return uuid.Nil, m.err
+}
+
 var errRepoFailure = errors.New("repository failure")
 
 func (m *mockUserReadRepository) FindByID(_ context.Context, id userentity.UserID) (*userentity.UserView, error) {
@@ -69,6 +73,10 @@ func (m *mockUserReadRepository) FindUserForAuth(_ context.Context, _ userentity
 		return m.authUser, nil
 	}
 	return nil, userentity.ErrUserNotFound
+}
+
+func (m *mockUserReadRepository) FindDefaultRoleID(_ context.Context) (uuid.UUID, error) {
+	return uuid.New(), nil
 }
 
 // --- Tests ---

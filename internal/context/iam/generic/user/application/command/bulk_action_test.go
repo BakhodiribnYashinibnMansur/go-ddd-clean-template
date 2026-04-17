@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	userentity "gct/internal/context/iam/generic/user/domain/entity"
+	shared "gct/internal/kernel/domain"
 
 	"github.com/stretchr/testify/require"
 )
@@ -19,7 +20,7 @@ func TestBulkActionHandler_Activate(t *testing.T) {
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewBulkActionHandler(repo, eventBus, log)
+	handler := NewBulkActionHandler(repo, fakeDB{}, eventBus, log)
 
 	_, err := handler.Handle(context.Background(), BulkActionCommand{
 		IDs:    []userentity.UserID{userentity.UserID(user.ID())},
@@ -45,7 +46,7 @@ func TestBulkActionHandler_Deactivate(t *testing.T) {
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewBulkActionHandler(repo, eventBus, log)
+	handler := NewBulkActionHandler(repo, fakeDB{}, eventBus, log)
 
 	_, err := handler.Handle(context.Background(), BulkActionCommand{
 		IDs:    []userentity.UserID{userentity.UserID(user.ID())},
@@ -71,7 +72,7 @@ func TestBulkActionHandler_Delete(t *testing.T) {
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewBulkActionHandler(repo, eventBus, log)
+	handler := NewBulkActionHandler(repo, fakeDB{}, eventBus, log)
 
 	_, err := handler.Handle(context.Background(), BulkActionCommand{
 		IDs:    []userentity.UserID{userentity.UserID(user.ID())},
@@ -100,7 +101,7 @@ func TestBulkActionHandler_UnknownAction(t *testing.T) {
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewBulkActionHandler(repo, eventBus, log)
+	handler := NewBulkActionHandler(repo, fakeDB{}, eventBus, log)
 
 	_, err := handler.Handle(context.Background(), BulkActionCommand{
 		IDs:    []userentity.UserID{userentity.UserID(user.ID())},
@@ -124,7 +125,7 @@ func TestBulkActionHandler_MultipleUsers(t *testing.T) {
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewBulkActionHandler(repo, eventBus, log)
+	handler := NewBulkActionHandler(repo, fakeDB{}, eventBus, log)
 
 	_, err := handler.Handle(context.Background(), BulkActionCommand{
 		IDs:    []userentity.UserID{userentity.UserID(user1.TypedID()), userentity.UserID(user2.TypedID())},
@@ -146,7 +147,7 @@ func TestBulkActionHandler_SkipsMissing(t *testing.T) {
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewBulkActionHandler(repo, eventBus, log)
+	handler := NewBulkActionHandler(repo, fakeDB{}, eventBus, log)
 
 	result, err := handler.Handle(context.Background(), BulkActionCommand{
 		IDs:    []userentity.UserID{userentity.UserID(user.ID()), userentity.NewUserID()}, // second ID doesn't exist
@@ -175,7 +176,7 @@ func (m *bulkMockRepo) FindByID(_ context.Context, id userentity.UserID) (*usere
 	return nil, userentity.ErrUserNotFound
 }
 
-func (m *bulkMockRepo) Update(_ context.Context, entity *userentity.User) error {
+func (m *bulkMockRepo) Update(_ context.Context, _ shared.Querier, entity *userentity.User) error {
 	if m.updatedUsers == nil {
 		m.updatedUsers = make(map[userentity.UserID]*userentity.User)
 	}

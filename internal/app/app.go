@@ -407,7 +407,7 @@ func Run(cfg *config.Config) {
 		}
 		for _, v := range views {
 			if v.Name == name {
-				return dddBCs.Integration.WriteRepo.RotateJWTKey(ctx, v.ID, publicKeyPEM, kid)
+				return dddBCs.Integration.WriteRepo.RotateJWTKey(ctx, pg.Pool, v.ID, publicKeyPEM, kid)
 			}
 		}
 		return fmt.Errorf("integration %q not found in active JWT list", name)

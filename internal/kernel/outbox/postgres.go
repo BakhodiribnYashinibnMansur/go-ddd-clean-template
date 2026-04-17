@@ -5,7 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/jackc/pgx/v5"
+	shareddomain "gct/internal/kernel/domain"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -23,9 +24,9 @@ func NewPgStore(pool *pgxpool.Pool) *PgStore {
 // Append inserts one or more outbox rows within the caller's transaction.
 // The producer MUST pass the same pgx.Tx that mutated the aggregate, so the
 // outbox write commits or rolls back atomically with the business change.
-func (s *PgStore) Append(ctx context.Context, tx pgx.Tx, entries ...Entry) error {
-	if tx == nil {
-		return errors.New("outbox: nil transaction")
+func (s *PgStore) Append(ctx context.Context, q shareddomain.Querier, entries ...Entry) error {
+	if q == nil {
+		return errors.New("outbox: nil querier")
 	}
 	if len(entries) == 0 {
 		return nil
@@ -34,7 +35,7 @@ func (s *PgStore) Append(ctx context.Context, tx pgx.Tx, entries ...Entry) error
 		(event_id, event_name, aggregate_id, payload, occurred_at)
 		VALUES ($1, $2, $3, $4, $5)`
 	for _, e := range entries {
-		if _, err := tx.Exec(ctx, stmt,
+		if _, err := q.Exec(ctx, stmt,
 			e.EventID, e.EventName, e.AggregateID, e.Payload, e.OccurredAt); err != nil {
 			return fmt.Errorf("outbox append: %w", err)
 		}

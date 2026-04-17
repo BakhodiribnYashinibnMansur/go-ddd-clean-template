@@ -5,8 +5,6 @@ import (
 
 	"gct/internal/context/iam/generic/user/domain/entity"
 	shared "gct/internal/kernel/domain"
-
-	"github.com/google/uuid"
 )
 
 // UserRepository is the write-side persistence contract for the User aggregate.
@@ -16,7 +14,6 @@ type UserRepository interface {
 	shared.Repository[entity.User, entity.UserID]
 	FindByPhone(ctx context.Context, phone entity.Phone) (*entity.User, error)
 	FindByEmail(ctx context.Context, email entity.Email) (*entity.User, error)
-	FindDefaultRoleID(ctx context.Context) (uuid.UUID, error)
 
 	// ActiveSessionCount returns the number of non-revoked, non-expired
 	// sessions for the user at the moment of the call. Used by sign-in to

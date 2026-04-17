@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"gct/internal/kernel/consts"
+	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/metadata"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -43,7 +44,7 @@ func NewSystemErrorWriteRepo(pool *pgxpool.Pool) *SystemErrorWriteRepo {
 }
 
 // Save inserts a new SystemError aggregate into the database.
-func (r *SystemErrorWriteRepo) Save(ctx context.Context, se *syserrentity.SystemError) (err error) {
+func (r *SystemErrorWriteRepo) Save(ctx context.Context, q shareddomain.Querier, se *syserrentity.SystemError) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "SystemErrorWriteRepo.Save")
 	defer func() { end(err) }()
 
@@ -72,7 +73,7 @@ func (r *SystemErrorWriteRepo) Save(ctx context.Context, se *syserrentity.System
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildInsert)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = q.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 
@@ -114,7 +115,7 @@ func (r *SystemErrorWriteRepo) FindByID(ctx context.Context, id syserrentity.Sys
 }
 
 // Update updates the SystemError aggregate in the database.
-func (r *SystemErrorWriteRepo) Update(ctx context.Context, se *syserrentity.SystemError) (err error) {
+func (r *SystemErrorWriteRepo) Update(ctx context.Context, q shareddomain.Querier, se *syserrentity.SystemError) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "SystemErrorWriteRepo.Update")
 	defer func() { end(err) }()
 
@@ -139,7 +140,7 @@ func (r *SystemErrorWriteRepo) Update(ctx context.Context, se *syserrentity.Syst
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildUpdate)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = q.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 

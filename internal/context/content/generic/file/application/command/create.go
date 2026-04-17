@@ -5,6 +5,7 @@ import (
 
 	fileentity "gct/internal/context/content/generic/file/domain/entity"
 	filerepo "gct/internal/context/content/generic/file/domain/repository"
+	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -57,8 +58,8 @@ func (h *CreateFileHandler) Handle(ctx context.Context, cmd CreateFileCommand) (
 
 	f := fileentity.NewFile(cmd.Name, cmd.OriginalName, cmd.MimeType, cmd.Size, cmd.Path, cmd.URL, cmd.UploadedBy)
 
-	return h.committer.Commit(ctx, func(ctx context.Context) error {
-		if err := h.repo.Save(ctx, f); err != nil {
+	return h.committer.Commit(ctx, func(ctx context.Context, q shareddomain.Querier) error {
+		if err := h.repo.Save(ctx, q, f); err != nil {
 			h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateFile", Entity: "file", Err: err}.KV()...)
 			return apperrors.MapToServiceError(err)
 		}

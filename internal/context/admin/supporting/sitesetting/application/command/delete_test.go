@@ -17,7 +17,7 @@ func TestDeleteSiteSettingHandler_Handle(t *testing.T) {
 	repo := &mockRepo{}
 	log := &mockLogger{}
 
-	handler := NewDeleteSiteSettingHandler(repo, log)
+	handler := NewDeleteSiteSettingHandler(repo, nil, log)
 
 	err := handler.Handle(context.Background(), DeleteSiteSettingCommand{
 		ID: siteentity.SiteSettingID(uuid.New()),
@@ -32,7 +32,7 @@ func TestDeleteSiteSettingHandler_RepoError(t *testing.T) {
 	errR := &errorRepo{deleteErr: repoErr}
 	log := &mockLogger{}
 
-	handler := NewDeleteSiteSettingHandler(errR, log)
+	handler := NewDeleteSiteSettingHandler(errR, nil, log)
 
 	err := handler.Handle(context.Background(), DeleteSiteSettingCommand{
 		ID: siteentity.SiteSettingID(uuid.New()),

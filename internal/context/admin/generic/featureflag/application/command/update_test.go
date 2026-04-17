@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	ffentity "gct/internal/context/admin/generic/featureflag/domain/entity"
+	shareddomain "gct/internal/kernel/domain"
 
 	"gct/internal/kernel/outbox"
 	"github.com/google/uuid"
@@ -106,7 +107,7 @@ func TestUpdateHandler_Handle_UpdateRepoError(t *testing.T) {
 		findFn: func(_ context.Context, _ ffentity.FeatureFlagID) (*ffentity.FeatureFlag, error) {
 			return newReconstructedFlag(flagID), nil
 		},
-		updateFn: func(_ context.Context, _ *ffentity.FeatureFlag) error {
+		updateFn: func(_ context.Context, _ shareddomain.Querier, _ *ffentity.FeatureFlag) error {
 			return repoErr
 		},
 	}

@@ -13,7 +13,7 @@ func TestDeleteHandler_Handle(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockIntegrationRepo{}
-	handler := NewDeleteHandler(repo, &mockEventBus{}, &mockLogger{})
+	handler := NewDeleteHandler(repo, nil, &mockEventBus{}, &mockLogger{})
 
 	id := integentity.NewIntegrationID()
 	err := handler.Handle(context.Background(), DeleteCommand{ID: id})

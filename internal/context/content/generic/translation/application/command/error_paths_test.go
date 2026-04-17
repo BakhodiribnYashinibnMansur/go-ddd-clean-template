@@ -7,6 +7,7 @@ import (
 
 	translationentity "gct/internal/context/content/generic/translation/domain/entity"
 	translationrepo "gct/internal/context/content/generic/translation/domain/repository"
+	shareddomain "gct/internal/kernel/domain"
 	"gct/internal/kernel/outbox"
 )
 
@@ -18,7 +19,7 @@ type errorRepo struct {
 	findFn    func(ctx context.Context, id translationentity.TranslationID) (*translationentity.Translation, error)
 }
 
-func (m *errorRepo) Save(_ context.Context, _ *translationentity.Translation) error {
+func (m *errorRepo) Save(_ context.Context, _ shareddomain.Querier, _ *translationentity.Translation) error {
 	return m.saveErr
 }
 
@@ -29,11 +30,11 @@ func (m *errorRepo) FindByID(ctx context.Context, id translationentity.Translati
 	return nil, translationentity.ErrTranslationNotFound
 }
 
-func (m *errorRepo) Update(_ context.Context, _ *translationentity.Translation) error {
+func (m *errorRepo) Update(_ context.Context, _ shareddomain.Querier, _ *translationentity.Translation) error {
 	return m.updateErr
 }
 
-func (m *errorRepo) Delete(_ context.Context, _ translationentity.TranslationID) error {
+func (m *errorRepo) Delete(_ context.Context, _ shareddomain.Querier, _ translationentity.TranslationID) error {
 	return m.deleteErr
 }
 
@@ -110,7 +111,7 @@ func TestDeleteTranslationHandler_DeleteError(t *testing.T) {
 	repo := &errorRepo{deleteErr: errDelete}
 	log := &mockLogger{}
 
-	handler := NewDeleteTranslationHandler(repo, log)
+	handler := NewDeleteTranslationHandler(repo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, log), log)
 	err := handler.Handle(context.Background(), DeleteTranslationCommand{ID: translationentity.NewTranslationID()})
 	if !errors.Is(err, errDelete) {
 		t.Fatalf("expected errDelete, got: %v", err)

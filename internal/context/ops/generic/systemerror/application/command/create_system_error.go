@@ -3,6 +3,7 @@ package command
 import (
 	"context"
 
+	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -85,8 +86,8 @@ func (h *CreateSystemErrorHandler) Handle(ctx context.Context, cmd CreateSystemE
 		se.SetMethod(cmd.Method)
 	}
 
-	return h.committer.Commit(ctx, func(ctx context.Context) error {
-		if err := h.repo.Save(ctx, se); err != nil {
+	return h.committer.Commit(ctx, func(ctx context.Context, q shareddomain.Querier) error {
+		if err := h.repo.Save(ctx, q, se); err != nil {
 			h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateSystemError", Entity: "system_error", Err: err}.KV()...)
 			return apperrors.MapToServiceError(err)
 		}

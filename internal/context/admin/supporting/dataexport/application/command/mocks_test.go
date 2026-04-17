@@ -22,7 +22,7 @@ type mockWriteRepo struct {
 	deleteFn      func(ctx context.Context, id exportentity.DataExportID) error
 }
 
-func (m *mockWriteRepo) Save(ctx context.Context, entity *exportentity.DataExport) error {
+func (m *mockWriteRepo) Save(ctx context.Context, _ shared.Querier, entity *exportentity.DataExport) error {
 	m.savedEntity = entity
 	if m.saveFn != nil {
 		return m.saveFn(ctx, entity)
@@ -37,7 +37,7 @@ func (m *mockWriteRepo) FindByID(ctx context.Context, id exportentity.DataExport
 	return nil, exportentity.ErrDataExportNotFound
 }
 
-func (m *mockWriteRepo) Update(ctx context.Context, entity *exportentity.DataExport) error {
+func (m *mockWriteRepo) Update(ctx context.Context, _ shared.Querier, entity *exportentity.DataExport) error {
 	m.updatedEntity = entity
 	if m.updateFn != nil {
 		return m.updateFn(ctx, entity)
@@ -45,7 +45,7 @@ func (m *mockWriteRepo) Update(ctx context.Context, entity *exportentity.DataExp
 	return nil
 }
 
-func (m *mockWriteRepo) Delete(ctx context.Context, id exportentity.DataExportID) error {
+func (m *mockWriteRepo) Delete(ctx context.Context, _ shared.Querier, id exportentity.DataExportID) error {
 	m.deletedID = id
 	if m.deleteFn != nil {
 		return m.deleteFn(ctx, id)

@@ -79,8 +79,8 @@ func (h *CreateRuleGroupHandler) Handle(ctx context.Context, cmd CreateRuleGroup
 
 	event := ffevent.NewFlagUpdated(cmd.FlagID.UUID())
 
-	return h.committer.Commit(ctx, func(ctx context.Context) error {
-		if err := h.rgRepo.Save(ctx, rg); err != nil {
+	return h.committer.Commit(ctx, func(ctx context.Context, q shareddomain.Querier) error {
+		if err := h.rgRepo.Save(ctx, q, rg); err != nil {
 			h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateRuleGroup", Entity: "rule_group", EntityID: cmd.FlagID.String(), Err: err}.KV()...)
 			return apperrors.MapToServiceError(err)
 		}

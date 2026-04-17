@@ -32,7 +32,7 @@ type mockRepo struct {
 	findFn  func(ctx context.Context, id exportentity.DataExportID) (*exportentity.DataExport, error)
 }
 
-func (m *mockRepo) Save(_ context.Context, e *exportentity.DataExport) error {
+func (m *mockRepo) Save(_ context.Context, _ shared.Querier, e *exportentity.DataExport) error {
 	m.saved = e
 	return nil
 }
@@ -42,11 +42,11 @@ func (m *mockRepo) FindByID(ctx context.Context, id exportentity.DataExportID) (
 	}
 	return nil, exportentity.ErrDataExportNotFound
 }
-func (m *mockRepo) Update(_ context.Context, e *exportentity.DataExport) error {
+func (m *mockRepo) Update(_ context.Context, _ shared.Querier, e *exportentity.DataExport) error {
 	m.updated = e
 	return nil
 }
-func (m *mockRepo) Delete(_ context.Context, id exportentity.DataExportID) error {
+func (m *mockRepo) Delete(_ context.Context, _ shared.Querier, id exportentity.DataExportID) error {
 	m.deleted = id
 	return nil
 }
@@ -109,7 +109,7 @@ func setupRouter(repo *mockRepo, readRepo *mockReadRepo) *gin.Engine {
 	bc := &dataexport.BoundedContext{
 		CreateDataExport: command.NewCreateDataExportHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l),
 		UpdateDataExport: command.NewUpdateDataExportHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l),
-		DeleteDataExport: command.NewDeleteDataExportHandler(repo, l),
+		DeleteDataExport: command.NewDeleteDataExportHandler(repo, nil, l),
 		GetDataExport:    query.NewGetDataExportHandler(readRepo, l),
 		ListDataExports:  query.NewListDataExportsHandler(readRepo, l),
 	}

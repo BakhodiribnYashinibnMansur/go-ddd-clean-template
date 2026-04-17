@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"gct/internal/context/ops/supporting/activitylog/domain"
@@ -88,12 +87,8 @@ func (r *ActivityLogReadRepo) List(ctx context.Context, filter domain.ActivityLo
 		qb = qb.Limit(uint64(filter.Pagination.Limit)).
 			Offset(uint64(filter.Pagination.Offset))
 
-		if filter.Pagination.SortBy != "" {
-			order := "ASC"
-			if filter.Pagination.SortOrder == "DESC" {
-				order = "DESC"
-			}
-			qb = qb.OrderBy(fmt.Sprintf("%s %s", filter.Pagination.SortBy, order))
+		if ob := filter.Pagination.SafeOrderBy(); ob != "" {
+			qb = qb.OrderBy(ob)
 		}
 	}
 

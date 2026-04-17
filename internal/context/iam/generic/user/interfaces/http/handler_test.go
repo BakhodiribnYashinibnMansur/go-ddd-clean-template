@@ -19,7 +19,46 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 )
+
+// fakeDB satisfies shareddomain.DB for unit tests where the mock repo
+// ignores the Querier argument. Begin returns a fakeTx that no-ops on
+// Commit/Rollback, so pgxutil.WithTx works without a real database.
+type fakeDB struct{}
+
+func (fakeDB) Begin(ctx context.Context) (pgx.Tx, error) { return &fakeTx{}, nil }
+func (fakeDB) Exec(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error) {
+	return pgconn.NewCommandTag(""), nil
+}
+func (fakeDB) Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error) {
+	return nil, nil
+}
+func (fakeDB) QueryRow(ctx context.Context, sql string, args ...any) pgx.Row { return nil }
+
+// fakeTx satisfies pgx.Tx for unit tests.
+type fakeTx struct{ pgx.Tx }
+
+func (fakeTx) Commit(_ context.Context) error   { return nil }
+func (fakeTx) Rollback(_ context.Context) error  { return nil }
+func (fakeTx) Begin(_ context.Context) (pgx.Tx, error) { return &fakeTx{}, nil }
+func (fakeTx) Exec(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error) {
+	return pgconn.NewCommandTag(""), nil
+}
+func (fakeTx) Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error) {
+	return nil, nil
+}
+func (fakeTx) QueryRow(ctx context.Context, sql string, args ...any) pgx.Row { return nil }
+func (fakeTx) Conn() *pgx.Conn                                               { return nil }
+func (fakeTx) CopyFrom(_ context.Context, _ pgx.Identifier, _ []string, _ pgx.CopyFromSource) (int64, error) {
+	return 0, nil
+}
+func (fakeTx) SendBatch(_ context.Context, _ *pgx.Batch) pgx.BatchResults { return nil }
+func (fakeTx) LargeObjects() pgx.LargeObjects                             { return pgx.LargeObjects{} }
+func (fakeTx) Prepare(_ context.Context, _ string, _ string) (*pgconn.StatementDescription, error) {
+	return nil, nil
+}
 
 // ---------------------------------------------------------------------------
 // Mock infrastructure
@@ -31,7 +70,7 @@ type mockUserRepo struct {
 	findByIDFn  func(ctx context.Context, id userentity.UserID) (*userentity.User, error)
 }
 
-func (m *mockUserRepo) Save(_ context.Context, entity *userentity.User) error {
+func (m *mockUserRepo) Save(_ context.Context, _ shared.Querier, entity *userentity.User) error {
 	m.savedUser = entity
 	return nil
 }
@@ -43,15 +82,13 @@ func (m *mockUserRepo) FindByID(ctx context.Context, id userentity.UserID) (*use
 	return nil, userentity.ErrUserNotFound
 }
 
-func (m *mockUserRepo) Update(_ context.Context, entity *userentity.User) error {
+func (m *mockUserRepo) Update(_ context.Context, _ shared.Querier, entity *userentity.User) error {
 	m.updatedUser = entity
 	return nil
 }
 
-func (m *mockUserRepo) Delete(_ context.Context, _ userentity.UserID) error { return nil }
-
-func (m *mockUserRepo) List(_ context.Context, _ shared.Pagination) ([]*userentity.User, int64, error) {
-	return nil, 0, nil
+func (m *mockUserRepo) Delete(_ context.Context, _ shared.Querier, _ userentity.UserID) error {
+	return nil
 }
 
 func (m *mockUserRepo) FindByPhone(_ context.Context, phone userentity.Phone) (*userentity.User, error) {
@@ -60,10 +97,6 @@ func (m *mockUserRepo) FindByPhone(_ context.Context, phone userentity.Phone) (*
 
 func (m *mockUserRepo) FindByEmail(_ context.Context, email userentity.Email) (*userentity.User, error) {
 	return nil, userentity.ErrUserNotFound
-}
-
-func (m *mockUserRepo) FindDefaultRoleID(_ context.Context) (uuid.UUID, error) {
-	return uuid.New(), nil
 }
 
 func (m *mockUserRepo) ActiveSessionCount(_ context.Context, _ userentity.UserID) (int, error) {
@@ -137,6 +170,10 @@ func (m *mockReadRepo) FindUserForAuth(_ context.Context, _ userentity.UserID) (
 	return nil, userentity.ErrUserNotFound
 }
 
+func (m *mockReadRepo) FindDefaultRoleID(_ context.Context) (uuid.UUID, error) {
+	return uuid.New(), nil
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -158,11 +195,11 @@ func newBC(repo *mockUserRepo, readRepo *mockReadRepo) *user.BoundedContext {
 		UpdateUser:  command.NewUpdateUserHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l),
 		DeleteUser:  command.NewDeleteUserHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l),
 		SignIn:      command.NewSignInHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l, command.JWTConfig{}),
-		SignUp:      command.NewSignUpHandler(repo, eb, l),
-		SignOut:     command.NewSignOutHandler(repo, eb, l),
-		ApproveUser: command.NewApproveUserHandler(repo, eb, l),
-		ChangeRole:  command.NewChangeRoleHandler(repo, eb, l),
-		BulkAction:  command.NewBulkActionHandler(repo, eb, l),
+		SignUp:      command.NewSignUpHandler(repo, readRepo, fakeDB{}, eb, l),
+		SignOut:     command.NewSignOutHandler(repo, fakeDB{}, eb, l),
+		ApproveUser: command.NewApproveUserHandler(repo, fakeDB{}, eb, l),
+		ChangeRole:  command.NewChangeRoleHandler(repo, fakeDB{}, eb, l),
+		BulkAction:  command.NewBulkActionHandler(repo, fakeDB{}, eb, l),
 		GetUser:     query.NewGetUserHandler(readRepo, l),
 		ListUsers:   query.NewListUsersHandler(readRepo, l),
 	}

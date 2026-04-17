@@ -7,6 +7,7 @@ import (
 	ratelimitentity "gct/internal/context/ops/generic/ratelimit/domain/entity"
 	ratelimitrepo "gct/internal/context/ops/generic/ratelimit/domain/repository"
 	"gct/internal/kernel/consts"
+	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/pgxutil"
 
@@ -38,7 +39,7 @@ func NewRateLimitWriteRepo(pool *pgxpool.Pool) *RateLimitWriteRepo {
 }
 
 // Save inserts a new RateLimit aggregate into the database.
-func (r *RateLimitWriteRepo) Save(ctx context.Context, rl *ratelimitentity.RateLimit) (err error) {
+func (r *RateLimitWriteRepo) Save(ctx context.Context, q shareddomain.Querier, rl *ratelimitentity.RateLimit) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "RateLimitWriteRepo.Save")
 	defer func() { end(err) }()
 
@@ -55,7 +56,7 @@ func (r *RateLimitWriteRepo) Save(ctx context.Context, rl *ratelimitentity.RateL
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildInsert)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = q.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 
@@ -81,7 +82,7 @@ func (r *RateLimitWriteRepo) FindByID(ctx context.Context, id ratelimitentity.Ra
 }
 
 // Update updates an existing RateLimit aggregate in the database.
-func (r *RateLimitWriteRepo) Update(ctx context.Context, rl *ratelimitentity.RateLimit) (err error) {
+func (r *RateLimitWriteRepo) Update(ctx context.Context, q shareddomain.Querier, rl *ratelimitentity.RateLimit) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "RateLimitWriteRepo.Update")
 	defer func() { end(err) }()
 
@@ -99,7 +100,7 @@ func (r *RateLimitWriteRepo) Update(ctx context.Context, rl *ratelimitentity.Rat
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildUpdate)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = q.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 
@@ -107,7 +108,7 @@ func (r *RateLimitWriteRepo) Update(ctx context.Context, rl *ratelimitentity.Rat
 }
 
 // Delete removes a RateLimit by its ID.
-func (r *RateLimitWriteRepo) Delete(ctx context.Context, id ratelimitentity.RateLimitID) (err error) {
+func (r *RateLimitWriteRepo) Delete(ctx context.Context, q shareddomain.Querier, id ratelimitentity.RateLimitID) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "RateLimitWriteRepo.Delete")
 	defer func() { end(err) }()
 
@@ -119,7 +120,7 @@ func (r *RateLimitWriteRepo) Delete(ctx context.Context, id ratelimitentity.Rate
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildDelete)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = q.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 

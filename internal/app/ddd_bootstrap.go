@@ -129,7 +129,7 @@ func NewDDDBoundedContexts(ctx context.Context, pool *pgxpool.Pool, eventBus app
 		FeatureFlag:  ffBC,
 		Integration:  integrationBC,
 
-		Notification: notification.NewBoundedContext(pool, eventBus, committer, l),
+		Notification: notification.NewBoundedContext(pool, committer, l),
 		Announcement: announcement.NewBoundedContext(pool, committer, l),
 		Translation:  translation.NewBoundedContext(pool, committer, l),
 		SiteSetting:  siteSettingBC,

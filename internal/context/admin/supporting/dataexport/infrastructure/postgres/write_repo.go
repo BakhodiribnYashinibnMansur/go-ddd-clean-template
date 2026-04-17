@@ -6,6 +6,7 @@ import (
 
 	exportentity "gct/internal/context/admin/supporting/dataexport/domain/entity"
 	"gct/internal/kernel/consts"
+	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/pgxutil"
 
@@ -37,7 +38,7 @@ func NewDataExportWriteRepo(pool *pgxpool.Pool) *DataExportWriteRepo {
 }
 
 // Save inserts a new DataExport aggregate into the database.
-func (r *DataExportWriteRepo) Save(ctx context.Context, de *exportentity.DataExport) (err error) {
+func (r *DataExportWriteRepo) Save(ctx context.Context, q shareddomain.Querier, de *exportentity.DataExport) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "DataExportWriteRepo.Save")
 	defer func() { end(err) }()
 
@@ -63,7 +64,7 @@ func (r *DataExportWriteRepo) Save(ctx context.Context, de *exportentity.DataExp
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildInsert)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = q.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 
@@ -71,7 +72,7 @@ func (r *DataExportWriteRepo) Save(ctx context.Context, de *exportentity.DataExp
 }
 
 // Update updates an existing DataExport aggregate in the database.
-func (r *DataExportWriteRepo) Update(ctx context.Context, de *exportentity.DataExport) (err error) {
+func (r *DataExportWriteRepo) Update(ctx context.Context, q shareddomain.Querier, de *exportentity.DataExport) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "DataExportWriteRepo.Update")
 	defer func() { end(err) }()
 
@@ -90,7 +91,7 @@ func (r *DataExportWriteRepo) Update(ctx context.Context, de *exportentity.DataE
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildUpdate)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = q.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 
@@ -116,7 +117,7 @@ func (r *DataExportWriteRepo) FindByID(ctx context.Context, id exportentity.Data
 }
 
 // Delete removes a data export by its ID.
-func (r *DataExportWriteRepo) Delete(ctx context.Context, id exportentity.DataExportID) (err error) {
+func (r *DataExportWriteRepo) Delete(ctx context.Context, q shareddomain.Querier, id exportentity.DataExportID) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "DataExportWriteRepo.Delete")
 	defer func() { end(err) }()
 
@@ -128,7 +129,7 @@ func (r *DataExportWriteRepo) Delete(ctx context.Context, id exportentity.DataEx
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildDelete)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = q.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 

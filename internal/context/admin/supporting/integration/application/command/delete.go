@@ -6,6 +6,7 @@ import (
 	integentity "gct/internal/context/admin/supporting/integration/domain/entity"
 	integrepo "gct/internal/context/admin/supporting/integration/domain/repository"
 	"gct/internal/kernel/application"
+	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -22,6 +23,7 @@ type DeleteCommand struct {
 // Callers are responsible for authorization checks before invoking this handler.
 type DeleteHandler struct {
 	repo     integrepo.IntegrationRepository
+	pool     shareddomain.Querier
 	eventBus application.EventBus
 	logger   logger.Log
 }
@@ -29,11 +31,13 @@ type DeleteHandler struct {
 // NewDeleteHandler wires up the handler with its required dependencies.
 func NewDeleteHandler(
 	repo integrepo.IntegrationRepository,
+	pool shareddomain.Querier,
 	eventBus application.EventBus,
 	logger logger.Log,
 ) *DeleteHandler {
 	return &DeleteHandler{
 		repo:     repo,
+		pool:     pool,
 		eventBus: eventBus,
 		logger:   logger,
 	}
@@ -46,7 +50,7 @@ func (h *DeleteHandler) Handle(ctx context.Context, cmd DeleteCommand) (err erro
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "DeleteIntegration", "integration")()
 
-	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
+	if err := h.repo.Delete(ctx, h.pool, cmd.ID); err != nil {
 		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteIntegration", Entity: "integration", EntityID: cmd.ID, Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}

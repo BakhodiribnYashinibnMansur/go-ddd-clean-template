@@ -7,6 +7,7 @@ import (
 
 	ipruleentity "gct/internal/context/ops/supporting/iprule/domain/entity"
 	iprulerepo "gct/internal/context/ops/supporting/iprule/domain/repository"
+	shared "gct/internal/kernel/domain"
 	"gct/internal/kernel/outbox"
 )
 
@@ -23,7 +24,7 @@ type errorIPRuleRepo struct {
 	findFn    func(ctx context.Context, id ipruleentity.IPRuleID) (*ipruleentity.IPRule, error)
 }
 
-func (m *errorIPRuleRepo) Save(_ context.Context, _ *ipruleentity.IPRule) error {
+func (m *errorIPRuleRepo) Save(_ context.Context, _ shared.Querier, _ *ipruleentity.IPRule) error {
 	return m.saveErr
 }
 
@@ -34,11 +35,11 @@ func (m *errorIPRuleRepo) FindByID(ctx context.Context, id ipruleentity.IPRuleID
 	return nil, ipruleentity.ErrIPRuleNotFound
 }
 
-func (m *errorIPRuleRepo) Update(_ context.Context, _ *ipruleentity.IPRule) error {
+func (m *errorIPRuleRepo) Update(_ context.Context, _ shared.Querier, _ *ipruleentity.IPRule) error {
 	return m.updateErr
 }
 
-func (m *errorIPRuleRepo) Delete(_ context.Context, _ ipruleentity.IPRuleID) error {
+func (m *errorIPRuleRepo) Delete(_ context.Context, _ shared.Querier, _ ipruleentity.IPRuleID) error {
 	return m.deleteErr
 }
 
@@ -83,7 +84,7 @@ func TestDeleteIPRuleHandler_RepoError(t *testing.T) {
 	t.Parallel()
 
 	repo := &errorIPRuleRepo{deleteErr: errRepoDelete}
-	handler := NewDeleteIPRuleHandler(repo, &mockLogger{})
+	handler := NewDeleteIPRuleHandler(repo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	err := handler.Handle(context.Background(), DeleteIPRuleCommand{ID: ipruleentity.NewIPRuleID()})
 	if !errors.Is(err, errRepoDelete) {

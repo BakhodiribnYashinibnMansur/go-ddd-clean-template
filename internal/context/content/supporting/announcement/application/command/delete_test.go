@@ -6,6 +6,7 @@ import (
 
 	announceentity "gct/internal/context/content/supporting/announcement/domain/entity"
 
+	"gct/internal/kernel/outbox"
 	"github.com/stretchr/testify/require"
 )
 
@@ -13,7 +14,7 @@ func TestDeleteAnnouncementHandler_Handle(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockAnnouncementRepo{}
-	handler := NewDeleteAnnouncementHandler(repo, &mockLogger{})
+	handler := NewDeleteAnnouncementHandler(repo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	id := announceentity.NewAnnouncementID()
 	err := handler.Handle(context.Background(), DeleteAnnouncementCommand{ID: id})

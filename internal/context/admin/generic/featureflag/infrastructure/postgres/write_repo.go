@@ -6,6 +6,7 @@ import (
 
 	ffentity "gct/internal/context/admin/generic/featureflag/domain/entity"
 	"gct/internal/kernel/consts"
+	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/pgxutil"
 
@@ -42,7 +43,7 @@ func NewFeatureFlagWriteRepo(pool *pgxpool.Pool) *FeatureFlagWriteRepo {
 }
 
 // Save inserts a new FeatureFlag aggregate into the database.
-func (r *FeatureFlagWriteRepo) Save(ctx context.Context, ff *ffentity.FeatureFlag) (err error) {
+func (r *FeatureFlagWriteRepo) Save(ctx context.Context, q shareddomain.Querier, ff *ffentity.FeatureFlag) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "FeatureFlagWriteRepo.Save")
 	defer func() { end(err) }()
 
@@ -67,7 +68,7 @@ func (r *FeatureFlagWriteRepo) Save(ctx context.Context, ff *ffentity.FeatureFla
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildInsert)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = q.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 
@@ -180,7 +181,7 @@ func (r *FeatureFlagWriteRepo) FindAll(ctx context.Context) (result []*ffentity.
 }
 
 // Update updates a FeatureFlag aggregate in the database.
-func (r *FeatureFlagWriteRepo) Update(ctx context.Context, ff *ffentity.FeatureFlag) (err error) {
+func (r *FeatureFlagWriteRepo) Update(ctx context.Context, q shareddomain.Querier, ff *ffentity.FeatureFlag) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "FeatureFlagWriteRepo.Update")
 	defer func() { end(err) }()
 
@@ -201,7 +202,7 @@ func (r *FeatureFlagWriteRepo) Update(ctx context.Context, ff *ffentity.FeatureF
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildUpdate)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = q.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 
@@ -209,7 +210,7 @@ func (r *FeatureFlagWriteRepo) Update(ctx context.Context, ff *ffentity.FeatureF
 }
 
 // Delete removes a FeatureFlag by ID.
-func (r *FeatureFlagWriteRepo) Delete(ctx context.Context, id ffentity.FeatureFlagID) (err error) {
+func (r *FeatureFlagWriteRepo) Delete(ctx context.Context, q shareddomain.Querier, id ffentity.FeatureFlagID) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "FeatureFlagWriteRepo.Delete")
 	defer func() { end(err) }()
 
@@ -221,7 +222,7 @@ func (r *FeatureFlagWriteRepo) Delete(ctx context.Context, id ffentity.FeatureFl
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildDelete)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = q.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 

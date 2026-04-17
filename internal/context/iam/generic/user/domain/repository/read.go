@@ -5,6 +5,8 @@ import (
 
 	"gct/internal/context/iam/generic/user/domain/entity"
 	shared "gct/internal/kernel/domain"
+
+	"github.com/google/uuid"
 )
 
 // UserReadRepository provides read-only access returning lightweight UserView projections.
@@ -14,4 +16,5 @@ type UserReadRepository interface {
 	List(ctx context.Context, filter entity.UsersFilter) ([]*entity.UserView, int64, error)
 	FindSessionByID(ctx context.Context, id entity.SessionID) (*shared.AuthSession, error)
 	FindUserForAuth(ctx context.Context, id entity.UserID) (*shared.AuthUser, error)
+	FindDefaultRoleID(ctx context.Context) (uuid.UUID, error)
 }

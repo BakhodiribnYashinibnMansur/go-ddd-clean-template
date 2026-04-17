@@ -24,7 +24,7 @@ type mockIPRuleRepo struct {
 	findFn  func(ctx context.Context, id ipruleentity.IPRuleID) (*ipruleentity.IPRule, error)
 }
 
-func (m *mockIPRuleRepo) Save(_ context.Context, e *ipruleentity.IPRule) error {
+func (m *mockIPRuleRepo) Save(_ context.Context, _ shared.Querier, e *ipruleentity.IPRule) error {
 	m.saved = e
 	return nil
 }
@@ -36,12 +36,12 @@ func (m *mockIPRuleRepo) FindByID(ctx context.Context, id ipruleentity.IPRuleID)
 	return nil, ipruleentity.ErrIPRuleNotFound
 }
 
-func (m *mockIPRuleRepo) Update(_ context.Context, e *ipruleentity.IPRule) error {
+func (m *mockIPRuleRepo) Update(_ context.Context, _ shared.Querier, e *ipruleentity.IPRule) error {
 	m.updated = e
 	return nil
 }
 
-func (m *mockIPRuleRepo) Delete(_ context.Context, id ipruleentity.IPRuleID) error {
+func (m *mockIPRuleRepo) Delete(_ context.Context, _ shared.Querier, id ipruleentity.IPRuleID) error {
 	m.deleted = id
 	return nil
 }

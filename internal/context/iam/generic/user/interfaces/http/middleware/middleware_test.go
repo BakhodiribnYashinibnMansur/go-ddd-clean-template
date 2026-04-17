@@ -79,6 +79,10 @@ func (f *fakeReadRepo) FindUserForAuth(_ context.Context, _ userentity.UserID) (
 	return f.user, f.userErr
 }
 
+func (f *fakeReadRepo) FindDefaultRoleID(_ context.Context) (uuid.UUID, error) {
+	return uuid.New(), nil
+}
+
 // Ensure fakeReadRepo satisfies the interface at compile time.
 var _ userrepo.UserReadRepository = (*fakeReadRepo)(nil)
 

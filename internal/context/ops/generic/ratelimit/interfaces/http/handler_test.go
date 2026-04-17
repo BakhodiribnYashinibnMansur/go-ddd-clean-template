@@ -32,7 +32,7 @@ type mockRepo struct {
 	findFn  func(ctx context.Context, id ratelimitentity.RateLimitID) (*ratelimitentity.RateLimit, error)
 }
 
-func (m *mockRepo) Save(_ context.Context, e *ratelimitentity.RateLimit) error {
+func (m *mockRepo) Save(_ context.Context, _ shared.Querier, e *ratelimitentity.RateLimit) error {
 	m.saved = e
 	return nil
 }
@@ -42,11 +42,11 @@ func (m *mockRepo) FindByID(ctx context.Context, id ratelimitentity.RateLimitID)
 	}
 	return nil, ratelimitentity.ErrRateLimitNotFound
 }
-func (m *mockRepo) Update(_ context.Context, e *ratelimitentity.RateLimit) error {
+func (m *mockRepo) Update(_ context.Context, _ shared.Querier, e *ratelimitentity.RateLimit) error {
 	m.updated = e
 	return nil
 }
-func (m *mockRepo) Delete(_ context.Context, id ratelimitentity.RateLimitID) error {
+func (m *mockRepo) Delete(_ context.Context, _ shared.Querier, id ratelimitentity.RateLimitID) error {
 	m.deleted = id
 	return nil
 }
@@ -112,7 +112,7 @@ func setupRouter(repo *mockRepo, readRepo *mockReadRepo) *gin.Engine {
 	bc := &ratelimit.BoundedContext{
 		CreateRateLimit: command.NewCreateRateLimitHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l),
 		UpdateRateLimit: command.NewUpdateRateLimitHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l),
-		DeleteRateLimit: command.NewDeleteRateLimitHandler(repo, l),
+		DeleteRateLimit: command.NewDeleteRateLimitHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l),
 		GetRateLimit:    query.NewGetRateLimitHandler(readRepo, l),
 		ListRateLimits:  query.NewListRateLimitsHandler(readRepo, l),
 	}

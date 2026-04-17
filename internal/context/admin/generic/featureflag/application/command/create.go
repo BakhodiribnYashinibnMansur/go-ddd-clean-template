@@ -7,6 +7,7 @@ import (
 	ffentity "gct/internal/context/admin/generic/featureflag/domain/entity"
 	ffevent "gct/internal/context/admin/generic/featureflag/domain/event"
 	ffrepo "gct/internal/context/admin/generic/featureflag/domain/repository"
+	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -61,8 +62,8 @@ func (h *CreateHandler) Handle(ctx context.Context, cmd CreateCommand) (err erro
 
 	ff.AddEvent(ffevent.NewFlagCreated(ff.ID()))
 
-	return h.committer.Commit(ctx, func(ctx context.Context) error {
-		if err := h.repo.Save(ctx, ff); err != nil {
+	return h.committer.Commit(ctx, func(ctx context.Context, q shareddomain.Querier) error {
+		if err := h.repo.Save(ctx, q, ff); err != nil {
 			h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateFeatureFlag", Entity: "feature_flag", Err: err}.KV()...)
 			return apperrors.MapToServiceError(err)
 		}

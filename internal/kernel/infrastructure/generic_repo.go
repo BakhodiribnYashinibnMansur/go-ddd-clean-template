@@ -108,12 +108,8 @@ func (r *BaseRepository[T]) List(ctx context.Context, filter domain.Pagination) 
 		Limit(uint64(filter.Limit)).
 		Offset(uint64(filter.Offset))
 
-	if filter.SortBy != "" {
-		order := "ASC"
-		if filter.SortOrder == "DESC" {
-			order = "DESC"
-		}
-		qb = qb.OrderBy(fmt.Sprintf("%s %s", filter.SortBy, order))
+	if ob := filter.SafeOrderBy(); ob != "" {
+		qb = qb.OrderBy(ob)
 	}
 
 	query, args, err := qb.ToSql()

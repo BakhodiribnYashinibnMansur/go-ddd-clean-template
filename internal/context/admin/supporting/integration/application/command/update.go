@@ -5,6 +5,7 @@ import (
 
 	integentity "gct/internal/context/admin/supporting/integration/domain/entity"
 	integrepo "gct/internal/context/admin/supporting/integration/domain/repository"
+	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -59,8 +60,8 @@ func (h *UpdateHandler) Handle(ctx context.Context, cmd UpdateCommand) (err erro
 
 	i.UpdateDetails(cmd.Name, cmd.Type, cmd.APIKey, cmd.WebhookURL, cmd.Enabled, cmd.Config)
 
-	return h.committer.Commit(ctx, func(ctx context.Context) error {
-		if err := h.repo.Update(ctx, i); err != nil {
+	return h.committer.Commit(ctx, func(ctx context.Context, q shareddomain.Querier) error {
+		if err := h.repo.Update(ctx, q, i); err != nil {
 			h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "UpdateIntegration", Entity: "integration", EntityID: cmd.ID, Err: err}.KV()...)
 			return apperrors.MapToServiceError(err)
 		}

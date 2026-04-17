@@ -32,7 +32,7 @@ func TestSignOutHandler_Handle(t *testing.T) {
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewSignOutHandler(repo, eventBus, log)
+	handler := NewSignOutHandler(repo, fakeDB{}, eventBus, log)
 
 	err = handler.Handle(context.Background(), SignOutCommand{
 		UserID:    userentity.UserID(user.ID()),
@@ -67,7 +67,7 @@ func TestSignOutHandler_SessionNotFound(t *testing.T) {
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewSignOutHandler(repo, eventBus, log)
+	handler := NewSignOutHandler(repo, fakeDB{}, eventBus, log)
 
 	err := handler.Handle(context.Background(), SignOutCommand{
 		UserID:    userentity.UserID(user.ID()),
@@ -88,7 +88,7 @@ func TestSignOutHandler_UserNotFound(t *testing.T) {
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewSignOutHandler(repo, eventBus, log)
+	handler := NewSignOutHandler(repo, fakeDB{}, eventBus, log)
 
 	err := handler.Handle(context.Background(), SignOutCommand{
 		UserID:    userentity.NewUserID(),

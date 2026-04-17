@@ -29,11 +29,11 @@ type errorRepo struct {
 	findUser  *userentity.User
 }
 
-func (m *errorRepo) Save(_ context.Context, _ *userentity.User) error {
+func (m *errorRepo) Save(_ context.Context, _ shared.Querier, _ *userentity.User) error {
 	return m.saveErr
 }
 
-func (m *errorRepo) Update(_ context.Context, _ *userentity.User) error {
+func (m *errorRepo) Update(_ context.Context, _ shared.Querier, _ *userentity.User) error {
 	return m.updateErr
 }
 
@@ -88,7 +88,7 @@ func TestSignUpHandler_RepoSaveError(t *testing.T) {
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewSignUpHandler(repo, eventBus, log)
+	handler := NewSignUpHandler(repo, &signUpMockReadRepo{}, fakeDB{}, eventBus, log)
 
 	err := handler.Handle(context.Background(), SignUpCommand{
 		Phone:    "+998901234567",
@@ -137,7 +137,7 @@ func TestApproveUserHandler_RepoUpdateError(t *testing.T) {
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewApproveUserHandler(repo, eventBus, log)
+	handler := NewApproveUserHandler(repo, fakeDB{}, eventBus, log)
 
 	err := handler.Handle(context.Background(), ApproveUserCommand{ID: userentity.UserID(user.ID())})
 	if !errors.Is(err, errRepoUpdate) {
@@ -175,7 +175,7 @@ func TestChangeRoleHandler_RepoUpdateError(t *testing.T) {
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewChangeRoleHandler(repo, eventBus, log)
+	handler := NewChangeRoleHandler(repo, fakeDB{}, eventBus, log)
 
 	err := handler.Handle(context.Background(), ChangeRoleCommand{
 		UserID: userentity.UserID(user.ID()),
@@ -285,10 +285,6 @@ func (m *signInErrorRepo) FindByEmail(_ context.Context, email userentity.Email)
 	return nil, userentity.ErrUserNotFound
 }
 
-func (m *signInErrorRepo) FindDefaultRoleID(_ context.Context) (uuid.UUID, error) {
-	return uuid.New(), nil
-}
-
-func (m *signInErrorRepo) Update(_ context.Context, _ *userentity.User) error {
+func (m *signInErrorRepo) Update(_ context.Context, _ shared.Querier, _ *userentity.User) error {
 	return m.updateErr
 }

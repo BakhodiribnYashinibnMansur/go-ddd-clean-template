@@ -24,7 +24,7 @@ func TestApproveUserHandler_Handle(t *testing.T) {
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewApproveUserHandler(repo, eventBus, log)
+	handler := NewApproveUserHandler(repo, fakeDB{}, eventBus, log)
 
 	err := handler.Handle(context.Background(), ApproveUserCommand{ID: userentity.UserID(user.ID())})
 	require.NoError(t, err)
@@ -55,7 +55,7 @@ func TestApproveUserHandler_NotFound(t *testing.T) {
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewApproveUserHandler(repo, eventBus, log)
+	handler := NewApproveUserHandler(repo, fakeDB{}, eventBus, log)
 
 	err := handler.Handle(context.Background(), ApproveUserCommand{ID: userentity.NewUserID()})
 	if err == nil {

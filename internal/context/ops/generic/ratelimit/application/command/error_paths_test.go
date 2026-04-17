@@ -7,6 +7,7 @@ import (
 
 	ratelimitentity "gct/internal/context/ops/generic/ratelimit/domain/entity"
 	ratelimitrepo "gct/internal/context/ops/generic/ratelimit/domain/repository"
+	shared "gct/internal/kernel/domain"
 	"gct/internal/kernel/outbox"
 )
 
@@ -23,7 +24,7 @@ type errorRateLimitRepo struct {
 	findFn    func(ctx context.Context, id ratelimitentity.RateLimitID) (*ratelimitentity.RateLimit, error)
 }
 
-func (m *errorRateLimitRepo) Save(_ context.Context, _ *ratelimitentity.RateLimit) error {
+func (m *errorRateLimitRepo) Save(_ context.Context, _ shared.Querier, _ *ratelimitentity.RateLimit) error {
 	return m.saveErr
 }
 
@@ -34,11 +35,11 @@ func (m *errorRateLimitRepo) FindByID(ctx context.Context, id ratelimitentity.Ra
 	return nil, ratelimitentity.ErrRateLimitNotFound
 }
 
-func (m *errorRateLimitRepo) Update(_ context.Context, _ *ratelimitentity.RateLimit) error {
+func (m *errorRateLimitRepo) Update(_ context.Context, _ shared.Querier, _ *ratelimitentity.RateLimit) error {
 	return m.updateErr
 }
 
-func (m *errorRateLimitRepo) Delete(_ context.Context, _ ratelimitentity.RateLimitID) error {
+func (m *errorRateLimitRepo) Delete(_ context.Context, _ shared.Querier, _ ratelimitentity.RateLimitID) error {
 	return m.deleteErr
 }
 
@@ -83,7 +84,7 @@ func TestDeleteRateLimitHandler_RepoError(t *testing.T) {
 	t.Parallel()
 
 	repo := &errorRateLimitRepo{deleteErr: errRepoDelete}
-	handler := NewDeleteRateLimitHandler(repo, &mockLogger{})
+	handler := NewDeleteRateLimitHandler(repo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	err := handler.Handle(context.Background(), DeleteRateLimitCommand{ID: ratelimitentity.NewRateLimitID()})
 	if !errors.Is(err, errRepoDelete) {

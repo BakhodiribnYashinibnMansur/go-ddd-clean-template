@@ -7,7 +7,7 @@ import (
 
 	announceentity "gct/internal/context/content/supporting/announcement/domain/entity"
 	announcerepo "gct/internal/context/content/supporting/announcement/domain/repository"
-	shared "gct/internal/kernel/domain"
+	shareddomain "gct/internal/kernel/domain"
 	"gct/internal/kernel/outbox"
 )
 
@@ -24,7 +24,7 @@ type errorAnnouncementRepo struct {
 	findFn    func(ctx context.Context, id announceentity.AnnouncementID) (*announceentity.Announcement, error)
 }
 
-func (m *errorAnnouncementRepo) Save(_ context.Context, _ *announceentity.Announcement) error {
+func (m *errorAnnouncementRepo) Save(_ context.Context, _ shareddomain.Querier, _ *announceentity.Announcement) error {
 	return m.saveErr
 }
 
@@ -35,11 +35,11 @@ func (m *errorAnnouncementRepo) FindByID(ctx context.Context, id announceentity.
 	return nil, announceentity.ErrAnnouncementNotFound
 }
 
-func (m *errorAnnouncementRepo) Update(_ context.Context, _ *announceentity.Announcement) error {
+func (m *errorAnnouncementRepo) Update(_ context.Context, _ shareddomain.Querier, _ *announceentity.Announcement) error {
 	return m.updateErr
 }
 
-func (m *errorAnnouncementRepo) Delete(_ context.Context, _ announceentity.AnnouncementID) error {
+func (m *errorAnnouncementRepo) Delete(_ context.Context, _ shareddomain.Querier, _ announceentity.AnnouncementID) error {
 	return m.deleteErr
 }
 
@@ -56,8 +56,8 @@ func TestCreateAnnouncementHandler_RepoError(t *testing.T) {
 	handler := NewCreateAnnouncementHandler(repo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	err := handler.Handle(context.Background(), CreateAnnouncementCommand{
-		Title:   shared.Lang{Uz: "t", Ru: "t", En: "t"},
-		Content: shared.Lang{Uz: "c", Ru: "c", En: "c"},
+		Title:   shareddomain.Lang{Uz: "t", Ru: "t", En: "t"},
+		Content: shareddomain.Lang{Uz: "c", Ru: "c", En: "c"},
 	})
 	if !errors.Is(err, errRepoSave) {
 		t.Fatalf("expected errRepoSave, got: %v", err)
@@ -68,8 +68,8 @@ func TestUpdateAnnouncementHandler_RepoUpdateError(t *testing.T) {
 	t.Parallel()
 
 	a, _ := announceentity.NewAnnouncement(
-		shared.Lang{Uz: "t", Ru: "t", En: "t"},
-		shared.Lang{Uz: "c", Ru: "c", En: "c"},
+		shareddomain.Lang{Uz: "t", Ru: "t", En: "t"},
+		shareddomain.Lang{Uz: "c", Ru: "c", En: "c"},
 		1, nil, nil,
 	)
 
@@ -89,7 +89,7 @@ func TestDeleteAnnouncementHandler_RepoError(t *testing.T) {
 	t.Parallel()
 
 	repo := &errorAnnouncementRepo{deleteErr: errRepoDelete}
-	handler := NewDeleteAnnouncementHandler(repo, &mockLogger{})
+	handler := NewDeleteAnnouncementHandler(repo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	err := handler.Handle(context.Background(), DeleteAnnouncementCommand{ID: announceentity.NewAnnouncementID()})
 	if !errors.Is(err, errRepoDelete) {

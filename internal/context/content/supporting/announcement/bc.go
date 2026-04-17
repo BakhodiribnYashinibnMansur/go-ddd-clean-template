@@ -30,7 +30,7 @@ func NewBoundedContext(pool *pgxpool.Pool, committer *outbox.EventCommitter, l l
 	return &BoundedContext{
 		CreateAnnouncement: command.NewCreateAnnouncementHandler(writeRepo, committer, l),
 		UpdateAnnouncement: command.NewUpdateAnnouncementHandler(writeRepo, committer, l),
-		DeleteAnnouncement: command.NewDeleteAnnouncementHandler(writeRepo, l),
+		DeleteAnnouncement: command.NewDeleteAnnouncementHandler(writeRepo, committer, l),
 		GetAnnouncement:    query.NewGetAnnouncementHandler(readRepo, l),
 		ListAnnouncements:  query.NewListAnnouncementsHandler(readRepo, l),
 	}

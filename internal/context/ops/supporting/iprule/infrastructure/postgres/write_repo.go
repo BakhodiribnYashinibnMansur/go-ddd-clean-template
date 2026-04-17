@@ -7,6 +7,7 @@ import (
 	ipruleentity "gct/internal/context/ops/supporting/iprule/domain/entity"
 	iprulerepo "gct/internal/context/ops/supporting/iprule/domain/repository"
 	"gct/internal/kernel/consts"
+	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/pgxutil"
 
@@ -37,7 +38,7 @@ func NewIPRuleWriteRepo(pool *pgxpool.Pool) *IPRuleWriteRepo {
 }
 
 // Save inserts a new IPRule aggregate into the database.
-func (r *IPRuleWriteRepo) Save(ctx context.Context, rule *ipruleentity.IPRule) (err error) {
+func (r *IPRuleWriteRepo) Save(ctx context.Context, q shareddomain.Querier, rule *ipruleentity.IPRule) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "IPRuleWriteRepo.Save")
 	defer func() { end(err) }()
 
@@ -53,7 +54,7 @@ func (r *IPRuleWriteRepo) Save(ctx context.Context, rule *ipruleentity.IPRule) (
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildInsert)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = q.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 
@@ -79,7 +80,7 @@ func (r *IPRuleWriteRepo) FindByID(ctx context.Context, id ipruleentity.IPRuleID
 }
 
 // Update updates an existing IPRule aggregate in the database.
-func (r *IPRuleWriteRepo) Update(ctx context.Context, rule *ipruleentity.IPRule) (err error) {
+func (r *IPRuleWriteRepo) Update(ctx context.Context, q shareddomain.Querier, rule *ipruleentity.IPRule) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "IPRuleWriteRepo.Update")
 	defer func() { end(err) }()
 
@@ -95,7 +96,7 @@ func (r *IPRuleWriteRepo) Update(ctx context.Context, rule *ipruleentity.IPRule)
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildUpdate)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = q.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 
@@ -103,7 +104,7 @@ func (r *IPRuleWriteRepo) Update(ctx context.Context, rule *ipruleentity.IPRule)
 }
 
 // Delete removes an IPRule by its ID.
-func (r *IPRuleWriteRepo) Delete(ctx context.Context, id ipruleentity.IPRuleID) (err error) {
+func (r *IPRuleWriteRepo) Delete(ctx context.Context, q shareddomain.Querier, id ipruleentity.IPRuleID) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "IPRuleWriteRepo.Delete")
 	defer func() { end(err) }()
 
@@ -115,7 +116,7 @@ func (r *IPRuleWriteRepo) Delete(ctx context.Context, id ipruleentity.IPRuleID) 
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildDelete)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = q.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 

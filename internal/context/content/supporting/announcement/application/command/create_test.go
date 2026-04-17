@@ -8,7 +8,7 @@ import (
 	announceentity "gct/internal/context/content/supporting/announcement/domain/entity"
 	announcerepo "gct/internal/context/content/supporting/announcement/domain/repository"
 	"gct/internal/kernel/application"
-	shared "gct/internal/kernel/domain"
+	shareddomain "gct/internal/kernel/domain"
 
 	"gct/internal/kernel/outbox"
 
@@ -24,7 +24,7 @@ type mockAnnouncementRepo struct {
 	findFn  func(ctx context.Context, id announceentity.AnnouncementID) (*announceentity.Announcement, error)
 }
 
-func (m *mockAnnouncementRepo) Save(_ context.Context, e *announceentity.Announcement) error {
+func (m *mockAnnouncementRepo) Save(_ context.Context, _ shareddomain.Querier, e *announceentity.Announcement) error {
 	m.saved = e
 	return nil
 }
@@ -36,12 +36,12 @@ func (m *mockAnnouncementRepo) FindByID(ctx context.Context, id announceentity.A
 	return nil, announceentity.ErrAnnouncementNotFound
 }
 
-func (m *mockAnnouncementRepo) Update(_ context.Context, e *announceentity.Announcement) error {
+func (m *mockAnnouncementRepo) Update(_ context.Context, _ shareddomain.Querier, e *announceentity.Announcement) error {
 	m.updated = e
 	return nil
 }
 
-func (m *mockAnnouncementRepo) Delete(_ context.Context, id announceentity.AnnouncementID) error {
+func (m *mockAnnouncementRepo) Delete(_ context.Context, _ shareddomain.Querier, id announceentity.AnnouncementID) error {
 	m.deleted = id
 	return nil
 }
@@ -51,10 +51,10 @@ func (m *mockAnnouncementRepo) List(_ context.Context, _ announcerepo.Announceme
 }
 
 type mockEventBus struct {
-	published []shared.DomainEvent
+	published []shareddomain.DomainEvent
 }
 
-func (m *mockEventBus) Publish(_ context.Context, events ...shared.DomainEvent) error {
+func (m *mockEventBus) Publish(_ context.Context, events ...shareddomain.DomainEvent) error {
 	m.published = append(m.published, events...)
 	return nil
 }
@@ -95,8 +95,8 @@ func TestCreateAnnouncementHandler_Handle(t *testing.T) {
 
 	now := time.Now()
 	cmd := CreateAnnouncementCommand{
-		Title:     shared.Lang{Uz: "title_uz", Ru: "title_ru", En: "title_en"},
-		Content:   shared.Lang{Uz: "content_uz", Ru: "content_ru", En: "content_en"},
+		Title:     shareddomain.Lang{Uz: "title_uz", Ru: "title_ru", En: "title_en"},
+		Content:   shareddomain.Lang{Uz: "content_uz", Ru: "content_ru", En: "content_en"},
 		Priority:  1,
 		StartDate: &now,
 		EndDate:   nil,
@@ -132,8 +132,8 @@ func TestCreateAnnouncementHandler_MinimalFields(t *testing.T) {
 	handler := NewCreateAnnouncementHandler(repo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	err := handler.Handle(context.Background(), CreateAnnouncementCommand{
-		Title:   shared.Lang{Uz: "t", Ru: "t", En: "t"},
-		Content: shared.Lang{Uz: "c", Ru: "c", En: "c"},
+		Title:   shareddomain.Lang{Uz: "t", Ru: "t", En: "t"},
+		Content: shareddomain.Lang{Uz: "c", Ru: "c", En: "c"},
 	})
 	require.NoError(t, err)
 	if repo.saved == nil {

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	errcodeentity "gct/internal/context/admin/supporting/errorcode/domain/entity"
+	shareddomain "gct/internal/kernel/domain"
 
 	"gct/internal/kernel/outbox"
 
@@ -25,7 +26,7 @@ type errorErrorCodeRepo struct {
 	findFn    func(ctx context.Context, id errcodeentity.ErrorCodeID) (*errcodeentity.ErrorCode, error)
 }
 
-func (m *errorErrorCodeRepo) Save(_ context.Context, _ *errcodeentity.ErrorCode) error {
+func (m *errorErrorCodeRepo) Save(_ context.Context, _ shareddomain.Querier, _ *errcodeentity.ErrorCode) error {
 	return m.saveErr
 }
 
@@ -36,11 +37,11 @@ func (m *errorErrorCodeRepo) FindByID(ctx context.Context, id errcodeentity.Erro
 	return nil, errcodeentity.ErrErrorCodeNotFound
 }
 
-func (m *errorErrorCodeRepo) Update(_ context.Context, _ *errcodeentity.ErrorCode) error {
+func (m *errorErrorCodeRepo) Update(_ context.Context, _ shareddomain.Querier, _ *errcodeentity.ErrorCode) error {
 	return m.updateErr
 }
 
-func (m *errorErrorCodeRepo) Delete(_ context.Context, _ errcodeentity.ErrorCodeID) error {
+func (m *errorErrorCodeRepo) Delete(_ context.Context, _ shareddomain.Querier, _ errcodeentity.ErrorCodeID) error {
 	return m.deleteErr
 }
 

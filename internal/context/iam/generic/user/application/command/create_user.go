@@ -8,6 +8,7 @@ import (
 	userentity "gct/internal/context/iam/generic/user/domain/entity"
 	userevent "gct/internal/context/iam/generic/user/domain/event"
 	userrepo "gct/internal/context/iam/generic/user/domain/repository"
+	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -112,8 +113,8 @@ func (h *CreateUserHandler) Handle(ctx context.Context, cmd CreateUserCommand) (
 	}
 	user.AddEvent(userevent.NewUserCreatedWithChanges(user.ID(), cmd.ActorID, changes))
 
-	return h.committer.Commit(ctx, func(ctx context.Context) error {
-		if err := h.repo.Save(ctx, user); err != nil {
+	return h.committer.Commit(ctx, func(ctx context.Context, q shareddomain.Querier) error {
+		if err := h.repo.Save(ctx, q, user); err != nil {
 			h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateUser", Entity: "user", Err: err}.KV()...)
 			return apperrors.MapToServiceError(err)
 		}

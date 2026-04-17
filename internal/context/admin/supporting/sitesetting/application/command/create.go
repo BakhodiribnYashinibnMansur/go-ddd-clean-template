@@ -5,6 +5,7 @@ import (
 
 	siteentity "gct/internal/context/admin/supporting/sitesetting/domain/entity"
 	siterepo "gct/internal/context/admin/supporting/sitesetting/domain/repository"
+	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -49,8 +50,8 @@ func (h *CreateSiteSettingHandler) Handle(ctx context.Context, cmd CreateSiteSet
 
 	s := siteentity.NewSiteSetting(cmd.Key, cmd.Value, cmd.Type, cmd.Description)
 
-	return h.committer.Commit(ctx, func(ctx context.Context) error {
-		if err := h.repo.Save(ctx, s); err != nil {
+	return h.committer.Commit(ctx, func(ctx context.Context, q shareddomain.Querier) error {
+		if err := h.repo.Save(ctx, q, s); err != nil {
 			h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateSiteSetting", Entity: "site_setting", Err: err}.KV()...)
 			return apperrors.MapToServiceError(err)
 		}

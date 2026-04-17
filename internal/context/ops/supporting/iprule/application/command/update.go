@@ -6,6 +6,7 @@ import (
 
 	ipruleentity "gct/internal/context/ops/supporting/iprule/domain/entity"
 	iprulerepo "gct/internal/context/ops/supporting/iprule/domain/repository"
+	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -58,8 +59,8 @@ func (h *UpdateIPRuleHandler) Handle(ctx context.Context, cmd UpdateIPRuleComman
 
 	r.Update(cmd.IPAddress, cmd.Action, cmd.Reason, cmd.ExpiresAt)
 
-	return h.committer.Commit(ctx, func(ctx context.Context) error {
-		if err := h.repo.Update(ctx, r); err != nil {
+	return h.committer.Commit(ctx, func(ctx context.Context, q shareddomain.Querier) error {
+		if err := h.repo.Update(ctx, q, r); err != nil {
 			h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "UpdateIPRule", Entity: "ip_rule", EntityID: cmd.ID.String(), Err: err}.KV()...)
 			return apperrors.MapToServiceError(err)
 		}

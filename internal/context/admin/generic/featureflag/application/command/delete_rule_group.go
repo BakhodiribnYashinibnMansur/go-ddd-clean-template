@@ -53,8 +53,8 @@ func (h *DeleteRuleGroupHandler) Handle(ctx context.Context, cmd DeleteRuleGroup
 	flagID := rg.FlagID()
 	event := ffevent.NewFlagUpdated(flagID)
 
-	return h.committer.Commit(ctx, func(ctx context.Context) error {
-		if err := h.rgRepo.Delete(ctx, cmd.ID); err != nil {
+	return h.committer.Commit(ctx, func(ctx context.Context, q shareddomain.Querier) error {
+		if err := h.rgRepo.Delete(ctx, q, cmd.ID); err != nil {
 			h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteRuleGroup", Entity: "rule_group", EntityID: cmd.ID, Err: err}.KV()...)
 			return apperrors.MapToServiceError(err)
 		}

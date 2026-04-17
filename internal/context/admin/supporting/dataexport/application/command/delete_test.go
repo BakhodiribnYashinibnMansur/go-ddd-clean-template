@@ -17,7 +17,7 @@ func TestDeleteDataExportHandler_Success(t *testing.T) {
 
 	repo := &mockWriteRepo{}
 	l := &mockLogger{}
-	h := command.NewDeleteDataExportHandler(repo, l)
+	h := command.NewDeleteDataExportHandler(repo, nil, l)
 
 	exportID := exportentity.NewDataExportID()
 	cmd := command.DeleteDataExportCommand{ID: exportentity.DataExportID(exportID)}
@@ -39,7 +39,7 @@ func TestDeleteDataExportHandler_RepoError(t *testing.T) {
 		},
 	}
 	l := &mockLogger{}
-	h := command.NewDeleteDataExportHandler(repo, l)
+	h := command.NewDeleteDataExportHandler(repo, nil, l)
 
 	cmd := command.DeleteDataExportCommand{ID: exportentity.DataExportID(uuid.New())}
 

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	ffentity "gct/internal/context/admin/generic/featureflag/domain/entity"
+	shareddomain "gct/internal/kernel/domain"
 
 	"gct/internal/kernel/outbox"
 	"github.com/google/uuid"
@@ -39,7 +40,7 @@ func TestDeleteHandler_Handle_RepoError(t *testing.T) {
 
 	repoErr := errors.New("delete failed")
 	repo := &mockFeatureFlagRepo{
-		deleteFn: func(_ context.Context, _ ffentity.FeatureFlagID) error {
+		deleteFn: func(_ context.Context, _ shareddomain.Querier, _ ffentity.FeatureFlagID) error {
 			return repoErr
 		},
 	}

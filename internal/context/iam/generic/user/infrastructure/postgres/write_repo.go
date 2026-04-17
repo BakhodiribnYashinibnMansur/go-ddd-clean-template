@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	userentity "gct/internal/context/iam/generic/user/domain/entity"
@@ -70,95 +69,71 @@ func NewUserWriteRepo(pool *pgxpool.Pool) *UserWriteRepo {
 }
 
 // Save inserts a new User aggregate (and its sessions) into the database.
-func (r *UserWriteRepo) Save(ctx context.Context, user *userentity.User) (err error) {
+// The caller provides a Querier (typically a transaction from EventCommitter).
+func (r *UserWriteRepo) Save(ctx context.Context, q shared.Querier, user *userentity.User) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "UserWriteRepo.Save")
 	defer func() { end(err) }()
 
-	return pgxutil.WithTx(ctx, r.pool, func(tx pgx.Tx) error {
-		var emailVal *string
-		if user.Email() != nil {
-			v := user.Email().Value()
-			emailVal = &v
-		}
+	v := userToInsertValues(user)
 
-		var deletedAtVal int64
-		if user.DeletedAt() != nil {
-			deletedAtVal = user.DeletedAt().Unix()
-		}
-
-		sql, args, err := r.builder.
-			Insert(usersTable).
-			Columns(userColumns...).
-			Values(
-				user.ID(),
-				user.RoleID(),
-				user.Username(),
-				emailVal,
-				user.Phone().Value(),
-				user.Password().Hash(),
-				"", // salt — bcrypt includes salt in hash
-				user.IsActive(),
-				user.IsApproved(),
-				user.CreatedAt(),
-				user.UpdatedAt(),
-				deletedAtVal,
-				user.LastSeen(),
-			).
-			ToSql()
-		if err != nil {
-			return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildInsert)
-		}
-
-		if _, err = tx.Exec(ctx, sql, args...); err != nil {
-			return apperrors.HandlePgError(err, usersTable, nil)
-		}
-
-		// Persist user attributes via EAV table.
-		if err := r.metadata.SetManyTx(ctx, tx, metadata.EntityTypeUserAttributes, user.ID(), user.Attributes()); err != nil {
-			return err
-		}
-
-		// Insert sessions if any.
-		for _, s := range user.Sessions() {
-			if err := r.insertSession(ctx, tx, &s); err != nil {
-				return err
-			}
-		}
-
-		return nil
-	})
-}
-
-// insertSession inserts a single session row within an existing transaction.
-func (r *UserWriteRepo) insertSession(ctx context.Context, tx pgx.Tx, s *userentity.Session) error {
 	sql, args, err := r.builder.
-		Insert(sessionTable).
-		Columns(sessionInsertColumns...).
+		Insert(usersTable).
+		Columns(userColumns...).
 		Values(
-			s.ID(),
-			s.UserID(),
-			s.DeviceID(),
-			s.DeviceName(),
-			string(s.DeviceType()),
-			s.IPAddress().String(),
-			s.UserAgent().String(),
-			s.RefreshTokenHash(),
-			s.ExpiresAt(),
-			s.LastActivity(),
-			s.IsRevoked(),
-			s.CreatedAt(),
-			s.UpdatedAt(),
-			s.IntegrationName(),
-			s.PreviousRefreshHash(),
-			s.DeviceFingerprint(),
+			v.id, v.roleID, v.username, v.email, v.phone,
+			v.passwordHash, "",
+			v.active, v.isApproved,
+			v.createdAt, v.updatedAt, v.deletedAt, v.lastSeen,
 		).
 		ToSql()
 	if err != nil {
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildInsert)
 	}
 
-	if _, err = tx.Exec(ctx, sql, args...); err != nil {
-		return apperrors.HandlePgError(err, sessionTable, nil)
+	if _, err = q.Exec(ctx, sql, args...); err != nil {
+		return apperrors.HandlePgError(err, usersTable, map[string]any{"id": v.id})
+	}
+
+	// Persist user attributes via EAV table.
+	if err := r.metadata.SetManyTx(ctx, q, metadata.EntityTypeUserAttributes, user.ID(), user.Attributes()); err != nil {
+		return err
+	}
+
+	// Batch-insert all sessions in a single round-trip.
+	return r.insertSessionsBatch(ctx, q, user.ID(), user.Sessions())
+}
+
+// insertSessionsBatch writes all sessions for a user in a single INSERT
+// round-trip. Returns nil when the slice is empty.
+func (r *UserWriteRepo) insertSessionsBatch(ctx context.Context, q shared.Querier, userID uuid.UUID, sessions []userentity.Session) error {
+	if len(sessions) == 0 {
+		return nil
+	}
+
+	qb := r.builder.
+		Insert(sessionTable).
+		Columns(sessionInsertColumns...)
+
+	for i := range sessions {
+		s := &sessions[i]
+		qb = qb.Values(
+			s.ID(), s.UserID(), s.DeviceID(), s.DeviceName(), string(s.DeviceType()),
+			s.IPAddress().String(), s.UserAgent().String(), s.RefreshTokenHash(),
+			s.ExpiresAt(), s.LastActivity(), s.IsRevoked(),
+			s.CreatedAt(), s.UpdatedAt(),
+			s.IntegrationName(),
+			s.PreviousRefreshHash(),
+			s.DeviceFingerprint(),
+		)
+	}
+
+	sql, args, err := qb.ToSql()
+	if err != nil {
+		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildInsert)
+	}
+
+	if _, err := q.Exec(ctx, sql, args...); err != nil {
+		return apperrors.HandlePgError(err, sessionTable, map[string]any{"user_id": userID, "count": len(sessions)})
 	}
 	return nil
 }
@@ -217,83 +192,84 @@ func (r *UserWriteRepo) FindByID(ctx context.Context, id userentity.UserID) (res
 }
 
 // Update updates the User aggregate in the database.
-func (r *UserWriteRepo) Update(ctx context.Context, user *userentity.User) (err error) {
+// The caller provides a Querier (typically a transaction from EventCommitter).
+func (r *UserWriteRepo) Update(ctx context.Context, q shared.Querier, user *userentity.User) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "UserWriteRepo.Update")
 	defer func() { end(err) }()
 
-	return pgxutil.WithTx(ctx, r.pool, func(tx pgx.Tx) error {
-		var emailVal *string
-		if user.Email() != nil {
-			v := user.Email().Value()
-			emailVal = &v
-		}
+	v := userToInsertValues(user)
 
-		var deletedAtVal int64
-		if user.DeletedAt() != nil {
-			deletedAtVal = user.DeletedAt().Unix()
-		}
+	sql, args, err := r.builder.
+		Update(usersTable).
+		Set("role_id", v.roleID).
+		Set("username", v.username).
+		Set("email", v.email).
+		Set("phone", v.phone).
+		Set("password_hash", v.passwordHash).
+		Set("active", v.active).
+		Set("is_approved", v.isApproved).
+		Set("updated_at", v.updatedAt).
+		Set("deleted_at", v.deletedAt).
+		Set("last_seen", v.lastSeen).
+		Where(squirrel.Eq{"id": v.id}).
+		ToSql()
+	if err != nil {
+		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildUpdate)
+	}
 
-		sql, args, err := r.builder.
-			Update(usersTable).
-			Set("role_id", user.RoleID()).
-			Set("username", user.Username()).
-			Set("email", emailVal).
-			Set("phone", user.Phone().Value()).
-			Set("password_hash", user.Password().Hash()).
-			Set("active", user.IsActive()).
-			Set("is_approved", user.IsApproved()).
-			Set("updated_at", user.UpdatedAt()).
-			Set("deleted_at", deletedAtVal).
-			Set("last_seen", user.LastSeen()).
-			Where(squirrel.Eq{"id": user.ID()}).
-			ToSql()
-		if err != nil {
-			return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildUpdate)
-		}
+	if _, err = q.Exec(ctx, sql, args...); err != nil {
+		return apperrors.HandlePgError(err, usersTable, map[string]any{"id": v.id})
+	}
 
-		if _, err = tx.Exec(ctx, sql, args...); err != nil {
-			return apperrors.HandlePgError(err, usersTable, nil)
-		}
+	// Persist user attributes via EAV table.
+	if err := r.metadata.SetManyTx(ctx, q, metadata.EntityTypeUserAttributes, user.ID(), user.Attributes()); err != nil {
+		return err
+	}
 
-		// Persist user attributes via EAV table.
-		if err := r.metadata.SetManyTx(ctx, tx, metadata.EntityTypeUserAttributes, user.ID(), user.Attributes()); err != nil {
-			return err
-		}
-
-		return r.upsertSessions(ctx, tx, user.Sessions())
-	})
+	return r.upsertSessions(ctx, q, user.Sessions())
 }
 
-// upsertSessions inserts new sessions or updates existing ones in a single tx,
-// using ON CONFLICT to avoid FK violations on replay.
-func (r *UserWriteRepo) upsertSessions(ctx context.Context, tx pgx.Tx, sessions []userentity.Session) error {
-	for _, s := range sessions {
-		upsertSQL, upsertArgs, upsertErr := r.builder.
-			Insert(sessionTable).
-			Columns(sessionInsertColumns...).
-			Values(
-				s.ID(), s.UserID(), s.DeviceID(), s.DeviceName(), string(s.DeviceType()),
-				s.IPAddress().String(), s.UserAgent().String(), s.RefreshTokenHash(),
-				s.ExpiresAt(), s.LastActivity(), s.IsRevoked(),
-				s.CreatedAt(), s.UpdatedAt(),
-				s.IntegrationName(),
-				s.PreviousRefreshHash(),
-				s.DeviceFingerprint(),
-			).
-			Suffix("ON CONFLICT (id) DO UPDATE SET refresh_token_hash = EXCLUDED.refresh_token_hash, previous_refresh_hash = EXCLUDED.previous_refresh_hash, last_activity = EXCLUDED.last_activity, revoked = EXCLUDED.revoked, updated_at = EXCLUDED.updated_at").
-			ToSql()
-		if upsertErr != nil {
-			return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildInsert)
-		}
-		if _, err := tx.Exec(ctx, upsertSQL, upsertArgs...); err != nil {
-			return apperrors.HandlePgError(err, sessionTable, nil)
-		}
+// upsertSessions inserts all sessions (or updates conflicting rows) in a
+// single INSERT ... ON CONFLICT round-trip. Safe for replay during token
+// refresh.
+func (r *UserWriteRepo) upsertSessions(ctx context.Context, q shared.Querier, sessions []userentity.Session) error {
+	if len(sessions) == 0 {
+		return nil
+	}
+
+	qb := r.builder.
+		Insert(sessionTable).
+		Columns(sessionInsertColumns...)
+
+	for i := range sessions {
+		s := &sessions[i]
+		qb = qb.Values(
+			s.ID(), s.UserID(), s.DeviceID(), s.DeviceName(), string(s.DeviceType()),
+			s.IPAddress().String(), s.UserAgent().String(), s.RefreshTokenHash(),
+			s.ExpiresAt(), s.LastActivity(), s.IsRevoked(),
+			s.CreatedAt(), s.UpdatedAt(),
+			s.IntegrationName(),
+			s.PreviousRefreshHash(),
+			s.DeviceFingerprint(),
+		)
+	}
+
+	sql, args, err := qb.
+		Suffix("ON CONFLICT (id) DO UPDATE SET refresh_token_hash = EXCLUDED.refresh_token_hash, previous_refresh_hash = EXCLUDED.previous_refresh_hash, last_activity = EXCLUDED.last_activity, revoked = EXCLUDED.revoked, updated_at = EXCLUDED.updated_at").
+		ToSql()
+	if err != nil {
+		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildInsert)
+	}
+
+	if _, err := q.Exec(ctx, sql, args...); err != nil {
+		return apperrors.HandlePgError(err, sessionTable, map[string]any{"count": len(sessions)})
 	}
 	return nil
 }
 
 // Delete performs a soft delete on the user by setting deleted_at to the current unix timestamp.
-func (r *UserWriteRepo) Delete(ctx context.Context, id userentity.UserID) (err error) {
+// The caller provides a Querier (typically a transaction from EventCommitter).
+func (r *UserWriteRepo) Delete(ctx context.Context, q shared.Querier, id userentity.UserID) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "UserWriteRepo.Delete")
 	defer func() { end(err) }()
 
@@ -306,81 +282,10 @@ func (r *UserWriteRepo) Delete(ctx context.Context, id userentity.UserID) (err e
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildDelete)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = q.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, usersTable, nil)
 	}
 	return nil
-}
-
-// List retrieves a paginated list of users (without sessions).
-func (r *UserWriteRepo) List(ctx context.Context, filter shared.Pagination) (items []*userentity.User, total int64, err error) {
-	ctx, end := pgxutil.RepoSpan(ctx, "UserWriteRepo.List")
-	defer func() { end(err) }()
-
-	// Count total.
-	countSQL, countArgs, err := r.builder.
-		Select("COUNT(*)").
-		From(usersTable).
-		Where(squirrel.Eq{"deleted_at": 0}).
-		ToSql()
-	if err != nil {
-		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
-	}
-
-	if err = r.pool.QueryRow(ctx, countSQL, countArgs...).Scan(&total); err != nil {
-		return nil, 0, apperrors.HandlePgError(err, usersTable, nil)
-	}
-
-	// Fetch page.
-	qb := r.builder.
-		Select(userColumns...).
-		From(usersTable).
-		Where(squirrel.Eq{"deleted_at": 0}).
-		Limit(uint64(filter.Limit)).
-		Offset(uint64(filter.Offset))
-
-	if filter.SortBy != "" {
-		order := "ASC"
-		if filter.SortOrder == "DESC" {
-			order = "DESC"
-		}
-		qb = qb.OrderBy(fmt.Sprintf("%s %s", filter.SortBy, order))
-	}
-
-	sql, args, err := qb.ToSql()
-	if err != nil {
-		return nil, 0, apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildQuery)
-	}
-
-	rows, err := r.pool.Query(ctx, sql, args...)
-	if err != nil {
-		return nil, 0, apperrors.HandlePgError(err, usersTable, nil)
-	}
-	defer rows.Close()
-
-	var users []*userentity.User
-	for rows.Next() {
-		u, err := scanUserFromRows(rows)
-		if err != nil {
-			return nil, 0, apperrors.HandlePgError(err, usersTable, nil)
-		}
-		users = append(users, u)
-	}
-
-	// Load attributes from EAV table for each user.
-	for i, u := range users {
-		attrs, err := r.metadata.GetAll(ctx, metadata.EntityTypeUserAttributes, u.ID())
-		if err != nil {
-			return nil, 0, err
-		}
-		users[i] = userentity.ReconstructUser(
-			u.ID(), u.CreatedAt(), u.UpdatedAt(), u.DeletedAt(),
-			u.Phone(), u.Email(), u.Username(), u.Password(), u.RoleID(),
-			attrs, u.IsActive(), u.IsApproved(), u.LastSeen(), nil,
-		)
-	}
-
-	return users, total, nil
 }
 
 // FindByPhone finds a user by phone number.
@@ -571,19 +476,6 @@ func (r *UserWriteRepo) RevokeSessionsByIntegration(ctx context.Context, userID 
 		return 0, apperrors.HandlePgError(err, sessionTable, nil)
 	}
 	return int(tag.RowsAffected()), nil
-}
-
-// FindDefaultRoleID returns the ID of the "user" role (the default role for self-registration).
-func (r *UserWriteRepo) FindDefaultRoleID(ctx context.Context) (result uuid.UUID, err error) {
-	ctx, end := pgxutil.RepoSpan(ctx, "UserWriteRepo.FindDefaultRoleID")
-	defer func() { end(err) }()
-
-	var id uuid.UUID
-	err = r.pool.QueryRow(ctx, "SELECT id FROM role WHERE name = 'user' LIMIT 1").Scan(&id)
-	if err != nil {
-		return uuid.Nil, apperrors.HandlePgError(err, "role", nil)
-	}
-	return id, nil
 }
 
 // scanUser scans a single user row (pgx.Row) and returns a User aggregate without sessions.

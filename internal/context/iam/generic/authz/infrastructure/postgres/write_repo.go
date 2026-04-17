@@ -73,7 +73,7 @@ func (r *RoleWriteRepo) Save(ctx context.Context, role *authzentity.Role) (err e
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildInsert)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = r.pool.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, roleTable, nil)
 	}
 	return nil
@@ -113,7 +113,7 @@ func (r *RoleWriteRepo) Update(ctx context.Context, role *authzentity.Role) (err
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildUpdate)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = r.pool.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, roleTable, nil)
 	}
 	return nil
@@ -124,7 +124,7 @@ func (r *RoleWriteRepo) Delete(ctx context.Context, id authzentity.RoleID) (err 
 	ctx, end := pgxutil.RepoSpan(ctx, "RoleWriteRepo.Delete")
 	defer func() { end(err) }()
 
-	return pgxutil.WithTx(ctx, r.pool, func(tx pgx.Tx) error {
+	return pgxutil.WithTx(ctx, r.pool, func(q shared.Querier) error {
 		// Delete role_permission entries first.
 		delRP, argsRP, err := r.builder.
 			Delete(rolePermissionTable).
@@ -133,7 +133,7 @@ func (r *RoleWriteRepo) Delete(ctx context.Context, id authzentity.RoleID) (err 
 		if err != nil {
 			return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildDelete)
 		}
-		if _, err = tx.Exec(ctx, delRP, argsRP...); err != nil {
+		if _, err = q.Exec(ctx, delRP, argsRP...); err != nil {
 			return apperrors.HandlePgError(err, rolePermissionTable, nil)
 		}
 
@@ -145,7 +145,7 @@ func (r *RoleWriteRepo) Delete(ctx context.Context, id authzentity.RoleID) (err 
 		if err != nil {
 			return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildDelete)
 		}
-		if _, err = tx.Exec(ctx, delSQL, delArgs...); err != nil {
+		if _, err = q.Exec(ctx, delSQL, delArgs...); err != nil {
 			return apperrors.HandlePgError(err, roleTable, nil)
 		}
 		return nil
@@ -175,12 +175,8 @@ func (r *RoleWriteRepo) List(ctx context.Context, pagination shared.Pagination) 
 		Limit(uint64(pagination.Limit)).
 		Offset(uint64(pagination.Offset))
 
-	if pagination.SortBy != "" {
-		order := "ASC"
-		if pagination.SortOrder == "DESC" {
-			order = "DESC"
-		}
-		qb = qb.OrderBy(fmt.Sprintf("%s %s", pagination.SortBy, order))
+	if ob := pagination.SafeOrderBy(); ob != "" {
+		qb = qb.OrderBy(ob)
 	}
 
 	sql, args, err := qb.ToSql()
@@ -245,7 +241,7 @@ func (r *PermissionWriteRepo) Save(ctx context.Context, perm *authzentity.Permis
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildInsert)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = r.pool.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, permissionTable, nil)
 	}
 	return nil
@@ -286,7 +282,7 @@ func (r *PermissionWriteRepo) Update(ctx context.Context, perm *authzentity.Perm
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildUpdate)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = r.pool.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, permissionTable, nil)
 	}
 	return nil
@@ -297,7 +293,7 @@ func (r *PermissionWriteRepo) Delete(ctx context.Context, id authzentity.Permiss
 	ctx, end := pgxutil.RepoSpan(ctx, "PermissionWriteRepo.Delete")
 	defer func() { end(err) }()
 
-	return pgxutil.WithTx(ctx, r.pool, func(tx pgx.Tx) error {
+	return pgxutil.WithTx(ctx, r.pool, func(q shared.Querier) error {
 		// Delete permission_scope entries first.
 		delPS, argsPS, err := r.builder.
 			Delete(permissionScopeTable).
@@ -306,7 +302,7 @@ func (r *PermissionWriteRepo) Delete(ctx context.Context, id authzentity.Permiss
 		if err != nil {
 			return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildDelete)
 		}
-		if _, err = tx.Exec(ctx, delPS, argsPS...); err != nil {
+		if _, err = q.Exec(ctx, delPS, argsPS...); err != nil {
 			return apperrors.HandlePgError(err, permissionScopeTable, nil)
 		}
 
@@ -318,7 +314,7 @@ func (r *PermissionWriteRepo) Delete(ctx context.Context, id authzentity.Permiss
 		if err != nil {
 			return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildDelete)
 		}
-		if _, err = tx.Exec(ctx, delRP, argsRP...); err != nil {
+		if _, err = q.Exec(ctx, delRP, argsRP...); err != nil {
 			return apperrors.HandlePgError(err, rolePermissionTable, nil)
 		}
 
@@ -330,7 +326,7 @@ func (r *PermissionWriteRepo) Delete(ctx context.Context, id authzentity.Permiss
 		if err != nil {
 			return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildDelete)
 		}
-		if _, err = tx.Exec(ctx, delSQL, delArgs...); err != nil {
+		if _, err = q.Exec(ctx, delSQL, delArgs...); err != nil {
 			return apperrors.HandlePgError(err, permissionTable, nil)
 		}
 		return nil
@@ -360,12 +356,8 @@ func (r *PermissionWriteRepo) List(ctx context.Context, pagination shared.Pagina
 		Limit(uint64(pagination.Limit)).
 		Offset(uint64(pagination.Offset))
 
-	if pagination.SortBy != "" {
-		order := "ASC"
-		if pagination.SortOrder == "DESC" {
-			order = "DESC"
-		}
-		qb = qb.OrderBy(fmt.Sprintf("%s %s", pagination.SortBy, order))
+	if ob := pagination.SafeOrderBy(); ob != "" {
+		qb = qb.OrderBy(ob)
 	}
 
 	sql, args, err := qb.ToSql()
@@ -433,7 +425,7 @@ func (r *PolicyWriteRepo) Save(ctx context.Context, policy *authzentity.Policy) 
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildInsert)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = r.pool.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, policyTable, nil)
 	}
 
@@ -490,7 +482,7 @@ func (r *PolicyWriteRepo) Update(ctx context.Context, policy *authzentity.Policy
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildUpdate)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = r.pool.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, policyTable, nil)
 	}
 
@@ -548,12 +540,8 @@ func (r *PolicyWriteRepo) List(ctx context.Context, pagination shared.Pagination
 		Limit(uint64(pagination.Limit)).
 		Offset(uint64(pagination.Offset))
 
-	if pagination.SortBy != "" {
-		order := "ASC"
-		if pagination.SortOrder == "DESC" {
-			order = "DESC"
-		}
-		qb = qb.OrderBy(fmt.Sprintf("%s %s", pagination.SortBy, order))
+	if ob := pagination.SafeOrderBy(); ob != "" {
+		qb = qb.OrderBy(ob)
 	}
 
 	sql, args, err := qb.ToSql()
@@ -670,7 +658,7 @@ func (r *ScopeWriteRepo) Delete(ctx context.Context, path, method string) (err e
 	ctx, end := pgxutil.RepoSpan(ctx, "ScopeWriteRepo.Delete")
 	defer func() { end(err) }()
 
-	return pgxutil.WithTx(ctx, r.pool, func(tx pgx.Tx) error {
+	return pgxutil.WithTx(ctx, r.pool, func(q shared.Querier) error {
 		// Delete permission_scope entries first.
 		delPS, argsPS, err := r.builder.
 			Delete(permissionScopeTable).
@@ -679,7 +667,7 @@ func (r *ScopeWriteRepo) Delete(ctx context.Context, path, method string) (err e
 		if err != nil {
 			return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildDelete)
 		}
-		if _, err = tx.Exec(ctx, delPS, argsPS...); err != nil {
+		if _, err = q.Exec(ctx, delPS, argsPS...); err != nil {
 			return apperrors.HandlePgError(err, permissionScopeTable, nil)
 		}
 
@@ -691,7 +679,7 @@ func (r *ScopeWriteRepo) Delete(ctx context.Context, path, method string) (err e
 		if err != nil {
 			return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildDelete)
 		}
-		if _, err = tx.Exec(ctx, delSQL, delArgs...); err != nil {
+		if _, err = q.Exec(ctx, delSQL, delArgs...); err != nil {
 			return apperrors.HandlePgError(err, scopeTable, nil)
 		}
 		return nil
@@ -721,12 +709,8 @@ func (r *ScopeWriteRepo) List(ctx context.Context, pagination shared.Pagination)
 		Limit(uint64(pagination.Limit)).
 		Offset(uint64(pagination.Offset))
 
-	if pagination.SortBy != "" {
-		order := "ASC"
-		if pagination.SortOrder == "DESC" {
-			order = "DESC"
-		}
-		qb = qb.OrderBy(fmt.Sprintf("%s %s", pagination.SortBy, order))
+	if ob := pagination.SafeOrderBy(); ob != "" {
+		qb = qb.OrderBy(ob)
 	}
 
 	sql, args, err := qb.ToSql()

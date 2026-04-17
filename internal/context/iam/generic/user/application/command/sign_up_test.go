@@ -4,8 +4,31 @@ import (
 	"context"
 	"testing"
 
+	userentity "gct/internal/context/iam/generic/user/domain/entity"
+	shared "gct/internal/kernel/domain"
+
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
+
+// signUpMockReadRepo satisfies UserReadRepository for sign-up tests.
+type signUpMockReadRepo struct{}
+
+func (m *signUpMockReadRepo) FindByID(_ context.Context, _ userentity.UserID) (*userentity.UserView, error) {
+	return nil, nil
+}
+func (m *signUpMockReadRepo) List(_ context.Context, _ userentity.UsersFilter) ([]*userentity.UserView, int64, error) {
+	return nil, 0, nil
+}
+func (m *signUpMockReadRepo) FindSessionByID(_ context.Context, _ userentity.SessionID) (*shared.AuthSession, error) {
+	return nil, nil
+}
+func (m *signUpMockReadRepo) FindUserForAuth(_ context.Context, _ userentity.UserID) (*shared.AuthUser, error) {
+	return nil, nil
+}
+func (m *signUpMockReadRepo) FindDefaultRoleID(_ context.Context) (uuid.UUID, error) {
+	return uuid.New(), nil
+}
 
 func TestSignUpHandler_Handle(t *testing.T) {
 	t.Parallel()
@@ -14,7 +37,7 @@ func TestSignUpHandler_Handle(t *testing.T) {
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewSignUpHandler(repo, eventBus, log)
+	handler := NewSignUpHandler(repo, &signUpMockReadRepo{}, fakeDB{}, eventBus, log)
 
 	username := "newuser"
 	email := "newuser@example.com"
@@ -64,7 +87,7 @@ func TestSignUpHandler_MinimalFields(t *testing.T) {
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewSignUpHandler(repo, eventBus, log)
+	handler := NewSignUpHandler(repo, &signUpMockReadRepo{}, fakeDB{}, eventBus, log)
 
 	cmd := SignUpCommand{
 		Phone:    "+998907654321",
@@ -94,7 +117,7 @@ func TestSignUpHandler_InvalidPhone(t *testing.T) {
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewSignUpHandler(repo, eventBus, log)
+	handler := NewSignUpHandler(repo, &signUpMockReadRepo{}, fakeDB{}, eventBus, log)
 
 	cmd := SignUpCommand{
 		Phone:    "bad-phone",
@@ -118,7 +141,7 @@ func TestSignUpHandler_WeakPassword(t *testing.T) {
 	eventBus := &mockEventBus{}
 	log := &mockLogger{}
 
-	handler := NewSignUpHandler(repo, eventBus, log)
+	handler := NewSignUpHandler(repo, &signUpMockReadRepo{}, fakeDB{}, eventBus, log)
 
 	cmd := SignUpCommand{
 		Phone:    "+998901234567",

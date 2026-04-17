@@ -7,6 +7,7 @@ import (
 	translationentity "gct/internal/context/content/generic/translation/domain/entity"
 	translationrepo "gct/internal/context/content/generic/translation/domain/repository"
 	"gct/internal/kernel/consts"
+	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/pgxutil"
 
@@ -37,7 +38,7 @@ func NewTranslationWriteRepo(pool *pgxpool.Pool) *TranslationWriteRepo {
 }
 
 // Save inserts a new Translation aggregate into the database.
-func (r *TranslationWriteRepo) Save(ctx context.Context, t *translationentity.Translation) (err error) {
+func (r *TranslationWriteRepo) Save(ctx context.Context, q shareddomain.Querier, t *translationentity.Translation) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "TranslationWriteRepo.Save")
 	defer func() { end(err) }()
 
@@ -53,7 +54,7 @@ func (r *TranslationWriteRepo) Save(ctx context.Context, t *translationentity.Tr
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildInsert)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = q.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 
@@ -79,7 +80,7 @@ func (r *TranslationWriteRepo) FindByID(ctx context.Context, id translationentit
 }
 
 // Update updates an existing Translation aggregate in the database.
-func (r *TranslationWriteRepo) Update(ctx context.Context, t *translationentity.Translation) (err error) {
+func (r *TranslationWriteRepo) Update(ctx context.Context, q shareddomain.Querier, t *translationentity.Translation) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "TranslationWriteRepo.Update")
 	defer func() { end(err) }()
 
@@ -96,7 +97,7 @@ func (r *TranslationWriteRepo) Update(ctx context.Context, t *translationentity.
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildUpdate)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = q.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 
@@ -104,7 +105,7 @@ func (r *TranslationWriteRepo) Update(ctx context.Context, t *translationentity.
 }
 
 // Delete removes a Translation by its ID.
-func (r *TranslationWriteRepo) Delete(ctx context.Context, id translationentity.TranslationID) (err error) {
+func (r *TranslationWriteRepo) Delete(ctx context.Context, q shareddomain.Querier, id translationentity.TranslationID) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "TranslationWriteRepo.Delete")
 	defer func() { end(err) }()
 
@@ -116,7 +117,7 @@ func (r *TranslationWriteRepo) Delete(ctx context.Context, id translationentity.
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildDelete)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = q.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 

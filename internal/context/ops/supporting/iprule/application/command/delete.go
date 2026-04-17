@@ -5,9 +5,11 @@ import (
 
 	ipruleentity "gct/internal/context/ops/supporting/iprule/domain/entity"
 	iprulerepo "gct/internal/context/ops/supporting/iprule/domain/repository"
+	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
+	"gct/internal/kernel/outbox"
 )
 
 // DeleteIPRuleCommand represents an intent to permanently remove an IP rule by its unique identifier.
@@ -20,18 +22,21 @@ type DeleteIPRuleCommand struct {
 // It enforces a hard-delete strategy — no soft-delete or audit trail is maintained at this level.
 // Callers are responsible for authorization checks before invoking this handler.
 type DeleteIPRuleHandler struct {
-	repo   iprulerepo.IPRuleRepository
-	logger logger.Log
+	repo      iprulerepo.IPRuleRepository
+	committer *outbox.EventCommitter
+	logger    logger.Log
 }
 
 // NewDeleteIPRuleHandler wires up the handler with its required dependencies.
 func NewDeleteIPRuleHandler(
 	repo iprulerepo.IPRuleRepository,
+	committer *outbox.EventCommitter,
 	logger logger.Log,
 ) *DeleteIPRuleHandler {
 	return &DeleteIPRuleHandler{
-		repo:   repo,
-		logger: logger,
+		repo:      repo,
+		committer: committer,
+		logger:    logger,
 	}
 }
 
@@ -42,9 +47,11 @@ func (h *DeleteIPRuleHandler) Handle(ctx context.Context, cmd DeleteIPRuleComman
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "DeleteIPRule", "ip_rule")()
 
-	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
-		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteIPRule", Entity: "ip_rule", EntityID: cmd.ID.String(), Err: err}.KV()...)
-		return apperrors.MapToServiceError(err)
-	}
-	return nil
+	return h.committer.Commit(ctx, func(ctx context.Context, q shareddomain.Querier) error {
+		if err := h.repo.Delete(ctx, q, cmd.ID); err != nil {
+			h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteIPRule", Entity: "ip_rule", EntityID: cmd.ID.String(), Err: err}.KV()...)
+			return apperrors.MapToServiceError(err)
+		}
+		return nil
+	}, func() []shareddomain.DomainEvent { return nil })
 }

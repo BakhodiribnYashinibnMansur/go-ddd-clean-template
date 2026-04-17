@@ -12,6 +12,8 @@ import (
 	userdomain "gct/internal/context/iam/generic/user/domain/entity"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 // ---------------------------------------------------------------------------
@@ -77,9 +79,9 @@ type sessionTestUserRepo struct {
 	revokeAllUserID   uuid.UUID
 }
 
-func (m *sessionTestUserRepo) Save(_ context.Context, _ *userdomain.User) error   { return nil }
-func (m *sessionTestUserRepo) Update(_ context.Context, _ *userdomain.User) error { return nil }
-func (m *sessionTestUserRepo) Delete(_ context.Context, _ userdomain.UserID) error        { return nil }
+func (m *sessionTestUserRepo) Save(_ context.Context, _ shareddomain.Querier, _ *userdomain.User) error   { return nil }
+func (m *sessionTestUserRepo) Update(_ context.Context, _ shareddomain.Querier, _ *userdomain.User) error { return nil }
+func (m *sessionTestUserRepo) Delete(_ context.Context, _ shareddomain.Querier, _ userdomain.UserID) error        { return nil }
 func (m *sessionTestUserRepo) FindByID(_ context.Context, id userdomain.UserID) (*userdomain.User, error) {
 	return nil, userdomain.ErrUserNotFound
 }
@@ -92,9 +94,6 @@ func (m *sessionTestUserRepo) FindByPhone(_ context.Context, _ userdomain.Phone)
 func (m *sessionTestUserRepo) FindByEmail(_ context.Context, _ userdomain.Email) (*userdomain.User, error) {
 	return nil, userdomain.ErrUserNotFound
 }
-func (m *sessionTestUserRepo) FindDefaultRoleID(_ context.Context) (uuid.UUID, error) {
-	return uuid.New(), nil
-}
 func (m *sessionTestUserRepo) ActiveSessionCount(_ context.Context, _ userdomain.UserID) (int, error) {
 	return 0, nil
 }
@@ -104,6 +103,14 @@ func (m *sessionTestUserRepo) RevokeOldestActiveSession(_ context.Context, _ use
 func (m *sessionTestUserRepo) RevokeSessionsByIntegration(_ context.Context, _ userdomain.UserID, _ string) (int, error) {
 	return 0, nil
 }
+
+// sessionTestDB satisfies shareddomain.DB for tests.
+type sessionTestDB struct{}
+
+func (d *sessionTestDB) Begin(_ context.Context) (pgx.Tx, error)                          { return nil, nil }
+func (d *sessionTestDB) Exec(_ context.Context, _ string, _ ...any) (pgconn.CommandTag, error) { return pgconn.CommandTag{}, nil }
+func (d *sessionTestDB) Query(_ context.Context, _ string, _ ...any) (pgx.Rows, error)    { return nil, nil }
+func (d *sessionTestDB) QueryRow(_ context.Context, _ string, _ ...any) pgx.Row           { return nil }
 
 // ---------------------------------------------------------------------------
 // Tests
@@ -115,9 +122,10 @@ func TestSubscribeSessionEvents_RevokeRequested(t *testing.T) {
 	repo := &sessionTestUserRepo{}
 	eb := newSessionTestEventBus()
 
+	db := &sessionTestDB{}
 	userBC := &user.BoundedContext{
-		SignOut:    usercommand.NewSignOutHandler(repo, eb, log),
-		RevokeAll: usercommand.NewRevokeAllSessionsHandler(repo, eb, log),
+		SignOut:    usercommand.NewSignOutHandler(repo, db, eb, log),
+		RevokeAll: usercommand.NewRevokeAllSessionsHandler(repo, db, eb, log),
 	}
 
 	subscribeSessionEvents(eventBus, userBC, log)
@@ -137,9 +145,10 @@ func TestSubscribeSessionEvents_RevokeEvent_TypeMismatch(t *testing.T) {
 	repo := &sessionTestUserRepo{}
 	eb := newSessionTestEventBus()
 
+	db := &sessionTestDB{}
 	userBC := &user.BoundedContext{
-		SignOut:    usercommand.NewSignOutHandler(repo, eb, log),
-		RevokeAll: usercommand.NewRevokeAllSessionsHandler(repo, eb, log),
+		SignOut:    usercommand.NewSignOutHandler(repo, db, eb, log),
+		RevokeAll: usercommand.NewRevokeAllSessionsHandler(repo, db, eb, log),
 	}
 
 	subscribeSessionEvents(eventBus, userBC, log)
@@ -159,9 +168,10 @@ func TestSubscribeSessionEvents_RevokeAllEvent_TypeMismatch(t *testing.T) {
 	repo := &sessionTestUserRepo{}
 	eb := newSessionTestEventBus()
 
+	db := &sessionTestDB{}
 	userBC := &user.BoundedContext{
-		SignOut:    usercommand.NewSignOutHandler(repo, eb, log),
-		RevokeAll: usercommand.NewRevokeAllSessionsHandler(repo, eb, log),
+		SignOut:    usercommand.NewSignOutHandler(repo, db, eb, log),
+		RevokeAll: usercommand.NewRevokeAllSessionsHandler(repo, db, eb, log),
 	}
 
 	subscribeSessionEvents(eventBus, userBC, log)

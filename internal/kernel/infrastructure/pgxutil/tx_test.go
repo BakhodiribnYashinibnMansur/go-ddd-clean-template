@@ -5,6 +5,8 @@ import (
 	"errors"
 	"testing"
 
+	shareddomain "gct/internal/kernel/domain"
+
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 )
@@ -71,7 +73,7 @@ func TestWithTx_Success(t *testing.T) {
 	pool := &mockPool{tx: tx}
 
 	called := false
-	err := WithTx(context.Background(), pool, func(tx pgx.Tx) error {
+	err := WithTx(context.Background(), pool, func(q shareddomain.Querier) error {
 		called = true
 		return nil
 	})
@@ -91,7 +93,7 @@ func TestWithTx_FnError(t *testing.T) {
 	pool := &mockPool{tx: tx}
 	fnErr := errors.New("fn error")
 
-	err := WithTx(context.Background(), pool, func(tx pgx.Tx) error {
+	err := WithTx(context.Background(), pool, func(q shareddomain.Querier) error {
 		return fnErr
 	})
 	if err == nil {
@@ -108,7 +110,7 @@ func TestWithTx_FnError(t *testing.T) {
 func TestWithTx_BeginError(t *testing.T) {
 	pool := &mockPool{beginErr: errors.New("begin failed")}
 
-	err := WithTx(context.Background(), pool, func(tx pgx.Tx) error {
+	err := WithTx(context.Background(), pool, func(q shareddomain.Querier) error {
 		t.Fatal("fn should not be called when Begin fails")
 		return nil
 	})
@@ -121,7 +123,7 @@ func TestWithTx_CommitError(t *testing.T) {
 	tx := &mockTx{commitErr: errors.New("commit failed")}
 	pool := &mockPool{tx: tx}
 
-	err := WithTx(context.Background(), pool, func(tx pgx.Tx) error {
+	err := WithTx(context.Background(), pool, func(q shareddomain.Querier) error {
 		return nil
 	})
 	if err == nil {

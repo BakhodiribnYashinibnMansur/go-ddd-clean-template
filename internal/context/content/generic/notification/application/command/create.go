@@ -6,6 +6,7 @@ import (
 
 	notifentity "gct/internal/context/content/generic/notification/domain/entity"
 	notifrepo "gct/internal/context/content/generic/notification/domain/repository"
+	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -53,8 +54,8 @@ func (h *CreateHandler) Handle(ctx context.Context, cmd CreateCommand) (err erro
 		return fmt.Errorf("create_notification: %w", err)
 	}
 
-	return h.committer.Commit(ctx, func(ctx context.Context) error {
-		if err := h.repo.Save(ctx, n); err != nil {
+	return h.committer.Commit(ctx, func(ctx context.Context, q shareddomain.Querier) error {
+		if err := h.repo.Save(ctx, q, n); err != nil {
 			h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateNotification", Entity: "notification", Err: err}.KV()...)
 			return apperrors.MapToServiceError(err)
 		}

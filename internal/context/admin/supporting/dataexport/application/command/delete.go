@@ -5,6 +5,7 @@ import (
 
 	exportentity "gct/internal/context/admin/supporting/dataexport/domain/entity"
 	exportrepo "gct/internal/context/admin/supporting/dataexport/domain/repository"
+	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -20,16 +21,19 @@ type DeleteDataExportCommand struct {
 // No domain events are emitted — callers needing file cleanup should handle that at a higher layer.
 type DeleteDataExportHandler struct {
 	repo   exportrepo.DataExportRepository
+	pool   shareddomain.Querier
 	logger logger.Log
 }
 
 // NewDeleteDataExportHandler wires dependencies for data export deletion.
 func NewDeleteDataExportHandler(
 	repo exportrepo.DataExportRepository,
+	pool shareddomain.Querier,
 	logger logger.Log,
 ) *DeleteDataExportHandler {
 	return &DeleteDataExportHandler{
 		repo:   repo,
+		pool:   pool,
 		logger: logger,
 	}
 }
@@ -41,7 +45,7 @@ func (h *DeleteDataExportHandler) Handle(ctx context.Context, cmd DeleteDataExpo
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "DeleteDataExport", "data_export")()
 
-	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
+	if err := h.repo.Delete(ctx, h.pool, cmd.ID); err != nil {
 		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "DeleteDataExport", Entity: "data_export", EntityID: cmd.ID, Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}

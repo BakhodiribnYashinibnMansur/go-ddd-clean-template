@@ -54,8 +54,8 @@ func (h *DeleteErrorCodeHandler) Handle(ctx context.Context, cmd DeleteErrorCode
 
 	event := errcodeevent.NewErrorCodeDeleted(cmd.ID.UUID(), ec.Code())
 
-	return h.committer.Commit(ctx, func(ctx context.Context) error {
-		if err := h.repo.Delete(ctx, cmd.ID); err != nil {
+	return h.committer.Commit(ctx, func(ctx context.Context, q shareddomain.Querier) error {
+		if err := h.repo.Delete(ctx, q, cmd.ID); err != nil {
 			h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteErrorCode", Entity: "error_code", EntityID: cmd.ID.String(), Err: err}.KV()...)
 			return apperrors.MapToServiceError(err)
 		}

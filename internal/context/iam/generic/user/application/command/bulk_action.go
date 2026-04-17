@@ -7,6 +7,7 @@ import (
 	userentity "gct/internal/context/iam/generic/user/domain/entity"
 	userrepo "gct/internal/context/iam/generic/user/domain/repository"
 	"gct/internal/kernel/application"
+	shareddomain "gct/internal/kernel/domain"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
 )
@@ -34,6 +35,7 @@ type BulkActionResult struct {
 // BulkActionHandler handles the BulkActionCommand.
 type BulkActionHandler struct {
 	repo     userrepo.UserRepository
+	db       shareddomain.DB
 	eventBus application.EventBus
 	logger   commandLogger
 }
@@ -41,11 +43,13 @@ type BulkActionHandler struct {
 // NewBulkActionHandler creates a new BulkActionHandler.
 func NewBulkActionHandler(
 	repo userrepo.UserRepository,
+	db shareddomain.DB,
 	eventBus application.EventBus,
 	logger commandLogger,
 ) *BulkActionHandler {
 	return &BulkActionHandler{
 		repo:     repo,
+		db:       db,
 		eventBus: eventBus,
 		logger:   logger,
 	}
@@ -81,7 +85,9 @@ func (h *BulkActionHandler) Handle(ctx context.Context, cmd BulkActionCommand) (
 			return nil, fmt.Errorf("unknown bulk action: %s", cmd.Action)
 		}
 
-		if err := h.repo.Update(ctx, user); err != nil {
+		if err := pgxutil.WithTx(ctx, h.db, func(q shareddomain.Querier) error {
+			return h.repo.Update(ctx, q, user)
+		}); err != nil {
 			h.logger.Errorc(ctx, "bulk action: repository update failed", logger.F{Op: "BulkAction", Entity: "user", EntityID: id.String(), Err: err}.KV()...)
 			result.Failed++
 			result.Errors = append(result.Errors, fmt.Sprintf("%s: update failed", id))

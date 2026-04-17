@@ -7,6 +7,7 @@ import (
 	siteentity "gct/internal/context/admin/supporting/sitesetting/domain/entity"
 	siterepo "gct/internal/context/admin/supporting/sitesetting/domain/repository"
 	"gct/internal/kernel/consts"
+	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/pgxutil"
 
@@ -37,7 +38,7 @@ func NewSiteSettingWriteRepo(pool *pgxpool.Pool) *SiteSettingWriteRepo {
 }
 
 // Save inserts a new SiteSetting aggregate into the database.
-func (r *SiteSettingWriteRepo) Save(ctx context.Context, s *siteentity.SiteSetting) (err error) {
+func (r *SiteSettingWriteRepo) Save(ctx context.Context, q shareddomain.Querier, s *siteentity.SiteSetting) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "SiteSettingWriteRepo.Save")
 	defer func() { end(err) }()
 
@@ -53,7 +54,7 @@ func (r *SiteSettingWriteRepo) Save(ctx context.Context, s *siteentity.SiteSetti
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildInsert)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = q.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 
@@ -79,7 +80,7 @@ func (r *SiteSettingWriteRepo) FindByID(ctx context.Context, id siteentity.SiteS
 }
 
 // Update updates an existing SiteSetting aggregate in the database.
-func (r *SiteSettingWriteRepo) Update(ctx context.Context, s *siteentity.SiteSetting) (err error) {
+func (r *SiteSettingWriteRepo) Update(ctx context.Context, q shareddomain.Querier, s *siteentity.SiteSetting) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "SiteSettingWriteRepo.Update")
 	defer func() { end(err) }()
 
@@ -96,7 +97,7 @@ func (r *SiteSettingWriteRepo) Update(ctx context.Context, s *siteentity.SiteSet
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildUpdate)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = q.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 
@@ -104,7 +105,7 @@ func (r *SiteSettingWriteRepo) Update(ctx context.Context, s *siteentity.SiteSet
 }
 
 // Delete removes a SiteSetting by its ID.
-func (r *SiteSettingWriteRepo) Delete(ctx context.Context, id siteentity.SiteSettingID) (err error) {
+func (r *SiteSettingWriteRepo) Delete(ctx context.Context, q shareddomain.Querier, id siteentity.SiteSettingID) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "SiteSettingWriteRepo.Delete")
 	defer func() { end(err) }()
 
@@ -116,7 +117,7 @@ func (r *SiteSettingWriteRepo) Delete(ctx context.Context, id siteentity.SiteSet
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildDelete)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = q.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 

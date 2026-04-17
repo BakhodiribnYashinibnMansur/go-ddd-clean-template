@@ -6,6 +6,7 @@ import (
 
 	integentity "gct/internal/context/admin/supporting/integration/domain/entity"
 	"gct/internal/kernel/consts"
+	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/metadata"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -76,7 +77,7 @@ func nullableTime(t *time.Time) any {
 }
 
 // Save inserts a new Integration aggregate into the database.
-func (r *IntegrationWriteRepo) Save(ctx context.Context, i *integentity.Integration) (err error) {
+func (r *IntegrationWriteRepo) Save(ctx context.Context, q shareddomain.Querier, i *integentity.Integration) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "IntegrationWriteRepo.Save")
 	defer func() { end(err) }()
 
@@ -108,7 +109,7 @@ func (r *IntegrationWriteRepo) Save(ctx context.Context, i *integentity.Integrat
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildInsert)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = q.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 
@@ -157,7 +158,7 @@ func (r *IntegrationWriteRepo) FindByID(ctx context.Context, id integentity.Inte
 }
 
 // Update updates an Integration aggregate in the database.
-func (r *IntegrationWriteRepo) Update(ctx context.Context, i *integentity.Integration) (err error) {
+func (r *IntegrationWriteRepo) Update(ctx context.Context, q shareddomain.Querier, i *integentity.Integration) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "IntegrationWriteRepo.Update")
 	defer func() { end(err) }()
 
@@ -185,7 +186,7 @@ func (r *IntegrationWriteRepo) Update(ctx context.Context, i *integentity.Integr
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildUpdate)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = q.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 
@@ -197,7 +198,7 @@ func (r *IntegrationWriteRepo) Update(ctx context.Context, i *integentity.Integr
 }
 
 // Delete removes an Integration by ID.
-func (r *IntegrationWriteRepo) Delete(ctx context.Context, id integentity.IntegrationID) (err error) {
+func (r *IntegrationWriteRepo) Delete(ctx context.Context, q shareddomain.Querier, id integentity.IntegrationID) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "IntegrationWriteRepo.Delete")
 	defer func() { end(err) }()
 
@@ -209,7 +210,7 @@ func (r *IntegrationWriteRepo) Delete(ctx context.Context, id integentity.Integr
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildDelete)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = q.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 
@@ -218,7 +219,7 @@ func (r *IntegrationWriteRepo) Delete(ctx context.Context, id integentity.Integr
 
 // RotateJWTKey atomically installs new JWT key material for an integration,
 // moving current values to the "previous" slots.
-func (r *IntegrationWriteRepo) RotateJWTKey(ctx context.Context, id integentity.IntegrationID, newPublicPEM, newKeyID string) (err error) {
+func (r *IntegrationWriteRepo) RotateJWTKey(ctx context.Context, q shareddomain.Querier, id integentity.IntegrationID, newPublicPEM, newKeyID string) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "IntegrationWriteRepo.RotateJWTKey")
 	defer func() { end(err) }()
 
@@ -232,7 +233,7 @@ UPDATE ` + tableName + `
        updated_at                  = NOW()
  WHERE id = $3`
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, newPublicPEM, newKeyID, id.UUID()); err != nil {
+	if _, err = q.Exec(ctx, sql, newPublicPEM, newKeyID, id.UUID()); err != nil {
 		return apperrors.HandlePgError(err, tableName, map[string]any{"id": id.UUID()})
 	}
 	return nil

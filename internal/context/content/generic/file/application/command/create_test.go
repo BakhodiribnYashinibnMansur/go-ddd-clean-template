@@ -21,7 +21,7 @@ type mockFileRepo struct {
 	saved *fileentity.File
 }
 
-func (m *mockFileRepo) Save(_ context.Context, f *fileentity.File) error {
+func (m *mockFileRepo) Save(_ context.Context, _ shared.Querier, f *fileentity.File) error {
 	m.saved = f
 	return nil
 }

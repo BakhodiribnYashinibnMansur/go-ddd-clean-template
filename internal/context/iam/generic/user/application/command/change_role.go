@@ -7,6 +7,7 @@ import (
 	userevent "gct/internal/context/iam/generic/user/domain/event"
 	userrepo "gct/internal/context/iam/generic/user/domain/repository"
 	"gct/internal/kernel/application"
+	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -25,6 +26,7 @@ type ChangeRoleCommand struct {
 // ChangeRoleHandler handles the ChangeRoleCommand.
 type ChangeRoleHandler struct {
 	repo     userrepo.UserRepository
+	db       shareddomain.DB
 	eventBus application.EventBus
 	logger   commandLogger
 }
@@ -32,11 +34,13 @@ type ChangeRoleHandler struct {
 // NewChangeRoleHandler creates a new ChangeRoleHandler.
 func NewChangeRoleHandler(
 	repo userrepo.UserRepository,
+	db shareddomain.DB,
 	eventBus application.EventBus,
 	logger commandLogger,
 ) *ChangeRoleHandler {
 	return &ChangeRoleHandler{
 		repo:     repo,
+		db:       db,
 		eventBus: eventBus,
 		logger:   logger,
 	}
@@ -64,7 +68,9 @@ func (h *ChangeRoleHandler) Handle(ctx context.Context, cmd ChangeRoleCommand) (
 		{FieldName: "role_id", OldValue: oldRoleID, NewValue: cmd.RoleID.String()},
 	}))
 
-	if err := h.repo.Update(ctx, user); err != nil {
+	if err := pgxutil.WithTx(ctx, h.db, func(q shareddomain.Querier) error {
+		return h.repo.Update(ctx, q, user)
+	}); err != nil {
 		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "ChangeRole", Entity: "user", EntityID: cmd.UserID, Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}

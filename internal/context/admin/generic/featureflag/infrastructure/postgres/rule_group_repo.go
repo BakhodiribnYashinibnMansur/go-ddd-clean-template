@@ -6,6 +6,7 @@ import (
 
 	ffentity "gct/internal/context/admin/generic/featureflag/domain/entity"
 	"gct/internal/kernel/consts"
+	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/pgxutil"
 
@@ -32,7 +33,7 @@ func NewRuleGroupWriteRepo(pool *pgxpool.Pool) *RuleGroupWriteRepo {
 }
 
 // Save inserts a rule group and all its conditions.
-func (r *RuleGroupWriteRepo) Save(ctx context.Context, rg *ffentity.RuleGroup) (err error) {
+func (r *RuleGroupWriteRepo) Save(ctx context.Context, q shareddomain.Querier, rg *ffentity.RuleGroup) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "RuleGroupWriteRepo.Save")
 	defer func() { end(err) }()
 
@@ -53,12 +54,12 @@ func (r *RuleGroupWriteRepo) Save(ctx context.Context, rg *ffentity.RuleGroup) (
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildInsert)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = q.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, ruleGroupTable, nil)
 	}
 
 	for _, c := range rg.Conditions() {
-		if err := r.saveCondition(ctx, c); err != nil {
+		if err := r.saveCondition(ctx, q, c); err != nil {
 			return err
 		}
 	}
@@ -104,7 +105,7 @@ func (r *RuleGroupWriteRepo) FindByID(ctx context.Context, id ffentity.RuleGroup
 }
 
 // Update updates a rule group's fields and replaces all conditions.
-func (r *RuleGroupWriteRepo) Update(ctx context.Context, rg *ffentity.RuleGroup) (err error) {
+func (r *RuleGroupWriteRepo) Update(ctx context.Context, q shareddomain.Querier, rg *ffentity.RuleGroup) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "RuleGroupWriteRepo.Update")
 	defer func() { end(err) }()
 
@@ -120,17 +121,17 @@ func (r *RuleGroupWriteRepo) Update(ctx context.Context, rg *ffentity.RuleGroup)
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildUpdate)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = q.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, ruleGroupTable, nil)
 	}
 
 	// Replace conditions: delete old, insert new.
-	if err := r.DeleteConditionsByRuleGroupID(ctx, rg.TypedID()); err != nil {
+	if err := r.DeleteConditionsByRuleGroupID(ctx, q, rg.TypedID()); err != nil {
 		return err
 	}
 
 	for _, c := range rg.Conditions() {
-		if err := r.saveCondition(ctx, c); err != nil {
+		if err := r.saveCondition(ctx, q, c); err != nil {
 			return err
 		}
 	}
@@ -139,7 +140,7 @@ func (r *RuleGroupWriteRepo) Update(ctx context.Context, rg *ffentity.RuleGroup)
 }
 
 // Delete removes a rule group by ID. FK cascades handle conditions.
-func (r *RuleGroupWriteRepo) Delete(ctx context.Context, id ffentity.RuleGroupID) (err error) {
+func (r *RuleGroupWriteRepo) Delete(ctx context.Context, q shareddomain.Querier, id ffentity.RuleGroupID) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "RuleGroupWriteRepo.Delete")
 	defer func() { end(err) }()
 
@@ -151,7 +152,7 @@ func (r *RuleGroupWriteRepo) Delete(ctx context.Context, id ffentity.RuleGroupID
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildDelete)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = q.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, ruleGroupTable, nil)
 	}
 
@@ -207,16 +208,16 @@ func (r *RuleGroupWriteRepo) FindByFlagID(ctx context.Context, flagID ffentity.F
 }
 
 // SaveCondition inserts a single condition for a rule group.
-func (r *RuleGroupWriteRepo) SaveCondition(ctx context.Context, rgID ffentity.RuleGroupID, c ffentity.Condition) (err error) {
+func (r *RuleGroupWriteRepo) SaveCondition(ctx context.Context, q shareddomain.Querier, rgID ffentity.RuleGroupID, c ffentity.Condition) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "RuleGroupWriteRepo.SaveCondition")
 	defer func() { end(err) }()
 
 	_ = rgID // condition already carries its rule_group_id
-	return r.saveCondition(ctx, c)
+	return r.saveCondition(ctx, q, c)
 }
 
 // DeleteConditionsByRuleGroupID removes all conditions for a rule group.
-func (r *RuleGroupWriteRepo) DeleteConditionsByRuleGroupID(ctx context.Context, rgID ffentity.RuleGroupID) (err error) {
+func (r *RuleGroupWriteRepo) DeleteConditionsByRuleGroupID(ctx context.Context, q shareddomain.Querier, rgID ffentity.RuleGroupID) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "RuleGroupWriteRepo.DeleteConditionsByRuleGroupID")
 	defer func() { end(err) }()
 
@@ -228,7 +229,7 @@ func (r *RuleGroupWriteRepo) DeleteConditionsByRuleGroupID(ctx context.Context, 
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildDelete)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = q.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, conditionTable, nil)
 	}
 
@@ -239,7 +240,7 @@ func (r *RuleGroupWriteRepo) DeleteConditionsByRuleGroupID(ctx context.Context, 
 // Helpers
 // ---------------------------------------------------------------------------
 
-func (r *RuleGroupWriteRepo) saveCondition(ctx context.Context, c ffentity.Condition) error {
+func (r *RuleGroupWriteRepo) saveCondition(ctx context.Context, q shareddomain.Querier, c ffentity.Condition) error {
 	sql, args, err := r.builder.
 		Insert(conditionTable).
 		Columns("id", "rule_group_id", "attribute", "operator", "value").
@@ -249,7 +250,7 @@ func (r *RuleGroupWriteRepo) saveCondition(ctx context.Context, c ffentity.Condi
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildInsert)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = q.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, conditionTable, nil)
 	}
 

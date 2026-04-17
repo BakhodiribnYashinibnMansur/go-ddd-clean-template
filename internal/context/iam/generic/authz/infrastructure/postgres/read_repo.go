@@ -80,12 +80,8 @@ func (r *AuthzReadRepo) ListRoles(ctx context.Context, pagination shared.Paginat
 		Limit(uint64(pagination.Limit)).
 		Offset(uint64(pagination.Offset))
 
-	if pagination.SortBy != "" {
-		order := "ASC"
-		if pagination.SortOrder == "DESC" {
-			order = "DESC"
-		}
-		qb = qb.OrderBy(fmt.Sprintf("%s %s", pagination.SortBy, order))
+	if ob := pagination.SafeOrderBy(); ob != "" {
+		qb = qb.OrderBy(ob)
 	}
 
 	sql, args, err := qb.ToSql()
@@ -157,12 +153,8 @@ func (r *AuthzReadRepo) ListPermissions(ctx context.Context, pagination shared.P
 		Limit(uint64(pagination.Limit)).
 		Offset(uint64(pagination.Offset))
 
-	if pagination.SortBy != "" {
-		order := "ASC"
-		if pagination.SortOrder == "DESC" {
-			order = "DESC"
-		}
-		qb = qb.OrderBy(fmt.Sprintf("%s %s", pagination.SortBy, order))
+	if ob := pagination.SafeOrderBy(); ob != "" {
+		qb = qb.OrderBy(ob)
 	}
 
 	sql, args, err := qb.ToSql()
@@ -211,12 +203,8 @@ func (r *AuthzReadRepo) ListPolicies(ctx context.Context, pagination shared.Pagi
 		Limit(uint64(pagination.Limit)).
 		Offset(uint64(pagination.Offset))
 
-	if pagination.SortBy != "" {
-		order := "ASC"
-		if pagination.SortOrder == "DESC" {
-			order = "DESC"
-		}
-		qb = qb.OrderBy(fmt.Sprintf("%s %s", pagination.SortBy, order))
+	if ob := pagination.SafeOrderBy(); ob != "" {
+		qb = qb.OrderBy(ob)
 	}
 
 	sql, args, err := qb.ToSql()
@@ -273,12 +261,8 @@ func (r *AuthzReadRepo) ListScopes(ctx context.Context, pagination shared.Pagina
 		Limit(uint64(pagination.Limit)).
 		Offset(uint64(pagination.Offset))
 
-	if pagination.SortBy != "" {
-		order := "ASC"
-		if pagination.SortOrder == "DESC" {
-			order = "DESC"
-		}
-		qb = qb.OrderBy(fmt.Sprintf("%s %s", pagination.SortBy, order))
+	if ob := pagination.SafeOrderBy(); ob != "" {
+		qb = qb.OrderBy(ob)
 	}
 
 	sql, args, err := qb.ToSql()

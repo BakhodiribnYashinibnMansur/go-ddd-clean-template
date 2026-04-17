@@ -7,6 +7,7 @@ import (
 
 	siteentity "gct/internal/context/admin/supporting/sitesetting/domain/entity"
 	siterepo "gct/internal/context/admin/supporting/sitesetting/domain/repository"
+	shareddomain "gct/internal/kernel/domain"
 
 	"gct/internal/kernel/outbox"
 	"github.com/google/uuid"
@@ -20,7 +21,7 @@ type errorRepo struct {
 	findFn    func(ctx context.Context, id siteentity.SiteSettingID) (*siteentity.SiteSetting, error)
 }
 
-func (m *errorRepo) Save(_ context.Context, _ *siteentity.SiteSetting) error {
+func (m *errorRepo) Save(_ context.Context, _ shareddomain.Querier, _ *siteentity.SiteSetting) error {
 	return m.saveErr
 }
 
@@ -31,11 +32,11 @@ func (m *errorRepo) FindByID(ctx context.Context, id siteentity.SiteSettingID) (
 	return nil, siteentity.ErrSiteSettingNotFound
 }
 
-func (m *errorRepo) Update(_ context.Context, _ *siteentity.SiteSetting) error {
+func (m *errorRepo) Update(_ context.Context, _ shareddomain.Querier, _ *siteentity.SiteSetting) error {
 	return m.updateErr
 }
 
-func (m *errorRepo) Delete(_ context.Context, _ siteentity.SiteSettingID) error {
+func (m *errorRepo) Delete(_ context.Context, _ shareddomain.Querier, _ siteentity.SiteSettingID) error {
 	return m.deleteErr
 }
 
@@ -112,7 +113,7 @@ func TestDeleteSiteSettingHandler_DeleteError(t *testing.T) {
 	repo := &errorRepo{deleteErr: errDelete}
 	log := &mockLogger{}
 
-	handler := NewDeleteSiteSettingHandler(repo, log)
+	handler := NewDeleteSiteSettingHandler(repo, nil, log)
 	err := handler.Handle(context.Background(), DeleteSiteSettingCommand{ID: siteentity.SiteSettingID(uuid.New())})
 	if !errors.Is(err, errDelete) {
 		t.Fatalf("expected errDelete, got: %v", err)

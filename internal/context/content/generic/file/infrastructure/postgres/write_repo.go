@@ -5,6 +5,7 @@ import (
 
 	fileentity "gct/internal/context/content/generic/file/domain/entity"
 	"gct/internal/kernel/consts"
+	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/pgxutil"
 
@@ -34,7 +35,7 @@ func NewFileWriteRepo(pool *pgxpool.Pool) *FileWriteRepo {
 }
 
 // Save inserts a new File aggregate into the database.
-func (r *FileWriteRepo) Save(ctx context.Context, f *fileentity.File) (err error) {
+func (r *FileWriteRepo) Save(ctx context.Context, q shareddomain.Querier, f *fileentity.File) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "FileWriteRepo.Save")
 	defer func() { end(err) }()
 
@@ -57,7 +58,7 @@ func (r *FileWriteRepo) Save(ctx context.Context, f *fileentity.File) (err error
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildInsert)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = q.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 

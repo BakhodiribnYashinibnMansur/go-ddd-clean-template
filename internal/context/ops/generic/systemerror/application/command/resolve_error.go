@@ -3,6 +3,7 @@ package command
 import (
 	"context"
 
+	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -55,8 +56,8 @@ func (h *ResolveErrorHandler) Handle(ctx context.Context, cmd ResolveErrorComman
 
 	se.Resolve(cmd.ResolvedBy)
 
-	return h.committer.Commit(ctx, func(ctx context.Context) error {
-		if err := h.repo.Update(ctx, se); err != nil {
+	return h.committer.Commit(ctx, func(ctx context.Context, q shareddomain.Querier) error {
+		if err := h.repo.Update(ctx, q, se); err != nil {
 			h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "ResolveError", Entity: "system_error", EntityID: cmd.ID.String(), Err: err}.KV()...)
 			return apperrors.MapToServiceError(err)
 		}

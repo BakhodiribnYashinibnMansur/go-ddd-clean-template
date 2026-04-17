@@ -10,8 +10,45 @@ import (
 	"gct/internal/kernel/outbox"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/stretchr/testify/require"
 )
+
+// fakeDB satisfies shared.DB for unit tests where mock repos ignore the
+// Querier argument. Begin returns a fakeTx that no-ops on Commit/Rollback.
+type fakeDB struct{}
+
+func (fakeDB) Begin(ctx context.Context) (pgx.Tx, error) { return &fakeTx{}, nil }
+func (fakeDB) Exec(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error) {
+	return pgconn.NewCommandTag(""), nil
+}
+func (fakeDB) Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error) {
+	return nil, nil
+}
+func (fakeDB) QueryRow(ctx context.Context, sql string, args ...any) pgx.Row { return nil }
+
+type fakeTx struct{ pgx.Tx }
+
+func (fakeTx) Commit(_ context.Context) error   { return nil }
+func (fakeTx) Rollback(_ context.Context) error  { return nil }
+func (fakeTx) Begin(_ context.Context) (pgx.Tx, error) { return &fakeTx{}, nil }
+func (fakeTx) Exec(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error) {
+	return pgconn.NewCommandTag(""), nil
+}
+func (fakeTx) Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error) {
+	return nil, nil
+}
+func (fakeTx) QueryRow(ctx context.Context, sql string, args ...any) pgx.Row { return nil }
+func (fakeTx) Conn() *pgx.Conn                                               { return nil }
+func (fakeTx) CopyFrom(_ context.Context, _ pgx.Identifier, _ []string, _ pgx.CopyFromSource) (int64, error) {
+	return 0, nil
+}
+func (fakeTx) SendBatch(_ context.Context, _ *pgx.Batch) pgx.BatchResults { return nil }
+func (fakeTx) LargeObjects() pgx.LargeObjects                             { return pgx.LargeObjects{} }
+func (fakeTx) Prepare(_ context.Context, _ string, _ string) (*pgconn.StatementDescription, error) {
+	return nil, nil
+}
 
 // --- Mock Repository ---
 
@@ -27,7 +64,7 @@ type mockUserRepository struct {
 	countCalls     int
 }
 
-func (m *mockUserRepository) Save(ctx context.Context, entity *userentity.User) error {
+func (m *mockUserRepository) Save(ctx context.Context, q shared.Querier, entity *userentity.User) error {
 	m.savedUser = entity
 	return nil
 }
@@ -39,17 +76,13 @@ func (m *mockUserRepository) FindByID(ctx context.Context, id userentity.UserID)
 	return nil, userentity.ErrUserNotFound
 }
 
-func (m *mockUserRepository) Update(ctx context.Context, entity *userentity.User) error {
+func (m *mockUserRepository) Update(ctx context.Context, q shared.Querier, entity *userentity.User) error {
 	m.updatedUser = entity
 	return nil
 }
 
-func (m *mockUserRepository) Delete(ctx context.Context, id userentity.UserID) error {
+func (m *mockUserRepository) Delete(ctx context.Context, q shared.Querier, id userentity.UserID) error {
 	return nil
-}
-
-func (m *mockUserRepository) List(ctx context.Context, filter shared.Pagination) ([]*userentity.User, int64, error) {
-	return nil, 0, nil
 }
 
 func (m *mockUserRepository) FindByPhone(ctx context.Context, phone userentity.Phone) (*userentity.User, error) {
@@ -58,10 +91,6 @@ func (m *mockUserRepository) FindByPhone(ctx context.Context, phone userentity.P
 
 func (m *mockUserRepository) FindByEmail(ctx context.Context, email userentity.Email) (*userentity.User, error) {
 	return nil, userentity.ErrUserNotFound
-}
-
-func (m *mockUserRepository) FindDefaultRoleID(_ context.Context) (uuid.UUID, error) {
-	return uuid.New(), nil
 }
 
 func (m *mockUserRepository) ActiveSessionCount(_ context.Context, _ userentity.UserID) (int, error) {

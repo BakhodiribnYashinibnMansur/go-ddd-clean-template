@@ -15,7 +15,7 @@ import (
 	ffentity "gct/internal/context/admin/generic/featureflag/domain/entity"
 	ffrepo "gct/internal/context/admin/generic/featureflag/domain/repository"
 	"gct/internal/kernel/application"
-	shared "gct/internal/kernel/domain"
+	shareddomain "gct/internal/kernel/domain"
 
 	"gct/internal/kernel/outbox"
 
@@ -33,7 +33,7 @@ type mockFeatureFlagRepo struct {
 	listFn  func(ctx context.Context, f ffrepo.FeatureFlagFilter) ([]*ffentity.FeatureFlag, int64, error)
 }
 
-func (m *mockFeatureFlagRepo) Save(_ context.Context, e *ffentity.FeatureFlag) error {
+func (m *mockFeatureFlagRepo) Save(_ context.Context, _ shareddomain.Querier, e *ffentity.FeatureFlag) error {
 	m.saved = e
 	return nil
 }
@@ -46,11 +46,11 @@ func (m *mockFeatureFlagRepo) FindByID(ctx context.Context, id ffentity.FeatureF
 func (m *mockFeatureFlagRepo) FindByKey(_ context.Context, _ string) (*ffentity.FeatureFlag, error) {
 	return nil, ffentity.ErrFeatureFlagNotFound
 }
-func (m *mockFeatureFlagRepo) Update(_ context.Context, e *ffentity.FeatureFlag) error {
+func (m *mockFeatureFlagRepo) Update(_ context.Context, _ shareddomain.Querier, e *ffentity.FeatureFlag) error {
 	m.updated = e
 	return nil
 }
-func (m *mockFeatureFlagRepo) Delete(_ context.Context, _ ffentity.FeatureFlagID) error {
+func (m *mockFeatureFlagRepo) Delete(_ context.Context, _ shareddomain.Querier, _ ffentity.FeatureFlagID) error {
 	m.deleted = true
 	return nil
 }
@@ -65,7 +65,7 @@ type mockRuleGroupRepo struct {
 	findFn  func(ctx context.Context, id ffentity.RuleGroupID) (*ffentity.RuleGroup, error)
 }
 
-func (m *mockRuleGroupRepo) Save(_ context.Context, e *ffentity.RuleGroup) error {
+func (m *mockRuleGroupRepo) Save(_ context.Context, _ shareddomain.Querier, e *ffentity.RuleGroup) error {
 	m.saved = e
 	return nil
 }
@@ -75,21 +75,21 @@ func (m *mockRuleGroupRepo) FindByID(ctx context.Context, id ffentity.RuleGroupI
 	}
 	return nil, ffentity.ErrRuleGroupNotFound
 }
-func (m *mockRuleGroupRepo) Update(_ context.Context, e *ffentity.RuleGroup) error {
+func (m *mockRuleGroupRepo) Update(_ context.Context, _ shareddomain.Querier, e *ffentity.RuleGroup) error {
 	m.updated = e
 	return nil
 }
-func (m *mockRuleGroupRepo) Delete(_ context.Context, _ ffentity.RuleGroupID) error {
+func (m *mockRuleGroupRepo) Delete(_ context.Context, _ shareddomain.Querier, _ ffentity.RuleGroupID) error {
 	m.deleted = true
 	return nil
 }
 func (m *mockRuleGroupRepo) FindByFlagID(_ context.Context, _ ffentity.FeatureFlagID) ([]*ffentity.RuleGroup, error) {
 	return nil, nil
 }
-func (m *mockRuleGroupRepo) SaveCondition(_ context.Context, _ ffentity.RuleGroupID, _ ffentity.Condition) error {
+func (m *mockRuleGroupRepo) SaveCondition(_ context.Context, _ shareddomain.Querier, _ ffentity.RuleGroupID, _ ffentity.Condition) error {
 	return nil
 }
-func (m *mockRuleGroupRepo) DeleteConditionsByRuleGroupID(_ context.Context, _ ffentity.RuleGroupID) error {
+func (m *mockRuleGroupRepo) DeleteConditionsByRuleGroupID(_ context.Context, _ shareddomain.Querier, _ ffentity.RuleGroupID) error {
 	return nil
 }
 
@@ -110,10 +110,10 @@ func (m *mockReadRepo) List(_ context.Context, _ ffrepo.FeatureFlagFilter) ([]*f
 }
 
 type mockEventBus struct {
-	published []shared.DomainEvent
+	published []shareddomain.DomainEvent
 }
 
-func (m *mockEventBus) Publish(_ context.Context, events ...shared.DomainEvent) error {
+func (m *mockEventBus) Publish(_ context.Context, events ...shareddomain.DomainEvent) error {
 	m.published = append(m.published, events...)
 	return nil
 }

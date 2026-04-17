@@ -22,7 +22,7 @@ type mockIntegrationRepo struct {
 	findFn  func(ctx context.Context, id integentity.IntegrationID) (*integentity.Integration, error)
 }
 
-func (m *mockIntegrationRepo) Save(_ context.Context, e *integentity.Integration) error {
+func (m *mockIntegrationRepo) Save(_ context.Context, _ shared.Querier, e *integentity.Integration) error {
 	m.saved = e
 	return nil
 }
@@ -34,13 +34,17 @@ func (m *mockIntegrationRepo) FindByID(ctx context.Context, id integentity.Integ
 	return nil, integentity.ErrIntegrationNotFound
 }
 
-func (m *mockIntegrationRepo) Update(_ context.Context, e *integentity.Integration) error {
+func (m *mockIntegrationRepo) Update(_ context.Context, _ shared.Querier, e *integentity.Integration) error {
 	m.updated = e
 	return nil
 }
 
-func (m *mockIntegrationRepo) Delete(_ context.Context, id integentity.IntegrationID) error {
+func (m *mockIntegrationRepo) Delete(_ context.Context, _ shared.Querier, id integentity.IntegrationID) error {
 	m.deleted = id
+	return nil
+}
+
+func (m *mockIntegrationRepo) RotateJWTKey(_ context.Context, _ shared.Querier, _ integentity.IntegrationID, _, _ string) error {
 	return nil
 }
 

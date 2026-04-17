@@ -5,6 +5,7 @@ import (
 
 	siteentity "gct/internal/context/admin/supporting/sitesetting/domain/entity"
 	siterepo "gct/internal/context/admin/supporting/sitesetting/domain/repository"
+	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -20,16 +21,19 @@ type DeleteSiteSettingCommand struct {
 // No domain events are emitted — callers needing audit trails should handle that separately.
 type DeleteSiteSettingHandler struct {
 	repo   siterepo.SiteSettingRepository
+	pool   shareddomain.Querier
 	logger logger.Log
 }
 
 // NewDeleteSiteSettingHandler creates a new DeleteSiteSettingHandler.
 func NewDeleteSiteSettingHandler(
 	repo siterepo.SiteSettingRepository,
+	pool shareddomain.Querier,
 	logger logger.Log,
 ) *DeleteSiteSettingHandler {
 	return &DeleteSiteSettingHandler{
 		repo:   repo,
+		pool:   pool,
 		logger: logger,
 	}
 }
@@ -40,7 +44,7 @@ func (h *DeleteSiteSettingHandler) Handle(ctx context.Context, cmd DeleteSiteSet
 	ctx, end := pgxutil.AppSpan(ctx, "DeleteSiteSettingHandler.Handle")
 	defer func() { end(err) }()
 
-	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
+	if err := h.repo.Delete(ctx, h.pool, cmd.ID); err != nil {
 		h.logger.Errorc(ctx, "repository delete failed", logger.F{Op: "DeleteSiteSetting", Entity: "site_setting", EntityID: cmd.ID.String(), Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}

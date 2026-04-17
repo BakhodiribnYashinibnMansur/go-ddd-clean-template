@@ -18,13 +18,10 @@ type mockEntity struct {
 // mockRepo implements domain.Repository[mockEntity] for compile-time satisfaction.
 type mockRepo struct{}
 
-func (m *mockRepo) Save(_ context.Context, _ *mockEntity) error             { return nil }
-func (m *mockRepo) FindByID(_ context.Context, _ uuid.UUID) (*mockEntity, error) { return nil, nil }
-func (m *mockRepo) Update(_ context.Context, _ *mockEntity) error           { return nil }
-func (m *mockRepo) Delete(_ context.Context, _ uuid.UUID) error             { return nil }
-func (m *mockRepo) List(_ context.Context, _ domain.Pagination) ([]*mockEntity, int64, error) {
-	return nil, 0, nil
-}
+func (m *mockRepo) Save(_ context.Context, _ domain.Querier, _ *mockEntity) error   { return nil }
+func (m *mockRepo) FindByID(_ context.Context, _ uuid.UUID) (*mockEntity, error)    { return nil, nil }
+func (m *mockRepo) Update(_ context.Context, _ domain.Querier, _ *mockEntity) error { return nil }
+func (m *mockRepo) Delete(_ context.Context, _ domain.Querier, _ uuid.UUID) error   { return nil }
 
 // Compile-time interface satisfaction check.
 var _ domain.Repository[mockEntity, uuid.UUID] = (*mockRepo)(nil)

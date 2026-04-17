@@ -31,7 +31,7 @@ type mockRepo struct {
 	findFn  func(ctx context.Context, id syserrentity.SystemErrorID) (*syserrentity.SystemError, error)
 }
 
-func (m *mockRepo) Save(_ context.Context, e *syserrentity.SystemError) error {
+func (m *mockRepo) Save(_ context.Context, _ shared.Querier, e *syserrentity.SystemError) error {
 	m.saved = e
 	return nil
 }
@@ -41,7 +41,7 @@ func (m *mockRepo) FindByID(ctx context.Context, id syserrentity.SystemErrorID) 
 	}
 	return nil, syserrentity.ErrSystemErrorNotFound
 }
-func (m *mockRepo) Update(_ context.Context, e *syserrentity.SystemError) error {
+func (m *mockRepo) Update(_ context.Context, _ shared.Querier, e *syserrentity.SystemError) error {
 	m.updated = e
 	return nil
 }

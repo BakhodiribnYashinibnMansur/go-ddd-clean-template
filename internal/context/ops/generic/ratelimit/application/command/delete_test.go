@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	ratelimitentity "gct/internal/context/ops/generic/ratelimit/domain/entity"
+	"gct/internal/kernel/outbox"
 
 	"github.com/stretchr/testify/require"
 )
@@ -13,7 +14,7 @@ func TestDeleteRateLimitHandler_Handle(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockRateLimitRepo{}
-	handler := NewDeleteRateLimitHandler(repo, &mockLogger{})
+	handler := NewDeleteRateLimitHandler(repo, outbox.NewEventCommitter(nil, nil, &mockEventBus{}, &mockLogger{}), &mockLogger{})
 
 	id := ratelimitentity.NewRateLimitID()
 	err := handler.Handle(context.Background(), DeleteRateLimitCommand{ID: id})

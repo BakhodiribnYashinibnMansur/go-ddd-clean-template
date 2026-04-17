@@ -7,7 +7,7 @@ import (
 	announceentity "gct/internal/context/content/supporting/announcement/domain/entity"
 	announcerepo "gct/internal/context/content/supporting/announcement/domain/repository"
 	"gct/internal/kernel/consts"
-	shared "gct/internal/kernel/domain"
+	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/pgxutil"
 
@@ -39,7 +39,7 @@ func NewAnnouncementWriteRepo(pool *pgxpool.Pool) *AnnouncementWriteRepo {
 }
 
 // Save inserts a new Announcement aggregate into the database.
-func (r *AnnouncementWriteRepo) Save(ctx context.Context, a *announceentity.Announcement) (err error) {
+func (r *AnnouncementWriteRepo) Save(ctx context.Context, q shareddomain.Querier, a *announceentity.Announcement) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "AnnouncementWriteRepo.Save")
 	defer func() { end(err) }()
 
@@ -61,7 +61,7 @@ func (r *AnnouncementWriteRepo) Save(ctx context.Context, a *announceentity.Anno
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildInsert)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = q.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 
@@ -87,7 +87,7 @@ func (r *AnnouncementWriteRepo) FindByID(ctx context.Context, id announceentity.
 }
 
 // Update updates an existing Announcement aggregate in the database.
-func (r *AnnouncementWriteRepo) Update(ctx context.Context, a *announceentity.Announcement) (err error) {
+func (r *AnnouncementWriteRepo) Update(ctx context.Context, q shareddomain.Querier, a *announceentity.Announcement) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "AnnouncementWriteRepo.Update")
 	defer func() { end(err) }()
 
@@ -106,7 +106,7 @@ func (r *AnnouncementWriteRepo) Update(ctx context.Context, a *announceentity.An
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildUpdate)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = q.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 
@@ -114,7 +114,7 @@ func (r *AnnouncementWriteRepo) Update(ctx context.Context, a *announceentity.An
 }
 
 // Delete removes an Announcement by its ID.
-func (r *AnnouncementWriteRepo) Delete(ctx context.Context, id announceentity.AnnouncementID) (err error) {
+func (r *AnnouncementWriteRepo) Delete(ctx context.Context, q shareddomain.Querier, id announceentity.AnnouncementID) (err error) {
 	ctx, end := pgxutil.RepoSpan(ctx, "AnnouncementWriteRepo.Delete")
 	defer func() { end(err) }()
 
@@ -126,7 +126,7 @@ func (r *AnnouncementWriteRepo) Delete(ctx context.Context, id announceentity.An
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildDelete)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = q.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, tableName, nil)
 	}
 
@@ -225,8 +225,8 @@ func scanAnnouncement(row pgx.Row) (*announceentity.Announcement, error) {
 
 	return announceentity.ReconstructAnnouncement(
 		id, createdAt, updatedAt,
-		shared.Lang{Uz: title, Ru: title, En: title},
-		shared.Lang{Uz: content, Ru: content, En: content},
+		shareddomain.Lang{Uz: title, Ru: title, En: title},
+		shareddomain.Lang{Uz: content, Ru: content, En: content},
 		isActive, nil, priority, startsAt, endsAt,
 	), nil
 }
@@ -254,8 +254,8 @@ func scanAnnouncementFromRows(rows pgx.Rows) (*announceentity.Announcement, erro
 
 	return announceentity.ReconstructAnnouncement(
 		id, createdAt, updatedAt,
-		shared.Lang{Uz: title, Ru: title, En: title},
-		shared.Lang{Uz: content, Ru: content, En: content},
+		shareddomain.Lang{Uz: title, Ru: title, En: title},
+		shareddomain.Lang{Uz: content, Ru: content, En: content},
 		isActive, nil, priority, startsAt, endsAt,
 	), nil
 }

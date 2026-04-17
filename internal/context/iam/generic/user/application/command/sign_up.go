@@ -7,6 +7,7 @@ import (
 	userentity "gct/internal/context/iam/generic/user/domain/entity"
 	userrepo "gct/internal/context/iam/generic/user/domain/repository"
 	"gct/internal/kernel/application"
+	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/metrics"
@@ -24,6 +25,8 @@ type SignUpCommand struct {
 // SignUpHandler handles the SignUpCommand.
 type SignUpHandler struct {
 	repo     userrepo.UserRepository
+	readRepo userrepo.UserReadRepository
+	db       shareddomain.DB
 	eventBus application.EventBus
 	logger   commandLogger
 	bm       *metrics.BusinessMetrics
@@ -32,11 +35,15 @@ type SignUpHandler struct {
 // NewSignUpHandler creates a new SignUpHandler.
 func NewSignUpHandler(
 	repo userrepo.UserRepository,
+	readRepo userrepo.UserReadRepository,
+	db shareddomain.DB,
 	eventBus application.EventBus,
 	logger commandLogger,
 ) *SignUpHandler {
 	return &SignUpHandler{
 		repo:     repo,
+		readRepo: readRepo,
+		db:       db,
 		eventBus: eventBus,
 		logger:   logger,
 	}
@@ -80,11 +87,13 @@ func (h *SignUpHandler) Handle(ctx context.Context, cmd SignUpCommand) (err erro
 	}
 	user.Approve()
 
-	if defaultRoleID, err := h.repo.FindDefaultRoleID(ctx); err == nil {
+	if defaultRoleID, err := h.readRepo.FindDefaultRoleID(ctx); err == nil {
 		user.ChangeRole(defaultRoleID)
 	}
 
-	if err := h.repo.Save(ctx, user); err != nil {
+	if err := pgxutil.WithTx(ctx, h.db, func(q shareddomain.Querier) error {
+		return h.repo.Save(ctx, q, user)
+	}); err != nil {
 		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "SignUp", Entity: "user", Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}

@@ -6,6 +6,7 @@ import (
 
 	integentity "gct/internal/context/admin/supporting/integration/domain/entity"
 	integrepo "gct/internal/context/admin/supporting/integration/domain/repository"
+	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -56,8 +57,8 @@ func (h *CreateHandler) Handle(ctx context.Context, cmd CreateCommand) (err erro
 		return fmt.Errorf("create_integration: %w", err)
 	}
 
-	return h.committer.Commit(ctx, func(ctx context.Context) error {
-		if err := h.repo.Save(ctx, i); err != nil {
+	return h.committer.Commit(ctx, func(ctx context.Context, q shareddomain.Querier) error {
+		if err := h.repo.Save(ctx, q, i); err != nil {
 			h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "CreateIntegration", Entity: "integration", Err: err}.KV()...)
 			return apperrors.MapToServiceError(err)
 		}

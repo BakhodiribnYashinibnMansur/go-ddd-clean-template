@@ -7,6 +7,7 @@ import (
 	userentity "gct/internal/context/iam/generic/user/domain/entity"
 	userrepo "gct/internal/context/iam/generic/user/domain/repository"
 	"gct/internal/kernel/application"
+	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -27,6 +28,7 @@ type SignOutCommand struct {
 // SignOutHandler handles the SignOutCommand.
 type SignOutHandler struct {
 	repo        userrepo.UserRepository
+	db          shareddomain.DB
 	eventBus    application.EventBus
 	logger      commandLogger
 	auditLogger audit.Logger
@@ -36,11 +38,13 @@ type SignOutHandler struct {
 // NewSignOutHandler creates a new SignOutHandler.
 func NewSignOutHandler(
 	repo userrepo.UserRepository,
+	db shareddomain.DB,
 	eventBus application.EventBus,
 	logger commandLogger,
 ) *SignOutHandler {
 	return &SignOutHandler{
 		repo:        repo,
+		db:          db,
 		eventBus:    eventBus,
 		logger:      logger,
 		auditLogger: audit.NoopLogger{},
@@ -75,7 +79,9 @@ func (h *SignOutHandler) Handle(ctx context.Context, cmd SignOutCommand) (err er
 		return apperrors.MapToServiceError(err)
 	}
 
-	if err := h.repo.Update(ctx, user); err != nil {
+	if err := pgxutil.WithTx(ctx, h.db, func(q shareddomain.Querier) error {
+		return h.repo.Update(ctx, q, user)
+	}); err != nil {
 		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "SignOut", Entity: "user", EntityID: cmd.UserID, Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}

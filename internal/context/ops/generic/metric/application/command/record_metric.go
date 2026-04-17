@@ -5,6 +5,7 @@ import (
 
 	metricentity "gct/internal/context/ops/generic/metric/domain/entity"
 	metricrepo "gct/internal/context/ops/generic/metric/domain/repository"
+	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -49,8 +50,8 @@ func (h *RecordMetricHandler) Handle(ctx context.Context, cmd RecordMetricComman
 
 	fm := metricentity.NewFunctionMetric(cmd.Name, cmd.LatencyMs, cmd.IsPanic, cmd.PanicError)
 
-	return h.committer.Commit(ctx, func(ctx context.Context) error {
-		if err := h.repo.Save(ctx, fm); err != nil {
+	return h.committer.Commit(ctx, func(ctx context.Context, q shareddomain.Querier) error {
+		if err := h.repo.Save(ctx, q, fm); err != nil {
 			h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "RecordMetric", Entity: "metric", Err: err}.KV()...)
 			return apperrors.MapToServiceError(err)
 		}

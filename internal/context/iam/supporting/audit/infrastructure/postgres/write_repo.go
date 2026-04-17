@@ -72,7 +72,7 @@ func (r *AuditLogWriteRepo) Save(ctx context.Context, auditLog *domain.AuditLog)
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildInsert)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = r.pool.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, consts.TableAuditLog, nil)
 	}
 
@@ -117,7 +117,7 @@ func (r *EndpointHistoryWriteRepo) Save(ctx context.Context, entry *domain.Endpo
 		return apperrors.NewRepoError(apperrors.ErrRepoDatabase, consts.ErrMsgFailedToBuildInsert)
 	}
 
-	if _, err = pgxutil.QuerierFromContext(ctx, r.pool).Exec(ctx, sql, args...); err != nil {
+	if _, err = r.pool.Exec(ctx, sql, args...); err != nil {
 		return apperrors.HandlePgError(err, consts.TableEndpointHistory, nil)
 	}
 

@@ -5,9 +5,11 @@ import (
 
 	announceentity "gct/internal/context/content/supporting/announcement/domain/entity"
 	announcerepo "gct/internal/context/content/supporting/announcement/domain/repository"
+	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
+	"gct/internal/kernel/outbox"
 )
 
 // DeleteAnnouncementCommand represents an intent to permanently remove an announcement.
@@ -19,18 +21,21 @@ type DeleteAnnouncementCommand struct {
 // DeleteAnnouncementHandler performs hard deletion of announcements via the repository.
 // No domain events are emitted — callers needing audit trails should record them separately.
 type DeleteAnnouncementHandler struct {
-	repo   announcerepo.AnnouncementRepository
-	logger logger.Log
+	repo      announcerepo.AnnouncementRepository
+	committer *outbox.EventCommitter
+	logger    logger.Log
 }
 
 // NewDeleteAnnouncementHandler wires dependencies for announcement deletion.
 func NewDeleteAnnouncementHandler(
 	repo announcerepo.AnnouncementRepository,
+	committer *outbox.EventCommitter,
 	logger logger.Log,
 ) *DeleteAnnouncementHandler {
 	return &DeleteAnnouncementHandler{
-		repo:   repo,
-		logger: logger,
+		repo:      repo,
+		committer: committer,
+		logger:    logger,
 	}
 }
 
@@ -41,9 +46,11 @@ func (h *DeleteAnnouncementHandler) Handle(ctx context.Context, cmd DeleteAnnoun
 	defer func() { end(err) }()
 	defer logger.SlowOp(h.logger, ctx, "DeleteAnnouncement", "announcement")()
 
-	if err := h.repo.Delete(ctx, cmd.ID); err != nil {
-		h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "DeleteAnnouncement", Entity: "announcement", EntityID: cmd.ID, Err: err}.KV()...)
-		return apperrors.MapToServiceError(err)
-	}
-	return nil
+	return h.committer.Commit(ctx, func(ctx context.Context, q shareddomain.Querier) error {
+		if err := h.repo.Delete(ctx, q, cmd.ID); err != nil {
+			h.logger.Errorc(ctx, "repository save failed", logger.F{Op: "DeleteAnnouncement", Entity: "announcement", EntityID: cmd.ID, Err: err}.KV()...)
+			return apperrors.MapToServiceError(err)
+		}
+		return nil
+	}, func() []shareddomain.DomainEvent { return nil })
 }

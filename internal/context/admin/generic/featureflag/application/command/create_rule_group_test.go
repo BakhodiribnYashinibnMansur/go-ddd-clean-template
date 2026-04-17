@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	ffentity "gct/internal/context/admin/generic/featureflag/domain/entity"
+	shareddomain "gct/internal/kernel/domain"
 
 	"gct/internal/kernel/outbox"
 
@@ -129,7 +130,7 @@ func TestCreateRuleGroupHandler_Handle_RepoError(t *testing.T) {
 	}
 	repoErr := errors.New("save failed")
 	rgRepo := &mockRuleGroupRepo{
-		saveFn: func(_ context.Context, _ *ffentity.RuleGroup) error {
+		saveFn: func(_ context.Context, _ shareddomain.Querier, _ *ffentity.RuleGroup) error {
 			return repoErr
 		},
 	}

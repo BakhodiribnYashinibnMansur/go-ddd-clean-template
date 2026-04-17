@@ -9,6 +9,7 @@ import (
 	userentity "gct/internal/context/iam/generic/user/domain/entity"
 	userrepo "gct/internal/context/iam/generic/user/domain/repository"
 	usersvc "gct/internal/context/iam/generic/user/domain/service"
+	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/metrics"
@@ -244,8 +245,8 @@ func (h *SignInHandler) Handle(ctx context.Context, cmd SignInCommand) (result *
 
 	// Persist user (with the updated session containing the refresh token hash)
 	// and publish domain events via the transactional outbox.
-	if err := h.committer.Commit(ctx, func(ctx context.Context) error {
-		if err := h.repo.Update(ctx, user); err != nil {
+	if err := h.committer.Commit(ctx, func(ctx context.Context, q shareddomain.Querier) error {
+		if err := h.repo.Update(ctx, q, user); err != nil {
 			h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "SignIn", Entity: "user", Err: err}.KV()...)
 			return apperrors.MapToServiceError(err)
 		}

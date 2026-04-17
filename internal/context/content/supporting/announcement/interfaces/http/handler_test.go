@@ -32,7 +32,7 @@ type mockRepo struct {
 	findFn  func(ctx context.Context, id announceentity.AnnouncementID) (*announceentity.Announcement, error)
 }
 
-func (m *mockRepo) Save(_ context.Context, e *announceentity.Announcement) error {
+func (m *mockRepo) Save(_ context.Context, _ shared.Querier, e *announceentity.Announcement) error {
 	m.saved = e
 	return nil
 }
@@ -42,11 +42,11 @@ func (m *mockRepo) FindByID(ctx context.Context, id announceentity.AnnouncementI
 	}
 	return nil, announceentity.ErrAnnouncementNotFound
 }
-func (m *mockRepo) Update(_ context.Context, e *announceentity.Announcement) error {
+func (m *mockRepo) Update(_ context.Context, _ shared.Querier, e *announceentity.Announcement) error {
 	m.updated = e
 	return nil
 }
-func (m *mockRepo) Delete(_ context.Context, id announceentity.AnnouncementID) error {
+func (m *mockRepo) Delete(_ context.Context, _ shared.Querier, id announceentity.AnnouncementID) error {
 	m.deleted = id
 	return nil
 }
@@ -112,7 +112,7 @@ func setupRouter(repo *mockRepo, readRepo *mockReadRepo) *gin.Engine {
 	bc := &announcement.BoundedContext{
 		CreateAnnouncement: command.NewCreateAnnouncementHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l),
 		UpdateAnnouncement: command.NewUpdateAnnouncementHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l),
-		DeleteAnnouncement: command.NewDeleteAnnouncementHandler(repo, l),
+		DeleteAnnouncement: command.NewDeleteAnnouncementHandler(repo, outbox.NewEventCommitter(nil, nil, eb, l), l),
 		GetAnnouncement:    query.NewGetAnnouncementHandler(readRepo, l),
 		ListAnnouncements:  query.NewListAnnouncementsHandler(readRepo, l),
 	}

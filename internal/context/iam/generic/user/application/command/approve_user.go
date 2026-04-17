@@ -7,6 +7,7 @@ import (
 	userevent "gct/internal/context/iam/generic/user/domain/event"
 	userrepo "gct/internal/context/iam/generic/user/domain/repository"
 	"gct/internal/kernel/application"
+	shareddomain "gct/internal/kernel/domain"
 	apperrors "gct/internal/kernel/infrastructure/errorx"
 	"gct/internal/kernel/infrastructure/logger"
 	"gct/internal/kernel/infrastructure/pgxutil"
@@ -23,6 +24,7 @@ type ApproveUserCommand struct {
 // ApproveUserHandler handles the ApproveUserCommand.
 type ApproveUserHandler struct {
 	repo     userrepo.UserRepository
+	db       shareddomain.DB
 	eventBus application.EventBus
 	logger   commandLogger
 }
@@ -30,11 +32,13 @@ type ApproveUserHandler struct {
 // NewApproveUserHandler creates a new ApproveUserHandler.
 func NewApproveUserHandler(
 	repo userrepo.UserRepository,
+	db shareddomain.DB,
 	eventBus application.EventBus,
 	logger commandLogger,
 ) *ApproveUserHandler {
 	return &ApproveUserHandler{
 		repo:     repo,
+		db:       db,
 		eventBus: eventBus,
 		logger:   logger,
 	}
@@ -57,7 +61,9 @@ func (h *ApproveUserHandler) Handle(ctx context.Context, cmd ApproveUserCommand)
 		{FieldName: "is_approved", OldValue: "false", NewValue: "true"},
 	}))
 
-	if err := h.repo.Update(ctx, user); err != nil {
+	if err := pgxutil.WithTx(ctx, h.db, func(q shareddomain.Querier) error {
+		return h.repo.Update(ctx, q, user)
+	}); err != nil {
 		h.logger.Errorc(ctx, "repository update failed", logger.F{Op: "ApproveUser", Entity: "user", EntityID: cmd.ID, Err: err}.KV()...)
 		return apperrors.MapToServiceError(err)
 	}
